@@ -65,6 +65,40 @@ The public home page behaves like a modern shopping app on mobile:
 
 The template uses Receiz ID as the account layer. Existing Receiz IDs can continue in one click, while new brands or customers can create a Receiz ID from the same flow. The adapter imports SDK identity helpers including `createReceizIdIdentity`, `buildReceizIdContinueRequest`, `projectReceizIdentityAccount`, and `signReceizIdentityLoginProof` through `@receiz/sdk`.
 
+## Vercel Launch
+
+This app is ready for Vercel as a standard Next.js App Router project.
+
+Recommended project settings:
+
+- Framework preset: `Next.js`
+- Install command: `pnpm install --frozen-lockfile`
+- Build command: `pnpm build`
+- Output directory: leave empty/default
+- Node.js: `20.x` or newer
+
+Set these environment variables in Vercel:
+
+```bash
+NEXT_PUBLIC_RECEIZ_MODE=mock
+RECEIZ_BASE_URL=https://receiz.com
+RECEIZ_CLIENT_ID=receiz-commerce-kit-demo
+RECEIZ_ACCESS_TOKEN=
+
+NEXT_PUBLIC_CHECKOUT_MODE=mock
+CHECKOUT_PROVIDER=mock
+STRIPE_SECRET_KEY=
+
+NEXT_PUBLIC_AUTH_MODE=mock
+AUTH_PROVIDER=mock
+
+NEXT_PUBLIC_HOSTING_MODE=mock_hosted
+NEXT_PUBLIC_SITE_URL=https://your-project.vercel.app
+NEXT_PUBLIC_DEFAULT_SUBDOMAIN=boost.receiz.store
+```
+
+After adding a custom domain, update `NEXT_PUBLIC_SITE_URL` to that custom domain so Receiz ID redirect URLs use the production origin.
+
 ## Developer Fork Path
 
 Developers can fork this repo, replace mock adapters with real providers, and keep the same UI/domain model. The app is structured so provider choices do not leak into page components.

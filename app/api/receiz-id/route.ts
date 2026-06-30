@@ -1,11 +1,14 @@
 import { NextResponse } from "next/server";
 import { mockAuth } from "@/lib/auth/mock-auth";
+import { getRequestOrigin } from "@/lib/url";
 
-export async function GET() {
+export async function GET(request: Request) {
+  const origin = getRequestOrigin(request);
+
   return NextResponse.json({
     ok: true,
     receizId: mockAuth.getReceizIdState(),
-    authorizeUrl: mockAuth.getReceizIdAuthorizeUrl()
+    authorizeUrl: mockAuth.getReceizIdAuthorizeUrl(origin)
   });
 }
 
