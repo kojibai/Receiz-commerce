@@ -239,9 +239,10 @@ Optional experimental Receiz Twin/World content assistance:
 ```bash
 NEXT_PUBLIC_RECEIZ_TWIN_ENABLED=false
 NEXT_PUBLIC_RECEIZ_WORLD_ENABLED=false
+RECEIZ_ENABLE_TWIN_SCOPES=false
 ```
 
-Leave these disabled until the installed `@receiz/sdk` exposes the typed Twin/World namespace for production content generation. The frontend hides Receiz Twin buttons unless the capability flag is enabled and the SDK namespace is present.
+Leave these disabled until the installed `@receiz/sdk` exposes the typed Twin/World namespace for production content generation and the Receiz OIDC client has `receiz:twin.read` plus `receiz:twin.write` enabled. The frontend hides Receiz Twin buttons unless the capability flag is enabled and the SDK namespace is present. `RECEIZ_ENABLE_TWIN_SCOPES=true` should only be set after those scopes are accepted by the Receiz OIDC client; otherwise login will fail with `invalid_scope`.
 
 Do not add a Receiz access token for normal OIDC login. The setup is:
 

@@ -4,27 +4,9 @@ import { receizCommerceAdapter } from "@/lib/receiz/adapter";
 import { hostContextFromHost } from "@/lib/hosting/host-context";
 import { getReceizRedirectUri, getRequestOrigin } from "@/lib/url";
 import { packReceizOAuthState } from "@/lib/receiz/oauth-state";
+import { receizOidcScopesFromEnv } from "@/lib/receiz/oauth-scopes";
 
 export const runtime = "nodejs";
-
-const RECEIZ_SCOPES = [
-  "openid",
-  "profile",
-  "email",
-  "offline_access",
-  "receiz:record",
-  "receiz:seal",
-  "receiz:verify",
-  "receiz:wallet.read",
-  "receiz:wallet.transfer",
-  "receiz:payments.create",
-  "receiz:payments.read",
-  "receiz:notes.mint",
-  "receiz:notes.claim",
-  "receiz:notes.read",
-  "receiz:twin.read",
-  "receiz:twin.write"
-];
 
 function base64Url(bytes: Buffer) {
   return bytes.toString("base64url");
@@ -56,7 +38,7 @@ export async function GET(request: NextRequest) {
     clientId,
     redirectUri,
     codeChallenge: codeChallenge(verifier),
-    scopes: RECEIZ_SCOPES,
+    scopes: receizOidcScopesFromEnv(process.env),
     state
   });
 

@@ -15,6 +15,7 @@
     "src/lib/receiz/proof-state.ts",
     "src/lib/receiz/proof-state-store.ts",
     "src/lib/receiz/oauth-state.ts",
+    "src/lib/receiz/oauth-scopes.ts",
     "src/lib/pwa/cache-policy.ts",
     "src/lib/pwa/manifest.ts",
     "src/lib/import/commerce-importer.ts",
