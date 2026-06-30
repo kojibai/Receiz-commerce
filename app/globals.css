@@ -1750,6 +1750,12 @@ a {
   color: var(--muted);
 }
 
+.account-hero-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .receiz-id-line {
   display: inline-flex;
   align-items: center;
@@ -1769,6 +1775,116 @@ a {
 
 .account-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.customer-account-scope {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin-top: 14px;
+  padding: 14px;
+  border: 1px solid color-mix(in srgb, var(--receiz) 18%, var(--border));
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--receiz) 7%, white);
+}
+
+.customer-account-scope svg,
+.payment-rail-grid svg,
+.shipping-profile svg,
+.account-empty-state svg {
+  color: var(--receiz);
+  flex: 0 0 auto;
+}
+
+.customer-account-scope strong,
+.customer-account-scope span,
+.payment-rail-grid strong,
+.payment-rail-grid span,
+.shipping-profile strong,
+.shipping-profile span {
+  display: block;
+}
+
+.customer-account-scope span,
+.payment-rail-grid span,
+.shipping-profile span {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.payment-rail-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.payment-rail-grid > div {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+}
+
+.shipping-profile {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 16px;
+  min-height: 118px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+}
+
+.customer-order-list,
+.account-reward-stack {
+  display: grid;
+  gap: 10px;
+}
+
+.customer-order-card {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+}
+
+.customer-order-card strong,
+.customer-order-card span {
+  display: block;
+}
+
+.customer-order-card span {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.account-empty-state {
+  display: grid;
+  justify-items: start;
+  gap: 8px;
+  padding: 18px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--surface-2) 80%, white);
+  color: var(--muted);
+}
+
+.account-empty-state strong {
+  color: var(--ink);
+}
+
+.account-empty-state span {
+  font-size: 13px;
+  line-height: 1.45;
 }
 
 .metric-card {

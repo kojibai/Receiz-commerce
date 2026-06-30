@@ -22,4 +22,25 @@ describe("tenant fallback state", () => {
     assert.equal(state.auth.signedInAs, "customer");
     assert.equal(JSON.stringify(state).includes("Boost"), false);
   });
+
+  it("rewrites stale template copy even when local tenant storage already matches the subdomain", () => {
+    const staleTenant = {
+      ...baseState(),
+      brand: {
+        ...baseState().brand,
+        name: "Bjklock",
+        logoText: "bjklock"
+      },
+      hosting: {
+        ...baseState().hosting,
+        tenantSlug: "bjklock",
+        subdomain: "bjklock.receiz.app"
+      }
+    };
+    const state = tenantFallbackState(staleTenant, hostContextFromHost("bjklock.localhost:3001"));
+
+    assert.equal(state.brand.name, "Bjklock");
+    assert.equal(JSON.stringify(state).includes("Boost"), false);
+    assert.equal(state.auth.receizId.connected, false);
+  });
 });

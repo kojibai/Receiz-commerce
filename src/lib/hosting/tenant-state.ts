@@ -89,6 +89,10 @@ function tenantSafeFallbackContent(state: CommerceState, brandName: string): Com
   };
 }
 
+function containsTemplateBrand(state: CommerceState, brandName: string) {
+  return brandName !== "Boost Coffee" && JSON.stringify(state).includes("Boost");
+}
+
 export function tenantFallbackState(state: CommerceState, hostContext: HostContext): CommerceState {
   if (hostContext.surface !== "tenant") return state;
 
@@ -97,11 +101,12 @@ export function tenantFallbackState(state: CommerceState, hostContext: HostConte
     const isStoredTenant = state.hosting.subdomain === subdomain;
     const brandName = isStoredTenant ? state.brand.name : titleFromHost(hostContext.tenantSlug);
     const logoText = logoTextFromHost(hostContext.tenantSlug);
-    const contentState = isStoredTenant ? state : tenantSafeFallbackContent(state, brandName);
+    const trustedStoredTenant = isStoredTenant && !containsTemplateBrand(state, brandName);
+    const contentState = trustedStoredTenant ? state : tenantSafeFallbackContent(state, brandName);
 
     return {
       ...contentState,
-      brand: isStoredTenant
+      brand: trustedStoredTenant
         ? contentState.brand
         : {
             ...contentState.brand,
@@ -113,8 +118,8 @@ export function tenantFallbackState(state: CommerceState, hostContext: HostConte
         tenantSlug: hostContext.tenantSlug,
         subdomain,
         liveUrl: `https://${subdomain}`,
-        merchantReceizId: isStoredTenant ? contentState.hosting.merchantReceizId : `${logoText}.receiz.id`,
-        settlementAccountLabel: isStoredTenant ? contentState.hosting.settlementAccountLabel : `${brandName} Receiz account`,
+        merchantReceizId: trustedStoredTenant ? contentState.hosting.merchantReceizId : `${logoText}.receiz.id`,
+        settlementAccountLabel: trustedStoredTenant ? contentState.hosting.settlementAccountLabel : `${brandName} Receiz account`,
         subdomainStatus: {
           ...contentState.hosting.subdomainStatus,
           domain: subdomain,
@@ -128,7 +133,7 @@ export function tenantFallbackState(state: CommerceState, hostContext: HostConte
       auth: {
         ...contentState.auth,
         signedInAs: "customer",
-        receizId: isStoredTenant
+        receizId: trustedStoredTenant
           ? contentState.auth.receizId
           : {
               ...contentState.auth.receizId,
@@ -145,11 +150,12 @@ export function tenantFallbackState(state: CommerceState, hostContext: HostConte
     const isStoredDomain = state.hosting.customDomain.domain === hostContext.customDomain;
     const brandName = isStoredDomain ? state.brand.name : titleFromHost(hostContext.customDomain);
     const logoText = logoTextFromHost(hostContext.customDomain);
-    const contentState = isStoredDomain ? state : tenantSafeFallbackContent(state, brandName);
+    const trustedStoredDomain = isStoredDomain && !containsTemplateBrand(state, brandName);
+    const contentState = trustedStoredDomain ? state : tenantSafeFallbackContent(state, brandName);
 
     return {
       ...contentState,
-      brand: isStoredDomain
+      brand: trustedStoredDomain
         ? contentState.brand
         : {
             ...contentState.brand,
@@ -159,8 +165,8 @@ export function tenantFallbackState(state: CommerceState, hostContext: HostConte
       hosting: {
         ...contentState.hosting,
         liveUrl: `https://${hostContext.customDomain}`,
-        merchantReceizId: isStoredDomain ? contentState.hosting.merchantReceizId : `${logoText}.receiz.id`,
-        settlementAccountLabel: isStoredDomain ? contentState.hosting.settlementAccountLabel : `${brandName} Receiz account`,
+        merchantReceizId: trustedStoredDomain ? contentState.hosting.merchantReceizId : `${logoText}.receiz.id`,
+        settlementAccountLabel: trustedStoredDomain ? contentState.hosting.settlementAccountLabel : `${brandName} Receiz account`,
         customDomain: {
           ...contentState.hosting.customDomain,
           domain: hostContext.customDomain,
@@ -174,7 +180,7 @@ export function tenantFallbackState(state: CommerceState, hostContext: HostConte
       auth: {
         ...contentState.auth,
         signedInAs: "customer",
-        receizId: isStoredDomain
+        receizId: trustedStoredDomain
           ? contentState.auth.receizId
           : {
               ...contentState.auth.receizId,
