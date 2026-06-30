@@ -30,12 +30,27 @@ function tenantSlugFromOwner(owner: PublishOwner, fallback: string) {
 
 function customDomainFromOwner(owner: PublishOwner) {
   if (!owner.customDomain) return "";
+  if (isTemplateCustomDomain(owner.customDomain)) return "";
 
   try {
     return normalizeCustomDomain(owner.customDomain);
   } catch {
     return "";
   }
+}
+
+function isTemplateCustomDomain(value: string | undefined) {
+  const domain = value?.trim().toLowerCase() ?? "";
+  return domain === "www.boostcoffee.com" || domain === "boostcoffee.com";
+}
+
+function stripTemplatePublishedContent(state: CommerceState): CommerceState {
+  if (state.hosting.merchantReceizId === "boost.receiz.id") return state;
+
+  return {
+    ...state,
+    blogPosts: state.blogPosts.filter((post) => post.id !== "blog-origin-roast" && post.id !== "blog-rewards-guide")
+  };
 }
 
 function mergeHostingForPublish(base: HostingConfig, input: unknown, owner: PublishOwner = {}): HostingConfig {
@@ -71,7 +86,7 @@ function mergeHostingForPublish(base: HostingConfig, input: unknown, owner: Publ
         status: merged.customDomain.status === "pending" ? "ready" : merged.customDomain.status,
         message: merged.customDomain.message || "Loaded from Receiz profile"
       }
-    : ownerChanged
+    : ownerChanged || isTemplateCustomDomain(merged.customDomain.domain)
       ? {
           ...base.customDomain,
           domain: "",
@@ -106,9 +121,9 @@ function mergeHostingForPublish(base: HostingConfig, input: unknown, owner: Publ
 export function buildPublishedCommerceState(base: CommerceState, input: unknown, owner: PublishOwner = {}): CommerceState {
   const state = (isRecord(input) ? input : {}) as Partial<CommerceState>;
 
-  return {
+  return stripTemplatePublishedContent({
     ...base,
     ...state,
     hosting: mergeHostingForPublish(base.hosting, state.hosting, owner)
-  };
+  });
 }

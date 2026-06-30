@@ -324,6 +324,7 @@ describe("Receiz proof commerce state", () => {
         }
       },
       {
+        customDomain: "www.boostcoffee.com",
         displayName: "BJ Klock",
         merchantReceizId: "bjklock.receiz.id"
       }
@@ -335,6 +336,130 @@ describe("Receiz proof commerce state", () => {
     assert.equal(state.hosting.liveUrl, "https://bjklock.receiz.app");
     assert.equal(state.hosting.customDomain.domain, "");
     assert.equal(state.hosting.settlementAccountLabel, "BJ Klock Receiz account");
+  });
+
+  it("removes template blog posts when publishing a merchant-owned store", () => {
+    const state = buildPublishedCommerceState(
+      {
+        ...baseState(),
+        blogPosts: [
+          {
+            id: "blog-origin-roast",
+            title: "How Boost sources proof-sealed beans",
+            slug: "/blog/proof-sealed-beans",
+            excerpt: "Boost template story",
+            body: "Boost template body",
+            authorName: "Boost Coffee",
+            coverImageUrl: null,
+            tags: ["coffee"],
+            featured: true,
+            status: "published",
+            publishedAt: "2026-06-30T00:00:00.000Z",
+            seo: {
+              title: "Boost story",
+              description: "Boost story",
+              canonicalPath: "/blog/proof-sealed-beans",
+              keywords: ["Boost"],
+              socialImageUrl: null
+            }
+          },
+          {
+            id: "post-custom",
+            title: "BJ Klock story",
+            slug: "/blog/bj-klock-story",
+            excerpt: "Merchant story",
+            body: "Merchant body",
+            authorName: "BJ Klock",
+            coverImageUrl: null,
+            tags: ["updates"],
+            featured: false,
+            status: "draft",
+            publishedAt: "2026-06-30T00:00:00.000Z",
+            seo: {
+              title: "BJ Klock story",
+              description: "Merchant story",
+              canonicalPath: "/blog/bj-klock-story",
+              keywords: ["BJ Klock"],
+              socialImageUrl: null
+            }
+          }
+        ]
+      },
+      {},
+      {
+        displayName: "BJ Klock",
+        merchantReceizId: "bjklock.receiz.id"
+      }
+    );
+
+    assert.deepEqual(state.blogPosts.map((post) => post.id), ["post-custom"]);
+  });
+
+  it("does not project platform seed commerce arrays into a published tenant store", () => {
+    const base = {
+      ...baseState(),
+      customers: [
+        {
+          id: "customer-lena",
+          name: "Lena Smith",
+          email: "lena@example.com",
+          tier: "VIP",
+          rewardsValueLabel: "$36",
+          beans: 128,
+          streak: "2x",
+          orderIds: ["1045"],
+          rewardIds: [],
+          assetIds: []
+        }
+      ],
+      orders: [
+        {
+          id: "1045",
+          customerId: "customer-lena",
+          totalLabel: "$36.00",
+          status: "fulfilled" as const,
+          itemCount: 2,
+          sealed: true,
+          createdAt: "2026-06-30T00:00:00.000Z",
+          merchantReceizId: "boost.receiz.id",
+          tenantHost: "boost.receiz.app"
+        }
+      ],
+      proofEvents: [
+        {
+          id: "event-order",
+          type: "ORDER_VERIFIED" as const,
+          title: "ORDER_VERIFIED",
+          detail: "Boost order",
+          status: "verified" as const,
+          timestampLabel: "now"
+        }
+      ]
+    };
+    const record = buildStoreStateRecord(
+      {
+        ...baseState(),
+        brand: { ...baseState().brand, name: "BJ Klock" },
+        hosting: {
+          ...baseState().hosting,
+          tenantSlug: "bjklock",
+          subdomain: "bjklock.receiz.app",
+          merchantReceizId: "bjklock.receiz.id"
+        }
+      },
+      {
+        actorReceizId: "bjklock.receiz.id",
+        tenantHost: "bjklock.receiz.app",
+        reason: "publish",
+        recordedAt: "2026-06-30T00:05:15.000Z"
+      }
+    );
+    const projected = projectStoreStateFromRecords(base, [record], "bjklock.receiz.app");
+
+    assert.equal(projected.brand.name, "BJ Klock");
+    assert.equal(projected.orders.length, 0);
+    assert.equal(projected.customers.length, 0);
+    assert.equal(projected.proofEvents.length, 0);
   });
 
   it("omits oversized inline media from the published proof record", () => {

@@ -256,17 +256,17 @@ export function projectStoreStateFromRecords(
   return {
     ...baseState,
     ...latest.state,
-    cart: baseState.cart,
-    orders: baseState.orders,
-    customers: baseState.customers,
-    listings: baseState.listings,
+    cart: { lines: [] },
+    orders: [],
+    customers: [],
+    listings: [],
     receiz: baseState.receiz,
     auth: baseState.auth,
     publish: {
       ...baseState.publish,
       checklist: baseState.publish.checklist
     },
-    proofEvents: baseState.proofEvents
+    proofEvents: []
   };
 }
 
