@@ -4,6 +4,7 @@ import {
   type StoreStateRecord
 } from "./proof-state";
 import type { ProofStateStore } from "./proof-state-store";
+import { RECEIZ_PUBLIC_STORE_STATE_PROJECTION_SCHEMA } from "@receiz/sdk";
 
 const DEFAULT_LEDGER_LIMIT = 500;
 
@@ -50,6 +51,17 @@ async function recoverReceizPublicProofStoreStateRecords(tenantHost: string) {
   const normalizedHost = tenantHost.trim().toLowerCase();
   const urls = [`https://${normalizedHost}`, `https://${normalizedHost}/`];
   const records: StoreStateRecord[] = [];
+
+  try {
+    const restored = await receiz.resolveTenant(normalizedHost, {
+      schema: RECEIZ_PUBLIC_STORE_STATE_PROJECTION_SCHEMA,
+      state: "published",
+      requiredDataKey: "storeStateRecord"
+    });
+    records.push(...extractStoreStateRecords(restored));
+  } catch {
+    // Fall through to raw public-proof reads for older registry records.
+  }
 
   for (const url of urls) {
     try {

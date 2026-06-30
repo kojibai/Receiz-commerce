@@ -14,14 +14,30 @@ import {
   type PublicProofRecord,
   type ReceizAssetManifest,
   type ReceizAssetManifestProjection,
+  type ReceizAuditAppendRequest,
+  type ReceizCapabilities,
+  type ReceizCapabilitiesOptions,
   type ReceizClient,
   type ReceizClientOptions,
+  type ReceizCommerceRuntimeRequest,
+  type ReceizCustomerSessionRequest,
   type ReceizDeviceIdentity,
+  type ReceizDoctorReport,
   type ReceizIdContinueRequest,
+  type ReceizIdempotencyOptions,
   type ReceizIdentityAccountProjection,
   type ReceizIdentityLoginProof,
+  type ReceizJobRequest,
+  type ReceizMediaTransformRequest,
+  type ReceizMediaUploadOptions,
+  type ReceizMediaUploadResponse,
+  type ReceizMerchantOnboardRequest,
   type ReceizOneClickCheckoutRequest,
   type ReceizOneClickCheckoutResponse,
+  type ReceizPermissionCheckRequest,
+  type ReceizPermissionGrantRequest,
+  type ReceizReleasePinRequest,
+  type ReceizSearchRequest,
   type ReceizKeyFile,
   type ReceizProofMemory,
   type ReceizProofMemoryAdditionsQuery,
@@ -34,6 +50,7 @@ import {
   type ReceizWorldProfileResponse,
   type ReceizWorldPublicSnapshotResponse,
   type SaveTwinMarketMandateInput,
+  type ReceizTenantRuntimeRequest,
   type CreateTwinMarketIntentInput,
   type TwinApprovalResponse,
   type TwinMarketIntentResponse,
@@ -51,6 +68,8 @@ import { platform } from "@/lib/platform";
 export type ReceizCommerceAdapter = {
   sdkVersion: string;
   client: ReceizClient;
+  capabilities(options?: ReceizCapabilitiesOptions): Promise<ReceizCapabilities>;
+  doctor(options?: ReceizCapabilitiesOptions): Promise<ReceizDoctorReport>;
   connectReceiz(): Promise<ReceizRailsStatus>;
   buildReceizIdAuthorizeUrl(input: {
     clientId: string;
@@ -110,11 +129,44 @@ export type ReceizCommerceAdapter = {
   twinApproval(): Promise<TwinApprovalResponse>;
   approveTwinPromotion(body: TwinPromotionApprovalInput): Promise<TwinApprovalResponse>;
   oneClickCheckout(body: ReceizOneClickCheckoutRequest): Promise<ReceizOneClickCheckoutResponse>;
+  customerSession(body: ReceizCustomerSessionRequest, idempotencyKey?: string): Promise<JsonObject>;
+  customerPortal(body: ReceizTenantRuntimeRequest): Promise<JsonObject>;
+  customerOrders(query?: ReceizSearchRequest): Promise<JsonObject>;
+  customerRewards(query?: ReceizSearchRequest): Promise<JsonObject>;
+  customerAssets(query?: ReceizSearchRequest): Promise<JsonObject>;
+  merchantOnboard(body: ReceizMerchantOnboardRequest, idempotencyKey?: string): Promise<JsonObject>;
+  merchantProfile(query?: { tenantHost?: string }): Promise<JsonObject>;
+  merchantCapabilities(query?: { tenantHost?: string }): Promise<JsonObject>;
   checkout(body: CheckoutRequest): Promise<CheckoutSessionResponse>;
   checkoutSession(query: { checkoutSessionId?: string; sessionId?: string }): Promise<CheckoutSessionResponse>;
   connectWallet(): Promise<ConnectWalletResponse>;
   connectTransfer(body: ConnectTransferRequest, idempotencyKey?: string): Promise<ConnectTransferResponse>;
   connectRecord(body: JsonObject): Promise<JsonObject>;
+  uploadMedia(file: Blob, options?: ReceizMediaUploadOptions): Promise<ReceizMediaUploadResponse>;
+  transformMedia(body: ReceizMediaTransformRequest, idempotencyKey?: string): Promise<JsonObject>;
+  reserveSubdomain(body: JsonObject, idempotencyKey?: string): Promise<JsonObject>;
+  verifyCustomDomain(body: JsonObject, idempotencyKey?: string): Promise<JsonObject>;
+  domainStatus(query?: { host?: string; domain?: string }): Promise<JsonObject>;
+  resolveTenant<TData extends JsonObject = JsonObject>(
+    host: string,
+    options?: { schema?: string; state?: string; requiredDataKey?: string }
+  ): Promise<import("@receiz/sdk").ReceizAppStateRestoreResult<TData>>;
+  createRefund(body: ReceizCommerceRuntimeRequest, options?: ReceizIdempotencyOptions): Promise<JsonObject>;
+  reserveInventory(body: ReceizCommerceRuntimeRequest, options?: ReceizIdempotencyOptions): Promise<JsonObject>;
+  quoteShipping(body: ReceizCommerceRuntimeRequest): Promise<JsonObject>;
+  quoteTax(body: ReceizCommerceRuntimeRequest): Promise<JsonObject>;
+  auditAppend(body: ReceizAuditAppendRequest, options?: ReceizIdempotencyOptions): Promise<JsonObject>;
+  searchProducts(body: ReceizSearchRequest): Promise<JsonObject>;
+  enqueueJob(body: ReceizJobRequest): Promise<JsonObject>;
+  grantPermission(body: ReceizPermissionGrantRequest, options?: ReceizIdempotencyOptions): Promise<JsonObject>;
+  checkPermission(body: ReceizPermissionCheckRequest): Promise<JsonObject>;
+  scorePaymentRisk(body: ReceizCommerceRuntimeRequest): Promise<JsonObject>;
+  exportComplianceOrders(query: ReceizSearchRequest): Promise<JsonObject>;
+  exportStorePortability(query: { tenantHost: string }): Promise<JsonObject>;
+  importStorePortability(body: ReceizTenantRuntimeRequest, options?: ReceizIdempotencyOptions): Promise<JsonObject>;
+  sendNotification(body: ReceizTenantRuntimeRequest, options?: ReceizIdempotencyOptions): Promise<JsonObject>;
+  releaseCheck(query?: { tenantHost?: string }): Promise<JsonObject>;
+  releasePin(body: ReceizReleasePinRequest, options?: ReceizIdempotencyOptions): Promise<JsonObject>;
   walletLedger(query?: { limit?: number; cursor?: string; since?: string }): Promise<WalletLedgerFeed>;
   actionLedger(query?: { limit?: number; cursor?: string; since?: string }): Promise<ActionLedgerFeed>;
   signWebhook(input: { secret: string; timestamp: string; body: string | Uint8Array | ArrayBuffer | JsonObject }): Promise<string>;
@@ -155,6 +207,23 @@ export type ReceizRailKey =
   | "webhooks"
   | "manifests"
   | "proofMemory"
+  | "customers"
+  | "merchants"
+  | "commerce"
+  | "rewards"
+  | "media"
+  | "domains"
+  | "events"
+  | "search"
+  | "permissions"
+  | "jobs"
+  | "audit"
+  | "risk"
+  | "compliance"
+  | "portability"
+  | "notifications"
+  | "offline"
+  | "releases"
   | "world"
   | "twin";
 
@@ -164,6 +233,11 @@ export type ReceizRailsStatus = {
   baseUrl: string;
   mode: "mock" | "live";
   hasAccessToken: boolean;
+  doctor: {
+    ok: boolean;
+    missing: ReceizDoctorReport["missing"];
+    warnings: ReceizDoctorReport["warnings"];
+  };
   rails: Array<{
     key: ReceizRailKey;
     label: string;
@@ -189,6 +263,41 @@ function receizClientOptionsFromEnv(): ReceizClientOptions {
   };
 }
 
+function enabled(value: string | undefined) {
+  return value === "1" || value === "true";
+}
+
+function receizDoctorScopes() {
+  const scopes = [
+    "openid",
+    "profile",
+    "email",
+    "offline_access",
+    "receiz:record",
+    "receiz:seal",
+    "receiz:verify",
+    "receiz:wallet.read",
+    "receiz:wallet.transfer",
+    "receiz:payments.create",
+    "receiz:payments.read",
+    "receiz:notes.mint",
+    "receiz:notes.claim",
+    "receiz:notes.read"
+  ];
+
+  return enabled(process.env.RECEIZ_ENABLE_TWIN_SCOPES)
+    ? [...scopes, "receiz:twin.read", "receiz:twin.write"]
+    : scopes;
+}
+
+function defaultDoctorOptions(): ReceizCapabilitiesOptions {
+  return {
+    tenantHost: process.env.NEXT_PUBLIC_DEFAULT_SUBDOMAIN || platform.domain,
+    callbackUrl: process.env.RECEIZ_ID_CALLBACK_URL,
+    scopes: receizDoctorScopes()
+  };
+}
+
 export function createReceizCommerceAdapter(
   options: ReceizClientOptions = receizClientOptionsFromEnv()
 ): ReceizCommerceAdapter {
@@ -205,7 +314,28 @@ export function createReceizCommerceAdapter(
   return {
     sdkVersion: RECEIZ_SDK_VERSION,
     client,
+    capabilities(options) {
+      return client.capabilities(options);
+    },
+    doctor(options) {
+      return client.doctor(options);
+    },
     async connectReceiz() {
+      const doctor = await client.doctor(defaultDoctorOptions());
+      const capabilityStatus = (
+        capability: keyof ReceizCapabilities["capabilities"],
+        key: ReceizRailKey,
+        label: string
+      ) => ({
+        key,
+        label,
+        status: doctor.capabilities[capability]?.available ? ("configured" as const) : ("needs_env" as const)
+      });
+      const needsTenantToken = (key: ReceizRailKey, label: string) => ({
+        key,
+        label,
+        status: hasAccessToken ? ("configured" as const) : ("needs_env" as const)
+      });
       const needsToken = (key: ReceizRailKey, label: string) => ({
         key,
         label,
@@ -218,16 +348,38 @@ export function createReceizCommerceAdapter(
         baseUrl: client.baseUrl,
         mode: hasAccessToken ? "live" : "mock",
         hasAccessToken,
+        doctor: {
+          ok: doctor.ok,
+          missing: doctor.missing,
+          warnings: doctor.warnings
+        },
         rails: [
           { key: "identity", label: "Receiz ID creation and continuation", status: "available" },
           { key: "identityArtifacts", label: "Receiz Key, Identity Record, Identity Seal restore", status: "available" },
           { key: "manifests", label: "Manifest validation and display projections", status: "available" },
           { key: "proofMemory", label: "Admit-once proof memory and known-head sync", status: "available" },
+          { key: "offline", label: "Offline proof queue for resilient appends", status: "available" },
           { key: "world", label: "Public World profiles and public Twin conversations", status: "available" },
           { key: "verification", label: "Artifact verification and seal calls", status: "available" },
           { key: "publicProof", label: "Public proof rendering and observation", status: "available" },
           needsToken("appState", "Public app-state projection publishing and cold-start recovery"),
           needsToken("twin", "Delegated Twin mandates, intents, mind import/export, and promotion approval"),
+          needsTenantToken("customers", "Tenant-scoped customer sessions, orders, rewards, and assets"),
+          needsTenantToken("merchants", "Merchant onboarding, profile, and runtime capability checks"),
+          capabilityStatus("commerce", "commerce", "One-click checkout, refunds, inventory, shipping, tax, and payouts"),
+          capabilityStatus("rewards", "rewards", "Receiz reward routes and benefit state"),
+          capabilityStatus("media", "media", "Receiz media uploads and transformations"),
+          capabilityStatus("domains", "domains", "Subdomain, custom-domain, and tenant resolution helpers"),
+          capabilityStatus("events", "events", "Durable event subscriptions and replay"),
+          capabilityStatus("search", "search", "Products, pages, posts, orders, customers, and proof search"),
+          capabilityStatus("permissions", "permissions", "Tenant-scoped owner, staff, support, and customer permissions"),
+          capabilityStatus("jobs", "jobs", "Durable background jobs"),
+          capabilityStatus("audit", "audit", "Sealed tenant audit trail"),
+          capabilityStatus("risk", "risk", "Payment, recovery, velocity, and proof-activity risk signals"),
+          capabilityStatus("compliance", "compliance", "Orders, tax, payout, customer, and audit exports"),
+          capabilityStatus("portability", "portability", "Receiz-native store import/export portability"),
+          capabilityStatus("notifications", "notifications", "Tenant notifications, templates, and preferences"),
+          capabilityStatus("releases", "releases", "Runtime release rail checks and pinning"),
           needsToken("connect", "Delegated Receiz Connect actions"),
           needsToken("checkout", "Receiz checkout sessions"),
           needsToken("payments", "Embedded Receiz payments and note claim"),
@@ -364,6 +516,30 @@ export function createReceizCommerceAdapter(
     oneClickCheckout(body) {
       return client.commerce.oneClickCheckout(body);
     },
+    customerSession(body, idempotencyKey) {
+      return client.customers.session(body, { idempotencyKey });
+    },
+    customerPortal(body) {
+      return client.customers.portal(body);
+    },
+    customerOrders(query) {
+      return client.customers.orders(query);
+    },
+    customerRewards(query) {
+      return client.customers.rewards(query);
+    },
+    customerAssets(query) {
+      return client.customers.assets(query);
+    },
+    merchantOnboard(body, idempotencyKey) {
+      return client.merchants.onboard(body, { idempotencyKey });
+    },
+    merchantProfile(query) {
+      return client.merchants.profile(query);
+    },
+    merchantCapabilities(query) {
+      return client.merchants.capabilities(query);
+    },
     checkout(body) {
       return client.payments.embeddedCheckout(body);
     },
@@ -378,6 +554,72 @@ export function createReceizCommerceAdapter(
     },
     connectRecord(body) {
       return client.connect.record(body);
+    },
+    uploadMedia(file, options) {
+      return client.media.upload(file, options);
+    },
+    transformMedia(body, idempotencyKey) {
+      return client.media.transform(body, { idempotencyKey });
+    },
+    reserveSubdomain(body, idempotencyKey) {
+      return client.domains.reserveSubdomain(body, { idempotencyKey });
+    },
+    verifyCustomDomain(body, idempotencyKey) {
+      return client.domains.verifyCustomDomain(body, { idempotencyKey });
+    },
+    domainStatus(query) {
+      return client.domains.status(query);
+    },
+    resolveTenant(host, options) {
+      return client.domains.resolveTenant(host, options);
+    },
+    createRefund(body, options) {
+      return client.commerce.refunds.create(body, options);
+    },
+    reserveInventory(body, options) {
+      return client.commerce.inventory.reserve(body, options);
+    },
+    quoteShipping(body) {
+      return client.commerce.shipping.quote(body);
+    },
+    quoteTax(body) {
+      return client.commerce.tax.quote(body);
+    },
+    auditAppend(body, options) {
+      return client.audit.append(body, options);
+    },
+    searchProducts(body) {
+      return client.search.products(body);
+    },
+    enqueueJob(body) {
+      return client.jobs.enqueue(body);
+    },
+    grantPermission(body, options) {
+      return client.permissions.grant(body, options);
+    },
+    checkPermission(body) {
+      return client.permissions.check(body);
+    },
+    scorePaymentRisk(body) {
+      return client.risk.scorePayment(body);
+    },
+    exportComplianceOrders(query) {
+      return client.compliance.exportOrders(query);
+    },
+    exportStorePortability(query) {
+      return client.portability.exportStore(query);
+    },
+    importStorePortability(body, options) {
+      return client.portability.importStore(body, options);
+    },
+    sendNotification(body, options) {
+      return client.notifications.send(body, options);
+    },
+    releaseCheck(query) {
+      return client.releases.check(query);
+    },
+    releasePin(body, options) {
+      return client.releases.pin(body, options);
     },
     walletLedger(query) {
       return client.wallet.publicLedger(query);

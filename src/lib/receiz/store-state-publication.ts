@@ -1,7 +1,12 @@
 import { platform } from "@/lib/platform";
 import { createReceizCommerceAdapter } from "./adapter";
 import { buildStoreStateConnectRecord, type StoreStateRecord } from "./proof-state";
-import type { ReceizAppStateFeed } from "@receiz/sdk";
+import {
+  RECEIZ_PUBLIC_STORE_STATE_FEED_SCHEMA,
+  createReceizPublicStoreStateRecord,
+  type JsonObject,
+  type ReceizAppStateFeed
+} from "@receiz/sdk";
 
 function hostUrl(host: string) {
   return `https://${host.trim().toLowerCase()}`;
@@ -16,19 +21,20 @@ function publicProofRecordsForStoreState(record: StoreStateRecord) {
   const connectRecord = buildStoreStateConnectRecord(record);
 
   return [...hosts].map((host) => ({
-    id: `store_state:${host}`,
-    sourceUrl: hostUrl(host),
-    externalCreatorId: record.merchantReceizId,
-    title: `${record.state.brand.name} storefront`,
-    state: "published",
-    platform: platform.productName,
-    namespace: host,
-    schema: "receiz.app.public_store_state_projection.v1",
-    record,
-    data: {
-      storeStateRecord: record,
-      storeStateConnectRecord: connectRecord
-    }
+    ...createReceizPublicStoreStateRecord({
+      id: `store_state:${host}`,
+      sourceUrl: hostUrl(host),
+      externalCreatorId: record.merchantReceizId,
+      title: `${record.state.brand.name} storefront`,
+      state: "published",
+      platform: platform.productName,
+      namespace: host,
+      record: record as unknown as JsonObject,
+      data: {
+        storeStateRecord: record,
+        storeStateConnectRecord: connectRecord
+      } as unknown as JsonObject
+    })
   }));
 }
 
@@ -51,7 +57,7 @@ export async function publishReceizStoreState(accessToken: string | undefined, r
   });
   const connectRecord = buildStoreStateConnectRecord(record);
   const appStateFeed: ReceizAppStateFeed = {
-    schema: "receiz.app.public_store_state_registry_feed.v1",
+    schema: RECEIZ_PUBLIC_STORE_STATE_FEED_SCHEMA,
     namespace: record.tenantHost,
     externalCreatorId: record.merchantReceizId,
     records: publicProofRecordsForStoreState(record)

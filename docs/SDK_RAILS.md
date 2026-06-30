@@ -37,8 +37,31 @@ SDK rails:
 - `connect.wallet`
 - `payments.embeddedCheckout`
 - `connect.checkoutSession`
+- `commerce.oneClickCheckout`
 
 Tenant checkout is host-scoped. A customer must log in with Receiz ID on the merchant store host before wallet-first checkout can proceed.
+
+## Customers And Merchants
+
+Files:
+
+- `src/lib/receiz/adapter.ts`
+- `app/api/checkout/route.ts`
+- `src/features/account/AccountDashboard.tsx`
+- `src/features/admin/AdminStudio.tsx`
+
+SDK rails:
+
+- `customers.session`
+- `customers.portal`
+- `customers.orders`
+- `customers.rewards`
+- `customers.assets`
+- `merchants.onboard`
+- `merchants.profile`
+- `merchants.capabilities`
+
+These rails are exposed in `@receiz/sdk@97.2.0`. The app treats customer accounts as tenant-scoped storefront accounts: the same Receiz ID can authenticate on multiple stores, but orders, rewards, assets, and permissions are projected for the active subdomain or custom domain only. SDK `doctor()` currently reports the underlying delegated-token and tenant requirements; when `customers` and `merchants` are added as first-class capability keys, this template can display their capability state directly.
 
 ## Merchant Settlement
 
@@ -87,12 +110,48 @@ Files:
 SDK rails:
 
 - `appState.publish`
+- `appState.publishRecord`
+- `appState.createPublicStoreRecord`
+- `domains.resolveTenant`
 - `appState.byUrl`
 - `appState.byCreator`
 - `appState.byNamespace`
 - `appState.byId`
 
-Admin publish writes the public storefront projection through `appState.publish`. Tenant cold starts recover the latest public store projection through `appState.byUrl` using the subdomain or custom domain URL. This is the Receiz-only durability path that lets the app avoid Supabase, Redis, Vercel KV, Shopify, or a custom database for public storefront state.
+Admin publish writes the public storefront projection through the SDK public-store app-state record helpers. Tenant cold starts first recover the latest public store projection through `domains.resolveTenant`, then fall back to raw public app-state reads for older registry records. This is the Receiz-only durability path that lets the app avoid Supabase, Redis, Vercel KV, Shopify, or a custom database for public storefront state.
+
+## App Runtime Rails
+
+Files:
+
+- `src/lib/receiz/adapter.ts`
+- `app/api/receiz/route.ts`
+
+SDK rails:
+
+- `doctor`
+- `capabilities`
+- `media.upload`
+- `media.transform`
+- `domains.reserveSubdomain`
+- `domains.verifyCustomDomain`
+- `domains.status`
+- `events.subscribe`
+- `events.replay`
+- `jobs.enqueue`
+- `permissions.grant`
+- `permissions.check`
+- `audit.append`
+- `risk.scorePayment`
+- `compliance.exportOrders`
+- `portability.exportStore`
+- `portability.importStore`
+- `search.products`
+- `notifications.send`
+- `releases.check`
+- `releases.pin`
+
+These rails make the template a real Receiz SaaS substrate rather than a static demo. The adapter exposes them behind one app boundary so builders can add production UI without importing internal Receiz code.
 
 ## Webhooks
 
@@ -121,4 +180,4 @@ Receiz Twin/World buttons are hidden unless both are true:
 - The relevant `NEXT_PUBLIC_RECEIZ_*_ENABLED` flag is set.
 - The installed `@receiz/sdk` client exposes the matching namespace.
 
-With `@receiz/sdk@96.2.0`, typed app-state, Twin, and World namespaces are exposed. The frontend still hides optional Twin/World buttons when the matching env flag is disabled.
+With `@receiz/sdk@97.2.0`, typed app-state, Twin, World, commerce runtime, domain, customer, merchant, media, portability, and release namespaces are exposed. The frontend still hides optional Twin/World buttons when the matching env flag is disabled.
