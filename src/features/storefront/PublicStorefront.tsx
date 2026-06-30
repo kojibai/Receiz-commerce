@@ -23,19 +23,29 @@ import {
 export function PublicStorefront() {
   const { state, actions } = useTemplateStore();
   const [mobileView, setMobileView] = useState<MobileView>("store");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const customer = state.customers[0];
   const reward = state.rewards[0];
 
   const sealObject = () => actions.appendProofEvent("OBJECT_VERIFIED", "Coffee Pack · Serial #BC-88421");
   const issueReward = () => actions.appendProofEvent("REWARD_ISSUED", "$12 reward · Boost Coffee");
   const claimReward = () => actions.appendProofEvent("REWARD_CLAIMED", "$12 reward claimed");
+  const selectMobileView = (view: MobileView) => {
+    setMobileView(view);
+    setMobileMenuOpen(false);
+  };
 
   return (
     <main className="commerce-app" style={brandThemeStyle(state.brand)}>
       <StoreSidebar state={state} />
       <div className="app-body">
         <StoreTopbar state={state} />
-        <MobileHeader state={state} />
+        <MobileHeader
+          menuOpen={mobileMenuOpen}
+          onAccount={() => selectMobileView("account")}
+          onMenu={() => setMobileMenuOpen((open) => !open)}
+          state={state}
+        />
         <div className="content-grid">
           <section className="main-column">
             <div className="page-title">
@@ -121,9 +131,114 @@ export function PublicStorefront() {
           reward={reward}
           state={state}
         />
-        <BottomNav activeView={mobileView} onChange={setMobileView} />
+        <MobileCommandMenu
+          activeView={mobileView}
+          onClose={() => setMobileMenuOpen(false)}
+          onCreateReceizId={actions.createReceizId}
+          onNavigate={selectMobileView}
+          onSeal={sealObject}
+          onSignInReceizId={actions.signInWithReceizId}
+          open={mobileMenuOpen}
+          state={state}
+        />
+        <BottomNav activeView={mobileView} onChange={selectMobileView} />
       </div>
     </main>
+  );
+}
+
+function MobileCommandMenu({
+  activeView,
+  onClose,
+  onCreateReceizId,
+  onNavigate,
+  onSeal,
+  onSignInReceizId,
+  open,
+  state
+}: {
+  activeView: MobileView;
+  onClose: () => void;
+  onCreateReceizId: () => void;
+  onNavigate: (view: MobileView) => void;
+  onSeal: () => void;
+  onSignInReceizId: () => void;
+  open: boolean;
+  state: CommerceState;
+}) {
+  const navItems = [
+    ["store", "Store", Icons.store],
+    ["rewards", "Rewards", Icons.gift],
+    ["assets", "Assets", Icons.assets],
+    ["play", "Play", Icons.game],
+    ["account", "Account", Icons.user]
+  ] as const;
+
+  const runAction = (action: () => void) => {
+    action();
+    onClose();
+  };
+
+  return (
+    <div aria-hidden={!open} className={open ? "mobile-command-menu open" : "mobile-command-menu"}>
+      <div aria-label="Mobile menu" aria-modal="true" className="mobile-command-sheet" role="dialog">
+        <div className="mobile-command-head">
+          <div>
+            <span>{state.hosting.subdomain}</span>
+            <strong>{state.brand.name}</strong>
+          </div>
+          <button aria-label="Close menu" className="icon-button" onClick={onClose} type="button">
+            <Icons.close size={22} />
+          </button>
+        </div>
+
+        <div className="mobile-command-grid" aria-label="Switch view">
+          {navItems.map(([view, label, Icon]) => (
+            <button
+              aria-current={activeView === view ? "page" : undefined}
+              className={activeView === view ? "active" : undefined}
+              key={view}
+              onClick={() => onNavigate(view)}
+              type="button"
+            >
+              <Icon size={20} />
+              <span>{label}</span>
+            </button>
+          ))}
+        </div>
+
+        <div className="mobile-command-actions">
+          <button onClick={() => runAction(onSignInReceizId)} type="button">
+            <Icons.user size={21} />
+            <div>
+              <strong>Continue Receiz ID</strong>
+              <span>{state.auth.receizId.handle}</span>
+            </div>
+          </button>
+          <button onClick={() => runAction(onCreateReceizId)} type="button">
+            <Icons.receiz size={21} />
+            <div>
+              <strong>Create Receiz ID</strong>
+              <span>One-click identity setup</span>
+            </div>
+          </button>
+          <button onClick={() => runAction(onSeal)} type="button">
+            <Icons.seal size={21} />
+            <div>
+              <strong>Seal object</strong>
+              <span>Verify an asset, reward, or product</span>
+            </div>
+          </button>
+          <button onClick={() => window.location.assign("/admin")} type="button">
+            <Icons.settings size={21} />
+            <div>
+              <strong>Admin Studio</strong>
+              <span>Edit brand, store, rewards, and hosting</span>
+            </div>
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 

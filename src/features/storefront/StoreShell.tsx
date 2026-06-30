@@ -116,7 +116,17 @@ export function StoreTopbar({ state }: { state: CommerceState }) {
   );
 }
 
-export function MobileHeader({ state }: { state: CommerceState }) {
+export function MobileHeader({
+  menuOpen,
+  onAccount,
+  onMenu,
+  state
+}: {
+  menuOpen: boolean;
+  onAccount: () => void;
+  onMenu: () => void;
+  state: CommerceState;
+}) {
   return (
     <header className="mobile-header">
       <BrandMark label={state.brand.logoText} compact />
@@ -128,13 +138,19 @@ export function MobileHeader({ state }: { state: CommerceState }) {
       </div>
       <div className="mobile-domain">
         <strong>{state.hosting.subdomain}</strong>
-            <span>Receiz ID ready</span>
+        <span>Receiz ID ready</span>
       </div>
-      <button aria-label="Open account" className="icon-button" type="button">
+      <button aria-label="Open account" className="icon-button" onClick={onAccount} type="button">
         <Icons.user size={21} />
       </button>
-      <button aria-label="Open menu" className="icon-button" type="button">
-        <Icons.menu size={24} />
+      <button
+        aria-expanded={menuOpen}
+        aria-label={menuOpen ? "Close menu" : "Open menu"}
+        className="icon-button"
+        onClick={onMenu}
+        type="button"
+      >
+        {menuOpen ? <Icons.close size={23} /> : <Icons.menu size={24} />}
       </button>
     </header>
   );

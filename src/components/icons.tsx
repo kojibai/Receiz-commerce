@@ -34,7 +34,8 @@ import {
   Store,
   Trophy,
   User,
-  Users
+  Users,
+  X
 } from "lucide-react";
 
 export const Icons = {
@@ -47,6 +48,7 @@ export const Icons = {
   check: Check,
   chevronDown: ChevronDown,
   chevronRight: ChevronRight,
+  close: X,
   code: Code2,
   collections: Box,
   creditCard: CreditCard,

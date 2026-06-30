@@ -446,17 +446,26 @@ a {
 .brand-mark {
   display: flex;
   flex-direction: column;
+  align-items: center;
   justify-content: center;
+  min-width: 0;
   width: 116px;
   height: 116px;
   padding: 14px;
+  overflow: hidden;
   border-radius: var(--radius);
   color: #ffffff;
   background: linear-gradient(135deg, #ff5d7c, #f73663);
   box-shadow: 0 12px 26px rgba(248, 72, 110, 0.18);
+  text-align: center;
 }
 
 .brand-mark span {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-family: Georgia, "Times New Roman", serif;
   font-size: 34px;
   line-height: 0.92;
@@ -464,7 +473,11 @@ a {
 }
 
 .brand-mark small {
+  max-width: 100%;
   margin-top: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: 13px;
   letter-spacing: 0.02em;
 }
@@ -476,7 +489,7 @@ a {
 }
 
 .brand-mark-compact span {
-  font-size: 14px;
+  font-size: 12px;
 }
 
 .brand-mark-compact small {
@@ -833,6 +846,26 @@ a {
 .card-visual .brand-mark {
   width: 38px;
   height: 26px;
+  padding: 5px;
+}
+
+.bag-visual .bag-label span,
+.can-body span,
+.mug-cup span,
+.card-visual .brand-mark span {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.card-visual .brand-mark span {
+  font-size: 10px;
+}
+
+.card-visual .brand-mark small {
+  display: none;
 }
 
 .class-visual {
@@ -939,6 +972,11 @@ a {
 .reward-card .brand-mark {
   width: 96px;
   height: 96px;
+  padding: 10px;
+}
+
+.reward-card .brand-mark span {
+  font-size: 27px;
 }
 
 .reward-copy {
@@ -1139,6 +1177,7 @@ a {
 }
 
 .mobile-header,
+.mobile-command-menu,
 .mobile-stage,
 .bottom-nav,
 .mobile-fork {
@@ -1778,10 +1817,11 @@ a {
   .mobile-header .brand-mark {
     width: 64px;
     height: 64px;
+    padding: 8px;
   }
 
   .mobile-header .brand-mark span {
-    font-size: 21px;
+    font-size: 17px;
   }
 
   .mobile-header strong {
@@ -1798,6 +1838,119 @@ a {
 
   .mobile-domain {
     display: none;
+  }
+
+  .mobile-command-menu.open {
+    position: fixed;
+    inset: 0;
+    z-index: 70;
+    display: grid;
+    align-items: end;
+    padding: 88px 12px 92px;
+    background: rgba(18, 25, 38, 0.28);
+    backdrop-filter: blur(10px);
+  }
+
+  .mobile-command-sheet {
+    display: grid;
+    gap: 12px;
+    max-height: 100%;
+    padding: 14px;
+    overflow: hidden;
+    border: 1px solid rgba(16, 185, 129, 0.22);
+    border-radius: 22px;
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: var(--shadow);
+  }
+
+  .mobile-command-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .mobile-command-head > div {
+    min-width: 0;
+  }
+
+  .mobile-command-head span,
+  .mobile-command-actions span {
+    display: block;
+    overflow: hidden;
+    color: var(--muted);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 12px;
+  }
+
+  .mobile-command-head strong {
+    display: block;
+    overflow: hidden;
+    color: var(--text);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 22px;
+  }
+
+  .mobile-command-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+  }
+
+  .mobile-command-grid button,
+  .mobile-command-actions button {
+    border: 1px solid var(--border);
+    color: var(--text);
+    background: #ffffff;
+  }
+
+  .mobile-command-grid button {
+    display: grid;
+    place-items: center;
+    gap: 4px;
+    min-width: 0;
+    min-height: 60px;
+    padding: 8px 4px;
+    border-radius: 16px;
+    font-size: 11px;
+    font-weight: 850;
+  }
+
+  .mobile-command-grid button.active {
+    border-color: rgba(0, 122, 103, 0.25);
+    color: var(--receiz);
+    background: rgba(0, 122, 103, 0.08);
+  }
+
+  .mobile-command-actions {
+    display: grid;
+    gap: 8px;
+  }
+
+  .mobile-command-actions button {
+    display: grid;
+    grid-template-columns: 38px minmax(0, 1fr);
+    align-items: center;
+    gap: 8px;
+    min-height: 58px;
+    padding: 9px;
+    border-radius: 16px;
+    text-align: left;
+  }
+
+  .mobile-command-actions button > svg {
+    justify-self: center;
+    color: var(--receiz);
+  }
+
+  .mobile-command-actions strong {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 13px;
   }
 
   .commerce-app .content-grid {
@@ -1918,6 +2071,11 @@ a {
   .mobile-featured-product .brand-mark {
     width: 82px;
     height: 82px;
+    padding: 10px;
+  }
+
+  .mobile-featured-product .brand-mark span {
+    font-size: 23px;
   }
 
   .mobile-featured-product strong {
@@ -2040,6 +2198,11 @@ a {
   .mobile-reward-card .brand-mark {
     width: 92px;
     height: 92px;
+    padding: 10px;
+  }
+
+  .mobile-reward-card .brand-mark span {
+    font-size: 25px;
   }
 
   .mobile-reward-card h3,
@@ -2264,5 +2427,202 @@ a {
 
   .mobile-product-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 390px) {
+  .mobile-header {
+    grid-template-columns: 58px minmax(0, 1fr) 38px 38px;
+    gap: 8px;
+    padding: 10px;
+  }
+
+  .mobile-header .brand-mark {
+    width: 54px;
+    height: 54px;
+    padding: 7px;
+  }
+
+  .mobile-header .brand-mark span {
+    font-size: 14px;
+  }
+
+  .mobile-header strong,
+  .mobile-header span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .mobile-header strong {
+    font-size: 20px;
+  }
+
+  .mobile-header span {
+    font-size: 11px;
+  }
+
+  .mobile-command-menu.open {
+    padding: 76px 10px 84px;
+  }
+
+  .mobile-command-sheet {
+    gap: 10px;
+    padding: 12px;
+    border-radius: 20px;
+  }
+
+  .mobile-command-grid {
+    gap: 5px;
+  }
+
+  .mobile-command-grid button {
+    min-height: 54px;
+    border-radius: 14px;
+    font-size: 10px;
+  }
+
+  .mobile-command-actions button {
+    grid-template-columns: 34px minmax(0, 1fr);
+    min-height: 54px;
+  }
+
+  .mobile-stage {
+    height: calc(100dvh - 76px - 82px);
+    padding: 0 10px 8px;
+  }
+
+  .mobile-pane {
+    inset: 0 10px 8px;
+    gap: 8px;
+  }
+
+  .mobile-pane-heading {
+    min-height: 30px;
+  }
+
+  .mobile-pane-heading h2 {
+    font-size: 21px;
+  }
+
+  .mobile-shop-hero {
+    grid-template-columns: minmax(0, 1fr) 104px;
+    gap: 8px;
+    min-height: 168px;
+    padding: 12px;
+    border-radius: 16px;
+  }
+
+  .mobile-shop-hero h3 {
+    font-size: 25px;
+  }
+
+  .mobile-shop-hero p {
+    max-width: 150px;
+    font-size: 13px;
+  }
+
+  .mobile-shop-actions {
+    gap: 6px;
+    margin-top: 12px;
+  }
+
+  .mobile-shop-actions button {
+    min-height: 30px;
+    padding: 0 9px;
+    font-size: 11px;
+  }
+
+  .mobile-featured-product {
+    gap: 6px;
+    padding: 8px;
+  }
+
+  .mobile-featured-product .brand-mark {
+    width: 66px;
+    height: 66px;
+    padding: 8px;
+  }
+
+  .mobile-featured-product .brand-mark span {
+    font-size: 17px;
+  }
+
+  .mobile-featured-product strong {
+    font-size: 12px;
+  }
+
+  .mobile-category-row {
+    gap: 6px;
+  }
+
+  .mobile-category-row button {
+    height: 34px;
+    font-size: 11px;
+  }
+
+  .mobile-mini-products {
+    gap: 8px;
+  }
+
+  .mobile-mini-products article {
+    grid-template-rows: 74px auto;
+    min-height: 156px;
+    padding: 8px;
+  }
+
+  .mobile-mini-products .product-visual {
+    height: 78px;
+  }
+
+  .mobile-store-footer span,
+  .mobile-stat-row div {
+    min-height: 34px;
+    font-size: 11px;
+  }
+
+  .mobile-reward-card {
+    grid-template-columns: 78px minmax(0, 1fr);
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .mobile-reward-card .brand-mark {
+    width: 74px;
+    height: 74px;
+    padding: 9px;
+  }
+
+  .mobile-reward-card .brand-mark span {
+    font-size: 18px;
+  }
+
+  .mobile-reward-card h3,
+  .mobile-account-card h3 {
+    font-size: 20px;
+  }
+
+  .mobile-action-grid button {
+    min-height: 56px;
+    border-radius: 14px;
+  }
+
+  .mobile-play-wrap .game-tile {
+    min-height: 33px;
+    font-size: 12px;
+  }
+
+  .bottom-nav {
+    right: 10px;
+    bottom: 8px;
+    left: 10px;
+    padding: 7px;
+    border-radius: 16px;
+  }
+
+  .bottom-nav button {
+    gap: 3px;
+    font-size: 10.5px;
   }
 }
