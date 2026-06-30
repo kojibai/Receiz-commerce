@@ -15,6 +15,16 @@ import { safeGetLocalStorage, safeRemoveLocalStorage, safeSetLocalStorage } from
 import { pendingPublishStorageKey, shouldResumePendingPublish } from "@/lib/storage/pending-publish";
 import { mergeStoreApiProjection } from "@/lib/storefront/store-api-projection";
 import { applyLocalReceizIdentitySession } from "@/lib/storefront/local-identity-session";
+import {
+  applyBrowserReceizIdSession,
+  applyTenantCustomerSession,
+  BROWSER_RECEIZ_ID_SESSION_KEY,
+  buildBrowserReceizIdSession,
+  buildTenantCustomerSession,
+  parseBrowserReceizIdSession,
+  parseTenantCustomerSession,
+  tenantCustomerSessionKey
+} from "@/lib/storefront/tenant-customer-session";
 import type { BlogPost, CommerceState, CustomerAccount, Product, ProofEvent, SitePage, StorefrontHomepageMode } from "@/types/domain";
 import { makeId } from "@/lib/utils";
 
@@ -580,6 +590,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
   const [hydrated, setHydrated] = useState(false);
   const [hostContext, setHostContext] = useState<HostContext>(() => initialHostContext ?? hostContextFromHost(null));
   const stateRef = useRef(initialState);
+  const pendingBrowserIdentityKeyFileRef = useRef<unknown | null>(null);
   const publishResumeAttemptedRef = useRef(false);
 
   useEffect(() => {
@@ -588,8 +599,20 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
 
   useEffect(() => {
     const context = currentHostContext();
+    const restoredCustomerSession =
+      context.surface === "tenant"
+        ? parseTenantCustomerSession(safeGetLocalStorage(window.localStorage, tenantCustomerSessionKey(context.storageKey)))
+        : null;
+    const restoredBrowserIdentitySession =
+      context.surface === "tenant"
+        ? parseBrowserReceizIdSession(safeGetLocalStorage(window.localStorage, BROWSER_RECEIZ_ID_SESSION_KEY))
+        : null;
+    const restoredState = restoredCustomerSession
+      ? applyTenantCustomerSession(readState(context, initialState), restoredCustomerSession)
+      : applyBrowserReceizIdSession(readState(context, initialState), restoredBrowserIdentitySession);
+
     setHostContext(context);
-    setState(readState(context, initialState));
+    setState(restoredState);
     setHydrated(true);
 
     if (process.env.NEXT_PUBLIC_AUTH_MODE === "receiz_id") {
@@ -597,11 +620,17 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
         .then((result) => {
           if (!result) return;
           const surface = result.surface ?? context.surface;
-          setState((current) =>
-            result.connected && result.profile
-              ? applyReceizProfile(current, result.profile, surface)
-              : applyReceizDisconnected(current)
-          );
+          setState((current) => {
+            if (result.connected && result.profile) {
+              return applyReceizProfile(current, result.profile, surface);
+            }
+
+            if (context.surface === "tenant" && current.auth.signedInAs === "customer" && current.auth.receizId.connected) {
+              return current;
+            }
+
+            return applyReceizDisconnected(current);
+          });
         })
         .catch(() => undefined);
     }
@@ -612,6 +641,32 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
       safeSetLocalStorage(window.localStorage, hostContext.storageKey, JSON.stringify(state));
     }
   }, [hostContext.storageKey, hostContext.surface, hydrated, state]);
+
+  useEffect(() => {
+    if (!hydrated || !state.auth.receizId.connected) return;
+
+    const previous = parseBrowserReceizIdSession(safeGetLocalStorage(window.localStorage, BROWSER_RECEIZ_ID_SESSION_KEY));
+    const keyFile = pendingBrowserIdentityKeyFileRef.current ?? previous?.keyFile;
+    const session = buildBrowserReceizIdSession(state, keyFile);
+
+    if (session) {
+      safeSetLocalStorage(window.localStorage, BROWSER_RECEIZ_ID_SESSION_KEY, JSON.stringify(session));
+      pendingBrowserIdentityKeyFileRef.current = null;
+    }
+  }, [hydrated, state]);
+
+  useEffect(() => {
+    if (!hydrated || hostContext.surface !== "tenant") return;
+
+    const session = buildTenantCustomerSession(state, hostContext.tenantHost ?? hostContext.customDomain);
+    const key = tenantCustomerSessionKey(hostContext.storageKey);
+
+    if (session) {
+      safeSetLocalStorage(window.localStorage, key, JSON.stringify(session));
+    } else {
+      safeRemoveLocalStorage(window.localStorage, key);
+    }
+  }, [hostContext.customDomain, hostContext.storageKey, hostContext.surface, hostContext.tenantHost, hydrated, state]);
 
   useEffect(() => {
     if (!hydrated || hostContext.surface !== "tenant") return;
@@ -962,6 +1017,23 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
           }
         }
 
+        if (typeof window !== "undefined") {
+          const browserSession = parseBrowserReceizIdSession(
+            safeGetLocalStorage(window.localStorage, BROWSER_RECEIZ_ID_SESSION_KEY)
+          );
+
+          if (browserSession) {
+            setState((current) => ({
+              ...applyBrowserReceizIdSession(current, browserSession),
+              proofEvents: [
+                makeEvent("RECEIZ_ID_CONNECTED", `${browserSession.receizId.handle} continued from browser proof memory`),
+                ...current.proofEvents
+              ]
+            }));
+            return true;
+          }
+        }
+
         setState((current) => ({
           ...current,
           auth: {
@@ -981,6 +1053,22 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
       },
       async createReceizId() {
         const snapshot = stateRef.current;
+        const existingBrowserSession =
+          typeof window !== "undefined"
+            ? parseBrowserReceizIdSession(safeGetLocalStorage(window.localStorage, BROWSER_RECEIZ_ID_SESSION_KEY))
+            : null;
+
+        if (existingBrowserSession) {
+          setState((current) => ({
+            ...applyBrowserReceizIdSession(current, existingBrowserSession),
+            proofEvents: [
+              makeEvent("RECEIZ_ID_CONNECTED", `${existingBrowserSession.receizId.handle} continued from browser proof memory`),
+              ...current.proofEvents
+            ]
+          }));
+          return;
+        }
+
         const client = createReceizClient();
         let projection: ReceizIdentityAccountProjection | null = null;
         let handle = `${slugify(snapshot.brand.logoText || snapshot.brand.name, "customer")}-${makeId("id").slice(-6)}`;
@@ -992,6 +1080,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
             displayName,
             deviceName: snapshot.brand.name
           });
+          pendingBrowserIdentityKeyFileRef.current = identity.keyFile;
           projection = await client.identity.projectAccount(identity.keyFile);
           handle = accountHandle(projection, `${handle}.receiz.id`);
           displayName = projection?.owner.displayName ?? displayName;
@@ -1026,11 +1115,13 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
       async restoreReceizIdentityArtifact(file: File) {
         const client = createReceizClient();
         let projection: ReceizIdentityAccountProjection | null = null;
+        let keyFileForBrowserMemory: unknown | null = null;
         let failed = false;
 
         try {
           const keyFile = await client.identity.readArtifact(file);
           projection = await client.identity.projectAccount(keyFile);
+          keyFileForBrowserMemory = keyFile;
         } catch {
           failed = true;
         }
@@ -1066,6 +1157,10 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
                 },
                 currentHostContext().surface === "tenant"
               );
+
+          if (!failed && keyFileForBrowserMemory) {
+            pendingBrowserIdentityKeyFileRef.current = keyFileForBrowserMemory;
+          }
 
           return {
             ...identityState,
