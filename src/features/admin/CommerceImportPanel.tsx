@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { Icons } from "@/components/icons";
 import { Button, Panel, SectionHeader, StatusPill } from "@/components/ui";
 import type { CommerceImportInput, CommerceImportResult, CommerceImportSourceType } from "@/lib/import/commerce-importer";
@@ -27,7 +27,26 @@ export function CommerceImportPanel({
   const [importing, setImporting] = useState(false);
   const [result, setResult] = useState<CommerceImportResult | null>(null);
   const [error, setError] = useState("");
+  const [expandedBodyHeight, setExpandedBodyHeight] = useState(0);
+  const bodyRef = useRef<HTMLDivElement | null>(null);
   const activeType = sourceTypes.find((item) => item.value === sourceType) ?? sourceTypes[0]!;
+
+  useEffect(() => {
+    if (!open || !bodyRef.current) return;
+
+    const body = bodyRef.current;
+    const updateHeight = () => setExpandedBodyHeight(body.scrollHeight);
+    updateHeight();
+
+    const resizeObserver = new ResizeObserver(updateHeight);
+    resizeObserver.observe(body);
+    window.addEventListener("resize", updateHeight);
+
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener("resize", updateHeight);
+    };
+  }, [open]);
 
   const runImport = async () => {
     setImporting(true);
@@ -43,8 +62,12 @@ export function CommerceImportPanel({
     }
   };
 
+  const expandedStyle = open
+    ? ({ "--commerce-import-expanded-height": `${expandedBodyHeight + 96}px` } as CSSProperties)
+    : undefined;
+
   return (
-    <Panel className={open ? "admin-panel commerce-import-panel open" : "admin-panel commerce-import-panel"}>
+    <Panel className={open ? "admin-panel commerce-import-panel open" : "admin-panel commerce-import-panel"} style={expandedStyle}>
       <button
         aria-expanded={open}
         className="commerce-import-toggle"
@@ -61,7 +84,7 @@ export function CommerceImportPanel({
         <StatusPill tone={result ? "green" : "neutral"}>{result ? "Imported" : "Migration"}</StatusPill>
         <Icons.chevronDown aria-hidden size={18} />
       </button>
-      <div className="commerce-import-body" aria-hidden={!open}>
+      <div className="commerce-import-body" aria-hidden={!open} ref={bodyRef}>
         <SectionHeader
           title="Migration source"
           action={<StatusPill tone="neutral">{activeType.label}</StatusPill>}

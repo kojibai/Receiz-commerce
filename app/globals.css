@@ -4905,6 +4905,7 @@ a {
 
 .commerce-import-panel.open {
   display: block;
+  overflow: visible;
 }
 
 .import-toggle-icon {
@@ -5121,9 +5122,6 @@ a {
   }
 
   main.admin-app .mobile-admin-pane .commerce-import-panel {
-    position: sticky;
-    top: 48px;
-    z-index: 6;
     margin: 0 2px 12px;
     min-height: 74px;
     border: 1px solid rgba(0, 138, 106, 0.32);
@@ -5132,9 +5130,7 @@ a {
   }
 
   main.admin-app .mobile-admin-pane .commerce-import-panel.open {
-    position: relative;
-    top: auto;
-    min-height: calc(78px + min(980px, calc(100dvh - 230px)));
+    min-height: var(--commerce-import-expanded-height, auto);
   }
 
   .commerce-import-toggle {
@@ -5175,9 +5171,9 @@ a {
   }
 
   .commerce-import-panel.open .commerce-import-body {
-    max-height: min(980px, calc(100dvh - 230px));
+    max-height: none;
     padding: 0 11px 11px;
-    overflow: auto;
+    overflow: visible;
   }
 
   .import-source-card {
