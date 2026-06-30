@@ -1,4 +1,5 @@
 import { Button, Panel, SectionHeader, StatusPill } from "@/components/ui";
+import { Icons } from "@/components/icons";
 import type { RewardRule } from "@/types/domain";
 
 export function RewardsRulesPanel({ rules }: { rules: RewardRule[] }) {
@@ -18,6 +19,13 @@ export function RewardsRulesPanel({ rules }: { rules: RewardRule[] }) {
             </StatusPill>
           </div>
         ))}
+        {rules.length === 0 ? (
+          <div className="panel-empty-state">
+            <Icons.gift size={22} />
+            <strong>No rewards yet</strong>
+            <span>Create coupons, access passes, benefits, or game rewards.</span>
+          </div>
+        ) : null}
       </div>
       <Button variant="outline">Add reward</Button>
     </Panel>

@@ -6,11 +6,13 @@ import type { ReceizIdState } from "@/types/domain";
 
 export function ReceizIdentityPanel({
   receizId,
+  artifactInputId = "receiz-identity-artifact",
   onCreate,
   onRestoreArtifact,
   onSignIn
 }: {
   receizId: ReceizIdState;
+  artifactInputId?: string;
   onCreate: () => void;
   onRestoreArtifact: (file: File) => void | Promise<void>;
   onSignIn: () => void;
@@ -62,21 +64,23 @@ export function ReceizIdentityPanel({
         <div><span>Mode</span><strong>{modeLabel}</strong></div>
         <div><span>SDK helpers</span><strong>{receizId.sdkHelpers.length}</strong></div>
       </div>
-      <div className="identity-actions">
-        <Button onClick={onSignIn} variant="primary">
-          Continue with Receiz ID
-        </Button>
-        <Button onClick={onCreate} variant="outline">
-          Create Receiz ID
-        </Button>
-      </div>
+      {receizId.connected ? null : (
+        <div className="identity-actions">
+          <Button onClick={onSignIn} variant="primary">
+            Continue with Receiz ID
+          </Button>
+          <Button onClick={onCreate} variant="outline">
+            Create Receiz ID
+          </Button>
+        </div>
+      )}
       <div className="identity-restore-row">
-        <label className="button button-outline" htmlFor="receiz-identity-artifact">
+        <label className="button button-outline" htmlFor={artifactInputId}>
           Restore Key or Seal
         </label>
         <input
           accept=".json,image/png,image/jpeg,image/webp"
-          id="receiz-identity-artifact"
+          id={artifactInputId}
           onChange={(event) => {
             const file = event.currentTarget.files?.[0];
             if (file) {

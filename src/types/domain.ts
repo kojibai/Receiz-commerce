@@ -78,6 +78,7 @@ export type DomainStatus = {
     | "error";
   sslStatus: "valid" | "pending" | "mock" | "unknown";
   verified?: boolean;
+  dnsResolved?: boolean;
   liveUrl?: string;
   verification?: DomainVerificationRecord[];
   dnsInstructions?: string[];
@@ -324,6 +325,8 @@ export type AuthState = {
   customer: CustomerAccount;
   receizId: ReceizIdState;
   signedInAs: "admin" | "customer";
+  workspaceOwnerId?: string;
+  templateClearedAt?: string;
 };
 
 export type PublishState = {

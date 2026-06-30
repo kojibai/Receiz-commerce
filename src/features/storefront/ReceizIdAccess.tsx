@@ -22,17 +22,23 @@ export function ReceizIdAccess({
         </span>
         <div>
           <strong>{receizId.handle}</strong>
-          <p>Use an existing Receiz ID or create one to own rewards, assets, orders, and benefits.</p>
+          <p>
+            {receizId.connected
+              ? "Receiz ID is connected for rewards, assets, orders, and benefits."
+              : "Use an existing Receiz ID or create one to own rewards, assets, orders, and benefits."}
+          </p>
         </div>
       </div>
-      <div className="identity-actions">
-        <Button onClick={onSignIn} variant="primary">
-          Continue
-        </Button>
-        <Button onClick={onCreate} variant="outline">
-          Create ID
-        </Button>
-      </div>
+      {receizId.connected ? null : (
+        <div className="identity-actions">
+          <Button onClick={onSignIn} variant="primary">
+            Continue
+          </Button>
+          <Button onClick={onCreate} variant="outline">
+            Create ID
+          </Button>
+        </div>
+      )}
     </Panel>
   );
 }

@@ -25,13 +25,13 @@ export function PublicStorefront() {
   const { state, actions } = useTemplateStore();
   const [mobileView, setMobileView] = useState<MobileView>("store");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const customer = state.customers[0];
-  const reward = state.rewards[0];
+  const customer = state.customers[0] ?? state.auth.customer;
+  const reward = state.rewards[0] ?? null;
   const campaignName = state.campaigns[0]?.name ?? "Reward Challenge";
 
   const sealObject = () => actions.appendProofEvent("OBJECT_VERIFIED", "Coffee Pack · Serial #BC-88421");
-  const issueReward = () => actions.appendProofEvent("REWARD_ISSUED", `${reward.name} · ${state.brand.name}`);
-  const claimReward = () => actions.appendProofEvent("REWARD_CLAIMED", "$12 reward claimed");
+  const issueReward = () => actions.appendProofEvent("REWARD_ISSUED", `${reward?.name ?? "Reward"} · ${state.brand.name}`);
+  const claimReward = () => actions.appendProofEvent("REWARD_CLAIMED", `${reward?.name ?? "Reward"} claimed`);
   const selectMobileView = (view: MobileView) => {
     setMobileView(view);
     setMobileMenuOpen(false);
@@ -216,20 +216,24 @@ function MobileCommandMenu({
         </div>
 
         <div className="mobile-command-actions">
-          <button onClick={() => runAction(onSignInReceizId)} type="button">
-            <Icons.user size={21} />
-            <div>
-              <strong>Continue Receiz ID</strong>
-              <span>{state.auth.receizId.handle}</span>
-            </div>
-          </button>
-          <button onClick={() => runAction(onCreateReceizId)} type="button">
-            <Icons.receiz size={21} />
-            <div>
-              <strong>Create Receiz ID</strong>
-              <span>One-click identity setup</span>
-            </div>
-          </button>
+          {state.auth.receizId.connected ? null : (
+            <>
+              <button onClick={() => runAction(onSignInReceizId)} type="button">
+                <Icons.user size={21} />
+                <div>
+                  <strong>Continue Receiz ID</strong>
+                  <span>{state.auth.receizId.handle}</span>
+                </div>
+              </button>
+              <button onClick={() => runAction(onCreateReceizId)} type="button">
+                <Icons.receiz size={21} />
+                <div>
+                  <strong>Create Receiz ID</strong>
+                  <span>One-click identity setup</span>
+                </div>
+              </button>
+            </>
+          )}
           <button onClick={() => runAction(onSeal)} type="button">
             <Icons.seal size={21} />
             <div>
@@ -276,7 +280,7 @@ function MobileStage({
   onPlayComplete: (beans: number) => void;
   onSeal: () => void;
   onSignInReceizId: () => void;
-  reward: Reward;
+  reward: Reward | null;
   state: CommerceState;
 }) {
   return (
@@ -358,6 +362,8 @@ function MobileStorePanel({
   onCheckout: () => void;
   onSeal: () => void;
 }) {
+  const firstProduct = products[0];
+
   return (
     <MobilePane active={active} action={<StatusPill tone="green">Live</StatusPill>} title="Store">
       <div className="mobile-shop-hero">
@@ -376,8 +382,8 @@ function MobileStorePanel({
         </div>
         <div className="mobile-featured-product">
           <BrandMark label={state.brand.logoText} />
-          <strong>House Blend</strong>
-          <small>$18.00</small>
+          <strong>{firstProduct?.name ?? "Add products"}</strong>
+          <small>{firstProduct?.priceLabel ?? "Ready"}</small>
         </div>
       </div>
 
@@ -390,19 +396,27 @@ function MobileStorePanel({
       </div>
 
       <div className="mobile-mini-products">
-        {products.slice(0, 2).map((product) => (
-          <article key={product.id}>
-            <ProductVisual brandLabel={state.brand.logoText} product={product} />
-            <div>
-              <strong>{product.name}</strong>
-              <span>{product.subtitle}</span>
-              <b>{product.priceLabel}</b>
-            </div>
-            <button aria-label={`Add ${product.name} to cart`} onClick={() => onAddToCart(product.id)} type="button">
-              <Icons.cart size={16} />
-            </button>
-          </article>
-        ))}
+        {products.length ? (
+          products.slice(0, 2).map((product) => (
+            <article key={product.id}>
+              <ProductVisual brandLabel={state.brand.logoText} product={product} />
+              <div>
+                <strong>{product.name}</strong>
+                <span>{product.subtitle}</span>
+                <b>{product.priceLabel}</b>
+              </div>
+              <button aria-label={`Add ${product.name} to cart`} onClick={() => onAddToCart(product.id)} type="button">
+                <Icons.cart size={16} />
+              </button>
+            </article>
+          ))
+        ) : (
+          <div className="mobile-empty-state">
+            <Icons.products size={24} />
+            <strong>No products yet</strong>
+            <span>Add products in Admin Studio to open the storefront.</span>
+          </div>
+        )}
       </div>
       <div className="mobile-store-footer">
         <span><Icons.seal size={15} /> Proof-sealed orders</span>
@@ -425,27 +439,35 @@ function MobileRewardsPanel({
   customer: CustomerAccount;
   onClaimReward: () => void;
   onIssueReward: () => void;
-  reward: Reward;
+  reward: Reward | null;
 }) {
-  const progress = Math.min(100, Math.round((reward.progress / reward.target) * 100));
+  const progress = reward ? Math.min(100, Math.round((reward.progress / reward.target) * 100)) : 0;
 
   return (
     <MobilePane active={active} action={<StatusPill tone="gold">{customer.beans} beans</StatusPill>} title="Rewards">
-      <div className="mobile-reward-card">
-        <BrandMark label={brandLabel} />
-        <div>
-          <StatusPill tone="gold">Active</StatusPill>
-          <h3>{reward.name}</h3>
-          <p>{reward.description}</p>
-          <span>{reward.requirement}</span>
-        </div>
-        <div className="progress-wrap">
-          <div className="progress-bar">
-            <span style={{ width: `${progress}%` }} />
+      {reward ? (
+        <div className="mobile-reward-card">
+          <BrandMark label={brandLabel} />
+          <div>
+            <StatusPill tone="gold">Active</StatusPill>
+            <h3>{reward.name}</h3>
+            <p>{reward.description}</p>
+            <span>{reward.requirement}</span>
           </div>
-          <strong>{reward.progress} / {reward.target}</strong>
+          <div className="progress-wrap">
+            <div className="progress-bar">
+              <span style={{ width: `${progress}%` }} />
+            </div>
+            <strong>{reward.progress} / {reward.target}</strong>
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="mobile-empty-state">
+          <Icons.gift size={24} />
+          <strong>No rewards yet</strong>
+          <span>Create branded rewards in Admin Studio.</span>
+        </div>
+      )}
       <div className="mobile-action-grid">
         <button onClick={onIssueReward} type="button">
           <Icons.gift size={21} />
@@ -488,24 +510,33 @@ function MobileAssetsPanel({
           <p>Own, list, sell, trade, and share proof-sealed assets.</p>
         </div>
       </div>
-      <div className="mobile-action-grid">
-        <button onClick={onSignInReceizId} type="button">
-          <Icons.user size={21} />
-          <span>Continue</span>
-        </button>
-        <button onClick={onCreateReceizId} type="button">
-          <Icons.receiz size={21} />
-          <span>Create ID</span>
-        </button>
-      </div>
+      {state.auth.receizId.connected ? null : (
+        <div className="mobile-action-grid">
+          <button onClick={onSignInReceizId} type="button">
+            <Icons.user size={21} />
+            <span>Continue</span>
+          </button>
+          <button onClick={onCreateReceizId} type="button">
+            <Icons.receiz size={21} />
+            <span>Create ID</span>
+          </button>
+        </div>
+      )}
       <div className="mobile-asset-list">
-        {assets.slice(0, 3).map((asset) => (
-          <div key={asset.id}>
-            <strong>{asset.name}</strong>
-            <span>{asset.proofSource} · {asset.priceLabel}</span>
-            <StatusPill tone={asset.status === "listed" ? "green" : "neutral"}>{asset.status}</StatusPill>
+        {assets.length ? (
+          assets.slice(0, 3).map((asset) => (
+            <div key={asset.id}>
+              <strong>{asset.name}</strong>
+              <span>{asset.proofSource} · {asset.priceLabel}</span>
+              <StatusPill tone={asset.status === "listed" ? "green" : "neutral"}>{asset.status}</StatusPill>
+            </div>
+          ))
+        ) : (
+          <div className="mobile-empty-row">
+            <strong>No assets yet</strong>
+            <span>Sold products, benefits, and access can become Receized assets.</span>
           </div>
-        ))}
+        )}
       </div>
     </MobilePane>
   );
@@ -547,23 +578,25 @@ function MobileAccountPanel({
   return (
     <MobilePane active={active} action={<StatusPill tone="green">{customer.tier}</StatusPill>} title="Account">
       <div className="mobile-account-card">
-        <div className="avatar large-avatar">{customer.name.slice(0, 1)}S</div>
+        <div className="avatar large-avatar">{customer.name.slice(0, 1)}</div>
         <div>
           <h3>{customer.name}</h3>
           <p>{customer.email}</p>
           <span><Icons.receiz size={15} /> {state.auth.receizId.handle}</span>
         </div>
       </div>
-      <div className="mobile-action-grid">
-        <button onClick={onSignInReceizId} type="button">
-          <Icons.user size={21} />
-          <span>Receiz login</span>
-        </button>
-        <button onClick={onCreateReceizId} type="button">
-          <Icons.receiz size={21} />
-          <span>Create ID</span>
-        </button>
-      </div>
+      {state.auth.receizId.connected ? null : (
+        <div className="mobile-action-grid">
+          <button onClick={onSignInReceizId} type="button">
+            <Icons.user size={21} />
+            <span>Receiz login</span>
+          </button>
+          <button onClick={onCreateReceizId} type="button">
+            <Icons.receiz size={21} />
+            <span>Create ID</span>
+          </button>
+        </div>
+      )}
       <div className="mobile-stat-row">
         <div><strong>{customer.rewardsValueLabel}</strong><span>Rewards</span></div>
         <div><strong>{customer.beans}</strong><span>Beans</span></div>

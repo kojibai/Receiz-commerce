@@ -1,4 +1,5 @@
 import { Button, Panel, SectionHeader, StatusPill } from "@/components/ui";
+import { Icons } from "@/components/icons";
 import type { SitePage } from "@/types/domain";
 
 export function PageBuilderPanel({ pages }: { pages: SitePage[] }) {
@@ -16,6 +17,13 @@ export function PageBuilderPanel({ pages }: { pages: SitePage[] }) {
             </StatusPill>
           </div>
         ))}
+        {pages.length === 0 ? (
+          <div className="panel-empty-state">
+            <Icons.pages size={22} />
+            <strong>No pages yet</strong>
+            <span>Add pages when the store is ready for content.</span>
+          </div>
+        ) : null}
       </div>
     </Panel>
   );

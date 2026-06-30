@@ -10,6 +10,7 @@ import {
   verifyProjectDomain,
   wildcardDomainStatusFromVercel
 } from "@/lib/hosting/vercel-domains";
+import { checkPublicDns } from "@/lib/hosting/dns-check";
 import { platform } from "@/lib/platform";
 import { createReceizCommerceAdapter } from "@/lib/receiz/adapter";
 import { receizAccessTokenFromRequest, receizLoginRequired } from "@/lib/receiz/session";
@@ -325,6 +326,27 @@ export async function POST(request: NextRequest) {
   try {
     const wildcard = await addProjectDomain(`*.${platform.domain}`);
     subdomainStatus = wildcardDomainStatusFromVercel(subdomain, wildcard);
+    const dns = await checkPublicDns(subdomain);
+
+    if (!dns.resolved) {
+      subdomainStatus = {
+        ...subdomainStatus,
+        status: "needs_dns",
+        sslStatus: "pending",
+        dnsResolved: false,
+        dnsInstructions: [
+          `Add DNS record: *.${platform.domain} CNAME ${process.env.VERCEL_CNAME_TARGET ?? "cname.vercel-dns-0.com"}`,
+          "Wait for DNS propagation, then claim the subdomain again.",
+          ...(subdomainStatus.dnsInstructions ?? [])
+        ],
+        message: `Wildcard domain is verified in Vercel, but ${subdomain} does not resolve in public DNS yet`
+      };
+    } else {
+      subdomainStatus = {
+        ...subdomainStatus,
+        dnsResolved: true
+      };
+    }
   } catch (error) {
     subdomainStatus = domainErrorStatus(subdomain, error);
   }

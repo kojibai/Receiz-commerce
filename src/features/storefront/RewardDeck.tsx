@@ -1,3 +1,4 @@
+import { Icons } from "@/components/icons";
 import { Button, Panel, RewardCard, SectionHeader } from "@/components/ui";
 import type { CustomerAccount, Reward } from "@/types/domain";
 
@@ -7,19 +8,27 @@ export function RewardDeck({
   customer
 }: {
   brandLabel: string;
-  reward: Reward;
+  reward: Reward | null;
   customer: CustomerAccount;
 }) {
   return (
     <Panel className="reward-deck-panel" id="rewards">
       <SectionHeader title="Reward deck" action={<Button variant="outline">Manage</Button>} />
-      <RewardCard brandLabel={brandLabel} reward={reward} />
+      {reward ? (
+        <RewardCard brandLabel={brandLabel} reward={reward} />
+      ) : (
+        <div className="panel-empty-state">
+          <Icons.gift size={22} />
+          <strong>No rewards yet</strong>
+          <span>Create the first branded reward in Admin Studio.</span>
+        </div>
+      )}
       <div className="deck-count">
-        <span>5 / 12 claimed</span>
+        <span>{reward ? "5 / 12 claimed" : "0 / 0 claimed"}</span>
         <button type="button">View all</button>
       </div>
       <div className="account-mini">
-        <div className="avatar">{customer.name.slice(0, 1)}S</div>
+        <div className="avatar">{customer.name.slice(0, 1)}</div>
         <div>
           <strong>{customer.name}</strong>
           <p>{customer.email}</p>

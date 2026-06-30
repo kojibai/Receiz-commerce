@@ -67,7 +67,7 @@ export function BrandMark({
   return (
     <div className={cx("brand-mark", compact && "brand-mark-compact")}>
       <span>{label}</span>
-      <small>coffee</small>
+      <small>sealed</small>
     </div>
   );
 }

@@ -10,7 +10,7 @@ import { platform } from "@/lib/platform";
 
 export function AccountDashboard() {
   const { state, actions } = useTemplateStore();
-  const customer = state.customers[0];
+  const customer = state.customers[0] ?? state.auth.customer;
   const ownedAssets = state.assets.filter((asset) => customer.assetIds.includes(asset.id));
   const orders = state.orders.filter((order) => order.customerId === customer.id);
   const rewards = state.rewards.filter((reward) => customer.rewardIds.includes(reward.id));
@@ -33,7 +33,7 @@ export function AccountDashboard() {
       </header>
 
       <section className="account-hero panel">
-        <div className="avatar large-avatar">{customer.name.slice(0, 1)}S</div>
+        <div className="avatar large-avatar">{customer.name.slice(0, 1)}</div>
         <div>
           <h1>{customer.name}</h1>
           <p>{customer.email}</p>
@@ -74,14 +74,16 @@ export function AccountDashboard() {
               <strong>{state.auth.receizId.localProofVerified ? "Verified" : state.auth.receizId.portableStateStatus}</strong>
             </div>
           </div>
-          <div className="identity-actions">
-            <button className="button button-primary" onClick={actions.signInWithReceizId} type="button">
-              Continue with Receiz ID
-            </button>
-            <button className="button button-outline" onClick={actions.createReceizId} type="button">
-              Create Receiz ID
-            </button>
-          </div>
+          {state.auth.receizId.connected ? null : (
+            <div className="identity-actions">
+              <button className="button button-primary" onClick={actions.signInWithReceizId} type="button">
+                Continue with Receiz ID
+              </button>
+              <button className="button button-outline" onClick={actions.createReceizId} type="button">
+                Create Receiz ID
+              </button>
+            </div>
+          )}
         </Panel>
 
         <Panel>

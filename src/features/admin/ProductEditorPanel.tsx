@@ -1,3 +1,4 @@
+import { Icons } from "@/components/icons";
 import { Button, ProductVisual, Panel, SectionHeader, StatusPill } from "@/components/ui";
 import type { Product } from "@/types/domain";
 
@@ -29,6 +30,13 @@ export function ProductEditorPanel({
             <span>{product.inventoryLabel}</span>
           </div>
         ))}
+        {products.length === 0 ? (
+          <div className="panel-empty-state">
+            <Icons.products size={22} />
+            <strong>No products yet</strong>
+            <span>Add products, benefits, access passes, or Receized assets.</span>
+          </div>
+        ) : null}
       </div>
       <Button variant="outline">Add product</Button>
     </Panel>

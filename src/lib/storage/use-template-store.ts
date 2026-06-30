@@ -11,7 +11,7 @@ import {
   subdomainForSlug,
   tenantSlugFromHost
 } from "@/lib/hosting/domain-utils";
-import type { CommerceState, ProofEvent } from "@/types/domain";
+import type { CommerceState, CustomerAccount, ProofEvent } from "@/types/domain";
 import { makeId } from "@/lib/utils";
 
 const STORAGE_KEY = "receiz-app-commerce-state-v1";
@@ -219,6 +219,242 @@ function accountHandle(projection: ReceizIdentityAccountProjection | null, fallb
   return username.includes(".") ? username : `${username}.receiz.id`;
 }
 
+type ReceizProfile = {
+  id?: string;
+  name?: string;
+  email?: string;
+  handle?: string;
+};
+
+type ReceizProfileResponse = {
+  ok: boolean;
+  connected: boolean;
+  profile?: ReceizProfile;
+};
+
+function compactString(value: string | undefined, fallback: string) {
+  const trimmed = value?.trim();
+  return trimmed || fallback;
+}
+
+function normalizeProfileHandle(value: string | undefined, fallback: string) {
+  const handle = compactString(value, fallback).replace(/^@/, "");
+  return handle.includes(".") ? handle : `${handle}.receiz.id`;
+}
+
+function ownerKeyFromProfile(profile: ReceizProfile) {
+  return compactString(profile.id, compactString(profile.handle, compactString(profile.email, "receiz-account")));
+}
+
+function displayNameFromProfile(profile: ReceizProfile) {
+  const fromHandle = profile.handle?.replace(/\.receiz\.id$/i, "").replace(/[._-]+/g, " ");
+  return compactString(profile.name, compactString(fromHandle, "New Receiz Store"));
+}
+
+function logoTextFromProfile(profile: ReceizProfile) {
+  const source = profile.handle?.replace(/\.receiz\.id$/i, "") ?? profile.name ?? "store";
+  const cleaned = source.toLowerCase().replace(/[^a-z0-9]+/g, "").slice(0, 8);
+  return cleaned || "store";
+}
+
+function tenantFromProfile(profile: ReceizProfile) {
+  const source = profile.handle?.replace(/\.receiz\.id$/i, "") ?? profile.name ?? "store";
+  try {
+    return normalizeTenantSlug(source);
+  } catch {
+    return "store";
+  }
+}
+
+function customerFromProfile(current: CustomerAccount, profile: ReceizProfile): CustomerAccount {
+  return {
+    ...current,
+    id: current.id || "customer-receiz-owner",
+    name: displayNameFromProfile(profile),
+    email: compactString(profile.email, current.email),
+    tier: current.tier || "Owner"
+  };
+}
+
+function createFreshMerchantWorkspace(current: CommerceState, profile: ReceizProfile): CommerceState {
+  const displayName = displayNameFromProfile(profile);
+  const handle = normalizeProfileHandle(profile.handle, current.auth.receizId.handle);
+  const tenantSlug = tenantFromProfile(profile);
+  const subdomain = subdomainForSlug(tenantSlug);
+  const customer: CustomerAccount = {
+    id: current.auth.customer.id || "customer-receiz-owner",
+    name: displayName,
+    email: compactString(profile.email, current.auth.customer.email),
+    tier: "Owner",
+    rewardsValueLabel: "$0.00",
+    beans: 0,
+    streak: "0x",
+    orderIds: [],
+    rewardIds: [],
+    assetIds: []
+  };
+
+  return {
+    ...current,
+    brand: {
+      ...current.brand,
+      name: displayName,
+      logoText: logoTextFromProfile(profile),
+      logoImageUrl: null,
+      tagline: "Proof-sealed commerce by Receiz"
+    },
+    storefront: {
+      headline: "Proof-sealed commerce",
+      subheadline: "Sell products, access, benefits, and Receized assets.",
+      heroBody: "Your store is ready for products, payments, rewards, and proof.",
+      ctaLabel: "Shop now"
+    },
+    hosting: {
+      ...current.hosting,
+      mode: "hosted_platform",
+      tenantSlug,
+      subdomain,
+      liveUrl: `https://${subdomain}`,
+      merchantReceizId: handle,
+      settlementAccountLabel: `${displayName} Receiz account`,
+      published: false,
+      lastPublishedAt: "Not published",
+      subdomainStatus: {
+        ...seedCommerceState.hosting.subdomainStatus,
+        domain: subdomain,
+        status: "pending",
+        sslStatus: "pending",
+        verified: false,
+        dnsResolved: false,
+        liveUrl: `https://${subdomain}`,
+        message: "Choose and claim this free Receiz.app subdomain"
+      },
+      customDomain: {
+        ...seedCommerceState.hosting.customDomain,
+        domain: "",
+        status: "pending",
+        sslStatus: "pending",
+        verified: false,
+        dnsResolved: false,
+        liveUrl: "",
+        verification: undefined,
+        dnsInstructions: undefined,
+        message: "Connect a custom domain when ready"
+      }
+    },
+    billing: {
+      ...current.billing,
+      status: "trial",
+      paymentMethodLabel: "No payment method yet",
+      monthlyTotalLabel: "$0 / mo",
+      trialEndsAt: "Free subdomain available",
+      invoices: []
+    },
+    navigation: seedCommerceState.navigation,
+    pages: [],
+    collections: [],
+    products: [],
+    cart: { lines: [] },
+    orders: [],
+    customers: [customer],
+    rewards: [],
+    rewardRules: [],
+    assets: [],
+    listings: [],
+    qualifiers: [],
+    campaigns: [],
+    game: {
+      ...current.game,
+      enabled: false,
+      campaignId: "",
+      leaderboardEnabled: false
+    },
+    auth: {
+      ...current.auth,
+      admin: {
+        ...current.auth.admin,
+        name: displayName,
+        email: compactString(profile.email, current.auth.admin.email)
+      },
+      customer
+    },
+    publish: {
+      ...current.publish,
+      checklist: current.publish.checklist.map((item) => ({
+        ...item,
+        complete: item.id === "receiz",
+        warning: item.id === "game" ? true : item.warning
+      }))
+    },
+    proofEvents: [makeEvent("RECEIZ_ID_CONNECTED", `${handle} workspace initialized`)]
+  };
+}
+
+function applyReceizProfile(current: CommerceState, profile: ReceizProfile): CommerceState {
+  const ownerKey = ownerKeyFromProfile(profile);
+  const resetTemplate = current.auth.workspaceOwnerId !== ownerKey && current.hosting.published;
+  const base = resetTemplate ? createFreshMerchantWorkspace(current, profile) : current;
+  const handle = normalizeProfileHandle(profile.handle, base.auth.receizId.handle);
+  const displayName = displayNameFromProfile(profile);
+  const customer = customerFromProfile(base.auth.customer, profile);
+
+  return {
+    ...base,
+    customers: base.customers.length ? base.customers.map((item, index) => (index === 0 ? customer : item)) : [customer],
+    hosting: {
+      ...base.hosting,
+      merchantReceizId: handle,
+      settlementAccountLabel: `${displayName} Receiz account`
+    },
+    auth: {
+      ...base.auth,
+      workspaceOwnerId: ownerKey,
+      templateClearedAt: resetTemplate ? new Date().toISOString() : base.auth.templateClearedAt,
+      admin: {
+        ...base.auth.admin,
+        name: displayName,
+        email: compactString(profile.email, base.auth.admin.email)
+      },
+      customer,
+      receizId: {
+        ...base.auth.receizId,
+        connected: true,
+        handle,
+        displayName,
+        keyId: compactString(profile.id, base.auth.receizId.keyId),
+        loginMode: "existing_receiz_id",
+        accountImageLabel: "Receiz account image",
+        statusLabel: "Receiz ID connected"
+      }
+    }
+  };
+}
+
+function applyReceizDisconnected(current: CommerceState): CommerceState {
+  if (process.env.NEXT_PUBLIC_AUTH_MODE !== "receiz_id") return current;
+
+  return {
+    ...current,
+    auth: {
+      ...current.auth,
+      receizId: {
+        ...current.auth.receizId,
+        connected: false,
+        statusLabel: "Connect Receiz ID"
+      }
+    }
+  };
+}
+
+async function fetchReceizProfile(): Promise<ReceizProfileResponse | null> {
+  const response = await fetch("/api/auth/receiz/me", {
+    headers: { accept: "application/json" }
+  });
+
+  if (!response.ok) return null;
+  return (await response.json()) as ReceizProfileResponse;
+}
+
 async function postJson<T>(url: string, body: Record<string, unknown>): Promise<T> {
   const response = await fetch(url, {
     method: "POST",
@@ -263,6 +499,19 @@ export function useTemplateStore() {
   useEffect(() => {
     setState(readState());
     setHydrated(true);
+
+    if (process.env.NEXT_PUBLIC_AUTH_MODE === "receiz_id") {
+      void fetchReceizProfile()
+        .then((result) => {
+          if (!result) return;
+          setState((current) =>
+            result.connected && result.profile
+              ? applyReceizProfile(current, result.profile)
+              : applyReceizDisconnected(current)
+          );
+        })
+        .catch(() => undefined);
+    }
   }, []);
 
   useEffect(() => {

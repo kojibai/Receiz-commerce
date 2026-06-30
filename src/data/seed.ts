@@ -464,7 +464,7 @@ export const seedCommerceState: CommerceState = {
       assetIds: ["asset-member-access", "asset-limited-drop", "asset-brew-class"]
     },
     receizId: {
-      connected: true,
+      connected: false,
       handle: "boost.receiz.id",
       displayName: "Boost Coffee",
       keyId: "rzid_demo_boost_88421",
@@ -485,7 +485,7 @@ export const seedCommerceState: CommerceState = {
         "verifyReceizIdentityLoginProof",
         "signReceizIdentityLoginProof"
       ],
-      statusLabel: "Receiz ID connected"
+      statusLabel: "Connect Receiz ID"
     },
     signedInAs: "customer"
   },

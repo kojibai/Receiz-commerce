@@ -64,26 +64,41 @@ export function ProductCatalog({
             </div>
           </div>
         ))}
+        {products.length === 0 ? (
+          <div className="panel-empty-state table-empty-state">
+            <Icons.products size={22} />
+            <strong>No products yet</strong>
+            <span>Add products in Admin Studio to start selling.</span>
+          </div>
+        ) : null}
       </div>
 
       <div className="mobile-product-grid">
-        {products.slice(0, 4).map((product) => (
-          <article className="mobile-product-card" key={product.id}>
-            <ProductVisual brandLabel={brandLabel} product={product} />
-            <strong>{product.name}</strong>
-            <p>{product.subtitle}</p>
-            <div>
-              <span>{product.priceLabel}</span>
-              <button
-                aria-label={`Add ${product.name} to cart`}
-                onClick={() => onAddToCart(product.id)}
-                type="button"
-              >
-                <Icons.cart size={18} />
-              </button>
-            </div>
-          </article>
-        ))}
+        {products.length ? (
+          products.slice(0, 4).map((product) => (
+            <article className="mobile-product-card" key={product.id}>
+              <ProductVisual brandLabel={brandLabel} product={product} />
+              <strong>{product.name}</strong>
+              <p>{product.subtitle}</p>
+              <div>
+                <span>{product.priceLabel}</span>
+                <button
+                  aria-label={`Add ${product.name} to cart`}
+                  onClick={() => onAddToCart(product.id)}
+                  type="button"
+                >
+                  <Icons.cart size={18} />
+                </button>
+              </div>
+            </article>
+          ))
+        ) : (
+          <div className="panel-empty-state">
+            <Icons.products size={22} />
+            <strong>No products yet</strong>
+            <span>Add products in Admin Studio to start selling.</span>
+          </div>
+        )}
       </div>
     </section>
   );
