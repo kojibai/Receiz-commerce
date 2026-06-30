@@ -5,11 +5,17 @@ import { Button, Panel, SectionHeader, StatusPill } from "@/components/ui";
 import type { ReceizIdState } from "@/types/domain";
 
 export function ReceizIdAccess({
+  onCreateReceizId,
+  onExistingReceizId,
+  onRestoreArtifact,
   receizId,
-  onSignIn
+  showUploadFallback
 }: {
+  onCreateReceizId: () => void | Promise<void>;
+  onExistingReceizId: () => void | Promise<void>;
+  onRestoreArtifact: (file: File) => void | Promise<void>;
   receizId: ReceizIdState;
-  onSignIn: () => void;
+  showUploadFallback: boolean;
 }) {
   return (
     <Panel className="receiz-id-panel">
@@ -28,11 +34,37 @@ export function ReceizIdAccess({
         </div>
       </div>
       {receizId.connected ? null : (
-        <div className="identity-actions">
-          <Button onClick={onSignIn} variant="primary">
-            Continue with Receiz ID
+        <>
+        <div className="identity-actions identity-choice-actions">
+          <Button onClick={onExistingReceizId} variant="primary">
+            <Icons.image size={17} />
+            Existing Receiz ID
+          </Button>
+          <Button onClick={onCreateReceizId} variant="outline">
+            <Icons.receiz size={17} />
+            New Receiz ID
           </Button>
         </div>
+        {showUploadFallback ? (
+          <div className="identity-upload-fallback">
+            <label className="button button-outline" htmlFor="storefront-receiz-identity-artifact">
+              <Icons.image size={17} />
+              Upload Identity Seal
+            </label>
+            <input
+              accept=".json,image/png,image/jpeg,image/webp"
+              id="storefront-receiz-identity-artifact"
+              onChange={(event) => {
+                const file = event.currentTarget.files?.[0];
+                if (file) void onRestoreArtifact(file);
+                event.currentTarget.value = "";
+              }}
+              type="file"
+            />
+            <p>Use an Identity Seal image, Identity Record image, or Receiz Key from this device.</p>
+          </div>
+        ) : null}
+        </>
       )}
     </Panel>
   );

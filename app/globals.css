@@ -1413,6 +1413,51 @@ a {
   width: 100%;
 }
 
+.identity-choice-actions .button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-width: 0;
+  padding-inline: 10px;
+  line-height: 1.05;
+  white-space: normal;
+}
+
+.identity-upload-fallback,
+.mobile-identity-fallback {
+  display: grid;
+  gap: 8px;
+  padding: 0 14px 12px;
+}
+
+.identity-upload-fallback input,
+.mobile-identity-fallback input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.identity-upload-fallback .button,
+.mobile-identity-fallback .button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+
+.identity-upload-fallback p,
+.mobile-identity-fallback span {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.25;
+}
+
 .identity-proof-strip {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -4105,6 +4150,19 @@ a {
     line-height: 1.08;
     text-align: center;
     overflow-wrap: anywhere;
+  }
+
+  .mobile-identity-actions button {
+    min-height: 58px;
+  }
+
+  .mobile-identity-fallback {
+    padding: 0;
+  }
+
+  .mobile-identity-fallback .button {
+    min-height: 42px;
+    border-radius: 14px;
   }
 
   .mobile-stat-row {

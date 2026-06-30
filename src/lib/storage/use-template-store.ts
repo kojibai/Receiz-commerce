@@ -14,6 +14,7 @@ import { selectClientInitialState } from "@/lib/storage/client-state";
 import { safeGetLocalStorage, safeRemoveLocalStorage, safeSetLocalStorage } from "@/lib/storage/browser-storage";
 import { pendingPublishStorageKey, shouldResumePendingPublish } from "@/lib/storage/pending-publish";
 import { mergeStoreApiProjection } from "@/lib/storefront/store-api-projection";
+import { applyLocalReceizIdentitySession } from "@/lib/storefront/local-identity-session";
 import type { BlogPost, CommerceState, CustomerAccount, Product, ProofEvent, SitePage, StorefrontHomepageMode } from "@/types/domain";
 import { makeId } from "@/lib/utils";
 
@@ -578,7 +579,12 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
   const [state, setState] = useState<CommerceState>(initialState);
   const [hydrated, setHydrated] = useState(false);
   const [hostContext, setHostContext] = useState<HostContext>(() => initialHostContext ?? hostContextFromHost(null));
+  const stateRef = useRef(initialState);
   const publishResumeAttemptedRef = useRef(false);
+
+  useEffect(() => {
+    stateRef.current = state;
+  }, [state]);
 
   useEffect(() => {
     const context = currentHostContext();
@@ -940,28 +946,82 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
           ]
         }));
       },
-      createReceizId() {
-        setState((current) => {
-          const handle = `${current.brand.logoText.toLowerCase().replace(/[^a-z0-9]+/g, "") || "brand"}.receiz.id`;
-          return {
-            ...current,
-            auth: {
-              ...current.auth,
-              receizId: {
-                ...current.auth.receizId,
-                connected: true,
-                handle,
-                displayName: current.brand.name,
-                loginMode: "new_receiz_id",
-                statusLabel: "New Receiz ID created"
-              }
+      async connectExistingReceizId() {
+        if (typeof window !== "undefined" && process.env.NEXT_PUBLIC_AUTH_MODE === "receiz_id") {
+          const result = await fetchReceizProfile().catch(() => null);
+          if (result?.connected && result.profile) {
+            const surface = result.surface ?? currentHostContext().surface;
+            setState((current) => ({
+              ...applyReceizProfile(current, result.profile!, surface),
+              proofEvents: [
+                makeEvent("RECEIZ_ID_CONNECTED", `${normalizeProfileHandle(result.profile!.handle, current.auth.receizId.handle)} signed in`),
+                ...current.proofEvents
+              ]
+            }));
+            return true;
+          }
+        }
+
+        setState((current) => ({
+          ...current,
+          auth: {
+            ...current.auth,
+            receizId: {
+              ...current.auth.receizId,
+              statusLabel: "Upload Identity Seal or Record"
+            }
+          },
+          proofEvents: [
+            makeEvent("RECEIZ_ID_CONNECTED", "Existing Receiz ID needs Identity Seal or Record"),
+            ...current.proofEvents
+          ]
+        }));
+
+        return false;
+      },
+      async createReceizId() {
+        const snapshot = stateRef.current;
+        const client = createReceizClient();
+        let projection: ReceizIdentityAccountProjection | null = null;
+        let handle = `${slugify(snapshot.brand.logoText || snapshot.brand.name, "customer")}-${makeId("id").slice(-6)}`;
+        let displayName = "Receiz customer";
+
+        try {
+          const identity = await client.identity.createReceizId({
+            username: handle,
+            displayName,
+            deviceName: snapshot.brand.name
+          });
+          projection = await client.identity.projectAccount(identity.keyFile);
+          handle = accountHandle(projection, `${handle}.receiz.id`);
+          displayName = projection?.owner.displayName ?? displayName;
+        } catch {
+          handle = handle.includes(".") ? handle : `${handle}.receiz.id`;
+        }
+
+        setState((current) => ({
+          ...applyLocalReceizIdentitySession(
+            current,
+            {
+              accountImageLabel: "Local Receiz ID",
+              artifactKind: "receiz_id",
+              artifactStatus: projection?.portableStateVerified ? "verified" : "created",
+              displayName,
+              email: projection?.owner.email ?? undefined,
+              handle,
+              keyId: projection?.keyId ?? current.auth.receizId.keyId,
+              localProofVerified: Boolean(projection?.portableStateVerified),
+              loginMode: "new_receiz_id",
+              portableStateStatus: projection?.portableStateStatus ?? "missing",
+              statusLabel: projection?.portableStateVerified ? "New Receiz ID locally verified" : "New Receiz ID created"
             },
-            proofEvents: [
-              makeEvent("RECEIZ_ID_CONNECTED", `${handle} created`),
-              ...current.proofEvents
-            ]
-          };
-        });
+            currentHostContext().surface === "tenant"
+          ),
+          proofEvents: [
+            makeEvent("RECEIZ_ID_CONNECTED", `${handle} created locally`),
+            ...current.proofEvents
+          ]
+        }));
       },
       async restoreReceizIdentityArtifact(file: File) {
         const client = createReceizClient();
@@ -987,13 +1047,32 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
             : failed
               ? "Identity artifact needs a valid Receiz proof"
               : "Identity artifact restored";
+          const identityState = failed
+            ? current
+            : applyLocalReceizIdentitySession(
+                current,
+                {
+                  accountImageLabel: file.name,
+                  artifactKind,
+                  artifactStatus,
+                  displayName,
+                  email: projection?.owner.email ?? undefined,
+                  handle,
+                  keyId: projection?.keyId ?? current.auth.receizId.keyId,
+                  localProofVerified,
+                  loginMode: "restored_identity_artifact",
+                  portableStateStatus,
+                  statusLabel
+                },
+                currentHostContext().surface === "tenant"
+              );
 
           return {
-            ...current,
+            ...identityState,
             auth: {
-              ...current.auth,
+              ...identityState.auth,
               receizId: {
-                ...current.auth.receizId,
+                ...identityState.auth.receizId,
                 connected: !failed,
                 handle,
                 displayName,
