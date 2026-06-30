@@ -13,7 +13,10 @@ import {
 import { checkPublicDns } from "@/lib/hosting/dns-check";
 import { platform } from "@/lib/platform";
 import { createReceizCommerceAdapter } from "@/lib/receiz/adapter";
+import { buildStoreStateRecord } from "@/lib/receiz/proof-state";
+import { getServerProofStateStore } from "@/lib/receiz/proof-state-store";
 import { receizAccessTokenFromRequest, receizLoginRequired } from "@/lib/receiz/session";
+import { mockStorage } from "@/lib/storage/mock-storage";
 import type { DomainStatus, HostingConfig } from "@/types/domain";
 
 export const runtime = "nodejs";
@@ -22,6 +25,10 @@ const PLATFORM_RECORD_SCHEMA = "receiz.app.hosting_event.v1";
 
 function errorMessage(error: unknown) {
   return error instanceof Error ? error.message : "Unknown error";
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
 
 function badRequest(error: unknown) {
@@ -95,6 +102,23 @@ async function recordReceizHostingEvent(
       recordedAt: new Date().toISOString(),
       data
     });
+  } catch (error) {
+    return { ok: false, error: errorMessage(error) };
+  }
+}
+
+async function recordReceizStoreState(accessToken: string | undefined, record: ReturnType<typeof buildStoreStateRecord>) {
+  if (!accessToken) {
+    return { ok: false, skipped: true, error: "receiz_login_required" };
+  }
+
+  try {
+    const receiz = createReceizCommerceAdapter({
+      baseUrl: process.env.RECEIZ_BASE_URL,
+      accessToken
+    });
+
+    return await receiz.connectRecord(record);
   } catch (error) {
     return { ok: false, error: errorMessage(error) };
   }
@@ -306,12 +330,40 @@ export async function POST(request: NextRequest) {
       published: true,
       lastPublishedAt: "now"
     };
+    const state = {
+      ...mockStorage.getState(),
+      ...(isRecord(body.state) ? body.state : {}),
+      hosting: {
+        ...mockStorage.getState().hosting,
+        ...(isRecord(body.state) && isRecord(body.state.hosting) ? body.state.hosting : {}),
+        ...hosting
+      }
+    };
+    const storeStateRecord = buildStoreStateRecord(state, {
+      actorReceizId: state.auth.receizId.handle,
+      tenantHost: state.hosting.customDomain.domain || state.hosting.subdomain,
+      reason: "publish"
+    });
+    const proofStore = await getServerProofStateStore(storeStateRecord.merchantReceizId);
+    await proofStore.admitStoreRecord(storeStateRecord);
+    const storeStateReceizRecord = await recordReceizStoreState(accessToken, storeStateRecord);
     const receizRecord = await recordReceizHostingEvent(accessToken, "store.published", {
       hosting,
-      state: body.state ?? null
+      storeStateRecordId: storeStateRecord.id
     });
 
-    return NextResponse.json({ ok: true, action, hosting, receizRecord });
+    return NextResponse.json({
+      ok: true,
+      action,
+      hosting,
+      storeStateRecord,
+      storeStateReceizRecord,
+      receizRecord,
+      proofMemory: {
+        knownHead: proofStore.knownHead(100),
+        entries: proofStore.snapshot().head.count
+      }
+    });
   }
 
   let tenantSlug = "";

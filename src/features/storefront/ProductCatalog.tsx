@@ -1,8 +1,13 @@
 "use client";
 
+import Link from "next/link";
 import { Icons } from "@/components/icons";
 import { Button, ProductVisual, SectionHeader, StatusPill } from "@/components/ui";
 import type { Product } from "@/types/domain";
+
+function productHref(product: Product) {
+  return `/products/${product.seo?.canonicalPath?.split("/").filter(Boolean).at(-1) ?? product.id}`;
+}
 
 export function ProductCatalog({
   brandImageUrl,
@@ -46,7 +51,7 @@ export function ProductCatalog({
             <div className="product-cell">
               <ProductVisual brandImageUrl={brandImageUrl} brandLabel={brandLabel} product={product} />
               <div>
-                <strong>{product.name}</strong>
+                <Link className="text-link" href={productHref(product)}>{product.name}</Link>
                 <p>{product.subtitle}</p>
               </div>
             </div>
@@ -86,7 +91,7 @@ export function ProductCatalog({
           products.slice(0, 4).map((product) => (
             <article className="mobile-product-card" key={product.id}>
               <ProductVisual brandImageUrl={brandImageUrl} brandLabel={brandLabel} product={product} />
-              <strong>{product.name}</strong>
+              <Link className="text-link" href={productHref(product)}>{product.name}</Link>
               <p>{product.subtitle}</p>
               <div>
                 <span>{product.priceLabel}</span>

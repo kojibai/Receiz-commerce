@@ -22,6 +22,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "test": "tsc -p tsconfig.test.json && node scripts/patch-test-imports.mjs && node --test .test-build/tests/*.test.js",
     "typecheck": "tsc --noEmit",
     "lint": "eslint ."
   },
