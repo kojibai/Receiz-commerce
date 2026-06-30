@@ -21,7 +21,9 @@ const RECEIZ_SCOPES = [
   "receiz:payments.read",
   "receiz:notes.mint",
   "receiz:notes.claim",
-  "receiz:notes.read"
+  "receiz:notes.read",
+  "receiz:twin.read",
+  "receiz:twin.write"
 ];
 
 function base64Url(bytes: Buffer) {
@@ -58,8 +60,5 @@ export async function GET(request: NextRequest) {
     state
   });
 
-  const response = NextResponse.redirect(authorizeUrl);
-  const secure = origin.startsWith("https://");
-
-  return response;
+  return NextResponse.redirect(authorizeUrl);
 }

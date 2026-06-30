@@ -15,8 +15,8 @@ function sdkNamespaceReady(namespace: "twin" | "world") {
 }
 
 export const receizSdkCapabilities: ReceizSdkCapabilities = {
-  twin: process.env.NEXT_PUBLIC_RECEIZ_TWIN_ENABLED === "true" && sdkNamespaceReady("twin"),
-  world: process.env.NEXT_PUBLIC_RECEIZ_WORLD_ENABLED === "true" && sdkNamespaceReady("world")
+  twin: process.env.NEXT_PUBLIC_RECEIZ_TWIN_ENABLED !== "false" && sdkNamespaceReady("twin"),
+  world: process.env.NEXT_PUBLIC_RECEIZ_WORLD_ENABLED !== "false" && sdkNamespaceReady("world")
 };
 
 export function hasReceizTwinCapability() {

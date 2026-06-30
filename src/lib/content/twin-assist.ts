@@ -21,7 +21,7 @@ export type TwinAssistResult = {
   tags?: string[];
   seo: SeoConfig;
   source: "receiz_twin" | "local_twin_template";
-  rail: "receiz_connect_record" | "local_preview";
+  rail: "receiz_world_message" | "receiz_connect_record" | "local_preview";
 };
 
 function slugify(value: string, fallback: string) {

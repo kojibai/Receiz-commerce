@@ -11,6 +11,7 @@ describe("tenant fallback state", () => {
     assert.equal(state.brand.name, "Bjklock");
     assert.equal(state.hosting.subdomain, "bjklock.receiz.app");
     assert.equal(state.auth.signedInAs, "customer");
+    assert.equal(JSON.stringify(state).includes("Boost"), false);
   });
 
   it("does not show the platform default brand on a custom domain without a published record", () => {
@@ -19,5 +20,6 @@ describe("tenant fallback state", () => {
     assert.equal(state.brand.name, "Shop");
     assert.equal(state.hosting.customDomain.domain, "shop.example.com");
     assert.equal(state.auth.signedInAs, "customer");
+    assert.equal(JSON.stringify(state).includes("Boost"), false);
   });
 });

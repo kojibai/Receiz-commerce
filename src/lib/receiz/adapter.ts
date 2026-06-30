@@ -27,6 +27,18 @@ import {
   type ReceizProofRegister,
   type ReceizSportsCardManifest,
   type ReceizSportsCardManifestProjection,
+  type ReceizWorldProfileMessageRequest,
+  type ReceizWorldProfileQuery,
+  type ReceizWorldProfileResponse,
+  type ReceizWorldPublicSnapshotResponse,
+  type SaveTwinMarketMandateInput,
+  type CreateTwinMarketIntentInput,
+  type TwinApprovalResponse,
+  type TwinMarketIntentResponse,
+  type TwinMarketIntentsResponse,
+  type TwinMarketMandateResponse,
+  type TwinMindImportSummaryResponse,
+  type TwinPromotionApprovalInput,
   type ReceizWebhookEvent,
   type WalletLedgerFeed
 } from "@receiz/sdk";
@@ -82,6 +94,19 @@ export type ReceizCommerceAdapter = {
   observePublicProof(body: { url: string; externalCreatorId?: string; title?: string }): Promise<PublicProofRecord>;
   getPublicProofByUrl(url: string): Promise<PublicProofRecord>;
   getPublicProofById(id: string): Promise<PublicProofRecord>;
+  worldSnapshot(): Promise<ReceizWorldPublicSnapshotResponse>;
+  worldProfile(username: string, query?: ReceizWorldProfileQuery): Promise<ReceizWorldProfileResponse>;
+  worldMessage(username: string, body: ReceizWorldProfileMessageRequest): Promise<ReceizWorldProfileResponse>;
+  twinMarketMandate(): Promise<TwinMarketMandateResponse>;
+  saveTwinMarketMandate(body: SaveTwinMarketMandateInput): Promise<TwinMarketMandateResponse>;
+  twinMarketIntents(): Promise<TwinMarketIntentsResponse>;
+  createTwinMarketIntent(body: CreateTwinMarketIntentInput): Promise<TwinMarketIntentResponse>;
+  approveTwinMarketIntent(intentId: string): Promise<TwinMarketIntentResponse>;
+  exportTwinMind(): Promise<Blob>;
+  importTwinMind(file: Blob): Promise<TwinMindImportSummaryResponse>;
+  importTwinMindSummary(): Promise<TwinMindImportSummaryResponse>;
+  twinApproval(): Promise<TwinApprovalResponse>;
+  approveTwinPromotion(body: TwinPromotionApprovalInput): Promise<TwinApprovalResponse>;
   checkout(body: CheckoutRequest): Promise<CheckoutSessionResponse>;
   checkoutSession(query: { checkoutSessionId?: string; sessionId?: string }): Promise<CheckoutSessionResponse>;
   connectWallet(): Promise<ConnectWalletResponse>;
@@ -125,7 +150,9 @@ export type ReceizRailKey =
   | "wallet"
   | "webhooks"
   | "manifests"
-  | "proofMemory";
+  | "proofMemory"
+  | "world"
+  | "twin";
 
 export type ReceizRailsStatus = {
   connected: true;
@@ -192,8 +219,10 @@ export function createReceizCommerceAdapter(
           { key: "identityArtifacts", label: "Receiz Key, Identity Record, Identity Seal restore", status: "available" },
           { key: "manifests", label: "Manifest validation and display projections", status: "available" },
           { key: "proofMemory", label: "Admit-once proof memory and known-head sync", status: "available" },
+          { key: "world", label: "Public World profiles and public Twin conversations", status: "available" },
           { key: "verification", label: "Artifact verification and seal calls", status: "available" },
           { key: "publicProof", label: "Public proof rendering and observation", status: "available" },
+          needsToken("twin", "Delegated Twin mandates, intents, mind import/export, and promotion approval"),
           needsToken("connect", "Delegated Receiz Connect actions"),
           needsToken("checkout", "Receiz checkout sessions"),
           needsToken("payments", "Embedded Receiz payments and note claim"),
@@ -287,6 +316,45 @@ export function createReceizCommerceAdapter(
     },
     getPublicProofById(id) {
       return client.publicProof.byId(id);
+    },
+    worldSnapshot() {
+      return client.world.publicSnapshot();
+    },
+    worldProfile(username, query) {
+      return client.world.profile(username, query);
+    },
+    worldMessage(username, body) {
+      return client.world.message(username, body);
+    },
+    twinMarketMandate() {
+      return client.twin.marketMandate();
+    },
+    saveTwinMarketMandate(body) {
+      return client.twin.saveMarketMandate(body);
+    },
+    twinMarketIntents() {
+      return client.twin.marketIntents();
+    },
+    createTwinMarketIntent(body) {
+      return client.twin.createMarketIntent(body);
+    },
+    approveTwinMarketIntent(intentId) {
+      return client.twin.approveMarketIntent(intentId);
+    },
+    exportTwinMind() {
+      return client.twin.exportMind();
+    },
+    importTwinMind(file) {
+      return client.twin.importMind(file);
+    },
+    importTwinMindSummary() {
+      return client.twin.importMindSummary();
+    },
+    twinApproval() {
+      return client.twin.approval();
+    },
+    approveTwinPromotion(body) {
+      return client.twin.approvePromotion(body);
     },
     checkout(body) {
       return client.payments.embeddedCheckout(body);

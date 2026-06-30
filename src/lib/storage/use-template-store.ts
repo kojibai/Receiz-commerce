@@ -9,6 +9,7 @@ import {
   subdomainForSlug
 } from "@/lib/hosting/domain-utils";
 import { BASE_STORAGE_KEY, currentHostContext, hostContextFromHost, type HostContext } from "@/lib/hosting/host-context";
+import { tenantFallbackState } from "@/lib/hosting/tenant-state";
 import type { CommerceImportInput, CommerceImportResult } from "@/lib/import/commerce-importer";
 import type { BlogPost, CommerceState, CustomerAccount, Product, ProofEvent, SitePage } from "@/types/domain";
 import { makeId } from "@/lib/utils";
@@ -118,82 +119,8 @@ function migrateStoredState(value: unknown): CommerceState {
   };
 }
 
-function titleFromHost(value: string) {
-  return value
-    .split(".")[0]
-    .replace(/[-_]+/g, " ")
-    .replace(/\b\w/g, (letter) => letter.toUpperCase());
-}
-
 function applyHostContext(state: CommerceState, hostContext: HostContext): CommerceState {
-  const { customDomain, host, tenantSlug } = hostContext;
-
-  if (tenantSlug) {
-    const subdomain = subdomainForSlug(tenantSlug);
-    const isStoredTenant = state.hosting.subdomain === subdomain;
-    return {
-      ...state,
-      brand: isStoredTenant
-        ? state.brand
-        : {
-            ...state.brand,
-            name: titleFromHost(tenantSlug),
-            logoText: tenantSlug.replace(/[^a-z0-9]+/g, "").slice(0, 8) || state.brand.logoText
-          },
-      hosting: {
-        ...state.hosting,
-        tenantSlug,
-        subdomain,
-        liveUrl: `https://${subdomain}`,
-        subdomainStatus: {
-          ...state.hosting.subdomainStatus,
-          domain: subdomain,
-          liveUrl: `https://${subdomain}`,
-          status: "active",
-          sslStatus: "valid",
-          verified: true,
-          message: "Loaded from hosted subdomain"
-        }
-      },
-      auth: {
-        ...state.auth,
-        signedInAs: "customer"
-      }
-    };
-  }
-
-  if (customDomain) {
-    const isStoredDomain = state.hosting.customDomain.domain === customDomain;
-    return {
-      ...state,
-      brand: isStoredDomain
-        ? state.brand
-        : {
-            ...state.brand,
-            name: titleFromHost(customDomain),
-            logoText: customDomain.split(".")[0]?.replace(/[^a-z0-9]+/g, "").slice(0, 8) || state.brand.logoText
-          },
-      hosting: {
-        ...state.hosting,
-        liveUrl: `https://${customDomain}`,
-        customDomain: {
-          ...state.hosting.customDomain,
-          domain: customDomain,
-          liveUrl: `https://${customDomain}`,
-          status: "active",
-          sslStatus: "valid",
-          verified: true,
-          message: "Loaded from custom domain"
-        }
-      },
-      auth: {
-        ...state.auth,
-        signedInAs: "customer"
-      }
-    };
-  }
-
-  return state;
+  return tenantFallbackState(state, hostContext);
 }
 
 function readState(hostContext: HostContext, fallbackState: CommerceState = seedCommerceState): CommerceState {
