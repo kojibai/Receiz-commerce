@@ -54,16 +54,30 @@ export async function recoverReceizStoreStateRecords(tenantHost: string) {
   }
 }
 
-export async function hydrateProofStoreFromReceizStoreState(proofStore: ProofStateStore, tenantHost: string) {
-  if (proofStore.records().some((record) => isStoreStateRecord(record) && storeStateRecordMatchesTenantHost(record, tenantHost))) {
-    return { admitted: 0, recovered: 0 };
-  }
+export async function admitRecoveredStoreStateRecords(
+  proofStore: ProofStateStore,
+  tenantHost: string,
+  recovered: StoreStateRecord[]
+) {
+  const knownRecordIds = new Set(
+    proofStore
+      .records()
+      .filter((record) => isStoreStateRecord(record) && storeStateRecordMatchesTenantHost(record, tenantHost))
+      .map((record) => record.id)
+  );
+  const matchingRecords = recovered.filter((record) => storeStateRecordMatchesTenantHost(record, tenantHost));
+  let admitted = 0;
 
-  const recovered = await recoverReceizStoreStateRecords(tenantHost);
-
-  for (const record of recovered) {
+  for (const record of matchingRecords) {
+    if (!knownRecordIds.has(record.id)) admitted += 1;
     await proofStore.admitStoreRecord(record);
   }
 
-  return { admitted: recovered.length, recovered: recovered.length };
+  return { admitted, recovered: matchingRecords.length };
+}
+
+export async function hydrateProofStoreFromReceizStoreState(proofStore: ProofStateStore, tenantHost: string) {
+  const recovered = await recoverReceizStoreStateRecords(tenantHost);
+
+  return admitRecoveredStoreStateRecords(proofStore, tenantHost, recovered);
 }
