@@ -1,0 +1,22 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "allowImportingTsExtensions": false,
+    "incremental": false,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "noEmit": false,
+    "outDir": ".test-build",
+    "rootDir": ".",
+    "types": ["node"]
+  },
+  "include": [
+    "tests/**/*.ts",
+    "src/lib/receiz/proof-state.ts",
+    "src/lib/receiz/proof-state-store.ts",
+    "src/lib/pwa/cache-policy.ts",
+    "src/lib/pwa/manifest.ts",
+    "src/lib/storefront/content-routing.ts",
+    "src/types/domain.ts"
+  ]
+}
