@@ -1,7 +1,7 @@
 "use client";
 
 import { Icons } from "@/components/icons";
-import { Button, Panel, SectionHeader, StatusPill } from "@/components/ui";
+import { Button, OfficialReceizLoginButton, Panel, SectionHeader, StatusPill } from "@/components/ui";
 import type { ReceizIdState } from "@/types/domain";
 
 export function ReceizIdAccess({
@@ -36,10 +36,7 @@ export function ReceizIdAccess({
       {receizId.connected ? null : (
         <>
         <div className="identity-actions identity-choice-actions">
-          <Button onClick={onExistingReceizId} variant="primary">
-            <Icons.image size={17} />
-            Existing Receiz ID
-          </Button>
+          <OfficialReceizLoginButton onClick={onExistingReceizId} />
           <Button onClick={onCreateReceizId} variant="outline">
             <Icons.receiz size={17} />
             New Receiz ID

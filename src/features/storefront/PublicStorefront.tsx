@@ -2,7 +2,16 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 import { Icons } from "@/components/icons";
-import { BrandMark, Button, Panel, ProductVisual, SectionHeader, StatusPill } from "@/components/ui";
+import {
+  BrandMark,
+  Button,
+  OfficialReceizLoginButton,
+  Panel,
+  PoweredByReceizBadge,
+  ProductVisual,
+  SectionHeader,
+  StatusPill
+} from "@/components/ui";
 import { platform } from "@/lib/platform";
 import { brandThemeStyle } from "@/lib/theme";
 import { useTemplateStore } from "@/lib/storage/use-template-store";
@@ -411,8 +420,8 @@ function MobileCommandMenu({
     ["account", "Account", Icons.user]
   ] as const;
 
-  const runAction = (action: () => void) => {
-    action();
+  const runAction = (action: () => void | Promise<void>) => {
+    void action();
     onClose();
   };
 
@@ -447,13 +456,10 @@ function MobileCommandMenu({
         <div className="mobile-command-actions">
           {state.auth.receizId.connected ? null : (
             <>
-              <button onClick={() => runAction(onExistingReceizId)} type="button">
-                <Icons.image size={21} />
-                <div>
-                  <strong>Existing Receiz ID</strong>
-                  <span>Use browser session or upload Identity Seal</span>
-                </div>
-              </button>
+              <OfficialReceizLoginButton
+                className="mobile-command-receiz-login"
+                onClick={() => runAction(onExistingReceizId)}
+              />
               <button onClick={() => runAction(onCreateReceizId)} type="button">
                 <Icons.receiz size={21} />
                 <div>
@@ -696,6 +702,7 @@ function MobileStorePanel({
         <span><Icons.seal size={15} /> Proof-sealed orders</span>
         <span><Icons.gift size={15} /> Rewards enabled</span>
       </div>
+      <PoweredByReceizBadge className="mobile-powered-by-receiz" />
       {firstPost ? (
         <article className="mobile-blog-card">
           <Icons.book size={19} />
@@ -844,10 +851,7 @@ function MobileIdentityActions({
   return (
     <>
       <div className="mobile-action-grid mobile-identity-actions">
-        <button onClick={onExistingReceizId} type="button">
-          <Icons.image size={21} />
-          <span>Existing Receiz ID</span>
-        </button>
+        <OfficialReceizLoginButton className="mobile-official-receiz-login" onClick={onExistingReceizId} />
         <button onClick={onCreateReceizId} type="button">
           <Icons.receiz size={21} />
           <span>New Receiz ID</span>

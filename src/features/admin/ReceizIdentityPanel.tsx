@@ -1,7 +1,7 @@
 "use client";
 
 import { Icons } from "@/components/icons";
-import { Button, Panel, SectionHeader, StatusPill } from "@/components/ui";
+import { OfficialReceizLoginButton, Panel, SectionHeader, StatusPill } from "@/components/ui";
 import type { ReceizIdState } from "@/types/domain";
 
 export function ReceizIdentityPanel({
@@ -64,9 +64,7 @@ export function ReceizIdentityPanel({
       </div>
       {receizId.connected ? null : (
         <div className="identity-actions">
-          <Button onClick={onSignIn} variant="primary">
-            Continue with Receiz ID
-          </Button>
+          <OfficialReceizLoginButton onClick={onSignIn} />
         </div>
       )}
       <div className="identity-restore-row">

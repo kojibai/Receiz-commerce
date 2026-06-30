@@ -2,7 +2,15 @@
 
 import Link from "next/link";
 import { Icons } from "@/components/icons";
-import { MetricCard, Panel, RewardCard, SealEventTimeline, SectionHeader, StatusPill } from "@/components/ui";
+import {
+  MetricCard,
+  OfficialReceizLoginButton,
+  Panel,
+  RewardCard,
+  SealEventTimeline,
+  SectionHeader,
+  StatusPill
+} from "@/components/ui";
 import { brandThemeStyle } from "@/lib/theme";
 import { useTemplateStore } from "@/lib/storage/use-template-store";
 import { customerForAccountSurface, customerReceizHandle } from "@/lib/storefront/customer-session";
@@ -103,9 +111,7 @@ export function AccountDashboard({
           </div>
           {state.auth.receizId.connected ? null : (
             <div className="identity-actions">
-              <button className="button button-primary" onClick={actions.signInWithReceizId} type="button">
-                Continue with Receiz ID
-              </button>
+              <OfficialReceizLoginButton onClick={actions.signInWithReceizId} />
             </div>
           )}
         </Panel>

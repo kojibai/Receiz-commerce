@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Icons } from "@/components/icons";
-import { BrandMark, Button, StatusPill } from "@/components/ui";
+import { BrandMark, Button, PoweredByReceizBadge, StatusPill } from "@/components/ui";
 import type { CommerceState } from "@/types/domain";
 import { cx } from "@/lib/utils";
 import { platform } from "@/lib/platform";
@@ -168,7 +168,7 @@ export function MobileHeader({
       </div>
       <div className="mobile-domain">
         <strong>{visibleHost}</strong>
-        <span>Receiz ID ready</span>
+        <PoweredByReceizBadge className="mobile-header-receiz-badge" />
       </div>
       <button aria-label="Open account" className="icon-button" onClick={onAccount} type="button">
         <Icons.user size={21} />
@@ -244,7 +244,7 @@ export function HeroProduct({
         <h1>{state.brand.name}</h1>
         <p>{state.storefront.heroBody}</p>
         <div className="hero-meta">
-          <span>● Receiz enabled</span>
+          <PoweredByReceizBadge className="hero-powered-by-receiz" />
           <span>
             <Icons.seal size={16} /> Verified store
           </span>

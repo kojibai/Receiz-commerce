@@ -992,6 +992,24 @@ a {
   color: var(--receiz-strong);
 }
 
+.powered-by-receiz-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+}
+
+.powered-by-receiz-badge img {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  height: 26px;
+}
+
+.hero-powered-by-receiz img {
+  height: 28px;
+}
+
 .hero-actions {
   margin-top: 18px;
 }
@@ -1411,6 +1429,30 @@ a {
 
 .identity-actions .button {
   width: 100%;
+}
+
+.official-receiz-login-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  cursor: pointer;
+}
+
+.official-receiz-login-button img {
+  display: block;
+  width: 100%;
+  max-width: 235px;
+  height: auto;
+}
+
+.identity-actions > .official-receiz-login-button:only-child {
+  grid-column: 1 / -1;
 }
 
 .identity-choice-actions .button {
@@ -3922,6 +3964,15 @@ a {
     gap: 8px;
   }
 
+  .mobile-powered-by-receiz {
+    justify-self: center;
+    width: min(188px, 100%);
+  }
+
+  .mobile-powered-by-receiz img {
+    height: auto;
+  }
+
   .mobile-store-footer span,
   .mobile-stat-row div {
     display: flex;
@@ -4154,6 +4205,30 @@ a {
 
   .mobile-identity-actions button {
     min-height: 58px;
+  }
+
+  .mobile-identity-actions .mobile-official-receiz-login {
+    min-height: 58px;
+    padding: 5px;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background: #ffffff;
+  }
+
+  .mobile-identity-actions .mobile-official-receiz-login img {
+    width: min(150px, 100%);
+  }
+
+  .mobile-command-actions .mobile-command-receiz-login {
+    min-height: 64px;
+    padding: 8px;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background: #ffffff;
+  }
+
+  .mobile-command-actions .mobile-command-receiz-login img {
+    width: min(190px, 100%);
   }
 
   .mobile-identity-fallback {

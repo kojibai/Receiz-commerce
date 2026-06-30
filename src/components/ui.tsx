@@ -18,6 +18,52 @@ export function Button({
   );
 }
 
+const RECEIZ_VERIFY_URL = "https://receiz.com/verify";
+const POWERED_BY_RECEIZ_BADGE_URL = "https://receiz.com/powered-by-receiz.svg";
+const SIGN_IN_WITH_RECEIZ_URL = "https://receiz.com/sign-in-with-receiz.svg";
+const SIGN_IN_WITH_RECEIZ_LIGHT_URL = "https://receiz.com/sign-in-with-receiz-light.svg";
+
+export function PoweredByReceizBadge({
+  className,
+  href = RECEIZ_VERIFY_URL
+}: {
+  className?: string;
+  href?: string;
+}) {
+  return (
+    <a
+      aria-label="Verify with Receiz"
+      className={cx("powered-by-receiz-badge", className)}
+      href={href}
+      rel="noreferrer"
+      target="_blank"
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img alt="Powered by Receiz" src={POWERED_BY_RECEIZ_BADGE_URL} />
+    </a>
+  );
+}
+
+export function OfficialReceizLoginButton({
+  className,
+  light = false,
+  ...props
+}: ComponentPropsWithoutRef<"button"> & {
+  light?: boolean;
+}) {
+  return (
+    <button
+      aria-label="Sign in with Receiz"
+      className={cx("official-receiz-login-button", className)}
+      type="button"
+      {...props}
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img alt="Sign in with Receiz" src={light ? SIGN_IN_WITH_RECEIZ_LIGHT_URL : SIGN_IN_WITH_RECEIZ_URL} />
+    </button>
+  );
+}
+
 export function StatusPill({
   children,
   tone = "green"
