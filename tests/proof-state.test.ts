@@ -303,6 +303,66 @@ describe("Receiz proof commerce state", () => {
     assert.equal(storeStateProjectionSource([], "bjklock.receiz.app"), "fallback");
   });
 
+  it("normalizes publish hosting to the connected Receiz owner", () => {
+    const state = buildPublishedCommerceState(
+      baseState(),
+      {
+        hosting: {
+          ...baseState().hosting,
+          merchantReceizId: "boost.receiz.id",
+          tenantSlug: "boost",
+          subdomain: "boost.receiz.app",
+          liveUrl: "https://www.boostcoffee.com",
+          customDomain: {
+            ...baseState().hosting.customDomain,
+            domain: "www.boostcoffee.com",
+            liveUrl: "https://www.boostcoffee.com",
+            status: "ready" as const,
+            sslStatus: "valid" as const,
+            verified: true
+          }
+        }
+      },
+      {
+        displayName: "BJ Klock",
+        merchantReceizId: "bjklock.receiz.id"
+      }
+    );
+
+    assert.equal(state.hosting.merchantReceizId, "bjklock.receiz.id");
+    assert.equal(state.hosting.tenantSlug, "bjklock");
+    assert.equal(state.hosting.subdomain, "bjklock.receiz.app");
+    assert.equal(state.hosting.liveUrl, "https://bjklock.receiz.app");
+    assert.equal(state.hosting.customDomain.domain, "");
+    assert.equal(state.hosting.settlementAccountLabel, "BJ Klock Receiz account");
+  });
+
+  it("omits oversized inline media from the published proof record", () => {
+    const hugeDataUrl = `data:image/png;base64,${"a".repeat(28_000)}`;
+    const record = buildStoreStateRecord(
+      {
+        ...baseState(),
+        brand: { ...baseState().brand, logoImageUrl: hugeDataUrl },
+        products: [
+          {
+            ...baseState().products[0],
+            imageUrl: hugeDataUrl
+          }
+        ]
+      },
+      {
+        actorReceizId: "boost.receiz.id",
+        tenantHost: "boost.receiz.app",
+        reason: "publish",
+        recordedAt: "2026-06-30T00:05:30.000Z"
+      }
+    );
+
+    assert.equal(record.state.brand.logoImageUrl, null);
+    assert.equal(record.state.products[0]?.imageUrl, null);
+    assert.ok(JSON.stringify(buildStoreStateConnectRecord(record)).length < hugeDataUrl.length);
+  });
+
   it("wraps published store state in a Receiz connect action envelope", () => {
     const record = buildStoreStateRecord(baseState(), {
       actorReceizId: "boost.receiz.id",
@@ -316,7 +376,8 @@ describe("Receiz proof commerce state", () => {
     assert.equal(connectRecord.event, "store.state.published");
     assert.equal(connectRecord.tenantHost, "boost.receiz.app");
     assert.equal(connectRecord.merchantReceizId, "boost.receiz.id");
-    assert.deepEqual(connectRecord.data.payload, record);
+    assert.deepEqual(connectRecord.data.storeStateRecord, record);
+    assert.equal("payload" in connectRecord.data, false);
   });
 
   it("admits checkout events exactly once and projects settlement into sales and customers", () => {

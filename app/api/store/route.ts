@@ -9,6 +9,7 @@ import {
   type StoreStateRecord
 } from "@/lib/receiz/proof-state";
 import { getServerProofStateStore } from "@/lib/receiz/proof-state-store";
+import { loadReceizConnectProfile } from "@/lib/receiz/connect-profile";
 import { receizAccessTokenFromRequest, receizLoginRequired } from "@/lib/receiz/session";
 import { mockStorage } from "@/lib/storage/mock-storage";
 import { tenantFallbackState } from "@/lib/hosting/tenant-state";
@@ -74,6 +75,16 @@ async function recordWithReceiz(accessToken: string | undefined, record: StoreSt
 
 function receizWriteSucceeded(result: unknown) {
   return !(isRecord(result) && result.ok === false);
+}
+
+async function loadPublishOwner(accessToken: string | undefined) {
+  if (!accessToken) return null;
+
+  try {
+    return await loadReceizConnectProfile(accessToken);
+  } catch {
+    return null;
+  }
 }
 
 export async function GET(request: NextRequest) {
@@ -143,7 +154,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(receizLoginRequired("/admin"), { status: 401 });
   }
 
-  const state = buildPublishedCommerceState(mockStorage.getState(), mergePublishedState(isRecord(body) ? body.state : null));
+  const publishOwner = await loadPublishOwner(accessToken);
+  const state = buildPublishedCommerceState(mockStorage.getState(), mergePublishedState(isRecord(body) ? body.state : null), {
+    customDomain: publishOwner?.customDomain,
+    displayName: publishOwner?.name,
+    merchantReceizId: publishOwner?.handle,
+    tenantSlug: publishOwner?.subdomain
+  });
   const tenantHost = state.hosting.customDomain.domain || state.hosting.subdomain || hostContext.tenantHost || host;
   const record = buildStoreStateRecord(state, {
     actorReceizId: state.hosting.merchantReceizId || state.auth.receizId.handle,

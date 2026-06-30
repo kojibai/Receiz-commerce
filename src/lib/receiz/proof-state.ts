@@ -64,7 +64,6 @@ export type StoreStateConnectRecord = {
   merchantReceizId: string;
   data: {
     action: "store.published";
-    payload: StoreStateRecord;
     storeStateRecord: StoreStateRecord;
     storeStateRecordId: string;
   };
@@ -123,23 +122,45 @@ function recordId(prefix: string, tenantHost: string, recordedAt: string) {
   return `${prefix}:${tenantHost}:${stamp}`;
 }
 
+const MAX_INLINE_DATA_URL_CHARS = 24_000;
+
+function compactInlineMedia(value: unknown): unknown {
+  if (typeof value === "string") {
+    return value.startsWith("data:") && value.length > MAX_INLINE_DATA_URL_CHARS ? null : value;
+  }
+
+  if (Array.isArray(value)) {
+    return value.map((item) => compactInlineMedia(item));
+  }
+
+  if (!value || typeof value !== "object") return value;
+
+  return Object.fromEntries(
+    Object.entries(value).map(([key, item]) => [key, compactInlineMedia(item)])
+  );
+}
+
+function compactPublishedState<T>(value: T): T {
+  return compactInlineMedia(structuredClone(value)) as T;
+}
+
 function clonePublishedState(state: CommerceState): PublishedStoreState {
   return {
-    brand: structuredClone(state.brand),
-    storefront: structuredClone(state.storefront),
-    hosting: structuredClone(state.hosting),
-    navigation: structuredClone(state.navigation),
-    pages: structuredClone(state.pages),
-    blogPosts: structuredClone(state.blogPosts),
-    collections: structuredClone(state.collections),
-    products: structuredClone(state.products),
-    rewards: structuredClone(state.rewards),
-    rewardRules: structuredClone(state.rewardRules),
-    assets: structuredClone(state.assets),
-    qualifiers: structuredClone(state.qualifiers),
-    campaigns: structuredClone(state.campaigns),
-    game: structuredClone(state.game),
-    checkout: structuredClone(state.checkout)
+    brand: compactPublishedState(state.brand),
+    storefront: compactPublishedState(state.storefront),
+    hosting: compactPublishedState(state.hosting),
+    navigation: compactPublishedState(state.navigation),
+    pages: compactPublishedState(state.pages),
+    blogPosts: compactPublishedState(state.blogPosts),
+    collections: compactPublishedState(state.collections),
+    products: compactPublishedState(state.products),
+    rewards: compactPublishedState(state.rewards),
+    rewardRules: compactPublishedState(state.rewardRules),
+    assets: compactPublishedState(state.assets),
+    qualifiers: compactPublishedState(state.qualifiers),
+    campaigns: compactPublishedState(state.campaigns),
+    game: compactPublishedState(state.game),
+    checkout: compactPublishedState(state.checkout)
   };
 }
 
@@ -185,7 +206,6 @@ export function buildStoreStateConnectRecord(
     merchantReceizId: record.merchantReceizId,
     data: {
       action: "store.published",
-      payload: record,
       storeStateRecord: record,
       storeStateRecordId: record.id
     }

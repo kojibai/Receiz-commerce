@@ -14,6 +14,7 @@ import { checkPublicDns } from "@/lib/hosting/dns-check";
 import { buildPublishedCommerceState } from "@/lib/hosting/published-state";
 import { platform } from "@/lib/platform";
 import { createReceizCommerceAdapter } from "@/lib/receiz/adapter";
+import { loadReceizConnectProfile } from "@/lib/receiz/connect-profile";
 import { buildStoreStateConnectRecord, buildStoreStateRecord } from "@/lib/receiz/proof-state";
 import { getServerProofStateStore } from "@/lib/receiz/proof-state-store";
 import { receizAccessTokenFromRequest, receizLoginRequired } from "@/lib/receiz/session";
@@ -45,6 +46,17 @@ function badRequest(error: unknown) {
 
 function receizWriteSucceeded(result: unknown) {
   return !(isRecord(result) && result.ok === false);
+}
+
+async function loadPublishOwner(accessToken: string | undefined) {
+  if (!accessToken) return null;
+
+  try {
+    return await loadReceizConnectProfile(accessToken);
+  } catch (error) {
+    console.error("[publish] Receiz profile unavailable", { error: errorMessage(error) });
+    return null;
+  }
 }
 
 function returnToFromRequest(request: NextRequest) {
@@ -330,6 +342,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(receizLoginRequired(returnTo), { status: 401 });
     }
 
+    const publishOwner = await loadPublishOwner(accessToken);
     const hosting = {
       ...(isRecord(body.state) && isRecord(body.state.hosting) ? body.state.hosting : mockHosting.getHostingStatus()),
       published: true,
@@ -338,6 +351,11 @@ export async function POST(request: NextRequest) {
     const state = buildPublishedCommerceState(mockStorage.getState(), {
       ...(isRecord(body.state) ? body.state : {}),
       hosting
+    }, {
+      customDomain: publishOwner?.customDomain,
+      displayName: publishOwner?.name,
+      merchantReceizId: publishOwner?.handle,
+      tenantSlug: publishOwner?.subdomain
     });
     const storeStateRecord = buildStoreStateRecord(state, {
       actorReceizId: state.hosting.merchantReceizId || state.auth.receizId.handle,
