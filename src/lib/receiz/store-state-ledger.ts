@@ -12,6 +12,16 @@ function ledgerLimit() {
   return Number.isFinite(parsed) && parsed > 0 ? Math.min(parsed, 500) : DEFAULT_LEDGER_LIMIT;
 }
 
+function uniqueRecords(records: StoreStateRecord[]) {
+  const unique = new Map<string, StoreStateRecord>();
+
+  for (const record of records) {
+    unique.set(record.id, record);
+  }
+
+  return [...unique.values()];
+}
+
 function collectStoreStateRecords(value: unknown, depth = 0, seen = new WeakSet<object>()): StoreStateRecord[] {
   if (depth > 8 || value === null || value === undefined) return [];
 
@@ -29,16 +39,33 @@ function collectStoreStateRecords(value: unknown, depth = 0, seen = new WeakSet<
 }
 
 export function extractStoreStateRecords(value: unknown): StoreStateRecord[] {
-  const uniqueRecords = new Map<string, StoreStateRecord>();
+  return uniqueRecords(collectStoreStateRecords(value));
+}
 
-  for (const record of collectStoreStateRecords(value)) {
-    uniqueRecords.set(record.id, record);
+async function recoverReceizPublicProofStoreStateRecords(tenantHost: string) {
+  const { createReceizCommerceAdapter } = await import("./adapter");
+  const receiz = createReceizCommerceAdapter({
+    baseUrl: process.env.RECEIZ_BASE_URL
+  });
+  const normalizedHost = tenantHost.trim().toLowerCase();
+  const urls = [`https://${normalizedHost}`, `https://${normalizedHost}/`];
+  const records: StoreStateRecord[] = [];
+
+  for (const url of urls) {
+    try {
+      const publicProof = await receiz.client.publicProof.byUrl(url);
+      records.push(...extractStoreStateRecords(publicProof));
+    } catch {
+      // Missing public projections are expected for unpublished or legacy stores.
+    }
   }
 
-  return [...uniqueRecords.values()];
+  return records.filter((record) => storeStateRecordMatchesTenantHost(record, tenantHost));
 }
 
 export async function recoverReceizStoreStateRecords(tenantHost: string) {
+  const records: StoreStateRecord[] = [];
+
   try {
     const { createReceizCommerceAdapter } = await import("./adapter");
     const receiz = createReceizCommerceAdapter({
@@ -46,12 +73,22 @@ export async function recoverReceizStoreStateRecords(tenantHost: string) {
     });
     const ledger = await receiz.actionLedger({ limit: ledgerLimit() });
 
-    return extractStoreStateRecords(ledger).filter((record) =>
-      storeStateRecordMatchesTenantHost(record, tenantHost)
+    records.push(
+      ...extractStoreStateRecords(ledger).filter((record) =>
+        storeStateRecordMatchesTenantHost(record, tenantHost)
+      )
     );
   } catch {
-    return [];
+    // The public action ledger is additive only. Public-proof recovery below is the durable storefront path.
   }
+
+  try {
+    records.push(...(await recoverReceizPublicProofStoreStateRecords(tenantHost)));
+  } catch {
+    // Keep tenant rendering resilient if Receiz public proof is temporarily unavailable.
+  }
+
+  return uniqueRecords(records);
 }
 
 export async function admitRecoveredStoreStateRecords(

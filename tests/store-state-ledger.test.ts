@@ -45,6 +45,44 @@ describe("Receiz store-state ledger recovery", () => {
     assert.equal(records[0]?.state.hosting.customDomain.domain, "shop.bjklock.com");
   });
 
+  it("extracts published store records from public proof registry records", () => {
+    const state = {
+      ...baseState(),
+      brand: { ...baseState().brand, name: "BJ Klock" },
+      hosting: {
+        ...baseState().hosting,
+        tenantSlug: "bjklock",
+        subdomain: "bjklock.receiz.app",
+        customDomain: {
+          ...baseState().hosting.customDomain,
+          domain: ""
+        }
+      },
+      products: [{ ...baseState().products[0], id: "new-product", name: "New product" }]
+    };
+    const record = buildStoreStateRecord(state, {
+      actorReceizId: "bjklock.receiz.id",
+      tenantHost: "bjklock.receiz.app",
+      recordedAt: "2026-06-30T16:00:00.000Z"
+    });
+    const publicProof = {
+      ok: true,
+      sourceUrl: "https://bjklock.receiz.app",
+      record: {
+        schema: "receiz.app.public_store_state_projection.v1",
+        data: {
+          storeStateRecord: record
+        }
+      }
+    };
+
+    const records = extractStoreStateRecords(publicProof);
+
+    assert.equal(records.length, 1);
+    assert.equal(records[0]?.state.brand.name, "BJ Klock");
+    assert.equal(records[0]?.state.products[0]?.name, "New product");
+  });
+
   it("admits newer recovered records when an older tenant record is already warm", async () => {
     const tenantHost = "bjklock.receiz.app";
     const store = await createInMemoryProofStateStore("bjklock.receiz.id");

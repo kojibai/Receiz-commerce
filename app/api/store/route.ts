@@ -1,14 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { hostContextFromHost } from "@/lib/hosting/host-context";
 import { platform } from "@/lib/platform";
-import { createReceizCommerceAdapter } from "@/lib/receiz/adapter";
 import {
-  buildStoreStateConnectRecord,
   buildStoreStateRecord,
-  storeStateProjectionSource,
-  type StoreStateRecord
+  storeStateProjectionSource
 } from "@/lib/receiz/proof-state";
 import { getServerProofStateStore } from "@/lib/receiz/proof-state-store";
+import { publishReceizStoreState } from "@/lib/receiz/store-state-publication";
 import { loadReceizConnectProfile } from "@/lib/receiz/connect-profile";
 import { receizAccessTokenFromRequest, receizLoginRequired } from "@/lib/receiz/session";
 import { mockStorage } from "@/lib/storage/mock-storage";
@@ -51,26 +49,6 @@ function mergePublishedState(input: unknown): CommerceState {
     game: isRecord(input.game) ? { ...base.game, ...input.game } : base.game,
     checkout: isRecord(input.checkout) ? { ...base.checkout, ...input.checkout } : base.checkout
   };
-}
-
-async function recordWithReceiz(accessToken: string | undefined, record: StoreStateRecord) {
-  if (!accessToken) {
-    return { ok: false, skipped: true, error: "receiz_login_required" };
-  }
-
-  try {
-    const receiz = createReceizCommerceAdapter({
-      baseUrl: process.env.RECEIZ_BASE_URL,
-      accessToken
-    });
-
-    return await receiz.connectRecord(buildStoreStateConnectRecord(record));
-  } catch (error) {
-    return {
-      ok: false,
-      error: error instanceof Error ? error.message : "Receiz store-state record failed"
-    };
-  }
 }
 
 function receizWriteSucceeded(result: unknown) {
@@ -177,7 +155,7 @@ export async function POST(request: NextRequest) {
   });
   const proofStore = await getServerProofStateStore(record.merchantReceizId);
   await proofStore.admitStoreRecord(record);
-  const receizRecord = await recordWithReceiz(accessToken, record);
+  const receizRecord = await publishReceizStoreState(accessToken, record);
 
   if (!receizWriteSucceeded(receizRecord)) {
     const error = isRecord(receizRecord) ? String(receizRecord.error ?? "receiz_store_state_record_failed") : "receiz_store_state_record_failed";

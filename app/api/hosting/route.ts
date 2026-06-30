@@ -15,8 +15,9 @@ import { buildPublishedCommerceState } from "@/lib/hosting/published-state";
 import { platform } from "@/lib/platform";
 import { createReceizCommerceAdapter } from "@/lib/receiz/adapter";
 import { loadReceizConnectProfile } from "@/lib/receiz/connect-profile";
-import { buildStoreStateConnectRecord, buildStoreStateRecord } from "@/lib/receiz/proof-state";
+import { buildStoreStateRecord } from "@/lib/receiz/proof-state";
 import { getServerProofStateStore } from "@/lib/receiz/proof-state-store";
+import { publishReceizStoreState } from "@/lib/receiz/store-state-publication";
 import { receizAccessTokenFromRequest, receizLoginRequired } from "@/lib/receiz/session";
 import { mockStorage } from "@/lib/storage/mock-storage";
 import type { DomainStatus, HostingConfig } from "@/types/domain";
@@ -119,23 +120,6 @@ async function recordReceizHostingEvent(
       recordedAt: new Date().toISOString(),
       data
     });
-  } catch (error) {
-    return { ok: false, error: errorMessage(error) };
-  }
-}
-
-async function recordReceizStoreState(accessToken: string | undefined, record: ReturnType<typeof buildStoreStateRecord>) {
-  if (!accessToken) {
-    return { ok: false, skipped: true, error: "receiz_login_required" };
-  }
-
-  try {
-    const receiz = createReceizCommerceAdapter({
-      baseUrl: process.env.RECEIZ_BASE_URL,
-      accessToken
-    });
-
-    return await receiz.connectRecord(buildStoreStateConnectRecord(record));
   } catch (error) {
     return { ok: false, error: errorMessage(error) };
   }
@@ -364,7 +348,7 @@ export async function POST(request: NextRequest) {
     });
     const proofStore = await getServerProofStateStore(storeStateRecord.merchantReceizId);
     await proofStore.admitStoreRecord(storeStateRecord);
-    const storeStateReceizRecord = await recordReceizStoreState(accessToken, storeStateRecord);
+    const storeStateReceizRecord = await publishReceizStoreState(accessToken, storeStateRecord);
 
     if (!receizWriteSucceeded(storeStateReceizRecord)) {
       const error = isRecord(storeStateReceizRecord) ? String(storeStateReceizRecord.error ?? "receiz_store_state_record_failed") : "receiz_store_state_record_failed";
