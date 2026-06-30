@@ -2,11 +2,17 @@ import { NextRequest, NextResponse } from "next/server";
 import { hostContextFromHost } from "@/lib/hosting/host-context";
 import { platform } from "@/lib/platform";
 import { createReceizCommerceAdapter } from "@/lib/receiz/adapter";
-import { buildStoreStateRecord, type StoreStateRecord } from "@/lib/receiz/proof-state";
+import {
+  buildStoreStateRecord,
+  isStoreStateRecord,
+  storeStateRecordMatchesTenantHost,
+  type StoreStateRecord
+} from "@/lib/receiz/proof-state";
 import { getServerProofStateStore } from "@/lib/receiz/proof-state-store";
 import { receizAccessTokenFromRequest, receizLoginRequired } from "@/lib/receiz/session";
 import { mockStorage } from "@/lib/storage/mock-storage";
 import { tenantFallbackState } from "@/lib/hosting/tenant-state";
+import { hydrateProofStoreFromReceizStoreState } from "@/lib/receiz/store-state-ledger";
 import type { CommerceState, StorefrontHomepageMode } from "@/types/domain";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -69,9 +75,19 @@ export async function GET(request: NextRequest) {
   const host = request.headers.get("x-forwarded-host") ?? request.headers.get("host") ?? platform.domain;
   const hostContext = hostContextFromHost(host);
   const proofStore = await getServerProofStateStore();
+  const tenantHost = hostContext.tenantHost ?? hostContext.host;
+
+  if (hostContext.surface === "tenant") {
+    await hydrateProofStoreFromReceizStoreState(proofStore, tenantHost);
+  }
+
+  const trustedPublishedState =
+    hostContext.surface === "tenant" &&
+    proofStore.records().some((record) => isStoreStateRecord(record) && storeStateRecordMatchesTenantHost(record, tenantHost));
+
   const projectedState =
     hostContext.surface === "tenant"
-      ? tenantFallbackState(proofStore.projectHost(mockStorage.getState(), hostContext.tenantHost ?? hostContext.host), hostContext)
+      ? tenantFallbackState(proofStore.projectHost(mockStorage.getState(), tenantHost), hostContext, { trustedPublishedState })
       : mockStorage.getState();
 
   return NextResponse.json({

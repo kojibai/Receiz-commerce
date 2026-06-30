@@ -48,4 +48,39 @@ describe("tenant fallback state", () => {
     assert.equal(state.auth.receizId.localProofVerified, false);
     assert.equal(state.hosting.customDomain.domain, "");
   });
+
+  it("trusts a published tenant record even when unedited seed copy remains", () => {
+    const publishedTenant = {
+      ...baseState(),
+      brand: {
+        ...baseState().brand,
+        name: "Bjklock Supply",
+        logoText: "bjk"
+      },
+      storefront: {
+        ...baseState().storefront,
+        headline: "Bjklock proof shop",
+        heroBody: "This is the real saved store."
+      },
+      hosting: {
+        ...baseState().hosting,
+        tenantSlug: "bjklock",
+        subdomain: "bjklock.receiz.app",
+        customDomain: {
+          ...baseState().hosting.customDomain,
+          domain: "shop.bjklock.com"
+        }
+      }
+    };
+    const state = tenantFallbackState(
+      publishedTenant,
+      hostContextFromHost("bjklock.localhost:3001"),
+      { trustedPublishedState: true }
+    );
+
+    assert.equal(state.brand.name, "Bjklock Supply");
+    assert.equal(state.storefront.headline, "Bjklock proof shop");
+    assert.equal(state.storefront.heroBody, "This is the real saved store.");
+    assert.equal(state.hosting.customDomain.domain, "shop.bjklock.com");
+  });
 });

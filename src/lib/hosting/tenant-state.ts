@@ -142,7 +142,11 @@ function containsTemplateBrand(state: CommerceState, brandName: string) {
   );
 }
 
-export function tenantFallbackState(state: CommerceState, hostContext: HostContext): CommerceState {
+export function tenantFallbackState(
+  state: CommerceState,
+  hostContext: HostContext,
+  options: { trustedPublishedState?: boolean } = {}
+): CommerceState {
   if (hostContext.surface !== "tenant") return state;
 
   if (hostContext.tenantSlug) {
@@ -150,7 +154,7 @@ export function tenantFallbackState(state: CommerceState, hostContext: HostConte
     const isStoredTenant = state.hosting.subdomain === subdomain;
     const brandName = isStoredTenant ? state.brand.name : titleFromHost(hostContext.tenantSlug);
     const logoText = logoTextFromHost(hostContext.tenantSlug);
-    const trustedStoredTenant = isStoredTenant && !containsTemplateBrand(state, brandName);
+    const trustedStoredTenant = isStoredTenant && (options.trustedPublishedState || !containsTemplateBrand(state, brandName));
     const contentState = trustedStoredTenant ? state : tenantSafeFallbackContent(state, brandName);
 
     return {
@@ -219,7 +223,7 @@ export function tenantFallbackState(state: CommerceState, hostContext: HostConte
     const isStoredDomain = state.hosting.customDomain.domain === hostContext.customDomain;
     const brandName = isStoredDomain ? state.brand.name : titleFromHost(hostContext.customDomain);
     const logoText = logoTextFromHost(hostContext.customDomain);
-    const trustedStoredDomain = isStoredDomain && !containsTemplateBrand(state, brandName);
+    const trustedStoredDomain = isStoredDomain && (options.trustedPublishedState || !containsTemplateBrand(state, brandName));
     const contentState = trustedStoredDomain ? state : tenantSafeFallbackContent(state, brandName);
 
     return {

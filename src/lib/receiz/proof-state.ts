@@ -166,7 +166,7 @@ export function isCommerceEventRecord(value: unknown): value is CommerceEventRec
   return isRecord(value) && value.schema === COMMERCE_EVENT_SCHEMA && isRecord(value.data);
 }
 
-function matchesTenantHost(record: StoreStateRecord, tenantHost: string) {
+export function storeStateRecordMatchesTenantHost(record: StoreStateRecord, tenantHost: string) {
   const normalized = tenantHost.trim().toLowerCase();
   return (
     record.tenantHost === normalized ||
@@ -182,7 +182,7 @@ export function projectStoreStateFromRecords(
 ): CommerceState {
   const latest = records
     .filter(isStoreStateRecord)
-    .filter((record) => matchesTenantHost(record, tenantHost))
+    .filter((record) => storeStateRecordMatchesTenantHost(record, tenantHost))
     .sort((left, right) => Date.parse(right.recordedAt) - Date.parse(left.recordedAt))[0];
 
   if (!latest) return baseState;
