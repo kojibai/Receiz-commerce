@@ -19,6 +19,7 @@
     "src/lib/pwa/manifest.ts",
     "src/lib/import/commerce-importer.ts",
     "src/lib/media/image-upload.ts",
+    "src/lib/storage/pending-publish.ts",
     "src/lib/hosting/tenant-state.ts",
     "src/lib/hosting/published-state.ts",
     "src/lib/hosting/host-context.ts",

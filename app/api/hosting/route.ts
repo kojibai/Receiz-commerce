@@ -350,6 +350,12 @@ export async function POST(request: NextRequest) {
 
     if (!receizWriteSucceeded(storeStateReceizRecord)) {
       const error = isRecord(storeStateReceizRecord) ? String(storeStateReceizRecord.error ?? "receiz_store_state_record_failed") : "receiz_store_state_record_failed";
+      console.error("[publish] Receiz store-state record failed", {
+        tenantHost: storeStateRecord.tenantHost,
+        merchantReceizId: storeStateRecord.merchantReceizId,
+        storeStateRecordId: storeStateRecord.id,
+        error
+      });
 
       return NextResponse.json(
         {
@@ -361,6 +367,12 @@ export async function POST(request: NextRequest) {
         { status: error === "receiz_login_required" ? 401 : 502 }
       );
     }
+
+    console.info("[publish] Receiz store-state record written", {
+      tenantHost: storeStateRecord.tenantHost,
+      merchantReceizId: storeStateRecord.merchantReceizId,
+      storeStateRecordId: storeStateRecord.id
+    });
 
     const receizRecord = await recordReceizHostingEvent(accessToken, "store.published", {
       hosting,

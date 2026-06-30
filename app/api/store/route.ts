@@ -90,6 +90,14 @@ export async function GET(request: NextRequest) {
   const projectionSource = hostContext.surface === "tenant" ? storeStateProjectionSource(proofStore.records(), tenantHost) : "platform";
   const trustedPublishedState = projectionSource === "published";
 
+  if (hostContext.surface === "tenant" && projectionSource === "fallback") {
+    console.info("[store] tenant fallback projection", {
+      tenantHost,
+      recovered: recovery.recovered,
+      entries: proofStore.snapshot().head.count
+    });
+  }
+
   const projectedState =
     hostContext.surface === "tenant"
       ? tenantFallbackState(proofStore.projectHost(mockStorage.getState(), tenantHost), hostContext, { trustedPublishedState })

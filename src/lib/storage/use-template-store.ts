@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createReceizClient, type ReceizIdentityAccountProjection } from "@receiz/sdk";
 import { seedCommerceState } from "@/data/seed";
 import {
@@ -11,6 +11,7 @@ import {
 import { BASE_STORAGE_KEY, currentHostContext, hostContextFromHost, type HostContext } from "@/lib/hosting/host-context";
 import type { CommerceImportInput, CommerceImportResult } from "@/lib/import/commerce-importer";
 import { selectClientInitialState } from "@/lib/storage/client-state";
+import { pendingPublishStorageKey, shouldResumePendingPublish } from "@/lib/storage/pending-publish";
 import type { BlogPost, CommerceState, CustomerAccount, Product, ProofEvent, SitePage, StorefrontHomepageMode } from "@/types/domain";
 import { makeId } from "@/lib/utils";
 
@@ -435,7 +436,36 @@ async function fetchReceizProfile(): Promise<ReceizProfileResponse | null> {
   return (await response.json()) as ReceizProfileResponse;
 }
 
-async function postJson<T>(url: string, body: Record<string, unknown>): Promise<T> {
+class ReceizLoginRequiredError extends Error {
+  connectUrl: string;
+
+  constructor(connectUrl: string) {
+    super("Receiz login required");
+    this.name = "ReceizLoginRequiredError";
+    this.connectUrl = connectUrl;
+  }
+}
+
+function markPendingPublish(storageKey: string) {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(pendingPublishStorageKey(storageKey), JSON.stringify({ createdAt: Date.now() }));
+}
+
+function clearPendingPublish(storageKey: string) {
+  if (typeof window === "undefined") return;
+  window.localStorage.removeItem(pendingPublishStorageKey(storageKey));
+}
+
+function hasPendingPublish(storageKey: string) {
+  if (typeof window === "undefined") return false;
+  return Boolean(window.localStorage.getItem(pendingPublishStorageKey(storageKey)));
+}
+
+async function postJson<T>(
+  url: string,
+  body: Record<string, unknown>,
+  options: { deferLoginRedirect?: boolean } = {}
+): Promise<T> {
   const response = await fetch(url, {
     method: "POST",
     headers: { "content-type": "application/json" },
@@ -444,8 +474,10 @@ async function postJson<T>(url: string, body: Record<string, unknown>): Promise<
   const payload = await response.json().catch(() => ({}));
 
   if (response.status === 401 && typeof payload.connectUrl === "string") {
-    window.location.assign(payload.connectUrl);
-    throw new Error("Receiz login required");
+    if (!options.deferLoginRedirect) {
+      window.location.assign(payload.connectUrl);
+    }
+    throw new ReceizLoginRequiredError(payload.connectUrl);
   }
 
   if (!response.ok || payload.ok === false) {
@@ -530,6 +562,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
   const [state, setState] = useState<CommerceState>(initialState);
   const [hydrated, setHydrated] = useState(false);
   const [hostContext, setHostContext] = useState<HostContext>(() => initialHostContext ?? hostContextFromHost(null));
+  const publishResumeAttemptedRef = useRef(false);
 
   useEffect(() => {
     const context = currentHostContext();
@@ -959,12 +992,15 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
             ...current,
             hosting: { ...current.hosting, published: true, lastPublishedAt: "now" }
           };
+          const publishHostContext = currentHostContext();
+          markPendingPublish(publishHostContext.storageKey);
 
           void postJson<{ hosting: CommerceState["hosting"] }>("/api/hosting", {
             action: "publish",
             state: publishedStatePayload(publishRequestState)
-          })
+          }, { deferLoginRedirect: true })
             .then((result) => {
+              clearPendingPublish(publishHostContext.storageKey);
               setState((latest) => ({
                 ...latest,
                 hosting: result.hosting,
@@ -972,6 +1008,12 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
               }));
             })
             .catch((error) => {
+              if (error instanceof ReceizLoginRequiredError) {
+                window.location.assign(error.connectUrl);
+                return;
+              }
+
+              clearPendingPublish(publishHostContext.storageKey);
               setState((latest) => ({
                 ...latest,
                 proofEvents: [
@@ -1264,6 +1306,23 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
     }),
     []
   );
+
+  useEffect(() => {
+    if (
+      !hydrated ||
+      publishResumeAttemptedRef.current ||
+      hostContext.surface !== "platform" ||
+      typeof window === "undefined" ||
+      !shouldResumePendingPublish(window.location.search) ||
+      !hasPendingPublish(hostContext.storageKey)
+    ) {
+      return;
+    }
+
+    publishResumeAttemptedRef.current = true;
+    clearPendingPublish(hostContext.storageKey);
+    actions.publish();
+  }, [actions, hostContext.storageKey, hostContext.surface, hydrated]);
 
   return { state, actions, hydrated, hostContext };
 }
