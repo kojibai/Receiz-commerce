@@ -5,6 +5,7 @@ import { Icons } from "@/components/icons";
 import { BrandMark, Button, StatusPill } from "@/components/ui";
 import type { CommerceState } from "@/types/domain";
 import { cx } from "@/lib/utils";
+import { platform } from "@/lib/platform";
 
 const primaryNav = [
   ["Storefront", Icons.home],
@@ -31,7 +32,7 @@ export function StoreSidebar({ state }: { state: CommerceState }) {
         <span className="receiz-mark">
           <Icons.receiz size={23} />
         </span>
-        <strong>Receiz Commerce Kit</strong>
+        <strong>{platform.name}</strong>
       </Link>
 
       <nav className="nav-stack" aria-label="Primary">
@@ -62,7 +63,7 @@ export function StoreSidebar({ state }: { state: CommerceState }) {
 
       <a className="fork-card" href="https://github.com" target="_blank" rel="noreferrer">
         <Icons.github size={23} />
-        <strong>Fork this template</strong>
+        <strong>{platform.repoLabel}</strong>
       </a>
 
       <div className="plan-card">

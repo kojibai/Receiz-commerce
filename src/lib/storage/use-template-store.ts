@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { createReceizClient, type ReceizIdentityAccountProjection } from "@receiz/sdk";
 import { seedCommerceState } from "@/data/seed";
 import type { CommerceState, ProofEvent } from "@/types/domain";
 import { makeId } from "@/lib/utils";
 
-const STORAGE_KEY = "receiz-commerce-kit-state-v1";
+const STORAGE_KEY = "receiz-app-commerce-state-v1";
 
 function readState(): CommerceState {
   if (typeof window === "undefined") return seedCommerceState;
@@ -38,6 +39,22 @@ function makeEvent(type: ProofEvent["type"], detail: string): ProofEvent {
     status,
     timestampLabel: "now"
   };
+}
+
+function identityArtifactKind(file: File): CommerceState["auth"]["receizId"]["artifactKind"] {
+  const name = file.name.toLowerCase();
+
+  if (name.includes("record")) return "identity_record";
+  if (file.type.startsWith("image/")) return "identity_seal";
+  if (name.includes("receiz-id")) return "receiz_id";
+
+  return "receiz_key";
+}
+
+function accountHandle(projection: ReceizIdentityAccountProjection | null, fallback: string) {
+  const username = projection?.owner.username?.trim();
+  if (!username) return fallback;
+  return username.includes(".") ? username : `${username}.receiz.id`;
 }
 
 export function useTemplateStore() {
@@ -94,10 +111,10 @@ export function useTemplateStore() {
             mode,
             label:
               mode === "mock"
-                ? "Mock checkout"
+                ? "Receiz sandbox"
                 : mode === "live"
-                  ? "Live payments"
-                  : "Redirect checkout"
+                  ? "Receiz checkout"
+                  : "Receiz delegated checkout"
           }
         }));
       },
@@ -187,6 +204,62 @@ export function useTemplateStore() {
             },
             proofEvents: [
               makeEvent("RECEIZ_ID_CONNECTED", `${handle} created`),
+              ...current.proofEvents
+            ]
+          };
+        });
+      },
+      async restoreReceizIdentityArtifact(file: File) {
+        const client = createReceizClient();
+        let projection: ReceizIdentityAccountProjection | null = null;
+        let failed = false;
+
+        try {
+          const keyFile = await client.identity.readArtifact(file);
+          projection = await client.identity.projectAccount(keyFile);
+        } catch {
+          failed = true;
+        }
+
+        setState((current) => {
+          const artifactKind = identityArtifactKind(file);
+          const handle = accountHandle(projection, current.auth.receizId.handle);
+          const displayName = projection?.owner.displayName ?? current.auth.receizId.displayName;
+          const localProofVerified = Boolean(projection?.portableStateVerified);
+          const portableStateStatus = projection?.portableStateStatus ?? (failed ? "invalid" : "missing");
+          const artifactStatus = localProofVerified ? "verified" : failed ? "pending" : "restored";
+          const statusLabel = localProofVerified
+            ? "Identity artifact locally verified"
+            : failed
+              ? "Identity artifact needs a valid Receiz proof"
+              : "Identity artifact restored";
+
+          return {
+            ...current,
+            auth: {
+              ...current.auth,
+              receizId: {
+                ...current.auth.receizId,
+                connected: !failed,
+                handle,
+                displayName,
+                keyId: projection?.keyId ?? current.auth.receizId.keyId,
+                loginMode: "restored_identity_artifact",
+                accountImageLabel: file.name,
+                artifactKind,
+                artifactStatus,
+                portableStateStatus,
+                localProofVerified,
+                statusLabel
+              }
+            },
+            proofEvents: [
+              makeEvent(
+                "RECEIZ_ID_CONNECTED",
+                failed
+                  ? `${file.name} could not be restored`
+                  : `${handle} restored from ${artifactKind.replace(/_/g, " ")}`
+              ),
               ...current.proofEvents
             ]
           };

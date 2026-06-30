@@ -3,6 +3,7 @@
 import { Icons } from "@/components/icons";
 import { Button, Panel, SectionHeader, StatusPill } from "@/components/ui";
 import type { BillingConfig, HostingConfig } from "@/types/domain";
+import { platform } from "@/lib/platform";
 
 export function HostingBillingPanel({
   billing,
@@ -52,8 +53,8 @@ export function HostingBillingPanel({
       </div>
       <div className="settings-list">
         <div><span>Trial</span><strong>{billing.trialEndsAt}</strong></div>
-        <div><span>Hosted domain</span><strong>{hosting.subdomain}</strong></div>
-        <div><span>Custom domain</span><strong>{hosting.customDomain.domain}</strong></div>
+        <div><span>{platform.freeSubdomainLabel}</span><strong>{hosting.subdomain}</strong></div>
+        <div><span>{platform.customDomainLabel}</span><strong>{hosting.customDomain.domain}</strong></div>
       </div>
     </Panel>
   );

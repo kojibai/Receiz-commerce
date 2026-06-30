@@ -8,6 +8,7 @@ import { AdminShell } from "@/features/admin/AdminShell";
 import { BrandPanel } from "@/features/admin/BrandPanel";
 import { HostingBillingPanel } from "@/features/admin/HostingBillingPanel";
 import { HostingDomainsPanel } from "@/features/admin/HostingDomainsPanel";
+import { LaunchRailsPanel } from "@/features/admin/LaunchRailsPanel";
 import { PageBuilderPanel } from "@/features/admin/PageBuilderPanel";
 import { ProductEditorPanel } from "@/features/admin/ProductEditorPanel";
 import { PublishChecklist } from "@/features/admin/PublishChecklist";
@@ -16,14 +17,15 @@ import { RewardsRulesPanel } from "@/features/admin/RewardsRulesPanel";
 
 export function AdminStudio() {
   const { state, actions } = useTemplateStore();
+  const campaignName = state.campaigns[0]?.name ?? "Reward Challenge";
 
   return (
     <AdminShell onPublish={actions.publish} state={state}>
       <div className="admin-content">
         <div className="admin-heading">
           <div>
-            <h1>No-code setup</h1>
-            <p>Design, customize, and launch your proof-sealed commerce experience.</p>
+            <h1>Launch your ecommerce site</h1>
+            <p>No-code setup for a hosted store, Receiz ID, checkout, proof objects, rewards, and domains.</p>
           </div>
         </div>
 
@@ -33,11 +35,12 @@ export function AdminStudio() {
           <AdminStatusCard icon={<Icons.lock size={22} />} label="Custom domain ready" value="Connected" detail={state.hosting.customDomain.domain} />
           <AdminStatusCard icon={<Icons.receiz size={22} />} label="Receiz ID" value="Connected" detail={state.auth.receizId.handle} />
           <AdminStatusCard icon={<Icons.creditCard size={22} />} label="Hosting billing" value={state.billing.status} detail={state.billing.monthlyTotalLabel} />
-          <AdminStatusCard icon={<Icons.game size={22} />} label="Game enabled" value={state.game.enabled ? "Enabled" : "Off"} detail="Boost Coffee Challenge" />
+          <AdminStatusCard icon={<Icons.game size={22} />} label="Game enabled" value={state.game.enabled ? "Enabled" : "Off"} detail={campaignName} />
         </div>
 
         <div className="admin-layout-grid">
           <div className="admin-main-grid">
+            <LaunchRailsPanel state={state} />
             <BrandPanel
               onBrandUpdate={actions.updateBrand}
               onSaveTheme={actions.saveTheme}
@@ -45,6 +48,7 @@ export function AdminStudio() {
             />
             <ReceizIdentityPanel
               onCreate={actions.createReceizId}
+              onRestoreArtifact={actions.restoreReceizIdentityArtifact}
               onSignIn={actions.signInWithReceizId}
               receizId={state.auth.receizId}
             />
@@ -55,7 +59,7 @@ export function AdminStudio() {
               onSelectPlan={actions.selectHostingPlan}
             />
             <PageBuilderPanel pages={state.pages} />
-            <ProductEditorPanel products={state.products} />
+            <ProductEditorPanel brandLabel={state.brand.logoText} products={state.products} />
             <RewardsRulesPanel rules={state.rewardRules} />
             <HostingDomainsPanel
               hosting={state.hosting}
@@ -67,7 +71,7 @@ export function AdminStudio() {
               <div className="game-admin-row">
                 <div className="game-admin-thumb" />
                 <div>
-                  <strong>Boost Coffee Challenge</strong>
+                  <strong>{campaignName}</strong>
                   <span>Collect beans, unlock perks.</span>
                 </div>
                 <button className={state.game.enabled ? "toggle active" : "toggle"} onClick={actions.toggleGame} type="button">
@@ -96,9 +100,9 @@ export function AdminStudio() {
               <SectionHeader title="Checkout mode" />
               <div className="radio-list">
                 {[
-                  ["live", "Live payments", "Accept real payments on your store."],
-                  ["mock", "Mock checkout", "Test orders without charging customers."],
-                  ["external", "Redirect to external", "Send customers to your existing checkout."]
+                  ["live", "Receiz checkout", "Accept Receiz-powered payments on your store."],
+                  ["mock", "Receiz sandbox", "Test proof-sealed orders without charging customers."],
+                  ["external", "Receiz delegated checkout", "Use a hosted Receiz checkout handoff when needed."]
                 ].map(([mode, label, desc]) => (
                   <button
                     className={state.checkout.mode === mode ? "radio-card active" : "radio-card"}
@@ -141,11 +145,11 @@ export function AdminStudio() {
                 </div>
                 <div className="preview-hero">
                   <div>
-                    <h3>Collect beans. Unlock more.</h3>
-                    <p>Rewards that fuel your day.</p>
+                    <h3>{state.brand.tagline}</h3>
+                    <p>{state.storefront.heroBody}</p>
                     <Button variant="primary">Shop now</Button>
                   </div>
-                  <div className="preview-cup">boost</div>
+                  <div className="preview-cup">{state.brand.logoText}</div>
                 </div>
                 <div className="preview-actions">
                   <span>Collect beans</span>

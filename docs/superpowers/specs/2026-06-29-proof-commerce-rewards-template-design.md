@@ -161,9 +161,9 @@ Lets the storefront sell products, digital goods, benefits, access, services, or
 
 Checkout behavior:
 
-- Cart persists locally in mock mode.
-- Mock checkout creates an order without payment credentials.
-- Provider checkout can be wired through the checkout adapter.
+- Cart persists locally only for demo composition.
+- Receiz sandbox checkout creates an order without payment credentials.
+- Receiz checkout can be wired through the SDK adapter for production payments.
 - Checkout can require or allow a customer account depending on admin settings.
 - Successful checkout can issue proof events, rewards, assets, or benefits.
 - Successful checkout can seal the order and related reward/asset events through the Receiz adapter.
@@ -350,12 +350,12 @@ Shows:
 
 Use Next.js App Router + TypeScript for the implementation. This keeps storefront pages, admin pages, backend route handlers, SDK boundaries, and deployment in one forkable app.
 
-Recommended persistence approach:
+Recommended proof-state approach:
 
-- **Mock mode:** works immediately after clone with seed data and browser-local admin edits.
-- **Launch mode:** uses a database adapter for persistent store/admin data.
+- **Demo mode:** works immediately after clone with seed data and browser-local admin edits.
+- **Launch mode:** uses Receiz proof objects, identity artifacts, verified appends, ownership appends, and settlement ledger rows as the product truth.
 
-The implementation should isolate persistence behind an app-level storage API so the template can support Supabase, Vercel Postgres, Neon, SQLite, or another database later without rewriting the UI.
+The implementation should isolate local demo composition from Receiz truth so the template does not introduce Supabase, Stripe, or a parallel database as an authority layer. Durable proof memory stores admitted truth; it is not a cache and should only append verified additions after the known Kai/proof head.
 
 Initial storage methods:
 
@@ -388,12 +388,12 @@ Initial storage methods:
 
 ## Auth and Account Boundary
 
-The template should provide customer/admin account flows without hard-coding one provider into every feature.
+The template should provide customer/admin account flows without inventing a parallel account authority.
 
 Auth modes:
 
-- **Mock auth:** default. Lets the template run immediately with a sample admin and sample customer.
-- **Provider auth:** adapter boundary for Supabase Auth, Clerk, Auth.js, or another provider.
+- **Demo auth:** lets the template run immediately with a sample admin and sample customer.
+- **Receiz ID:** create, continue, or restore the same account from Receiz ID, Receiz Key, Identity Record, or Identity Seal.
 
 Initial auth methods:
 
@@ -403,7 +403,7 @@ Initial auth methods:
 - `requireAdmin()`
 - `requireCustomer()`
 
-Admin access can be mocked locally for the starter. Production deployments should replace the mock adapter with a real auth provider before handling real customer data.
+Admin access can be simulated locally for the starter. Production deployments should use Receiz ID and Connect/OIDC boundaries before handling real customer data.
 
 ## Checkout Boundary
 
@@ -411,10 +411,10 @@ The app should support checkout without storing card data directly.
 
 Checkout modes:
 
-- **Mock checkout:** default. Lets the template run immediately and creates local orders.
-- **Provider checkout:** adapter boundary for Stripe or another payment provider.
+- **Receiz sandbox:** lets the template run immediately and creates proof-sealed local sample orders.
+- **Receiz checkout:** uses the SDK checkout rail for production payments.
 
-The template must not implement raw card handling. Payment provider setup should live behind a `checkout` adapter so developers can replace it.
+The template must not implement raw card handling or a non-Receiz payment authority. Checkout should call the Receiz SDK rail.
 
 Initial checkout methods:
 
@@ -424,12 +424,12 @@ Initial checkout methods:
 
 ## Hosting and Domain Boundary
 
-The template should model hosted publishing without locking the app to one provider in the code.
+The template should model hosted publishing with Receiz proof objects as product truth and Vercel only as an optional deployment/domain automation layer.
 
 Hosting modes:
 
-- **Mock hosted mode:** default. Shows a working subdomain/custom-domain setup flow in admin and stores state locally.
-- **Hosted platform mode:** future adapter for managed subdomains, custom domains, billing, and deployment.
+- **Demo hosted mode:** shows a working subdomain/custom-domain setup flow in admin and stores composition state locally.
+- **Receiz hosted mode:** managed subdomains, custom domains, billing plans, and deployment automation around Receiz rails.
 - **Self-hosted mode:** developer forks the repo and deploys to their own infrastructure.
 
 Initial hosting methods:
@@ -574,12 +574,12 @@ Suggested modules:
 - `src/features/admin`: admin shell, dashboard, settings
 - `src/features/hosting`: hosted subdomain, custom domain, publishing, self-host/fork surfaces
 - `src/features/receiz`: SDK status and proof trail
-- `src/features/checkout`: cart, mock checkout, checkout adapter
-- `src/lib/auth`: auth adapter and mock auth provider
-- `src/lib/hosting`: hosting/domain adapter and mock hosted provider
+- `src/features/checkout`: cart, Receiz sandbox checkout, checkout adapter
+- `src/lib/auth`: Receiz ID adapter and local demo auth
+- `src/lib/hosting`: hosting/domain adapter and local hosted demo state
 - `src/lib/storage`: storage adapter and seed data
-- `src/lib/receiz`: SDK adapter and mock adapter
-- `src/lib/checkout`: checkout adapter and mock provider
+- `src/lib/receiz`: SDK adapter and proof rails
+- `src/lib/checkout`: Receiz checkout adapter and sandbox checkout
 - `src/types`: shared domain types
 
 Keep pages as composition glue. Avoid one giant component or one giant state file.
@@ -612,7 +612,7 @@ The template must be interactive enough to prove the product loop:
 - View proof events.
 - Claim, redeem, share, list, sell, and trade reward or asset actions locally.
 
-The app can simulate provider-backed state locally, but the state transitions should be real in the browser.
+The app can simulate Receiz-backed product state locally, but the state transitions should be real in the browser.
 
 ## Non-Goals
 
@@ -621,7 +621,7 @@ This template will not include:
 - Proprietary Receiz marketplace economics.
 - Raw card handling or direct payment credential storage.
 - Real production fulfillment.
-- Production-grade auth without configuring a real provider.
+- Production-grade auth without configuring Receiz ID and Connect/OIDC.
 - Real DNS or managed hosting automation in the first template implementation.
 - Real billing for hosted plans in the first template implementation.
 - A complex custom game engine.

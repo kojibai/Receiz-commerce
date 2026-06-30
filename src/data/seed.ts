@@ -1,4 +1,5 @@
 import type { CommerceState } from "@/types/domain";
+import { platform } from "@/lib/platform";
 
 const now = "2026-06-29T18:00:00.000Z";
 
@@ -25,7 +26,7 @@ export const seedCommerceState: CommerceState = {
   },
   hosting: {
     mode: "mock_hosted",
-    subdomain: "boost.receiz.store",
+    subdomain: platform.defaultSubdomain,
     customDomain: {
       domain: "www.boostcoffee.com",
       status: "ready",
@@ -51,16 +52,16 @@ export const seedCommerceState: CommerceState = {
     plans: [
       {
         id: "starter",
-        name: "Starter",
-        priceLabel: "$19 / mo",
-        description: "Launch a branded Receiz site on a hosted subdomain.",
+        name: "Free",
+        priceLabel: "$0 / mo",
+        description: `Launch on a ${platform.domain} subdomain with Receiz primitives built in.`,
         included: ["Hosted storefront", "Receiz ID login", "Proof-sealed orders", "Basic rewards"]
       },
       {
         id: "pro",
         name: "Pro",
         priceLabel: "$49 / mo",
-        description: "Custom domain, advanced rewards, assets, and game modules.",
+        description: "Custom domain, production hosting, advanced rewards, assets, and game modules.",
         included: ["Custom domain", "Receized assets", "Reward game", "Theme studio"],
         recommended: true
       },
@@ -68,8 +69,8 @@ export const seedCommerceState: CommerceState = {
         id: "scale",
         name: "Scale",
         priceLabel: "$199 / mo",
-        description: "Higher usage, teams, analytics, and production provider adapters.",
-        included: ["Team seats", "Priority hosting", "Advanced analytics", "Provider hooks"]
+        description: "Higher usage, teams, analytics, and advanced Receiz rails.",
+        included: ["Team seats", "Priority hosting", "Advanced analytics", "Receiz hooks"]
       }
     ]
   },
@@ -426,7 +427,7 @@ export const seedCommerceState: CommerceState = {
   },
   checkout: {
     mode: "mock",
-    label: "Mock checkout"
+    label: "Receiz sandbox"
   },
   auth: {
     admin: {
@@ -453,12 +454,20 @@ export const seedCommerceState: CommerceState = {
       displayName: "Boost Coffee",
       keyId: "rzid_demo_boost_88421",
       loginMode: "existing_receiz_id",
+      accountImageLabel: "Identity Seal image",
+      artifactKind: "identity_seal",
+      artifactStatus: "verified",
+      portableStateStatus: "verified",
+      localProofVerified: true,
+      restoreSources: ["Receiz Key", "Identity Record", "Identity Seal image"],
       oneClickLogin: true,
       existingIdsSupported: true,
       sdkHelpers: [
         "createReceizIdIdentity",
         "buildReceizIdContinueRequest",
         "projectReceizIdentityAccount",
+        "readReceizIdentityArtifact",
+        "verifyReceizIdentityLoginProof",
         "signReceizIdentityLoginProof"
       ],
       statusLabel: "Receiz ID connected"

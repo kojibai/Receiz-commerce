@@ -11,7 +11,7 @@ export const mockAuth = {
   },
   getReceizIdAuthorizeUrl(origin = getConfiguredSiteOrigin()) {
     return receizCommerceAdapter.buildReceizIdAuthorizeUrl({
-      clientId: process.env.RECEIZ_CLIENT_ID ?? "receiz-commerce-kit-demo",
+      clientId: process.env.RECEIZ_CLIENT_ID ?? "receiz-app-commerce-demo",
       redirectUri: getReceizRedirectUri(origin),
       codeChallenge: "demo-code-challenge",
       usernameHint: seedCommerceState.auth.receizId.handle

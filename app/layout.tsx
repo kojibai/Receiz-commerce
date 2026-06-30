@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
+import { platform } from "@/lib/platform";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Receiz Commerce Kit",
-  description: "Proof-sealed commerce, rewards, assets, and optional reward games."
+  title: platform.productName,
+  description: "Launch a proof-sealed ecommerce site with Receiz ID, checkout, rewards, assets, and domains."
 };
 
 export default function RootLayout({

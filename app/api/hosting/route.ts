@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { mockHosting } from "@/lib/hosting/mock-hosting";
+import { platform } from "@/lib/platform";
 
 export async function GET() {
   return NextResponse.json({
@@ -27,7 +28,7 @@ export async function POST(request: Request) {
     });
   }
 
-  const subdomain = String(body.subdomain ?? "boost.receiz.store");
+  const subdomain = String(body.subdomain ?? platform.defaultSubdomain);
   return NextResponse.json({
     ok: true,
     action,

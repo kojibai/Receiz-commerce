@@ -1,6 +1,6 @@
-# Receiz Commerce Kit
+# Receiz.app Commerce Cloud
 
-Receiz Commerce Kit is a forkable, full-stack proof-sealed commerce template. It gives brands a Shopify-style business website, state-of-the-art mobile storefront, customer account area, no-code admin studio, hosted-domain mock flow, hosting billing, checkout adapter, Receiz SDK adapter, Receiz ID account flow, rewards, Receized assets, and an optional reward game.
+Receiz.app Commerce Cloud is both a SaaS product and a forkable ecommerce template. Non-coders can launch a mobile-friendly ecommerce site on a free `*.receiz.app` subdomain, customize the brand in a no-code studio, connect Receiz primitives, and upgrade to paid custom-domain hosting. Developers can fork the same codebase and build custom Receiz-powered commerce experiences.
 
 The core verb is **seal**. Products, orders, rewards, assets, and game actions can be sealed with Receiz.
 
@@ -17,23 +17,23 @@ Open:
 - Admin studio: `http://localhost:3000/admin`
 - Customer account: `http://localhost:3000/account`
 
-## Modes
+## Receiz Rails
 
-The template runs immediately in mock mode:
+Receiz.app Commerce Cloud uses Receiz as the account, payment, proof, reward, ledger, and asset rail. The app can still run locally with demo UI state, but production truth comes from Receiz proof objects, identity artifacts, verified appends, ownership appends, and settlement ledger rows.
 
-- Mock auth: sample admin and customer
-- Mock checkout: creates local orders without handling payment cards
-- Mock hosting: claims a sample subdomain, custom domain, hosting plan, and billing state
-- Mock Receiz: imports `@receiz/sdk` and exposes template-level seal methods
-- Mock Receiz ID: demonstrates existing Receiz ID login and new Receiz ID creation boundaries
+The SDK integration follows the Receiz order:
 
-Live providers are intentionally isolated behind adapters:
+- Verify or validate carried proof truth.
+- Project it immediately for first paint.
+- Admit it once into durable proof memory.
+- Resume from the known Kai/proof head.
+- Append later verified additions without rediscovering known truth.
+
+No Supabase, Stripe, or app database is required for product truth. Local browser state in this template is demo composition only; proof memory is admitted proof truth, not a cache.
+
+The main Receiz adapter is:
 
 - `src/lib/receiz/adapter.ts`
-- `src/lib/checkout/mock-checkout.ts`
-- `src/lib/auth/mock-auth.ts`
-- `src/lib/hosting/mock-hosting.ts`
-- `src/lib/storage/mock-storage.ts`
 
 ## No-Code Admin
 
@@ -45,11 +45,17 @@ The admin studio lets an operator customize:
 - Products and collections
 - Rewards and reward rules
 - Receized assets
-- Receiz ID login and account creation
+- Receiz ID login, account creation, and identity artifact restore
 - Game enabled/off
 - Checkout mode
-- Hosted subdomain, custom domain, hosting plan, and billing method
+- Free hosted subdomain, paid custom domain, hosting plan, and billing method
 - Publish checklist
+
+## Product Model
+
+- Free launch: create, continue, or restore Receiz ID, publish a hosted `*.receiz.app` storefront, customize branding, add products, and use Receiz proof rails.
+- Paid upgrade: connect a custom domain, enable production hosting, configure Receiz checkout, and scale rewards/assets/game modules.
+- Adoption loop: every merchant store uses Receiz ID, Receiz checkout rails, proof objects, rewards, Receized assets, and sealed business events.
 
 ## Mobile Storefront
 
@@ -63,7 +69,7 @@ The public home page behaves like a modern shopping app on mobile:
 
 ## Receiz ID
 
-The template uses Receiz ID as the account layer. Existing Receiz IDs can continue in one click, while new brands or customers can create a Receiz ID from the same flow. The adapter imports SDK identity helpers including `createReceizIdIdentity`, `buildReceizIdContinueRequest`, `projectReceizIdentityAccount`, and `signReceizIdentityLoginProof` through `@receiz/sdk`.
+The template uses Receiz ID as the account layer. Existing Receiz IDs can continue in one click, new brands or customers can create a Receiz ID from the same flow, and users can restore the same account from a Receiz Key, Identity Record image, or Identity Seal image. The adapter and admin UI use SDK identity helpers including `createReceizIdIdentity`, `readReceizIdentityArtifact`, `projectReceizIdentityAccount`, `signReceizIdentityLoginProof`, `verifyReceizIdentityLoginProof`, and `buildReceizIdContinueRequest` through `@receiz/sdk`.
 
 ## Vercel Launch
 
@@ -77,31 +83,46 @@ Recommended project settings:
 - Output directory: leave empty/default
 - Node.js: `20.x` or newer
 
-Set these environment variables in Vercel:
+Set these environment variables in Vercel for production Receiz rails:
 
 ```bash
-NEXT_PUBLIC_RECEIZ_MODE=mock
+NEXT_PUBLIC_RECEIZ_MODE=live
 RECEIZ_BASE_URL=https://receiz.com
-RECEIZ_CLIENT_ID=receiz-commerce-kit-demo
+RECEIZ_CLIENT_ID=
+RECEIZ_CLIENT_SECRET=
 RECEIZ_ACCESS_TOKEN=
+RECEIZ_CONNECT_ACCESS_TOKEN=
 
-NEXT_PUBLIC_CHECKOUT_MODE=mock
-CHECKOUT_PROVIDER=mock
-STRIPE_SECRET_KEY=
+NEXT_PUBLIC_AUTH_MODE=receiz_id
+RECEIZ_AUTH_MODE=receiz_id
+RECEIZ_ID_CALLBACK_URL=https://receiz.app/api/auth/receiz/callback
 
-NEXT_PUBLIC_AUTH_MODE=mock
-AUTH_PROVIDER=mock
+NEXT_PUBLIC_CHECKOUT_MODE=receiz
+RECEIZ_CHECKOUT_MODE=receiz
 
-NEXT_PUBLIC_HOSTING_MODE=mock_hosted
-NEXT_PUBLIC_SITE_URL=https://your-project.vercel.app
-NEXT_PUBLIC_DEFAULT_SUBDOMAIN=boost.receiz.store
+NEXT_PUBLIC_HOSTING_MODE=receiz_hosted
+NEXT_PUBLIC_SITE_URL=https://receiz.app
+NEXT_PUBLIC_DEFAULT_SUBDOMAIN=boost.receiz.app
+RECEIZ_ACCOUNT_STATE_MODE=receiz
+
+RECEIZ_WEBHOOK_SECRET=
+RECEIZ_CHECKOUT_WEBHOOK_SECRET=
+RECEIZ_PROOF_WEBHOOK_SECRET=
+RECEIZ_HOSTING_WEBHOOK_SECRET=
+
+VERCEL_TEAM_ID=
+VERCEL_PROJECT_ID=
+VERCEL_API_TOKEN=
+
+RECEIZ_CUSTOM_DOMAIN_PLAN_ID=
+RECEIZ_HOSTING_PRO_PLAN_ID=
 ```
 
-After adding a custom domain, update `NEXT_PUBLIC_SITE_URL` to that custom domain so Receiz ID redirect URLs use the production origin.
+`VERCEL_*` values are only for deployment/custom-domain automation if Vercel is hosting the SaaS. They are not commerce, payment, identity, or proof rails. After changing the production domain, update `NEXT_PUBLIC_SITE_URL` and `RECEIZ_ID_CALLBACK_URL` so Receiz ID redirect URLs use the correct origin. Never expose `RECEIZ_ACCESS_TOKEN`, webhook secrets, client secrets, or `VERCEL_API_TOKEN` with a `NEXT_PUBLIC_` prefix.
 
 ## Developer Fork Path
 
-Developers can fork this repo, replace mock adapters with real providers, and keep the same UI/domain model. The app is structured so provider choices do not leak into page components.
+Developers can fork this repo and build custom commerce modules on the same Receiz SDK boundary. The app is structured so page components render projected proof truth and product controls without inventing a second source of truth.
 
 ## Design References
 

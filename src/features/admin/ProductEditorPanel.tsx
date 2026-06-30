@@ -1,7 +1,13 @@
 import { Button, ProductVisual, Panel, SectionHeader, StatusPill } from "@/components/ui";
 import type { Product } from "@/types/domain";
 
-export function ProductEditorPanel({ products }: { products: Product[] }) {
+export function ProductEditorPanel({
+  brandLabel,
+  products
+}: {
+  brandLabel: string;
+  products: Product[];
+}) {
   return (
     <Panel className="admin-panel">
       <SectionHeader title="Product editor" action={<button className="link-button">View all</button>} />
@@ -15,7 +21,7 @@ export function ProductEditorPanel({ products }: { products: Product[] }) {
         {products.slice(0, 5).map((product) => (
           <div className="admin-product-row" key={product.id}>
             <div>
-              <ProductVisual product={product} />
+              <ProductVisual brandLabel={brandLabel} product={product} />
               <strong>{product.name}</strong>
             </div>
             <span>{product.priceLabel}</span>

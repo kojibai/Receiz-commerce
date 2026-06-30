@@ -2,11 +2,11 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build a full-stack Next.js template for proof-sealed commerce: public storefront, customer account, no-code admin studio, mock backend, Receiz SDK adapter, checkout adapter, hosting/domain mock flow, and optional rewards game.
+**Goal:** Build a full-stack Next.js template for proof-sealed commerce: public storefront, customer account, no-code admin studio, Receiz SDK rails, hosted-domain launch flow, and optional rewards game.
 
-**Architecture:** Use Next.js App Router with TypeScript. Keep all provider-specific behavior behind adapters (`receiz`, `checkout`, `auth`, `hosting`, `storage`) so mock mode runs instantly and live providers can be swapped in later. Implement UI from the saved desktop, mobile, and admin references in `docs/design-references/`.
+**Architecture:** Use Next.js App Router with TypeScript. Keep Receiz-specific behavior behind clear rails (`receiz`, `checkout`, `auth`, `hosting`) so demo mode runs instantly and production mode uses Receiz as the account, payment, proof, reward, ledger, and asset authority. Implement UI from the saved desktop, mobile, and admin references in `docs/design-references/`.
 
-**Tech Stack:** Next.js, React, TypeScript, CSS modules/global CSS, lucide-react, `@receiz/sdk`, local mock adapters.
+**Tech Stack:** Next.js, React, TypeScript, CSS modules/global CSS, lucide-react, `@receiz/sdk`, local demo adapters.
 
 ---
 
@@ -118,7 +118,7 @@ Expose `getCurrentUser`, `signIn`, `signOut`, `requireAdmin`, and `requireCustom
 
 - [ ] **Step 3: Implement checkout adapter**
 
-Expose `createCheckoutSession`, `confirmMockCheckout`, and `getOrder`. Mock checkout should create an order and append an `ORDER_VERIFIED` proof event.
+Expose Receiz checkout session creation plus sandbox order confirmation for local demos. Sandbox checkout should create an order and append an `ORDER_VERIFIED` proof event.
 
 - [ ] **Step 4: Implement hosting adapter**
 
@@ -268,11 +268,11 @@ Expected: TypeScript passes.
 
 - [ ] **Step 1: Write README**
 
-Document mock mode, hosted path concept, self-host/fork path, Receiz SDK adapter, checkout adapter, auth adapter, hosting/domain adapter, and customization workflow.
+Document demo mode, hosted path concept, self-host/fork path, Receiz SDK adapter, checkout rail, auth rail, hosting/domain automation, and customization workflow.
 
 - [ ] **Step 2: Add environment example**
 
-Include non-secret placeholders for Receiz mode, checkout mode, auth provider, hosting mode, and public site URL.
+Include non-secret placeholders for Receiz mode, Receiz checkout mode, Receiz auth mode, hosting mode, and public site URL.
 
 ### Task 11: Verification
 

@@ -3,6 +3,7 @@
 import { useState, type ReactNode } from "react";
 import { Icons } from "@/components/icons";
 import { BrandMark, Button, Panel, ProductVisual, SectionHeader, StatusPill } from "@/components/ui";
+import { platform } from "@/lib/platform";
 import { brandThemeStyle } from "@/lib/theme";
 import { useTemplateStore } from "@/lib/storage/use-template-store";
 import type { CommerceState, CustomerAccount, Product, ReceizedAsset, Reward } from "@/types/domain";
@@ -26,9 +27,10 @@ export function PublicStorefront() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const customer = state.customers[0];
   const reward = state.rewards[0];
+  const campaignName = state.campaigns[0]?.name ?? "Reward Challenge";
 
   const sealObject = () => actions.appendProofEvent("OBJECT_VERIFIED", "Coffee Pack · Serial #BC-88421");
-  const issueReward = () => actions.appendProofEvent("REWARD_ISSUED", "$12 reward · Boost Coffee");
+  const issueReward = () => actions.appendProofEvent("REWARD_ISSUED", `${reward.name} · ${state.brand.name}`);
   const claimReward = () => actions.appendProofEvent("REWARD_CLAIMED", "$12 reward claimed");
   const selectMobileView = (view: MobileView) => {
     setMobileView(view);
@@ -87,19 +89,24 @@ export function PublicStorefront() {
             </div>
 
             <PlayCampaign
+              campaignName={campaignName}
               enabled={state.game.enabled}
               onComplete={(beans) =>
-                actions.appendProofEvent("GAME_COMPLETED", `Boost Coffee Challenge · ${beans} beans`)
+                actions.appendProofEvent("GAME_COMPLETED", `${campaignName} · ${beans} beans`)
               }
             />
 
-            <ProductCatalog products={state.products} onAddToCart={actions.addToCart} />
+            <ProductCatalog
+              brandLabel={state.brand.logoText}
+              products={state.products}
+              onAddToCart={actions.addToCart}
+            />
 
             <a className="mobile-fork" href="https://github.com" target="_blank" rel="noreferrer">
               <Icons.github size={29} />
               <div>
-                <strong>Fork this template</strong>
-                <span>Launch your own proof-sealed store in minutes.</span>
+                <strong>{platform.repoLabel}</strong>
+                <span>{platform.tagline}</span>
               </div>
               <Icons.chevronRight size={20} />
             </a>
@@ -111,7 +118,7 @@ export function PublicStorefront() {
               onSignIn={actions.signInWithReceizId}
               receizId={state.auth.receizId}
             />
-            <RewardDeck customer={customer} reward={reward} />
+            <RewardDeck brandLabel={state.brand.logoText} customer={customer} reward={reward} />
             <SealEvents events={state.proofEvents} />
           </aside>
         </div>
@@ -126,8 +133,9 @@ export function PublicStorefront() {
           onSeal={sealObject}
           onSignInReceizId={actions.signInWithReceizId}
           onPlayComplete={(beans) =>
-            actions.appendProofEvent("GAME_COMPLETED", `Boost Coffee Challenge · ${beans} beans`)
+            actions.appendProofEvent("GAME_COMPLETED", `${campaignName} · ${beans} beans`)
           }
+          campaignName={campaignName}
           reward={reward}
           state={state}
         />
@@ -244,6 +252,7 @@ function MobileCommandMenu({
 
 function MobileStage({
   activeView,
+  campaignName,
   customer,
   onAddToCart,
   onCheckout,
@@ -257,6 +266,7 @@ function MobileStage({
   state
 }: {
   activeView: MobileView;
+  campaignName: string;
   customer: CustomerAccount;
   onAddToCart: (productId: string) => void;
   onCheckout: () => void;
@@ -281,6 +291,7 @@ function MobileStage({
       />
       <MobileRewardsPanel
         active={activeView === "rewards"}
+        brandLabel={state.brand.logoText}
         customer={customer}
         onClaimReward={onClaimReward}
         onIssueReward={onIssueReward}
@@ -295,6 +306,7 @@ function MobileStage({
       />
       <MobilePlayPanel
         active={activeView === "play"}
+        campaignName={campaignName}
         enabled={state.game.enabled}
         onComplete={onPlayComplete}
       />
@@ -380,7 +392,7 @@ function MobileStorePanel({
       <div className="mobile-mini-products">
         {products.slice(0, 2).map((product) => (
           <article key={product.id}>
-            <ProductVisual product={product} />
+            <ProductVisual brandLabel={state.brand.logoText} product={product} />
             <div>
               <strong>{product.name}</strong>
               <span>{product.subtitle}</span>
@@ -402,12 +414,14 @@ function MobileStorePanel({
 
 function MobileRewardsPanel({
   active,
+  brandLabel,
   customer,
   onClaimReward,
   onIssueReward,
   reward
 }: {
   active: boolean;
+  brandLabel: string;
   customer: CustomerAccount;
   onClaimReward: () => void;
   onIssueReward: () => void;
@@ -418,7 +432,7 @@ function MobileRewardsPanel({
   return (
     <MobilePane active={active} action={<StatusPill tone="gold">{customer.beans} beans</StatusPill>} title="Rewards">
       <div className="mobile-reward-card">
-        <BrandMark label="boost" />
+        <BrandMark label={brandLabel} />
         <div>
           <StatusPill tone="gold">Active</StatusPill>
           <h3>{reward.name}</h3>
@@ -499,17 +513,19 @@ function MobileAssetsPanel({
 
 function MobilePlayPanel({
   active,
+  campaignName,
   enabled,
   onComplete
 }: {
   active: boolean;
+  campaignName: string;
   enabled: boolean;
   onComplete: (beans: number) => void;
 }) {
   return (
     <MobilePane active={active} action={<StatusPill tone="pink">Game on</StatusPill>} title="Play">
       <div className="mobile-play-wrap">
-        <PlayCampaign enabled={enabled} onComplete={onComplete} />
+        <PlayCampaign campaignName={campaignName} enabled={enabled} onComplete={onComplete} />
       </div>
     </MobilePane>
   );

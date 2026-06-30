@@ -6,6 +6,7 @@ import { MetricCard, Panel, RewardCard, SealEventTimeline, SectionHeader, Status
 import { brandThemeStyle } from "@/lib/theme";
 import { useTemplateStore } from "@/lib/storage/use-template-store";
 import { ProductCatalog } from "@/features/storefront/ProductCatalog";
+import { platform } from "@/lib/platform";
 
 export function AccountDashboard() {
   const { state, actions } = useTemplateStore();
@@ -21,7 +22,7 @@ export function AccountDashboard() {
           <span className="receiz-mark">
             <Icons.receiz size={23} />
           </span>
-          <strong>Receiz Commerce Kit</strong>
+          <strong>{platform.name}</strong>
         </Link>
         <div>
           <StatusPill tone="green">{state.auth.receizId.statusLabel}</StatusPill>
@@ -57,7 +58,20 @@ export function AccountDashboard() {
             </span>
             <div>
               <strong>{state.auth.receizId.handle}</strong>
-              <p>Existing Receiz IDs can sign in, and new users can create one from this flow.</p>
+              <p>
+                Existing Receiz IDs can sign in, new users can create one, and Receiz Key or Identity Seal artifacts
+                restore the same account locally.
+              </p>
+            </div>
+          </div>
+          <div className="identity-proof-strip account-proof-strip">
+            <div>
+              <span>Artifact</span>
+              <strong>{state.auth.receizId.artifactKind.replace(/_/g, " ")}</strong>
+            </div>
+            <div>
+              <span>Account proof</span>
+              <strong>{state.auth.receizId.localProofVerified ? "Verified" : state.auth.receizId.portableStateStatus}</strong>
             </div>
           </div>
           <div className="identity-actions">
@@ -107,7 +121,7 @@ export function AccountDashboard() {
         <Panel>
           <SectionHeader title="Owned rewards" />
           {rewards.map((reward) => (
-            <RewardCard key={reward.id} reward={reward} />
+            <RewardCard brandLabel={state.brand.logoText} key={reward.id} reward={reward} />
           ))}
         </Panel>
 
@@ -117,7 +131,11 @@ export function AccountDashboard() {
         </Panel>
       </div>
 
-      <ProductCatalog products={state.products.slice(0, 4)} onAddToCart={actions.addToCart} />
+      <ProductCatalog
+        brandLabel={state.brand.logoText}
+        products={state.products.slice(0, 4)}
+        onAddToCart={actions.addToCart}
+      />
     </main>
   );
 }

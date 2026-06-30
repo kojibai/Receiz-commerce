@@ -184,7 +184,13 @@ export type ReceizIdState = {
   handle: string;
   displayName: string;
   keyId: string;
-  loginMode: "existing_receiz_id" | "new_receiz_id";
+  loginMode: "existing_receiz_id" | "new_receiz_id" | "restored_identity_artifact";
+  accountImageLabel: string;
+  artifactKind: "receiz_id" | "receiz_key" | "identity_record" | "identity_seal";
+  artifactStatus: "created" | "restored" | "verified" | "pending";
+  portableStateStatus: "verified" | "missing" | "invalid";
+  localProofVerified: boolean;
+  restoreSources: Array<"Receiz Key" | "Identity Record" | "Identity Seal image">;
   oneClickLogin: boolean;
   existingIdsSupported: boolean;
   sdkHelpers: string[];

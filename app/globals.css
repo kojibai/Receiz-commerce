@@ -63,6 +63,10 @@ a {
   text-decoration: none;
 }
 
+.mobile-label {
+  display: none;
+}
+
 .placeholder-shell {
   display: grid;
   place-content: center;
@@ -266,6 +270,7 @@ a {
   display: flex;
   align-items: center;
   gap: 12px;
+  min-width: 0;
 }
 
 .domain-chip,
@@ -275,6 +280,7 @@ a {
   display: flex;
   align-items: center;
   gap: 10px;
+  min-width: 0;
   padding: 8px 10px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -286,6 +292,9 @@ a {
 .brand-selector strong,
 .admin-user strong {
   display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: 13px;
 }
 
@@ -958,6 +967,85 @@ a {
   width: 100%;
 }
 
+.identity-proof-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  padding: 0 14px 12px;
+}
+
+.identity-proof-strip div {
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.identity-proof-strip span,
+.identity-restore-row p {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.identity-proof-strip strong {
+  display: block;
+  margin-top: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-transform: capitalize;
+  font-size: 12px;
+}
+
+.restore-source-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0 14px 12px;
+}
+
+.restore-source-row span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  color: var(--receiz-strong);
+  background: var(--receiz-soft);
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.identity-restore-row {
+  display: grid;
+  gap: 8px;
+  padding: 0 14px;
+}
+
+.identity-restore-row .button {
+  width: 100%;
+}
+
+.identity-restore-row input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.identity-restore-row p {
+  margin: 0;
+}
+
+.account-proof-strip {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .reward-card {
   display: grid;
   grid-template-columns: 110px 1fr;
@@ -1351,6 +1439,88 @@ a {
 
 .admin-panel {
   padding: 0 0 12px;
+}
+
+.launch-rails-panel {
+  grid-column: 1 / -1;
+}
+
+.launch-rails-hero {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  gap: 12px;
+  margin: 0 14px 12px;
+  padding: 14px;
+  border: 1px solid rgba(0, 138, 106, 0.18);
+  border-radius: var(--radius-lg);
+  background:
+    linear-gradient(90deg, rgba(231, 248, 242, 0.88), rgba(255, 255, 255, 0.96));
+}
+
+.launch-rails-hero strong {
+  display: block;
+  font-size: 18px;
+}
+
+.launch-rails-hero p {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.launch-rail-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  padding: 0 14px 2px;
+}
+
+.launch-rail-card {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 9px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.launch-rail-card > span {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  color: var(--receiz);
+  background: var(--receiz-soft);
+}
+
+.launch-rail-card strong,
+.launch-rail-card b,
+.launch-rail-card small {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.launch-rail-card strong {
+  font-size: 12px;
+}
+
+.launch-rail-card b {
+  margin-top: 4px;
+  color: var(--receiz);
+  white-space: nowrap;
+  font-size: 13px;
+}
+
+.launch-rail-card small {
+  margin-top: 5px;
+  color: var(--muted);
+  line-height: 1.35;
 }
 
 .brand-editor {
@@ -1770,6 +1940,10 @@ a {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .launch-rail-grid {
+    grid-template-columns: 1fr;
+  }
+
   .hero-panel {
     grid-template-columns: 120px 1fr;
   }
@@ -1787,6 +1961,94 @@ a {
   .commerce-app,
   .admin-app {
     display: block;
+  }
+
+  .admin-app {
+    min-width: 0;
+    overflow-x: hidden;
+  }
+
+  .admin-body {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .admin-topbar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+    min-height: 0;
+    padding: 10px;
+  }
+
+  .admin-topbar .brand-selector {
+    width: 100%;
+    min-height: 48px;
+    padding: 6px 8px;
+  }
+
+  .admin-topbar .brand-selector .brand-mark {
+    width: 34px;
+    height: 34px;
+    padding: 5px;
+  }
+
+  .admin-topbar .brand-selector .brand-mark span {
+    font-size: 10px;
+  }
+
+  .admin-topbar .brand-selector strong {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .admin-top-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 40px 40px 48px;
+    gap: 6px;
+    width: 100%;
+  }
+
+  .admin-top-actions .button {
+    min-width: 0;
+    min-height: 40px;
+    padding: 0 8px;
+    font-size: 12px;
+  }
+
+  .admin-top-actions .desktop-label {
+    display: none;
+  }
+
+  .admin-top-actions .mobile-label {
+    display: inline;
+  }
+
+  .admin-top-actions .button svg {
+    display: none;
+  }
+
+  .admin-top-actions .icon-button {
+    width: 40px;
+    height: 40px;
+  }
+
+  .admin-user {
+    justify-content: center;
+    width: 48px;
+    min-width: 0;
+    padding: 0;
+  }
+
+  .admin-user > div:not(.avatar) {
+    display: none;
+  }
+
+  .launch-rails-hero,
+  .launch-rail-card {
+    grid-template-columns: 1fr;
   }
 
   .commerce-app {
@@ -2401,6 +2663,7 @@ a {
   }
 
   .identity-actions,
+  .identity-proof-strip,
   .billing-summary {
     grid-template-columns: 1fr;
   }
@@ -2431,6 +2694,30 @@ a {
 }
 
 @media (max-width: 390px) {
+  .admin-top-actions {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 36px 36px 42px;
+  }
+
+  .admin-top-actions .button {
+    padding: 0 6px;
+    font-size: 11px;
+  }
+
+  .admin-top-actions .icon-button {
+    width: 36px;
+    height: 36px;
+  }
+
+  .admin-user {
+    width: 42px;
+  }
+
+  .admin-user .avatar {
+    width: 32px;
+    height: 32px;
+    font-size: 11px;
+  }
+
   .mobile-header {
     grid-template-columns: 58px minmax(0, 1fr) 38px 38px;
     gap: 8px;

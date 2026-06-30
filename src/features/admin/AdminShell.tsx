@@ -7,6 +7,7 @@ import { BrandMark, Button } from "@/components/ui";
 import type { CommerceState } from "@/types/domain";
 import { cx } from "@/lib/utils";
 import { brandThemeStyle } from "@/lib/theme";
+import { platform } from "@/lib/platform";
 
 const nav = [
   ["Dashboard", Icons.home],
@@ -46,8 +47,8 @@ export function AdminShell({
             <Icons.receiz size={23} />
           </span>
           <span>
-            <strong>Receiz Commerce Kit</strong>
-            <small>Admin Studio</small>
+            <strong>{platform.name}</strong>
+            <small>{platform.studioName}</small>
           </span>
         </Link>
         <nav className="nav-stack">
@@ -60,7 +61,7 @@ export function AdminShell({
         </nav>
         <a className="fork-card" href="https://github.com" target="_blank" rel="noreferrer">
           <Icons.github size={23} />
-          <strong>Fork this template</strong>
+          <strong>{platform.repoLabel}</strong>
         </a>
       </aside>
       <div className="admin-body">
@@ -72,10 +73,14 @@ export function AdminShell({
           </Link>
           <div className="admin-top-actions">
             <Link className="button button-outline" href="/">
-              Preview storefront <Icons.external size={15} />
+              <span className="desktop-label">Preview storefront</span>
+              <span className="mobile-label">Preview</span>
+              <Icons.external size={15} />
             </Link>
             <Button onClick={onPublish} variant="primary">
-              Publish changes <Icons.chevronDown size={15} />
+              <span className="desktop-label">Publish changes</span>
+              <span className="mobile-label">Publish</span>
+              <Icons.chevronDown size={15} />
             </Button>
             <button aria-label="Open help" className="icon-button" type="button">
               <Icons.help size={18} />

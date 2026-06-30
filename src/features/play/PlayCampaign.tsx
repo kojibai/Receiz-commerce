@@ -7,9 +7,11 @@ import { cx } from "@/lib/utils";
 import { gameTiles, initialPlayState, movePlayer } from "@/features/play/game-state";
 
 export function PlayCampaign({
+  campaignName = "Reward Challenge",
   enabled,
   onComplete
 }: {
+  campaignName?: string;
   enabled: boolean;
   onComplete?: (beans: number) => void;
 }) {
@@ -42,7 +44,7 @@ export function PlayCampaign({
       <div className="play-header">
         <div>
           <h2>
-            <span>Play:</span> Boost Coffee Challenge
+            <span>Play:</span> {campaignName}
           </h2>
           <p>Collect beans, unlock perks, earn rewards.</p>
         </div>
@@ -53,7 +55,7 @@ export function PlayCampaign({
         </div>
       </div>
 
-      <div className="game-grid" role="grid" aria-label="Boost Coffee reward game">
+      <div className="game-grid" role="grid" aria-label={`${campaignName} reward game`}>
         {gameTiles.map((tile, index) => {
           const isPlayer = index === state.playerIndex;
           const collected = state.collected.includes(tile.id);

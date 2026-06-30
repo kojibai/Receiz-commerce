@@ -5,9 +5,11 @@ import { Button, ProductVisual, SectionHeader, StatusPill } from "@/components/u
 import type { Product } from "@/types/domain";
 
 export function ProductCatalog({
+  brandLabel,
   products,
   onAddToCart
 }: {
+  brandLabel: string;
   products: Product[];
   onAddToCart: (productId: string) => void;
 }) {
@@ -36,7 +38,7 @@ export function ProductCatalog({
         {products.slice(0, 4).map((product) => (
           <div className="table-row" key={product.id}>
             <div className="product-cell">
-              <ProductVisual product={product} />
+              <ProductVisual brandLabel={brandLabel} product={product} />
               <div>
                 <strong>{product.name}</strong>
                 <p>{product.subtitle}</p>
@@ -67,7 +69,7 @@ export function ProductCatalog({
       <div className="mobile-product-grid">
         {products.slice(0, 4).map((product) => (
           <article className="mobile-product-card" key={product.id}>
-            <ProductVisual product={product} />
+            <ProductVisual brandLabel={brandLabel} product={product} />
             <strong>{product.name}</strong>
             <p>{product.subtitle}</p>
             <div>

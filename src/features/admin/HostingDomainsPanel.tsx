@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Button, Panel, SectionHeader, StatusPill } from "@/components/ui";
 import type { HostingConfig } from "@/types/domain";
+import { platform } from "@/lib/platform";
 
 export function HostingDomainsPanel({
   hosting,
@@ -36,10 +37,10 @@ export function HostingDomainsPanel({
 
   return (
     <Panel className="admin-panel">
-      <SectionHeader title="Hosting & domains" />
+      <SectionHeader title="Hosting & domains" action={<StatusPill tone="green">{platform.domain}</StatusPill>} />
       <div className="hosting-fields">
         <label>
-          <span>Subdomain</span>
+          <span>{platform.freeSubdomainLabel}</span>
           <div className="domain-input-row">
             <input
               aria-label="Subdomain"
@@ -52,7 +53,7 @@ export function HostingDomainsPanel({
           </div>
         </label>
         <label>
-          <span>Custom domain</span>
+          <span>{platform.customDomainLabel}</span>
           <div className="domain-input-row">
             <input
               aria-label="Custom domain"

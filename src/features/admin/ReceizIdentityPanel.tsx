@@ -7,12 +7,21 @@ import type { ReceizIdState } from "@/types/domain";
 export function ReceizIdentityPanel({
   receizId,
   onCreate,
+  onRestoreArtifact,
   onSignIn
 }: {
   receizId: ReceizIdState;
   onCreate: () => void;
+  onRestoreArtifact: (file: File) => void | Promise<void>;
   onSignIn: () => void;
 }) {
+  const modeLabel =
+    receizId.loginMode === "new_receiz_id"
+      ? "New ID"
+      : receizId.loginMode === "restored_identity_artifact"
+        ? "Restored artifact"
+        : "Existing ID";
+
   return (
     <Panel className="admin-panel identity-panel">
       <SectionHeader
@@ -28,10 +37,29 @@ export function ReceizIdentityPanel({
           <p>{receizId.displayName}</p>
         </div>
       </div>
+      <div className="identity-proof-strip">
+        <div>
+          <span>Account image</span>
+          <strong>{receizId.accountImageLabel}</strong>
+        </div>
+        <div>
+          <span>Artifact</span>
+          <strong>{receizId.artifactKind.replace(/_/g, " ")}</strong>
+        </div>
+        <div>
+          <span>Local proof</span>
+          <strong>{receizId.localProofVerified ? "Verified" : receizId.portableStateStatus}</strong>
+        </div>
+      </div>
+      <div className="restore-source-row" aria-label="Receiz identity restore sources">
+        {receizId.restoreSources.map((source) => (
+          <span key={source}>{source}</span>
+        ))}
+      </div>
       <div className="settings-list identity-settings">
         <div><span>One-click login</span><strong>{receizId.oneClickLogin ? "Enabled" : "Off"}</strong></div>
         <div><span>Existing Receiz IDs</span><strong>{receizId.existingIdsSupported ? "Accepted" : "Off"}</strong></div>
-        <div><span>Mode</span><strong>{receizId.loginMode === "existing_receiz_id" ? "Existing ID" : "New ID"}</strong></div>
+        <div><span>Mode</span><strong>{modeLabel}</strong></div>
         <div><span>SDK helpers</span><strong>{receizId.sdkHelpers.length}</strong></div>
       </div>
       <div className="identity-actions">
@@ -41,6 +69,24 @@ export function ReceizIdentityPanel({
         <Button onClick={onCreate} variant="outline">
           Create Receiz ID
         </Button>
+      </div>
+      <div className="identity-restore-row">
+        <label className="button button-outline" htmlFor="receiz-identity-artifact">
+          Restore Key or Seal
+        </label>
+        <input
+          accept=".json,image/png,image/jpeg,image/webp"
+          id="receiz-identity-artifact"
+          onChange={(event) => {
+            const file = event.currentTarget.files?.[0];
+            if (file) {
+              void onRestoreArtifact(file);
+              event.currentTarget.value = "";
+            }
+          }}
+          type="file"
+        />
+        <p>Reads the Receiz Key, Identity Record image, or Identity Seal image locally before continuity.</p>
       </div>
     </Panel>
   );

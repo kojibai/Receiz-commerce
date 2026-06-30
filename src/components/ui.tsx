@@ -58,7 +58,7 @@ export function SectionHeader({
 }
 
 export function BrandMark({
-  label = "boost",
+  label = "brand",
   compact = false
 }: {
   label?: string;
@@ -72,12 +72,18 @@ export function BrandMark({
   );
 }
 
-export function ProductVisual({ product }: { product: Pick<Product, "imageTone" | "name"> }) {
+export function ProductVisual({
+  brandLabel = "brand",
+  product
+}: {
+  brandLabel?: string;
+  product: Pick<Product, "imageTone" | "name">;
+}) {
   if (product.imageTone === "mug") {
     return (
       <div className="product-visual mug-visual">
         <div className="mug-cup">
-          <span>boost</span>
+          <span>{brandLabel}</span>
         </div>
       </div>
     );
@@ -87,7 +93,7 @@ export function ProductVisual({ product }: { product: Pick<Product, "imageTone" 
     return (
       <div className="product-visual can-visual">
         <div className="can-body">
-          <span>boost</span>
+          <span>{brandLabel}</span>
         </div>
       </div>
     );
@@ -96,7 +102,7 @@ export function ProductVisual({ product }: { product: Pick<Product, "imageTone" 
   if (product.imageTone === "card" || product.imageTone === "access") {
     return (
       <div className="product-visual card-visual">
-        <BrandMark label="boost" />
+        <BrandMark label={brandLabel} />
       </div>
     );
   }
@@ -114,19 +120,25 @@ export function ProductVisual({ product }: { product: Pick<Product, "imageTone" 
     <div className="product-visual bag-visual">
       <div className="bag-top" />
       <div className="bag-label">
-        <span>boost</span>
+        <span>{brandLabel}</span>
         <small>whole bean</small>
       </div>
     </div>
   );
 }
 
-export function RewardCard({ reward }: { reward: Reward }) {
+export function RewardCard({
+  brandLabel = "brand",
+  reward
+}: {
+  brandLabel?: string;
+  reward: Reward;
+}) {
   const progress = Math.min(100, Math.round((reward.progress / reward.target) * 100));
 
   return (
     <div className="reward-card">
-      <BrandMark label="boost" />
+      <BrandMark label={brandLabel} />
       <div className="reward-copy">
         <StatusPill tone="gold">Active</StatusPill>
         <h3>{reward.name}</h3>

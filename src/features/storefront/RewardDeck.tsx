@@ -2,16 +2,18 @@ import { Button, Panel, RewardCard, SectionHeader } from "@/components/ui";
 import type { CustomerAccount, Reward } from "@/types/domain";
 
 export function RewardDeck({
+  brandLabel,
   reward,
   customer
 }: {
+  brandLabel: string;
   reward: Reward;
   customer: CustomerAccount;
 }) {
   return (
     <Panel className="reward-deck-panel" id="rewards">
       <SectionHeader title="Reward deck" action={<Button variant="outline">Manage</Button>} />
-      <RewardCard reward={reward} />
+      <RewardCard brandLabel={brandLabel} reward={reward} />
       <div className="deck-count">
         <span>5 / 12 claimed</span>
         <button type="button">View all</button>
