@@ -4903,6 +4903,10 @@ a {
   transform: rotate(180deg);
 }
 
+.commerce-import-panel.open {
+  display: block;
+}
+
 .import-toggle-icon {
   display: grid;
   place-items: center;
@@ -4932,7 +4936,7 @@ a {
 }
 
 .commerce-import-panel.open .commerce-import-body {
-  max-height: 980px;
+  max-height: none;
   padding: 0 14px 14px;
   opacity: 1;
   pointer-events: auto;
@@ -5130,6 +5134,7 @@ a {
   main.admin-app .mobile-admin-pane .commerce-import-panel.open {
     position: relative;
     top: auto;
+    min-height: 0;
   }
 
   .commerce-import-toggle {
@@ -5170,8 +5175,9 @@ a {
   }
 
   .commerce-import-panel.open .commerce-import-body {
-    max-height: 1200px;
+    max-height: min(980px, calc(100dvh - 230px));
     padding: 0 11px 11px;
+    overflow: auto;
   }
 
   .import-source-card {
