@@ -1,8 +1,19 @@
 {
   "name": "receiz-commerce-kit",
   "version": "0.1.0",
+  "description": "Open-source Receiz SDK commerce SaaS template for proof-sealed storefronts, rewards, checkout, domains, and admin builders.",
+  "license": "MIT",
   "private": true,
   "type": "module",
+  "keywords": [
+    "receiz",
+    "commerce",
+    "ecommerce",
+    "nextjs",
+    "proof-objects",
+    "receiz-sdk",
+    "rewards"
+  ],
   "packageManager": "pnpm@10.29.1",
   "engines": {
     "node": ">=20.18.0"

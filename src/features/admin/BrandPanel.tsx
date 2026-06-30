@@ -19,12 +19,20 @@ export function BrandPanel({
         <div>
           <span className="field-label">Logo</span>
           <div className="logo-edit-row">
-            <BrandMark label={state.brand.logoText} />
+            <BrandMark imageUrl={state.brand.logoImageUrl} label={state.brand.logoText} />
             <label className="logo-text-field">
               <span>Logo text</span>
               <input value={state.brand.logoText} onChange={(event) => onBrandUpdate({ logoText: event.target.value })} />
             </label>
           </div>
+          <label>
+            <span>Logo image URL</span>
+            <input
+              placeholder="https://..."
+              value={state.brand.logoImageUrl ?? ""}
+              onChange={(event) => onBrandUpdate({ logoImageUrl: event.target.value.trim() || null })}
+            />
+          </label>
           <label>
             <span>Brand name</span>
             <input value={state.brand.name} onChange={(event) => onBrandUpdate({ name: event.target.value })} />

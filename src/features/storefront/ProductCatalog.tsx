@@ -5,11 +5,13 @@ import { Button, ProductVisual, SectionHeader, StatusPill } from "@/components/u
 import type { Product } from "@/types/domain";
 
 export function ProductCatalog({
+  brandImageUrl,
   brandLabel,
   showAdminActions = true,
   products,
   onAddToCart
 }: {
+  brandImageUrl?: string | null;
   brandLabel: string;
   showAdminActions?: boolean;
   products: Product[];
@@ -23,9 +25,9 @@ export function ProductCatalog({
           showAdminActions ? (
             <div className="section-actions">
               <button className="link-button" type="button">
-                View all products
+              View all products
               </button>
-              <Button variant="primary">Add product</Button>
+              <Button onClick={() => window.location.assign("/admin")} variant="primary">Add product</Button>
             </div>
           ) : null
         }
@@ -42,7 +44,7 @@ export function ProductCatalog({
         {products.slice(0, 4).map((product) => (
           <div className="table-row" key={product.id}>
             <div className="product-cell">
-              <ProductVisual brandLabel={brandLabel} product={product} />
+              <ProductVisual brandImageUrl={brandImageUrl} brandLabel={brandLabel} product={product} />
               <div>
                 <strong>{product.name}</strong>
                 <p>{product.subtitle}</p>
@@ -83,7 +85,7 @@ export function ProductCatalog({
         {products.length ? (
           products.slice(0, 4).map((product) => (
             <article className="mobile-product-card" key={product.id}>
-              <ProductVisual brandLabel={brandLabel} product={product} />
+              <ProductVisual brandImageUrl={brandImageUrl} brandLabel={brandLabel} product={product} />
               <strong>{product.name}</strong>
               <p>{product.subtitle}</p>
               <div>

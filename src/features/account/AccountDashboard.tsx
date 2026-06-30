@@ -124,7 +124,7 @@ export function AccountDashboard() {
         <Panel>
           <SectionHeader title="Owned rewards" />
           {rewards.map((reward) => (
-            <RewardCard brandLabel={state.brand.logoText} key={reward.id} reward={reward} />
+            <RewardCard brandImageUrl={state.brand.logoImageUrl} brandLabel={state.brand.logoText} key={reward.id} reward={reward} />
           ))}
         </Panel>
 
@@ -135,6 +135,7 @@ export function AccountDashboard() {
       </div>
 
       <ProductCatalog
+        brandImageUrl={state.brand.logoImageUrl}
         brandLabel={state.brand.logoText}
         products={state.products.slice(0, 4)}
         onAddToCart={actions.addToCart}

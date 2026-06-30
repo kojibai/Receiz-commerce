@@ -77,8 +77,24 @@ export function AdminStudio() {
               onAddPayment={actions.addBillingMethod}
               onSelectPlan={actions.selectHostingPlan}
             />
-            <PageBuilderPanel pages={state.pages} />
-            <ProductEditorPanel brandLabel={state.brand.logoText} products={state.products} />
+            <PageBuilderPanel
+              authorName={state.brand.name}
+              brand={state.brand}
+              blogPosts={state.blogPosts}
+              onAddBlogPost={actions.addBlogPost}
+              onAddPage={actions.addPage}
+              onUpdateBlogPost={actions.updateBlogPost}
+              onUpdatePage={actions.updatePage}
+              pages={state.pages}
+            />
+            <ProductEditorPanel
+              brand={state.brand}
+              brandImageUrl={state.brand.logoImageUrl}
+              brandLabel={state.brand.logoText}
+              onAddProduct={actions.addProduct}
+              onUpdateProduct={actions.updateProduct}
+              products={state.products}
+            />
             <RewardsRulesPanel rules={state.rewardRules} />
             <HostingDomainsPanel
               hosting={state.hosting}
@@ -151,6 +167,7 @@ export function AdminStudio() {
               <MetricCard label="Revenue" value="$48,219" delta="+16.4%" />
               <MetricCard label="Average order value" value="$20.61" delta="+1.2%" />
             </Panel>
+            <CommerceOpsPanel state={state} />
             <PublishChecklist onPublish={actions.publish} publish={state.publish} />
           </div>
 
@@ -218,6 +235,82 @@ function AdminStatusCard({
   );
 }
 
+function CommerceOpsPanel({
+  compact = false,
+  state
+}: {
+  compact?: boolean;
+  state: ReturnType<typeof useTemplateStore>["state"];
+}) {
+  const recentOrders = state.orders.slice(0, compact ? 3 : 5);
+  const recentCustomers = state.customers.slice(0, compact ? 3 : 4);
+
+  return (
+    <Panel className="admin-panel commerce-ops-panel">
+      <SectionHeader title="Sales and customers" action={<StatusPill tone="green">{state.orders.length} orders</StatusPill>} />
+      <div className="commerce-ops-grid">
+        <div className="commerce-ops-column">
+          <strong className="mini-section-title">Orders</strong>
+          <div className="admin-list">
+            {recentOrders.map((order) => (
+              <div className="commerce-order-row" key={order.id}>
+                <div>
+                  <strong>#{order.id}</strong>
+                  <span>{order.customerEmail ?? order.customerId} · {order.itemCount} items</span>
+                </div>
+                <div>
+                  <b>{order.totalLabel}</b>
+                  <span>{order.paymentRail?.replace(/_/g, " ") ?? "checkout"}</span>
+                </div>
+                <StatusPill tone={order.settlementStatus === "card_required" ? "gold" : "green"}>
+                  {order.settlementStatus ?? order.status}
+                </StatusPill>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="commerce-ops-column">
+          <strong className="mini-section-title">Customers</strong>
+          <div className="admin-list">
+            {recentCustomers.map((customer) => (
+              <div className="commerce-customer-row" key={customer.id}>
+                <div className="avatar">{customer.name.slice(0, 1)}</div>
+                <div>
+                  <strong>{customer.name}</strong>
+                  <span>{customer.email}</span>
+                  <em>{customer.receizHandle ?? state.auth.receizId.handle}</em>
+                </div>
+                <StatusPill tone="neutral">{customer.tier}</StatusPill>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="commerce-ops-column shipping-column">
+          <strong className="mini-section-title">Fulfillment</strong>
+          {recentOrders[0]?.shipping ? (
+            <div className="shipping-detail-card">
+              <span>{recentOrders[0].shipping.name}</span>
+              <strong>{recentOrders[0].shipping.line1}</strong>
+              <p>
+                {recentOrders[0].shipping.city}, {recentOrders[0].shipping.region} {recentOrders[0].shipping.postalCode}
+              </p>
+              <em>{recentOrders[0].tenantHost ?? state.hosting.subdomain}</em>
+            </div>
+          ) : (
+            <div className="shipping-detail-card">
+              <span>No shipping yet</span>
+              <strong>Customer details appear here after checkout.</strong>
+              <p>Receiz checkout returns the payment rail, settlement proof, and customer details for merchant fulfillment.</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </Panel>
+  );
+}
+
 function MobileAdminConsole({
   actions,
   campaignName,
@@ -234,7 +327,7 @@ function MobileAdminConsole({
     <section className="mobile-admin-console" aria-label="Mobile admin console">
       <header className="mobile-admin-header">
         <Link aria-label="Open storefront" href="/">
-          <BrandMark label={state.brand.logoText} compact />
+          <BrandMark imageUrl={state.brand.logoImageUrl} label={state.brand.logoText} compact />
         </Link>
         <div>
           <span>{state.hosting.subdomain}</span>
@@ -280,8 +373,25 @@ function MobileAdminConsole({
         </MobileAdminPane>
 
         <MobileAdminPane active={activeView === "store"} title="Store" action={<StatusPill tone="green">Catalog</StatusPill>}>
-          <PageBuilderPanel pages={state.pages} />
-          <ProductEditorPanel brandLabel={state.brand.logoText} products={state.products} />
+          <PageBuilderPanel
+            authorName={state.brand.name}
+            brand={state.brand}
+            blogPosts={state.blogPosts}
+            onAddBlogPost={actions.addBlogPost}
+            onAddPage={actions.addPage}
+            onUpdateBlogPost={actions.updateBlogPost}
+            onUpdatePage={actions.updatePage}
+            pages={state.pages}
+          />
+          <ProductEditorPanel
+            brand={state.brand}
+            brandImageUrl={state.brand.logoImageUrl}
+            brandLabel={state.brand.logoText}
+            onAddProduct={actions.addProduct}
+            onUpdateProduct={actions.updateProduct}
+            products={state.products}
+          />
+          <CommerceOpsPanel state={state} compact />
           <Panel className="admin-panel mobile-admin-card">
             <SectionHeader title="Checkout mode" />
             <div className="radio-list">

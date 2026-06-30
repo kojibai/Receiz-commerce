@@ -130,6 +130,14 @@ export type NavigationItem = {
   visible: boolean;
 };
 
+export type SeoConfig = {
+  title: string;
+  description: string;
+  canonicalPath: string;
+  keywords: string[];
+  socialImageUrl?: string | null;
+};
+
 export type PageSection = {
   id: string;
   kind: "hero" | "products" | "rewards" | "assets" | "game" | "content";
@@ -144,6 +152,22 @@ export type SitePage = {
   visibleInNav: boolean;
   published: boolean;
   sections: PageSection[];
+  seo?: SeoConfig;
+};
+
+export type BlogPost = {
+  id: string;
+  title: string;
+  slug: string;
+  excerpt: string;
+  body: string;
+  authorName: string;
+  coverImageUrl: string | null;
+  tags: string[];
+  featured: boolean;
+  status: "draft" | "published";
+  publishedAt: string;
+  seo: SeoConfig;
 };
 
 export type Collection = {
@@ -165,6 +189,8 @@ export type Product = {
   rewardEligible: boolean;
   sealed: boolean;
   imageTone: "bag" | "can" | "mug" | "card" | "class" | "access";
+  description?: string;
+  seo?: SeoConfig;
 };
 
 export type CartLine = {
@@ -179,17 +205,34 @@ export type Cart = {
 export type Order = {
   id: string;
   customerId: string;
+  customerEmail?: string;
   totalLabel: string;
-  status: "mock_paid" | "pending" | "fulfilled";
+  status: "mock_paid" | "pending" | "fulfilled" | "card_required" | "settled";
   itemCount: number;
   sealed: boolean;
   createdAt: string;
+  merchantReceizId?: string;
+  tenantHost?: string;
+  checkoutSessionId?: string;
+  paymentRail?: "receiz_wallet" | "card_fallback" | "receiz_checkout" | "sandbox";
+  settlementStatus?: "wallet_reserved" | "card_required" | "pending" | "settled" | "sandbox";
+  shipping?: {
+    name: string;
+    email: string;
+    line1: string;
+    line2?: string;
+    city: string;
+    region: string;
+    postalCode: string;
+    country: string;
+  };
 };
 
 export type CustomerAccount = {
   id: string;
   name: string;
   email: string;
+  receizHandle?: string;
   tier: string;
   rewardsValueLabel: string;
   beans: number;
@@ -197,6 +240,7 @@ export type CustomerAccount = {
   orderIds: string[];
   rewardIds: string[];
   assetIds: string[];
+  shippingAddress?: Order["shipping"];
 };
 
 export type AdminUser = {
@@ -352,6 +396,7 @@ export type CommerceState = {
   billing: BillingConfig;
   navigation: NavigationItem[];
   pages: SitePage[];
+  blogPosts: BlogPost[];
   collections: Collection[];
   products: Product[];
   cart: Cart;

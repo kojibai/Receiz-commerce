@@ -12,6 +12,7 @@ const primaryNav = [
   ["Products", Icons.products],
   ["Rewards", Icons.rewards],
   ["Assets", Icons.assets],
+  ["Blog", Icons.book],
   ["Play", Icons.game],
   ["Account", Icons.user],
   ["Admin", Icons.settings]
@@ -131,7 +132,7 @@ export function StoreTopbar({
           </button>
         )}
         <Link className="brand-chip" href={tenantSurface ? "/account" : "/admin"}>
-          <BrandMark label={state.brand.logoText} compact />
+          <BrandMark imageUrl={state.brand.logoImageUrl} label={state.brand.logoText} compact />
           <div>
             <strong>{state.brand.name}</strong>
             <span>{tenantSurface ? "Account" : "View storefront"}</span>
@@ -156,7 +157,7 @@ export function MobileHeader({
 }) {
   return (
     <header className="mobile-header">
-      <BrandMark label={state.brand.logoText} compact />
+      <BrandMark imageUrl={state.brand.logoImageUrl} label={state.brand.logoText} compact />
       <div>
         <strong>{state.brand.name}</strong>
         <span>
@@ -233,7 +234,7 @@ export function HeroProduct({
   return (
     <section className="hero-panel">
       <div className="hero-brand-card">
-        <BrandMark label={state.brand.logoText} />
+        <BrandMark imageUrl={state.brand.logoImageUrl} label={state.brand.logoText} />
       </div>
       <div className="hero-copy">
         <h1>{state.brand.name}</h1>

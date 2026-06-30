@@ -58,25 +58,36 @@ export function SectionHeader({
 }
 
 export function BrandMark({
+  imageUrl,
   label = "brand",
   compact = false
 }: {
+  imageUrl?: string | null;
   label?: string;
   compact?: boolean;
 }) {
   return (
-    <div className={cx("brand-mark", compact && "brand-mark-compact")}>
-      <span>{label}</span>
-      <small>sealed</small>
+    <div className={cx("brand-mark", imageUrl && "brand-mark-image-mode", compact && "brand-mark-compact")}>
+      {imageUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img alt={`${label} logo`} src={imageUrl} />
+      ) : (
+        <>
+          <span>{label}</span>
+          <small>sealed</small>
+        </>
+      )}
     </div>
   );
 }
 
 export function ProductVisual({
   brandLabel = "brand",
+  brandImageUrl,
   product
 }: {
   brandLabel?: string;
+  brandImageUrl?: string | null;
   product: Pick<Product, "imageTone" | "name">;
 }) {
   if (product.imageTone === "mug") {
@@ -102,7 +113,7 @@ export function ProductVisual({
   if (product.imageTone === "card" || product.imageTone === "access") {
     return (
       <div className="product-visual card-visual">
-        <BrandMark label={brandLabel} />
+        <BrandMark imageUrl={brandImageUrl} label={brandLabel} />
       </div>
     );
   }
@@ -129,16 +140,18 @@ export function ProductVisual({
 
 export function RewardCard({
   brandLabel = "brand",
+  brandImageUrl,
   reward
 }: {
   brandLabel?: string;
+  brandImageUrl?: string | null;
   reward: Reward;
 }) {
   const progress = Math.min(100, Math.round((reward.progress / reward.target) * 100));
 
   return (
     <div className="reward-card">
-      <BrandMark label={brandLabel} />
+      <BrandMark imageUrl={brandImageUrl} label={brandLabel} />
       <div className="reward-copy">
         <StatusPill tone="gold">Active</StatusPill>
         <h3>{reward.name}</h3>

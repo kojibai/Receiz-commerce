@@ -94,6 +94,7 @@ export const seedCommerceState: CommerceState = {
     { id: "products", label: "Products", href: "/#products", visible: true },
     { id: "rewards", label: "Rewards", href: "/#rewards", visible: true },
     { id: "assets", label: "Assets", href: "/#assets", visible: true },
+    { id: "blog", label: "Blog", href: "/blog", visible: true },
     { id: "play", label: "Play", href: "/#play", visible: true },
     { id: "account", label: "Account", href: "/account", visible: true },
     { id: "admin", label: "Admin", href: "/admin", visible: true }
@@ -153,6 +154,48 @@ export const seedCommerceState: CommerceState = {
       visibleInNav: true,
       published: true,
       sections: []
+    }
+  ],
+  blogPosts: [
+    {
+      id: "blog-origin-roast",
+      title: "How Boost sources proof-sealed beans",
+      slug: "/blog/proof-sealed-beans",
+      excerpt: "A behind-the-scenes look at how every featured roast carries a Receiz proof trail.",
+      body: "Tell the story behind the product, the people, the proof object, and the reward that customers unlock after purchase.",
+      authorName: "Boost Coffee",
+      coverImageUrl: null,
+      tags: ["sourcing", "proof", "coffee"],
+      featured: true,
+      status: "published",
+      publishedAt: now,
+      seo: {
+        title: "Proof-sealed beans from Boost Coffee",
+        description: "See how Boost Coffee uses Receiz proof objects to connect sourcing, purchases, and rewards.",
+        canonicalPath: "/blog/proof-sealed-beans",
+        keywords: ["proof-sealed coffee", "Receiz rewards", "Boost Coffee"],
+        socialImageUrl: null
+      }
+    },
+    {
+      id: "blog-rewards-guide",
+      title: "Your guide to earning rewards",
+      slug: "/blog/rewards-guide",
+      excerpt: "How beans, access passes, coupons, and Receized perks work in the Boost rewards program.",
+      body: "Explain the reward rules, customer actions, eligibility, proof seals, and how to redeem benefits.",
+      authorName: "Boost Coffee",
+      coverImageUrl: null,
+      tags: ["rewards", "members"],
+      featured: false,
+      status: "draft",
+      publishedAt: now,
+      seo: {
+        title: "Boost Coffee rewards guide",
+        description: "Learn how to earn and redeem proof-sealed rewards at Boost Coffee.",
+        canonicalPath: "/blog/rewards-guide",
+        keywords: ["coffee rewards", "Receiz ID", "proof rewards"],
+        socialImageUrl: null
+      }
     }
   ],
   collections: [
@@ -264,20 +307,50 @@ export const seedCommerceState: CommerceState = {
     {
       id: "1045",
       customerId: "customer-lena",
+      customerEmail: "lena@example.com",
       totalLabel: "$36.00",
       status: "mock_paid",
       itemCount: 2,
       sealed: true,
-      createdAt: now
+      createdAt: now,
+      merchantReceizId: "boost.receiz.id",
+      tenantHost: "boost.receiz.app",
+      checkoutSessionId: "demo_checkout_1045",
+      paymentRail: "receiz_wallet",
+      settlementStatus: "wallet_reserved",
+      shipping: {
+        name: "Lena Smith",
+        email: "lena@example.com",
+        line1: "88 Market Street",
+        city: "San Francisco",
+        region: "CA",
+        postalCode: "94105",
+        country: "US"
+      }
     },
     {
       id: "10234",
       customerId: "customer-lena",
+      customerEmail: "lena@example.com",
       totalLabel: "$20.61",
       status: "fulfilled",
       itemCount: 1,
       sealed: true,
-      createdAt: now
+      createdAt: now,
+      merchantReceizId: "boost.receiz.id",
+      tenantHost: "boost.receiz.app",
+      checkoutSessionId: "demo_checkout_10234",
+      paymentRail: "card_fallback",
+      settlementStatus: "settled",
+      shipping: {
+        name: "Lena Smith",
+        email: "lena@example.com",
+        line1: "88 Market Street",
+        city: "San Francisco",
+        region: "CA",
+        postalCode: "94105",
+        country: "US"
+      }
     }
   ],
   customers: [
@@ -285,13 +358,23 @@ export const seedCommerceState: CommerceState = {
       id: "customer-lena",
       name: "Lena Smith",
       email: "lena@example.com",
+      receizHandle: "lena.receiz.id",
       tier: "VIP",
       rewardsValueLabel: "$36.00",
       beans: 128,
       streak: "2x",
       orderIds: ["1045", "10234"],
       rewardIds: ["reward-12"],
-      assetIds: ["asset-member-access", "asset-limited-drop", "asset-brew-class"]
+      assetIds: ["asset-member-access", "asset-limited-drop", "asset-brew-class"],
+      shippingAddress: {
+        name: "Lena Smith",
+        email: "lena@example.com",
+        line1: "88 Market Street",
+        city: "San Francisco",
+        region: "CA",
+        postalCode: "94105",
+        country: "US"
+      }
     }
   ],
   rewards: [

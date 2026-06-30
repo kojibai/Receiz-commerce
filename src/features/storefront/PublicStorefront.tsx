@@ -6,7 +6,7 @@ import { BrandMark, Button, Panel, ProductVisual, SectionHeader, StatusPill } fr
 import { platform } from "@/lib/platform";
 import { brandThemeStyle } from "@/lib/theme";
 import { useTemplateStore } from "@/lib/storage/use-template-store";
-import type { CommerceState, CustomerAccount, Product, ReceizedAsset, Reward } from "@/types/domain";
+import type { BlogPost, CommerceState, CustomerAccount, Product, ReceizedAsset, Reward } from "@/types/domain";
 import { PlayCampaign } from "@/features/play/PlayCampaign";
 import { ProductCatalog } from "@/features/storefront/ProductCatalog";
 import { ReceizIdAccess } from "@/features/storefront/ReceizIdAccess";
@@ -101,11 +101,14 @@ export function PublicStorefront() {
             />
 
             <ProductCatalog
+              brandImageUrl={state.brand.logoImageUrl}
               brandLabel={state.brand.logoText}
               products={state.products}
               onAddToCart={actions.addToCart}
               showAdminActions={!tenantSurface}
             />
+
+            <BlogHighlights posts={state.blogPosts} showAdminActions={!tenantSurface} />
 
             {tenantSurface ? null : (
               <a className="mobile-fork" href="https://github.com" target="_blank" rel="noreferrer">
@@ -125,7 +128,13 @@ export function PublicStorefront() {
               onSignIn={actions.signInWithReceizId}
               receizId={state.auth.receizId}
             />
-            <RewardDeck brandLabel={state.brand.logoText} customer={customer} reward={reward} showAdminActions={!tenantSurface} />
+            <RewardDeck
+              brandImageUrl={state.brand.logoImageUrl}
+              brandLabel={state.brand.logoText}
+              customer={customer}
+              reward={reward}
+              showAdminActions={!tenantSurface}
+            />
             {tenantSurface ? null : <SealEvents events={state.proofEvents} />}
           </aside>
         </div>
@@ -161,6 +170,53 @@ export function PublicStorefront() {
         <BottomNav activeView={mobileView} onChange={selectMobileView} />
       </div>
     </main>
+  );
+}
+
+function BlogHighlights({
+  posts,
+  showAdminActions
+}: {
+  posts: BlogPost[];
+  showAdminActions: boolean;
+}) {
+  const visiblePosts = posts.filter((post) => post.status === "published" || showAdminActions).slice(0, 3);
+
+  return (
+    <section className="panel blog-panel" id="blog">
+      <SectionHeader
+        title="Blog"
+        action={showAdminActions ? <Button onClick={() => window.location.assign("/admin")} variant="outline">Add post</Button> : null}
+      />
+      {visiblePosts.length ? (
+        <div className="blog-card-grid">
+          {visiblePosts.map((post) => (
+            <article className={post.featured ? "blog-card featured" : "blog-card"} key={post.id}>
+              <div className="blog-cover">
+                {post.coverImageUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img alt="" src={post.coverImageUrl} />
+                ) : (
+                  <Icons.book size={24} />
+                )}
+              </div>
+              <div>
+                <span>{post.tags.slice(0, 2).join(" · ") || "Update"}</span>
+                <h3>{post.title}</h3>
+                <p>{post.excerpt}</p>
+              </div>
+              <StatusPill tone={post.status === "published" ? "green" : "neutral"}>{post.status}</StatusPill>
+            </article>
+          ))}
+        </div>
+      ) : (
+        <div className="panel-empty-state">
+          <Icons.book size={22} />
+          <strong>No posts yet</strong>
+          <span>This store has not published blog content yet.</span>
+        </div>
+      )}
+    </section>
   );
 }
 
@@ -304,6 +360,7 @@ function MobileStage({
     <div className="mobile-stage" data-active-view={activeView}>
       <MobileStorePanel
         active={activeView === "store"}
+        blogPosts={state.blogPosts}
         onAddToCart={onAddToCart}
         onCheckout={onCheckout}
         onSeal={onSeal}
@@ -313,6 +370,7 @@ function MobileStage({
       />
       <MobileRewardsPanel
         active={activeView === "rewards"}
+        brandImageUrl={state.brand.logoImageUrl}
         brandLabel={state.brand.logoText}
         customer={customer}
         onClaimReward={onClaimReward}
@@ -371,6 +429,7 @@ function MobilePane({
 function MobileStorePanel({
   active,
   products,
+  blogPosts,
   state,
   tenantSurface,
   onAddToCart,
@@ -378,6 +437,7 @@ function MobileStorePanel({
   onSeal
 }: {
   active: boolean;
+  blogPosts: BlogPost[];
   products: Product[];
   state: CommerceState;
   tenantSurface: boolean;
@@ -386,6 +446,7 @@ function MobileStorePanel({
   onSeal: () => void;
 }) {
   const firstProduct = products[0];
+  const firstPost = blogPosts.find((post) => post.status === "published") ?? blogPosts[0];
 
   return (
     <MobilePane active={active} action={<StatusPill tone="green">Live</StatusPill>} title="Store">
@@ -406,7 +467,7 @@ function MobileStorePanel({
           </div>
         </div>
         <div className="mobile-featured-product">
-          <BrandMark label={state.brand.logoText} />
+          <BrandMark imageUrl={state.brand.logoImageUrl} label={state.brand.logoText} />
           <strong>{firstProduct?.name ?? "Add products"}</strong>
           <small>{firstProduct?.priceLabel ?? "Ready"}</small>
         </div>
@@ -424,7 +485,7 @@ function MobileStorePanel({
         {products.length ? (
           products.slice(0, 2).map((product) => (
             <article key={product.id}>
-              <ProductVisual brandLabel={state.brand.logoText} product={product} />
+              <ProductVisual brandImageUrl={state.brand.logoImageUrl} brandLabel={state.brand.logoText} product={product} />
               <div>
                 <strong>{product.name}</strong>
                 <span>{product.subtitle}</span>
@@ -447,12 +508,22 @@ function MobileStorePanel({
         <span><Icons.seal size={15} /> Proof-sealed orders</span>
         <span><Icons.gift size={15} /> Rewards enabled</span>
       </div>
+      {firstPost ? (
+        <article className="mobile-blog-card">
+          <Icons.book size={19} />
+          <div>
+            <strong>{firstPost.title}</strong>
+            <span>{firstPost.excerpt}</span>
+          </div>
+        </article>
+      ) : null}
     </MobilePane>
   );
 }
 
 function MobileRewardsPanel({
   active,
+  brandImageUrl,
   brandLabel,
   customer,
   onClaimReward,
@@ -461,6 +532,7 @@ function MobileRewardsPanel({
   tenantSurface
 }: {
   active: boolean;
+  brandImageUrl?: string | null;
   brandLabel: string;
   customer: CustomerAccount;
   onClaimReward: () => void;
@@ -474,7 +546,7 @@ function MobileRewardsPanel({
     <MobilePane active={active} action={<StatusPill tone="gold">{customer.beans} beans</StatusPill>} title="Rewards">
       {reward ? (
         <div className="mobile-reward-card">
-          <BrandMark label={brandLabel} />
+          <BrandMark imageUrl={brandImageUrl} label={brandLabel} />
           <div>
             <StatusPill tone="gold">Active</StatusPill>
             <h3>{reward.name}</h3>

@@ -3,11 +3,13 @@ import { Button, Panel, RewardCard, SectionHeader } from "@/components/ui";
 import type { CustomerAccount, Reward } from "@/types/domain";
 
 export function RewardDeck({
+  brandImageUrl,
   brandLabel,
   showAdminActions = true,
   reward,
   customer
 }: {
+  brandImageUrl?: string | null;
   brandLabel: string;
   showAdminActions?: boolean;
   reward: Reward | null;
@@ -17,7 +19,7 @@ export function RewardDeck({
     <Panel className="reward-deck-panel" id="rewards">
       <SectionHeader title="Reward deck" action={showAdminActions ? <Button variant="outline">Manage</Button> : null} />
       {reward ? (
-        <RewardCard brandLabel={brandLabel} reward={reward} />
+        <RewardCard brandImageUrl={brandImageUrl} brandLabel={brandLabel} reward={reward} />
       ) : (
         <div className="panel-empty-state">
           <Icons.gift size={22} />

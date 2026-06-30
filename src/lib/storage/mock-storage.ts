@@ -8,6 +8,7 @@ import type {
   Reward,
   SitePage,
   Collection,
+  BlogPost,
   CustomerAccount,
   ReceizedAsset,
   StorefrontConfig
@@ -20,6 +21,9 @@ export type StorageAdapter = {
   listPages(): SitePage[];
   createPage(input: SitePage): SitePage;
   updatePage(id: string, input: Partial<SitePage>): SitePage | null;
+  listBlogPosts(): BlogPost[];
+  createBlogPost(input: BlogPost): BlogPost;
+  updateBlogPost(id: string, input: Partial<BlogPost>): BlogPost | null;
   listCollections(): Collection[];
   createCollection(input: Collection): Collection;
   updateCollection(id: string, input: Partial<Collection>): Collection | null;
@@ -74,6 +78,25 @@ export const mockStorage: StorageAdapter = {
       pages: state.pages.map((page) => {
         if (page.id !== id) return page;
         updated = { ...page, ...input };
+        return updated;
+      })
+    };
+    return updated;
+  },
+  listBlogPosts() {
+    return state.blogPosts;
+  },
+  createBlogPost(input) {
+    state = { ...state, blogPosts: [input, ...state.blogPosts] };
+    return input;
+  },
+  updateBlogPost(id, input) {
+    let updated: BlogPost | null = null;
+    state = {
+      ...state,
+      blogPosts: state.blogPosts.map((post) => {
+        if (post.id !== id) return post;
+        updated = { ...post, ...input };
         return updated;
       })
     };

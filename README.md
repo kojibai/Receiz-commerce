@@ -42,7 +42,7 @@ The admin studio lets an operator customize:
 - Brand name, logo, colors, and tagline
 - Font, radius, button style, and theme save flow
 - Pages and navigation
-- Products and collections
+- Robust pages, blog posts, products, collections, and SEO
 - Rewards and reward rules
 - Receized assets
 - Receiz ID login, account creation, and identity artifact restore
@@ -50,6 +50,33 @@ The admin studio lets an operator customize:
 - Checkout mode
 - Free hosted subdomain, paid custom domain, hosting plan, and billing method
 - Publish checklist
+
+The page, blog, and product buttons open real builders. They persist local template projections immediately and are structured so production deployments can admit the resulting content events through Receiz proof rails.
+
+## Content Builders
+
+The admin includes mobile-friendly builders for:
+
+- Pages: URL path, hero content, body copy, navigation visibility, publish state, SEO title, description, canonical path, and keywords
+- Blog posts: title, slug, excerpt, body, author, cover image, tags, featured state, publish state, and SEO
+- Products: type, price, inventory, status, visual treatment, product description, SEO, reward eligibility, and seal readiness
+
+Published blog posts render on the storefront, including tenant/custom-domain storefronts.
+
+## Sales And Customers
+
+The admin console includes a sales/customer panel that displays:
+
+- Orders
+- Buyer email
+- Payment rail
+- Settlement status
+- Merchant Receiz ID
+- Tenant host/custom domain
+- Customer profile rows
+- Shipping details for fulfillment
+
+Checkout projections are local UI projections until the Receiz checkout/session/settlement proof bundles are returned and admitted.
 
 ## Product Model
 
@@ -172,12 +199,35 @@ RECEIZ_DEFAULT_SETTLEMENT_USER_ID=
 
 Production merchant checkout should use the merchant's connected Receiz account/state. The checkout API sends tenant host, merchant Receiz ID, and settlement recipient metadata into Receiz checkout so customer payments settle to the merchant's Receiz rails, not a Stripe account.
 
+Customer checkout on a tenant host requires that customer's scoped Receiz session for that exact host. A `receiz.app` platform login is not reused as the buyer session on `brand.receiz.app` or a custom domain.
+
+The checkout request is wallet-first:
+
+```txt
+Receiz ID login
+-> read customer Receiz wallet projection
+-> create Receiz embedded checkout session
+-> prefer Receiz wallet balance
+-> allow credit-card fallback when wallet funds are unavailable
+-> route settlement metadata to the merchant Receiz ID/reserve wallet
+-> project order/customer/fulfillment state into the merchant admin
+```
+
 Optional Receiz plan IDs for hosted-commerce upgrades:
 
 ```bash
 RECEIZ_CUSTOM_DOMAIN_PLAN_ID=
 RECEIZ_HOSTING_PRO_PLAN_ID=
 ```
+
+Optional experimental Receiz Twin/World content assistance:
+
+```bash
+NEXT_PUBLIC_RECEIZ_TWIN_ENABLED=false
+NEXT_PUBLIC_RECEIZ_WORLD_ENABLED=false
+```
+
+Leave these disabled until the installed `@receiz/sdk` exposes the typed Twin/World namespace for production content generation. The frontend hides Receiz Twin buttons unless the capability flag is enabled and the SDK namespace is present.
 
 Do not add a Receiz access token for normal OIDC login. The setup is:
 
@@ -203,6 +253,21 @@ RECEIZ_CONNECT_ACCESS_TOKEN=
 ## Developer Fork Path
 
 Developers can fork this repo and build custom commerce modules on the same Receiz SDK boundary. The app is structured so page components render projected proof truth and product controls without inventing a second source of truth.
+
+## Open-Source Release
+
+Release checklist:
+
+- `pnpm typecheck`
+- `pnpm lint`
+- `pnpm build`
+- Mobile admin QA
+- Tenant storefront QA
+- Checkout QA
+- Domain QA
+- Secret scan before publishing
+
+See `docs/OPEN_SOURCE_RELEASE.md` for the full public-release checklist.
 
 ## Design References
 

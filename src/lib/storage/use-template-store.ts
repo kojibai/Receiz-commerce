@@ -8,8 +8,8 @@ import {
   normalizeTenantSlug,
   subdomainForSlug
 } from "@/lib/hosting/domain-utils";
-import { BASE_STORAGE_KEY, currentHostContext, type HostContext } from "@/lib/hosting/host-context";
-import type { CommerceState, CustomerAccount, ProofEvent } from "@/types/domain";
+import { BASE_STORAGE_KEY, currentHostContext, hostContextFromHost, type HostContext } from "@/lib/hosting/host-context";
+import type { BlogPost, CommerceState, CustomerAccount, Product, ProofEvent, SitePage } from "@/types/domain";
 import { makeId } from "@/lib/utils";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -84,6 +84,7 @@ function migrateStoredState(value: unknown): CommerceState {
     },
     navigation: mergeArray(base.navigation, stored.navigation),
     pages: mergeArray(base.pages, stored.pages),
+    blogPosts: mergeArray(base.blogPosts, stored.blogPosts),
     collections: mergeArray(base.collections, stored.collections),
     products: mergeArray(base.products, stored.products),
     cart: {
@@ -227,6 +228,63 @@ function makeEvent(type: ProofEvent["type"], detail: string): ProofEvent {
   };
 }
 
+function slugify(value: string, fallback = "untitled") {
+  const slug = value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 72);
+
+  return slug || fallback;
+}
+
+function pageWithDefaults(page: SitePage): SitePage {
+  const path = page.slug.startsWith("/") ? page.slug : `/${slugify(page.slug || page.title, "page")}`;
+
+  return {
+    ...page,
+    slug: path,
+    seo: page.seo ?? {
+      title: page.title,
+      description: page.sections[0]?.body ?? "",
+      canonicalPath: path,
+      keywords: [],
+      socialImageUrl: null
+    }
+  };
+}
+
+function blogPostWithDefaults(post: BlogPost): BlogPost {
+  const path = post.slug.startsWith("/blog/") ? post.slug : `/blog/${slugify(post.slug || post.title, "post")}`;
+
+  return {
+    ...post,
+    slug: path,
+    seo: {
+      ...post.seo,
+      canonicalPath: post.seo.canonicalPath || path,
+      title: post.seo.title || post.title,
+      description: post.seo.description || post.excerpt
+    }
+  };
+}
+
+function productWithDefaults(product: Product): Product {
+  return {
+    ...product,
+    id: product.id || makeId("product"),
+    seo: product.seo ?? {
+      title: product.name,
+      description: product.description || product.subtitle,
+      canonicalPath: `/products/${slugify(product.name, "product")}`,
+      keywords: [product.type.replace("_", " "), product.name],
+      socialImageUrl: null
+    }
+  };
+}
+
 function identityArtifactKind(file: File): CommerceState["auth"]["receizId"]["artifactKind"] {
   const name = file.name.toLowerCase();
 
@@ -248,6 +306,7 @@ type ReceizProfile = {
   name?: string;
   email?: string;
   handle?: string;
+  imageUrl?: string;
   subdomain?: string;
   customDomain?: string;
 };
@@ -336,7 +395,7 @@ function createFreshMerchantWorkspace(current: CommerceState, profile: ReceizPro
       ...current.brand,
       name: displayName,
       logoText: logoTextFromProfile(profile),
-      logoImageUrl: null,
+      logoImageUrl: profile.imageUrl || null,
       tagline: "Proof-sealed commerce by Receiz"
     },
     storefront: {
@@ -388,6 +447,7 @@ function createFreshMerchantWorkspace(current: CommerceState, profile: ReceizPro
     },
     navigation: seedCommerceState.navigation,
     pages: [],
+    blogPosts: [],
     collections: [],
     products: [],
     cart: { lines: [] },
@@ -439,6 +499,10 @@ function applyReceizProfile(current: CommerceState, profile: ReceizProfile): Com
 
   return {
     ...base,
+    brand: {
+      ...base.brand,
+      logoImageUrl: base.brand.logoImageUrl || profile.imageUrl || null
+    },
     customers: base.customers.length ? base.customers.map((item, index) => (index === 0 ? customer : item)) : [customer],
     hosting: {
       ...base.hosting,
@@ -546,10 +610,39 @@ function cartAmountUsd(state: CommerceState) {
   return Math.max(1, priceFromLabel(firstProduct?.priceLabel ?? "18")).toFixed(2);
 }
 
+function customerShipping(customer: CustomerAccount) {
+  return (
+    customer.shippingAddress ?? {
+      name: customer.name,
+      email: customer.email,
+      line1: "Add shipping address",
+      city: "Pending",
+      region: "",
+      postalCode: "",
+      country: "US"
+    }
+  );
+}
+
+function upsertCheckoutCustomer(customers: CustomerAccount[], customer: CustomerAccount, orderId: string) {
+  const nextCustomer = {
+    ...customer,
+    receizHandle: customer.receizHandle,
+    shippingAddress: customerShipping(customer),
+    orderIds: Array.from(new Set([orderId, ...customer.orderIds]))
+  };
+
+  if (!customers.some((item) => item.id === customer.id)) {
+    return [nextCustomer, ...customers];
+  }
+
+  return customers.map((item) => (item.id === customer.id ? { ...item, ...nextCustomer } : item));
+}
+
 export function useTemplateStore() {
   const [state, setState] = useState<CommerceState>(seedCommerceState);
   const [hydrated, setHydrated] = useState(false);
-  const [hostContext, setHostContext] = useState<HostContext>(() => currentHostContext());
+  const [hostContext, setHostContext] = useState<HostContext>(() => hostContextFromHost(null));
 
   useEffect(() => {
     const context = currentHostContext();
@@ -980,6 +1073,7 @@ export function useTemplateStore() {
               storefront: next.storefront,
               hosting: next.hosting,
               products: next.products,
+              blogPosts: next.blogPosts,
               rewards: next.rewards,
               rewardRules: next.rewardRules,
               campaigns: next.campaigns,
@@ -1007,6 +1101,54 @@ export function useTemplateStore() {
           return next;
         });
       },
+      addPage(page: SitePage) {
+        const nextPage = pageWithDefaults(page);
+        setState((current) => ({
+          ...current,
+          pages: [nextPage, ...current.pages],
+          proofEvents: [makeEvent("SITE_PUBLISHED", `${nextPage.title} page drafted`), ...current.proofEvents]
+        }));
+      },
+      updatePage(pageId: string, input: Partial<SitePage>) {
+        setState((current) => ({
+          ...current,
+          pages: current.pages.map((page) =>
+            page.id === pageId ? pageWithDefaults({ ...page, ...input }) : page
+          )
+        }));
+      },
+      addBlogPost(post: BlogPost) {
+        const nextPost = blogPostWithDefaults(post);
+        setState((current) => ({
+          ...current,
+          blogPosts: [nextPost, ...current.blogPosts],
+          proofEvents: [makeEvent("SITE_PUBLISHED", `${nextPost.title} blog post drafted`), ...current.proofEvents]
+        }));
+      },
+      updateBlogPost(postId: string, input: Partial<BlogPost>) {
+        setState((current) => ({
+          ...current,
+          blogPosts: current.blogPosts.map((post) =>
+            post.id === postId ? blogPostWithDefaults({ ...post, ...input }) : post
+          )
+        }));
+      },
+      addProduct(product: Product) {
+        const nextProduct = productWithDefaults(product);
+        setState((current) => ({
+          ...current,
+          products: [nextProduct, ...current.products],
+          proofEvents: [makeEvent("OBJECT_VERIFIED", `${nextProduct.name} product drafted`), ...current.proofEvents]
+        }));
+      },
+      updateProduct(productId: string, input: Partial<Product>) {
+        setState((current) => ({
+          ...current,
+          products: current.products.map((product) =>
+            product.id === productId ? productWithDefaults({ ...product, ...input }) : product
+          )
+        }));
+      },
       addToCart(productId: string) {
         setState((current) => {
           const existing = current.cart.lines.find((line) => line.productId === productId);
@@ -1026,20 +1168,33 @@ export function useTemplateStore() {
       },
       completeMockCheckout() {
         setState((current) => {
+          const id = `${Math.floor(10000 + Math.random() * 89999)}`;
+          const customer = {
+            ...current.auth.customer,
+            receizHandle: current.auth.receizId.handle
+          };
           const order = {
-            id: `${Math.floor(10000 + Math.random() * 89999)}`,
-            customerId: current.auth.customer.id,
+            id,
+            customerId: customer.id,
+            customerEmail: customer.email,
             totalLabel: "$18.00",
             status: "mock_paid" as const,
             itemCount: Math.max(1, current.cart.lines.length),
             sealed: true,
-            createdAt: new Date().toISOString()
+            createdAt: new Date().toISOString(),
+            merchantReceizId: current.hosting.merchantReceizId,
+            tenantHost: current.hosting.customDomain.domain || current.hosting.subdomain,
+            checkoutSessionId: `mock-${id}`,
+            paymentRail: "sandbox" as const,
+            settlementStatus: "sandbox" as const,
+            shipping: customerShipping(customer)
           };
 
           return {
             ...current,
             cart: { lines: [] },
             orders: [order, ...current.orders],
+            customers: upsertCheckoutCustomer(current.customers, customer, order.id),
             proofEvents: [makeEvent("ORDER_VERIFIED", `Order #${order.id} sealed`), ...current.proofEvents]
           };
         });
@@ -1049,20 +1204,33 @@ export function useTemplateStore() {
           const checkoutMode = process.env.NEXT_PUBLIC_CHECKOUT_MODE ?? current.checkout.mode;
 
           if (checkoutMode === "mock") {
+            const id = `${Math.floor(10000 + Math.random() * 89999)}`;
+            const customer = {
+              ...current.auth.customer,
+              receizHandle: current.auth.receizId.handle
+            };
             const order = {
-              id: `${Math.floor(10000 + Math.random() * 89999)}`,
-              customerId: current.auth.customer.id,
+              id,
+              customerId: customer.id,
+              customerEmail: customer.email,
               totalLabel: `$${cartAmountUsd(current)}`,
               status: "mock_paid" as const,
               itemCount: Math.max(1, current.cart.lines.length),
               sealed: true,
-              createdAt: new Date().toISOString()
+              createdAt: new Date().toISOString(),
+              merchantReceizId: current.hosting.merchantReceizId,
+              tenantHost: current.hosting.customDomain.domain || current.hosting.subdomain,
+              checkoutSessionId: `mock-${id}`,
+              paymentRail: "sandbox" as const,
+              settlementStatus: "sandbox" as const,
+              shipping: customerShipping(customer)
             };
 
             return {
               ...current,
               cart: { lines: [] },
               orders: [order, ...current.orders],
+              customers: upsertCheckoutCustomer(current.customers, customer, order.id),
               proofEvents: [makeEvent("ORDER_VERIFIED", `Order #${order.id} sealed`), ...current.proofEvents]
             };
           }
@@ -1072,6 +1240,13 @@ export function useTemplateStore() {
               checkoutUrl?: string;
               checkoutSessionId?: string;
               clientSecret?: string;
+              status?: string;
+            };
+            paymentRails?: {
+              preferred: "receiz_wallet";
+              fallback: "credit_card";
+              settlement: "merchant_receiz_reserve";
+              merchantReceizId: string;
             };
           }>("/api/checkout", {
             amountUsd: cartAmountUsd(current),
@@ -1088,18 +1263,50 @@ export function useTemplateStore() {
             cancelUrl: `${window.location.origin}/?checkout=cancel`
           })
             .then((result) => {
+              const checkoutSessionId = result.session?.checkoutSessionId ?? `receiz-${Date.now()}`;
+              const sessionStatus = String(result.session?.status ?? "");
+              const cardRequired = sessionStatus.includes("card") || sessionStatus.includes("payment_method");
+              const customer = {
+                ...current.auth.customer,
+                receizHandle: current.auth.receizId.handle
+              };
+              const order = {
+                id: checkoutSessionId.replace(/^checkout[_-]/, "").slice(0, 18) || `${Date.now()}`,
+                customerId: customer.id,
+                customerEmail: customer.email,
+                totalLabel: `$${cartAmountUsd(current)}`,
+                status: cardRequired ? ("card_required" as const) : ("pending" as const),
+                itemCount: Math.max(1, current.cart.lines.length),
+                sealed: false,
+                createdAt: new Date().toISOString(),
+                merchantReceizId: result.paymentRails?.merchantReceizId ?? current.hosting.merchantReceizId,
+                tenantHost: current.hosting.customDomain.domain || current.hosting.subdomain,
+                checkoutSessionId,
+                paymentRail: cardRequired ? ("card_fallback" as const) : ("receiz_wallet" as const),
+                settlementStatus: cardRequired ? ("card_required" as const) : ("pending" as const),
+                shipping: customerShipping(customer)
+              };
+
+              setState((latest) => ({
+                ...latest,
+                cart: { lines: [] },
+                orders: [order, ...latest.orders],
+                customers: upsertCheckoutCustomer(latest.customers, customer, order.id),
+                proofEvents: [
+                  makeEvent(
+                    "ORDER_VERIFIED",
+                    cardRequired
+                      ? `Receiz checkout ${checkoutSessionId} needs card fallback`
+                      : `Receiz wallet checkout ${checkoutSessionId} routed to ${order.merchantReceizId}`
+                  ),
+                  ...latest.proofEvents
+                ]
+              }));
+
               if (result.session?.checkoutUrl) {
                 window.location.assign(result.session.checkoutUrl);
                 return;
               }
-
-              setState((latest) => ({
-                ...latest,
-                proofEvents: [
-                  makeEvent("ORDER_VERIFIED", `Receiz checkout ${result.session?.checkoutSessionId ?? "session"} ready`),
-                  ...latest.proofEvents
-                ]
-              }));
             })
             .catch((error) => {
               setState((latest) => ({

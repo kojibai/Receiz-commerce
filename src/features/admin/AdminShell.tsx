@@ -13,6 +13,7 @@ const nav = [
   ["Dashboard", Icons.home],
   ["Brand", Icons.palette],
   ["Pages", Icons.pages],
+  ["Blog", Icons.book],
   ["Navigation", Icons.sliders],
   ["Products", Icons.products],
   ["Collections", Icons.collections],
@@ -67,7 +68,7 @@ export function AdminShell({
       <div className="admin-body">
         <header className="admin-topbar">
           <Link className="brand-selector" href="/">
-            <BrandMark label={state.brand.logoText} compact />
+            <BrandMark imageUrl={state.brand.logoImageUrl} label={state.brand.logoText} compact />
             <strong>{state.brand.name}</strong>
             <Icons.chevronDown size={16} />
           </Link>
@@ -90,7 +91,7 @@ export function AdminShell({
               <span>1</span>
             </button>
             <div className="admin-user">
-              <div className="avatar">AM</div>
+              <div className="avatar">{state.auth.admin.name.slice(0, 1)}</div>
               <div>
                 <strong>{state.auth.admin.name}</strong>
                 <span>Admin</span>

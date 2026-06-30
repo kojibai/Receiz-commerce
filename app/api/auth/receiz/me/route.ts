@@ -69,6 +69,19 @@ export async function GET(request: NextRequest) {
         name: stringField(profileSource, ["name", "display_name", "displayName"]),
         email: stringField(profileSource, ["email"]),
         handle,
+        imageUrl: stringField(profileSource, [
+          "picture",
+          "avatar_url",
+          "avatarUrl",
+          "image",
+          "image_url",
+          "logo",
+          "logo_url",
+          "profile_image_url",
+          "profileImageUrl",
+          "receiz_profile_image",
+          "accountImageUrl"
+        ]),
         subdomain: stringField(profileSource, ["receiz_app_subdomain", "store_subdomain", "subdomain", "tenantSlug"]),
         customDomain: stringField(profileSource, ["receiz_app_custom_domain", "store_custom_domain", "customDomain", "custom_domain", "domain"])
       }

@@ -74,6 +74,14 @@ export function cleanHost(host: string | null | undefined) {
 
 export function tenantSlugFromHost(host: string | null | undefined, rootDomain = platform.domain) {
   const clean = cleanHost(host);
+  const localDevSuffix = ".localhost";
+
+  if (clean.endsWith(localDevSuffix)) {
+    const localSlug = clean.slice(0, -1 * localDevSuffix.length);
+    if (!localSlug || localSlug.includes(".")) return null;
+    return localSlug;
+  }
+
   if (!clean.endsWith(`.${rootDomain}`)) return null;
 
   const slug = clean.slice(0, -1 * (`.${rootDomain}`).length);

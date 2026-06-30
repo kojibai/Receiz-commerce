@@ -7,6 +7,7 @@ export async function GET() {
     products: mockStorage.listProducts(),
     rewards: mockStorage.listRewards(),
     assets: mockStorage.listAssets(),
+    blogPosts: mockStorage.listBlogPosts(),
     hosting: mockStorage.getHostingConfig()
   });
 }
