@@ -12,6 +12,7 @@ import { BASE_STORAGE_KEY, currentHostContext, hostContextFromHost, type HostCon
 import type { CommerceImportInput, CommerceImportResult } from "@/lib/import/commerce-importer";
 import { selectClientInitialState } from "@/lib/storage/client-state";
 import { pendingPublishStorageKey, shouldResumePendingPublish } from "@/lib/storage/pending-publish";
+import { mergeStoreApiProjection } from "@/lib/storefront/store-api-projection";
 import type { BlogPost, CommerceState, CustomerAccount, Product, ProofEvent, SitePage, StorefrontHomepageMode } from "@/types/domain";
 import { makeId } from "@/lib/utils";
 
@@ -436,6 +437,20 @@ async function fetchReceizProfile(): Promise<ReceizProfileResponse | null> {
   return (await response.json()) as ReceizProfileResponse;
 }
 
+async function fetchPublishedStoreProjection() {
+  const response = await fetch("/api/store", {
+    cache: "no-store",
+    headers: {
+      accept: "application/json",
+      "x-receiz-storefront-fetch": "1"
+    }
+  });
+
+  if (!response.ok) return null;
+
+  return response.json() as Promise<unknown>;
+}
+
 class ReceizLoginRequiredError extends Error {
   connectUrl: string;
 
@@ -590,6 +605,23 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
       window.localStorage.setItem(hostContext.storageKey, JSON.stringify(state));
     }
   }, [hostContext.storageKey, hostContext.surface, hydrated, state]);
+
+  useEffect(() => {
+    if (!hydrated || hostContext.surface !== "tenant") return;
+
+    let cancelled = false;
+
+    void fetchPublishedStoreProjection()
+      .then((projection) => {
+        if (cancelled || !projection) return;
+        setState((current) => mergeStoreApiProjection(current, projection) ?? current);
+      })
+      .catch(() => undefined);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [hostContext.host, hostContext.surface, hostContext.tenantHost, hydrated]);
 
   const actions = useMemo(
     () => ({
