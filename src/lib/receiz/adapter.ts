@@ -42,6 +42,8 @@ export type ReceizCommerceAdapter = {
     clientId: string;
     redirectUri: string;
     codeChallenge: string;
+    scopes?: string[];
+    state?: string;
     usernameHint?: string;
   }): string;
   createReceizId(input: {
@@ -210,7 +212,23 @@ export function createReceizCommerceAdapter(
         redirectUri: input.redirectUri,
         codeChallenge: input.codeChallenge,
         codeChallengeMethod: "S256",
-        scope: ["openid", "profile", "email", "receiz.id"],
+        scope: input.scopes ?? [
+          "openid",
+          "profile",
+          "email",
+          "offline_access",
+          "receiz:record",
+          "receiz:seal",
+          "receiz:verify",
+          "receiz:wallet.read",
+          "receiz:wallet.transfer",
+          "receiz:payments.create",
+          "receiz:payments.read",
+          "receiz:notes.mint",
+          "receiz:notes.claim",
+          "receiz:notes.read"
+        ],
+        state: input.state,
         usernameHint: input.usernameHint
       });
     },

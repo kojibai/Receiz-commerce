@@ -83,42 +83,87 @@ Recommended project settings:
 - Output directory: leave empty/default
 - Node.js: `20.x` or newer
 
-Set these environment variables in Vercel for production Receiz rails:
+OIDC registration:
+
+- Redirect URI: `https://receiz.app/api/auth/receiz/callback`
+- Public client: leave unchecked for this Vercel/Next.js app.
+- Client secret: keep server-only in `RECEIZ_CLIENT_SECRET`.
+- PKCE: still used through `/api/auth/receiz/start`.
+- Browser-only, mobile, or static forks should register a separate public client.
+
+Set these required environment variables in Vercel:
 
 ```bash
 NEXT_PUBLIC_RECEIZ_MODE=live
 RECEIZ_BASE_URL=https://receiz.com
 RECEIZ_CLIENT_ID=
 RECEIZ_CLIENT_SECRET=
-RECEIZ_ACCESS_TOKEN=
-RECEIZ_CONNECT_ACCESS_TOKEN=
 
 NEXT_PUBLIC_AUTH_MODE=receiz_id
 RECEIZ_AUTH_MODE=receiz_id
 RECEIZ_ID_CALLBACK_URL=https://receiz.app/api/auth/receiz/callback
+NEXT_PUBLIC_SITE_URL=https://receiz.app
+```
 
+Enable live Receiz checkout with:
+
+```bash
 NEXT_PUBLIC_CHECKOUT_MODE=receiz
 RECEIZ_CHECKOUT_MODE=receiz
+```
 
+Hosted-commerce settings:
+
+```bash
 NEXT_PUBLIC_HOSTING_MODE=receiz_hosted
-NEXT_PUBLIC_SITE_URL=https://receiz.app
 NEXT_PUBLIC_DEFAULT_SUBDOMAIN=boost.receiz.app
 RECEIZ_ACCOUNT_STATE_MODE=receiz
+```
 
+Optional webhook secrets, if enabled in Receiz:
+
+```bash
 RECEIZ_WEBHOOK_SECRET=
 RECEIZ_CHECKOUT_WEBHOOK_SECRET=
 RECEIZ_PROOF_WEBHOOK_SECRET=
 RECEIZ_HOSTING_WEBHOOK_SECRET=
+```
 
+Optional Vercel/domain automation:
+
+```bash
 VERCEL_TEAM_ID=
 VERCEL_PROJECT_ID=
 VERCEL_API_TOKEN=
+```
 
+Optional Receiz plan IDs for hosted-commerce upgrades:
+
+```bash
 RECEIZ_CUSTOM_DOMAIN_PLAN_ID=
 RECEIZ_HOSTING_PRO_PLAN_ID=
 ```
 
-`VERCEL_*` values are only for deployment/custom-domain automation if Vercel is hosting the SaaS. They are not commerce, payment, identity, or proof rails. After changing the production domain, update `NEXT_PUBLIC_SITE_URL` and `RECEIZ_ID_CALLBACK_URL` so Receiz ID redirect URLs use the correct origin. Never expose `RECEIZ_ACCESS_TOKEN`, webhook secrets, client secrets, or `VERCEL_API_TOKEN` with a `NEXT_PUBLIC_` prefix.
+Do not add a Receiz access token for normal OIDC login. The setup is:
+
+```txt
+Receiz client ID + client secret in Vercel
+-> user clicks Connect Receiz
+-> receiz.com asks the user to approve scopes
+-> receiz.com redirects to /api/auth/receiz/callback with a code
+-> this app exchanges the code for an access token
+-> this app stores that generated token in a secure server cookie
+-> checkout/wallet/payment calls use that generated token
+```
+
+Only set one of these if Receiz explicitly gives you a static app-level or service token. Most deployments should not set them:
+
+```bash
+RECEIZ_ACCESS_TOKEN=
+RECEIZ_CONNECT_ACCESS_TOKEN=
+```
+
+`VERCEL_*` values are only for deployment/custom-domain automation if Vercel is hosting the SaaS. They are not commerce, payment, identity, or proof rails. After changing the production domain, update `NEXT_PUBLIC_SITE_URL` and `RECEIZ_ID_CALLBACK_URL` so Receiz ID redirect URLs use the correct origin. Never expose access tokens, webhook secrets, client secrets, or `VERCEL_API_TOKEN` with a `NEXT_PUBLIC_` prefix.
 
 ## Developer Fork Path
 

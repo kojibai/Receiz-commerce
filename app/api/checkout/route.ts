@@ -1,6 +1,6 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { mockCheckout } from "@/lib/checkout/mock-checkout";
-import { receizCommerceAdapter } from "@/lib/receiz/adapter";
+import { createReceizCommerceAdapter } from "@/lib/receiz/adapter";
 
 function amountFromBody(body: Record<string, unknown>) {
   const explicit = body.amountUsd ?? body.amount;
@@ -11,9 +11,13 @@ function amountFromBody(body: Record<string, unknown>) {
   return normalized || "18.00";
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => ({}));
-  const hasReceizAccess = Boolean(process.env.RECEIZ_ACCESS_TOKEN || process.env.RECEIZ_CONNECT_ACCESS_TOKEN);
+  const accessToken =
+    request.cookies.get("receiz_access_token")?.value ??
+    process.env.RECEIZ_ACCESS_TOKEN ??
+    process.env.RECEIZ_CONNECT_ACCESS_TOKEN;
+  const hasReceizAccess = Boolean(accessToken);
   const checkoutMode =
     process.env.RECEIZ_CHECKOUT_MODE ??
     process.env.CHECKOUT_PROVIDER ??
@@ -21,7 +25,22 @@ export async function POST(request: Request) {
     (hasReceizAccess ? "receiz" : "mock");
 
   if (checkoutMode === "receiz" || checkoutMode === "live") {
-    const session = await receizCommerceAdapter.checkout({
+    if (!accessToken) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error: "receiz_login_required",
+          connectUrl: "/api/auth/receiz/start?returnTo=/"
+        },
+        { status: 401 }
+      );
+    }
+
+    const receiz = createReceizCommerceAdapter({
+      baseUrl: process.env.RECEIZ_BASE_URL,
+      accessToken
+    });
+    const session = await receiz.checkout({
       amountUsd: amountFromBody(body),
       currency: "usd",
       uiMode: body.uiMode === "embedded" ? "embedded" : "hosted",

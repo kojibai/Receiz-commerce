@@ -1,6 +1,6 @@
 import { seedCommerceState } from "@/data/seed";
 import { receizCommerceAdapter } from "@/lib/receiz/adapter";
-import { getConfiguredSiteOrigin, getReceizRedirectUri } from "@/lib/url";
+import { getConfiguredSiteOrigin } from "@/lib/url";
 
 export const mockAuth = {
   getCurrentUser() {
@@ -10,12 +10,7 @@ export const mockAuth = {
     return seedCommerceState.auth.receizId;
   },
   getReceizIdAuthorizeUrl(origin = getConfiguredSiteOrigin()) {
-    return receizCommerceAdapter.buildReceizIdAuthorizeUrl({
-      clientId: process.env.RECEIZ_CLIENT_ID ?? "receiz-app-commerce-demo",
-      redirectUri: getReceizRedirectUri(origin),
-      codeChallenge: "demo-code-challenge",
-      usernameHint: seedCommerceState.auth.receizId.handle
-    });
+    return `${origin.replace(/\/$/, "")}/api/auth/receiz/start`;
   },
   signIn(kind: "admin" | "customer") {
     return kind === "admin" ? seedCommerceState.auth.admin : seedCommerceState.auth.customer;
