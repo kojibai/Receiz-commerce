@@ -987,8 +987,7 @@ a {
   font-size: 13px;
 }
 
-.hero-meta span:first-child,
-.hero-meta span:nth-child(2) {
+.hero-meta span:first-child {
   color: var(--receiz-strong);
 }
 
@@ -1004,10 +1003,6 @@ a {
   width: auto;
   max-width: 100%;
   height: 26px;
-}
-
-.hero-powered-by-receiz img {
-  height: 28px;
 }
 
 .hero-actions {
@@ -1861,6 +1856,17 @@ a {
   color: var(--receiz);
   font-size: 13px;
   font-weight: 800;
+}
+
+.account-powered-by-receiz {
+  display: flex;
+  width: fit-content;
+  max-width: min(210px, 100%);
+  margin-top: 12px;
+}
+
+.account-powered-by-receiz img {
+  height: auto;
 }
 
 .account-hero-metrics,
@@ -3964,15 +3970,6 @@ a {
     gap: 8px;
   }
 
-  .mobile-powered-by-receiz {
-    justify-self: center;
-    width: min(188px, 100%);
-  }
-
-  .mobile-powered-by-receiz img {
-    height: auto;
-  }
-
   .mobile-store-footer span,
   .mobile-stat-row div {
     display: flex;
@@ -4307,6 +4304,20 @@ a {
     gap: 5px;
     color: var(--receiz);
     font-weight: 800;
+  }
+
+  .mobile-account-receiz-badge {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+  }
+
+  .mobile-account-receiz-badge .powered-by-receiz-badge {
+    width: min(188px, 100%);
+  }
+
+  .mobile-account-receiz-badge img {
+    height: auto;
   }
 
   .mobile-account-scope {

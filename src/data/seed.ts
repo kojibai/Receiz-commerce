@@ -145,7 +145,7 @@ export const seedCommerceState: CommerceState = {
       title: "About us",
       slug: "/about",
       visibleInNav: true,
-      published: false,
+      published: true,
       sections: []
     },
     {

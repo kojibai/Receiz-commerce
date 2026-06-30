@@ -6,6 +6,7 @@ import {
   MetricCard,
   OfficialReceizLoginButton,
   Panel,
+  PoweredByReceizBadge,
   RewardCard,
   SealEventTimeline,
   SectionHeader,
@@ -68,6 +69,7 @@ export function AccountDashboard({
           <span className="receiz-id-line">
             <Icons.receiz size={15} /> {receizHandle}
           </span>
+          <PoweredByReceizBadge className="account-powered-by-receiz" />
         </div>
         <div className="account-hero-metrics">
           <MetricCard label="Rewards" value={customer.rewardsValueLabel} />

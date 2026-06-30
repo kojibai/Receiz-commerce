@@ -33,7 +33,7 @@ function newPage(): SitePage {
     title,
     slug,
     visibleInNav: true,
-    published: false,
+    published: true,
     sections: [
       {
         id: `${id}-hero`,
@@ -266,7 +266,16 @@ function PageEditor({
           </label>
           <label className="builder-field">
             <span>URL path</span>
-            <input value={activePage.slug} onChange={(event) => onUpdatePage(activePage.id, { slug: event.target.value })} />
+            <input
+              value={activePage.slug}
+              onChange={(event) => {
+                const nextSlug = event.target.value.startsWith("/") ? event.target.value : `/${event.target.value}`;
+                onUpdatePage(activePage.id, {
+                  slug: nextSlug,
+                  seo: { ...activePage.seo, canonicalPath: nextSlug } as SitePage["seo"]
+                });
+              }}
+            />
           </label>
           <label className="builder-field">
             <span>Hero heading</span>

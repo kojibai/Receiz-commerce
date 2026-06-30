@@ -2,16 +2,20 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BrandMark, ProductVisual, StatusPill } from "@/components/ui";
-import { loadStorefrontState } from "@/lib/storefront/server-state";
+import { loadStorefrontState, type StorefrontSearchParams } from "@/lib/storefront/server-state";
 import { resolveProductBySlug } from "@/lib/storefront/content-routing";
 
 type ProductPageProps = {
   params: Promise<{ slug: string }>;
+  searchParams?: Promise<StorefrontSearchParams>;
 };
 
-export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+export async function generateMetadata({ params, searchParams }: ProductPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const { state } = await loadStorefrontState();
+  const { state } = await loadStorefrontState(await searchParams);
   const product = resolveProductBySlug(state, slug);
 
   if (!product) return {};
@@ -27,9 +31,9 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
   };
 }
 
-export default async function ProductDetailPage({ params }: ProductPageProps) {
+export default async function ProductDetailPage({ params, searchParams }: ProductPageProps) {
   const { slug } = await params;
-  const { state } = await loadStorefrontState();
+  const { state } = await loadStorefrontState(await searchParams);
   const product = resolveProductBySlug(state, slug);
 
   if (!product) notFound();

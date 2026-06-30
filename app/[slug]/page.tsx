@@ -3,15 +3,19 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BrandMark, StatusPill } from "@/components/ui";
 import { resolvePageBySlug } from "@/lib/storefront/content-routing";
-import { loadStorefrontState } from "@/lib/storefront/server-state";
+import { loadStorefrontState, type StorefrontSearchParams } from "@/lib/storefront/server-state";
 
 type SitePageProps = {
   params: Promise<{ slug: string }>;
+  searchParams?: Promise<StorefrontSearchParams>;
 };
 
-export async function generateMetadata({ params }: SitePageProps): Promise<Metadata> {
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+export async function generateMetadata({ params, searchParams }: SitePageProps): Promise<Metadata> {
   const { slug } = await params;
-  const { state } = await loadStorefrontState();
+  const { state } = await loadStorefrontState(await searchParams);
   const page = resolvePageBySlug(state, slug);
 
   if (!page) return {};
@@ -22,9 +26,9 @@ export async function generateMetadata({ params }: SitePageProps): Promise<Metad
   };
 }
 
-export default async function SiteDetailPage({ params }: SitePageProps) {
+export default async function SiteDetailPage({ params, searchParams }: SitePageProps) {
   const { slug } = await params;
-  const { state } = await loadStorefrontState();
+  const { state } = await loadStorefrontState(await searchParams);
   const page = resolvePageBySlug(state, slug);
 
   if (!page || page.slug === "/") notFound();

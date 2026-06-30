@@ -8,9 +8,40 @@ import { tenantFallbackState } from "@/lib/hosting/tenant-state";
 import { hydrateProofStoreFromReceizStoreState } from "@/lib/receiz/store-state-ledger";
 import { mergeStoreApiProjection } from "./store-api-projection";
 
+export type StorefrontSearchParams =
+  | Record<string, string | string[] | undefined>
+  | URLSearchParams
+  | null
+  | undefined;
+
 function requestProtocol(host: string, forwardedProto: string | null) {
   if (forwardedProto) return forwardedProto.split(",")[0]?.trim() || "https";
   return host.includes("localhost") || host.startsWith("127.") ? "http" : "https";
+}
+
+function searchParamValue(searchParams: StorefrontSearchParams, key: string) {
+  if (!searchParams) return null;
+
+  if (searchParams instanceof URLSearchParams) {
+    return searchParams.get(key);
+  }
+
+  const value = searchParams[key];
+  if (Array.isArray(value)) return value[0] ?? null;
+  return value ?? null;
+}
+
+function middlewareHostFromSearchParams(searchParams: StorefrontSearchParams) {
+  const tenantHost = searchParamValue(searchParams, "tenantHost");
+  if (tenantHost) return tenantHost;
+
+  const domain = searchParamValue(searchParams, "domain");
+  if (domain) return domain;
+
+  const tenant = searchParamValue(searchParams, "tenant");
+  if (tenant) return `${tenant}.${platform.domain}`;
+
+  return null;
 }
 
 async function loadCanonicalTenantProjection(host: string, protocol: string) {
@@ -31,15 +62,19 @@ async function loadCanonicalTenantProjection(host: string, protocol: string) {
   }
 }
 
-export async function loadStorefrontState() {
+export async function loadStorefrontState(searchParams?: StorefrontSearchParams) {
   const requestHeaders = await headers();
   const host = requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host") ?? platform.domain;
   const protocol = requestProtocol(host, requestHeaders.get("x-forwarded-proto"));
-  const hostContext = hostContextFromHost(host);
+  const hostContext = hostContextFromHost(middlewareHostFromSearchParams(searchParams) ?? host);
+  const headerHostContext = hostContextFromHost(host);
   const tenantHost = hostContext.tenantHost ?? hostContext.host;
 
   if (hostContext.surface === "tenant") {
-    const canonicalState = await loadCanonicalTenantProjection(host, protocol);
+    const canUseHeaderHostForTenantFetch = headerHostContext.storageKey === hostContext.storageKey;
+    const canonicalState = canUseHeaderHostForTenantFetch
+      ? await loadCanonicalTenantProjection(host, protocol)
+      : null;
 
     if (canonicalState) {
       return {

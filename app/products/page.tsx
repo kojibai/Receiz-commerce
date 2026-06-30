@@ -1,9 +1,13 @@
 import Link from "next/link";
 import { BrandMark, ProductVisual, StatusPill } from "@/components/ui";
-import { loadStorefrontState } from "@/lib/storefront/server-state";
+import { loadStorefrontState, type StorefrontSearchParams } from "@/lib/storefront/server-state";
 
-export default async function ProductsPage() {
-  const { state } = await loadStorefrontState();
+type ProductsPageProps = {
+  searchParams?: Promise<StorefrontSearchParams>;
+};
+
+export default async function ProductsPage({ searchParams }: ProductsPageProps) {
+  const { state } = await loadStorefrontState(await searchParams);
   const activeProducts = state.products.filter((product) => product.status === "active");
 
   return (

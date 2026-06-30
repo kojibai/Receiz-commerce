@@ -3,15 +3,19 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BrandMark, StatusPill } from "@/components/ui";
 import { resolveBlogPostBySlug } from "@/lib/storefront/content-routing";
-import { loadStorefrontState } from "@/lib/storefront/server-state";
+import { loadStorefrontState, type StorefrontSearchParams } from "@/lib/storefront/server-state";
 
 type BlogPageProps = {
   params: Promise<{ slug: string }>;
+  searchParams?: Promise<StorefrontSearchParams>;
 };
 
-export async function generateMetadata({ params }: BlogPageProps): Promise<Metadata> {
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+export async function generateMetadata({ params, searchParams }: BlogPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const { state } = await loadStorefrontState();
+  const { state } = await loadStorefrontState(await searchParams);
   const post = resolveBlogPostBySlug(state, slug);
 
   if (!post) return {};
@@ -27,9 +31,9 @@ export async function generateMetadata({ params }: BlogPageProps): Promise<Metad
   };
 }
 
-export default async function BlogDetailPage({ params }: BlogPageProps) {
+export default async function BlogDetailPage({ params, searchParams }: BlogPageProps) {
   const { slug } = await params;
-  const { state } = await loadStorefrontState();
+  const { state } = await loadStorefrontState(await searchParams);
   const post = resolveBlogPostBySlug(state, slug);
 
   if (!post) notFound();

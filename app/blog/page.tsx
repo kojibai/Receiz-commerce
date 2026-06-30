@@ -1,9 +1,13 @@
 import Link from "next/link";
 import { BrandMark, StatusPill } from "@/components/ui";
-import { loadStorefrontState } from "@/lib/storefront/server-state";
+import { loadStorefrontState, type StorefrontSearchParams } from "@/lib/storefront/server-state";
 
-export default async function BlogIndexPage() {
-  const { state } = await loadStorefrontState();
+type BlogIndexPageProps = {
+  searchParams?: Promise<StorefrontSearchParams>;
+};
+
+export default async function BlogIndexPage({ searchParams }: BlogIndexPageProps) {
+  const { state } = await loadStorefrontState(await searchParams);
   const posts = state.blogPosts.filter((post) => post.status === "published");
 
   return (

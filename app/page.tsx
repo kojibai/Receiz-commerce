@@ -1,8 +1,12 @@
 import { PublicStorefront } from "@/features/storefront/PublicStorefront";
-import { loadStorefrontState } from "@/lib/storefront/server-state";
+import { loadStorefrontState, type StorefrontSearchParams } from "@/lib/storefront/server-state";
 
-export default async function HomePage() {
-  const { hostContext, state } = await loadStorefrontState();
+type HomePageProps = {
+  searchParams?: Promise<StorefrontSearchParams>;
+};
+
+export default async function HomePage({ searchParams }: HomePageProps) {
+  const { hostContext, state } = await loadStorefrontState(await searchParams);
 
   return <PublicStorefront initialHostContext={hostContext} initialState={state} />;
 }

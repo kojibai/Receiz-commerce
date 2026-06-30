@@ -598,11 +598,15 @@ function MobilePane({
 }) {
   return (
     <section aria-hidden={!active} className={active ? "mobile-pane active" : "mobile-pane"}>
-      <div className="mobile-pane-heading">
-        <h2>{title}</h2>
-        {action}
-      </div>
-      {children}
+      {active ? (
+        <>
+          <div className="mobile-pane-heading">
+            <h2>{title}</h2>
+            {action}
+          </div>
+          {children}
+        </>
+      ) : null}
     </section>
   );
 }
@@ -702,7 +706,6 @@ function MobileStorePanel({
         <span><Icons.seal size={15} /> Proof-sealed orders</span>
         <span><Icons.gift size={15} /> Rewards enabled</span>
       </div>
-      <PoweredByReceizBadge className="mobile-powered-by-receiz" />
       {firstPost ? (
         <article className="mobile-blog-card">
           <Icons.book size={19} />
@@ -996,6 +999,9 @@ function MobileAccountPanel({
           <p>{tenantSurface ? `Customer account for ${state.brand.name}` : customer.email}</p>
           <span><Icons.receiz size={15} /> {customerReceizHandle}</span>
         </div>
+      </div>
+      <div className="mobile-account-receiz-badge">
+        <PoweredByReceizBadge />
       </div>
       {state.auth.receizId.connected ? null : (
         <MobileIdentityActions
