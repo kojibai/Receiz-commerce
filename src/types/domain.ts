@@ -215,8 +215,16 @@ export type Order = {
   merchantReceizId?: string;
   tenantHost?: string;
   checkoutSessionId?: string;
-  paymentRail?: "receiz_wallet" | "card_fallback" | "receiz_checkout" | "sandbox";
+  paymentRail?: "receiz_wallet" | "card_fallback" | "receiz_checkout" | "sandbox" | "wallet_card_split";
   settlementStatus?: "wallet_reserved" | "card_required" | "pending" | "settled" | "sandbox";
+  funding?: {
+    strategy: "receiz_wallet_first";
+    totalLabel: string;
+    walletAppliedLabel: string;
+    walletBalanceLabel?: string;
+    cardDeltaLabel: string;
+    cardRequired: boolean;
+  };
   shipping?: {
     name: string;
     email: string;

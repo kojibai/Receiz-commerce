@@ -86,6 +86,7 @@ export type CommerceEventData = {
   itemCount?: number;
   paymentRail?: Order["paymentRail"];
   settlementStatus?: Order["settlementStatus"];
+  funding?: Order["funding"];
   shipping?: Order["shipping"];
   receiptId?: string;
   proofBundle?: Record<string, unknown> | null;
@@ -325,6 +326,7 @@ function eventOrder(state: CommerceState, event: CommerceEventRecord): Order {
     checkoutSessionId: event.data.checkoutSessionId,
     paymentRail: paymentRailFromEvent(event),
     settlementStatus: settlementStatusFromEvent(event),
+    funding: event.data.funding,
     shipping: event.data.shipping
   };
 }
@@ -425,6 +427,7 @@ export function commerceEventFromUnknown(value: unknown, fallbackHost: string): 
       paymentRail: typeof data.paymentRail === "string" ? (data.paymentRail as Order["paymentRail"]) : undefined,
       settlementStatus:
         typeof data.settlementStatus === "string" ? (data.settlementStatus as Order["settlementStatus"]) : undefined,
+      funding: isRecord(data.funding) ? (data.funding as Order["funding"]) : undefined,
       shipping: isRecord(data.shipping) ? (data.shipping as Order["shipping"]) : undefined,
       receiptId: typeof data.receiptId === "string" ? data.receiptId : undefined,
       proofBundle: isRecord(data.proofBundle) ? data.proofBundle : null

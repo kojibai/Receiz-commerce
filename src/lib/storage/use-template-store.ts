@@ -25,7 +25,7 @@ import {
   parseTenantCustomerSession,
   tenantCustomerSessionKey
 } from "@/lib/storefront/tenant-customer-session";
-import type { BlogPost, CommerceState, CustomerAccount, Product, ProofEvent, SitePage, StorefrontHomepageMode } from "@/types/domain";
+import type { BlogPost, CommerceState, CustomerAccount, Order, Product, ProofEvent, SitePage, StorefrontHomepageMode } from "@/types/domain";
 import { makeId } from "@/lib/utils";
 
 function readState(hostContext: HostContext, fallbackState: CommerceState = seedCommerceState): CommerceState {
@@ -531,6 +531,73 @@ function cartAmountUsd(state: CommerceState) {
   return Math.max(1, priceFromLabel(firstProduct?.priceLabel ?? "18")).toFixed(2);
 }
 
+function usdLabelFromCents(cents: number) {
+  return `$${(Math.max(0, cents) / 100).toFixed(2)}`;
+}
+
+function centsFromAmount(value: string | number | undefined) {
+  const amount = typeof value === "number" ? value : Number(String(value ?? "0").replace(/[^0-9.]/g, ""));
+  return Number.isFinite(amount) ? Math.max(0, Math.round(amount * 100)) : 0;
+}
+
+function fallbackFunding(totalLabel: string, cardDeltaLabel = totalLabel): NonNullable<Order["funding"]> {
+  return {
+    strategy: "receiz_wallet_first",
+    totalLabel,
+    walletAppliedLabel: "$0.00",
+    walletBalanceLabel: "$0.00",
+    cardDeltaLabel,
+    cardRequired: centsFromAmount(cardDeltaLabel) > 0
+  };
+}
+
+type CheckoutFundingPayload = {
+  strategy?: string;
+  totalLabel?: string;
+  walletAppliedLabel?: string;
+  walletBalanceLabel?: string;
+  cardDeltaLabel?: string;
+  cardRequired?: boolean;
+  totalUsdCents?: number;
+  walletAppliedUsdCents?: number;
+  walletBalanceUsdCents?: number;
+  cardDeltaUsdCents?: number;
+};
+
+function fundingFromPayload(payload: CheckoutFundingPayload | undefined, totalLabel: string): NonNullable<Order["funding"]> {
+  if (!payload) return fallbackFunding(totalLabel);
+
+  const cardDeltaLabel = payload.cardDeltaLabel ?? usdLabelFromCents(payload.cardDeltaUsdCents ?? centsFromAmount(totalLabel));
+  const walletAppliedLabel = payload.walletAppliedLabel ?? usdLabelFromCents(payload.walletAppliedUsdCents ?? 0);
+
+  return {
+    strategy: "receiz_wallet_first",
+    totalLabel: payload.totalLabel ?? usdLabelFromCents(payload.totalUsdCents ?? centsFromAmount(totalLabel)),
+    walletAppliedLabel,
+    walletBalanceLabel: payload.walletBalanceLabel ?? usdLabelFromCents(payload.walletBalanceUsdCents ?? centsFromAmount(walletAppliedLabel)),
+    cardDeltaLabel,
+    cardRequired: payload.cardRequired ?? (centsFromAmount(cardDeltaLabel) > 0)
+  };
+}
+
+function railFromFunding(funding: NonNullable<Order["funding"]>): Order["paymentRail"] {
+  const walletCents = centsFromAmount(funding.walletAppliedLabel);
+  const cardCents = centsFromAmount(funding.cardDeltaLabel);
+
+  if (walletCents > 0 && cardCents > 0) return "wallet_card_split";
+  if (walletCents > 0) return "receiz_wallet";
+  if (cardCents > 0) return "card_fallback";
+  return "receiz_checkout";
+}
+
+function statusFromFunding(funding: NonNullable<Order["funding"]>): Order["status"] {
+  return funding.cardRequired ? "card_required" : "settled";
+}
+
+function settlementFromFunding(funding: NonNullable<Order["funding"]>): Order["settlementStatus"] {
+  return funding.cardRequired ? "card_required" : "wallet_reserved";
+}
+
 function customerShipping(customer: CustomerAccount) {
   return (
     customer.shippingAddress ?? {
@@ -582,6 +649,73 @@ function publishedStatePayload(state: CommerceState) {
     campaigns: state.campaigns,
     game: state.game,
     checkout: state.checkout
+  };
+}
+
+async function receizIdentityForOneClickCheckout(snapshot: CommerceState) {
+  if (snapshot.auth.receizId.connected) {
+    return {
+      keyFile: null as unknown | null,
+      detail: `${snapshot.auth.receizId.handle} ready for one-click checkout`,
+      apply: (state: CommerceState) => state
+    };
+  }
+
+  if (typeof window !== "undefined") {
+    const existingBrowserSession = parseBrowserReceizIdSession(
+      safeGetLocalStorage(window.localStorage, BROWSER_RECEIZ_ID_SESSION_KEY)
+    );
+
+    if (existingBrowserSession) {
+      return {
+        keyFile: existingBrowserSession.keyFile ?? null,
+        detail: `${existingBrowserSession.receizId.handle} continued for one-click checkout`,
+        apply: (state: CommerceState) => applyBrowserReceizIdSession(state, existingBrowserSession)
+      };
+    }
+  }
+
+  const client = createReceizClient();
+  let projection: ReceizIdentityAccountProjection | null = null;
+  let keyFile: unknown | null = null;
+  let handle = `${slugify(snapshot.brand.logoText || snapshot.brand.name, "customer")}-${makeId("id").slice(-6)}`;
+  let displayName = "Receiz customer";
+
+  try {
+    const identity = await client.identity.createReceizId({
+      username: handle,
+      displayName,
+      deviceName: snapshot.brand.name
+    });
+    keyFile = identity.keyFile;
+    projection = await client.identity.projectAccount(identity.keyFile);
+    handle = accountHandle(projection, `${handle}.receiz.id`);
+    displayName = projection?.owner.displayName ?? displayName;
+  } catch {
+    handle = handle.includes(".") ? handle : `${handle}.receiz.id`;
+  }
+
+  return {
+    keyFile,
+    detail: `${handle} created for one-click checkout`,
+    apply: (state: CommerceState) =>
+      applyLocalReceizIdentitySession(
+        state,
+        {
+          accountImageLabel: "Local Receiz ID",
+          artifactKind: "receiz_id",
+          artifactStatus: projection?.portableStateVerified ? "verified" : "created",
+          displayName,
+          email: projection?.owner.email ?? undefined,
+          handle,
+          keyId: projection?.keyId ?? state.auth.receizId.keyId,
+          localProofVerified: Boolean(projection?.portableStateVerified),
+          loginMode: "new_receiz_id",
+          portableStateStatus: projection?.portableStateStatus ?? "missing",
+          statusLabel: projection?.portableStateVerified ? "New Receiz ID locally verified" : "New Receiz ID created"
+        },
+        currentHostContext().surface === "tenant"
+      )
   };
 }
 
@@ -1349,49 +1483,72 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
           };
         });
       },
-      startCheckout() {
-        setState((current) => {
-          const checkoutMode = process.env.NEXT_PUBLIC_CHECKOUT_MODE ?? current.checkout.mode;
+      async startCheckout() {
+        const identity = await receizIdentityForOneClickCheckout(stateRef.current);
+        if (identity.keyFile) {
+          pendingBrowserIdentityKeyFileRef.current = identity.keyFile;
+        }
 
-          if (checkoutMode === "mock") {
-            const id = `${Math.floor(10000 + Math.random() * 89999)}`;
+        const checkoutSnapshot = identity.apply(stateRef.current);
+        const checkoutMode = process.env.NEXT_PUBLIC_CHECKOUT_MODE ?? checkoutSnapshot.checkout.mode;
+        const totalLabel = `$${cartAmountUsd(checkoutSnapshot)}`;
+        const itemCount = Math.max(1, checkoutSnapshot.cart.lines.length);
+
+        if (checkoutMode === "mock") {
+          const id = `${Math.floor(10000 + Math.random() * 89999)}`;
+          setState((current) => {
+            const base = identity.apply(current);
             const customer = {
-              ...current.auth.customer,
-              receizHandle: current.auth.receizId.handle
+              ...base.auth.customer,
+              receizHandle: base.auth.receizId.handle
             };
             const order = {
               id,
               customerId: customer.id,
               customerEmail: customer.email,
-              totalLabel: `$${cartAmountUsd(current)}`,
+              totalLabel,
               status: "mock_paid" as const,
-              itemCount: Math.max(1, current.cart.lines.length),
+              itemCount,
               sealed: true,
               createdAt: new Date().toISOString(),
-              merchantReceizId: current.hosting.merchantReceizId,
-              tenantHost: current.hosting.customDomain.domain || current.hosting.subdomain,
+              merchantReceizId: base.hosting.merchantReceizId,
+              tenantHost: base.hosting.customDomain.domain || base.hosting.subdomain,
               checkoutSessionId: `mock-${id}`,
               paymentRail: "sandbox" as const,
               settlementStatus: "sandbox" as const,
+              funding: {
+                ...fallbackFunding(totalLabel, "$0.00"),
+                walletAppliedLabel: totalLabel,
+                walletBalanceLabel: totalLabel,
+                cardRequired: false
+              },
               shipping: customerShipping(customer)
             };
 
             return {
-              ...current,
+              ...base,
               cart: { lines: [] },
-              orders: [order, ...current.orders],
-              customers: upsertCheckoutCustomer(current.customers, customer, order.id),
-              proofEvents: [makeEvent("ORDER_VERIFIED", `Order #${order.id} sealed`), ...current.proofEvents]
+              orders: [order, ...base.orders],
+              customers: upsertCheckoutCustomer(base.customers, customer, order.id),
+              proofEvents: [
+                makeEvent("RECEIZ_ID_CONNECTED", identity.detail),
+                makeEvent("ORDER_VERIFIED", `Order #${order.id} sealed`),
+                ...base.proofEvents
+              ]
             };
-          }
+          });
+          return;
+        }
 
-          void postJson<{
+        try {
+          const result = await postJson<{
             session?: {
               checkoutUrl?: string;
               checkoutSessionId?: string;
               clientSecret?: string;
               status?: string;
             };
+            funding?: CheckoutFundingPayload;
             paymentRails?: {
               preferred: "receiz_wallet";
               fallback: "credit_card";
@@ -1399,108 +1556,114 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
               merchantReceizId: string;
             };
           }>("/api/checkout", {
-            amountUsd: cartAmountUsd(current),
-            totalLabel: `$${cartAmountUsd(current)}`,
-            itemCount: Math.max(1, current.cart.lines.length),
-            customerId: current.auth.customer.id,
-            customerEmail: current.auth.customer.email,
+            amountUsd: cartAmountUsd(checkoutSnapshot),
+            totalLabel,
+            itemCount,
+            customerId: checkoutSnapshot.auth.customer.id,
+            customerEmail: checkoutSnapshot.auth.customer.email,
             referenceId: `order-${Date.now()}`,
-            description: `${current.brand.name} proof-sealed order`,
-            tenantSlug: current.hosting.tenantSlug,
-            tenantHost: current.hosting.subdomain,
-            merchantReceizId: current.hosting.merchantReceizId,
+            description: `${checkoutSnapshot.brand.name} proof-sealed order`,
+            tenantSlug: checkoutSnapshot.hosting.tenantSlug,
+            tenantHost: checkoutSnapshot.hosting.subdomain,
+            merchantReceizId: checkoutSnapshot.hosting.merchantReceizId,
             successUrl: `${window.location.origin}/?checkout=success`,
             cancelUrl: `${window.location.origin}/?checkout=cancel`
-          }, { deferLoginRedirect: true })
-            .then((result) => {
-              const checkoutSessionId = result.session?.checkoutSessionId ?? `receiz-${Date.now()}`;
-              const sessionStatus = String(result.session?.status ?? "");
-              const cardRequired = sessionStatus.includes("card") || sessionStatus.includes("payment_method");
+          }, { deferLoginRedirect: true });
+
+          setState((current) => {
+            const base = identity.apply(current);
+            const funding = fundingFromPayload(result.funding, totalLabel);
+            const checkoutSessionId = result.session?.checkoutSessionId ?? `receiz-${Date.now()}`;
+            const customer = {
+              ...base.auth.customer,
+              receizHandle: base.auth.receizId.handle
+            };
+            const order = {
+              id: checkoutSessionId.replace(/^checkout[_-]/, "").slice(0, 18) || `${Date.now()}`,
+              customerId: customer.id,
+              customerEmail: customer.email,
+              totalLabel,
+              status: statusFromFunding(funding),
+              itemCount,
+              sealed: !funding.cardRequired,
+              createdAt: new Date().toISOString(),
+              merchantReceizId: result.paymentRails?.merchantReceizId ?? base.hosting.merchantReceizId,
+              tenantHost: base.hosting.customDomain.domain || base.hosting.subdomain,
+              checkoutSessionId,
+              paymentRail: railFromFunding(funding),
+              settlementStatus: settlementFromFunding(funding),
+              funding,
+              shipping: customerShipping(customer)
+            };
+
+            return {
+              ...base,
+              cart: { lines: [] },
+              orders: [order, ...base.orders],
+              customers: upsertCheckoutCustomer(base.customers, customer, order.id),
+              proofEvents: [
+                makeEvent("RECEIZ_ID_CONNECTED", identity.detail),
+                makeEvent(
+                  "ORDER_VERIFIED",
+                  funding.cardRequired
+                    ? `Wallet applied ${funding.walletAppliedLabel}; card delta ${funding.cardDeltaLabel}`
+                    : `Receiz wallet funded ${funding.totalLabel} for ${order.merchantReceizId}`
+                ),
+                ...base.proofEvents
+              ]
+            };
+          });
+        } catch (error) {
+          if (error instanceof ReceizLoginRequiredError) {
+            setState((current) => {
+              const base = identity.apply(current);
+              const id = `card-${Date.now()}`;
+              const funding = fallbackFunding(totalLabel);
               const customer = {
-                ...current.auth.customer,
-                receizHandle: current.auth.receizId.handle
+                ...base.auth.customer,
+                receizHandle: base.auth.receizId.handle
               };
               const order = {
-                id: checkoutSessionId.replace(/^checkout[_-]/, "").slice(0, 18) || `${Date.now()}`,
+                id,
                 customerId: customer.id,
                 customerEmail: customer.email,
-                totalLabel: `$${cartAmountUsd(current)}`,
-                status: cardRequired ? ("card_required" as const) : ("pending" as const),
-                itemCount: Math.max(1, current.cart.lines.length),
+                totalLabel,
+                status: "card_required" as const,
+                itemCount,
                 sealed: false,
                 createdAt: new Date().toISOString(),
-                merchantReceizId: result.paymentRails?.merchantReceizId ?? current.hosting.merchantReceizId,
-                tenantHost: current.hosting.customDomain.domain || current.hosting.subdomain,
-                checkoutSessionId,
-                paymentRail: cardRequired ? ("card_fallback" as const) : ("receiz_wallet" as const),
-                settlementStatus: cardRequired ? ("card_required" as const) : ("pending" as const),
+                merchantReceizId: base.hosting.merchantReceizId,
+                tenantHost: base.hosting.customDomain.domain || base.hosting.subdomain,
+                checkoutSessionId: `in-app-${id}`,
+                paymentRail: "card_fallback" as const,
+                settlementStatus: "card_required" as const,
+                funding,
                 shipping: customerShipping(customer)
               };
 
-              setState((latest) => ({
-                ...latest,
+              return {
+                ...base,
                 cart: { lines: [] },
-                orders: [order, ...latest.orders],
-                customers: upsertCheckoutCustomer(latest.customers, customer, order.id),
+                orders: [order, ...base.orders],
+                customers: upsertCheckoutCustomer(base.customers, customer, order.id),
                 proofEvents: [
-                  makeEvent(
-                    "ORDER_VERIFIED",
-                    cardRequired
-                      ? `Receiz checkout ${checkoutSessionId} needs card fallback`
-                      : `Receiz wallet checkout ${checkoutSessionId} routed to ${order.merchantReceizId}`
-                  ),
-                  ...latest.proofEvents
+                  makeEvent("RECEIZ_ID_CONNECTED", identity.detail),
+                  makeEvent("ORDER_VERIFIED", `Card delta ${funding.cardDeltaLabel} ready in app`),
+                  ...base.proofEvents
                 ]
-              }));
-            })
-            .catch((error) => {
-              if (error instanceof ReceizLoginRequiredError) {
-                const id = `card-${Date.now()}`;
-                const customer = {
-                  ...current.auth.customer,
-                  receizHandle: current.auth.receizId.handle
-                };
-                const order = {
-                  id,
-                  customerId: customer.id,
-                  customerEmail: customer.email,
-                  totalLabel: `$${cartAmountUsd(current)}`,
-                  status: "card_required" as const,
-                  itemCount: Math.max(1, current.cart.lines.length),
-                  sealed: false,
-                  createdAt: new Date().toISOString(),
-                  merchantReceizId: current.hosting.merchantReceizId,
-                  tenantHost: current.hosting.customDomain.domain || current.hosting.subdomain,
-                  checkoutSessionId: `in-app-${id}`,
-                  paymentRail: "card_fallback" as const,
-                  settlementStatus: "card_required" as const,
-                  shipping: customerShipping(customer)
-                };
-
-                setState((latest) => ({
-                  ...latest,
-                  cart: { lines: [] },
-                  orders: [order, ...latest.orders],
-                  customers: upsertCheckoutCustomer(latest.customers, customer, order.id),
-                  proofEvents: [
-                    makeEvent("ORDER_VERIFIED", "Receiz wallet needs in-app card fallback"),
-                    ...latest.proofEvents
-                  ]
-                }));
-                return;
-              }
-
-              setState((latest) => ({
-                ...latest,
-                proofEvents: [
-                  makeEvent("ORDER_VERIFIED", error instanceof Error ? error.message : "Receiz checkout failed"),
-                  ...latest.proofEvents
-                ]
-              }));
+              };
             });
+            return;
+          }
 
-          return current;
-        });
+          setState((latest) => ({
+            ...latest,
+            proofEvents: [
+              makeEvent("ORDER_VERIFIED", error instanceof Error ? error.message : "Receiz checkout failed"),
+              ...latest.proofEvents
+            ]
+          }));
+        }
       },
       async importCommerceContent(input: Omit<CommerceImportInput, "payload"> & { rawContent?: string }) {
         const result = await postJson<{ imported: CommerceImportResult }>("/api/import", {

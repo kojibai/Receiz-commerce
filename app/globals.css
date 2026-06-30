@@ -4276,6 +4276,45 @@ a {
     font-weight: 850;
   }
 
+  .mobile-checkout-summary {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .mobile-checkout-summary div {
+    display: grid;
+    gap: 3px;
+    min-width: 0;
+    min-height: 74px;
+    padding: 10px;
+    border: 1px solid color-mix(in srgb, var(--receiz) 20%, var(--border));
+    border-radius: 15px;
+    background: color-mix(in srgb, var(--receiz) 7%, white);
+  }
+
+  .mobile-checkout-summary svg {
+    color: var(--receiz);
+  }
+
+  .mobile-checkout-summary span,
+  .mobile-checkout-summary strong {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    line-height: 1.08;
+  }
+
+  .mobile-checkout-summary span {
+    color: var(--muted);
+    font-size: clamp(8.5px, 2.7vw, 10px);
+  }
+
+  .mobile-checkout-summary strong {
+    color: var(--text);
+    font-size: clamp(10px, 3vw, 12px);
+    font-weight: 900;
+  }
+
   .mobile-admin-button {
     width: 100%;
   }
@@ -4620,6 +4659,15 @@ a {
 
   .mobile-account-scope div {
     min-height: 52px;
+    padding: 8px;
+  }
+
+  .mobile-checkout-summary {
+    gap: 6px;
+  }
+
+  .mobile-checkout-summary div {
+    min-height: 66px;
     padding: 8px;
   }
 

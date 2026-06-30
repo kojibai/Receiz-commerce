@@ -68,6 +68,14 @@ export function PublicStorefront({
     setIdentityUploadVisible(false);
     setMobileMenuOpen(false);
   };
+  const oneClickCheckout = async () => {
+    await actions.startCheckout();
+    setIdentityUploadVisible(false);
+    setMobileMenuOpen(false);
+    if (tenantSurface) {
+      setMobileView("account");
+    }
+  };
 
   useEffect(() => {
     if (homepageMode === "game") {
@@ -138,7 +146,7 @@ export function PublicStorefront({
             ) : (
               <>
                 <HeroProduct
-                  onCheckout={actions.startCheckout}
+                  onCheckout={oneClickCheckout}
                   onSeal={sealObject}
                   state={state}
                   tenantSurface={tenantSurface}
@@ -228,7 +236,7 @@ export function PublicStorefront({
           customer={customer}
           customerReceizHandle={receizHandle}
           onAddToCart={actions.addToCart}
-          onCheckout={actions.startCheckout}
+          onCheckout={oneClickCheckout}
           onClaimReward={claimReward}
           onIssueReward={issueReward}
           onSeal={sealObject}
@@ -972,6 +980,7 @@ function MobileAccountPanel({
 }) {
   const tenantHost = state.hosting.customDomain.domain || state.hosting.subdomain;
   const customerOrders = state.orders.filter((order) => order.customerId === customer.id || order.customerEmail === customer.email);
+  const latestOrder = customerOrders[0];
   const shippingReady = Boolean(customer.shippingAddress);
 
   return (
@@ -1008,12 +1017,31 @@ function MobileAccountPanel({
           <div>
             <Icons.orders size={17} />
             <span>Orders</span>
-            <strong>{customerOrders.length ? `${customerOrders.length} sealed` : "Ready"}</strong>
+            <strong>{customerOrders.length ? `${customerOrders.length} orders` : "Ready"}</strong>
           </div>
           <div>
             <Icons.package size={17} />
             <span>Shipping</span>
             <strong>{shippingReady ? "Saved" : "At checkout"}</strong>
+          </div>
+        </div>
+      ) : null}
+      {tenantSurface && latestOrder?.funding ? (
+        <div className="mobile-checkout-summary">
+          <div>
+            <Icons.receiz size={18} />
+            <span>Wallet applied</span>
+            <strong>{latestOrder.funding.walletAppliedLabel}</strong>
+          </div>
+          <div>
+            <Icons.creditCard size={18} />
+            <span>Card delta</span>
+            <strong>{latestOrder.funding.cardDeltaLabel}</strong>
+          </div>
+          <div>
+            <Icons.seal size={18} />
+            <span>Status</span>
+            <strong>{latestOrder.sealed ? "Sealed" : latestOrder.status.replace(/_/g, " ")}</strong>
           </div>
         </div>
       ) : null}

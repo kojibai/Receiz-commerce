@@ -161,6 +161,11 @@ export function AccountDashboard({
                     <strong>Order #{order.id}</strong>
                     <span>{order.itemCount} items · {order.totalLabel}</span>
                     <span>{order.paymentRail?.replace(/_/g, " ") ?? "Receiz checkout"} · {order.settlementStatus?.replace(/_/g, " ") ?? order.status}</span>
+                    {order.funding ? (
+                      <span>
+                        Wallet {order.funding.walletAppliedLabel} · Card delta {order.funding.cardDeltaLabel}
+                      </span>
+                    ) : null}
                   </div>
                   <StatusPill tone={order.sealed ? "green" : "gold"}>
                     {order.sealed ? "Sealed" : order.status.replace(/_/g, " ")}

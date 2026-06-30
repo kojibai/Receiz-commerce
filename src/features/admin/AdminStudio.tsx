@@ -325,6 +325,11 @@ function CommerceOpsPanel({
                 <div>
                   <b>{order.totalLabel}</b>
                   <span>{order.paymentRail?.replace(/_/g, " ") ?? "checkout"}</span>
+                  {order.funding ? (
+                    <span>
+                      Wallet {order.funding.walletAppliedLabel} · Card {order.funding.cardDeltaLabel}
+                    </span>
+                  ) : null}
                 </div>
                 <StatusPill tone={order.settlementStatus === "card_required" ? "gold" : "green"}>
                   {order.settlementStatus ?? order.status}

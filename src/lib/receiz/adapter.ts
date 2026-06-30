@@ -20,6 +20,8 @@ import {
   type ReceizIdContinueRequest,
   type ReceizIdentityAccountProjection,
   type ReceizIdentityLoginProof,
+  type ReceizOneClickCheckoutRequest,
+  type ReceizOneClickCheckoutResponse,
   type ReceizKeyFile,
   type ReceizProofMemory,
   type ReceizProofMemoryAdditionsQuery,
@@ -107,6 +109,7 @@ export type ReceizCommerceAdapter = {
   importTwinMindSummary(): Promise<TwinMindImportSummaryResponse>;
   twinApproval(): Promise<TwinApprovalResponse>;
   approveTwinPromotion(body: TwinPromotionApprovalInput): Promise<TwinApprovalResponse>;
+  oneClickCheckout(body: ReceizOneClickCheckoutRequest): Promise<ReceizOneClickCheckoutResponse>;
   checkout(body: CheckoutRequest): Promise<CheckoutSessionResponse>;
   checkoutSession(query: { checkoutSessionId?: string; sessionId?: string }): Promise<CheckoutSessionResponse>;
   connectWallet(): Promise<ConnectWalletResponse>;
@@ -357,6 +360,9 @@ export function createReceizCommerceAdapter(
     },
     approveTwinPromotion(body) {
       return client.twin.approvePromotion(body);
+    },
+    oneClickCheckout(body) {
+      return client.commerce.oneClickCheckout(body);
     },
     checkout(body) {
       return client.payments.embeddedCheckout(body);

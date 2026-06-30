@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { mockCheckout } from "@/lib/checkout/mock-checkout";
 import { hostContextFromHost } from "@/lib/hosting/host-context";
 import { createReceizCommerceAdapter } from "@/lib/receiz/adapter";
-import { receizLoginRequired } from "@/lib/receiz/session";
 import { platform } from "@/lib/platform";
 
 function amountFromBody(body: Record<string, unknown>) {
@@ -12,6 +11,49 @@ function amountFromBody(body: Record<string, unknown>) {
   const totalLabel = String(body.totalLabel ?? "18.00");
   const normalized = totalLabel.replace(/[^0-9.]/g, "");
   return normalized || "18.00";
+}
+
+function usdCentsFromAmount(value: string) {
+  const normalized = value.replace(/[^0-9.]/g, "");
+  const amount = Number(normalized || "0");
+  return Number.isFinite(amount) ? Math.max(0, Math.round(amount * 100)) : 0;
+}
+
+function usdLabelFromCents(cents: number) {
+  return `$${(Math.max(0, cents) / 100).toFixed(2)}`;
+}
+
+function centsFromValue(value: unknown) {
+  if (typeof value !== "string" && typeof value !== "number") return 0;
+  const cents = Number.parseInt(String(value), 10);
+  return Number.isFinite(cents) ? Math.max(0, cents) : 0;
+}
+
+function checkoutFunding(totalUsdCents: number, walletBalanceUsdCents: number) {
+  const walletAppliedUsdCents = Math.min(totalUsdCents, walletBalanceUsdCents);
+  const cardDeltaUsdCents = Math.max(0, totalUsdCents - walletAppliedUsdCents);
+
+  return {
+    strategy: "receiz_wallet_first" as const,
+    totalUsdCents,
+    walletBalanceUsdCents,
+    walletAppliedUsdCents,
+    cardDeltaUsdCents,
+    totalLabel: usdLabelFromCents(totalUsdCents),
+    walletBalanceLabel: usdLabelFromCents(walletBalanceUsdCents),
+    walletAppliedLabel: usdLabelFromCents(walletAppliedUsdCents),
+    cardDeltaLabel: usdLabelFromCents(cardDeltaUsdCents),
+    cardRequired: cardDeltaUsdCents > 0
+  };
+}
+
+function paymentRails(merchantReceizId: string) {
+  return {
+    preferred: "receiz_wallet" as const,
+    fallback: "credit_card" as const,
+    settlement: "merchant_receiz_reserve" as const,
+    merchantReceizId
+  };
 }
 
 export async function POST(request: NextRequest) {
@@ -30,74 +72,89 @@ export async function POST(request: NextRequest) {
     (hostContext.surface === "tenant" || process.env.NEXT_PUBLIC_AUTH_MODE === "receiz_id" || hasScopedReceizAccess
       ? "receiz"
       : "mock");
-  const referer = request.headers.get("referer");
-  let returnTo = "/";
-
-  if (referer) {
-    try {
-      const url = new URL(referer);
-      returnTo = `${url.pathname}${url.search}`;
-    } catch {
-      returnTo = "/";
-    }
-  }
-
   if (checkoutMode === "receiz" || checkoutMode === "live") {
-    if (!hasScopedReceizAccess || !accessToken) {
-      return NextResponse.json(receizLoginRequired(returnTo), { status: 401 });
-    }
-
     const merchantReceizId =
       typeof body.merchantReceizId === "string" && body.merchantReceizId.trim()
         ? body.merchantReceizId.trim()
         : hostContext.tenantSlug
           ? `${hostContext.tenantSlug}.receiz.id`
           : process.env.RECEIZ_DEFAULT_MERCHANT_RECEIZ_ID ?? "";
+    const totalUsdCents = usdCentsFromAmount(amountFromBody(body));
+
+    if (!hasScopedReceizAccess || !accessToken) {
+      const funding = checkoutFunding(totalUsdCents, 0);
+
+      return NextResponse.json({
+        ok: true,
+        mode: "receiz_wallet_first",
+        wallet: {
+          ok: false,
+          error: "receiz_wallet_not_scoped",
+          message: "No scoped Receiz wallet session is available; card handles the remaining checkout delta."
+        },
+        paymentRails: paymentRails(merchantReceizId),
+        funding,
+        session: {
+          ok: true,
+          checkoutSessionId: `in_app_${Date.now()}`,
+          status: funding.cardRequired ? "card_required" : "wallet_reserved"
+        }
+      });
+    }
+
     const receiz = createReceizCommerceAdapter({
       baseUrl: process.env.RECEIZ_BASE_URL,
       accessToken
     });
-    const wallet = await receiz.connectWallet().catch((error) => ({
-      ok: false,
-      error: "receiz_wallet_unavailable",
-      message: error instanceof Error ? error.message : "Unable to read Receiz wallet"
-    }));
-    const session = await receiz.checkout({
+    const checkout = await receiz.oneClickCheckout({
+      tenantHost: String(body.tenantHost ?? hostContext.tenantHost ?? host),
+      orderId: String(body.referenceId ?? body.orderId ?? `order_${Date.now()}`),
       amountUsd: amountFromBody(body),
       currency: "usd",
-      uiMode: body.uiMode === "embedded" ? "embedded" : "hosted",
-      referenceId: String(body.referenceId ?? body.orderId ?? "receiz-commerce-order"),
-      description: String(body.description ?? "Receiz.app proof-sealed order"),
+      walletFirst: true,
+      cardFallback: true,
       customerEmail: typeof body.customerEmail === "string" ? body.customerEmail : undefined,
       successUrl: typeof body.successUrl === "string" ? body.successUrl : undefined,
       cancelUrl: typeof body.cancelUrl === "string" ? body.cancelUrl : undefined,
-      platform: platform.productName,
-      tenantSlug: String(body.tenantSlug ?? hostContext.tenantSlug ?? hostContext.customDomain ?? "default"),
-      tenantHost: String(body.tenantHost ?? hostContext.tenantHost ?? host),
-      merchantReceizId,
-      settlementRecipientReceizId: merchantReceizId,
-      settlementRecipientUserId: String(
-        body.settlementRecipientUserId ?? process.env.RECEIZ_DEFAULT_SETTLEMENT_USER_ID ?? ""
-      ),
-      paymentRailPreference: "receiz_wallet",
-      walletFirst: true,
-      cardFallback: true,
-      fallbackRail: "credit_card",
-      settlementWallet: "merchant_receiz_reserve",
-      buyerWalletUserId: wallet.ok && "userId" in wallet ? wallet.userId : undefined,
-      proofObjectKind: "receiz.app.order.v1"
+      idempotencyKey: String(body.referenceId ?? body.orderId ?? `checkout:${hostContext.storageKey}:${amountFromBody(body)}`),
+      cart: {
+        items: [
+          {
+            id: "receiz-commerce-cart",
+            title: String(body.description ?? "Receiz.app proof-sealed order"),
+            quantity: Number(body.itemCount ?? 1),
+            amountUsd: amountFromBody(body)
+          }
+        ]
+      }
     });
+    const walletBalanceUsdCents = checkout.wallet && "balanceUsdCents" in checkout.wallet
+      ? centsFromValue(checkout.wallet.balanceUsdCents)
+      : 0;
+    const walletAppliedUsdCents = centsFromValue(checkout.funding.walletAppliedUsdCents);
+    const cardDeltaUsdCents = centsFromValue(checkout.funding.cardDeltaUsdCents);
+    const funding = {
+      ...checkoutFunding(totalUsdCents, walletBalanceUsdCents),
+      walletAppliedUsdCents,
+      cardDeltaUsdCents,
+      walletAppliedLabel: usdLabelFromCents(walletAppliedUsdCents),
+      cardDeltaLabel: usdLabelFromCents(cardDeltaUsdCents),
+      cardRequired: cardDeltaUsdCents > 0
+    };
+    const session = checkout.checkoutSession ?? {
+      ok: checkout.ok,
+      checkoutSessionId: checkout.orderId ?? `receiz_${Date.now()}`,
+      status: funding.cardRequired ? "card_required" : "wallet_reserved"
+    };
 
     return NextResponse.json({
       ok: true,
       mode: "receiz",
-      wallet,
-      paymentRails: {
-        preferred: "receiz_wallet",
-        fallback: "credit_card",
-        settlement: "merchant_receiz_reserve",
-        merchantReceizId
-      },
+      wallet: checkout.wallet,
+      paymentRails: paymentRails(merchantReceizId),
+      funding,
+      proofObject: checkout.proofObject,
+      events: checkout.events,
       session
     });
   }
