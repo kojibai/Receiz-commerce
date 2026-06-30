@@ -16,6 +16,7 @@ import { ProductEditorPanel } from "@/features/admin/ProductEditorPanel";
 import { PublishChecklist } from "@/features/admin/PublishChecklist";
 import { ReceizIdentityPanel } from "@/features/admin/ReceizIdentityPanel";
 import { RewardsRulesPanel } from "@/features/admin/RewardsRulesPanel";
+import type { StorefrontHomepageMode } from "@/types/domain";
 
 type TemplateActions = ReturnType<typeof useTemplateStore>["actions"];
 type AdminMobileView = "launch" | "brand" | "store" | "rewards" | "domains" | "receiz";
@@ -72,6 +73,10 @@ export function AdminStudio() {
               receizId={state.auth.receizId}
             />
             <CommerceImportPanel onImport={actions.importCommerceContent} />
+            <HomepageModePanel
+              mode={state.storefront.homepageMode}
+              onChange={actions.setHomepageMode}
+            />
             <HostingBillingPanel
               billing={state.billing}
               hosting={state.hosting}
@@ -212,6 +217,61 @@ export function AdminStudio() {
         </div>
       </div>
     </AdminShell>
+  );
+}
+
+const homepageModeOptions: Array<{
+  mode: StorefrontHomepageMode;
+  label: string;
+  description: string;
+  Icon: typeof Icons.store;
+}> = [
+  {
+    mode: "store",
+    label: "Store homepage",
+    description: "Default shopping app with products, checkout, rewards, and proof-sealed commerce.",
+    Icon: Icons.store
+  },
+  {
+    mode: "blog",
+    label: "Blog homepage",
+    description: "A premium content roll for stories, SEO, buying guides, and launches.",
+    Icon: Icons.book
+  },
+  {
+    mode: "game",
+    label: "Game homepage",
+    description: "Make the reward game the front door for play-to-earn campaigns and benefits.",
+    Icon: Icons.game
+  }
+];
+
+function HomepageModePanel({
+  mode,
+  onChange
+}: {
+  mode: StorefrontHomepageMode;
+  onChange: (mode: StorefrontHomepageMode) => void;
+}) {
+  return (
+    <Panel className="admin-panel homepage-mode-panel">
+      <SectionHeader title="Homepage" action={<StatusPill tone="green">{mode}</StatusPill>} />
+      <div className="homepage-mode-grid">
+        {homepageModeOptions.map(({ mode: optionMode, label, description, Icon }) => (
+          <button
+            aria-pressed={mode === optionMode}
+            className={mode === optionMode ? "homepage-mode-card active" : "homepage-mode-card"}
+            key={optionMode}
+            onClick={() => onChange(optionMode)}
+            type="button"
+          >
+            <span><Icon size={19} /></span>
+            <strong>{label}</strong>
+            <em>{description}</em>
+          </button>
+        ))}
+      </div>
+    </Panel>
   );
 }
 
@@ -378,6 +438,10 @@ function MobileAdminConsole({
 
         <MobileAdminPane active={activeView === "store"} title="Store" action={<StatusPill tone="green">Catalog</StatusPill>}>
           <CommerceImportPanel onImport={actions.importCommerceContent} />
+          <HomepageModePanel
+            mode={state.storefront.homepageMode}
+            onChange={actions.setHomepageMode}
+          />
           <PageBuilderPanel
             authorName={state.brand.name}
             brand={state.brand}

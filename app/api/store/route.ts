@@ -7,20 +7,28 @@ import { getServerProofStateStore } from "@/lib/receiz/proof-state-store";
 import { receizAccessTokenFromRequest, receizLoginRequired } from "@/lib/receiz/session";
 import { mockStorage } from "@/lib/storage/mock-storage";
 import { tenantFallbackState } from "@/lib/hosting/tenant-state";
-import type { CommerceState } from "@/types/domain";
+import type { CommerceState, StorefrontHomepageMode } from "@/types/domain";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
 
+function isHomepageMode(value: unknown): value is StorefrontHomepageMode {
+  return value === "store" || value === "blog" || value === "game";
+}
+
 function mergePublishedState(input: unknown): CommerceState {
   const base = mockStorage.getState();
   if (!isRecord(input)) return base;
+  const storefront = isRecord(input.storefront) ? { ...base.storefront, ...input.storefront } : base.storefront;
 
   return {
     ...base,
     brand: isRecord(input.brand) ? { ...base.brand, ...input.brand } : base.brand,
-    storefront: isRecord(input.storefront) ? { ...base.storefront, ...input.storefront } : base.storefront,
+    storefront: {
+      ...storefront,
+      homepageMode: isHomepageMode(storefront.homepageMode) ? storefront.homepageMode : base.storefront.homepageMode
+    },
     hosting: isRecord(input.hosting) ? { ...base.hosting, ...input.hosting } : base.hosting,
     navigation: Array.isArray(input.navigation) ? (input.navigation as CommerceState["navigation"]) : base.navigation,
     pages: Array.isArray(input.pages) ? (input.pages as CommerceState["pages"]) : base.pages,

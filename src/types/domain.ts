@@ -383,7 +383,10 @@ export type PublishState = {
   }>;
 };
 
+export type StorefrontHomepageMode = "store" | "blog" | "game";
+
 export type StorefrontConfig = {
+  homepageMode: StorefrontHomepageMode;
   headline: string;
   subheadline: string;
   heroBody: string;

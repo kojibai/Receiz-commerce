@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Icons } from "@/components/icons";
 import { BrandMark, Button, Panel, ProductVisual, SectionHeader, StatusPill } from "@/components/ui";
 import { platform } from "@/lib/platform";
@@ -38,6 +38,8 @@ export function PublicStorefront({
   const receizHandle = customerReceizHandle(state, customer);
   const reward = state.rewards[0] ?? null;
   const campaignName = state.campaigns[0]?.name ?? "Reward Challenge";
+  const homepageMode = state.storefront.homepageMode ?? "store";
+  const gameEnabled = state.game.enabled || homepageMode === "game";
 
   const sealObject = () => actions.appendProofEvent("OBJECT_VERIFIED", "Coffee Pack · Serial #BC-88421");
   const issueReward = () => actions.appendProofEvent("REWARD_ISSUED", `${reward?.name ?? "Reward"} · ${state.brand.name}`);
@@ -46,6 +48,14 @@ export function PublicStorefront({
     setMobileView(view);
     setMobileMenuOpen(false);
   };
+
+  useEffect(() => {
+    if (homepageMode === "game") {
+      setMobileView("play");
+    } else if (homepageMode === "blog") {
+      setMobileView("store");
+    }
+  }, [homepageMode]);
 
   return (
     <main className={tenantSurface ? "commerce-app tenant-store" : "commerce-app"} style={brandThemeStyle(state.brand)}>
@@ -65,59 +75,103 @@ export function PublicStorefront({
               <p>{state.storefront.subheadline}</p>
             </div>
 
-            <HeroProduct
-              onCheckout={actions.startCheckout}
-              onSeal={sealObject}
-              state={state}
-              tenantSurface={tenantSurface}
-            />
+            {homepageMode === "blog" ? (
+              <>
+                <BlogHomeSection
+                  posts={state.blogPosts}
+                  showAdminActions={!tenantSurface}
+                  state={state}
+                />
+                <ProductCatalog
+                  brandImageUrl={state.brand.logoImageUrl}
+                  brandLabel={state.brand.logoText}
+                  products={state.products}
+                  onAddToCart={actions.addToCart}
+                  showAdminActions={!tenantSurface}
+                />
+                <PlayCampaign
+                  campaignName={campaignName}
+                  enabled={gameEnabled}
+                  onComplete={(beans) =>
+                    actions.appendProofEvent("GAME_COMPLETED", `${campaignName} · ${beans} beans`)
+                  }
+                />
+              </>
+            ) : homepageMode === "game" ? (
+              <>
+                <PlayCampaign
+                  campaignName={campaignName}
+                  enabled={gameEnabled}
+                  onComplete={(beans) =>
+                    actions.appendProofEvent("GAME_COMPLETED", `${campaignName} · ${beans} beans`)
+                  }
+                />
+                <ProductCatalog
+                  brandImageUrl={state.brand.logoImageUrl}
+                  brandLabel={state.brand.logoText}
+                  products={state.products}
+                  onAddToCart={actions.addToCart}
+                  showAdminActions={!tenantSurface}
+                />
+                <BlogHighlights posts={state.blogPosts} showAdminActions={!tenantSurface} />
+              </>
+            ) : (
+              <>
+                <HeroProduct
+                  onCheckout={actions.startCheckout}
+                  onSeal={sealObject}
+                  state={state}
+                  tenantSurface={tenantSurface}
+                />
 
-            {tenantSurface ? null : (
-              <div className="quick-actions">
-                <button onClick={sealObject} type="button">
-                  <Icons.seal size={30} />
-                  <div>
-                    <strong>Seal object</strong>
-                    <span>Turn physical or digital objects into verified records.</span>
+                {tenantSurface ? null : (
+                  <div className="quick-actions">
+                    <button onClick={sealObject} type="button">
+                      <Icons.seal size={30} />
+                      <div>
+                        <strong>Seal object</strong>
+                        <span>Turn physical or digital objects into verified records.</span>
+                      </div>
+                      <Icons.chevronRight size={20} />
+                    </button>
+                    <button onClick={issueReward} type="button">
+                      <Icons.gift size={30} />
+                      <div>
+                        <strong>Issue reward</strong>
+                        <span>Reward customers for actions, purchases, or achievements.</span>
+                      </div>
+                      <Icons.chevronRight size={20} />
+                    </button>
+                    <button onClick={claimReward} type="button">
+                      <Icons.star size={30} />
+                      <div>
+                        <strong>Claim reward</strong>
+                        <span>Customers claim perks, discounts, and experiences.</span>
+                      </div>
+                      <Icons.chevronRight size={20} />
+                    </button>
                   </div>
-                  <Icons.chevronRight size={20} />
-                </button>
-                <button onClick={issueReward} type="button">
-                  <Icons.gift size={30} />
-                  <div>
-                    <strong>Issue reward</strong>
-                    <span>Reward customers for actions, purchases, or achievements.</span>
-                  </div>
-                  <Icons.chevronRight size={20} />
-                </button>
-                <button onClick={claimReward} type="button">
-                  <Icons.star size={30} />
-                  <div>
-                    <strong>Claim reward</strong>
-                    <span>Customers claim perks, discounts, and experiences.</span>
-                  </div>
-                  <Icons.chevronRight size={20} />
-                </button>
-              </div>
+                )}
+
+                <PlayCampaign
+                  campaignName={campaignName}
+                  enabled={gameEnabled}
+                  onComplete={(beans) =>
+                    actions.appendProofEvent("GAME_COMPLETED", `${campaignName} · ${beans} beans`)
+                  }
+                />
+
+                <ProductCatalog
+                  brandImageUrl={state.brand.logoImageUrl}
+                  brandLabel={state.brand.logoText}
+                  products={state.products}
+                  onAddToCart={actions.addToCart}
+                  showAdminActions={!tenantSurface}
+                />
+
+                <BlogHighlights posts={state.blogPosts} showAdminActions={!tenantSurface} />
+              </>
             )}
-
-            <PlayCampaign
-              campaignName={campaignName}
-              enabled={state.game.enabled}
-              onComplete={(beans) =>
-                actions.appendProofEvent("GAME_COMPLETED", `${campaignName} · ${beans} beans`)
-              }
-            />
-
-            <ProductCatalog
-              brandImageUrl={state.brand.logoImageUrl}
-              brandLabel={state.brand.logoText}
-              products={state.products}
-              onAddToCart={actions.addToCart}
-              showAdminActions={!tenantSurface}
-            />
-
-            <BlogHighlights posts={state.blogPosts} showAdminActions={!tenantSurface} />
 
             {tenantSurface ? null : (
               <a className="mobile-fork" href="https://github.com" target="_blank" rel="noreferrer">
@@ -166,6 +220,7 @@ export function PublicStorefront({
         />
         <MobileCommandMenu
           activeView={mobileView}
+          homepageMode={homepageMode}
           onClose={() => setMobileMenuOpen(false)}
           onNavigate={selectMobileView}
           onSeal={sealObject}
@@ -175,7 +230,7 @@ export function PublicStorefront({
           tenantSurface={tenantSurface}
           customerReceizHandle={receizHandle}
         />
-        <BottomNav activeView={mobileView} onChange={selectMobileView} />
+        <BottomNav activeView={mobileView} onChange={selectMobileView} storeLabel={homepageMode === "blog" ? "Blog" : "Store"} />
       </div>
     </main>
   );
@@ -228,8 +283,69 @@ function BlogHighlights({
   );
 }
 
+function BlogHomeSection({
+  posts,
+  showAdminActions,
+  state
+}: {
+  posts: BlogPost[];
+  showAdminActions: boolean;
+  state: CommerceState;
+}) {
+  const visiblePosts = posts.filter((post) => post.status === "published" || showAdminActions);
+  const featuredPost = visiblePosts.find((post) => post.featured) ?? visiblePosts[0];
+  const roll = featuredPost
+    ? visiblePosts.filter((post) => post.id !== featuredPost.id).slice(0, 4)
+    : [];
+
+  return (
+    <section className="panel blog-home-panel" id="blog">
+      <SectionHeader
+        title="Blog"
+        action={showAdminActions ? <Button onClick={() => window.location.assign("/admin")} variant="outline">Add post</Button> : <StatusPill tone="green">Latest</StatusPill>}
+      />
+      {featuredPost ? (
+        <div className="blog-home-layout">
+          <article className="blog-home-hero">
+            <div className="blog-home-cover">
+              {featuredPost.coverImageUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img alt="" src={featuredPost.coverImageUrl} />
+              ) : (
+                <BrandMark imageUrl={state.brand.logoImageUrl} label={state.brand.logoText} />
+              )}
+            </div>
+            <div>
+              <span>{featuredPost.tags.slice(0, 3).join(" · ") || state.brand.name}</span>
+              <h2>{featuredPost.title}</h2>
+              <p>{featuredPost.excerpt}</p>
+              <a className="blog-home-link" href={featuredPost.slug}>Read story</a>
+            </div>
+          </article>
+          <div className="blog-roll-list" aria-label="Latest stories">
+            {(roll.length ? roll : visiblePosts.slice(0, 3)).map((post) => (
+              <a href={post.slug} key={post.id}>
+                <span>{post.tags[0] ?? "Story"}</span>
+                <strong>{post.title}</strong>
+                <em>{post.excerpt}</em>
+              </a>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div className="panel-empty-state">
+          <Icons.book size={22} />
+          <strong>No posts yet</strong>
+          <span>Add blog posts in Admin Studio to use Blog as the homepage.</span>
+        </div>
+      )}
+    </section>
+  );
+}
+
 function MobileCommandMenu({
   activeView,
+  homepageMode,
   onClose,
   onNavigate,
   onSeal,
@@ -241,6 +357,7 @@ function MobileCommandMenu({
 }: {
   activeView: MobileView;
   customerReceizHandle: string;
+  homepageMode: CommerceState["storefront"]["homepageMode"];
   onClose: () => void;
   onNavigate: (view: MobileView) => void;
   onSeal: () => void;
@@ -250,7 +367,7 @@ function MobileCommandMenu({
   tenantSurface: boolean;
 }) {
   const navItems = [
-    ["store", "Store", Icons.store],
+    ["store", homepageMode === "blog" ? "Blog" : "Store", homepageMode === "blog" ? Icons.book : Icons.store],
     ["rewards", "Rewards", Icons.gift],
     ["assets", "Assets", Icons.assets],
     ["play", "Play", Icons.game],
@@ -391,7 +508,7 @@ function MobileStage({
       <MobilePlayPanel
         active={activeView === "play"}
         campaignName={campaignName}
-        enabled={state.game.enabled}
+        enabled={state.game.enabled || state.storefront.homepageMode === "game"}
         onComplete={onPlayComplete}
       />
       <MobileAccountPanel
@@ -455,9 +572,14 @@ function MobileStorePanel({
   const categoryLabels = visibleCollections.length
     ? visibleCollections.map((collection) => collection.name)
     : ["Featured", "Access", "Rewards", "Drops"];
+  const blogHome = state.storefront.homepageMode === "blog";
 
   return (
-    <MobilePane active={active} action={<StatusPill tone="green">Live</StatusPill>} title="Store">
+    <MobilePane active={active} action={<StatusPill tone="green">{blogHome ? "Stories" : "Live"}</StatusPill>} title={blogHome ? "Blog" : "Store"}>
+      {blogHome ? (
+        <MobileBlogHome posts={blogPosts} state={state} />
+      ) : (
+        <>
       <div className="mobile-shop-hero">
         <div>
           <span>{state.hosting.subdomain}</span>
@@ -525,7 +647,60 @@ function MobileStorePanel({
           </div>
         </article>
       ) : null}
+        </>
+      )}
     </MobilePane>
+  );
+}
+
+function MobileBlogHome({
+  posts,
+  state
+}: {
+  posts: BlogPost[];
+  state: CommerceState;
+}) {
+  const visiblePosts = posts.filter((post) => post.status === "published");
+  const featuredPost = visiblePosts.find((post) => post.featured) ?? visiblePosts[0];
+  const roll = featuredPost
+    ? visiblePosts.filter((post) => post.id !== featuredPost.id).slice(0, 3)
+    : [];
+
+  if (!featuredPost) {
+    return (
+      <div className="mobile-empty-state">
+        <Icons.book size={24} />
+        <strong>No stories yet</strong>
+        <span>This store is getting its blog ready.</span>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <article className="mobile-blog-home-hero">
+        <div className="mobile-blog-home-cover">
+          {featuredPost.coverImageUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img alt="" src={featuredPost.coverImageUrl} />
+          ) : (
+            <BrandMark imageUrl={state.brand.logoImageUrl} label={state.brand.logoText} />
+          )}
+        </div>
+        <span>{featuredPost.tags.slice(0, 2).join(" · ") || state.brand.name}</span>
+        <h3>{featuredPost.title}</h3>
+        <p>{featuredPost.excerpt}</p>
+        <a href={featuredPost.slug}>Read story</a>
+      </article>
+      <div className="mobile-blog-roll">
+        {(roll.length ? roll : visiblePosts.slice(0, 3)).map((post) => (
+          <a href={post.slug} key={post.id}>
+            <strong>{post.title}</strong>
+            <span>{post.excerpt}</span>
+          </a>
+        ))}
+      </div>
+    </>
   );
 }
 

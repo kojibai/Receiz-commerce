@@ -188,13 +188,15 @@ export type MobileView = "store" | "rewards" | "assets" | "play" | "account";
 
 export function BottomNav({
   activeView,
-  onChange
+  onChange,
+  storeLabel = "Store"
 }: {
   activeView: MobileView;
   onChange: (view: MobileView) => void;
+  storeLabel?: string;
 }) {
   const items = [
-    ["store", "Store", Icons.store],
+    ["store", storeLabel, storeLabel === "Blog" ? Icons.book : Icons.store],
     ["rewards", "Rewards", Icons.gift],
     ["assets", "Assets", Icons.assets],
     ["play", "Play", Icons.game],

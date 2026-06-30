@@ -26,6 +26,7 @@ function baseState(): CommerceState {
       buttonStyle: "filled"
     },
     storefront: {
+      homepageMode: "store",
       headline: "Proof commerce",
       subheadline: "Sell sealed objects",
       heroBody: "Built on Receiz",

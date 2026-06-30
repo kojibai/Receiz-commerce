@@ -22,6 +22,8 @@ function tenantText(value: string, brandName: string) {
 }
 
 function tenantSafeFallbackContent(state: CommerceState, brandName: string): CommerceState {
+  const fallbackProductIds = state.products.slice(0, 3).map((product) => product.id);
+
   return {
     ...state,
     storefront: {
@@ -60,19 +62,62 @@ function tenantSafeFallbackContent(state: CommerceState, brandName: string): Com
         keywords: post.seo.keywords.map((keyword) => tenantText(keyword, brandName))
       }
     })),
-    products: state.products.map((product) => ({
-      ...product,
-      subtitle: tenantText(product.subtitle, brandName),
-      description: product.description ? tenantText(product.description, brandName) : product.description,
-      seo: product.seo
-        ? {
-            ...product.seo,
-            title: tenantText(product.seo.title, brandName),
-            description: tenantText(product.seo.description, brandName),
-            keywords: product.seo.keywords.map((keyword) => tenantText(keyword, brandName))
-          }
-        : product.seo
-    })),
+    collections: [
+      {
+        id: "featured",
+        name: "Featured",
+        slug: "featured",
+        productIds: fallbackProductIds,
+        published: true
+      },
+      {
+        id: "access",
+        name: "Access",
+        slug: "access",
+        productIds: state.products.filter((product) => product.type === "access" || product.type === "benefit").map((product) => product.id),
+        published: true
+      },
+      {
+        id: "rewards",
+        name: "Rewards",
+        slug: "rewards",
+        productIds: state.products.filter((product) => product.rewardEligible).map((product) => product.id),
+        published: true
+      },
+      {
+        id: "drops",
+        name: "Drops",
+        slug: "drops",
+        productIds: state.products.filter((product) => product.type === "receized_asset" || product.type === "experience").map((product) => product.id),
+        published: true
+      }
+    ],
+    products: state.products.map((product, index) => {
+      const fallbackNames = ["Signature item", "Member perk", "Brand essential"];
+      const fallbackSubtitles = [
+        `${brandName} proof-sealed product`,
+        `${brandName} customer benefit`,
+        `${brandName} featured offer`
+      ];
+      const hasDefaultCoffeeCopy = /coffee|cold brew|mug/i.test(`${product.name} ${product.subtitle}`);
+      const name = hasDefaultCoffeeCopy ? fallbackNames[index] ?? `${brandName} item` : tenantText(product.name, brandName);
+      const subtitle = hasDefaultCoffeeCopy ? fallbackSubtitles[index] ?? `${brandName} proof-sealed item` : tenantText(product.subtitle, brandName);
+
+      return {
+        ...product,
+        name,
+        subtitle,
+        description: product.description ? tenantText(product.description, brandName) : product.description,
+        seo: product.seo
+          ? {
+              ...product.seo,
+              title: tenantText(product.seo.title, brandName),
+              description: tenantText(product.seo.description, brandName),
+              keywords: product.seo.keywords.map((keyword) => tenantText(keyword, brandName))
+            }
+          : product.seo
+      };
+    }),
     rewards: state.rewards.map((reward) => ({
       ...reward,
       description: tenantText(reward.description, brandName),
@@ -90,7 +135,11 @@ function tenantSafeFallbackContent(state: CommerceState, brandName: string): Com
 }
 
 function containsTemplateBrand(state: CommerceState, brandName: string) {
-  return brandName !== "Boost Coffee" && JSON.stringify(state).includes("Boost");
+  return (
+    brandName !== "Boost Coffee" &&
+    (JSON.stringify(state).includes("Boost") ||
+      state.collections.some((collection) => collection.name === "Coffee" || collection.name === "Access and benefits"))
+  );
 }
 
 export function tenantFallbackState(state: CommerceState, hostContext: HostContext): CommerceState {

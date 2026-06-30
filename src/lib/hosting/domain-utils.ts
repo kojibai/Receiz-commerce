@@ -96,6 +96,7 @@ export function isPlatformHost(host: string | null | undefined, rootDomain = pla
     clean === rootDomain ||
     clean === `www.${rootDomain}` ||
     clean === "localhost" ||
+    clean === "127.0.0.1" ||
     clean.startsWith("localhost:") ||
     clean.endsWith(".vercel.app")
   );

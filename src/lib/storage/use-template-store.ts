@@ -11,7 +11,7 @@ import {
 import { BASE_STORAGE_KEY, currentHostContext, hostContextFromHost, type HostContext } from "@/lib/hosting/host-context";
 import { tenantFallbackState } from "@/lib/hosting/tenant-state";
 import type { CommerceImportInput, CommerceImportResult } from "@/lib/import/commerce-importer";
-import type { BlogPost, CommerceState, CustomerAccount, Product, ProofEvent, SitePage } from "@/types/domain";
+import type { BlogPost, CommerceState, CustomerAccount, Product, ProofEvent, SitePage, StorefrontHomepageMode } from "@/types/domain";
 import { makeId } from "@/lib/utils";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -34,6 +34,10 @@ function safeTenantSlug(value: unknown) {
   }
 }
 
+function isHomepageMode(value: unknown): value is StorefrontHomepageMode {
+  return value === "store" || value === "blog" || value === "game";
+}
+
 function migrateStoredState(value: unknown): CommerceState {
   if (!isRecord(value)) return seedCommerceState;
 
@@ -51,12 +55,16 @@ function migrateStoredState(value: unknown): CommerceState {
     typeof storedHosting.merchantReceizId === "string"
       ? storedHosting.merchantReceizId
       : receizId.handle || base.hosting.merchantReceizId;
+  const storefront = mergeObject(base.storefront, stored.storefront);
 
   return {
     ...base,
     ...stored,
     brand: mergeObject(base.brand, stored.brand),
-    storefront: mergeObject(base.storefront, stored.storefront),
+    storefront: {
+      ...storefront,
+      homepageMode: isHomepageMode(storefront.homepageMode) ? storefront.homepageMode : base.storefront.homepageMode
+    },
     hosting: {
       ...base.hosting,
       ...storedHosting,
@@ -332,6 +340,7 @@ function createFreshMerchantWorkspace(current: CommerceState, profile: ReceizPro
       tagline: "Proof-sealed commerce by Receiz"
     },
     storefront: {
+      homepageMode: "store",
       headline: "Proof-sealed commerce",
       subheadline: "Sell products, access, benefits, and Receized assets.",
       heroBody: "Your store is ready for products, payments, rewards, and proof.",
@@ -721,6 +730,13 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
         setState((current) => ({
           ...current,
           storefront: { ...current.storefront, ...input }
+        }));
+      },
+      setHomepageMode(mode: StorefrontHomepageMode) {
+        setState((current) => ({
+          ...current,
+          storefront: { ...current.storefront, homepageMode: mode },
+          game: mode === "game" ? { ...current.game, enabled: true } : current.game
         }));
       },
       toggleGame() {

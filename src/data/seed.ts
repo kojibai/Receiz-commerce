@@ -19,6 +19,7 @@ export const seedCommerceState: CommerceState = {
     buttonStyle: "filled"
   },
   storefront: {
+    homepageMode: "store",
     headline: "Proof-sealed commerce",
     subheadline: "Sell products, benefits, access, and Receized assets.",
     heroBody: "Premium coffee, perks, access, and rewards you can trust.",

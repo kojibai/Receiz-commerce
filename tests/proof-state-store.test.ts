@@ -41,6 +41,7 @@ describe("Receiz proof state store", () => {
       brand: { ...baseState().brand, name: "Bjklock Supply", logoText: "bjk" },
       storefront: {
         ...baseState().storefront,
+        homepageMode: "blog",
         headline: "Rare proof gear"
       },
       collections: [
@@ -65,6 +66,7 @@ describe("Receiz proof state store", () => {
     const projected = store.projectHost(baseState(), "bjklock.receiz.app");
 
     assert.equal(projected.brand.name, "Bjklock Supply");
+    assert.equal(projected.storefront.homepageMode, "blog");
     assert.equal(projected.storefront.headline, "Rare proof gear");
     assert.equal(projected.collections[0]?.name, "Rare gear");
   });
