@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { receizCommerceAdapter } from "@/lib/receiz/adapter";
 import { hostContextFromHost } from "@/lib/hosting/host-context";
 import { getReceizRedirectUri, getRequestOrigin } from "@/lib/url";
+import { buildReceizConnectEntryUrl } from "@/lib/receiz/connect-url";
 import { packReceizOAuthState } from "@/lib/receiz/oauth-state";
 import { receizOidcScopesFromEnv } from "@/lib/receiz/oauth-scopes";
 
@@ -42,5 +43,5 @@ export async function GET(request: NextRequest) {
     state
   });
 
-  return NextResponse.redirect(authorizeUrl);
+  return NextResponse.redirect(buildReceizConnectEntryUrl(authorizeUrl));
 }

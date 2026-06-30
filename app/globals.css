@@ -3455,19 +3455,43 @@ a {
   }
 
   .mobile-header .brand-mark span {
-    font-size: 17px;
+    overflow: visible;
+    text-overflow: clip;
+    white-space: nowrap;
+    overflow-wrap: anywhere;
+    font-size: clamp(10px, 3.2vw, 14px);
+    line-height: 0.95;
+  }
+
+  .mobile-header .brand-mark small,
+  .mobile-featured-product .brand-mark small,
+  .mobile-mini-products .brand-mark small,
+  .mobile-reward-card .brand-mark small {
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
+    line-height: 1;
+    overflow-wrap: anywhere;
   }
 
   .mobile-header strong {
     display: block;
-    font-size: 25px;
+    min-width: 0;
+    font-size: clamp(18px, 6.4vw, 25px);
+    line-height: 1.02;
+    overflow-wrap: anywhere;
   }
 
   .mobile-header span {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: 5px;
     color: var(--muted);
+    min-width: 0;
+    font-size: clamp(10px, 3.2vw, 13px);
+    line-height: 1.12;
+    overflow-wrap: anywhere;
   }
 
   .mobile-domain {
@@ -3511,20 +3535,24 @@ a {
   .mobile-command-head span,
   .mobile-command-actions span {
     display: block;
-    overflow: hidden;
     color: var(--muted);
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    line-height: 1.18;
     font-size: 12px;
   }
 
   .mobile-command-head strong {
     display: block;
-    overflow: hidden;
+    overflow: visible;
     color: var(--text);
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    font-size: 22px;
+    text-overflow: clip;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    font-size: clamp(18px, 5vw, 22px);
+    line-height: 1.05;
   }
 
   .mobile-command-grid {
@@ -3581,9 +3609,11 @@ a {
 
   .mobile-command-actions strong {
     display: block;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    line-height: 1.12;
     font-size: 13px;
   }
 
@@ -3628,15 +3658,16 @@ a {
   .mobile-pane-heading h2 {
     margin: 0;
     color: var(--text);
-    font-size: 24px;
+    font-size: clamp(20px, 6.8vw, 24px);
     line-height: 1;
+    overflow-wrap: anywhere;
   }
 
   .mobile-shop-hero {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 126px;
+    grid-template-columns: minmax(0, 1fr) minmax(108px, 30%);
     gap: 12px;
-    min-height: 196px;
+    min-height: clamp(170px, 34dvh, 196px);
     padding: 16px;
     overflow: hidden;
     border: 1px solid var(--border);
@@ -3652,36 +3683,43 @@ a {
   .mobile-shop-hero p,
   .mobile-featured-product small {
     color: rgba(255, 255, 255, 0.82);
+    overflow-wrap: anywhere;
   }
 
   .mobile-shop-hero h3 {
     margin: 8px 0 4px;
-    font-size: 31px;
-    line-height: 0.95;
+    font-size: clamp(24px, 8vw, 31px);
+    line-height: 1;
+    overflow-wrap: anywhere;
   }
 
   .mobile-shop-hero p {
-    max-width: 180px;
+    max-width: 100%;
     margin: 0;
-    font-size: 15px;
+    font-size: clamp(12px, 3.7vw, 15px);
     line-height: 1.3;
   }
 
   .mobile-shop-actions {
     display: flex;
+    flex-wrap: wrap;
     gap: 8px;
-    margin-top: 18px;
+    margin-top: clamp(10px, 3.2vw, 18px);
   }
 
   .mobile-shop-actions button {
+    min-width: 0;
     min-height: 34px;
     padding: 0 12px;
     border: 1px solid rgba(255, 255, 255, 0.32);
     border-radius: 999px;
     color: var(--boost);
     background: #ffffff;
-    font-size: 12px;
+    font-size: clamp(10.5px, 3.2vw, 12px);
     font-weight: 850;
+    line-height: 1.05;
+    white-space: normal;
+    overflow-wrap: anywhere;
   }
 
   .mobile-shop-actions button + button {
@@ -3709,11 +3747,25 @@ a {
   }
 
   .mobile-featured-product .brand-mark span {
-    font-size: 23px;
+    overflow: visible;
+    text-overflow: clip;
+    white-space: nowrap;
+    overflow-wrap: anywhere;
+    font-size: clamp(11px, 3.9vw, 18px);
+    line-height: 0.95;
   }
 
   .mobile-featured-product strong {
-    font-size: 13px;
+    font-size: clamp(10.5px, 3.4vw, 13px);
+    line-height: 1.12;
+    text-align: center;
+    overflow-wrap: anywhere;
+  }
+
+  .mobile-featured-product small {
+    font-size: clamp(10px, 3vw, 12px);
+    line-height: 1.1;
+    text-align: center;
   }
 
   .mobile-category-row {
@@ -3725,12 +3777,16 @@ a {
   .mobile-category-row button {
     min-width: 0;
     height: 38px;
+    padding: 0 6px;
     border: 1px solid var(--border);
     border-radius: 999px;
     color: var(--text);
     background: #ffffff;
-    font-size: 12px;
+    font-size: clamp(10px, 3vw, 12px);
     font-weight: 800;
+    line-height: 1.05;
+    white-space: normal;
+    overflow-wrap: anywhere;
   }
 
   .mobile-mini-products {
@@ -3758,20 +3814,42 @@ a {
     height: 92px;
   }
 
+  .mobile-mini-products .bag-visual .bag-label span,
+  .mobile-mini-products .can-body span,
+  .mobile-mini-products .mug-cup span,
+  .mobile-mini-products .card-visual .brand-mark span {
+    overflow: visible;
+    text-overflow: clip;
+    white-space: nowrap;
+    overflow-wrap: anywhere;
+    line-height: 0.95;
+    text-align: center;
+  }
+
+  .mobile-mini-products .card-visual .brand-mark {
+    width: clamp(34px, 14vw, 48px);
+    height: clamp(30px, 12vw, 44px);
+  }
+
   .mobile-mini-products article > div:not(.product-visual) {
     display: grid;
     gap: 2px;
+    min-width: 0;
     padding-right: 28px;
   }
 
   .mobile-mini-products strong,
   .mobile-mini-products b {
-    font-size: 13px;
+    font-size: clamp(11px, 3.5vw, 13px);
+    line-height: 1.08;
+    overflow-wrap: anywhere;
   }
 
   .mobile-mini-products span {
     color: var(--muted);
-    font-size: 11px;
+    font-size: clamp(9.5px, 3vw, 11px);
+    line-height: 1.15;
+    overflow-wrap: anywhere;
   }
 
   .mobile-mini-products b {
@@ -3802,6 +3880,7 @@ a {
   .mobile-store-footer span,
   .mobile-stat-row div {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: center;
     gap: 6px;
@@ -3810,8 +3889,11 @@ a {
     border-radius: 999px;
     background: var(--surface-soft);
     color: var(--muted);
-    font-size: 12px;
+    font-size: clamp(10px, 3vw, 12px);
     font-weight: 800;
+    line-height: 1.08;
+    text-align: center;
+    overflow-wrap: anywhere;
   }
 
   .mobile-blog-card {
@@ -3834,19 +3916,22 @@ a {
   .mobile-blog-card span {
     display: block;
     min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
+    overflow-wrap: anywhere;
   }
 
   .mobile-blog-card strong {
-    font-size: 12px;
+    font-size: clamp(10.5px, 3.2vw, 12px);
+    line-height: 1.1;
   }
 
   .mobile-blog-card span {
     margin-top: 2px;
     color: var(--muted);
-    font-size: 11px;
+    font-size: clamp(9.5px, 3vw, 11px);
+    line-height: 1.16;
   }
 
   .mobile-blog-home-hero {
@@ -3899,12 +3984,10 @@ a {
   }
 
   .mobile-blog-home-hero p {
-    display: -webkit-box;
     margin: 0;
-    overflow: hidden;
+    overflow: visible;
     line-height: 1.35;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
+    overflow-wrap: anywhere;
   }
 
   .mobile-blog-home-hero a {
@@ -3943,14 +4026,16 @@ a {
   .mobile-blog-roll span {
     display: block;
     min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
+    overflow-wrap: anywhere;
   }
 
   .mobile-blog-roll strong {
     color: var(--text);
-    font-size: 13px;
+    font-size: clamp(11px, 3.4vw, 13px);
+    line-height: 1.12;
   }
 
   .mobile-reward-card,
@@ -3981,7 +4066,9 @@ a {
   .mobile-reward-card h3,
   .mobile-account-card h3 {
     margin: 6px 0 4px;
-    font-size: 23px;
+    font-size: clamp(19px, 6.4vw, 23px);
+    line-height: 1.05;
+    overflow-wrap: anywhere;
   }
 
   .mobile-reward-card p,
@@ -3992,7 +4079,9 @@ a {
   .mobile-asset-list span {
     margin: 0;
     color: var(--muted);
-    font-size: 12px;
+    font-size: clamp(10px, 3.2vw, 12px);
+    line-height: 1.18;
+    overflow-wrap: anywhere;
   }
 
   .mobile-action-grid,
@@ -4011,8 +4100,11 @@ a {
     border-radius: 16px;
     color: var(--text);
     background: #ffffff;
-    font-size: 12px;
+    font-size: clamp(10px, 3vw, 12px);
     font-weight: 850;
+    line-height: 1.08;
+    text-align: center;
+    overflow-wrap: anywhere;
   }
 
   .mobile-stat-row {
@@ -4030,7 +4122,7 @@ a {
 
   .mobile-stat-row span {
     color: var(--muted);
-    font-size: 11px;
+    font-size: clamp(9.5px, 3vw, 11px);
   }
 
   .mobile-asset-list {
@@ -4054,6 +4146,14 @@ a {
     grid-column: 1;
   }
 
+  .mobile-asset-list strong,
+  .mobile-receiz-id-card strong,
+  .mobile-account-card strong {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    line-height: 1.1;
+  }
+
   .mobile-receiz-id-card,
   .mobile-account-card {
     grid-template-columns: 44px minmax(0, 1fr);
@@ -4069,10 +4169,53 @@ a {
 
   .mobile-account-card span {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: 5px;
     color: var(--receiz);
     font-weight: 800;
+  }
+
+  .mobile-account-scope {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .mobile-account-scope div {
+    display: grid;
+    grid-template-columns: 20px minmax(0, 1fr);
+    gap: 2px 7px;
+    min-width: 0;
+    min-height: 58px;
+    padding: 9px;
+    border: 1px solid var(--border);
+    border-radius: 15px;
+    background: #ffffff;
+  }
+
+  .mobile-account-scope svg {
+    grid-row: span 2;
+    align-self: center;
+    color: var(--receiz);
+  }
+
+  .mobile-account-scope span,
+  .mobile-account-scope strong {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    line-height: 1.08;
+  }
+
+  .mobile-account-scope span {
+    color: var(--muted);
+    font-size: clamp(9px, 2.8vw, 10px);
+  }
+
+  .mobile-account-scope strong {
+    color: var(--text);
+    font-size: clamp(10px, 3vw, 11.5px);
+    font-weight: 850;
   }
 
   .mobile-admin-button {
@@ -4140,7 +4283,14 @@ a {
     border: 0;
     color: var(--muted);
     background: transparent;
-    font-size: 12px;
+    font-size: clamp(9.5px, 3vw, 12px);
+    line-height: 1;
+    text-align: center;
+  }
+
+  .bottom-nav button span {
+    max-width: 100%;
+    overflow-wrap: anywhere;
   }
 
   .bottom-nav button.active {
@@ -4242,23 +4392,23 @@ a {
   }
 
   .mobile-header .brand-mark span {
-    font-size: 14px;
+    font-size: clamp(9.5px, 3.1vw, 12px);
   }
 
   .mobile-header strong,
   .mobile-header span {
     min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
   }
 
   .mobile-header strong {
-    font-size: 20px;
+    font-size: clamp(16px, 5.8vw, 20px);
   }
 
   .mobile-header span {
-    font-size: 11px;
+    font-size: clamp(9.5px, 3.1vw, 11px);
   }
 
   .mobile-command-menu.open {
@@ -4317,8 +4467,8 @@ a {
   }
 
   .mobile-shop-hero p {
-    max-width: 150px;
-    font-size: 13px;
+    max-width: 100%;
+    font-size: clamp(11px, 3.5vw, 13px);
   }
 
   .mobile-shop-actions {
@@ -4344,11 +4494,11 @@ a {
   }
 
   .mobile-featured-product .brand-mark span {
-    font-size: 17px;
+    font-size: clamp(10px, 3.8vw, 15px);
   }
 
   .mobile-featured-product strong {
-    font-size: 12px;
+    font-size: clamp(10px, 3.3vw, 12px);
   }
 
   .mobile-category-row {
@@ -4371,7 +4521,7 @@ a {
   }
 
   .mobile-mini-products .product-visual {
-    height: 78px;
+    height: 74px;
   }
 
   .mobile-store-footer span,
@@ -4404,6 +4554,15 @@ a {
   .mobile-action-grid button {
     min-height: 56px;
     border-radius: 14px;
+  }
+
+  .mobile-account-scope {
+    gap: 6px;
+  }
+
+  .mobile-account-scope div {
+    min-height: 52px;
+    padding: 8px;
   }
 
   .mobile-play-wrap .game-tile {

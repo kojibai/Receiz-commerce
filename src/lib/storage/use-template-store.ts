@@ -11,6 +11,7 @@ import {
 import { BASE_STORAGE_KEY, currentHostContext, hostContextFromHost, type HostContext } from "@/lib/hosting/host-context";
 import type { CommerceImportInput, CommerceImportResult } from "@/lib/import/commerce-importer";
 import { selectClientInitialState } from "@/lib/storage/client-state";
+import { safeGetLocalStorage, safeRemoveLocalStorage, safeSetLocalStorage } from "@/lib/storage/browser-storage";
 import { pendingPublishStorageKey, shouldResumePendingPublish } from "@/lib/storage/pending-publish";
 import { mergeStoreApiProjection } from "@/lib/storefront/store-api-projection";
 import type { BlogPost, CommerceState, CustomerAccount, Product, ProofEvent, SitePage, StorefrontHomepageMode } from "@/types/domain";
@@ -20,8 +21,8 @@ function readState(hostContext: HostContext, fallbackState: CommerceState = seed
   if (typeof window === "undefined") return fallbackState;
 
   return selectClientInitialState(hostContext, fallbackState, {
-    scoped: window.localStorage.getItem(hostContext.storageKey),
-    base: hostContext.surface === "tenant" ? null : window.localStorage.getItem(BASE_STORAGE_KEY)
+    scoped: safeGetLocalStorage(window.localStorage, hostContext.storageKey),
+    base: hostContext.surface === "tenant" ? null : safeGetLocalStorage(window.localStorage, BASE_STORAGE_KEY)
   });
 }
 
@@ -463,17 +464,17 @@ class ReceizLoginRequiredError extends Error {
 
 function markPendingPublish(storageKey: string) {
   if (typeof window === "undefined") return;
-  window.localStorage.setItem(pendingPublishStorageKey(storageKey), JSON.stringify({ createdAt: Date.now() }));
+  safeSetLocalStorage(window.localStorage, pendingPublishStorageKey(storageKey), JSON.stringify({ createdAt: Date.now() }));
 }
 
 function clearPendingPublish(storageKey: string) {
   if (typeof window === "undefined") return;
-  window.localStorage.removeItem(pendingPublishStorageKey(storageKey));
+  safeRemoveLocalStorage(window.localStorage, pendingPublishStorageKey(storageKey));
 }
 
 function hasPendingPublish(storageKey: string) {
   if (typeof window === "undefined") return false;
-  return Boolean(window.localStorage.getItem(pendingPublishStorageKey(storageKey)));
+  return Boolean(safeGetLocalStorage(window.localStorage, pendingPublishStorageKey(storageKey)));
 }
 
 async function postJson<T>(
@@ -602,7 +603,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
 
   useEffect(() => {
     if (hydrated && hostContext.surface === "platform") {
-      window.localStorage.setItem(hostContext.storageKey, JSON.stringify(state));
+      safeSetLocalStorage(window.localStorage, hostContext.storageKey, JSON.stringify(state));
     }
   }, [hostContext.storageKey, hostContext.surface, hydrated, state]);
 
@@ -628,8 +629,8 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
       reset() {
         setState(seedCommerceState);
         if (typeof window !== "undefined") {
-          window.localStorage.removeItem(currentHostContext().storageKey);
-          window.localStorage.removeItem(BASE_STORAGE_KEY);
+          safeRemoveLocalStorage(window.localStorage, currentHostContext().storageKey);
+          safeRemoveLocalStorage(window.localStorage, BASE_STORAGE_KEY);
         }
       },
       updateBrand(input: Partial<CommerceState["brand"]>) {

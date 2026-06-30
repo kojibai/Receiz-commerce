@@ -861,13 +861,17 @@ function MobileAccountPanel({
   state: CommerceState;
   tenantSurface: boolean;
 }) {
+  const tenantHost = state.hosting.customDomain.domain || state.hosting.subdomain;
+  const customerOrders = state.orders.filter((order) => order.customerId === customer.id || order.customerEmail === customer.email);
+  const shippingReady = Boolean(customer.shippingAddress);
+
   return (
     <MobilePane active={active} action={<StatusPill tone="green">{customer.tier}</StatusPill>} title="Account">
       <div className="mobile-account-card">
         <div className="avatar large-avatar">{customer.name.slice(0, 1)}</div>
         <div>
           <h3>{customer.name}</h3>
-          <p>{customer.email}</p>
+          <p>{tenantSurface ? `Customer account for ${state.brand.name}` : customer.email}</p>
           <span><Icons.receiz size={15} /> {customerReceizHandle}</span>
         </div>
       </div>
@@ -879,6 +883,30 @@ function MobileAccountPanel({
           </button>
         </div>
       )}
+      {tenantSurface ? (
+        <div className="mobile-account-scope">
+          <div>
+            <Icons.store size={17} />
+            <span>Store scope</span>
+            <strong>{tenantHost}</strong>
+          </div>
+          <div>
+            <Icons.creditCard size={17} />
+            <span>Payment rail</span>
+            <strong>Receiz wallet or card</strong>
+          </div>
+          <div>
+            <Icons.orders size={17} />
+            <span>Orders</span>
+            <strong>{customerOrders.length ? `${customerOrders.length} sealed` : "Ready"}</strong>
+          </div>
+          <div>
+            <Icons.package size={17} />
+            <span>Shipping</span>
+            <strong>{shippingReady ? "Saved" : "At checkout"}</strong>
+          </div>
+        </div>
+      ) : null}
       <div className="mobile-stat-row">
         <div><strong>{customer.rewardsValueLabel}</strong><span>Rewards</span></div>
         <div><strong>{customer.beans}</strong><span>Beans</span></div>
