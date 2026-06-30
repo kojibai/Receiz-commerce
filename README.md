@@ -35,6 +35,8 @@ The main Receiz adapter is:
 
 - `src/lib/receiz/adapter.ts`
 
+See `docs/SDK_RAILS.md` for the route-by-route SDK rail map.
+
 ## No-Code Admin
 
 The admin studio lets an operator customize:
