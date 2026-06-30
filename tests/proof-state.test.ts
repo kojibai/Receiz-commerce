@@ -6,8 +6,10 @@ import {
   STORE_STATE_SCHEMA,
   admitCommerceEvent,
   buildStoreStateRecord,
+  storeStateRecordMatchesTenantHost,
   projectStoreStateFromRecords
 } from "../src/lib/receiz/proof-state.js";
+import { buildPublishedCommerceState } from "../src/lib/hosting/published-state.js";
 
 function baseState(): CommerceState {
   return {
@@ -243,6 +245,52 @@ describe("Receiz proof commerce state", () => {
 
     assert.equal(projectStoreStateFromRecords(baseState(), [record], "shop.bjklock.com").brand.name, "BJK Lock Store");
     assert.equal(projectStoreStateFromRecords(baseState(), [record], "bjklock.receiz.app").brand.name, "BJK Lock Store");
+  });
+
+  it("preserves the submitted merchant host when building a published state", () => {
+    const submitted = {
+      brand: { ...baseState().brand, name: "Bjklock Supply" },
+      hosting: {
+        ...baseState().hosting,
+        tenantSlug: "bjklock",
+        subdomain: "bjklock.receiz.app",
+        liveUrl: "https://bjklock.receiz.app",
+        merchantReceizId: "bjklock.receiz.id",
+        settlementAccountLabel: "Bjklock Receiz account",
+        published: false,
+        customDomain: {
+          ...baseState().hosting.customDomain,
+          domain: "shop.bjklock.com",
+          liveUrl: "https://shop.bjklock.com",
+          status: "active" as const,
+          sslStatus: "valid" as const,
+          verified: true
+        }
+      },
+      products: [
+        {
+          ...baseState().products[0],
+          id: "saved-coffee",
+          name: "Saved espresso kit"
+        }
+      ]
+    };
+
+    const state = buildPublishedCommerceState(baseState(), submitted);
+    const record = buildStoreStateRecord(state, {
+      actorReceizId: state.hosting.merchantReceizId,
+      tenantHost: state.hosting.customDomain.domain || state.hosting.subdomain,
+      reason: "publish",
+      recordedAt: "2026-06-30T00:05:00.000Z"
+    });
+
+    assert.equal(state.hosting.subdomain, "bjklock.receiz.app");
+    assert.equal(state.hosting.customDomain.domain, "shop.bjklock.com");
+    assert.equal(state.hosting.published, true);
+    assert.equal(record.tenantHost, "shop.bjklock.com");
+    assert.equal(record.merchantReceizId, "bjklock.receiz.id");
+    assert.equal(storeStateRecordMatchesTenantHost(record, "bjklock.receiz.app"), true);
+    assert.equal(projectStoreStateFromRecords(baseState(), [record], "bjklock.receiz.app").brand.name, "Bjklock Supply");
   });
 
   it("admits checkout events exactly once and projects settlement into sales and customers", () => {

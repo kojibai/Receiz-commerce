@@ -5,7 +5,7 @@ import {
 } from "./proof-state";
 import type { ProofStateStore } from "./proof-state-store";
 
-const DEFAULT_LEDGER_LIMIT = 100;
+const DEFAULT_LEDGER_LIMIT = 500;
 
 function ledgerLimit() {
   const parsed = Number.parseInt(process.env.RECEIZ_STORE_STATE_LEDGER_LIMIT ?? "", 10);

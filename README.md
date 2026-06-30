@@ -180,6 +180,18 @@ For free subdomains to work, the Vercel project must receive the traffic:
 
 The app routes tenant hosts through `middleware.ts`. A request to `boost.receiz.app` is served by the same deployment with `tenant=boost`; a verified custom domain is served by the same deployment with `domain=thebrand.com`.
 
+### Global Publish Sync
+
+The admin editor can stage changes locally, but a hosted subdomain/custom domain is only globally live after publish writes a Receiz store-state record. Production publish requires a Receiz ID session on `receiz.app/admin`; the generated OIDC access token is sent from the secure server cookie to Receiz Connect record APIs. Vercel function memory is not durable and is never treated as the global source of truth.
+
+After publishing, verify the public tenant projection:
+
+```bash
+curl -sS https://your-subdomain.receiz.app/api/store
+```
+
+The response should show the saved brand/content and `proofMemory.entries` greater than `0`. If `proofMemory.entries` is `0`, the live app did not recover a Receiz store-state record and will render the safe fallback storefront. If publish returns `receiz_login_required`, sign in from `https://receiz.app/admin` and publish again.
+
 Receiz settlement for platform fees we collect:
 
 ```bash

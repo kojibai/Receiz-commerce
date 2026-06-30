@@ -11,6 +11,7 @@ import {
   wildcardDomainStatusFromVercel
 } from "@/lib/hosting/vercel-domains";
 import { checkPublicDns } from "@/lib/hosting/dns-check";
+import { buildPublishedCommerceState } from "@/lib/hosting/published-state";
 import { platform } from "@/lib/platform";
 import { createReceizCommerceAdapter } from "@/lib/receiz/adapter";
 import { buildStoreStateRecord } from "@/lib/receiz/proof-state";
@@ -330,21 +331,16 @@ export async function POST(request: NextRequest) {
     }
 
     const hosting = {
-      ...mockHosting.getHostingStatus(),
+      ...(isRecord(body.state) && isRecord(body.state.hosting) ? body.state.hosting : mockHosting.getHostingStatus()),
       published: true,
       lastPublishedAt: "now"
     };
-    const state = {
-      ...mockStorage.getState(),
+    const state = buildPublishedCommerceState(mockStorage.getState(), {
       ...(isRecord(body.state) ? body.state : {}),
-      hosting: {
-        ...mockStorage.getState().hosting,
-        ...(isRecord(body.state) && isRecord(body.state.hosting) ? body.state.hosting : {}),
-        ...hosting
-      }
-    };
+      hosting
+    });
     const storeStateRecord = buildStoreStateRecord(state, {
-      actorReceizId: state.auth.receizId.handle,
+      actorReceizId: state.hosting.merchantReceizId || state.auth.receizId.handle,
       tenantHost: state.hosting.customDomain.domain || state.hosting.subdomain,
       reason: "publish"
     });

@@ -13,6 +13,7 @@ import { receizAccessTokenFromRequest, receizLoginRequired } from "@/lib/receiz/
 import { mockStorage } from "@/lib/storage/mock-storage";
 import { tenantFallbackState } from "@/lib/hosting/tenant-state";
 import { hydrateProofStoreFromReceizStoreState } from "@/lib/receiz/store-state-ledger";
+import { buildPublishedCommerceState } from "@/lib/hosting/published-state";
 import type { CommerceState, StorefrontHomepageMode } from "@/types/domain";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -71,14 +72,19 @@ async function recordWithReceiz(accessToken: string | undefined, record: StoreSt
   }
 }
 
+function receizWriteSucceeded(result: unknown) {
+  return !(isRecord(result) && result.ok === false);
+}
+
 export async function GET(request: NextRequest) {
   const host = request.headers.get("x-forwarded-host") ?? request.headers.get("host") ?? platform.domain;
   const hostContext = hostContextFromHost(host);
   const proofStore = await getServerProofStateStore();
   const tenantHost = hostContext.tenantHost ?? hostContext.host;
+  let recovery = { admitted: 0, recovered: 0 };
 
   if (hostContext.surface === "tenant") {
-    await hydrateProofStoreFromReceizStoreState(proofStore, tenantHost);
+    recovery = await hydrateProofStoreFromReceizStoreState(proofStore, tenantHost);
   }
 
   const trustedPublishedState =
@@ -107,7 +113,8 @@ export async function GET(request: NextRequest) {
     hosting: projectedState.hosting,
     proofMemory: {
       knownHead: proofStore.knownHead(100),
-      entries: proofStore.snapshot().head.count
+      entries: proofStore.snapshot().head.count,
+      recovery
     }
   });
 }
@@ -127,16 +134,30 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(receizLoginRequired("/admin"), { status: 401 });
   }
 
-  const state = mergePublishedState(isRecord(body) ? body.state : null);
+  const state = buildPublishedCommerceState(mockStorage.getState(), mergePublishedState(isRecord(body) ? body.state : null));
   const tenantHost = state.hosting.customDomain.domain || state.hosting.subdomain || hostContext.tenantHost || host;
   const record = buildStoreStateRecord(state, {
-    actorReceizId: state.auth.receizId.handle,
+    actorReceizId: state.hosting.merchantReceizId || state.auth.receizId.handle,
     tenantHost,
     reason: "publish"
   });
   const proofStore = await getServerProofStateStore(record.merchantReceizId);
   await proofStore.admitStoreRecord(record);
   const receizRecord = await recordWithReceiz(accessToken, record);
+
+  if (!receizWriteSucceeded(receizRecord)) {
+    const error = isRecord(receizRecord) ? String(receizRecord.error ?? "receiz_store_state_record_failed") : "receiz_store_state_record_failed";
+
+    return NextResponse.json(
+      {
+        ok: false,
+        error: "receiz_store_state_record_failed",
+        message: error,
+        receizRecord
+      },
+      { status: error === "receiz_login_required" ? 401 : 502 }
+    );
+  }
 
   return NextResponse.json({
     ok: true,
