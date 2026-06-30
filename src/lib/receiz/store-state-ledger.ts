@@ -53,8 +53,8 @@ async function recoverReceizPublicProofStoreStateRecords(tenantHost: string) {
 
   for (const url of urls) {
     try {
-      const publicProof = await receiz.client.publicProof.byUrl(url);
-      records.push(...extractStoreStateRecords(publicProof));
+      const appState = await receiz.client.appState.byUrl(url);
+      records.push(...extractStoreStateRecords(appState));
     } catch {
       // Missing public projections are expected for unpublished or legacy stores.
     }

@@ -74,6 +74,26 @@ SDK rails:
 - `proofMemory.createRegister`
 - `proofMemory.createMemory`
 
+## Public App State
+
+Files:
+
+- `app/api/hosting/route.ts`
+- `app/api/store/route.ts`
+- `src/lib/receiz/store-state-publication.ts`
+- `src/lib/receiz/store-state-ledger.ts`
+- `src/lib/storefront/server-state.ts`
+
+SDK rails:
+
+- `appState.publish`
+- `appState.byUrl`
+- `appState.byCreator`
+- `appState.byNamespace`
+- `appState.byId`
+
+Admin publish writes the public storefront projection through `appState.publish`. Tenant cold starts recover the latest public store projection through `appState.byUrl` using the subdomain or custom domain URL. This is the Receiz-only durability path that lets the app avoid Supabase, Redis, Vercel KV, Shopify, or a custom database for public storefront state.
+
 ## Webhooks
 
 Files:
@@ -101,4 +121,4 @@ Receiz Twin/World buttons are hidden unless both are true:
 - The relevant `NEXT_PUBLIC_RECEIZ_*_ENABLED` flag is set.
 - The installed `@receiz/sdk` client exposes the matching namespace.
 
-With `@receiz/sdk@96.0.0`, no typed Twin/World namespace is exposed, so the frontend does not show those buttons.
+With `@receiz/sdk@96.2.0`, typed app-state, Twin, and World namespaces are exposed. The frontend still hides optional Twin/World buttons when the matching env flag is disabled.

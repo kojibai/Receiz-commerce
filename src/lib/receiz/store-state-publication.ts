@@ -1,6 +1,7 @@
 import { platform } from "@/lib/platform";
 import { createReceizCommerceAdapter } from "./adapter";
 import { buildStoreStateConnectRecord, type StoreStateRecord } from "./proof-state";
+import type { ReceizAppStateFeed } from "@receiz/sdk";
 
 function hostUrl(host: string) {
   return `https://${host.trim().toLowerCase()}`;
@@ -15,12 +16,13 @@ function publicProofRecordsForStoreState(record: StoreStateRecord) {
   const connectRecord = buildStoreStateConnectRecord(record);
 
   return [...hosts].map((host) => ({
-    id: `${record.id}:${host}`,
+    id: `store_state:${host}`,
     sourceUrl: hostUrl(host),
     externalCreatorId: record.merchantReceizId,
     title: `${record.state.brand.name} storefront`,
     state: "published",
     platform: platform.productName,
+    namespace: host,
     schema: "receiz.app.public_store_state_projection.v1",
     record,
     data: {
@@ -48,28 +50,30 @@ export async function publishReceizStoreState(accessToken: string | undefined, r
     accessToken
   });
   const connectRecord = buildStoreStateConnectRecord(record);
-  const publicProofFeed = {
+  const appStateFeed: ReceizAppStateFeed = {
     schema: "receiz.app.public_store_state_registry_feed.v1",
+    namespace: record.tenantHost,
+    externalCreatorId: record.merchantReceizId,
     records: publicProofRecordsForStoreState(record)
   };
 
   try {
     const connect = await receiz.connectRecord(connectRecord);
-    const publicProof = await receiz.client.publicProof.registryFeed(publicProofFeed);
+    const appState = await receiz.client.appState.publish(appStateFeed);
 
-    if (failedReceizResponse(connect) || failedReceizResponse(publicProof)) {
+    if (failedReceizResponse(connect) || failedReceizResponse(appState)) {
       return {
         ok: false,
         error: "receiz_store_state_publication_failed",
         connect,
-        publicProof
+        appState
       };
     }
 
     return {
       ok: true,
       connect,
-      publicProof
+      appState
     };
   } catch (error) {
     return {

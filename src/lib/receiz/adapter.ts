@@ -147,6 +147,7 @@ export type ReceizRailKey =
   | "payments"
   | "verification"
   | "publicProof"
+  | "appState"
   | "wallet"
   | "webhooks"
   | "manifests"
@@ -222,6 +223,7 @@ export function createReceizCommerceAdapter(
           { key: "world", label: "Public World profiles and public Twin conversations", status: "available" },
           { key: "verification", label: "Artifact verification and seal calls", status: "available" },
           { key: "publicProof", label: "Public proof rendering and observation", status: "available" },
+          needsToken("appState", "Public app-state projection publishing and cold-start recovery"),
           needsToken("twin", "Delegated Twin mandates, intents, mind import/export, and promotion approval"),
           needsToken("connect", "Delegated Receiz Connect actions"),
           needsToken("checkout", "Receiz checkout sessions"),

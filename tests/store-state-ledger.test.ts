@@ -83,6 +83,40 @@ describe("Receiz store-state ledger recovery", () => {
     assert.equal(records[0]?.state.products[0]?.name, "New product");
   });
 
+  it("extracts published store records from app-state URL responses", () => {
+    const state = {
+      ...baseState(),
+      brand: { ...baseState().brand, name: "Proof Coffee" },
+      hosting: {
+        ...baseState().hosting,
+        tenantSlug: "proof-coffee",
+        subdomain: "proof-coffee.receiz.app"
+      },
+      products: [{ ...baseState().products[0], id: "roast", name: "House roast" }]
+    };
+    const record = buildStoreStateRecord(state, {
+      actorReceizId: "proof-coffee.receiz.id",
+      tenantHost: "proof-coffee.receiz.app",
+      recordedAt: "2026-06-30T17:00:00.000Z"
+    });
+    const response = {
+      ok: true,
+      record: {
+        sourceUrl: "https://proof-coffee.receiz.app/",
+        schema: "receiz.app.public_store_state_projection.v1",
+        data: {
+          storeStateRecord: record
+        }
+      }
+    };
+
+    const records = extractStoreStateRecords(response);
+
+    assert.equal(records.length, 1);
+    assert.equal(records[0]?.state.brand.name, "Proof Coffee");
+    assert.equal(records[0]?.state.products[0]?.name, "House roast");
+  });
+
   it("admits newer recovered records when an older tenant record is already warm", async () => {
     const tenantHost = "bjklock.receiz.app";
     const store = await createInMemoryProofStateStore("bjklock.receiz.id");
