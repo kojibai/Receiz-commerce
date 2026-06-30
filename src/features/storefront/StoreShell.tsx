@@ -155,6 +155,8 @@ export function MobileHeader({
   onMenu: () => void;
   state: CommerceState;
 }) {
+  const visibleHost = state.hosting.customDomain.domain || state.hosting.subdomain;
+
   return (
     <header className="mobile-header">
       <BrandMark imageUrl={state.brand.logoImageUrl} label={state.brand.logoText} compact />
@@ -165,7 +167,7 @@ export function MobileHeader({
         </span>
       </div>
       <div className="mobile-domain">
-        <strong>{state.hosting.subdomain}</strong>
+        <strong>{visibleHost}</strong>
         <span>Receiz ID ready</span>
       </div>
       <button aria-label="Open account" className="icon-button" onClick={onAccount} type="button">

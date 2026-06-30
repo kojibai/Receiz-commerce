@@ -573,6 +573,8 @@ function MobileStorePanel({
     ? visibleCollections.map((collection) => collection.name)
     : ["Featured", "Access", "Rewards", "Drops"];
   const blogHome = state.storefront.homepageMode === "blog";
+  const visibleHost = state.hosting.customDomain.domain || state.hosting.subdomain;
+  const heroBody = state.storefront.heroBody || state.storefront.subheadline || state.brand.tagline;
 
   return (
     <MobilePane active={active} action={<StatusPill tone="green">{blogHome ? "Stories" : "Live"}</StatusPill>} title={blogHome ? "Blog" : "Store"}>
@@ -582,12 +584,12 @@ function MobileStorePanel({
         <>
       <div className="mobile-shop-hero">
         <div>
-          <span>{state.hosting.subdomain}</span>
+          <span>{visibleHost}</span>
           <h3>{state.brand.name}</h3>
-          <p>{state.brand.tagline}</p>
+          <p>{heroBody}</p>
           <div className="mobile-shop-actions">
             <button onClick={onCheckout} type="button">
-              Shop now
+              {state.storefront.ctaLabel || "Shop now"}
             </button>
             {tenantSurface ? null : (
               <button onClick={onSeal} type="button">
