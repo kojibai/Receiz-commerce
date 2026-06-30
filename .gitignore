@@ -5,3 +5,7 @@ out/
 dist/
 *.tsbuildinfo
 .env.local
+.vercel
+.env*
+!.env.example
+.playwright-cli/
