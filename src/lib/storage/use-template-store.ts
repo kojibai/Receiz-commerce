@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createReceizClient, type ReceizIdentityAccountProjection } from "@receiz/sdk";
 import { seedCommerceState } from "@/data/seed";
 import {
@@ -526,22 +526,10 @@ function publishedStatePayload(state: CommerceState) {
   };
 }
 
-async function syncPublishedStoreState(state: CommerceState) {
-  await fetch("/api/store", {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({
-      action: "publish",
-      state: publishedStatePayload(state)
-    })
-  }).catch(() => undefined);
-}
-
 export function useTemplateStore(initialState: CommerceState = seedCommerceState, initialHostContext?: HostContext) {
   const [state, setState] = useState<CommerceState>(initialState);
   const [hydrated, setHydrated] = useState(false);
   const [hostContext, setHostContext] = useState<HostContext>(() => initialHostContext ?? hostContextFromHost(null));
-  const lastSyncedPayload = useRef("");
 
   useEffect(() => {
     const context = currentHostContext();
@@ -569,20 +557,6 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
       window.localStorage.setItem(hostContext.storageKey, JSON.stringify(state));
     }
   }, [hostContext.storageKey, hostContext.surface, hydrated, state]);
-
-  useEffect(() => {
-    if (!hydrated || hostContext.surface !== "platform" || !state.hosting.published) return;
-
-    const payload = JSON.stringify(publishedStatePayload(state));
-    if (lastSyncedPayload.current === payload) return;
-
-    const timeout = window.setTimeout(() => {
-      lastSyncedPayload.current = payload;
-      void syncPublishedStoreState(state);
-    }, 700);
-
-    return () => window.clearTimeout(timeout);
-  }, [hostContext.surface, hydrated, state]);
 
   const actions = useMemo(
     () => ({
@@ -981,17 +955,14 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
       },
       publish() {
         setState((current) => {
-          const next = {
+          const publishRequestState = {
             ...current,
-            hosting: { ...current.hosting, published: true, lastPublishedAt: "now" },
-            proofEvents: [makeEvent("SITE_PUBLISHED", `${current.hosting.subdomain} published`), ...current.proofEvents]
+            hosting: { ...current.hosting, published: true, lastPublishedAt: "now" }
           };
-
-          void syncPublishedStoreState(next);
 
           void postJson<{ hosting: CommerceState["hosting"] }>("/api/hosting", {
             action: "publish",
-            state: publishedStatePayload(next)
+            state: publishedStatePayload(publishRequestState)
           })
             .then((result) => {
               setState((latest) => ({
@@ -1010,7 +981,10 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
               }));
             });
 
-          return next;
+          return {
+            ...current,
+            proofEvents: [makeEvent("SITE_PUBLISHED", "Publishing store to Receiz proof rails"), ...current.proofEvents]
+          };
         });
       },
       addPage(page: SitePage) {

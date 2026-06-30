@@ -42,6 +42,10 @@ function badRequest(error: unknown) {
   );
 }
 
+function receizWriteSucceeded(result: unknown) {
+  return !(isRecord(result) && result.ok === false);
+}
+
 function returnToFromRequest(request: NextRequest) {
   const referer = request.headers.get("referer");
   if (!referer) return "/admin";
@@ -347,6 +351,21 @@ export async function POST(request: NextRequest) {
     const proofStore = await getServerProofStateStore(storeStateRecord.merchantReceizId);
     await proofStore.admitStoreRecord(storeStateRecord);
     const storeStateReceizRecord = await recordReceizStoreState(accessToken, storeStateRecord);
+
+    if (!receizWriteSucceeded(storeStateReceizRecord)) {
+      const error = isRecord(storeStateReceizRecord) ? String(storeStateReceizRecord.error ?? "receiz_store_state_record_failed") : "receiz_store_state_record_failed";
+
+      return NextResponse.json(
+        {
+          ok: false,
+          error: "receiz_store_state_record_failed",
+          message: error,
+          storeStateReceizRecord
+        },
+        { status: error === "receiz_login_required" ? 401 : 502 }
+      );
+    }
+
     const receizRecord = await recordReceizHostingEvent(accessToken, "store.published", {
       hosting,
       storeStateRecordId: storeStateRecord.id
