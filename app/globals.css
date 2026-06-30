@@ -1250,6 +1250,16 @@ a {
   background: #fff5f7;
 }
 
+.uploaded-product-visual {
+  background: #f3f6f5;
+}
+
+.uploaded-product-visual img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .bag-visual .bag-label,
 .can-body,
 .mug-cup,
@@ -2386,6 +2396,119 @@ a {
   padding: 10px;
   resize: vertical;
   line-height: 1.45;
+}
+
+.image-upload-field {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.image-upload-field > span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 850;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.image-upload-row {
+  display: grid;
+  grid-template-columns: minmax(120px, 0.6fr) minmax(0, 1fr);
+  gap: 10px;
+  align-items: stretch;
+}
+
+.image-upload-drop {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 116px;
+  padding: 10px;
+  overflow: hidden;
+  border: 1px dashed rgba(0, 138, 106, 0.42);
+  border-radius: var(--radius);
+  background: rgba(0, 168, 138, 0.07);
+  color: var(--text);
+  text-align: center;
+  cursor: pointer;
+}
+
+.image-upload-drop img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.image-upload-drop strong,
+.image-upload-drop small,
+.image-upload-drop svg {
+  position: relative;
+  z-index: 1;
+}
+
+.image-upload-drop img + strong,
+.image-upload-drop img ~ small {
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: rgba(7, 17, 31, 0.74);
+  color: #fff;
+}
+
+.image-upload-drop strong {
+  font-size: 13px;
+}
+
+.image-upload-drop small {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.image-upload-drop input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.image-url-fallback {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  align-content: start;
+}
+
+.image-url-fallback span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 850;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.image-url-fallback input {
+  width: 100%;
+  min-width: 0;
+  height: 40px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-soft);
+  font: inherit;
+}
+
+.image-clear-button {
+  justify-self: start;
+}
+
+.image-upload-error {
+  margin: 0;
+  color: #b42318;
+  font-size: 12px;
+  font-weight: 750;
 }
 
 .seo-fields {
@@ -4238,6 +4361,95 @@ a {
   gap: 16px;
 }
 
+.commerce-import-panel {
+  display: grid;
+  gap: 14px;
+}
+
+.import-source-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.import-source-card {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  min-height: 104px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.78);
+  color: inherit;
+  text-align: left;
+}
+
+.import-source-card.active {
+  border-color: rgba(0, 168, 138, 0.56);
+  background: rgba(0, 168, 138, 0.08);
+}
+
+.import-source-card strong,
+.import-source-card span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.import-source-card span {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.import-result-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.import-result-grid div {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #f8fbfa;
+}
+
+.import-result-grid strong,
+.import-result-grid span {
+  display: block;
+}
+
+.import-result-grid strong {
+  font-size: 24px;
+}
+
+.import-result-grid span,
+.import-action-row p,
+.import-error {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.import-error {
+  margin: 0;
+  color: #b42318;
+  font-weight: 750;
+}
+
+.import-action-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.import-action-row p {
+  margin: 0;
+}
+
 @media (max-width: 820px) {
   .detail-shell {
     padding: 12px;
@@ -4313,5 +4525,31 @@ a {
 
   .pwa-controller span {
     flex: 1;
+  }
+
+  .import-source-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .import-source-card {
+    min-height: 92px;
+    padding: 10px;
+  }
+
+  .import-result-grid,
+  .import-action-row {
+    grid-template-columns: 1fr;
+  }
+
+  .import-action-row {
+    display: grid;
+  }
+
+  .image-upload-row {
+    grid-template-columns: 1fr;
+  }
+
+  .image-upload-drop {
+    min-height: 126px;
   }
 }

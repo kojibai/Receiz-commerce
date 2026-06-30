@@ -5,6 +5,7 @@ import { Icons } from "@/components/icons";
 import { Button, ProductVisual, Panel, SectionHeader, StatusPill } from "@/components/ui";
 import { requestTwinAssist } from "@/lib/content/twin-client";
 import { hasReceizTwinCapability } from "@/lib/receiz/capabilities";
+import { ImageUploadField } from "@/features/admin/ImageUploadField";
 import type { BrandConfig, Product, ProductType } from "@/types/domain";
 
 const productTypes: ProductType[] = ["physical", "digital", "access", "benefit", "experience", "receized_asset"];
@@ -37,6 +38,7 @@ function newProduct(): Product {
     rewardEligible: true,
     sealed: false,
     imageTone: "bag",
+    imageUrl: null,
     description: "Describe the product, benefit, access pass, service, or Receized asset.",
     seo: {
       title: name,
@@ -206,6 +208,16 @@ export function ProductEditorPanel({
                 </select>
               </label>
             </div>
+            <ImageUploadField
+              label="Product image"
+              value={activeProduct.imageUrl ?? null}
+              onChange={(imageUrl) =>
+                onUpdateProduct(activeProduct.id, {
+                  imageUrl,
+                  seo: { ...(activeProduct.seo ?? { canonicalPath: "", description: "", keywords: [], title: activeProduct.name }), socialImageUrl: imageUrl }
+                })
+              }
+            />
             <label className="builder-field">
               <span>Subtitle</span>
               <input value={activeProduct.subtitle} onChange={(event) => onUpdateProduct(activeProduct.id, { subtitle: event.target.value })} />

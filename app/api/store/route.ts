@@ -6,6 +6,7 @@ import { buildStoreStateRecord, type StoreStateRecord } from "@/lib/receiz/proof
 import { getServerProofStateStore } from "@/lib/receiz/proof-state-store";
 import { receizAccessTokenFromRequest, receizLoginRequired } from "@/lib/receiz/session";
 import { mockStorage } from "@/lib/storage/mock-storage";
+import { tenantFallbackState } from "@/lib/hosting/tenant-state";
 import type { CommerceState } from "@/types/domain";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -62,7 +63,7 @@ export async function GET(request: NextRequest) {
   const proofStore = await getServerProofStateStore();
   const projectedState =
     hostContext.surface === "tenant"
-      ? proofStore.projectHost(mockStorage.getState(), hostContext.tenantHost ?? hostContext.host)
+      ? tenantFallbackState(proofStore.projectHost(mockStorage.getState(), hostContext.tenantHost ?? hostContext.host), hostContext)
       : mockStorage.getState();
 
   return NextResponse.json({

@@ -6,7 +6,9 @@ import { BrandMark, Button, Panel, ProductVisual, SectionHeader, StatusPill } fr
 import { platform } from "@/lib/platform";
 import { brandThemeStyle } from "@/lib/theme";
 import { useTemplateStore } from "@/lib/storage/use-template-store";
+import { customerForAccountSurface, customerReceizHandle } from "@/lib/storefront/customer-session";
 import type { BlogPost, CommerceState, CustomerAccount, Product, ReceizedAsset, Reward } from "@/types/domain";
+import type { HostContext } from "@/lib/hosting/host-context";
 import { PlayCampaign } from "@/features/play/PlayCampaign";
 import { ProductCatalog } from "@/features/storefront/ProductCatalog";
 import { ReceizIdAccess } from "@/features/storefront/ReceizIdAccess";
@@ -21,14 +23,21 @@ import {
   StoreTopbar
 } from "@/features/storefront/StoreShell";
 
-export function PublicStorefront() {
-  const { state, actions, hostContext } = useTemplateStore();
+export function PublicStorefront({
+  initialHostContext,
+  initialState
+}: {
+  initialHostContext?: HostContext;
+  initialState?: CommerceState;
+}) {
+  const { state, actions, hostContext } = useTemplateStore(initialState, initialHostContext);
   const [mobileView, setMobileView] = useState<MobileView>("store");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const customer = state.customers[0] ?? state.auth.customer;
+  const tenantSurface = hostContext.surface === "tenant";
+  const customer = customerForAccountSurface(state, tenantSurface);
+  const receizHandle = customerReceizHandle(state, customer);
   const reward = state.rewards[0] ?? null;
   const campaignName = state.campaigns[0]?.name ?? "Reward Challenge";
-  const tenantSurface = hostContext.surface === "tenant";
 
   const sealObject = () => actions.appendProofEvent("OBJECT_VERIFIED", "Coffee Pack · Serial #BC-88421");
   const issueReward = () => actions.appendProofEvent("REWARD_ISSUED", `${reward?.name ?? "Reward"} · ${state.brand.name}`);
@@ -124,7 +133,6 @@ export function PublicStorefront() {
 
           <aside className="right-rail">
             <ReceizIdAccess
-              onCreate={actions.createReceizId}
               onSignIn={actions.signInWithReceizId}
               receizId={state.auth.receizId}
             />
@@ -141,10 +149,10 @@ export function PublicStorefront() {
         <MobileStage
           activeView={mobileView}
           customer={customer}
+          customerReceizHandle={receizHandle}
           onAddToCart={actions.addToCart}
           onCheckout={actions.startCheckout}
           onClaimReward={claimReward}
-          onCreateReceizId={actions.createReceizId}
           onIssueReward={issueReward}
           onSeal={sealObject}
           onSignInReceizId={actions.signInWithReceizId}
@@ -159,13 +167,13 @@ export function PublicStorefront() {
         <MobileCommandMenu
           activeView={mobileView}
           onClose={() => setMobileMenuOpen(false)}
-          onCreateReceizId={actions.createReceizId}
           onNavigate={selectMobileView}
           onSeal={sealObject}
           onSignInReceizId={actions.signInWithReceizId}
           open={mobileMenuOpen}
           state={state}
           tenantSurface={tenantSurface}
+          customerReceizHandle={receizHandle}
         />
         <BottomNav activeView={mobileView} onChange={selectMobileView} />
       </div>
@@ -223,17 +231,17 @@ function BlogHighlights({
 function MobileCommandMenu({
   activeView,
   onClose,
-  onCreateReceizId,
   onNavigate,
   onSeal,
   onSignInReceizId,
   open,
   state,
+  customerReceizHandle,
   tenantSurface
 }: {
   activeView: MobileView;
+  customerReceizHandle: string;
   onClose: () => void;
-  onCreateReceizId: () => void;
   onNavigate: (view: MobileView) => void;
   onSeal: () => void;
   onSignInReceizId: () => void;
@@ -286,17 +294,10 @@ function MobileCommandMenu({
           {state.auth.receizId.connected ? null : (
             <>
               <button onClick={() => runAction(onSignInReceizId)} type="button">
-                <Icons.user size={21} />
+                  <Icons.user size={21} />
                 <div>
-                  <strong>Continue Receiz ID</strong>
-                  <span>{state.auth.receizId.handle}</span>
-                </div>
-              </button>
-              <button onClick={() => runAction(onCreateReceizId)} type="button">
-                <Icons.receiz size={21} />
-                <div>
-                  <strong>Create Receiz ID</strong>
-                  <span>One-click identity setup</span>
+                  <strong>Continue with Receiz ID</strong>
+                  <span>{customerReceizHandle}</span>
                 </div>
               </button>
             </>
@@ -332,22 +333,22 @@ function MobileStage({
   onAddToCart,
   onCheckout,
   onClaimReward,
-  onCreateReceizId,
   onIssueReward,
   onPlayComplete,
   onSeal,
   onSignInReceizId,
   reward,
   state,
+  customerReceizHandle,
   tenantSurface
 }: {
   activeView: MobileView;
   campaignName: string;
   customer: CustomerAccount;
+  customerReceizHandle: string;
   onAddToCart: (productId: string) => void;
   onCheckout: () => void;
   onClaimReward: () => void;
-  onCreateReceizId: () => void;
   onIssueReward: () => void;
   onPlayComplete: (beans: number) => void;
   onSeal: () => void;
@@ -381,7 +382,7 @@ function MobileStage({
       <MobileAssetsPanel
         active={activeView === "assets"}
         assets={state.assets}
-        onCreateReceizId={onCreateReceizId}
+        customerReceizHandle={customerReceizHandle}
         onSignInReceizId={onSignInReceizId}
         state={state}
         tenantSurface={tenantSurface}
@@ -395,7 +396,7 @@ function MobileStage({
       <MobileAccountPanel
         active={activeView === "account"}
         customer={customer}
-        onCreateReceizId={onCreateReceizId}
+        customerReceizHandle={customerReceizHandle}
         onSignInReceizId={onSignInReceizId}
         state={state}
         tenantSurface={tenantSurface}
@@ -590,14 +591,14 @@ function MobileRewardsPanel({
 function MobileAssetsPanel({
   active,
   assets,
-  onCreateReceizId,
+  customerReceizHandle,
   onSignInReceizId,
   state,
   tenantSurface: _tenantSurface
 }: {
   active: boolean;
   assets: ReceizedAsset[];
-  onCreateReceizId: () => void;
+  customerReceizHandle: string;
   onSignInReceizId: () => void;
   state: CommerceState;
   tenantSurface: boolean;
@@ -609,7 +610,7 @@ function MobileAssetsPanel({
           <Icons.receiz size={22} />
         </span>
         <div>
-          <strong>{state.auth.receizId.handle}</strong>
+          <strong>{customerReceizHandle}</strong>
           <p>Own, list, sell, trade, and share proof-sealed assets.</p>
         </div>
       </div>
@@ -618,10 +619,6 @@ function MobileAssetsPanel({
           <button onClick={onSignInReceizId} type="button">
             <Icons.user size={21} />
             <span>Continue</span>
-          </button>
-          <button onClick={onCreateReceizId} type="button">
-            <Icons.receiz size={21} />
-            <span>Create ID</span>
           </button>
         </div>
       )}
@@ -668,14 +665,14 @@ function MobilePlayPanel({
 function MobileAccountPanel({
   active,
   customer,
-  onCreateReceizId,
+  customerReceizHandle,
   onSignInReceizId,
   state,
   tenantSurface
 }: {
   active: boolean;
   customer: CustomerAccount;
-  onCreateReceizId: () => void;
+  customerReceizHandle: string;
   onSignInReceizId: () => void;
   state: CommerceState;
   tenantSurface: boolean;
@@ -687,18 +684,14 @@ function MobileAccountPanel({
         <div>
           <h3>{customer.name}</h3>
           <p>{customer.email}</p>
-          <span><Icons.receiz size={15} /> {state.auth.receizId.handle}</span>
+          <span><Icons.receiz size={15} /> {customerReceizHandle}</span>
         </div>
       </div>
       {state.auth.receizId.connected ? null : (
         <div className="mobile-action-grid">
           <button onClick={onSignInReceizId} type="button">
             <Icons.user size={21} />
-            <span>Receiz login</span>
-          </button>
-          <button onClick={onCreateReceizId} type="button">
-            <Icons.receiz size={21} />
-            <span>Create ID</span>
+            <span>Continue with Receiz ID</span>
           </button>
         </div>
       )}

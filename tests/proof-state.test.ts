@@ -214,6 +214,36 @@ describe("Receiz proof commerce state", () => {
     assert.equal(projected.hosting.subdomain, "boost.receiz.app");
   });
 
+  it("projects a saved store for both its subdomain and custom domain", () => {
+    const state = {
+      ...baseState(),
+      brand: { ...baseState().brand, name: "BJK Lock Store" },
+      hosting: {
+        ...baseState().hosting,
+        tenantSlug: "bjklock",
+        subdomain: "bjklock.receiz.app",
+        liveUrl: "https://bjklock.receiz.app",
+        customDomain: {
+          ...baseState().hosting.customDomain,
+          domain: "shop.bjklock.com",
+          liveUrl: "https://shop.bjklock.com",
+          status: "active" as const,
+          sslStatus: "valid" as const,
+          verified: true
+        }
+      }
+    };
+    const record = buildStoreStateRecord(state, {
+      actorReceizId: "bjklock.receiz.id",
+      tenantHost: "shop.bjklock.com",
+      reason: "publish",
+      recordedAt: "2026-06-30T00:04:00.000Z"
+    });
+
+    assert.equal(projectStoreStateFromRecords(baseState(), [record], "shop.bjklock.com").brand.name, "BJK Lock Store");
+    assert.equal(projectStoreStateFromRecords(baseState(), [record], "bjklock.receiz.app").brand.name, "BJK Lock Store");
+  });
+
   it("admits checkout events exactly once and projects settlement into sales and customers", () => {
     const state = baseState();
     const event = {

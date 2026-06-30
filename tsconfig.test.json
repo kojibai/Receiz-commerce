@@ -14,9 +14,17 @@
     "tests/**/*.ts",
     "src/lib/receiz/proof-state.ts",
     "src/lib/receiz/proof-state-store.ts",
+    "src/lib/receiz/oauth-state.ts",
     "src/lib/pwa/cache-policy.ts",
     "src/lib/pwa/manifest.ts",
+    "src/lib/import/commerce-importer.ts",
+    "src/lib/media/image-upload.ts",
+    "src/lib/hosting/tenant-state.ts",
+    "src/lib/hosting/host-context.ts",
+    "src/lib/hosting/domain-utils.ts",
+    "src/lib/platform.ts",
     "src/lib/storefront/content-routing.ts",
+    "src/lib/storefront/customer-session.ts",
     "src/types/domain.ts"
   ]
 }

@@ -88,8 +88,17 @@ export function ProductVisual({
 }: {
   brandLabel?: string;
   brandImageUrl?: string | null;
-  product: Pick<Product, "imageTone" | "name">;
+  product: Pick<Product, "imageTone" | "imageUrl" | "name">;
 }) {
+  if (product.imageUrl) {
+    return (
+      <div className="product-visual uploaded-product-visual">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img alt={product.name} src={product.imageUrl} />
+      </div>
+    );
+  }
+
   if (product.imageTone === "mug") {
     return (
       <div className="product-visual mug-visual">

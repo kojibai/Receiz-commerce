@@ -6,11 +6,9 @@ import type { ReceizIdState } from "@/types/domain";
 
 export function ReceizIdAccess({
   receizId,
-  onCreate,
   onSignIn
 }: {
   receizId: ReceizIdState;
-  onCreate: () => void;
   onSignIn: () => void;
 }) {
   return (
@@ -25,17 +23,14 @@ export function ReceizIdAccess({
           <p>
             {receizId.connected
               ? "Receiz ID is connected for rewards, assets, orders, and benefits."
-              : "Use an existing Receiz ID or create one to own rewards, assets, orders, and benefits."}
+              : "Continue with Receiz ID to own rewards, assets, orders, and benefits for this store."}
           </p>
         </div>
       </div>
       {receizId.connected ? null : (
         <div className="identity-actions">
           <Button onClick={onSignIn} variant="primary">
-            Continue
-          </Button>
-          <Button onClick={onCreate} variant="outline">
-            Create ID
+            Continue with Receiz ID
           </Button>
         </div>
       )}

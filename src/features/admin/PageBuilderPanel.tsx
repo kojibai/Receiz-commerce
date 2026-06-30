@@ -5,6 +5,7 @@ import { Button, Panel, SectionHeader, StatusPill } from "@/components/ui";
 import { Icons } from "@/components/icons";
 import { requestTwinAssist } from "@/lib/content/twin-client";
 import { hasReceizTwinCapability } from "@/lib/receiz/capabilities";
+import { ImageUploadField } from "@/features/admin/ImageUploadField";
 import type { BlogPost, BrandConfig, SitePage } from "@/types/domain";
 import type { ReactNode } from "react";
 
@@ -300,6 +301,7 @@ function PageEditor({
             canonicalPath={activePage.seo?.canonicalPath ?? activePage.slug}
             description={activePage.seo?.description ?? ""}
             keywords={activePage.seo?.keywords ?? []}
+            socialImageUrl={activePage.seo?.socialImageUrl ?? null}
             title={activePage.seo?.title ?? activePage.title}
             onChange={(seo) => onUpdatePage(activePage.id, { seo })}
           />
@@ -421,10 +423,16 @@ function BlogEditor({
               <span>Author</span>
               <input value={activePost.authorName} onChange={(event) => onUpdateBlogPost(activePost.id, { authorName: event.target.value })} />
             </label>
-            <label className="builder-field">
-              <span>Cover image URL</span>
-              <input value={activePost.coverImageUrl ?? ""} onChange={(event) => onUpdateBlogPost(activePost.id, { coverImageUrl: event.target.value.trim() || null })} />
-            </label>
+            <ImageUploadField
+              label="Cover image"
+              value={activePost.coverImageUrl}
+              onChange={(coverImageUrl) =>
+                onUpdateBlogPost(activePost.id, {
+                  coverImageUrl,
+                  seo: { ...activePost.seo, socialImageUrl: coverImageUrl }
+                })
+              }
+            />
             <label className="builder-field">
               <span>Tags</span>
               <input value={activePost.tags.join(", ")} onChange={(event) => onUpdateBlogPost(activePost.id, { tags: event.target.value.split(",").map((tag) => tag.trim()).filter(Boolean) })} />
@@ -434,6 +442,7 @@ function BlogEditor({
             canonicalPath={activePost.seo.canonicalPath}
             description={activePost.seo.description}
             keywords={activePost.seo.keywords}
+            socialImageUrl={activePost.seo.socialImageUrl ?? null}
             title={activePost.seo.title}
             onChange={(seo) => onUpdateBlogPost(activePost.id, { seo })}
           />
@@ -462,12 +471,14 @@ function SeoFields({
   description,
   keywords,
   onChange,
+  socialImageUrl,
   title
 }: {
   canonicalPath: string;
   description: string;
   keywords: string[];
-  onChange: (value: { title: string; description: string; canonicalPath: string; keywords: string[]; socialImageUrl: null }) => void;
+  onChange: (value: { title: string; description: string; canonicalPath: string; keywords: string[]; socialImageUrl?: string | null }) => void;
+  socialImageUrl?: string | null;
   title: string;
 }) {
   return (
@@ -475,20 +486,25 @@ function SeoFields({
       <strong>SEO</strong>
       <label className="builder-field">
         <span>SEO title</span>
-        <input value={title} onChange={(event) => onChange({ title: event.target.value, description, canonicalPath, keywords, socialImageUrl: null })} />
+        <input value={title} onChange={(event) => onChange({ title: event.target.value, description, canonicalPath, keywords, socialImageUrl })} />
       </label>
       <label className="builder-field">
         <span>Meta description</span>
-        <textarea rows={2} value={description} onChange={(event) => onChange({ title, description: event.target.value, canonicalPath, keywords, socialImageUrl: null })} />
+        <textarea rows={2} value={description} onChange={(event) => onChange({ title, description: event.target.value, canonicalPath, keywords, socialImageUrl })} />
       </label>
       <label className="builder-field">
         <span>Canonical path</span>
-        <input value={canonicalPath} onChange={(event) => onChange({ title, description, canonicalPath: event.target.value, keywords, socialImageUrl: null })} />
+        <input value={canonicalPath} onChange={(event) => onChange({ title, description, canonicalPath: event.target.value, keywords, socialImageUrl })} />
       </label>
       <label className="builder-field">
         <span>Keywords</span>
-        <input value={keywords.join(", ")} onChange={(event) => onChange({ title, description, canonicalPath, keywords: event.target.value.split(",").map((item) => item.trim()).filter(Boolean), socialImageUrl: null })} />
+        <input value={keywords.join(", ")} onChange={(event) => onChange({ title, description, canonicalPath, keywords: event.target.value.split(",").map((item) => item.trim()).filter(Boolean), socialImageUrl })} />
       </label>
+      <ImageUploadField
+        label="SEO/social image"
+        value={socialImageUrl ?? null}
+        onChange={(nextImage) => onChange({ title, description, canonicalPath, keywords, socialImageUrl: nextImage })}
+      />
     </div>
   );
 }

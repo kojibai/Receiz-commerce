@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { receizCommerceAdapter } from "@/lib/receiz/adapter";
 import { hostContextFromHost } from "@/lib/hosting/host-context";
 import { getReceizRedirectUri, getRequestOrigin } from "@/lib/url";
+import { packReceizOAuthState } from "@/lib/receiz/oauth-state";
 
 export const runtime = "nodejs";
 
@@ -34,16 +35,21 @@ function codeChallenge(verifier: string) {
 export async function GET(request: NextRequest) {
   const origin = getRequestOrigin(request);
   const clientId = process.env.RECEIZ_CLIENT_ID;
+  const hostContext = hostContextFromHost(request.headers.get("x-forwarded-host") ?? request.headers.get("host"));
 
   if (!clientId) {
-    return NextResponse.redirect(new URL("/admin?receiz_error=missing_client_id", origin));
+    return NextResponse.redirect(new URL(`${hostContext.surface === "tenant" ? "/account" : "/admin"}?receiz_error=missing_client_id`, origin));
   }
 
   const verifier = base64Url(randomBytes(48));
-  const state = base64Url(randomBytes(24));
   const returnTo = request.nextUrl.searchParams.get("returnTo") ?? "/admin";
   const redirectUri = process.env.RECEIZ_ID_CALLBACK_URL ?? getReceizRedirectUri(origin);
-  const hostContext = hostContextFromHost(request.headers.get("x-forwarded-host") ?? request.headers.get("host"));
+  const state = packReceizOAuthState({
+    verifier,
+    returnTo,
+    sessionScope: hostContext.storageKey,
+    startOrigin: origin
+  });
   const authorizeUrl = receizCommerceAdapter.buildReceizIdAuthorizeUrl({
     clientId,
     redirectUri,
@@ -54,35 +60,6 @@ export async function GET(request: NextRequest) {
 
   const response = NextResponse.redirect(authorizeUrl);
   const secure = origin.startsWith("https://");
-
-  response.cookies.set("receiz_pkce_verifier", verifier, {
-    httpOnly: true,
-    maxAge: 10 * 60,
-    path: "/api/auth/receiz",
-    sameSite: "lax",
-    secure
-  });
-  response.cookies.set("receiz_oauth_state", state, {
-    httpOnly: true,
-    maxAge: 10 * 60,
-    path: "/api/auth/receiz",
-    sameSite: "lax",
-    secure
-  });
-  response.cookies.set("receiz_oauth_return_to", returnTo, {
-    httpOnly: true,
-    maxAge: 10 * 60,
-    path: "/api/auth/receiz",
-    sameSite: "lax",
-    secure
-  });
-  response.cookies.set("receiz_oauth_scope", hostContext.storageKey, {
-    httpOnly: true,
-    maxAge: 10 * 60,
-    path: "/api/auth/receiz",
-    sameSite: "lax",
-    secure
-  });
 
   return response;
 }

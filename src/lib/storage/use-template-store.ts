@@ -9,6 +9,7 @@ import {
   subdomainForSlug
 } from "@/lib/hosting/domain-utils";
 import { BASE_STORAGE_KEY, currentHostContext, hostContextFromHost, type HostContext } from "@/lib/hosting/host-context";
+import type { CommerceImportInput, CommerceImportResult } from "@/lib/import/commerce-importer";
 import type { BlogPost, CommerceState, CustomerAccount, Product, ProofEvent, SitePage } from "@/types/domain";
 import { makeId } from "@/lib/utils";
 
@@ -195,16 +196,16 @@ function applyHostContext(state: CommerceState, hostContext: HostContext): Comme
   return state;
 }
 
-function readState(hostContext: HostContext): CommerceState {
-  if (typeof window === "undefined") return seedCommerceState;
+function readState(hostContext: HostContext, fallbackState: CommerceState = seedCommerceState): CommerceState {
+  if (typeof window === "undefined") return fallbackState;
 
   const raw = window.localStorage.getItem(hostContext.storageKey) ?? window.localStorage.getItem(BASE_STORAGE_KEY);
-  if (!raw) return applyHostContext(seedCommerceState, hostContext);
+  if (!raw) return applyHostContext(fallbackState, hostContext);
 
   try {
     return applyHostContext(migrateStoredState(JSON.parse(raw)), hostContext);
   } catch {
-    return applyHostContext(seedCommerceState, hostContext);
+    return applyHostContext(fallbackState, hostContext);
   }
 }
 
@@ -315,6 +316,7 @@ type ReceizProfileResponse = {
   ok: boolean;
   connected: boolean;
   profile?: ReceizProfile;
+  surface?: HostContext["surface"];
 };
 
 function compactString(value: string | undefined, fallback: string) {
@@ -360,12 +362,15 @@ function customDomainFromProfile(profile: ReceizProfile) {
   }
 }
 
-function customerFromProfile(current: CustomerAccount, profile: ReceizProfile): CustomerAccount {
+function customerFromProfile(current: CustomerAccount, profile: ReceizProfile, fallbackHandle: string): CustomerAccount {
+  const handle = normalizeProfileHandle(profile.handle, fallbackHandle);
+
   return {
     ...current,
     id: current.id || "customer-receiz-owner",
     name: displayNameFromProfile(profile),
     email: compactString(profile.email, current.email),
+    receizHandle: handle,
     tier: current.tier || "Owner"
   };
 }
@@ -386,7 +391,8 @@ function createFreshMerchantWorkspace(current: CommerceState, profile: ReceizPro
     streak: "0x",
     orderIds: [],
     rewardIds: [],
-    assetIds: []
+    assetIds: [],
+    receizHandle: handle
   };
 
   return {
@@ -486,13 +492,54 @@ function createFreshMerchantWorkspace(current: CommerceState, profile: ReceizPro
   };
 }
 
-function applyReceizProfile(current: CommerceState, profile: ReceizProfile): CommerceState {
+function applyCustomerReceizProfile(current: CommerceState, profile: ReceizProfile): CommerceState {
+  const fallbackHandle = current.auth.customer.receizHandle ?? current.auth.receizId.handle;
+  const handle = normalizeProfileHandle(profile.handle, fallbackHandle);
+  const displayName = displayNameFromProfile(profile);
+  const customer = {
+    ...customerFromProfile(current.auth.customer, profile, handle),
+    tier: current.auth.customer.tier || "Member"
+  };
+  const customers = current.customers.some((item) => item.id === customer.id)
+    ? current.customers.map((item) => (item.id === customer.id ? { ...item, ...customer } : item))
+    : [customer, ...current.customers];
+
+  return {
+    ...current,
+    customers,
+    auth: {
+      ...current.auth,
+      signedInAs: "customer",
+      customer,
+      receizId: {
+        ...current.auth.receizId,
+        connected: true,
+        handle,
+        displayName,
+        keyId: compactString(profile.id, current.auth.receizId.keyId),
+        loginMode: "existing_receiz_id",
+        accountImageLabel: "Receiz account image",
+        statusLabel: "Receiz ID connected"
+      }
+    }
+  };
+}
+
+function applyReceizProfile(
+  current: CommerceState,
+  profile: ReceizProfile,
+  surface: HostContext["surface"] = "platform"
+): CommerceState {
+  if (surface === "tenant") {
+    return applyCustomerReceizProfile(current, profile);
+  }
+
   const ownerKey = ownerKeyFromProfile(profile);
   const resetTemplate = current.auth.workspaceOwnerId !== ownerKey && current.hosting.published;
   const base = resetTemplate ? createFreshMerchantWorkspace(current, profile) : current;
   const handle = normalizeProfileHandle(profile.handle, base.auth.receizId.handle);
   const displayName = displayNameFromProfile(profile);
-  const customer = customerFromProfile(base.auth.customer, profile);
+  const customer = customerFromProfile(base.auth.customer, profile, handle);
   const tenantSlug = profile.subdomain ? tenantFromProfile(profile) : base.hosting.tenantSlug;
   const subdomain = subdomainForSlug(tenantSlug);
   const customDomain = customDomainFromProfile(profile) || base.hosting.customDomain.domain;
@@ -639,30 +686,36 @@ function upsertCheckoutCustomer(customers: CustomerAccount[], customer: Customer
   return customers.map((item) => (item.id === customer.id ? { ...item, ...nextCustomer } : item));
 }
 
-export function useTemplateStore() {
-  const [state, setState] = useState<CommerceState>(seedCommerceState);
+function appendUniqueById<T extends { id: string }>(current: T[], imported: T[]) {
+  const seen = new Set(current.map((item) => item.id));
+  return [...imported.filter((item) => !seen.has(item.id)), ...current];
+}
+
+export function useTemplateStore(initialState: CommerceState = seedCommerceState, initialHostContext?: HostContext) {
+  const [state, setState] = useState<CommerceState>(initialState);
   const [hydrated, setHydrated] = useState(false);
-  const [hostContext, setHostContext] = useState<HostContext>(() => hostContextFromHost(null));
+  const [hostContext, setHostContext] = useState<HostContext>(() => initialHostContext ?? hostContextFromHost(null));
 
   useEffect(() => {
     const context = currentHostContext();
     setHostContext(context);
-    setState(readState(context));
+    setState(readState(context, initialState));
     setHydrated(true);
 
     if (process.env.NEXT_PUBLIC_AUTH_MODE === "receiz_id") {
       void fetchReceizProfile()
         .then((result) => {
           if (!result) return;
+          const surface = result.surface ?? context.surface;
           setState((current) =>
             result.connected && result.profile
-              ? applyReceizProfile(current, result.profile)
+              ? applyReceizProfile(current, result.profile, surface)
               : applyReceizDisconnected(current)
           );
         })
         .catch(() => undefined);
     }
-  }, []);
+  }, [initialState]);
 
   useEffect(() => {
     if (hydrated) {
@@ -958,7 +1011,7 @@ export function useTemplateStore() {
       signInWithReceizId() {
         if (typeof window !== "undefined" && process.env.NEXT_PUBLIC_AUTH_MODE === "receiz_id") {
           const returnTo = `${window.location.pathname}${window.location.search}`;
-          window.location.assign(`/api/auth/receiz/start?returnTo=${encodeURIComponent(returnTo)}`);
+          window.location.assign(`/api/auth/receiz/start?returnTo=${encodeURIComponent(returnTo || "/account")}`);
           return;
         }
 
@@ -1320,6 +1373,30 @@ export function useTemplateStore() {
 
           return current;
         });
+      },
+      async importCommerceContent(input: Omit<CommerceImportInput, "payload"> & { rawContent?: string }) {
+        const result = await postJson<{ imported: CommerceImportResult }>("/api/import", {
+          sourceType: input.sourceType,
+          sourceUrl: input.sourceUrl,
+          rawContent: input.rawContent
+        });
+        const imported = result.imported;
+
+        setState((current) => ({
+          ...current,
+          products: appendUniqueById(current.products, imported.products),
+          blogPosts: appendUniqueById(current.blogPosts, imported.blogPosts),
+          pages: appendUniqueById(current.pages, imported.pages),
+          proofEvents: [
+            makeEvent(
+              "SITE_PUBLISHED",
+              `Imported ${imported.summary.products} products, ${imported.summary.blogPosts} posts, ${imported.summary.pages} pages`
+            ),
+            ...current.proofEvents
+          ]
+        }));
+
+        return imported;
       },
       appendProofEvent(type: ProofEvent["type"], detail: string) {
         setState((current) => ({

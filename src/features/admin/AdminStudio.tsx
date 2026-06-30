@@ -7,6 +7,7 @@ import { BrandMark, Button, MetricCard, Panel, SealEventTimeline, SectionHeader,
 import { useTemplateStore } from "@/lib/storage/use-template-store";
 import { AdminShell } from "@/features/admin/AdminShell";
 import { BrandPanel } from "@/features/admin/BrandPanel";
+import { CommerceImportPanel } from "@/features/admin/CommerceImportPanel";
 import { HostingBillingPanel } from "@/features/admin/HostingBillingPanel";
 import { HostingDomainsPanel } from "@/features/admin/HostingDomainsPanel";
 import { LaunchRailsPanel } from "@/features/admin/LaunchRailsPanel";
@@ -66,11 +67,11 @@ export function AdminStudio() {
               state={state}
             />
             <ReceizIdentityPanel
-              onCreate={actions.createReceizId}
               onRestoreArtifact={actions.restoreReceizIdentityArtifact}
               onSignIn={actions.signInWithReceizId}
               receizId={state.auth.receizId}
             />
+            <CommerceImportPanel onImport={actions.importCommerceContent} />
             <HostingBillingPanel
               billing={state.billing}
               hosting={state.hosting}
@@ -373,6 +374,7 @@ function MobileAdminConsole({
         </MobileAdminPane>
 
         <MobileAdminPane active={activeView === "store"} title="Store" action={<StatusPill tone="green">Catalog</StatusPill>}>
+          <CommerceImportPanel onImport={actions.importCommerceContent} />
           <PageBuilderPanel
             authorName={state.brand.name}
             brand={state.brand}
@@ -456,7 +458,6 @@ function MobileAdminConsole({
         <MobileAdminPane active={activeView === "receiz"} title="Receiz" action={<StatusPill tone={state.auth.receizId.connected ? "green" : "gold"}>{state.auth.receizId.statusLabel}</StatusPill>}>
           <ReceizIdentityPanel
             artifactInputId="receiz-identity-artifact-mobile"
-            onCreate={actions.createReceizId}
             onRestoreArtifact={actions.restoreReceizIdentityArtifact}
             onSignIn={actions.signInWithReceizId}
             receizId={state.auth.receizId}

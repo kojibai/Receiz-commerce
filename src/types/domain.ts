@@ -189,6 +189,7 @@ export type Product = {
   rewardEligible: boolean;
   sealed: boolean;
   imageTone: "bag" | "can" | "mug" | "card" | "class" | "access";
+  imageUrl?: string | null;
   description?: string;
   seo?: SeoConfig;
 };

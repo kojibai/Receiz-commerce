@@ -1,5 +1,5 @@
-import { cleanHost, isPlatformHost, tenantSlugFromHost } from "@/lib/hosting/domain-utils";
-import { platform } from "@/lib/platform";
+import { cleanHost, isPlatformHost, tenantSlugFromHost } from "./domain-utils";
+import { platform } from "../platform";
 
 export type HostContext = {
   host: string;

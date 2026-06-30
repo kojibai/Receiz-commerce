@@ -7,13 +7,11 @@ import type { ReceizIdState } from "@/types/domain";
 export function ReceizIdentityPanel({
   receizId,
   artifactInputId = "receiz-identity-artifact",
-  onCreate,
   onRestoreArtifact,
   onSignIn
 }: {
   receizId: ReceizIdState;
   artifactInputId?: string;
-  onCreate: () => void;
   onRestoreArtifact: (file: File) => void | Promise<void>;
   onSignIn: () => void;
 }) {
@@ -68,9 +66,6 @@ export function ReceizIdentityPanel({
         <div className="identity-actions">
           <Button onClick={onSignIn} variant="primary">
             Continue with Receiz ID
-          </Button>
-          <Button onClick={onCreate} variant="outline">
-            Create Receiz ID
           </Button>
         </div>
       )}

@@ -1,6 +1,7 @@
 "use client";
 
 import { BrandMark, Button, Panel, SectionHeader } from "@/components/ui";
+import { ImageUploadField } from "@/features/admin/ImageUploadField";
 import type { CommerceState } from "@/types/domain";
 
 export function BrandPanel({
@@ -25,14 +26,11 @@ export function BrandPanel({
               <input value={state.brand.logoText} onChange={(event) => onBrandUpdate({ logoText: event.target.value })} />
             </label>
           </div>
-          <label>
-            <span>Logo image URL</span>
-            <input
-              placeholder="https://..."
-              value={state.brand.logoImageUrl ?? ""}
-              onChange={(event) => onBrandUpdate({ logoImageUrl: event.target.value.trim() || null })}
-            />
-          </label>
+          <ImageUploadField
+            label="Logo image"
+            value={state.brand.logoImageUrl}
+            onChange={(logoImageUrl) => onBrandUpdate({ logoImageUrl })}
+          />
           <label>
             <span>Brand name</span>
             <input value={state.brand.name} onChange={(event) => onBrandUpdate({ name: event.target.value })} />

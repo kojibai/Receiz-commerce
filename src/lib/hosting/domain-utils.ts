@@ -1,4 +1,4 @@
-import { platform } from "@/lib/platform";
+import { platform } from "../platform";
 
 const RESERVED_SUBDOMAINS = new Set([
   "admin",

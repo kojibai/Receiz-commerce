@@ -5,13 +5,23 @@ import { Icons } from "@/components/icons";
 import { MetricCard, Panel, RewardCard, SealEventTimeline, SectionHeader, StatusPill } from "@/components/ui";
 import { brandThemeStyle } from "@/lib/theme";
 import { useTemplateStore } from "@/lib/storage/use-template-store";
+import { customerForAccountSurface, customerReceizHandle } from "@/lib/storefront/customer-session";
 import { ProductCatalog } from "@/features/storefront/ProductCatalog";
 import { platform } from "@/lib/platform";
+import type { CommerceState } from "@/types/domain";
+import type { HostContext } from "@/lib/hosting/host-context";
 
-export function AccountDashboard() {
-  const { state, actions, hostContext } = useTemplateStore();
-  const customer = state.customers[0] ?? state.auth.customer;
+export function AccountDashboard({
+  initialHostContext,
+  initialState
+}: {
+  initialHostContext?: HostContext;
+  initialState?: CommerceState;
+}) {
+  const { state, actions, hostContext } = useTemplateStore(initialState, initialHostContext);
   const tenantSurface = hostContext.surface === "tenant";
+  const customer = customerForAccountSurface(state, tenantSurface);
+  const receizHandle = customerReceizHandle(state, customer);
   const ownedAssets = state.assets.filter((asset) => customer.assetIds.includes(asset.id));
   const orders = state.orders.filter((order) => order.customerId === customer.id);
   const rewards = state.rewards.filter((reward) => customer.rewardIds.includes(reward.id));
@@ -23,7 +33,7 @@ export function AccountDashboard() {
           <span className="receiz-mark">
             <Icons.receiz size={23} />
           </span>
-          <strong>{platform.name}</strong>
+          <strong>{tenantSurface ? state.brand.name : platform.name}</strong>
         </Link>
         <div>
           <StatusPill tone="green">{state.auth.receizId.statusLabel}</StatusPill>
@@ -40,7 +50,7 @@ export function AccountDashboard() {
           <p>{customer.email}</p>
           <StatusPill tone="green">{customer.tier}</StatusPill>
           <span className="receiz-id-line">
-            <Icons.receiz size={15} /> {state.auth.receizId.handle}
+            <Icons.receiz size={15} /> {receizHandle}
           </span>
         </div>
         <div className="account-hero-metrics">
@@ -52,16 +62,15 @@ export function AccountDashboard() {
 
       <div className="account-grid">
         <Panel>
-          <SectionHeader title="Receiz ID login" action={<StatusPill tone="green">One click</StatusPill>} />
+          <SectionHeader title="Customer Receiz ID" action={<StatusPill tone="green">One click</StatusPill>} />
           <div className="identity-account-card">
             <span className="identity-icon">
               <Icons.receiz size={24} />
             </span>
             <div>
-              <strong>{state.auth.receizId.handle}</strong>
+              <strong>{receizHandle}</strong>
               <p>
-                Existing Receiz IDs can sign in, new users can create one, and Receiz Key or Identity Seal artifacts
-                restore the same account locally.
+                Continue with Receiz ID for this store rewards, orders, benefits, and Receized assets.
               </p>
             </div>
           </div>
@@ -79,9 +88,6 @@ export function AccountDashboard() {
             <div className="identity-actions">
               <button className="button button-primary" onClick={actions.signInWithReceizId} type="button">
                 Continue with Receiz ID
-              </button>
-              <button className="button button-outline" onClick={actions.createReceizId} type="button">
-                Create Receiz ID
               </button>
             </div>
           )}
