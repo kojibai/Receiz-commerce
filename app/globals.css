@@ -3370,3 +3370,20 @@ a {
     font-size: 10.5px;
   }
 }
+
+@media (max-width: 760px) {
+  main.admin-app .admin-sidebar,
+  main.admin-app .admin-topbar,
+  main.admin-app .admin-content {
+    display: none !important;
+  }
+
+  main.admin-app .mobile-admin-console {
+    position: fixed;
+    inset: 0;
+    z-index: 90;
+    display: grid !important;
+    width: 100vw;
+    height: 100dvh;
+  }
+}
