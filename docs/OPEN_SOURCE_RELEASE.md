@@ -18,7 +18,7 @@ Use this before tagging or announcing the public template.
   - Order/customer projections appear in admin
 - Domain QA:
   - Free subdomain is saved and served
-  - Published subdomain `/api/store` returns saved tenant content with `proofMemory.entries > 0`
+  - Published subdomain `/api/store` returns saved tenant content with `source: "published"`, `publishedState: true`, and `proofMemory.entries > 0`
   - Custom domain is added to Vercel
   - DNS instructions are visible when DNS is missing
 - Docs QA:

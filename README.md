@@ -190,7 +190,7 @@ After publishing, verify the public tenant projection:
 curl -sS https://your-subdomain.receiz.app/api/store
 ```
 
-The response should show the saved brand/content and `proofMemory.entries` greater than `0`. If `proofMemory.entries` is `0`, the live app did not recover a Receiz store-state record and will render the safe fallback storefront. If publish returns `receiz_login_required`, sign in from `https://receiz.app/admin` and publish again.
+The response should show saved brand/content, `source: "published"`, `publishedState: true`, and `proofMemory.entries` greater than `0`. If it shows `source: "fallback"` or `proofMemory.entries: 0`, the live app did not recover a Receiz store-state record and will render the safe fallback storefront. If publish returns `receiz_login_required`, sign in from `https://receiz.app/admin` and publish again.
 
 Receiz settlement for platform fees we collect:
 

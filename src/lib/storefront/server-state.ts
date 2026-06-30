@@ -2,7 +2,7 @@ import { headers } from "next/headers";
 import { hostContextFromHost } from "@/lib/hosting/host-context";
 import { platform } from "@/lib/platform";
 import { getServerProofStateStore } from "@/lib/receiz/proof-state-store";
-import { isStoreStateRecord, storeStateRecordMatchesTenantHost } from "@/lib/receiz/proof-state";
+import { storeStateProjectionSource } from "@/lib/receiz/proof-state";
 import { mockStorage } from "@/lib/storage/mock-storage";
 import { tenantFallbackState } from "@/lib/hosting/tenant-state";
 import { hydrateProofStoreFromReceizStoreState } from "@/lib/receiz/store-state-ledger";
@@ -18,9 +18,8 @@ export async function loadStorefrontState() {
     await hydrateProofStoreFromReceizStoreState(proofStore, tenantHost);
   }
 
-  const trustedPublishedState =
-    hostContext.surface === "tenant" &&
-    proofStore.records().some((record) => isStoreStateRecord(record) && storeStateRecordMatchesTenantHost(record, tenantHost));
+  const projectionSource = hostContext.surface === "tenant" ? storeStateProjectionSource(proofStore.records(), tenantHost) : "platform";
+  const trustedPublishedState = projectionSource === "published";
 
   const state =
     hostContext.surface === "tenant"

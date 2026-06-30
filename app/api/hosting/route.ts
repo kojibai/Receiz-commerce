@@ -14,7 +14,7 @@ import { checkPublicDns } from "@/lib/hosting/dns-check";
 import { buildPublishedCommerceState } from "@/lib/hosting/published-state";
 import { platform } from "@/lib/platform";
 import { createReceizCommerceAdapter } from "@/lib/receiz/adapter";
-import { buildStoreStateRecord } from "@/lib/receiz/proof-state";
+import { buildStoreStateConnectRecord, buildStoreStateRecord } from "@/lib/receiz/proof-state";
 import { getServerProofStateStore } from "@/lib/receiz/proof-state-store";
 import { receizAccessTokenFromRequest, receizLoginRequired } from "@/lib/receiz/session";
 import { mockStorage } from "@/lib/storage/mock-storage";
@@ -123,7 +123,7 @@ async function recordReceizStoreState(accessToken: string | undefined, record: R
       accessToken
     });
 
-    return await receiz.connectRecord(record);
+    return await receiz.connectRecord(buildStoreStateConnectRecord(record));
   } catch (error) {
     return { ok: false, error: errorMessage(error) };
   }

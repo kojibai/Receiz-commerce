@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { buildStoreStateRecord } from "../src/lib/receiz/proof-state.js";
+import { buildStoreStateConnectRecord, buildStoreStateRecord } from "../src/lib/receiz/proof-state.js";
 import { extractStoreStateRecords } from "../src/lib/receiz/store-state-ledger.js";
 import { baseState } from "./support/commerce-state.js";
 
@@ -31,10 +31,7 @@ describe("Receiz store-state ledger recovery", () => {
         {
           id: "event-1",
           type: "connect.record",
-          data: {
-            action: "store.published",
-            payload: record
-          }
+          data: buildStoreStateConnectRecord(record)
         }
       ]
     };

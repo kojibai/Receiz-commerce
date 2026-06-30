@@ -12,20 +12,30 @@ function ledgerLimit() {
   return Number.isFinite(parsed) && parsed > 0 ? Math.min(parsed, 500) : DEFAULT_LEDGER_LIMIT;
 }
 
-export function extractStoreStateRecords(value: unknown, depth = 0, seen = new WeakSet<object>()): StoreStateRecord[] {
+function collectStoreStateRecords(value: unknown, depth = 0, seen = new WeakSet<object>()): StoreStateRecord[] {
   if (depth > 8 || value === null || value === undefined) return [];
 
   if (isStoreStateRecord(value)) return [value];
 
   if (Array.isArray(value)) {
-    return value.flatMap((item) => extractStoreStateRecords(item, depth + 1, seen));
+    return value.flatMap((item) => collectStoreStateRecords(item, depth + 1, seen));
   }
 
   if (typeof value !== "object") return [];
   if (seen.has(value)) return [];
   seen.add(value);
 
-  return Object.values(value).flatMap((item) => extractStoreStateRecords(item, depth + 1, seen));
+  return Object.values(value).flatMap((item) => collectStoreStateRecords(item, depth + 1, seen));
+}
+
+export function extractStoreStateRecords(value: unknown): StoreStateRecord[] {
+  const uniqueRecords = new Map<string, StoreStateRecord>();
+
+  for (const record of collectStoreStateRecords(value)) {
+    uniqueRecords.set(record.id, record);
+  }
+
+  return [...uniqueRecords.values()];
 }
 
 export async function recoverReceizStoreStateRecords(tenantHost: string) {

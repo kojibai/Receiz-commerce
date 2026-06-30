@@ -3,9 +3,9 @@ import { hostContextFromHost } from "@/lib/hosting/host-context";
 import { platform } from "@/lib/platform";
 import { createReceizCommerceAdapter } from "@/lib/receiz/adapter";
 import {
+  buildStoreStateConnectRecord,
   buildStoreStateRecord,
-  isStoreStateRecord,
-  storeStateRecordMatchesTenantHost,
+  storeStateProjectionSource,
   type StoreStateRecord
 } from "@/lib/receiz/proof-state";
 import { getServerProofStateStore } from "@/lib/receiz/proof-state-store";
@@ -63,7 +63,7 @@ async function recordWithReceiz(accessToken: string | undefined, record: StoreSt
       accessToken
     });
 
-    return await receiz.connectRecord(record);
+    return await receiz.connectRecord(buildStoreStateConnectRecord(record));
   } catch (error) {
     return {
       ok: false,
@@ -87,9 +87,8 @@ export async function GET(request: NextRequest) {
     recovery = await hydrateProofStoreFromReceizStoreState(proofStore, tenantHost);
   }
 
-  const trustedPublishedState =
-    hostContext.surface === "tenant" &&
-    proofStore.records().some((record) => isStoreStateRecord(record) && storeStateRecordMatchesTenantHost(record, tenantHost));
+  const projectionSource = hostContext.surface === "tenant" ? storeStateProjectionSource(proofStore.records(), tenantHost) : "platform";
+  const trustedPublishedState = projectionSource === "published";
 
   const projectedState =
     hostContext.surface === "tenant"
@@ -98,6 +97,8 @@ export async function GET(request: NextRequest) {
 
   return NextResponse.json({
     ok: true,
+    source: projectionSource,
+    publishedState: trustedPublishedState,
     hostContext,
     storefront: projectedState.storefront,
     brand: projectedState.brand,

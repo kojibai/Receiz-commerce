@@ -20,6 +20,7 @@ import type {
 } from "../../types/domain";
 
 export const STORE_STATE_SCHEMA = "receiz.app.store_state.v1";
+export const STORE_STATE_CONNECT_SCHEMA = "receiz.app.store_state_connect.v1";
 export const COMMERCE_EVENT_SCHEMA = "receiz.app.commerce_event.v1";
 
 export type PublishedStoreState = {
@@ -51,6 +52,22 @@ export type StoreStateRecord = {
   tenantSlug: string;
   merchantReceizId: string;
   state: PublishedStoreState;
+};
+
+export type StoreStateConnectRecord = {
+  schema: typeof STORE_STATE_CONNECT_SCHEMA;
+  event: "store.state.published";
+  platform: string;
+  recordedAt: string;
+  tenantHost: string;
+  tenantSlug: string;
+  merchantReceizId: string;
+  data: {
+    action: "store.published";
+    payload: StoreStateRecord;
+    storeStateRecord: StoreStateRecord;
+    storeStateRecordId: string;
+  };
 };
 
 export type CommerceEventType =
@@ -154,6 +171,27 @@ export function buildStoreStateRecord(state: CommerceState, input: StoreStateRec
   };
 }
 
+export function buildStoreStateConnectRecord(
+  record: StoreStateRecord,
+  platform = "Receiz.app Commerce Cloud"
+): StoreStateConnectRecord {
+  return {
+    schema: STORE_STATE_CONNECT_SCHEMA,
+    event: "store.state.published",
+    platform,
+    recordedAt: record.recordedAt,
+    tenantHost: record.tenantHost,
+    tenantSlug: record.tenantSlug,
+    merchantReceizId: record.merchantReceizId,
+    data: {
+      action: "store.published",
+      payload: record,
+      storeStateRecord: record,
+      storeStateRecordId: record.id
+    }
+  };
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
@@ -173,6 +211,14 @@ export function storeStateRecordMatchesTenantHost(record: StoreStateRecord, tena
     record.state.hosting.subdomain.toLowerCase() === normalized ||
     record.state.hosting.customDomain.domain.toLowerCase() === normalized
   );
+}
+
+export function storeStateProjectionSource(records: unknown[], tenantHost: string): "published" | "fallback" {
+  return records
+    .filter(isStoreStateRecord)
+    .some((record) => storeStateRecordMatchesTenantHost(record, tenantHost))
+    ? "published"
+    : "fallback";
 }
 
 export function projectStoreStateFromRecords(

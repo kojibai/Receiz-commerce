@@ -5,7 +5,9 @@ import {
   COMMERCE_EVENT_SCHEMA,
   STORE_STATE_SCHEMA,
   admitCommerceEvent,
+  buildStoreStateConnectRecord,
   buildStoreStateRecord,
+  storeStateProjectionSource,
   storeStateRecordMatchesTenantHost,
   projectStoreStateFromRecords
 } from "../src/lib/receiz/proof-state.js";
@@ -248,6 +250,8 @@ describe("Receiz proof commerce state", () => {
   });
 
   it("preserves the submitted merchant host when building a published state", () => {
+    const savedImageUrl =
+      "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=";
     const submitted = {
       brand: { ...baseState().brand, name: "Bjklock Supply" },
       hosting: {
@@ -271,7 +275,8 @@ describe("Receiz proof commerce state", () => {
         {
           ...baseState().products[0],
           id: "saved-coffee",
-          name: "Saved espresso kit"
+          name: "Saved espresso kit",
+          imageUrl: savedImageUrl
         }
       ]
     };
@@ -290,7 +295,28 @@ describe("Receiz proof commerce state", () => {
     assert.equal(record.tenantHost, "shop.bjklock.com");
     assert.equal(record.merchantReceizId, "bjklock.receiz.id");
     assert.equal(storeStateRecordMatchesTenantHost(record, "bjklock.receiz.app"), true);
-    assert.equal(projectStoreStateFromRecords(baseState(), [record], "bjklock.receiz.app").brand.name, "Bjklock Supply");
+    const projected = projectStoreStateFromRecords(baseState(), [record], "bjklock.receiz.app");
+    assert.equal(projected.brand.name, "Bjklock Supply");
+    assert.equal(projected.products[0]?.name, "Saved espresso kit");
+    assert.equal(projected.products[0]?.imageUrl, savedImageUrl);
+    assert.equal(storeStateProjectionSource([record], "bjklock.receiz.app"), "published");
+    assert.equal(storeStateProjectionSource([], "bjklock.receiz.app"), "fallback");
+  });
+
+  it("wraps published store state in a Receiz connect action envelope", () => {
+    const record = buildStoreStateRecord(baseState(), {
+      actorReceizId: "boost.receiz.id",
+      tenantHost: "boost.receiz.app",
+      reason: "publish",
+      recordedAt: "2026-06-30T00:06:00.000Z"
+    });
+    const connectRecord = buildStoreStateConnectRecord(record);
+
+    assert.equal(connectRecord.schema, "receiz.app.store_state_connect.v1");
+    assert.equal(connectRecord.event, "store.state.published");
+    assert.equal(connectRecord.tenantHost, "boost.receiz.app");
+    assert.equal(connectRecord.merchantReceizId, "boost.receiz.id");
+    assert.deepEqual(connectRecord.data.payload, record);
   });
 
   it("admits checkout events exactly once and projects settlement into sales and customers", () => {
