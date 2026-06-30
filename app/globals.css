@@ -5134,7 +5134,7 @@ a {
   main.admin-app .mobile-admin-pane .commerce-import-panel.open {
     position: relative;
     top: auto;
-    min-height: 0;
+    min-height: calc(78px + min(980px, calc(100dvh - 230px)));
   }
 
   .commerce-import-toggle {
