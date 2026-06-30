@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, error: "unknown_action" }, { status: 400 });
   }
 
-  if (!accessToken) {
+  if (!accessToken && process.env.NEXT_PUBLIC_AUTH_MODE === "receiz_id") {
     return NextResponse.json(receizLoginRequired("/admin"), { status: 401 });
   }
 

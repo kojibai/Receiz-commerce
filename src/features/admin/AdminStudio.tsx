@@ -92,7 +92,10 @@ export function AdminStudio() {
               brand={state.brand}
               brandImageUrl={state.brand.logoImageUrl}
               brandLabel={state.brand.logoText}
+              collections={state.collections}
+              onAddCollection={actions.addCollection}
               onAddProduct={actions.addProduct}
+              onUpdateCollection={actions.updateCollection}
               onUpdateProduct={actions.updateProduct}
               products={state.products}
             />
@@ -389,7 +392,10 @@ function MobileAdminConsole({
             brand={state.brand}
             brandImageUrl={state.brand.logoImageUrl}
             brandLabel={state.brand.logoText}
+            collections={state.collections}
+            onAddCollection={actions.addCollection}
             onAddProduct={actions.addProduct}
+            onUpdateCollection={actions.updateCollection}
             onUpdateProduct={actions.updateProduct}
             products={state.products}
           />

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createReceizClient, type ReceizIdentityAccountProjection } from "@receiz/sdk";
 import { seedCommerceState } from "@/data/seed";
 import {
@@ -618,10 +618,42 @@ function appendUniqueById<T extends { id: string }>(current: T[], imported: T[])
   return [...imported.filter((item) => !seen.has(item.id)), ...current];
 }
 
+function publishedStatePayload(state: CommerceState) {
+  return {
+    brand: state.brand,
+    storefront: state.storefront,
+    hosting: state.hosting,
+    navigation: state.navigation,
+    pages: state.pages,
+    blogPosts: state.blogPosts,
+    collections: state.collections,
+    products: state.products,
+    rewards: state.rewards,
+    rewardRules: state.rewardRules,
+    assets: state.assets,
+    qualifiers: state.qualifiers,
+    campaigns: state.campaigns,
+    game: state.game,
+    checkout: state.checkout
+  };
+}
+
+async function syncPublishedStoreState(state: CommerceState) {
+  await fetch("/api/store", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      action: "publish",
+      state: publishedStatePayload(state)
+    })
+  }).catch(() => undefined);
+}
+
 export function useTemplateStore(initialState: CommerceState = seedCommerceState, initialHostContext?: HostContext) {
   const [state, setState] = useState<CommerceState>(initialState);
   const [hydrated, setHydrated] = useState(false);
   const [hostContext, setHostContext] = useState<HostContext>(() => initialHostContext ?? hostContextFromHost(null));
+  const lastSyncedPayload = useRef("");
 
   useEffect(() => {
     const context = currentHostContext();
@@ -649,6 +681,20 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
       window.localStorage.setItem(hostContext.storageKey, JSON.stringify(state));
     }
   }, [hostContext.storageKey, hydrated, state]);
+
+  useEffect(() => {
+    if (!hydrated || hostContext.surface !== "platform" || !state.hosting.published) return;
+
+    const payload = JSON.stringify(publishedStatePayload(state));
+    if (lastSyncedPayload.current === payload) return;
+
+    const timeout = window.setTimeout(() => {
+      lastSyncedPayload.current = payload;
+      void syncPublishedStoreState(state);
+    }, 700);
+
+    return () => window.clearTimeout(timeout);
+  }, [hostContext.surface, hydrated, state]);
 
   const actions = useMemo(
     () => ({
@@ -1046,20 +1092,11 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
             proofEvents: [makeEvent("SITE_PUBLISHED", `${current.hosting.subdomain} published`), ...current.proofEvents]
           };
 
+          void syncPublishedStoreState(next);
+
           void postJson<{ hosting: CommerceState["hosting"] }>("/api/hosting", {
             action: "publish",
-            state: {
-              brand: next.brand,
-              storefront: next.storefront,
-              hosting: next.hosting,
-              products: next.products,
-              blogPosts: next.blogPosts,
-              rewards: next.rewards,
-              rewardRules: next.rewardRules,
-              campaigns: next.campaigns,
-              game: next.game,
-              checkout: next.checkout
-            }
+            state: publishedStatePayload(next)
           })
             .then((result) => {
               setState((latest) => ({
@@ -1110,6 +1147,21 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
           ...current,
           blogPosts: current.blogPosts.map((post) =>
             post.id === postId ? blogPostWithDefaults({ ...post, ...input }) : post
+          )
+        }));
+      },
+      addCollection(collection: CommerceState["collections"][number]) {
+        setState((current) => ({
+          ...current,
+          collections: [collection, ...current.collections],
+          proofEvents: [makeEvent("SITE_PUBLISHED", `${collection.name} category added`), ...current.proofEvents]
+        }));
+      },
+      updateCollection(collectionId: string, input: Partial<CommerceState["collections"][number]>) {
+        setState((current) => ({
+          ...current,
+          collections: current.collections.map((collection) =>
+            collection.id === collectionId ? { ...collection, ...input } : collection
           )
         }));
       },

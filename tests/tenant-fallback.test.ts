@@ -10,7 +10,10 @@ describe("tenant fallback state", () => {
 
     assert.equal(state.brand.name, "Bjklock");
     assert.equal(state.hosting.subdomain, "bjklock.receiz.app");
+    assert.equal(state.hosting.customDomain.domain, "");
     assert.equal(state.auth.signedInAs, "customer");
+    assert.equal(state.auth.receizId.connected, false);
+    assert.equal(state.auth.receizId.localProofVerified, false);
     assert.equal(JSON.stringify(state).includes("Boost"), false);
   });
 
@@ -42,5 +45,7 @@ describe("tenant fallback state", () => {
     assert.equal(state.brand.name, "Bjklock");
     assert.equal(JSON.stringify(state).includes("Boost"), false);
     assert.equal(state.auth.receizId.connected, false);
+    assert.equal(state.auth.receizId.localProofVerified, false);
+    assert.equal(state.hosting.customDomain.domain, "");
   });
 });

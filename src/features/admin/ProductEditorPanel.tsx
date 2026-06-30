@@ -6,7 +6,7 @@ import { Button, ProductVisual, Panel, SectionHeader, StatusPill } from "@/compo
 import { requestTwinAssist } from "@/lib/content/twin-client";
 import { hasReceizTwinCapability } from "@/lib/receiz/capabilities";
 import { ImageUploadField } from "@/features/admin/ImageUploadField";
-import type { BrandConfig, Product, ProductType } from "@/types/domain";
+import type { BrandConfig, Collection, Product, ProductType } from "@/types/domain";
 
 const productTypes: ProductType[] = ["physical", "digital", "access", "benefit", "experience", "receized_asset"];
 const imageTones: Product["imageTone"][] = ["bag", "can", "mug", "card", "class", "access"];
@@ -50,10 +50,26 @@ function newProduct(): Product {
   };
 }
 
+function newCollection(): Collection {
+  const id = `collection-${Date.now()}`;
+  const name = "New category";
+
+  return {
+    id,
+    name,
+    slug: slugify(name, "category"),
+    productIds: [],
+    published: true
+  };
+}
+
 export function ProductEditorPanel({
   brandImageUrl,
   brandLabel,
   brand,
+  collections,
+  onAddCollection,
+  onUpdateCollection,
   onAddProduct,
   onUpdateProduct,
   products
@@ -61,6 +77,9 @@ export function ProductEditorPanel({
   brandImageUrl?: string | null;
   brand: BrandConfig;
   brandLabel: string;
+  collections: Collection[];
+  onAddCollection: (collection: Collection) => void;
+  onUpdateCollection: (collectionId: string, input: Partial<Collection>) => void;
   onAddProduct: (product: Product) => void;
   onUpdateProduct: (productId: string, input: Partial<Product>) => void;
   products: Product[];
@@ -77,6 +96,15 @@ export function ProductEditorPanel({
     const product = newProduct();
     onAddProduct(product);
     setActiveProductId(product.id);
+  };
+  const addCollection = () => {
+    onAddCollection(newCollection());
+  };
+  const toggleCollectionProduct = (collection: Collection, productId: string) => {
+    const productIds = collection.productIds.includes(productId)
+      ? collection.productIds.filter((id) => id !== productId)
+      : [...collection.productIds, productId];
+    onUpdateCollection(collection.id, { productIds });
   };
   const askTwin = async () => {
     if (!activeProduct) return;
@@ -110,6 +138,69 @@ export function ProductEditorPanel({
         action={<Button onClick={addProduct} variant="primary">Add product</Button>}
       />
       <div className="product-builder-grid">
+        <div className="collection-builder-panel">
+          <div className="collection-builder-head">
+            <div>
+              <strong>Categories</strong>
+              <span>Customize storefront filters and product grouping.</span>
+            </div>
+            <Button onClick={addCollection} variant="outline">Add category</Button>
+          </div>
+          <div className="collection-editor-list">
+            {collections.map((collection) => (
+              <div className="collection-editor-card" key={collection.id}>
+                <div className="builder-field-grid">
+                  <label className="builder-field">
+                    <span>Name</span>
+                    <input
+                      value={collection.name}
+                      onChange={(event) =>
+                        onUpdateCollection(collection.id, {
+                          name: event.target.value,
+                          slug: slugify(event.target.value, collection.slug || "category")
+                        })
+                      }
+                    />
+                  </label>
+                  <label className="builder-field">
+                    <span>Slug</span>
+                    <input
+                      value={collection.slug}
+                      onChange={(event) => onUpdateCollection(collection.id, { slug: slugify(event.target.value, "category") })}
+                    />
+                  </label>
+                </div>
+                <label className="inline-toggle">
+                  <input
+                    checked={collection.published}
+                    onChange={(event) => onUpdateCollection(collection.id, { published: event.target.checked })}
+                    type="checkbox"
+                  />
+                  <span>Show on storefront</span>
+                </label>
+                <div className="collection-product-picker">
+                  {products.map((product) => (
+                    <button
+                      className={collection.productIds.includes(product.id) ? "active" : undefined}
+                      key={product.id}
+                      onClick={() => toggleCollectionProduct(collection, product.id)}
+                      type="button"
+                    >
+                      {product.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+            {collections.length === 0 ? (
+              <div className="panel-empty-state">
+                <Icons.collections size={22} />
+                <strong>No categories yet</strong>
+                <span>Add custom categories for the mobile storefront filter row.</span>
+              </div>
+            ) : null}
+          </div>
+        </div>
         <div className="admin-product-table">
           <div className="admin-product-row head">
             <span>Product</span>

@@ -27,7 +27,7 @@ export function AccountDashboard({
   const rewards = state.rewards.filter((reward) => customer.rewardIds.includes(reward.id));
   const shipping = customer.shippingAddress ?? orders.find((order) => order.shipping)?.shipping;
   const recentProofs = state.proofEvents.slice(0, 6);
-  const storeHost = state.hosting.customDomain.domain || state.hosting.subdomain;
+  const storeHost = tenantSurface ? hostContext.tenantHost ?? state.hosting.liveUrl : state.hosting.liveUrl;
   const walletRailLabel = state.auth.receizId.connected ? "Receiz wallet ready" : "Sign in to use Receiz wallet";
   const checkoutFallbackLabel = "Credit card fallback";
 

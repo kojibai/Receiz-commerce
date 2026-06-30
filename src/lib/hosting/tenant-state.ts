@@ -128,8 +128,25 @@ export function tenantFallbackState(state: CommerceState, hostContext: HostConte
           sslStatus: "valid",
           verified: true,
           message: "Loaded from hosted subdomain"
-        }
+        },
+        customDomain: trustedStoredTenant
+          ? contentState.hosting.customDomain
+          : {
+              ...contentState.hosting.customDomain,
+              domain: "",
+              liveUrl: "",
+              status: "pending",
+              sslStatus: "pending",
+              verified: false,
+              message: "No custom domain connected for this fallback storefront"
+            }
       },
+      checkout: trustedStoredTenant
+        ? contentState.checkout
+        : {
+            ...contentState.checkout,
+            label: "Receiz checkout"
+          },
       auth: {
         ...contentState.auth,
         signedInAs: "customer",
@@ -140,6 +157,9 @@ export function tenantFallbackState(state: CommerceState, hostContext: HostConte
               connected: false,
               handle: `${logoText}.receiz.id`,
               displayName: brandName,
+              localProofVerified: false,
+              portableStateStatus: "missing",
+              artifactStatus: "pending",
               statusLabel: "Continue with Receiz ID"
             }
       }
@@ -177,6 +197,12 @@ export function tenantFallbackState(state: CommerceState, hostContext: HostConte
           message: "Loaded from custom domain"
         }
       },
+      checkout: trustedStoredDomain
+        ? contentState.checkout
+        : {
+            ...contentState.checkout,
+            label: "Receiz checkout"
+          },
       auth: {
         ...contentState.auth,
         signedInAs: "customer",
@@ -187,6 +213,9 @@ export function tenantFallbackState(state: CommerceState, hostContext: HostConte
               connected: false,
               handle: `${logoText}.receiz.id`,
               displayName: brandName,
+              localProofVerified: false,
+              portableStateStatus: "missing",
+              artifactStatus: "pending",
               statusLabel: "Continue with Receiz ID"
             }
       }

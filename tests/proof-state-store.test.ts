@@ -34,6 +34,41 @@ describe("Receiz proof state store", () => {
     assert.equal(store.snapshot().head.count, 2);
   });
 
+  it("projects saved tenant theme, content, and custom categories by subdomain", async () => {
+    const store = await createInMemoryProofStateStore("test-owner");
+    const saved = {
+      ...baseState(),
+      brand: { ...baseState().brand, name: "Bjklock Supply", logoText: "bjk" },
+      storefront: {
+        ...baseState().storefront,
+        headline: "Rare proof gear"
+      },
+      collections: [
+        {
+          id: "rare",
+          name: "Rare gear",
+          slug: "rare-gear",
+          productIds: ["coffee-pack"],
+          published: true
+        }
+      ]
+    } as CommerceState;
+
+    await store.admitStoreRecord(
+      buildStoreStateRecord(saved, {
+        actorReceizId: "bjklock.receiz.id",
+        tenantHost: "bjklock.receiz.app",
+        recordedAt: "2026-06-30T00:05:00.000Z"
+      })
+    );
+
+    const projected = store.projectHost(baseState(), "bjklock.receiz.app");
+
+    assert.equal(projected.brand.name, "Bjklock Supply");
+    assert.equal(projected.storefront.headline, "Rare proof gear");
+    assert.equal(projected.collections[0]?.name, "Rare gear");
+  });
+
   it("admits a commerce event once and persists the known head", async () => {
     const store = await createInMemoryProofStateStore("test-owner");
     const event = {

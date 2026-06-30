@@ -20,6 +20,7 @@ export function CommerceImportPanel({
 }: {
   onImport: (input: Omit<CommerceImportInput, "payload"> & { rawContent?: string }) => Promise<CommerceImportResult>;
 }) {
+  const [open, setOpen] = useState(false);
   const [sourceType, setSourceType] = useState<CommerceImportSourceType>("shopify");
   const [sourceUrl, setSourceUrl] = useState("");
   const [rawContent, setRawContent] = useState("");
@@ -43,71 +44,89 @@ export function CommerceImportPanel({
   };
 
   return (
-    <Panel className="admin-panel commerce-import-panel">
-      <SectionHeader
-        title="Import existing site"
-        action={<StatusPill tone={result ? "green" : "neutral"}>{result ? "Imported" : "Migration"}</StatusPill>}
-      />
-      <div className="import-source-grid">
-        {sourceTypes.map((item) => (
-          <button
-            className={sourceType === item.value ? "import-source-card active" : "import-source-card"}
-            key={item.value}
-            onClick={() => setSourceType(item.value)}
-            type="button"
-          >
-            <Icons.external size={16} />
-            <strong>{item.label}</strong>
-            <span>{item.hint}</span>
-          </button>
-        ))}
-      </div>
-      <div className="builder-field-grid">
+    <Panel className={open ? "admin-panel commerce-import-panel open" : "admin-panel commerce-import-panel"}>
+      <button
+        aria-expanded={open}
+        className="commerce-import-toggle"
+        onClick={() => setOpen((current) => !current)}
+        type="button"
+      >
+        <span className="import-toggle-icon">
+          <Icons.external size={17} />
+        </span>
+        <span>
+          <strong>Import existing site</strong>
+          <small>{result ? "Imported content is staged in your builders" : "Shopify, WordPress, Wix, CSV, JSON, or any public site"}</small>
+        </span>
+        <StatusPill tone={result ? "green" : "neutral"}>{result ? "Imported" : "Migration"}</StatusPill>
+        <Icons.chevronDown aria-hidden size={18} />
+      </button>
+      <div className="commerce-import-body" aria-hidden={!open}>
+        <SectionHeader
+          title="Migration source"
+          action={<StatusPill tone="neutral">{activeType.label}</StatusPill>}
+        />
+        <div className="import-source-grid">
+          {sourceTypes.map((item) => (
+            <button
+              className={sourceType === item.value ? "import-source-card active" : "import-source-card"}
+              key={item.value}
+              onClick={() => setSourceType(item.value)}
+              type="button"
+            >
+              <Icons.external size={16} />
+              <strong>{item.label}</strong>
+              <span>{item.hint}</span>
+            </button>
+          ))}
+        </div>
+        <div className="builder-field-grid">
+          <label className="builder-field">
+            <span>Source URL</span>
+            <input
+              placeholder={
+                sourceType === "shopify"
+                  ? "https://brand.myshopify.com/products.json"
+                  : sourceType === "wordpress"
+                    ? "https://brand.com/wp-json/wp/v2/posts"
+                    : "https://brand.com"
+              }
+              value={sourceUrl}
+              onChange={(event) => setSourceUrl(event.target.value)}
+            />
+          </label>
+          <label className="builder-field">
+            <span>Import type</span>
+            <select value={sourceType} onChange={(event) => setSourceType(event.target.value as CommerceImportSourceType)}>
+              {sourceTypes.map((item) => (
+                <option key={item.value} value={item.value}>{item.label}</option>
+              ))}
+            </select>
+          </label>
+        </div>
         <label className="builder-field">
-          <span>Source URL</span>
-          <input
-            placeholder={
-              sourceType === "shopify"
-                ? "https://brand.myshopify.com/products.json"
-                : sourceType === "wordpress"
-                  ? "https://brand.com/wp-json/wp/v2/posts"
-                  : "https://brand.com"
-            }
-            value={sourceUrl}
-            onChange={(event) => setSourceUrl(event.target.value)}
+          <span>Paste export content</span>
+          <textarea
+            placeholder={`${activeType.label} export JSON, CSV, or site HTML. Use this when the source blocks automated fetching.`}
+            rows={6}
+            value={rawContent}
+            onChange={(event) => setRawContent(event.target.value)}
           />
         </label>
-        <label className="builder-field">
-          <span>Import type</span>
-          <select value={sourceType} onChange={(event) => setSourceType(event.target.value as CommerceImportSourceType)}>
-            {sourceTypes.map((item) => (
-              <option key={item.value} value={item.value}>{item.label}</option>
-            ))}
-          </select>
-        </label>
-      </div>
-      <label className="builder-field">
-        <span>Paste export content</span>
-        <textarea
-          placeholder={`${activeType.label} export JSON, CSV, or site HTML. Use this when the source blocks automated fetching.`}
-          rows={6}
-          value={rawContent}
-          onChange={(event) => setRawContent(event.target.value)}
-        />
-      </label>
-      {error ? <p className="import-error">{error}</p> : null}
-      {result ? (
-        <div className="import-result-grid">
-          <div><strong>{result.summary.products}</strong><span>Products</span></div>
-          <div><strong>{result.summary.blogPosts}</strong><span>Posts</span></div>
-          <div><strong>{result.summary.pages}</strong><span>Pages</span></div>
+        {error ? <p className="import-error">{error}</p> : null}
+        {result ? (
+          <div className="import-result-grid">
+            <div><strong>{result.summary.products}</strong><span>Products</span></div>
+            <div><strong>{result.summary.blogPosts}</strong><span>Posts</span></div>
+            <div><strong>{result.summary.pages}</strong><span>Pages</span></div>
+          </div>
+        ) : null}
+        <div className="import-action-row">
+          <p>Imports are staged into your store builders so you can edit, Receiz seal, and publish them to your hosted site.</p>
+          <Button disabled={importing || (!sourceUrl && !rawContent.trim())} onClick={runImport} variant="primary">
+            {importing ? "Importing..." : "Import content"}
+          </Button>
         </div>
-      ) : null}
-      <div className="import-action-row">
-        <p>Imports are staged into your store builders so you can edit, Receiz seal, and publish them to your hosted site.</p>
-        <Button disabled={importing || (!sourceUrl && !rawContent.trim())} onClick={runImport} variant="primary">
-          {importing ? "Importing..." : "Import content"}
-        </Button>
       </div>
     </Panel>
   );

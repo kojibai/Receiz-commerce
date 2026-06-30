@@ -362,6 +362,7 @@ function MobileStage({
       <MobileStorePanel
         active={activeView === "store"}
         blogPosts={state.blogPosts}
+        collections={state.collections}
         onAddToCart={onAddToCart}
         onCheckout={onCheckout}
         onSeal={onSeal}
@@ -431,6 +432,7 @@ function MobileStorePanel({
   active,
   products,
   blogPosts,
+  collections,
   state,
   tenantSurface,
   onAddToCart,
@@ -439,6 +441,7 @@ function MobileStorePanel({
 }: {
   active: boolean;
   blogPosts: BlogPost[];
+  collections: CommerceState["collections"];
   products: Product[];
   state: CommerceState;
   tenantSurface: boolean;
@@ -448,6 +451,10 @@ function MobileStorePanel({
 }) {
   const firstProduct = products[0];
   const firstPost = blogPosts.find((post) => post.status === "published") ?? blogPosts[0];
+  const visibleCollections = collections.filter((collection) => collection.published).slice(0, 5);
+  const categoryLabels = visibleCollections.length
+    ? visibleCollections.map((collection) => collection.name)
+    : ["Featured", "Access", "Rewards", "Drops"];
 
   return (
     <MobilePane active={active} action={<StatusPill tone="green">Live</StatusPill>} title="Store">
@@ -475,7 +482,7 @@ function MobileStorePanel({
       </div>
 
       <div className="mobile-category-row" aria-label="Shop categories">
-        {["Coffee", "Access", "Rewards", "Drops"].map((label) => (
+        {categoryLabels.map((label) => (
           <button key={label} type="button">
             {label}
           </button>
