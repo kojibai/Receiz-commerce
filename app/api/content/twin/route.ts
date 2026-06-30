@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { createTwinAssistDraft, type TwinAssistInput } from "@/lib/content/twin-assist";
 import { hostContextFromHost } from "@/lib/hosting/host-context";
 import { createReceizCommerceAdapter } from "@/lib/receiz/adapter";
-import { receizLoginRequired } from "@/lib/receiz/session";
 import { platform } from "@/lib/platform";
 import type { JsonObject } from "@receiz/sdk";
 
@@ -20,18 +19,6 @@ function isTwinAssistInput(value: unknown): value is TwinAssistInput {
     typeof brand === "object" &&
     !Array.isArray(brand)
   );
-}
-
-function returnToFromRequest(request: NextRequest) {
-  const referer = request.headers.get("referer");
-  if (!referer) return "/admin";
-
-  try {
-    const url = new URL(referer);
-    return `${url.pathname}${url.search}`;
-  } catch {
-    return "/admin";
-  }
 }
 
 function asRecord(value: unknown): Record<string, unknown> {
@@ -172,20 +159,16 @@ export async function POST(request: NextRequest) {
   const hostContext = hostContextFromHost(request.headers.get("x-forwarded-host") ?? request.headers.get("host"));
   const accessToken = request.cookies.get("receiz_access_token")?.value;
   const sessionScope = request.cookies.get("receiz_session_scope")?.value;
-  const requireReceiz = process.env.NEXT_PUBLIC_AUTH_MODE === "receiz_id";
   const hasScopedSession = Boolean(accessToken && sessionScope === hostContext.storageKey);
-
-  if (requireReceiz && !hasScopedSession) {
-    return NextResponse.json(receizLoginRequired(returnToFromRequest(request)), { status: 401 });
-  }
-
   const draft = createTwinAssistDraft(body);
 
+  // Local Receiz ID proof memory is enough for first-paint drafting. Connect tokens are only
+  // needed when we can call delegated Twin/World rails from the server.
   if (!hasScopedSession || !accessToken) {
     return NextResponse.json({
       ok: true,
       mode: "local_preview",
-      note: "Connect Receiz ID to record this content assist through Receiz rails.",
+      note: "Generated locally from this store context. Connect is only needed for delegated Twin/World rails.",
       draft
     });
   }

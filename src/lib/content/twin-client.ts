@@ -8,9 +8,8 @@ export async function requestTwinAssist(input: TwinAssistInput): Promise<TwinAss
   });
   const payload = await response.json().catch(() => ({}));
 
-  if (response.status === 401 && typeof payload.connectUrl === "string") {
-    window.location.assign(payload.connectUrl);
-    throw new Error("Receiz login required");
+  if (response.status === 401) {
+    throw new Error(String(payload.message ?? "Use Receiz ID inside this app before asking Twin."));
   }
 
   if (!response.ok || payload.ok === false || !payload.draft) {

@@ -1411,7 +1411,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
             merchantReceizId: current.hosting.merchantReceizId,
             successUrl: `${window.location.origin}/?checkout=success`,
             cancelUrl: `${window.location.origin}/?checkout=cancel`
-          })
+          }, { deferLoginRedirect: true })
             .then((result) => {
               const checkoutSessionId = result.session?.checkoutSessionId ?? `receiz-${Date.now()}`;
               const sessionStatus = String(result.session?.status ?? "");
@@ -1452,13 +1452,44 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
                   ...latest.proofEvents
                 ]
               }));
-
-              if (result.session?.checkoutUrl) {
-                window.location.assign(result.session.checkoutUrl);
-                return;
-              }
             })
             .catch((error) => {
+              if (error instanceof ReceizLoginRequiredError) {
+                const id = `card-${Date.now()}`;
+                const customer = {
+                  ...current.auth.customer,
+                  receizHandle: current.auth.receizId.handle
+                };
+                const order = {
+                  id,
+                  customerId: customer.id,
+                  customerEmail: customer.email,
+                  totalLabel: `$${cartAmountUsd(current)}`,
+                  status: "card_required" as const,
+                  itemCount: Math.max(1, current.cart.lines.length),
+                  sealed: false,
+                  createdAt: new Date().toISOString(),
+                  merchantReceizId: current.hosting.merchantReceizId,
+                  tenantHost: current.hosting.customDomain.domain || current.hosting.subdomain,
+                  checkoutSessionId: `in-app-${id}`,
+                  paymentRail: "card_fallback" as const,
+                  settlementStatus: "card_required" as const,
+                  shipping: customerShipping(customer)
+                };
+
+                setState((latest) => ({
+                  ...latest,
+                  cart: { lines: [] },
+                  orders: [order, ...latest.orders],
+                  customers: upsertCheckoutCustomer(latest.customers, customer, order.id),
+                  proofEvents: [
+                    makeEvent("ORDER_VERIFIED", "Receiz wallet needs in-app card fallback"),
+                    ...latest.proofEvents
+                  ]
+                }));
+                return;
+              }
+
               setState((latest) => ({
                 ...latest,
                 proofEvents: [
