@@ -56,7 +56,7 @@ export function PublicStorefront() {
             </div>
 
             <HeroProduct
-              onCheckout={actions.completeMockCheckout}
+              onCheckout={actions.startCheckout}
               onSeal={sealObject}
               state={state}
             />
@@ -126,7 +126,7 @@ export function PublicStorefront() {
           activeView={mobileView}
           customer={customer}
           onAddToCart={actions.addToCart}
-          onCheckout={actions.completeMockCheckout}
+          onCheckout={actions.startCheckout}
           onClaimReward={claimReward}
           onCreateReceizId={actions.createReceizId}
           onIssueReward={issueReward}

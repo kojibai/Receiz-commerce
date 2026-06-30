@@ -31,8 +31,8 @@ export function AdminStudio() {
 
         <div className="status-card-grid">
           <AdminStatusCard icon={<Icons.store size={22} />} label="Storefront status" value="Live" detail={`Published ${state.hosting.lastPublishedAt}`} />
-          <AdminStatusCard icon={<Icons.globe size={22} />} label={state.hosting.subdomain} value="Active" detail="Subdomain connected" />
-          <AdminStatusCard icon={<Icons.lock size={22} />} label="Custom domain ready" value="Connected" detail={state.hosting.customDomain.domain} />
+          <AdminStatusCard icon={<Icons.globe size={22} />} label={state.hosting.subdomain} value={state.hosting.subdomainStatus.status} detail={state.hosting.subdomainStatus.message ?? "Subdomain status"} />
+          <AdminStatusCard icon={<Icons.lock size={22} />} label="Custom domain" value={state.hosting.customDomain.status} detail={state.hosting.customDomain.domain} />
           <AdminStatusCard icon={<Icons.receiz size={22} />} label="Receiz ID" value="Connected" detail={state.auth.receizId.handle} />
           <AdminStatusCard icon={<Icons.creditCard size={22} />} label="Hosting billing" value={state.billing.status} detail={state.billing.monthlyTotalLabel} />
           <AdminStatusCard icon={<Icons.game size={22} />} label="Game enabled" value={state.game.enabled ? "Enabled" : "Off"} detail={campaignName} />
@@ -65,6 +65,7 @@ export function AdminStudio() {
               hosting={state.hosting}
               onCustomDomain={actions.connectCustomDomain}
               onSubdomain={actions.claimSubdomain}
+              onVerifyDomain={actions.verifyCustomDomain}
             />
             <Panel className="admin-panel">
               <SectionHeader title="Game module" />

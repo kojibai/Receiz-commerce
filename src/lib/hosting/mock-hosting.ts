@@ -1,4 +1,5 @@
 import { seedCommerceState } from "@/data/seed";
+import { normalizeCustomDomain, normalizeTenantSlug, subdomainForSlug } from "@/lib/hosting/domain-utils";
 import type { HostingMode } from "@/types/domain";
 
 let hosting = seedCommerceState.hosting;
@@ -12,13 +13,36 @@ export const mockHosting = {
     return billing;
   },
   claimSubdomain(subdomain: string) {
-    hosting = { ...hosting, subdomain };
+    const tenantSlug = normalizeTenantSlug(subdomain);
+    const domain = subdomainForSlug(tenantSlug);
+    hosting = {
+      ...hosting,
+      tenantSlug,
+      subdomain: domain,
+      liveUrl: `https://${domain}`,
+      subdomainStatus: {
+        domain,
+        status: "active",
+        sslStatus: "mock",
+        verified: true,
+        liveUrl: `https://${domain}`,
+        message: "Mock subdomain claimed"
+      }
+    };
     return hosting;
   },
   connectCustomDomain(domain: string) {
+    const normalizedDomain = normalizeCustomDomain(domain);
     hosting = {
       ...hosting,
-      customDomain: { domain, status: "connected", sslStatus: "valid" }
+      customDomain: {
+        domain: normalizedDomain,
+        status: "connected",
+        sslStatus: "valid",
+        verified: true,
+        liveUrl: `https://${normalizedDomain}`,
+        message: "Mock custom domain connected"
+      }
     };
     return hosting;
   },

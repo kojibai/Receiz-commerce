@@ -1581,6 +1581,64 @@ a {
   padding: 0 12px;
 }
 
+.domain-live-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto 38px;
+  align-items: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-soft);
+}
+
+.domain-live-row strong,
+.domain-live-row span {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.domain-live-row strong {
+  font-size: 12px;
+}
+
+.domain-live-row span {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.domain-proof-box {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid rgba(0, 122, 103, 0.18);
+  border-radius: var(--radius);
+  background: rgba(0, 122, 103, 0.06);
+}
+
+.domain-proof-box strong {
+  font-size: 12px;
+}
+
+.domain-proof-box ul {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding-left: 16px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.domain-proof-box .button {
+  justify-self: start;
+}
+
 .brand-editor label + label {
   margin-top: 10px;
 }

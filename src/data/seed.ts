@@ -26,12 +26,27 @@ export const seedCommerceState: CommerceState = {
   },
   hosting: {
     mode: "mock_hosted",
+    tenantSlug: "boost",
     subdomain: platform.defaultSubdomain,
+    subdomainStatus: {
+      domain: platform.defaultSubdomain,
+      status: "active",
+      sslStatus: "valid",
+      verified: true,
+      liveUrl: `https://${platform.defaultSubdomain}`,
+      message: "Wildcard Receiz.app hosting ready"
+    },
     customDomain: {
       domain: "www.boostcoffee.com",
       status: "ready",
-      sslStatus: "valid"
+      sslStatus: "valid",
+      verified: true,
+      liveUrl: "https://www.boostcoffee.com",
+      message: "Custom domain verified"
     },
+    liveUrl: `https://${platform.defaultSubdomain}`,
+    merchantReceizId: "boost.receiz.id",
+    settlementAccountLabel: "Boost Coffee Receiz account",
     plan: "pro",
     published: true,
     lastPublishedAt: "2h ago"

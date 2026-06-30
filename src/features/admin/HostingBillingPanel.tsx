@@ -55,6 +55,8 @@ export function HostingBillingPanel({
         <div><span>Trial</span><strong>{billing.trialEndsAt}</strong></div>
         <div><span>{platform.freeSubdomainLabel}</span><strong>{hosting.subdomain}</strong></div>
         <div><span>{platform.customDomainLabel}</span><strong>{hosting.customDomain.domain}</strong></div>
+        <div><span>Live URL</span><strong>{hosting.liveUrl}</strong></div>
+        <div><span>Merchant Receiz account</span><strong>{hosting.merchantReceizId}</strong></div>
       </div>
     </Panel>
   );

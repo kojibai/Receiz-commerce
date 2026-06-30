@@ -58,16 +58,42 @@ export type BrandConfig = {
 
 export type HostingMode = "mock_hosted" | "hosted_platform" | "self_hosted";
 
+export type DomainVerificationRecord = {
+  type: string;
+  domain: string;
+  value: string;
+  reason?: string;
+};
+
 export type DomainStatus = {
   domain: string;
-  status: "active" | "pending" | "connected" | "ready";
-  sslStatus: "valid" | "pending" | "mock";
+  status:
+    | "active"
+    | "pending"
+    | "connected"
+    | "ready"
+    | "needs_dns"
+    | "needs_vercel_env"
+    | "payment_required"
+    | "error";
+  sslStatus: "valid" | "pending" | "mock" | "unknown";
+  verified?: boolean;
+  liveUrl?: string;
+  verification?: DomainVerificationRecord[];
+  dnsInstructions?: string[];
+  lastCheckedAt?: string;
+  message?: string;
 };
 
 export type HostingConfig = {
   mode: HostingMode;
+  tenantSlug: string;
   subdomain: string;
+  subdomainStatus: DomainStatus;
   customDomain: DomainStatus;
+  liveUrl: string;
+  merchantReceizId: string;
+  settlementAccountLabel: string;
   plan: "starter" | "pro" | "scale";
   published: boolean;
   lastPublishedAt: string;

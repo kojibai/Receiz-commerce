@@ -3,21 +3,79 @@
 import { useEffect, useMemo, useState } from "react";
 import { createReceizClient, type ReceizIdentityAccountProjection } from "@receiz/sdk";
 import { seedCommerceState } from "@/data/seed";
+import {
+  cleanHost,
+  isPlatformHost,
+  normalizeCustomDomain,
+  normalizeTenantSlug,
+  subdomainForSlug,
+  tenantSlugFromHost
+} from "@/lib/hosting/domain-utils";
 import type { CommerceState, ProofEvent } from "@/types/domain";
 import { makeId } from "@/lib/utils";
 
 const STORAGE_KEY = "receiz-app-commerce-state-v1";
 
+function applyHostContext(state: CommerceState): CommerceState {
+  if (typeof window === "undefined") return state;
+
+  const host = cleanHost(window.location.host);
+  const tenantSlug = tenantSlugFromHost(host);
+
+  if (tenantSlug) {
+    const subdomain = subdomainForSlug(tenantSlug);
+    return {
+      ...state,
+      hosting: {
+        ...state.hosting,
+        tenantSlug,
+        subdomain,
+        liveUrl: `https://${subdomain}`,
+        subdomainStatus: {
+          ...state.hosting.subdomainStatus,
+          domain: subdomain,
+          liveUrl: `https://${subdomain}`,
+          status: "active",
+          sslStatus: "valid",
+          verified: true,
+          message: "Loaded from hosted subdomain"
+        }
+      }
+    };
+  }
+
+  if (host && !isPlatformHost(host)) {
+    return {
+      ...state,
+      hosting: {
+        ...state.hosting,
+        liveUrl: `https://${host}`,
+        customDomain: {
+          ...state.hosting.customDomain,
+          domain: host,
+          liveUrl: `https://${host}`,
+          status: "active",
+          sslStatus: "valid",
+          verified: true,
+          message: "Loaded from custom domain"
+        }
+      }
+    };
+  }
+
+  return state;
+}
+
 function readState(): CommerceState {
   if (typeof window === "undefined") return seedCommerceState;
 
   const raw = window.localStorage.getItem(STORAGE_KEY);
-  if (!raw) return seedCommerceState;
+  if (!raw) return applyHostContext(seedCommerceState);
 
   try {
-    return JSON.parse(raw) as CommerceState;
+    return applyHostContext(JSON.parse(raw) as CommerceState);
   } catch {
-    return seedCommerceState;
+    return applyHostContext(seedCommerceState);
   }
 }
 
@@ -55,6 +113,43 @@ function accountHandle(projection: ReceizIdentityAccountProjection | null, fallb
   const username = projection?.owner.username?.trim();
   if (!username) return fallback;
   return username.includes(".") ? username : `${username}.receiz.id`;
+}
+
+async function postJson<T>(url: string, body: Record<string, unknown>): Promise<T> {
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(body)
+  });
+  const payload = await response.json().catch(() => ({}));
+
+  if (response.status === 401 && typeof payload.connectUrl === "string") {
+    window.location.assign(payload.connectUrl);
+    throw new Error("Receiz login required");
+  }
+
+  if (!response.ok || payload.ok === false) {
+    throw new Error(String(payload.message ?? payload.error ?? "Request failed"));
+  }
+
+  return payload as T;
+}
+
+function priceFromLabel(label: string) {
+  const match = label.match(/[0-9]+(?:\.[0-9]+)?/);
+  return match ? Number(match[0]) : 0;
+}
+
+function cartAmountUsd(state: CommerceState) {
+  const total = state.cart.lines.reduce((sum, line) => {
+    const product = state.products.find((item) => item.id === line.productId);
+    return sum + priceFromLabel(product?.priceLabel ?? "0") * line.quantity;
+  }, 0);
+
+  if (total > 0) return total.toFixed(2);
+
+  const firstProduct = state.products.find((product) => product.status === "active");
+  return Math.max(1, priceFromLabel(firstProduct?.priceLabel ?? "18")).toFixed(2);
 }
 
 export function useTemplateStore() {
@@ -118,28 +213,172 @@ export function useTemplateStore() {
           }
         }));
       },
-      claimSubdomain(subdomain: string) {
+      async claimSubdomain(subdomain: string) {
+        let tenantSlug = "";
+        let domain = "";
+
+        try {
+          tenantSlug = normalizeTenantSlug(subdomain);
+          domain = subdomainForSlug(tenantSlug);
+        } catch (error) {
+          setState((current) => ({
+            ...current,
+            proofEvents: [makeEvent("DOMAIN_CONNECTED", error instanceof Error ? error.message : "Invalid subdomain"), ...current.proofEvents]
+          }));
+          return;
+        }
+
         setState((current) => ({
           ...current,
-          hosting: { ...current.hosting, subdomain },
-          proofEvents: [makeEvent("DOMAIN_CONNECTED", `${subdomain} active`), ...current.proofEvents]
+          hosting: {
+            ...current.hosting,
+            tenantSlug,
+            subdomain: domain,
+            liveUrl: `https://${domain}`,
+            subdomainStatus: {
+              ...current.hosting.subdomainStatus,
+              domain,
+              status: "pending",
+              sslStatus: "pending",
+              verified: false,
+              liveUrl: `https://${domain}`,
+              message: "Checking hosted subdomain"
+            }
+          },
+          proofEvents: [makeEvent("DOMAIN_CONNECTED", `${domain} requested`), ...current.proofEvents]
         }));
+
+        try {
+          const result = await postJson<{ hosting: CommerceState["hosting"] }>("/api/hosting", {
+            action: "subdomain",
+            subdomain: domain
+          });
+          setState((current) => ({
+            ...current,
+            hosting: result.hosting,
+            proofEvents: [
+              makeEvent("DOMAIN_CONNECTED", `${result.hosting.subdomainStatus.message ?? result.hosting.subdomain} · ${result.hosting.subdomainStatus.status}`),
+              ...current.proofEvents
+            ]
+          }));
+        } catch (error) {
+          setState((current) => ({
+            ...current,
+            hosting: {
+              ...current.hosting,
+              subdomainStatus: {
+                ...current.hosting.subdomainStatus,
+                status: "error",
+                sslStatus: "unknown",
+                message: error instanceof Error ? error.message : "Subdomain claim failed"
+              }
+            },
+            proofEvents: [
+              makeEvent("DOMAIN_CONNECTED", error instanceof Error ? error.message : "Subdomain claim failed"),
+              ...current.proofEvents
+            ]
+          }));
+        }
       },
-      connectCustomDomain(domain: string) {
+      async connectCustomDomain(domain: string) {
+        let normalizedDomain = "";
+
+        try {
+          normalizedDomain = normalizeCustomDomain(domain);
+        } catch (error) {
+          setState((current) => ({
+            ...current,
+            proofEvents: [makeEvent("DOMAIN_CONNECTED", error instanceof Error ? error.message : "Invalid custom domain"), ...current.proofEvents]
+          }));
+          return;
+        }
+
         setState((current) => ({
           ...current,
           hosting: {
             ...current.hosting,
             customDomain: {
-              domain,
-              status: "connected",
-              sslStatus: "valid"
+              ...current.hosting.customDomain,
+              domain: normalizedDomain,
+              status: "pending",
+              sslStatus: "pending",
+              verified: false,
+              liveUrl: `https://${normalizedDomain}`,
+              message: "Adding domain to Vercel"
             }
           },
-          proofEvents: [makeEvent("DOMAIN_CONNECTED", `${domain} connected`), ...current.proofEvents]
+          proofEvents: [makeEvent("DOMAIN_CONNECTED", `${normalizedDomain} requested`), ...current.proofEvents]
         }));
+
+        try {
+          const result = await postJson<{ hosting: CommerceState["hosting"] }>("/api/hosting", {
+            action: "custom_domain",
+            domain: normalizedDomain
+          });
+          setState((current) => ({
+            ...current,
+            hosting: result.hosting,
+            proofEvents: [
+              makeEvent("DOMAIN_CONNECTED", `${result.hosting.customDomain.message ?? normalizedDomain} · ${result.hosting.customDomain.status}`),
+              ...current.proofEvents
+            ]
+          }));
+        } catch (error) {
+          setState((current) => ({
+            ...current,
+            hosting: {
+              ...current.hosting,
+              customDomain: {
+                ...current.hosting.customDomain,
+                status: "error",
+                sslStatus: "unknown",
+                message: error instanceof Error ? error.message : "Custom domain failed"
+              }
+            },
+            proofEvents: [
+              makeEvent("DOMAIN_CONNECTED", error instanceof Error ? error.message : "Custom domain failed"),
+              ...current.proofEvents
+            ]
+          }));
+        }
       },
-      selectHostingPlan(plan: CommerceState["hosting"]["plan"]) {
+      async verifyCustomDomain(domain: string) {
+        let normalizedDomain = "";
+
+        try {
+          normalizedDomain = normalizeCustomDomain(domain);
+        } catch (error) {
+          setState((current) => ({
+            ...current,
+            proofEvents: [makeEvent("DOMAIN_CONNECTED", error instanceof Error ? error.message : "Invalid custom domain"), ...current.proofEvents]
+          }));
+          return;
+        }
+
+        try {
+          const result = await postJson<{ hosting: CommerceState["hosting"] }>("/api/hosting", {
+            action: "verify_domain",
+            domain: normalizedDomain
+          });
+          setState((current) => ({
+            ...current,
+            hosting: result.hosting,
+            proofEvents: [
+              makeEvent("DOMAIN_CONNECTED", `${result.hosting.customDomain.message ?? normalizedDomain} · ${result.hosting.customDomain.status}`),
+              ...current.proofEvents
+            ]
+          }));
+        } catch (error) {
+          setState((current) => ({
+            ...current,
+            proofEvents: [
+              makeEvent("DOMAIN_CONNECTED", error instanceof Error ? error.message : "Domain verification failed"),
+              ...current.proofEvents
+            ]
+          }));
+        }
+      },
+      async selectHostingPlan(plan: CommerceState["hosting"]["plan"]) {
         setState((current) => {
           const selected = current.billing.plans.find((item) => item.id === plan);
           return {
@@ -155,8 +394,32 @@ export function useTemplateStore() {
             ]
           };
         });
+
+        try {
+          const result = await postJson<{
+            hosting: CommerceState["hosting"];
+            billing: CommerceState["billing"];
+          }>("/api/hosting", {
+            action: "plan",
+            plan
+          });
+          setState((current) => ({
+            ...current,
+            hosting: result.hosting,
+            billing: result.billing,
+            proofEvents: [makeEvent("HOSTING_PLAN_UPDATED", `${plan} plan synced with Receiz billing`), ...current.proofEvents]
+          }));
+        } catch (error) {
+          setState((current) => ({
+            ...current,
+            proofEvents: [
+              makeEvent("HOSTING_PLAN_UPDATED", error instanceof Error ? error.message : "Hosting plan sync failed"),
+              ...current.proofEvents
+            ]
+          }));
+        }
       },
-      addBillingMethod(label: string) {
+      async addBillingMethod(label: string) {
         setState((current) => ({
           ...current,
           billing: {
@@ -167,8 +430,34 @@ export function useTemplateStore() {
           },
           proofEvents: [makeEvent("BILLING_METHOD_ADDED", `${label} added for hosting`), ...current.proofEvents]
         }));
+
+        try {
+          const result = await postJson<{ billing: CommerceState["billing"] }>("/api/hosting", {
+            action: "payment",
+            paymentMethodLabel: label
+          });
+          setState((current) => ({
+            ...current,
+            billing: result.billing,
+            proofEvents: [makeEvent("BILLING_METHOD_ADDED", "Receiz account billing synced"), ...current.proofEvents]
+          }));
+        } catch (error) {
+          setState((current) => ({
+            ...current,
+            proofEvents: [
+              makeEvent("BILLING_METHOD_ADDED", error instanceof Error ? error.message : "Billing sync failed"),
+              ...current.proofEvents
+            ]
+          }));
+        }
       },
       signInWithReceizId() {
+        if (typeof window !== "undefined" && process.env.NEXT_PUBLIC_AUTH_MODE === "receiz_id") {
+          const returnTo = `${window.location.pathname}${window.location.search}`;
+          window.location.assign(`/api/auth/receiz/start?returnTo=${encodeURIComponent(returnTo)}`);
+          return;
+        }
+
         setState((current) => ({
           ...current,
           auth: {
@@ -266,11 +555,46 @@ export function useTemplateStore() {
         });
       },
       publish() {
-        setState((current) => ({
-          ...current,
-          hosting: { ...current.hosting, published: true, lastPublishedAt: "now" },
-          proofEvents: [makeEvent("SITE_PUBLISHED", `${current.hosting.subdomain} published`), ...current.proofEvents]
-        }));
+        setState((current) => {
+          const next = {
+            ...current,
+            hosting: { ...current.hosting, published: true, lastPublishedAt: "now" },
+            proofEvents: [makeEvent("SITE_PUBLISHED", `${current.hosting.subdomain} published`), ...current.proofEvents]
+          };
+
+          void postJson<{ hosting: CommerceState["hosting"] }>("/api/hosting", {
+            action: "publish",
+            state: {
+              brand: next.brand,
+              storefront: next.storefront,
+              hosting: next.hosting,
+              products: next.products,
+              rewards: next.rewards,
+              rewardRules: next.rewardRules,
+              campaigns: next.campaigns,
+              game: next.game,
+              checkout: next.checkout
+            }
+          })
+            .then((result) => {
+              setState((latest) => ({
+                ...latest,
+                hosting: result.hosting,
+                proofEvents: [makeEvent("SITE_PUBLISHED", "Store published to Receiz proof rails"), ...latest.proofEvents]
+              }));
+            })
+            .catch((error) => {
+              setState((latest) => ({
+                ...latest,
+                proofEvents: [
+                  makeEvent("SITE_PUBLISHED", error instanceof Error ? error.message : "Publish sync failed"),
+                  ...latest.proofEvents
+                ]
+              }));
+            });
+
+          return next;
+        });
       },
       addToCart(productId: string) {
         setState((current) => {
@@ -307,6 +631,76 @@ export function useTemplateStore() {
             orders: [order, ...current.orders],
             proofEvents: [makeEvent("ORDER_VERIFIED", `Order #${order.id} sealed`), ...current.proofEvents]
           };
+        });
+      },
+      startCheckout() {
+        setState((current) => {
+          const checkoutMode = process.env.NEXT_PUBLIC_CHECKOUT_MODE ?? current.checkout.mode;
+
+          if (checkoutMode === "mock") {
+            const order = {
+              id: `${Math.floor(10000 + Math.random() * 89999)}`,
+              customerId: current.auth.customer.id,
+              totalLabel: `$${cartAmountUsd(current)}`,
+              status: "mock_paid" as const,
+              itemCount: Math.max(1, current.cart.lines.length),
+              sealed: true,
+              createdAt: new Date().toISOString()
+            };
+
+            return {
+              ...current,
+              cart: { lines: [] },
+              orders: [order, ...current.orders],
+              proofEvents: [makeEvent("ORDER_VERIFIED", `Order #${order.id} sealed`), ...current.proofEvents]
+            };
+          }
+
+          void postJson<{
+            session?: {
+              checkoutUrl?: string;
+              checkoutSessionId?: string;
+              clientSecret?: string;
+            };
+          }>("/api/checkout", {
+            amountUsd: cartAmountUsd(current),
+            totalLabel: `$${cartAmountUsd(current)}`,
+            itemCount: Math.max(1, current.cart.lines.length),
+            customerId: current.auth.customer.id,
+            customerEmail: current.auth.customer.email,
+            referenceId: `order-${Date.now()}`,
+            description: `${current.brand.name} proof-sealed order`,
+            tenantSlug: current.hosting.tenantSlug,
+            tenantHost: current.hosting.subdomain,
+            merchantReceizId: current.hosting.merchantReceizId,
+            successUrl: `${window.location.origin}/?checkout=success`,
+            cancelUrl: `${window.location.origin}/?checkout=cancel`
+          })
+            .then((result) => {
+              if (result.session?.checkoutUrl) {
+                window.location.assign(result.session.checkoutUrl);
+                return;
+              }
+
+              setState((latest) => ({
+                ...latest,
+                proofEvents: [
+                  makeEvent("ORDER_VERIFIED", `Receiz checkout ${result.session?.checkoutSessionId ?? "session"} ready`),
+                  ...latest.proofEvents
+                ]
+              }));
+            })
+            .catch((error) => {
+              setState((latest) => ({
+                ...latest,
+                proofEvents: [
+                  makeEvent("ORDER_VERIFIED", error instanceof Error ? error.message : "Receiz checkout failed"),
+                  ...latest.proofEvents
+                ]
+              }));
+            });
+
+          return current;
         });
       },
       appendProofEvent(type: ProofEvent["type"], detail: string) {

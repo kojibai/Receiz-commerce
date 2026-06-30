@@ -1,37 +1,347 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { mockHosting } from "@/lib/hosting/mock-hosting";
+import { normalizeCustomDomain, normalizeTenantSlug, subdomainForSlug } from "@/lib/hosting/domain-utils";
+import {
+  VercelDomainError,
+  addProjectDomain,
+  customDomainStatusFromVercel,
+  hasVercelDomainConfig,
+  missingVercelEnvDomainStatus,
+  verifyProjectDomain,
+  wildcardDomainStatusFromVercel
+} from "@/lib/hosting/vercel-domains";
 import { platform } from "@/lib/platform";
+import { createReceizCommerceAdapter } from "@/lib/receiz/adapter";
+import { receizAccessTokenFromRequest, receizLoginRequired } from "@/lib/receiz/session";
+import type { DomainStatus, HostingConfig } from "@/types/domain";
+
+export const runtime = "nodejs";
+
+const PLATFORM_RECORD_SCHEMA = "receiz.app.hosting_event.v1";
+
+function errorMessage(error: unknown) {
+  return error instanceof Error ? error.message : "Unknown error";
+}
+
+function badRequest(error: unknown) {
+  return NextResponse.json(
+    {
+      ok: false,
+      error: "invalid_input",
+      message: errorMessage(error)
+    },
+    { status: 400 }
+  );
+}
+
+function returnToFromRequest(request: NextRequest) {
+  const referer = request.headers.get("referer");
+  if (!referer) return "/admin";
+
+  try {
+    const url = new URL(referer);
+    return `${url.pathname}${url.search}`;
+  } catch {
+    return "/admin";
+  }
+}
+
+function domainErrorStatus(domain: string, error: unknown): DomainStatus {
+  if (error instanceof VercelDomainError && error.status === 428) {
+    return missingVercelEnvDomainStatus(domain);
+  }
+
+  return {
+    domain,
+    status: "error",
+    sslStatus: "unknown",
+    verified: false,
+    liveUrl: `https://${domain}`,
+    message: errorMessage(error),
+    lastCheckedAt: new Date().toISOString()
+  };
+}
+
+function amountForPlan(plan: HostingConfig["plan"]) {
+  if (plan === "starter") return "0.00";
+  if (plan === "scale") return process.env.RECEIZ_SCALE_PLAN_USD ?? "199.00";
+  return process.env.RECEIZ_PRO_PLAN_USD ?? "49.00";
+}
+
+function isPositiveAmount(amountUsd: string) {
+  return Number(amountUsd) > 0;
+}
+
+async function recordReceizHostingEvent(
+  accessToken: string | undefined,
+  event: string,
+  data: Record<string, unknown>
+) {
+  if (!accessToken) {
+    return { ok: false, skipped: true, error: "receiz_login_required" };
+  }
+
+  try {
+    const receiz = createReceizCommerceAdapter({
+      baseUrl: process.env.RECEIZ_BASE_URL,
+      accessToken
+    });
+
+    return await receiz.connectRecord({
+      schema: PLATFORM_RECORD_SCHEMA,
+      event,
+      platform: platform.productName,
+      recordedAt: new Date().toISOString(),
+      data
+    });
+  } catch (error) {
+    return { ok: false, error: errorMessage(error) };
+  }
+}
+
+async function chargePlatformFee(
+  accessToken: string | undefined,
+  input: {
+    amountUsd: string;
+    note: string;
+    idempotencyKey: string;
+  }
+) {
+  const liveBilling = process.env.RECEIZ_PLATFORM_BILLING_MODE === "live";
+
+  if (!liveBilling || !isPositiveAmount(input.amountUsd)) {
+    return {
+      ok: true,
+      mode: liveBilling ? "no_charge" : "sandbox",
+      amountUsd: input.amountUsd,
+      message: liveBilling ? "No positive platform fee configured" : "Set RECEIZ_PLATFORM_BILLING_MODE=live to charge through Receiz"
+    };
+  }
+
+  if (!accessToken) {
+    return { ...receizLoginRequired("/admin"), status: 401 };
+  }
+
+  const recipientUserId = process.env.RECEIZ_PLATFORM_ACCOUNT_ID ?? process.env.RECEIZ_PLATFORM_USER_ID;
+  if (!recipientUserId) {
+    return {
+      ok: false,
+      status: 428,
+      error: "missing_platform_receiz_account",
+      message: "Set RECEIZ_PLATFORM_ACCOUNT_ID to collect platform/custom-domain fees into your Receiz account."
+    };
+  }
+
+  try {
+    const receiz = createReceizCommerceAdapter({
+      baseUrl: process.env.RECEIZ_BASE_URL,
+      accessToken
+    });
+    const transfer = await receiz.connectTransfer(
+      {
+        recipientUserId,
+        unit: "usd",
+        amountUsd: input.amountUsd,
+        note: input.note,
+        clientNonce: input.idempotencyKey
+      },
+      input.idempotencyKey
+    );
+
+    return {
+      ok: true,
+      mode: "live",
+      amountUsd: input.amountUsd,
+      transfer
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      status: 402,
+      error: "receiz_platform_fee_failed",
+      message: errorMessage(error)
+    };
+  }
+}
 
 export async function GET() {
   return NextResponse.json({
     ok: true,
     hosting: mockHosting.getHostingStatus(),
     billing: mockHosting.getBillingStatus(),
-    checklist: mockHosting.getPublishChecklist()
+    checklist: mockHosting.getPublishChecklist(),
+    platform: {
+      domain: platform.domain,
+      wildcardDomain: `*.${platform.domain}`,
+      vercelDomainAutomation: hasVercelDomainConfig(),
+      receizPlatformBilling: process.env.RECEIZ_PLATFORM_BILLING_MODE === "live"
+    }
   });
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => ({}));
   const action = String(body.action ?? "subdomain");
+  const accessToken = receizAccessTokenFromRequest(request);
+  const returnTo = returnToFromRequest(request);
 
   if (action === "plan") {
-    const result = mockHosting.selectHostingPlan(String(body.plan ?? "pro") as ReturnType<typeof mockHosting.getHostingStatus>["plan"]);
-    return NextResponse.json({ ok: true, action, ...result });
+    const plan = String(body.plan ?? "pro") as HostingConfig["plan"];
+    if (!["starter", "pro", "scale"].includes(plan)) {
+      return badRequest(new Error("Unknown hosting plan."));
+    }
+
+    const platformBilling = await chargePlatformFee(accessToken, {
+      amountUsd: amountForPlan(plan),
+      note: `${platform.productName} ${plan} hosting plan`,
+      idempotencyKey: `receiz-app:hosting-plan:${plan}`
+    });
+
+    if (!platformBilling.ok) {
+      const status = Number(platformBilling.status ?? 402);
+      return NextResponse.json(platformBilling, { status });
+    }
+
+    const result = mockHosting.selectHostingPlan(plan);
+    await recordReceizHostingEvent(accessToken, "hosting.plan.selected", {
+      plan,
+      platformBilling,
+      hosting: result.hosting
+    });
+
+    return NextResponse.json({ ok: true, action, platformBilling, ...result });
   }
 
   if (action === "payment") {
-    return NextResponse.json({
-      ok: true,
-      action,
-      billing: mockHosting.addBillingMethod(String(body.paymentMethodLabel ?? "Visa ending 4242"))
-    });
+    const billing = mockHosting.addBillingMethod("Receiz account billing");
+    await recordReceizHostingEvent(accessToken, "hosting.billing.connected", { billing });
+    return NextResponse.json({ ok: true, action, billing });
   }
 
-  const subdomain = String(body.subdomain ?? platform.defaultSubdomain);
-  return NextResponse.json({
-    ok: true,
-    action,
-    hosting: mockHosting.claimSubdomain(subdomain)
+  if (action === "custom_domain") {
+    if (!accessToken) {
+      return NextResponse.json(receizLoginRequired(returnTo), { status: 401 });
+    }
+
+    let domain = "";
+    try {
+      domain = normalizeCustomDomain(String(body.domain ?? body.customDomain ?? ""));
+    } catch (error) {
+      return badRequest(error);
+    }
+    const platformBilling = await chargePlatformFee(accessToken, {
+      amountUsd: process.env.RECEIZ_CUSTOM_DOMAIN_SETUP_USD ?? "0.00",
+      note: `${platform.productName} custom domain setup for ${domain}`,
+      idempotencyKey: `receiz-app:custom-domain:${domain}`
+    });
+
+    if (!platformBilling.ok) {
+      const status = Number(platformBilling.status ?? 402);
+      return NextResponse.json(platformBilling, { status });
+    }
+
+    let customDomain: DomainStatus;
+    try {
+      const vercelDomain = await addProjectDomain(domain);
+      customDomain = customDomainStatusFromVercel(domain, vercelDomain);
+    } catch (error) {
+      customDomain = domainErrorStatus(domain, error);
+    }
+
+    const hosting = {
+      ...mockHosting.connectCustomDomain(domain),
+      mode: "hosted_platform" as const,
+      customDomain
+    };
+    const receizRecord = await recordReceizHostingEvent(accessToken, "hosting.custom_domain.connected", {
+      domain,
+      customDomain,
+      platformBilling
+    });
+
+    return NextResponse.json({ ok: true, action, hosting, platformBilling, receizRecord });
+  }
+
+  if (action === "verify_domain") {
+    if (!accessToken) {
+      return NextResponse.json(receizLoginRequired(returnTo), { status: 401 });
+    }
+
+    let domain = "";
+    try {
+      domain = normalizeCustomDomain(String(body.domain ?? ""));
+    } catch (error) {
+      return badRequest(error);
+    }
+    let customDomain: DomainStatus;
+
+    try {
+      const vercelDomain = await verifyProjectDomain(domain);
+      customDomain = customDomainStatusFromVercel(domain, vercelDomain);
+    } catch (error) {
+      customDomain = domainErrorStatus(domain, error);
+    }
+
+    const hosting = {
+      ...mockHosting.connectCustomDomain(domain),
+      mode: "hosted_platform" as const,
+      customDomain
+    };
+    const receizRecord = await recordReceizHostingEvent(accessToken, "hosting.custom_domain.verified", {
+      domain,
+      customDomain
+    });
+
+    return NextResponse.json({ ok: true, action, hosting, receizRecord });
+  }
+
+  if (action === "publish") {
+    if (!accessToken) {
+      return NextResponse.json(receizLoginRequired(returnTo), { status: 401 });
+    }
+
+    const hosting = {
+      ...mockHosting.getHostingStatus(),
+      published: true,
+      lastPublishedAt: "now"
+    };
+    const receizRecord = await recordReceizHostingEvent(accessToken, "store.published", {
+      hosting,
+      state: body.state ?? null
+    });
+
+    return NextResponse.json({ ok: true, action, hosting, receizRecord });
+  }
+
+  let tenantSlug = "";
+  try {
+    tenantSlug = normalizeTenantSlug(String(body.subdomain ?? platform.defaultSubdomain));
+  } catch (error) {
+    return badRequest(error);
+  }
+  const subdomain = subdomainForSlug(tenantSlug);
+  let subdomainStatus: DomainStatus;
+
+  try {
+    const wildcard = await addProjectDomain(`*.${platform.domain}`);
+    subdomainStatus = wildcardDomainStatusFromVercel(subdomain, wildcard);
+  } catch (error) {
+    subdomainStatus = domainErrorStatus(subdomain, error);
+  }
+
+  const hosting = {
+    ...mockHosting.claimSubdomain(subdomain),
+    mode: "hosted_platform" as const,
+    tenantSlug,
+    subdomain,
+    subdomainStatus,
+    liveUrl: `https://${subdomain}`
+  };
+  const receizRecord = await recordReceizHostingEvent(accessToken, "hosting.subdomain.claimed", {
+    tenantSlug,
+    subdomain,
+    subdomainStatus
   });
+
+  return NextResponse.json({ ok: true, action, hosting, receizRecord });
 }

@@ -133,9 +133,44 @@ Optional Vercel/domain automation:
 
 ```bash
 VERCEL_TEAM_ID=
+VERCEL_TEAM_SLUG=
 VERCEL_PROJECT_ID=
 VERCEL_API_TOKEN=
+VERCEL_CNAME_TARGET=cname.vercel-dns-0.com
+VERCEL_APEX_A_RECORD=76.76.21.21
 ```
+
+For free subdomains to work, the Vercel project must receive the traffic:
+
+```txt
+1. Add receiz.app to the Vercel project.
+2. Add *.receiz.app to the Vercel project.
+3. Point wildcard DNS *.receiz.app to cname.vercel-dns-0.com.
+4. Set VERCEL_API_TOKEN and VERCEL_PROJECT_ID so /api/hosting can add and verify custom domains.
+```
+
+The app routes tenant hosts through `middleware.ts`. A request to `boost.receiz.app` is served by the same deployment with `tenant=boost`; a verified custom domain is served by the same deployment with `domain=thebrand.com`.
+
+Receiz settlement for platform fees we collect:
+
+```bash
+RECEIZ_PLATFORM_BILLING_MODE=sandbox
+RECEIZ_PLATFORM_ACCOUNT_ID=
+RECEIZ_PRO_PLAN_USD=49.00
+RECEIZ_SCALE_PLAN_USD=199.00
+RECEIZ_CUSTOM_DOMAIN_SETUP_USD=0.00
+```
+
+Set `RECEIZ_PLATFORM_BILLING_MODE=live` only when `RECEIZ_PLATFORM_ACCOUNT_ID` is your Receiz account/user id. Paid plan selection and custom-domain setup can then use Receiz Connect transfer to settle the platform fee to your Receiz account.
+
+Optional merchant settlement fallback for demo checkout:
+
+```bash
+RECEIZ_DEFAULT_MERCHANT_RECEIZ_ID=
+RECEIZ_DEFAULT_SETTLEMENT_USER_ID=
+```
+
+Production merchant checkout should use the merchant's connected Receiz account/state. The checkout API sends tenant host, merchant Receiz ID, and settlement recipient metadata into Receiz checkout so customer payments settle to the merchant's Receiz rails, not a Stripe account.
 
 Optional Receiz plan IDs for hosted-commerce upgrades:
 
