@@ -17,6 +17,10 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  if (nextUrl.pathname === "/admin" || nextUrl.pathname.startsWith("/admin/")) {
+    return NextResponse.redirect(new URL("/", nextUrl));
+  }
+
   const rewriteUrl = nextUrl.clone();
   if (tenantSlug) {
     rewriteUrl.searchParams.set("tenant", tenantSlug);

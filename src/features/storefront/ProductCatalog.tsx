@@ -6,10 +6,12 @@ import type { Product } from "@/types/domain";
 
 export function ProductCatalog({
   brandLabel,
+  showAdminActions = true,
   products,
   onAddToCart
 }: {
   brandLabel: string;
+  showAdminActions?: boolean;
   products: Product[];
   onAddToCart: (productId: string) => void;
 }) {
@@ -18,12 +20,14 @@ export function ProductCatalog({
       <SectionHeader
         title="Store catalog"
         action={
-          <div className="section-actions">
-            <button className="link-button" type="button">
-              View all products
-            </button>
-            <Button variant="primary">Add product</Button>
-          </div>
+          showAdminActions ? (
+            <div className="section-actions">
+              <button className="link-button" type="button">
+                View all products
+              </button>
+              <Button variant="primary">Add product</Button>
+            </div>
+          ) : null
         }
       />
       <div className="desktop-table">
@@ -33,7 +37,7 @@ export function ProductCatalog({
           <span>Price</span>
           <span>Status</span>
           <span>Receiz</span>
-          <span>Actions</span>
+          {showAdminActions ? <span>Actions</span> : null}
         </div>
         {products.slice(0, 4).map((product) => (
           <div className="table-row" key={product.id}>
@@ -50,25 +54,27 @@ export function ProductCatalog({
             <span className="verified-cell">
               <Icons.seal size={15} /> {product.sealed ? "Sealed" : "Ready"}
             </span>
-            <div className="row-actions">
-              <button
-                aria-label={`Add ${product.name} to cart`}
-                onClick={() => onAddToCart(product.id)}
-                type="button"
-              >
-                <Icons.cart size={15} />
-              </button>
-              <button aria-label={`Edit ${product.name}`} type="button">
-                <Icons.sliders size={15} />
-              </button>
-            </div>
+            {showAdminActions ? (
+              <div className="row-actions">
+                <button
+                  aria-label={`Add ${product.name} to cart`}
+                  onClick={() => onAddToCart(product.id)}
+                  type="button"
+                >
+                  <Icons.cart size={15} />
+                </button>
+                <button aria-label={`Edit ${product.name}`} type="button">
+                  <Icons.sliders size={15} />
+                </button>
+              </div>
+            ) : null}
           </div>
         ))}
         {products.length === 0 ? (
           <div className="panel-empty-state table-empty-state">
             <Icons.products size={22} />
             <strong>No products yet</strong>
-            <span>Add products in Admin Studio to start selling.</span>
+            <span>{showAdminActions ? "Add products in Admin Studio to start selling." : "This store is getting its catalog ready."}</span>
           </div>
         ) : null}
       </div>
@@ -96,7 +102,7 @@ export function ProductCatalog({
           <div className="panel-empty-state">
             <Icons.products size={22} />
             <strong>No products yet</strong>
-            <span>Add products in Admin Studio to start selling.</span>
+            <span>{showAdminActions ? "Add products in Admin Studio to start selling." : "This store is getting its catalog ready."}</span>
           </div>
         )}
       </div>

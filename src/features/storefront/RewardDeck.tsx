@@ -4,23 +4,25 @@ import type { CustomerAccount, Reward } from "@/types/domain";
 
 export function RewardDeck({
   brandLabel,
+  showAdminActions = true,
   reward,
   customer
 }: {
   brandLabel: string;
+  showAdminActions?: boolean;
   reward: Reward | null;
   customer: CustomerAccount;
 }) {
   return (
     <Panel className="reward-deck-panel" id="rewards">
-      <SectionHeader title="Reward deck" action={<Button variant="outline">Manage</Button>} />
+      <SectionHeader title="Reward deck" action={showAdminActions ? <Button variant="outline">Manage</Button> : null} />
       {reward ? (
         <RewardCard brandLabel={brandLabel} reward={reward} />
       ) : (
         <div className="panel-empty-state">
           <Icons.gift size={22} />
           <strong>No rewards yet</strong>
-          <span>Create the first branded reward in Admin Studio.</span>
+          <span>{showAdminActions ? "Create the first branded reward in Admin Studio." : "Rewards will appear here when this store launches them."}</span>
         </div>
       )}
       <div className="deck-count">

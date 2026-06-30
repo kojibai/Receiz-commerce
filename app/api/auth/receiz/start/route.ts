@@ -1,6 +1,7 @@
 import { createHash, randomBytes } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { receizCommerceAdapter } from "@/lib/receiz/adapter";
+import { hostContextFromHost } from "@/lib/hosting/host-context";
 import { getReceizRedirectUri, getRequestOrigin } from "@/lib/url";
 
 export const runtime = "nodejs";
@@ -42,6 +43,7 @@ export async function GET(request: NextRequest) {
   const state = base64Url(randomBytes(24));
   const returnTo = request.nextUrl.searchParams.get("returnTo") ?? "/admin";
   const redirectUri = process.env.RECEIZ_ID_CALLBACK_URL ?? getReceizRedirectUri(origin);
+  const hostContext = hostContextFromHost(request.headers.get("x-forwarded-host") ?? request.headers.get("host"));
   const authorizeUrl = receizCommerceAdapter.buildReceizIdAuthorizeUrl({
     clientId,
     redirectUri,
@@ -68,6 +70,13 @@ export async function GET(request: NextRequest) {
     secure
   });
   response.cookies.set("receiz_oauth_return_to", returnTo, {
+    httpOnly: true,
+    maxAge: 10 * 60,
+    path: "/api/auth/receiz",
+    sameSite: "lax",
+    secure
+  });
+  response.cookies.set("receiz_oauth_scope", hostContext.storageKey, {
     httpOnly: true,
     maxAge: 10 * 60,
     path: "/api/auth/receiz",

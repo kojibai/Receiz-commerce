@@ -25,18 +25,26 @@ const secondaryNav = [
   ["Settings", Icons.settings, ""]
 ] as const;
 
-export function StoreSidebar({ state }: { state: CommerceState }) {
+export function StoreSidebar({
+  state,
+  tenantSurface = false
+}: {
+  state: CommerceState;
+  tenantSurface?: boolean;
+}) {
+  const navItems = tenantSurface ? primaryNav.filter(([label]) => label !== "Admin") : primaryNav;
+
   return (
     <aside className="sidebar">
       <Link className="kit-logo" href="/">
         <span className="receiz-mark">
           <Icons.receiz size={23} />
         </span>
-        <strong>{platform.name}</strong>
+        <strong>{tenantSurface ? state.brand.name : platform.name}</strong>
       </Link>
 
       <nav className="nav-stack" aria-label="Primary">
-        {primaryNav.map(([label, Icon], index) => (
+        {navItems.map(([label, Icon], index) => (
           label === "Admin" ? (
             <Link className="nav-link" href="/admin" key={label}>
               <Icon size={19} />
@@ -51,36 +59,48 @@ export function StoreSidebar({ state }: { state: CommerceState }) {
         ))}
       </nav>
 
-      <nav className="nav-stack nav-secondary" aria-label="Operations">
-        {secondaryNav.map(([label, Icon, count]) => (
-          <Link className="nav-link" href="/admin" key={label}>
-            <Icon size={18} />
-            <span>{label}</span>
-            {count ? <em>{count}</em> : null}
-          </Link>
-        ))}
-      </nav>
+      {tenantSurface ? null : (
+        <nav className="nav-stack nav-secondary" aria-label="Operations">
+          {secondaryNav.map(([label, Icon, count]) => (
+            <Link className="nav-link" href="/admin" key={label}>
+              <Icon size={18} />
+              <span>{label}</span>
+              {count ? <em>{count}</em> : null}
+            </Link>
+          ))}
+        </nav>
+      )}
 
-      <a className="fork-card" href="https://github.com" target="_blank" rel="noreferrer">
-        <Icons.github size={23} />
-        <strong>{platform.repoLabel}</strong>
-      </a>
+      {tenantSurface ? null : (
+        <a className="fork-card" href="https://github.com" target="_blank" rel="noreferrer">
+          <Icons.github size={23} />
+          <strong>{platform.repoLabel}</strong>
+        </a>
+      )}
 
-      <div className="plan-card">
-        <div>
-          <strong>Pro plan</strong>
-          <span>Manage plan</span>
+      {tenantSurface ? null : (
+        <div className="plan-card">
+          <div>
+            <strong>Pro plan</strong>
+            <span>Manage plan</span>
+          </div>
+          <p>18 / 50K proofs</p>
+          <div className="progress-bar">
+            <span style={{ width: "36%" }} />
+          </div>
         </div>
-        <p>18 / 50K proofs</p>
-        <div className="progress-bar">
-          <span style={{ width: "36%" }} />
-        </div>
-      </div>
+      )}
     </aside>
   );
 }
 
-export function StoreTopbar({ state }: { state: CommerceState }) {
+export function StoreTopbar({
+  state,
+  tenantSurface = false
+}: {
+  state: CommerceState;
+  tenantSurface?: boolean;
+}) {
   return (
     <header className="topbar">
       <label className="search-box">
@@ -91,24 +111,30 @@ export function StoreTopbar({ state }: { state: CommerceState }) {
         <div className="domain-chip">
           <Icons.globe size={17} />
           <div>
-            <strong>{state.hosting.subdomain}</strong>
-            <span>Custom domain ready</span>
+            <strong>{state.hosting.customDomain.domain || state.hosting.subdomain}</strong>
+            <span>{tenantSurface ? "Storefront" : "Custom domain ready"}</span>
           </div>
           <Icons.chevronDown size={16} />
         </div>
-        <StatusPill tone="green">● Receiz ID connected</StatusPill>
-        <button aria-label="Open help" className="icon-button" type="button">
-          <Icons.help size={18} />
-        </button>
-        <button aria-label="View notifications" className="icon-button notification" type="button">
-          <Icons.bell size={18} />
-          <span>3</span>
-        </button>
-        <Link className="brand-chip" href="/admin">
+        <StatusPill tone={state.auth.receizId.connected ? "green" : "neutral"}>
+          {state.auth.receizId.connected ? "● Receiz ID connected" : "Receiz ID"}
+        </StatusPill>
+        {tenantSurface ? null : (
+          <button aria-label="Open help" className="icon-button" type="button">
+            <Icons.help size={18} />
+          </button>
+        )}
+        {tenantSurface ? null : (
+          <button aria-label="View notifications" className="icon-button notification" type="button">
+            <Icons.bell size={18} />
+            <span>3</span>
+          </button>
+        )}
+        <Link className="brand-chip" href={tenantSurface ? "/account" : "/admin"}>
           <BrandMark label={state.brand.logoText} compact />
           <div>
             <strong>{state.brand.name}</strong>
-            <span>View storefront</span>
+            <span>{tenantSurface ? "Account" : "View storefront"}</span>
           </div>
           <Icons.chevronDown size={16} />
         </Link>
@@ -196,11 +222,13 @@ export function BottomNav({
 export function HeroProduct({
   state,
   onSeal,
-  onCheckout
+  onCheckout,
+  tenantSurface = false
 }: {
   state: CommerceState;
   onSeal: () => void;
   onCheckout: () => void;
+  tenantSurface?: boolean;
 }) {
   return (
     <section className="hero-panel">
@@ -221,9 +249,11 @@ export function HeroProduct({
           <Button onClick={onCheckout} variant="primary">
             {state.storefront.ctaLabel}
           </Button>
-          <Button onClick={onSeal} variant="outline">
-            Connect Receiz
-          </Button>
+          {tenantSurface ? null : (
+            <Button onClick={onSeal} variant="outline">
+              Connect Receiz
+            </Button>
+          )}
         </div>
       </div>
       <div className="hero-product-art">

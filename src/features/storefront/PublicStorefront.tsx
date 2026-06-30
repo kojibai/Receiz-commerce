@@ -22,12 +22,13 @@ import {
 } from "@/features/storefront/StoreShell";
 
 export function PublicStorefront() {
-  const { state, actions } = useTemplateStore();
+  const { state, actions, hostContext } = useTemplateStore();
   const [mobileView, setMobileView] = useState<MobileView>("store");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const customer = state.customers[0] ?? state.auth.customer;
   const reward = state.rewards[0] ?? null;
   const campaignName = state.campaigns[0]?.name ?? "Reward Challenge";
+  const tenantSurface = hostContext.surface === "tenant";
 
   const sealObject = () => actions.appendProofEvent("OBJECT_VERIFIED", "Coffee Pack · Serial #BC-88421");
   const issueReward = () => actions.appendProofEvent("REWARD_ISSUED", `${reward?.name ?? "Reward"} · ${state.brand.name}`);
@@ -38,10 +39,10 @@ export function PublicStorefront() {
   };
 
   return (
-    <main className="commerce-app" style={brandThemeStyle(state.brand)}>
-      <StoreSidebar state={state} />
+    <main className={tenantSurface ? "commerce-app tenant-store" : "commerce-app"} style={brandThemeStyle(state.brand)}>
+      <StoreSidebar state={state} tenantSurface={tenantSurface} />
       <div className="app-body">
-        <StoreTopbar state={state} />
+        <StoreTopbar state={state} tenantSurface={tenantSurface} />
         <MobileHeader
           menuOpen={mobileMenuOpen}
           onAccount={() => selectMobileView("account")}
@@ -59,34 +60,37 @@ export function PublicStorefront() {
               onCheckout={actions.startCheckout}
               onSeal={sealObject}
               state={state}
+              tenantSurface={tenantSurface}
             />
 
-            <div className="quick-actions">
-              <button onClick={sealObject} type="button">
-                <Icons.seal size={30} />
-                <div>
-                  <strong>Seal object</strong>
-                  <span>Turn physical or digital objects into verified records.</span>
-                </div>
-                <Icons.chevronRight size={20} />
-              </button>
-              <button onClick={issueReward} type="button">
-                <Icons.gift size={30} />
-                <div>
-                  <strong>Issue reward</strong>
-                  <span>Reward customers for actions, purchases, or achievements.</span>
-                </div>
-                <Icons.chevronRight size={20} />
-              </button>
-              <button onClick={claimReward} type="button">
-                <Icons.star size={30} />
-                <div>
-                  <strong>Claim reward</strong>
-                  <span>Customers claim perks, discounts, and experiences.</span>
-                </div>
-                <Icons.chevronRight size={20} />
-              </button>
-            </div>
+            {tenantSurface ? null : (
+              <div className="quick-actions">
+                <button onClick={sealObject} type="button">
+                  <Icons.seal size={30} />
+                  <div>
+                    <strong>Seal object</strong>
+                    <span>Turn physical or digital objects into verified records.</span>
+                  </div>
+                  <Icons.chevronRight size={20} />
+                </button>
+                <button onClick={issueReward} type="button">
+                  <Icons.gift size={30} />
+                  <div>
+                    <strong>Issue reward</strong>
+                    <span>Reward customers for actions, purchases, or achievements.</span>
+                  </div>
+                  <Icons.chevronRight size={20} />
+                </button>
+                <button onClick={claimReward} type="button">
+                  <Icons.star size={30} />
+                  <div>
+                    <strong>Claim reward</strong>
+                    <span>Customers claim perks, discounts, and experiences.</span>
+                  </div>
+                  <Icons.chevronRight size={20} />
+                </button>
+              </div>
+            )}
 
             <PlayCampaign
               campaignName={campaignName}
@@ -100,16 +104,19 @@ export function PublicStorefront() {
               brandLabel={state.brand.logoText}
               products={state.products}
               onAddToCart={actions.addToCart}
+              showAdminActions={!tenantSurface}
             />
 
-            <a className="mobile-fork" href="https://github.com" target="_blank" rel="noreferrer">
-              <Icons.github size={29} />
-              <div>
-                <strong>{platform.repoLabel}</strong>
-                <span>{platform.tagline}</span>
-              </div>
-              <Icons.chevronRight size={20} />
-            </a>
+            {tenantSurface ? null : (
+              <a className="mobile-fork" href="https://github.com" target="_blank" rel="noreferrer">
+                <Icons.github size={29} />
+                <div>
+                  <strong>{platform.repoLabel}</strong>
+                  <span>{platform.tagline}</span>
+                </div>
+                <Icons.chevronRight size={20} />
+              </a>
+            )}
           </section>
 
           <aside className="right-rail">
@@ -118,8 +125,8 @@ export function PublicStorefront() {
               onSignIn={actions.signInWithReceizId}
               receizId={state.auth.receizId}
             />
-            <RewardDeck brandLabel={state.brand.logoText} customer={customer} reward={reward} />
-            <SealEvents events={state.proofEvents} />
+            <RewardDeck brandLabel={state.brand.logoText} customer={customer} reward={reward} showAdminActions={!tenantSurface} />
+            {tenantSurface ? null : <SealEvents events={state.proofEvents} />}
           </aside>
         </div>
         <MobileStage
@@ -132,6 +139,7 @@ export function PublicStorefront() {
           onIssueReward={issueReward}
           onSeal={sealObject}
           onSignInReceizId={actions.signInWithReceizId}
+          tenantSurface={tenantSurface}
           onPlayComplete={(beans) =>
             actions.appendProofEvent("GAME_COMPLETED", `${campaignName} · ${beans} beans`)
           }
@@ -148,6 +156,7 @@ export function PublicStorefront() {
           onSignInReceizId={actions.signInWithReceizId}
           open={mobileMenuOpen}
           state={state}
+          tenantSurface={tenantSurface}
         />
         <BottomNav activeView={mobileView} onChange={selectMobileView} />
       </div>
@@ -163,7 +172,8 @@ function MobileCommandMenu({
   onSeal,
   onSignInReceizId,
   open,
-  state
+  state,
+  tenantSurface
 }: {
   activeView: MobileView;
   onClose: () => void;
@@ -173,6 +183,7 @@ function MobileCommandMenu({
   onSignInReceizId: () => void;
   open: boolean;
   state: CommerceState;
+  tenantSurface: boolean;
 }) {
   const navItems = [
     ["store", "Store", Icons.store],
@@ -234,20 +245,24 @@ function MobileCommandMenu({
               </button>
             </>
           )}
-          <button onClick={() => runAction(onSeal)} type="button">
-            <Icons.seal size={21} />
-            <div>
-              <strong>Seal object</strong>
-              <span>Verify an asset, reward, or product</span>
-            </div>
-          </button>
-          <button onClick={() => window.location.assign("/admin")} type="button">
-            <Icons.settings size={21} />
-            <div>
-              <strong>Admin Studio</strong>
-              <span>Edit brand, store, rewards, and hosting</span>
-            </div>
-          </button>
+          {tenantSurface ? null : (
+            <button onClick={() => runAction(onSeal)} type="button">
+              <Icons.seal size={21} />
+              <div>
+                <strong>Seal object</strong>
+                <span>Verify an asset, reward, or product</span>
+              </div>
+            </button>
+          )}
+          {tenantSurface ? null : (
+            <button onClick={() => window.location.assign("/admin")} type="button">
+              <Icons.settings size={21} />
+              <div>
+                <strong>Admin Studio</strong>
+                <span>Edit brand, store, rewards, and hosting</span>
+              </div>
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -267,7 +282,8 @@ function MobileStage({
   onSeal,
   onSignInReceizId,
   reward,
-  state
+  state,
+  tenantSurface
 }: {
   activeView: MobileView;
   campaignName: string;
@@ -282,6 +298,7 @@ function MobileStage({
   onSignInReceizId: () => void;
   reward: Reward | null;
   state: CommerceState;
+  tenantSurface: boolean;
 }) {
   return (
     <div className="mobile-stage" data-active-view={activeView}>
@@ -292,6 +309,7 @@ function MobileStage({
         onSeal={onSeal}
         products={state.products}
         state={state}
+        tenantSurface={tenantSurface}
       />
       <MobileRewardsPanel
         active={activeView === "rewards"}
@@ -300,6 +318,7 @@ function MobileStage({
         onClaimReward={onClaimReward}
         onIssueReward={onIssueReward}
         reward={reward}
+        tenantSurface={tenantSurface}
       />
       <MobileAssetsPanel
         active={activeView === "assets"}
@@ -307,6 +326,7 @@ function MobileStage({
         onCreateReceizId={onCreateReceizId}
         onSignInReceizId={onSignInReceizId}
         state={state}
+        tenantSurface={tenantSurface}
       />
       <MobilePlayPanel
         active={activeView === "play"}
@@ -320,6 +340,7 @@ function MobileStage({
         onCreateReceizId={onCreateReceizId}
         onSignInReceizId={onSignInReceizId}
         state={state}
+        tenantSurface={tenantSurface}
       />
     </div>
   );
@@ -351,6 +372,7 @@ function MobileStorePanel({
   active,
   products,
   state,
+  tenantSurface,
   onAddToCart,
   onCheckout,
   onSeal
@@ -358,6 +380,7 @@ function MobileStorePanel({
   active: boolean;
   products: Product[];
   state: CommerceState;
+  tenantSurface: boolean;
   onAddToCart: (productId: string) => void;
   onCheckout: () => void;
   onSeal: () => void;
@@ -375,9 +398,11 @@ function MobileStorePanel({
             <button onClick={onCheckout} type="button">
               Shop now
             </button>
-            <button onClick={onSeal} type="button">
-              Seal object
-            </button>
+            {tenantSurface ? null : (
+              <button onClick={onSeal} type="button">
+                Seal object
+              </button>
+            )}
           </div>
         </div>
         <div className="mobile-featured-product">
@@ -414,7 +439,7 @@ function MobileStorePanel({
           <div className="mobile-empty-state">
             <Icons.products size={24} />
             <strong>No products yet</strong>
-            <span>Add products in Admin Studio to open the storefront.</span>
+            <span>{tenantSurface ? "This store is getting its catalog ready." : "Add products in Admin Studio to open the storefront."}</span>
           </div>
         )}
       </div>
@@ -432,7 +457,8 @@ function MobileRewardsPanel({
   customer,
   onClaimReward,
   onIssueReward,
-  reward
+  reward,
+  tenantSurface
 }: {
   active: boolean;
   brandLabel: string;
@@ -440,6 +466,7 @@ function MobileRewardsPanel({
   onClaimReward: () => void;
   onIssueReward: () => void;
   reward: Reward | null;
+  tenantSurface: boolean;
 }) {
   const progress = reward ? Math.min(100, Math.round((reward.progress / reward.target) * 100)) : 0;
 
@@ -465,14 +492,16 @@ function MobileRewardsPanel({
         <div className="mobile-empty-state">
           <Icons.gift size={24} />
           <strong>No rewards yet</strong>
-          <span>Create branded rewards in Admin Studio.</span>
+          <span>{tenantSurface ? "Rewards will appear here when this store launches them." : "Create branded rewards in Admin Studio."}</span>
         </div>
       )}
       <div className="mobile-action-grid">
-        <button onClick={onIssueReward} type="button">
-          <Icons.gift size={21} />
-          <span>Issue reward</span>
-        </button>
+        {tenantSurface ? null : (
+          <button onClick={onIssueReward} type="button">
+            <Icons.gift size={21} />
+            <span>Issue reward</span>
+          </button>
+        )}
         <button onClick={onClaimReward} type="button">
           <Icons.star size={21} />
           <span>Claim perk</span>
@@ -491,13 +520,15 @@ function MobileAssetsPanel({
   assets,
   onCreateReceizId,
   onSignInReceizId,
-  state
+  state,
+  tenantSurface: _tenantSurface
 }: {
   active: boolean;
   assets: ReceizedAsset[];
   onCreateReceizId: () => void;
   onSignInReceizId: () => void;
   state: CommerceState;
+  tenantSurface: boolean;
 }) {
   return (
     <MobilePane active={active} action={<StatusPill tone="green">Receized</StatusPill>} title="Assets">
@@ -567,13 +598,15 @@ function MobileAccountPanel({
   customer,
   onCreateReceizId,
   onSignInReceizId,
-  state
+  state,
+  tenantSurface
 }: {
   active: boolean;
   customer: CustomerAccount;
   onCreateReceizId: () => void;
   onSignInReceizId: () => void;
   state: CommerceState;
+  tenantSurface: boolean;
 }) {
   return (
     <MobilePane active={active} action={<StatusPill tone="green">{customer.tier}</StatusPill>} title="Account">
@@ -602,9 +635,11 @@ function MobileAccountPanel({
         <div><strong>{customer.beans}</strong><span>Beans</span></div>
         <div><strong>{customer.streak}</strong><span>Streak</span></div>
       </div>
-      <Button className="mobile-admin-button" variant="outline" onClick={() => window.location.assign("/admin")}>
-        Admin Studio
-      </Button>
+      {tenantSurface ? null : (
+        <Button className="mobile-admin-button" variant="outline" onClick={() => window.location.assign("/admin")}>
+          Admin Studio
+        </Button>
+      )}
     </MobilePane>
   );
 }

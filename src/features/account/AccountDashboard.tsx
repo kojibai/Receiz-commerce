@@ -9,8 +9,9 @@ import { ProductCatalog } from "@/features/storefront/ProductCatalog";
 import { platform } from "@/lib/platform";
 
 export function AccountDashboard() {
-  const { state, actions } = useTemplateStore();
+  const { state, actions, hostContext } = useTemplateStore();
   const customer = state.customers[0] ?? state.auth.customer;
+  const tenantSurface = hostContext.surface === "tenant";
   const ownedAssets = state.assets.filter((asset) => customer.assetIds.includes(asset.id));
   const orders = state.orders.filter((order) => order.customerId === customer.id);
   const rewards = state.rewards.filter((reward) => customer.rewardIds.includes(reward.id));
@@ -137,6 +138,7 @@ export function AccountDashboard() {
         brandLabel={state.brand.logoText}
         products={state.products.slice(0, 4)}
         onAddToCart={actions.addToCart}
+        showAdminActions={!tenantSurface}
       />
     </main>
   );

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { receizCommerceAdapter } from "@/lib/receiz/adapter";
+import { hostContextFromHost } from "@/lib/hosting/host-context";
 import { getReceizRedirectUri, getRequestOrigin } from "@/lib/url";
 
 export const runtime = "nodejs";
@@ -9,7 +10,7 @@ function redirectWithError(origin: string, error: string) {
 }
 
 function clearOauthCookies(response: NextResponse) {
-  for (const name of ["receiz_pkce_verifier", "receiz_oauth_state", "receiz_oauth_return_to"]) {
+  for (const name of ["receiz_pkce_verifier", "receiz_oauth_state", "receiz_oauth_return_to", "receiz_oauth_scope"]) {
     response.cookies.set(name, "", {
       httpOnly: true,
       maxAge: 0,
@@ -27,6 +28,7 @@ export async function GET(request: NextRequest) {
   const expectedState = request.cookies.get("receiz_oauth_state")?.value;
   const verifier = request.cookies.get("receiz_pkce_verifier")?.value;
   const returnTo = request.cookies.get("receiz_oauth_return_to")?.value ?? "/admin";
+  const oauthScope = request.cookies.get("receiz_oauth_scope")?.value;
   const clientId = process.env.RECEIZ_CLIENT_ID;
 
   if (error) return redirectWithError(origin, error);
@@ -51,8 +53,16 @@ export async function GET(request: NextRequest) {
   const response = NextResponse.redirect(target);
   const secure = origin.startsWith("https://");
   const accessMaxAge = Math.max(60, token.expires_in || 3600);
+  const hostContext = hostContextFromHost(request.headers.get("x-forwarded-host") ?? request.headers.get("host"));
 
   response.cookies.set("receiz_access_token", token.access_token, {
+    httpOnly: true,
+    maxAge: accessMaxAge,
+    path: "/",
+    sameSite: "lax",
+    secure
+  });
+  response.cookies.set("receiz_session_scope", oauthScope || hostContext.storageKey, {
     httpOnly: true,
     maxAge: accessMaxAge,
     path: "/",

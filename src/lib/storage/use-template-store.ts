@@ -4,17 +4,13 @@ import { useEffect, useMemo, useState } from "react";
 import { createReceizClient, type ReceizIdentityAccountProjection } from "@receiz/sdk";
 import { seedCommerceState } from "@/data/seed";
 import {
-  cleanHost,
-  isPlatformHost,
   normalizeCustomDomain,
   normalizeTenantSlug,
-  subdomainForSlug,
-  tenantSlugFromHost
+  subdomainForSlug
 } from "@/lib/hosting/domain-utils";
+import { BASE_STORAGE_KEY, currentHostContext, type HostContext } from "@/lib/hosting/host-context";
 import type { CommerceState, CustomerAccount, ProofEvent } from "@/types/domain";
 import { makeId } from "@/lib/utils";
-
-const STORAGE_KEY = "receiz-app-commerce-state-v1";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
@@ -120,16 +116,28 @@ function migrateStoredState(value: unknown): CommerceState {
   };
 }
 
-function applyHostContext(state: CommerceState): CommerceState {
-  if (typeof window === "undefined") return state;
+function titleFromHost(value: string) {
+  return value
+    .split(".")[0]
+    .replace(/[-_]+/g, " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
 
-  const host = cleanHost(window.location.host);
-  const tenantSlug = tenantSlugFromHost(host);
+function applyHostContext(state: CommerceState, hostContext: HostContext): CommerceState {
+  const { customDomain, host, tenantSlug } = hostContext;
 
   if (tenantSlug) {
     const subdomain = subdomainForSlug(tenantSlug);
+    const isStoredTenant = state.hosting.subdomain === subdomain;
     return {
       ...state,
+      brand: isStoredTenant
+        ? state.brand
+        : {
+            ...state.brand,
+            name: titleFromHost(tenantSlug),
+            logoText: tenantSlug.replace(/[^a-z0-9]+/g, "").slice(0, 8) || state.brand.logoText
+          },
       hosting: {
         ...state.hosting,
         tenantSlug,
@@ -144,25 +152,41 @@ function applyHostContext(state: CommerceState): CommerceState {
           verified: true,
           message: "Loaded from hosted subdomain"
         }
+      },
+      auth: {
+        ...state.auth,
+        signedInAs: "customer"
       }
     };
   }
 
-  if (host && !isPlatformHost(host)) {
+  if (customDomain) {
+    const isStoredDomain = state.hosting.customDomain.domain === customDomain;
     return {
       ...state,
+      brand: isStoredDomain
+        ? state.brand
+        : {
+            ...state.brand,
+            name: titleFromHost(customDomain),
+            logoText: customDomain.split(".")[0]?.replace(/[^a-z0-9]+/g, "").slice(0, 8) || state.brand.logoText
+          },
       hosting: {
         ...state.hosting,
-        liveUrl: `https://${host}`,
+        liveUrl: `https://${customDomain}`,
         customDomain: {
           ...state.hosting.customDomain,
-          domain: host,
-          liveUrl: `https://${host}`,
+          domain: customDomain,
+          liveUrl: `https://${customDomain}`,
           status: "active",
           sslStatus: "valid",
           verified: true,
           message: "Loaded from custom domain"
         }
+      },
+      auth: {
+        ...state.auth,
+        signedInAs: "customer"
       }
     };
   }
@@ -170,16 +194,16 @@ function applyHostContext(state: CommerceState): CommerceState {
   return state;
 }
 
-function readState(): CommerceState {
+function readState(hostContext: HostContext): CommerceState {
   if (typeof window === "undefined") return seedCommerceState;
 
-  const raw = window.localStorage.getItem(STORAGE_KEY);
-  if (!raw) return applyHostContext(seedCommerceState);
+  const raw = window.localStorage.getItem(hostContext.storageKey) ?? window.localStorage.getItem(BASE_STORAGE_KEY);
+  if (!raw) return applyHostContext(seedCommerceState, hostContext);
 
   try {
-    return applyHostContext(migrateStoredState(JSON.parse(raw)));
+    return applyHostContext(migrateStoredState(JSON.parse(raw)), hostContext);
   } catch {
-    return applyHostContext(seedCommerceState);
+    return applyHostContext(seedCommerceState, hostContext);
   }
 }
 
@@ -224,6 +248,8 @@ type ReceizProfile = {
   name?: string;
   email?: string;
   handle?: string;
+  subdomain?: string;
+  customDomain?: string;
 };
 
 type ReceizProfileResponse = {
@@ -258,11 +284,20 @@ function logoTextFromProfile(profile: ReceizProfile) {
 }
 
 function tenantFromProfile(profile: ReceizProfile) {
-  const source = profile.handle?.replace(/\.receiz\.id$/i, "") ?? profile.name ?? "store";
+  const source = profile.subdomain ?? profile.handle?.replace(/\.receiz\.id$/i, "") ?? profile.name ?? "store";
   try {
     return normalizeTenantSlug(source);
   } catch {
     return "store";
+  }
+}
+
+function customDomainFromProfile(profile: ReceizProfile) {
+  if (!profile.customDomain) return "";
+  try {
+    return normalizeCustomDomain(profile.customDomain);
+  } catch {
+    return "";
   }
 }
 
@@ -281,6 +316,7 @@ function createFreshMerchantWorkspace(current: CommerceState, profile: ReceizPro
   const handle = normalizeProfileHandle(profile.handle, current.auth.receizId.handle);
   const tenantSlug = tenantFromProfile(profile);
   const subdomain = subdomainForSlug(tenantSlug);
+  const customDomain = customDomainFromProfile(profile);
   const customer: CustomerAccount = {
     id: current.auth.customer.id || "customer-receiz-owner",
     name: displayName,
@@ -331,15 +367,15 @@ function createFreshMerchantWorkspace(current: CommerceState, profile: ReceizPro
       },
       customDomain: {
         ...seedCommerceState.hosting.customDomain,
-        domain: "",
-        status: "pending",
-        sslStatus: "pending",
-        verified: false,
-        dnsResolved: false,
-        liveUrl: "",
+        domain: customDomain,
+        status: customDomain ? "ready" : "pending",
+        sslStatus: customDomain ? "valid" : "pending",
+        verified: Boolean(customDomain),
+        dnsResolved: Boolean(customDomain),
+        liveUrl: customDomain ? `https://${customDomain}` : "",
         verification: undefined,
         dnsInstructions: undefined,
-        message: "Connect a custom domain when ready"
+        message: customDomain ? "Loaded from Receiz profile" : "Connect a custom domain when ready"
       }
     },
     billing: {
@@ -397,14 +433,32 @@ function applyReceizProfile(current: CommerceState, profile: ReceizProfile): Com
   const handle = normalizeProfileHandle(profile.handle, base.auth.receizId.handle);
   const displayName = displayNameFromProfile(profile);
   const customer = customerFromProfile(base.auth.customer, profile);
+  const tenantSlug = profile.subdomain ? tenantFromProfile(profile) : base.hosting.tenantSlug;
+  const subdomain = subdomainForSlug(tenantSlug);
+  const customDomain = customDomainFromProfile(profile) || base.hosting.customDomain.domain;
 
   return {
     ...base,
     customers: base.customers.length ? base.customers.map((item, index) => (index === 0 ? customer : item)) : [customer],
     hosting: {
       ...base.hosting,
+      tenantSlug,
+      subdomain,
+      liveUrl: customDomain || base.hosting.liveUrl === base.hosting.customDomain.liveUrl ? `https://${customDomain || subdomain}` : base.hosting.liveUrl,
       merchantReceizId: handle,
-      settlementAccountLabel: `${displayName} Receiz account`
+      settlementAccountLabel: `${displayName} Receiz account`,
+      subdomainStatus: {
+        ...base.hosting.subdomainStatus,
+        domain: subdomain,
+        liveUrl: `https://${subdomain}`
+      },
+      customDomain: {
+        ...base.hosting.customDomain,
+        domain: customDomain,
+        liveUrl: customDomain ? `https://${customDomain}` : base.hosting.customDomain.liveUrl,
+        status: customDomain ? base.hosting.customDomain.status : "pending",
+        message: customDomain ? base.hosting.customDomain.message : "Connect a custom domain when ready"
+      }
     },
     auth: {
       ...base.auth,
@@ -495,9 +549,12 @@ function cartAmountUsd(state: CommerceState) {
 export function useTemplateStore() {
   const [state, setState] = useState<CommerceState>(seedCommerceState);
   const [hydrated, setHydrated] = useState(false);
+  const [hostContext, setHostContext] = useState<HostContext>(() => currentHostContext());
 
   useEffect(() => {
-    setState(readState());
+    const context = currentHostContext();
+    setHostContext(context);
+    setState(readState(context));
     setHydrated(true);
 
     if (process.env.NEXT_PUBLIC_AUTH_MODE === "receiz_id") {
@@ -516,16 +573,17 @@ export function useTemplateStore() {
 
   useEffect(() => {
     if (hydrated) {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      window.localStorage.setItem(hostContext.storageKey, JSON.stringify(state));
     }
-  }, [hydrated, state]);
+  }, [hostContext.storageKey, hydrated, state]);
 
   const actions = useMemo(
     () => ({
       reset() {
         setState(seedCommerceState);
         if (typeof window !== "undefined") {
-          window.localStorage.removeItem(STORAGE_KEY);
+          window.localStorage.removeItem(currentHostContext().storageKey);
+          window.localStorage.removeItem(BASE_STORAGE_KEY);
         }
       },
       updateBrand(input: Partial<CommerceState["brand"]>) {
@@ -1075,5 +1133,5 @@ export function useTemplateStore() {
     []
   );
 
-  return { state, actions, hydrated };
+  return { state, actions, hydrated, hostContext };
 }
