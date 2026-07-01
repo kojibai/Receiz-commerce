@@ -17,6 +17,7 @@
     "src/lib/receiz/connect-url.ts",
     "src/lib/receiz/oauth-state.ts",
     "src/lib/receiz/oauth-scopes.ts",
+    "src/lib/launch/readiness.ts",
     "src/lib/pwa/cache-policy.ts",
     "src/lib/pwa/manifest.ts",
     "src/lib/import/commerce-importer.ts",
@@ -31,6 +32,7 @@
     "src/lib/platform.ts",
     "src/lib/storefront/content-routing.ts",
     "src/lib/storefront/customer-session.ts",
+    "src/data/seed.ts",
     "src/types/domain.ts"
   ]
 }

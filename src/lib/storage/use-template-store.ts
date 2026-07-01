@@ -1027,6 +1027,9 @@ async function postJson<T>(
   const payload = await response.json().catch(() => ({}));
 
   if (response.status === 401 && typeof payload.connectUrl === "string") {
+    if (!options.deferLoginRedirect && typeof window !== "undefined") {
+      window.location.assign(payload.connectUrl);
+    }
     throw new ReceizLoginRequiredError(payload.connectUrl, String(payload.message ?? "Receiz rails authorization required"));
   }
 

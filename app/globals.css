@@ -343,9 +343,9 @@
 
   .mobile-admin-pane .settings-list strong,
   .mobile-admin-pane .domain-live-row strong {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    overflow-wrap: anywhere;
+    text-overflow: clip;
+    white-space: normal;
   }
 
   .mobile-admin-pane .launch-rail-card b {
@@ -2484,9 +2484,9 @@ a {
 .domain-live-row span {
   display: block;
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
+  text-overflow: clip;
+  white-space: normal;
 }
 
 .domain-live-row strong {
@@ -2520,6 +2520,7 @@ a {
   color: var(--muted);
   font-size: 11px;
   line-height: 1.35;
+  overflow-wrap: anywhere;
 }
 
 .domain-proof-box .button {

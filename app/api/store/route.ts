@@ -18,6 +18,14 @@ import { buildPublishedCommerceState } from "@/lib/hosting/published-state";
 import type { CommerceState, StorefrontHomepageMode } from "@/types/domain";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+const noStoreHeaders = {
+  "cache-control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+  pragma: "no-cache",
+  expires: "0"
+};
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
@@ -100,37 +108,40 @@ export async function GET(request: NextRequest) {
       ? tenantFallbackState(proofStore.projectHost(mockStorage.getState(), tenantHost), hostContext, { trustedPublishedState })
       : mockStorage.getState();
 
-  return NextResponse.json({
-    ok: true,
-    source: projectionSource,
-    publishedState: trustedPublishedState,
-    hostContext,
-    storefront: projectedState.storefront,
-    brand: projectedState.brand,
-    navigation: projectedState.navigation,
-    pages: projectedState.pages,
-    collections: projectedState.collections,
-    products: projectedState.products,
-    rewards: projectedState.rewards,
-    rewardRules: projectedState.rewardRules,
-    assets: projectedState.assets,
-    listings: projectedState.listings,
-    qualifiers: projectedState.qualifiers,
-    campaigns: projectedState.campaigns,
-    blogPosts: projectedState.blogPosts,
-    game: projectedState.game,
-    checkout: projectedState.checkout,
-    receiz: projectedState.receiz,
-    orders: projectedState.orders,
-    customers: projectedState.customers,
-    proofEvents: projectedState.proofEvents,
-    hosting: projectedState.hosting,
-    proofMemory: {
-      knownHead: proofStore.knownHead(100),
-      entries: proofStore.snapshot().head.count,
-      recovery
-    }
-  });
+  return NextResponse.json(
+    {
+      ok: true,
+      source: projectionSource,
+      publishedState: trustedPublishedState,
+      hostContext,
+      storefront: projectedState.storefront,
+      brand: projectedState.brand,
+      navigation: projectedState.navigation,
+      pages: projectedState.pages,
+      collections: projectedState.collections,
+      products: projectedState.products,
+      rewards: projectedState.rewards,
+      rewardRules: projectedState.rewardRules,
+      assets: projectedState.assets,
+      listings: projectedState.listings,
+      qualifiers: projectedState.qualifiers,
+      campaigns: projectedState.campaigns,
+      blogPosts: projectedState.blogPosts,
+      game: projectedState.game,
+      checkout: projectedState.checkout,
+      receiz: projectedState.receiz,
+      orders: projectedState.orders,
+      customers: projectedState.customers,
+      proofEvents: projectedState.proofEvents,
+      hosting: projectedState.hosting,
+      proofMemory: {
+        knownHead: proofStore.knownHead(100),
+        entries: proofStore.snapshot().head.count,
+        recovery
+      }
+    },
+    { headers: noStoreHeaders }
+  );
 }
 
 export async function POST(request: NextRequest) {
@@ -145,7 +156,7 @@ export async function POST(request: NextRequest) {
   }
 
   if (!accessToken && process.env.NEXT_PUBLIC_AUTH_MODE === "receiz_id") {
-    return NextResponse.json(receizLoginRequired("/admin"), { status: 401 });
+    return NextResponse.json(receizLoginRequired("/admin"), { status: 401, headers: noStoreHeaders });
   }
 
   const publishOwner = await loadPublishOwner(accessToken);
@@ -178,7 +189,7 @@ export async function POST(request: NextRequest) {
           error: "receiz_media_publish_failed",
           message: errorMessage(error)
         },
-        { status: 502 }
+        { status: 502, headers: noStoreHeaders }
       );
     }
   }
@@ -202,18 +213,21 @@ export async function POST(request: NextRequest) {
         message: error,
         receizRecord
       },
-      { status: error === "receiz_login_required" ? 401 : 502 }
+      { status: error === "receiz_login_required" ? 401 : 502, headers: noStoreHeaders }
     );
   }
 
-  return NextResponse.json({
-    ok: true,
-    action,
-    record,
-    receizRecord,
-    proofMemory: {
-      knownHead: proofStore.knownHead(100),
-      entries: proofStore.snapshot().head.count
-    }
-  });
+  return NextResponse.json(
+    {
+      ok: true,
+      action,
+      record,
+      receizRecord,
+      proofMemory: {
+        knownHead: proofStore.knownHead(100),
+        entries: proofStore.snapshot().head.count
+      }
+    },
+    { headers: noStoreHeaders }
+  );
 }
