@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
+  normalizeRoutePath,
   resolveBlogPostBySlug,
   resolvePageBySlug,
   resolveProductBySlug,
@@ -12,6 +13,7 @@ describe("storefront content routing", () => {
   it("normalizes product and page route segments", () => {
     assert.equal(slugifyRouteSegment("Coffee Pack"), "coffee-pack");
     assert.equal(slugifyRouteSegment("/blog/Proof Sealed Beans"), "proof-sealed-beans");
+    assert.equal(normalizeRoutePath("https://example.com/company/About Us?ref=nav"), "/company/about-us");
   });
 
   it("resolves active products by SEO path, id, or generated slug", () => {
@@ -104,5 +106,40 @@ describe("storefront content routing", () => {
     assert.equal(resolveBlogPostBySlug(state, "draft-post"), null);
     assert.equal(resolvePageBySlug(state, "about")?.id, "about");
     assert.equal(resolvePageBySlug(state, "secret"), null);
+  });
+
+  it("resolves published pages by full dynamic route paths", () => {
+    const state = {
+      ...baseState(),
+      pages: [
+        {
+          id: "company-about",
+          title: "About Our Company",
+          slug: "/company/about",
+          visibleInNav: true,
+          published: true,
+          sections: [],
+          seo: {
+            title: "Company About",
+            description: "About this store",
+            canonicalPath: "/company/about",
+            keywords: [],
+            socialImageUrl: null
+          }
+        },
+        {
+          id: "wrong-path",
+          title: "Wrong Path",
+          slug: "/about",
+          visibleInNav: true,
+          published: true,
+          sections: []
+        }
+      ]
+    };
+
+    assert.equal(resolvePageBySlug(state, "/company/about")?.id, "company-about");
+    assert.equal(resolvePageBySlug(state, "company/about")?.id, "company-about");
+    assert.equal(resolvePageBySlug(state, "/company/missing"), null);
   });
 });

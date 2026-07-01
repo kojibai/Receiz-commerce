@@ -40,7 +40,7 @@ export function PublicStorefront({
   initialHostContext?: HostContext;
   initialState?: CommerceState;
 }) {
-  const { state, actions, hostContext } = useTemplateStore(initialState, initialHostContext);
+  const { state, actions, hostContext, hydrated, receizSessionPending } = useTemplateStore(initialState, initialHostContext);
   const [mobileView, setMobileView] = useState<MobileView>("store");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [identityUploadVisible, setIdentityUploadVisible] = useState(false);
@@ -51,7 +51,9 @@ export function PublicStorefront({
   const campaignName = state.campaigns[0]?.name ?? "Reward Challenge";
   const homepageMode = state.storefront.homepageMode ?? "store";
   const gameEnabled = state.game.enabled || homepageMode === "game";
-  const showIdentityUploadFallback = identityUploadVisible || !state.auth.receizId.connected;
+  const identityActionsReady = hydrated && !receizSessionPending;
+  const showIdentityEntry = identityActionsReady && !state.auth.receizId.connected;
+  const showIdentityUploadFallback = showIdentityEntry && (identityUploadVisible || !state.auth.receizId.connected);
 
   const sealObject = () => actions.appendProofEvent("OBJECT_VERIFIED", "Coffee Pack · Serial #BC-88421");
   const issueReward = () => actions.appendProofEvent("REWARD_ISSUED", `${reward?.name ?? "Reward"} · ${state.brand.name}`);
@@ -70,7 +72,6 @@ export function PublicStorefront({
     if (!connected) {
       setIdentityUploadVisible(true);
       setMobileView("account");
-      actions.signInWithReceizId();
     }
     setMobileMenuOpen(false);
   };
@@ -226,6 +227,7 @@ export function PublicStorefront({
 
           <aside className="right-rail">
             <ReceizIdAccess
+              identityActionsReady={identityActionsReady}
               onAttachPbiRecovery={actions.attachPbiRecovery}
               onCreateReceizId={createLocalReceizId}
               onDownloadIdentitySeal={actions.downloadIdentitySealImage}
@@ -258,6 +260,7 @@ export function PublicStorefront({
           onCreateReceizId={createLocalReceizId}
           onExistingReceizId={connectExistingReceizId}
           onRestoreArtifact={restoreIdentityArtifact}
+          showIdentityEntry={showIdentityEntry}
           showIdentityUpload={showIdentityUploadFallback}
           tenantSurface={tenantSurface}
           onPlayComplete={(beans) =>
@@ -275,6 +278,7 @@ export function PublicStorefront({
           onSeal={sealObject}
           onExistingReceizId={connectExistingReceizId}
           open={mobileMenuOpen}
+          showIdentityEntry={showIdentityEntry}
           state={state}
           tenantSurface={tenantSurface}
           customerReceizHandle={receizHandle}
@@ -400,6 +404,7 @@ function MobileCommandMenu({
   onNavigate,
   onSeal,
   open,
+  showIdentityEntry,
   state,
   customerReceizHandle,
   tenantSurface
@@ -412,6 +417,7 @@ function MobileCommandMenu({
   onNavigate: (view: MobileView) => void;
   onSeal: () => void;
   open: boolean;
+  showIdentityEntry: boolean;
   state: CommerceState;
   tenantSurface: boolean;
 }) {
@@ -457,12 +463,12 @@ function MobileCommandMenu({
         </div>
 
         <div className="mobile-command-actions">
-          {state.auth.receizId.connected ? null : (
+          {showIdentityEntry ? (
             <OfficialReceizLoginButton
               className="mobile-command-receiz-login"
               onClick={() => runAction(onExistingReceizId)}
             />
-          )}
+          ) : null}
           {tenantSurface ? null : (
             <button onClick={() => runAction(onSeal)} type="button">
               <Icons.seal size={21} />
@@ -503,6 +509,7 @@ function MobileStage({
   onRestoreArtifact,
   onSeal,
   reward,
+  showIdentityEntry,
   showIdentityUpload,
   state,
   customerReceizHandle,
@@ -524,6 +531,7 @@ function MobileStage({
   onRestoreArtifact: (file: File) => void | Promise<void>;
   onSeal: () => void;
   reward: Reward | null;
+  showIdentityEntry: boolean;
   showIdentityUpload: boolean;
   state: CommerceState;
   tenantSurface: boolean;
@@ -560,6 +568,7 @@ function MobileStage({
         onDownloadIdentitySeal={onDownloadIdentitySeal}
         onExistingReceizId={onExistingReceizId}
         onRestoreArtifact={onRestoreArtifact}
+        showIdentityEntry={showIdentityEntry}
         showIdentityUpload={showIdentityUpload}
         state={state}
         tenantSurface={tenantSurface}
@@ -579,6 +588,7 @@ function MobileStage({
         onDownloadIdentitySeal={onDownloadIdentitySeal}
         onExistingReceizId={onExistingReceizId}
         onRestoreArtifact={onRestoreArtifact}
+        showIdentityEntry={showIdentityEntry}
         showIdentityUpload={showIdentityUpload}
         state={state}
         tenantSurface={tenantSurface}
@@ -879,6 +889,7 @@ function MobileAssetsPanel({
   onDownloadIdentitySeal,
   onExistingReceizId,
   onRestoreArtifact,
+  showIdentityEntry,
   showIdentityUpload,
   state,
   tenantSurface: _tenantSurface
@@ -891,6 +902,7 @@ function MobileAssetsPanel({
   onDownloadIdentitySeal: () => void | Promise<void>;
   onExistingReceizId: () => void | Promise<void>;
   onRestoreArtifact: (file: File) => void | Promise<void>;
+  showIdentityEntry: boolean;
   showIdentityUpload: boolean;
   state: CommerceState;
   tenantSurface: boolean;
@@ -906,7 +918,7 @@ function MobileAssetsPanel({
           <p>Own, list, sell, trade, and share proof-sealed assets.</p>
         </div>
       </div>
-      {state.auth.receizId.connected ? null : (
+      {showIdentityEntry ? (
         <MobileIdentityActions
           inputId="mobile-assets-receiz-identity-artifact"
           onCreateReceizId={onCreateReceizId}
@@ -914,7 +926,7 @@ function MobileAssetsPanel({
           onRestoreArtifact={onRestoreArtifact}
           showIdentityUpload={showIdentityUpload}
         />
-      )}
+      ) : null}
       {state.auth.receizId.connected ? (
         <ReceizAccountManagementPills
           className="mobile-identity-pills"
@@ -971,6 +983,7 @@ function MobileAccountPanel({
   onDownloadIdentitySeal,
   onExistingReceizId,
   onRestoreArtifact,
+  showIdentityEntry,
   showIdentityUpload,
   state,
   tenantSurface
@@ -983,6 +996,7 @@ function MobileAccountPanel({
   onDownloadIdentitySeal: () => void | Promise<void>;
   onExistingReceizId: () => void | Promise<void>;
   onRestoreArtifact: (file: File) => void | Promise<void>;
+  showIdentityEntry: boolean;
   showIdentityUpload: boolean;
   state: CommerceState;
   tenantSurface: boolean;
@@ -1002,7 +1016,7 @@ function MobileAccountPanel({
           <span><Icons.receiz size={15} /> {customerReceizHandle}</span>
         </div>
       </div>
-      {state.auth.receizId.connected ? null : (
+      {showIdentityEntry ? (
         <MobileIdentityActions
           inputId="mobile-account-receiz-identity-artifact"
           onCreateReceizId={onCreateReceizId}
@@ -1010,7 +1024,7 @@ function MobileAccountPanel({
           onRestoreArtifact={onRestoreArtifact}
           showIdentityUpload={showIdentityUpload}
         />
-      )}
+      ) : null}
       {state.auth.receizId.connected ? (
         <ReceizAccountManagementPills
           className="mobile-identity-pills"

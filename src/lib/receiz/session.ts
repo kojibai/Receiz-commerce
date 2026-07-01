@@ -12,6 +12,7 @@ export function receizLoginRequired(returnTo = "/admin") {
   return {
     ok: false,
     error: "receiz_login_required",
+    message: "Receiz rails authorization is required for this server action. Continue with Receiz ID for this site, then try again.",
     connectUrl: `/api/auth/receiz/start?returnTo=${encodeURIComponent(returnTo)}`
   };
 }

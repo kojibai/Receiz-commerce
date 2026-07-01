@@ -563,8 +563,8 @@ async function fetchPublishedStoreProjection() {
 class ReceizLoginRequiredError extends Error {
   connectUrl: string;
 
-  constructor(connectUrl: string) {
-    super("Receiz login required");
+  constructor(connectUrl: string, message = "Receiz rails authorization is required for this server action. Continue with Receiz ID, then try again.") {
+    super(message);
     this.name = "ReceizLoginRequiredError";
     this.connectUrl = connectUrl;
   }
@@ -598,10 +598,7 @@ async function postJson<T>(
   const payload = await response.json().catch(() => ({}));
 
   if (response.status === 401 && typeof payload.connectUrl === "string") {
-    if (!options.deferLoginRedirect) {
-      window.location.assign(payload.connectUrl);
-    }
-    throw new ReceizLoginRequiredError(payload.connectUrl);
+    throw new ReceizLoginRequiredError(payload.connectUrl, String(payload.message ?? "Receiz rails authorization required"));
   }
 
   if (!response.ok || payload.ok === false) {
@@ -819,6 +816,7 @@ async function receizIdentityForOneClickCheckout(snapshot: CommerceState) {
 export function useTemplateStore(initialState: CommerceState = seedCommerceState, initialHostContext?: HostContext) {
   const [state, setState] = useState<CommerceState>(initialState);
   const [hydrated, setHydrated] = useState(false);
+  const [receizSessionPending, setReceizSessionPending] = useState(false);
   const [hostContext, setHostContext] = useState<HostContext>(() => initialHostContext ?? hostContextFromHost(null));
   const stateRef = useRef(initialState);
   const pendingBrowserIdentityKeyFileRef = useRef<unknown | null>(null);
@@ -834,10 +832,9 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
       context.surface === "tenant"
         ? parseTenantCustomerSession(safeGetLocalStorage(window.localStorage, tenantCustomerSessionKey(context.storageKey)))
         : null;
-    const restoredBrowserIdentitySession =
-      context.surface === "tenant"
-        ? parseBrowserReceizIdSession(safeGetLocalStorage(window.localStorage, BROWSER_RECEIZ_ID_SESSION_KEY))
-        : null;
+    const restoredBrowserIdentitySession = parseBrowserReceizIdSession(
+      safeGetLocalStorage(window.localStorage, BROWSER_RECEIZ_ID_SESSION_KEY)
+    );
     const restoredState = restoredCustomerSession
       ? applyTenantCustomerSession(readState(context, initialState), restoredCustomerSession)
       : applyBrowserReceizIdSession(readState(context, initialState), restoredBrowserIdentitySession);
@@ -845,6 +842,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
     setHostContext(context);
     setState(restoredState);
     setHydrated(true);
+    setReceizSessionPending(process.env.NEXT_PUBLIC_AUTH_MODE === "receiz_id");
 
     if (process.env.NEXT_PUBLIC_AUTH_MODE === "receiz_id") {
       void fetchReceizProfile()
@@ -860,10 +858,15 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
               return current;
             }
 
+            if (current.auth.receizId.connected) {
+              return current;
+            }
+
             return applyReceizDisconnected(current);
           });
         })
-        .catch(() => undefined);
+        .catch(() => undefined)
+        .finally(() => setReceizSessionPending(false));
     }
   }, [initialState]);
 
@@ -1560,7 +1563,14 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
             })
             .catch((error) => {
               if (error instanceof ReceizLoginRequiredError) {
-                window.location.assign(error.connectUrl);
+                clearPendingPublish(publishHostContext.storageKey);
+                setState((latest) => ({
+                  ...latest,
+                  proofEvents: [
+                    makeEvent("SITE_PUBLISHED", "Receiz ID required to publish. Continue with Receiz ID in Account, then publish again."),
+                    ...latest.proofEvents
+                  ]
+                }));
                 return;
               }
 
@@ -1935,5 +1945,5 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
     actions.publish();
   }, [actions, hostContext.storageKey, hostContext.surface, hydrated]);
 
-  return { state, actions, hydrated, hostContext };
+  return { state, actions, hydrated, hostContext, receizSessionPending };
 }

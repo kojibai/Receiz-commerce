@@ -11,9 +11,11 @@ export function ReceizIdAccess({
   onAttachPbiRecovery,
   onDownloadIdentitySeal,
   onRestoreArtifact,
+  identityActionsReady,
   receizId,
   showUploadFallback
 }: {
+  identityActionsReady: boolean;
   onAttachPbiRecovery: () => void | Promise<void>;
   onCreateReceizId: () => void | Promise<void>;
   onDownloadIdentitySeal: () => void | Promise<void>;
@@ -22,6 +24,8 @@ export function ReceizIdAccess({
   receizId: ReceizIdState;
   showUploadFallback: boolean;
 }) {
+  const showIdentityActions = identityActionsReady && !receizId.connected;
+
   return (
     <Panel className="receiz-id-panel">
       <SectionHeader title="Receiz ID" action={<StatusPill tone="green">One click</StatusPill>} />
@@ -44,20 +48,20 @@ export function ReceizIdAccess({
           onDownloadIdentitySeal={onDownloadIdentitySeal}
         />
       ) : null}
-      {receizId.connected ? null : (
+      {showIdentityActions ? (
         <>
-        <div className="identity-actions account-login-actions">
-          <OfficialReceizLoginButton onClick={onExistingReceizId} />
-        </div>
-        {showUploadFallback ? (
-          <ReceizRecoveryPills
-            inputId="storefront-receiz-identity-artifact"
-            onPbiRecovery={onCreateReceizId}
-            onRestoreArtifact={onRestoreArtifact}
-          />
-        ) : null}
+          <div className="identity-actions account-login-actions">
+            <OfficialReceizLoginButton onClick={onExistingReceizId} />
+          </div>
+          {showUploadFallback ? (
+            <ReceizRecoveryPills
+              inputId="storefront-receiz-identity-artifact"
+              onPbiRecovery={onCreateReceizId}
+              onRestoreArtifact={onRestoreArtifact}
+            />
+          ) : null}
         </>
-      )}
+      ) : null}
     </Panel>
   );
 }

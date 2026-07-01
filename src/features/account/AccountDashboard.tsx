@@ -28,7 +28,7 @@ export function AccountDashboard({
   initialHostContext?: HostContext;
   initialState?: CommerceState;
 }) {
-  const { state, actions, hostContext } = useTemplateStore(initialState, initialHostContext);
+  const { state, actions, hostContext, hydrated, receizSessionPending } = useTemplateStore(initialState, initialHostContext);
   const tenantSurface = hostContext.surface === "tenant";
   const customer = customerForAccountSurface(state, tenantSurface);
   const receizHandle = customerReceizHandle(state, customer);
@@ -40,9 +40,15 @@ export function AccountDashboard({
   const storeHost = tenantSurface ? hostContext.tenantHost ?? state.hosting.liveUrl : state.hosting.liveUrl;
   const walletRailLabel = state.auth.receizId.connected ? "Receiz wallet ready" : "Sign in to use Receiz wallet";
   const checkoutFallbackLabel = "Credit card fallback";
+  const showIdentityLogin = hydrated && !receizSessionPending && !state.auth.receizId.connected;
+  const accountStatusLabel = state.auth.receizId.connected
+    ? tenantSurface
+      ? "Account ready"
+      : "Receiz rails ready"
+    : state.auth.receizId.statusLabel;
   const continueWithReceizId = async () => {
     const connected = await actions.connectExistingReceizId();
-    if (!connected) {
+    if (!connected && !tenantSurface) {
       actions.signInWithReceizId();
     }
   };
@@ -57,7 +63,7 @@ export function AccountDashboard({
           <strong>{tenantSurface ? state.brand.name : platform.name}</strong>
         </Link>
         <div>
-          <StatusPill tone="green">{state.auth.receizId.statusLabel}</StatusPill>
+          <StatusPill tone="green">{accountStatusLabel}</StatusPill>
           <Link className="button button-outline" href="/">
             Storefront
           </Link>
@@ -117,7 +123,7 @@ export function AccountDashboard({
               <strong>{state.auth.receizId.localProofVerified ? "Verified" : state.auth.receizId.portableStateStatus}</strong>
             </div>
           </div>
-          {state.auth.receizId.connected ? null : (
+          {showIdentityLogin ? (
             <div className="identity-login-stack">
               <div className="identity-actions account-login-actions">
                 <OfficialReceizLoginButton onClick={() => void continueWithReceizId()} />
@@ -128,7 +134,7 @@ export function AccountDashboard({
                 onRestoreArtifact={actions.restoreReceizIdentityArtifact}
               />
             </div>
-          )}
+          ) : null}
           {state.auth.receizId.connected ? (
             <ReceizAccountManagementPills
               onAttachPbi={actions.attachPbiRecovery}

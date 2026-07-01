@@ -16,6 +16,20 @@ export function slugifyRouteSegment(value: string) {
     .replace(/^-|-$/g, "");
 }
 
+export function normalizeRoutePath(value: string) {
+  const pathname = value
+    .trim()
+    .replace(/^https?:\/\/[^/]+/i, "")
+    .split(/[?#]/)[0] ?? "";
+  const segments = pathname
+    .split("/")
+    .filter(Boolean)
+    .map((segment) => slugifyRouteSegment(segment))
+    .filter(Boolean);
+
+  return segments.length ? `/${segments.join("/")}` : "/";
+}
+
 function productRouteCandidates(product: Product) {
   return new Set(
     [
@@ -39,11 +53,14 @@ function blogRouteCandidates(post: BlogPost) {
 }
 
 function pageRouteCandidates(page: SitePage) {
-  return new Set(
-    [page.id, page.title, page.slug, page.seo?.canonicalPath]
-      .filter(Boolean)
-      .map((value) => slugifyRouteSegment(String(value)))
-  );
+  const values = [page.id, page.title, page.slug, page.seo?.canonicalPath]
+    .filter(Boolean)
+    .map((value) => String(value));
+
+  return {
+    paths: new Set(values.map((value) => normalizeRoutePath(value))),
+    segments: new Set(values.map((value) => slugifyRouteSegment(value)))
+  };
 }
 
 export function resolveProductBySlug(state: CommerceState, slug: string): Product | null {
@@ -57,6 +74,12 @@ export function resolveBlogPostBySlug(state: CommerceState, slug: string): BlogP
 }
 
 export function resolvePageBySlug(state: CommerceState, slug: string): SitePage | null {
-  const normalized = slugifyRouteSegment(slug);
-  return state.pages.find((page) => page.published && pageRouteCandidates(page).has(normalized)) ?? null;
+  const normalizedPath = normalizeRoutePath(slug);
+  const normalizedSegment = slugifyRouteSegment(slug);
+
+  return state.pages.find((page) => {
+    if (!page.published) return false;
+    const candidates = pageRouteCandidates(page);
+    return candidates.paths.has(normalizedPath) || candidates.segments.has(normalizedSegment);
+  }) ?? null;
 }

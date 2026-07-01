@@ -2,21 +2,25 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BrandMark, StatusPill } from "@/components/ui";
-import { resolvePageBySlug } from "@/lib/storefront/content-routing";
+import { normalizeRoutePath, resolvePageBySlug } from "@/lib/storefront/content-routing";
 import { loadStorefrontState, type StorefrontSearchParams } from "@/lib/storefront/server-state";
 
 type SitePageProps = {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ slug: string[] }>;
   searchParams?: Promise<StorefrontSearchParams>;
 };
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
+function pathFromSlug(slug: string[]) {
+  return normalizeRoutePath(`/${slug.join("/")}`);
+}
+
 export async function generateMetadata({ params, searchParams }: SitePageProps): Promise<Metadata> {
   const { slug } = await params;
   const { state } = await loadStorefrontState(await searchParams);
-  const page = resolvePageBySlug(state, slug);
+  const page = resolvePageBySlug(state, pathFromSlug(slug));
 
   if (!page) return {};
 
@@ -29,9 +33,9 @@ export async function generateMetadata({ params, searchParams }: SitePageProps):
 export default async function SiteDetailPage({ params, searchParams }: SitePageProps) {
   const { slug } = await params;
   const { state } = await loadStorefrontState(await searchParams);
-  const page = resolvePageBySlug(state, slug);
+  const page = resolvePageBySlug(state, pathFromSlug(slug));
 
-  if (!page || page.slug === "/") notFound();
+  if (!page || normalizeRoutePath(page.slug) === "/") notFound();
 
   return (
     <main className="detail-shell">
