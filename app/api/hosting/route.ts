@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { mockHosting } from "@/lib/hosting/mock-hosting";
 import { normalizeCustomDomain, normalizeTenantSlug, subdomainForSlug } from "@/lib/hosting/domain-utils";
 import {
-  merchantLocalIdentitySessionFromState,
-  merchantServerSessionRequirement,
-  type MerchantServerAction
-} from "@/lib/hosting/merchant-session-gate";
+  merchantLocalProofObjectFromState,
+  merchantProofAuthorityRequirement,
+  type MerchantAuthorityAction
+} from "@/lib/hosting/merchant-proof-authority";
 import {
   VercelDomainError,
   addProjectDomain,
@@ -19,14 +19,14 @@ import {
 import { checkPublicDns } from "@/lib/hosting/dns-check";
 import { buildPublishedCommerceState } from "@/lib/hosting/published-state";
 import { hostingBillingFromPlatformPayment } from "@/lib/hosting/platform-billing";
-import { identitySealCheckoutFunding } from "@/lib/checkout/wallet-authority";
+import { proofObjectCheckoutFunding } from "@/lib/checkout/wallet-authority";
 import { platform } from "@/lib/platform";
 import { createReceizCommerceAdapter } from "@/lib/receiz/adapter";
 import { loadReceizConnectProfile } from "@/lib/receiz/connect-profile";
 import { buildStoreStateRecord } from "@/lib/receiz/proof-state";
 import { getServerProofStateStore } from "@/lib/receiz/proof-state-store";
 import { publishReceizStoreState } from "@/lib/receiz/store-state-publication";
-import { receizAccessTokenFromRequest, receizLoginRequired } from "@/lib/receiz/session";
+import { receizAccessTokenFromRequest, receizAuthorityRequired } from "@/lib/receiz/session";
 import { prepareStoreStateMediaForPublish } from "@/lib/receiz/media-publication";
 import { mockStorage } from "@/lib/storage/mock-storage";
 import type { DomainStatus, HostingConfig } from "@/types/domain";
@@ -69,18 +69,18 @@ async function loadPublishOwner(accessToken: string | undefined) {
   }
 }
 
-async function requireMerchantSession(
+async function requireMerchantAuthority(
   accessToken: string | undefined,
-  action: MerchantServerAction,
+  action: MerchantAuthorityAction,
   returnTo: string,
   localIdentityState?: unknown
 ) {
   const profile = await loadPublishOwner(accessToken);
-  const localIdentity = merchantLocalIdentitySessionFromState(localIdentityState);
-  const tokenOnlySession = Boolean(accessToken) && !localIdentity.localProofVerified;
-  const gate = merchantServerSessionRequirement({
+  const localIdentity = merchantLocalProofObjectFromState(localIdentityState);
+  const delegatedPermission = Boolean(profile) || (Boolean(accessToken) && !localIdentity.localProofVerified);
+  const gate = merchantProofAuthorityRequirement({
     action,
-    connected: Boolean(profile) || tokenOnlySession,
+    delegatedPermission,
     handle: profile?.handle ?? localIdentity.handle,
     localReceizIdConnected: localIdentity.connected,
     localProofVerified: localIdentity.localProofVerified
@@ -100,7 +100,7 @@ async function requireMerchantSession(
     ok: false as const,
     response: NextResponse.json(
       {
-        ...receizLoginRequired(returnTo),
+        ...receizAuthorityRequired(returnTo),
         message: gate.message
       },
       { status: 401 }
@@ -158,7 +158,7 @@ async function recordReceizHostingEvent(
   data: Record<string, unknown>
 ) {
   if (!accessToken) {
-    return { ok: false, skipped: true, error: "receiz_login_required" };
+    return { ok: false, skipped: true, error: "receiz_authority_required" };
   }
 
   try {
@@ -185,7 +185,7 @@ async function chargePlatformFee(
     amountUsd: string;
     note: string;
     idempotencyKey: string;
-    authorizedByIdentitySeal?: boolean;
+    authorizedByProofObject?: boolean;
   }
 ) {
   const liveBilling = process.env.RECEIZ_PLATFORM_BILLING_MODE === "live";
@@ -212,11 +212,11 @@ async function chargePlatformFee(
   }
 
   if (!accessToken) {
-    if (input.authorizedByIdentitySeal) {
-      const funding = identitySealCheckoutFunding(centsFromAmountUsd(input.amountUsd));
+    if (input.authorizedByProofObject) {
+      const funding = proofObjectCheckoutFunding(centsFromAmountUsd(input.amountUsd));
       return {
         ok: true,
-        mode: "identity_seal_wallet_first",
+        mode: "proof_object_wallet_first",
         amountUsd: input.amountUsd,
         paid: !funding.cardRequired,
         funding,
@@ -227,12 +227,12 @@ async function chargePlatformFee(
           recipientUserId
         },
         message: funding.cardRequired
-          ? "Identity Seal authorized wallet-first platform billing; card funds the remaining delta."
-          : "Identity Seal authorized platform settlement."
+          ? "Verified Receiz proof object authorized wallet-first platform billing; card funds the remaining delta."
+          : "Verified Receiz proof object authorized platform settlement."
       };
     }
 
-    return { ...receizLoginRequired("/admin"), status: 401 };
+    return { ...receizAuthorityRequired("/admin"), status: 401 };
   }
 
   try {
@@ -294,19 +294,19 @@ export async function POST(request: NextRequest) {
     if (!["starter", "pro", "scale"].includes(plan)) {
       return badRequest(new Error("Unknown hosting plan."));
     }
-    const merchantSession = await requireMerchantSession(
+    const merchantAuthority = await requireMerchantAuthority(
       accessToken,
       "billing",
       returnTo,
-      isRecord(body) ? body.merchantSession ?? body.state : null
+      isRecord(body) ? body.merchantProof ?? body.merchantSession ?? body.state : null
     );
-    if (!merchantSession.ok) return merchantSession.response;
+    if (!merchantAuthority.ok) return merchantAuthority.response;
 
-    const platformBilling = await chargePlatformFee(merchantSession.source === "receiz_connect" ? accessToken : undefined, {
+    const platformBilling = await chargePlatformFee(merchantAuthority.source === "delegated_permission" ? accessToken : undefined, {
       amountUsd: amountForPlan(plan),
       note: `${platform.productName} ${plan} hosting plan`,
       idempotencyKey: `receiz-app:hosting-plan:${plan}`,
-      authorizedByIdentitySeal: merchantSession.source === "identity_seal"
+      authorizedByProofObject: merchantAuthority.source === "proof_object"
     });
 
     if (!platformBilling.ok) {
@@ -327,13 +327,13 @@ export async function POST(request: NextRequest) {
   }
 
   if (action === "payment") {
-    const merchantSession = await requireMerchantSession(
+    const merchantAuthority = await requireMerchantAuthority(
       accessToken,
       "billing",
       returnTo,
-      isRecord(body) ? body.merchantSession ?? body.state : null
+      isRecord(body) ? body.merchantProof ?? body.merchantSession ?? body.state : null
     );
-    if (!merchantSession.ok) return merchantSession.response;
+    if (!merchantAuthority.ok) return merchantAuthority.response;
 
     const billing = mockHosting.updateBilling({
       status: "trial",
@@ -352,19 +352,19 @@ export async function POST(request: NextRequest) {
       return badRequest(error);
     }
 
-    const merchantSession = await requireMerchantSession(
+    const merchantAuthority = await requireMerchantAuthority(
       accessToken,
       "custom_domain",
       returnTo,
-      isRecord(body) ? body.merchantSession ?? body.state : null
+      isRecord(body) ? body.merchantProof ?? body.merchantSession ?? body.state : null
     );
-    if (!merchantSession.ok) return merchantSession.response;
+    if (!merchantAuthority.ok) return merchantAuthority.response;
 
-    const platformBilling = await chargePlatformFee(merchantSession.source === "receiz_connect" ? accessToken : undefined, {
+    const platformBilling = await chargePlatformFee(merchantAuthority.source === "delegated_permission" ? accessToken : undefined, {
       amountUsd: process.env.RECEIZ_CUSTOM_DOMAIN_SETUP_USD ?? "0.00",
       note: `${platform.productName} custom domain setup for ${domain}`,
       idempotencyKey: `receiz-app:custom-domain:${domain}`,
-      authorizedByIdentitySeal: merchantSession.source === "identity_seal"
+      authorizedByProofObject: merchantAuthority.source === "proof_object"
     });
 
     if (!platformBilling.ok) {
@@ -402,13 +402,13 @@ export async function POST(request: NextRequest) {
       return badRequest(error);
     }
 
-    const merchantSession = await requireMerchantSession(
+    const merchantAuthority = await requireMerchantAuthority(
       accessToken,
       "verify_domain",
       returnTo,
-      isRecord(body) ? body.merchantSession ?? body.state : null
+      isRecord(body) ? body.merchantProof ?? body.merchantSession ?? body.state : null
     );
-    if (!merchantSession.ok) return merchantSession.response;
+    if (!merchantAuthority.ok) return merchantAuthority.response;
 
     let customDomain: DomainStatus;
 
@@ -433,14 +433,14 @@ export async function POST(request: NextRequest) {
   }
 
   if (action === "publish") {
-    const merchantSession = await requireMerchantSession(
+    const merchantAuthority = await requireMerchantAuthority(
       accessToken,
       "publish",
       returnTo,
-      isRecord(body) ? body.merchantSession ?? body.state : null
+      isRecord(body) ? body.merchantProof ?? body.merchantSession ?? body.state : null
     );
-    if (!merchantSession.ok) return merchantSession.response;
-    const publishOwner = merchantSession.profile;
+    if (!merchantAuthority.ok) return merchantAuthority.response;
+    const publishOwner = merchantAuthority.profile;
     const submittedHosting = {
       ...(isRecord(body.state) && isRecord(body.state.hosting) ? body.state.hosting : mockHosting.getHostingStatus()),
       published: true,
@@ -451,15 +451,15 @@ export async function POST(request: NextRequest) {
       hosting: submittedHosting
     }, {
       customDomain: publishOwner?.customDomain,
-      displayName: publishOwner?.name ?? merchantSession.localIdentity.displayName,
-      merchantReceizId: publishOwner?.handle ?? merchantSession.handle,
+      displayName: publishOwner?.name ?? merchantAuthority.localIdentity.displayName,
+      merchantReceizId: publishOwner?.handle ?? merchantAuthority.handle,
       tenantSlug: publishOwner?.subdomain
     });
     const actorReceizId = state.hosting.merchantReceizId || state.auth.receizId.handle;
     const tenantHost = state.hosting.customDomain.domain || state.hosting.subdomain;
     let publishState = state;
 
-    if (accessToken && merchantSession.source === "receiz_connect") {
+    if (accessToken && merchantAuthority.source === "delegated_permission") {
       const receiz = createReceizCommerceAdapter({
         baseUrl: process.env.RECEIZ_BASE_URL,
         accessToken
@@ -491,20 +491,20 @@ export async function POST(request: NextRequest) {
     const proofStore = await getServerProofStateStore(storeStateRecord.merchantReceizId);
     await proofStore.admitStoreRecord(storeStateRecord);
     let storeStateReceizRecord: unknown =
-      merchantSession.source === "identity_seal"
+      merchantAuthority.source === "proof_object"
         ? {
             ok: true,
             skipped: true,
-            mode: "identity_seal_authorized",
-            message: "Identity Seal authorized local proof-state publish."
+            mode: "proof_object_authorized",
+            message: "Verified Receiz proof object authorized local proof-state publish."
           }
         : await publishReceizStoreState(accessToken, storeStateRecord);
 
     if (!receizWriteSucceeded(storeStateReceizRecord)) {
       const error = isRecord(storeStateReceizRecord) ? String(storeStateReceizRecord.error ?? "receiz_store_state_record_failed") : "receiz_store_state_record_failed";
 
-      if (merchantSession.localIdentity.connected && merchantSession.localIdentity.localProofVerified) {
-        console.warn("[publish] Receiz remote mirror skipped after Identity Seal authorization", {
+      if (merchantAuthority.localIdentity.connected && merchantAuthority.localIdentity.localProofVerified) {
+        console.warn("[publish] Receiz remote mirror skipped after proof object authorization", {
           tenantHost: storeStateRecord.tenantHost,
           merchantReceizId: storeStateRecord.merchantReceizId,
           storeStateRecordId: storeStateRecord.id,
@@ -513,7 +513,7 @@ export async function POST(request: NextRequest) {
         storeStateReceizRecord = {
           ok: true,
           skipped: true,
-          mode: "identity_seal_authorized",
+          mode: "proof_object_authorized",
           warning: error,
           remote: storeStateReceizRecord
         };
@@ -532,7 +532,7 @@ export async function POST(request: NextRequest) {
             message: error,
             storeStateReceizRecord
           },
-          { status: error === "receiz_login_required" ? 401 : 502 }
+          { status: error === "receiz_authority_required" ? 401 : 502 }
         );
       }
     }

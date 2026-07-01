@@ -3,14 +3,14 @@ import { describe, it } from "node:test";
 import {
   checkoutModeForAuthority,
   checkoutWalletAuthority,
-  identitySealCheckoutFunding
+  proofObjectCheckoutFunding
 } from "../src/lib/checkout/wallet-authority.js";
 
-describe("Identity Seal checkout authority", () => {
-  it("treats a verified Identity Seal as full wallet authority", () => {
+describe("Receiz proof object checkout authority", () => {
+  it("treats a verified proof object as full wallet authority", () => {
     const authority = checkoutWalletAuthority({
       scopedReceizAccess: false,
-      merchantSession: {
+      proofObject: {
         auth: {
           receizId: {
             connected: true,
@@ -24,10 +24,10 @@ describe("Identity Seal checkout authority", () => {
     assert.deepEqual(authority, {
       ok: true,
       handle: "buyer.receiz.id",
-      source: "identity_seal"
+      source: "proof_object"
     });
 
-    assert.deepEqual(identitySealCheckoutFunding(1800), {
+    assert.deepEqual(proofObjectCheckoutFunding(1800), {
       strategy: "receiz_wallet_first",
       totalUsdCents: 1800,
       walletBalanceUsdCents: 1800,
@@ -41,8 +41,8 @@ describe("Identity Seal checkout authority", () => {
     });
   });
 
-  it("applies the Identity Seal wallet first and requires card for the remaining delta", () => {
-    assert.deepEqual(identitySealCheckoutFunding(1800, 900), {
+  it("applies the proof object wallet first and requires card for the remaining delta", () => {
+    assert.deepEqual(proofObjectCheckoutFunding(1800, 900), {
       strategy: "receiz_wallet_first",
       totalUsdCents: 1800,
       walletBalanceUsdCents: 900,
@@ -59,7 +59,7 @@ describe("Identity Seal checkout authority", () => {
   it("does not grant wallet authority to an unverified local identity", () => {
     const authority = checkoutWalletAuthority({
       scopedReceizAccess: false,
-      merchantSession: {
+      proofObject: {
         auth: {
           receizId: {
             connected: true,
@@ -71,17 +71,17 @@ describe("Identity Seal checkout authority", () => {
     });
 
     assert.equal(authority.ok, false);
-    assert.match(authority.message, /Sign in with Receiz ID/);
+    assert.match(authority.message, /verified Receiz proof object/);
   });
 
-  it("uses the Receiz checkout rail when Identity Seal wallet authority is present", () => {
+  it("uses the Receiz checkout rail when proof object wallet authority is present", () => {
     assert.equal(
       checkoutModeForAuthority({
         configuredCheckoutMode: undefined,
         tenantSurface: false,
         authMode: undefined,
         scopedReceizAccess: false,
-        identitySealAuthorized: true
+        proofObjectAuthorized: true
       }),
       "receiz"
     );
@@ -92,7 +92,7 @@ describe("Identity Seal checkout authority", () => {
         tenantSurface: false,
         authMode: undefined,
         scopedReceizAccess: false,
-        identitySealAuthorized: false
+        proofObjectAuthorized: false
       }),
       "mock"
     );

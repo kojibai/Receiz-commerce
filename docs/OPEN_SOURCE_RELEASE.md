@@ -9,8 +9,8 @@ Use this before tagging or announcing the public template.
 - Tenant storefront QA on a subdomain host
 - Platform admin QA on `receiz.app`
 - Checkout QA:
-  - Logged-out customer is sent to Receiz ID login
-  - Logged-in customer uses scoped Receiz session for that host
+  - Customer without proof is sent to Receiz ID continue/restore
+  - Customer with a verified proof object or continued Receiz ID proof can use that host
   - Receiz wallet-first checkout request includes card fallback metadata
   - Merchant settlement metadata points to the merchant Receiz ID
   - Order/customer projections appear in admin

@@ -21,6 +21,12 @@ Open:
 
 Receiz.app Commerce Cloud uses Receiz as the account, payment, proof, reward, ledger, and asset rail. The app can still run locally with demo UI state, but production truth comes from Receiz proof objects, identity artifacts, verified appends, ownership appends, and settlement ledger rows.
 
+### Authority Model
+
+The object carries the proof. A Receiz Key, Identity Record image, Identity Seal image, sealed product/order/reward object, verified append, ownership append, or settlement ledger row is the authority for the fact it carries.
+
+`@receiz/sdk` is the typed way to verify, project, admit, publish, and sync that proof truth. Receiz MCP is agent tooling over the SDK/API surface. Connect/OIDC tokens are scoped permission artifacts for remote reads and writes after proof has been established; they are not the identity proof root and do not outrank a verified proof object.
+
 The SDK integration follows the Receiz order:
 
 - Verify or validate carried proof truth.
@@ -214,7 +220,7 @@ The app routes tenant hosts through `middleware.ts`. A request to `boost.receiz.
 
 ### Global Publish Sync
 
-The admin editor can stage changes locally, but a hosted subdomain/custom domain is only globally live after publish writes a Receiz store-state record. Production publish requires a Receiz ID session on `receiz.app/admin`; the generated OIDC access token is sent from the secure server cookie to Receiz Connect record APIs. Vercel function memory is not durable and is never treated as the global source of truth.
+The admin editor can stage changes locally, but a hosted subdomain/custom domain is only globally live after publish writes a Receiz store-state record. Production publish is authorized by the merchant's verified Receiz proof object. When the app needs remote SDK/API writes, continued Receiz ID proof can mint delegated Connect permission from the secure server cookie, but that token is only a permission artifact beneath the proof object. Vercel function memory is not durable and is never treated as the global source of truth.
 
 After publishing, verify the public tenant projection:
 
@@ -222,7 +228,7 @@ After publishing, verify the public tenant projection:
 curl -sS https://your-subdomain.receiz.app/api/store
 ```
 
-The response should show saved brand/content, `source: "published"`, `publishedState: true`, and `proofMemory.entries` greater than `0`. If it shows `source: "fallback"` or `proofMemory.entries: 0`, the live app did not recover a Receiz store-state record and will render the safe fallback storefront. If publish returns `receiz_login_required`, sign in from `https://receiz.app/admin` and publish again.
+The response should show saved brand/content, `source: "published"`, `publishedState: true`, and `proofMemory.entries` greater than `0`. If it shows `source: "fallback"` or `proofMemory.entries: 0`, the live app did not recover a Receiz store-state record and will render the safe fallback storefront. If publish returns `receiz_authority_required`, restore or present a verified proof object, or continue with Receiz ID proof for delegated remote writes, then publish again.
 
 Receiz settlement for platform fees we collect:
 
@@ -243,9 +249,9 @@ RECEIZ_DEFAULT_MERCHANT_RECEIZ_ID=
 RECEIZ_DEFAULT_SETTLEMENT_USER_ID=
 ```
 
-Production merchant checkout should use the merchant's connected Receiz account/state or a verified local Identity Seal. The checkout API sends tenant host, merchant Receiz ID, and settlement recipient metadata into Receiz checkout so customer payments settle to the merchant's Receiz rails, not a Stripe account.
+Production merchant checkout should use the merchant's verified Receiz proof object, continued Receiz ID proof, or delegated Connect permission. The checkout API sends tenant host, merchant Receiz ID, and settlement recipient metadata into Receiz checkout so customer payments settle to the merchant's Receiz rails, not a Stripe account.
 
-Customer checkout on a tenant host requires that customer's scoped Receiz session or verified Identity Seal for that exact host. A `receiz.app` platform login is not reused as the buyer session on `brand.receiz.app` or a custom domain.
+Customer checkout on a tenant host requires customer proof for that store: a verified identity object, continued Receiz ID proof, or scoped delegated permission. A `receiz.app` platform login is not reused as buyer authority on `brand.receiz.app` or a custom domain.
 
 The checkout request is wallet-first:
 
@@ -320,7 +326,7 @@ RECEIZ_BASE_URL = "https://receiz.com"
 # RECEIZ_ACCESS_TOKEN = "delegated_agent_access_token"
 ```
 
-Without `RECEIZ_ACCESS_TOKEN`, MCP should still be able to run public diagnostics and public resolve/read tools. With a delegated token, MCP can publish/resolve app state, write public-store projections, verify assets, inspect proof objects, and make agent-driven setup much faster.
+Without `RECEIZ_ACCESS_TOKEN`, MCP should still be able to run public diagnostics and public resolve/read tools. With a delegated token, MCP can publish/resolve app state, write public-store projections, verify assets, inspect proof objects, and make agent-driven setup much faster. MCP never becomes the authority; it only helps inspect or invoke the SDK/API rails.
 
 `VERCEL_*` values are only for deployment/custom-domain automation if Vercel is hosting the SaaS. They are not commerce, payment, identity, or proof rails. After changing the production domain, update `NEXT_PUBLIC_SITE_URL` and `RECEIZ_ID_CALLBACK_URL` so Receiz ID redirect URLs use the correct origin. Never expose access tokens, webhook secrets, client secrets, or `VERCEL_API_TOKEN` with a `NEXT_PUBLIC_` prefix.
 

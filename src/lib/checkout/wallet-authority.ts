@@ -1,13 +1,13 @@
 import {
-  merchantLocalIdentitySessionFromState,
-  merchantServerSessionRequirement
-} from "../hosting/merchant-session-gate";
+  merchantLocalProofObjectFromState,
+  merchantProofAuthorityRequirement
+} from "../hosting/merchant-proof-authority";
 
 function usdLabelFromCents(cents: number) {
   return `$${(Math.max(0, cents) / 100).toFixed(2)}`;
 }
 
-export function identitySealCheckoutFunding(totalUsdCents: number, walletBalanceUsdCents = totalUsdCents) {
+export function proofObjectCheckoutFunding(totalUsdCents: number, walletBalanceUsdCents = totalUsdCents) {
   const safeTotalUsdCents = Math.max(0, totalUsdCents);
   const safeWalletBalanceUsdCents = Math.max(0, walletBalanceUsdCents);
   const walletAppliedUsdCents = Math.min(safeTotalUsdCents, safeWalletBalanceUsdCents);
@@ -29,14 +29,14 @@ export function identitySealCheckoutFunding(totalUsdCents: number, walletBalance
 
 export function checkoutWalletAuthority(input: {
   scopedReceizAccess: boolean;
-  merchantSession?: unknown;
+  proofObject?: unknown;
   handle?: string | null;
 }) {
-  const localIdentity = merchantLocalIdentitySessionFromState(input.merchantSession);
+  const localIdentity = merchantLocalProofObjectFromState(input.proofObject);
 
-  return merchantServerSessionRequirement({
+  return merchantProofAuthorityRequirement({
     action: "checkout",
-    connected: input.scopedReceizAccess,
+    delegatedPermission: input.scopedReceizAccess,
     handle: input.handle ?? localIdentity.handle,
     localReceizIdConnected: localIdentity.connected,
     localProofVerified: localIdentity.localProofVerified
@@ -48,14 +48,14 @@ export function checkoutModeForAuthority(input: {
   tenantSurface: boolean;
   authMode?: string;
   scopedReceizAccess: boolean;
-  identitySealAuthorized: boolean;
+  proofObjectAuthorized: boolean;
 }) {
   return (
     input.configuredCheckoutMode ??
     (input.tenantSurface ||
     input.authMode === "receiz_id" ||
     input.scopedReceizAccess ||
-    input.identitySealAuthorized
+    input.proofObjectAuthorized
       ? "receiz"
       : "mock")
   );

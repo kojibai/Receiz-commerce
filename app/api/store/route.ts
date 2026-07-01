@@ -8,7 +8,7 @@ import {
 import { getServerProofStateStore } from "@/lib/receiz/proof-state-store";
 import { publishReceizStoreState } from "@/lib/receiz/store-state-publication";
 import { loadReceizConnectProfile } from "@/lib/receiz/connect-profile";
-import { receizAccessTokenFromRequest, receizLoginRequired } from "@/lib/receiz/session";
+import { receizAccessTokenFromRequest, receizAuthorityRequired } from "@/lib/receiz/session";
 import { createReceizCommerceAdapter } from "@/lib/receiz/adapter";
 import { prepareStoreStateMediaForPublish } from "@/lib/receiz/media-publication";
 import { mockStorage } from "@/lib/storage/mock-storage";
@@ -16,9 +16,9 @@ import { tenantFallbackState } from "@/lib/hosting/tenant-state";
 import { hydrateProofStoreFromReceizStoreState } from "@/lib/receiz/store-state-ledger";
 import { buildPublishedCommerceState } from "@/lib/hosting/published-state";
 import {
-  merchantLocalIdentitySessionFromState,
-  merchantServerSessionRequirement
-} from "@/lib/hosting/merchant-session-gate";
+  merchantLocalProofObjectFromState,
+  merchantProofAuthorityRequirement
+} from "@/lib/hosting/merchant-proof-authority";
 import type { CommerceState, StorefrontHomepageMode } from "@/types/domain";
 
 export const runtime = "nodejs";
@@ -85,13 +85,13 @@ async function loadPublishOwner(accessToken: string | undefined) {
   }
 }
 
-async function requireStorePublishSession(accessToken: string | undefined, localIdentityState?: unknown) {
+async function requireStorePublishAuthority(accessToken: string | undefined, localIdentityState?: unknown) {
   const profile = await loadPublishOwner(accessToken);
-  const localIdentity = merchantLocalIdentitySessionFromState(localIdentityState);
-  const tokenOnlySession = Boolean(accessToken) && !localIdentity.localProofVerified;
-  const gate = merchantServerSessionRequirement({
+  const localIdentity = merchantLocalProofObjectFromState(localIdentityState);
+  const delegatedPermission = Boolean(profile) || (Boolean(accessToken) && !localIdentity.localProofVerified);
+  const gate = merchantProofAuthorityRequirement({
     action: "publish",
-    connected: Boolean(profile) || tokenOnlySession,
+    delegatedPermission,
     handle: profile?.handle ?? localIdentity.handle,
     localReceizIdConnected: localIdentity.connected,
     localProofVerified: localIdentity.localProofVerified
@@ -111,7 +111,7 @@ async function requireStorePublishSession(accessToken: string | undefined, local
     ok: false as const,
     response: NextResponse.json(
       {
-        ...receizLoginRequired("/admin"),
+        ...receizAuthorityRequired("/admin"),
         message: gate.message
       },
       { status: 401, headers: noStoreHeaders }
@@ -199,24 +199,24 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, error: "unknown_action" }, { status: 400 });
   }
 
-  const merchantSession = await requireStorePublishSession(
+  const merchantAuthority = await requireStorePublishAuthority(
     accessToken,
-    isRecord(body) ? body.merchantSession ?? body.state : null
+    isRecord(body) ? body.merchantProof ?? body.merchantSession ?? body.state : null
   );
-  if (!merchantSession.ok) return merchantSession.response;
+  if (!merchantAuthority.ok) return merchantAuthority.response;
 
-  const publishOwner = merchantSession.profile;
+  const publishOwner = merchantAuthority.profile;
   const state = buildPublishedCommerceState(mockStorage.getState(), mergePublishedState(isRecord(body) ? body.state : null), {
     customDomain: publishOwner?.customDomain,
-    displayName: publishOwner?.name ?? merchantSession.localIdentity.displayName,
-    merchantReceizId: publishOwner?.handle ?? merchantSession.handle,
+    displayName: publishOwner?.name ?? merchantAuthority.localIdentity.displayName,
+    merchantReceizId: publishOwner?.handle ?? merchantAuthority.handle,
     tenantSlug: publishOwner?.subdomain
   });
   const tenantHost = state.hosting.customDomain.domain || state.hosting.subdomain || hostContext.tenantHost || host;
   const actorReceizId = state.hosting.merchantReceizId || state.auth.receizId.handle;
   let publishState = state;
 
-  if (accessToken && merchantSession.source === "receiz_connect") {
+  if (accessToken && merchantAuthority.source === "delegated_permission") {
     const receiz = createReceizCommerceAdapter({
       baseUrl: process.env.RECEIZ_BASE_URL,
       accessToken
@@ -248,23 +248,23 @@ export async function POST(request: NextRequest) {
   const proofStore = await getServerProofStateStore(record.merchantReceizId);
   await proofStore.admitStoreRecord(record);
   let receizRecord: unknown =
-    merchantSession.source === "identity_seal"
+    merchantAuthority.source === "proof_object"
       ? {
           ok: true,
           skipped: true,
-          mode: "identity_seal_authorized",
-          message: "Identity Seal authorized local proof-state publish."
+          mode: "proof_object_authorized",
+          message: "Verified Receiz proof object authorized local proof-state publish."
         }
       : await publishReceizStoreState(accessToken, record);
 
   if (!receizWriteSucceeded(receizRecord)) {
     const error = isRecord(receizRecord) ? String(receizRecord.error ?? "receiz_store_state_record_failed") : "receiz_store_state_record_failed";
 
-    if (merchantSession.localIdentity.connected && merchantSession.localIdentity.localProofVerified) {
+    if (merchantAuthority.localIdentity.connected && merchantAuthority.localIdentity.localProofVerified) {
       receizRecord = {
         ok: true,
         skipped: true,
-        mode: "identity_seal_authorized",
+        mode: "proof_object_authorized",
         warning: error,
         remote: receizRecord
       };
@@ -276,7 +276,7 @@ export async function POST(request: NextRequest) {
           message: error,
           receizRecord
         },
-        { status: error === "receiz_login_required" ? 401 : 502, headers: noStoreHeaders }
+        { status: error === "receiz_authority_required" ? 401 : 502, headers: noStoreHeaders }
       );
     }
   }

@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
     const payload = rawContent.trim() || (await fetchSource(sourceUrl));
     const imported = parseCommerceImport({ sourceType, sourceUrl, payload });
     const accessToken = receizAccessTokenFromRequest(request);
-    let receizRecord: unknown = { ok: false, skipped: true, error: "receiz_login_required" };
+    let receizRecord: unknown = { ok: false, skipped: true, error: "receiz_authority_required" };
 
     if (accessToken) {
       try {

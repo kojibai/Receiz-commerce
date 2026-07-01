@@ -26,11 +26,11 @@ export function receizAccessTokenFromRequest(request: NextRequest) {
   return receizRequestSession(request).accessToken;
 }
 
-export function receizLoginRequired(returnTo = "/admin") {
+export function receizAuthorityRequired(returnTo = "/admin") {
   return {
     ok: false,
-    error: "receiz_login_required",
-    message: "Receiz rails authorization is required for this server action. Continue with Receiz ID for this site, then try again.",
+    error: "receiz_authority_required",
+    message: "Present a verified Receiz proof object, or continue with Receiz ID proof for this site, then try again.",
     connectUrl: `/api/auth/receiz/start?returnTo=${encodeURIComponent(returnTo)}`
   };
 }

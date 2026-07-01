@@ -1,6 +1,6 @@
 import type { ProofEventType } from "@/types/domain";
 
-export type MerchantServerAction =
+export type MerchantAuthorityAction =
   | "account"
   | "billing"
   | "checkout"
@@ -8,13 +8,13 @@ export type MerchantServerAction =
   | "publish"
   | "verify_domain"
   | "wallet";
-export type MerchantServerSessionSource = "receiz_connect" | "identity_seal";
+export type MerchantAuthoritySource = "delegated_permission" | "proof_object";
 
-export type MerchantServerSessionGate =
+export type MerchantAuthorityGate =
   | {
       ok: true;
       handle: string;
-      source: MerchantServerSessionSource;
+      source: MerchantAuthoritySource;
     }
   | {
       ok: false;
@@ -24,7 +24,7 @@ export type MerchantServerSessionGate =
     };
 
 const ACTION_COPY: Record<
-  MerchantServerAction,
+  MerchantAuthorityAction,
   {
     eventType: ProofEventType;
     message: string;
@@ -32,31 +32,31 @@ const ACTION_COPY: Record<
 > = {
   account: {
     eventType: "RECEIZ_ID_CONNECTED",
-    message: "Sign in with Receiz ID before using account functions."
+    message: "Present a verified Receiz proof object or continue with Receiz ID proof before using account functions."
   },
   billing: {
     eventType: "BILLING_METHOD_ADDED",
-    message: "Sign in with Receiz ID before changing billing."
+    message: "Present a verified Receiz proof object or continue with Receiz ID proof before changing billing."
   },
   checkout: {
     eventType: "ORDER_VERIFIED",
-    message: "Sign in with Receiz ID before using checkout."
+    message: "Present a verified Receiz proof object or continue with Receiz ID proof before using checkout."
   },
   custom_domain: {
     eventType: "DOMAIN_CONNECTED",
-    message: "Sign in with Receiz ID before connecting a custom domain."
+    message: "Present a verified Receiz proof object or continue with Receiz ID proof before connecting a custom domain."
   },
   verify_domain: {
     eventType: "DOMAIN_CONNECTED",
-    message: "Sign in with Receiz ID before verifying a custom domain."
+    message: "Present a verified Receiz proof object or continue with Receiz ID proof before verifying a custom domain."
   },
   publish: {
     eventType: "SITE_PUBLISHED",
-    message: "Sign in with Receiz ID before publishing this store."
+    message: "Present a verified Receiz proof object or continue with Receiz ID proof before publishing this store."
   },
   wallet: {
     eventType: "ORDER_VERIFIED",
-    message: "Sign in with Receiz ID before using Receiz wallet."
+    message: "Present a verified Receiz proof object or continue with Receiz ID proof before using Receiz wallet."
   }
 };
 
@@ -68,7 +68,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
 
-export function merchantLocalIdentitySessionFromState(value: unknown) {
+export function merchantLocalProofObjectFromState(value: unknown) {
   const state = isRecord(value) ? value : {};
   const auth = isRecord(state.auth) ? state.auth : {};
   const receizId = isRecord(auth.receizId) ? auth.receizId : {};
@@ -81,20 +81,20 @@ export function merchantLocalIdentitySessionFromState(value: unknown) {
   };
 }
 
-export function merchantServerSessionRequirement(input: {
-  action: MerchantServerAction;
-  connected: boolean;
+export function merchantProofAuthorityRequirement(input: {
+  action: MerchantAuthorityAction;
+  delegatedPermission: boolean;
   handle?: string | null;
   localReceizIdConnected?: boolean;
   localProofVerified?: boolean;
-}): MerchantServerSessionGate {
+}): MerchantAuthorityGate {
   const handle = normalizedHandle(input.handle);
 
-  if (input.connected) {
+  if (input.delegatedPermission) {
     return {
       ok: true,
       handle: handle || "receiz-connected",
-      source: "receiz_connect"
+      source: "delegated_permission"
     };
   }
 
@@ -102,7 +102,7 @@ export function merchantServerSessionRequirement(input: {
     return {
       ok: true,
       handle: handle || "identity-seal",
-      source: "identity_seal"
+      source: "proof_object"
     };
   }
 
@@ -112,6 +112,6 @@ export function merchantServerSessionRequirement(input: {
     ok: false,
     eventType: copy.eventType,
     message: copy.message,
-    statusLabel: "Receiz ID sign-in required"
+    statusLabel: "Receiz proof object required"
   };
 }

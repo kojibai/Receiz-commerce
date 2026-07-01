@@ -11,11 +11,14 @@ Receiz MCP is agent tooling. It helps agents inspect setup, runtime expectations
 
 Production truth comes from:
 
-- Receiz SDK/API rails.
-- Receiz public-store and app-state records.
 - Sealed proof objects.
-- Verified local proof projections.
-- Authenticated server appends.
+- Identity artifacts: Receiz Key, Identity Record, and Identity Seal.
+- Verified local proof projections admitted into proof memory.
+- Verified appends, ownership appends, and settlement ledger rows.
+- Receiz public-store and app-state records.
+- Receiz SDK/API rails that verify, project, publish, or append that truth.
+
+Connect/OIDC tokens are delegated permission artifacts for remote SDK/API reads and writes after proof has been established. They are not the proof root. A verified proof object is enough authority for the account, wallet, checkout, publish, billing, and domain actions this app can perform locally or route into the correct remote rail.
 
 The app follows this first-paint rule:
 
@@ -61,9 +64,9 @@ Required checks:
 - The same readiness model supports both no-code merchants and developer clones.
 - Long domain/auth/DNS messages wrap inside the UI on mobile and desktop.
 
-### 3. Receiz Identity And Auth
+### 3. Receiz Identity And Proof Authority
 
-Purpose: local/demo identity never masquerades as full server authorization.
+Purpose: identity proof objects, not app sessions, define account authority.
 
 Code paths:
 
@@ -75,10 +78,10 @@ Code paths:
 
 Required checks:
 
-- Server actions that require Receiz access tokens return `receiz_login_required`.
-- Client actions redirect to Receiz login when server authorization is missing.
+- Verified Receiz Key, Identity Record, or Identity Seal projections are accepted as account authority.
+- Remote-only SDK calls that require delegated Connect permission return `receiz_authority_required` only when no verified proof path can authorize the action.
 - Tenant customer sessions remain scoped to the tenant host.
-- Platform admin sessions are not reused as tenant customer sessions.
+- Platform admin state is not reused as tenant buyer authority.
 
 ### 4. Publish And Tenant Recovery
 
@@ -129,7 +132,7 @@ Code paths:
 
 Required checks:
 
-- Tenant checkout requires tenant-scoped Receiz ID or verified Identity Seal authority.
+- Tenant checkout requires customer proof for that store: verified identity proof object, continued Receiz ID proof, or scoped delegated permission.
 - Wallet-first checkout can fall back to card delta.
 - Orders, customers, fulfillment, payment rail, and settlement state project into admin.
 - Checkout/proof writes are never queued offline by the PWA.
@@ -148,7 +151,7 @@ Code paths:
 Required checks:
 
 - Subdomain claim normalizes and reserves only valid `*.receiz.app` hosts.
-- Custom-domain connect and verify require a Receiz Connect session or verified Identity Seal authority.
+- Custom-domain connect and verify require merchant proof authority: verified identity proof object, continued Receiz ID proof, or scoped delegated permission.
 - Missing Vercel configuration returns actionable DNS/env messages.
 - Domain messages wrap in the admin UI.
 
@@ -191,10 +194,10 @@ RECEIZ_DOCTOR_TENANT_HOST=boost.receiz.app pnpm receiz:doctor
 
 ## Manual Smoke Test
 
-1. Sign in on `/admin` with Receiz ID.
+1. Present a verified Receiz proof object or continue with Receiz ID proof on `/admin`.
 2. Change brand copy, add or edit a page, and publish.
 3. Open the published subdomain and verify the updated home page.
 4. Open `/about`, `/rewards`, and any new page slug directly.
-5. Connect a custom domain and confirm missing auth redirects into Receiz sign-in.
+5. Connect a custom domain and confirm missing proof/delegated permission shows the Receiz proof-object/continue prompt.
 6. Run a checkout and verify the order appears in admin with payment rail and settlement state.
 7. Refresh the subdomain in a clean browser session and verify the same published state cold-starts from Receiz.

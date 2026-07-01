@@ -2,6 +2,12 @@
 
 This template is intended to show how to build a commerce SaaS on top of `@receiz/sdk` without reaching into internal Receiz code.
 
+## Authority Model
+
+The proof object is the authority. Receiz Key, Identity Record, Identity Seal, sealed artifact/proof bundle, verified append, ownership append, and settlement ledger rows carry truth.
+
+The SDK is convenience and typed transport around that truth. It verifies, projects, admits into proof memory, publishes public-store/app-state records, and calls remote rails when delegated permission is needed. Receiz MCP is agent-callable tooling over the SDK/API surface; it does not create, replace, or outrank proof truth. Connect/OIDC access tokens authorize scoped remote calls after proof, but they are permission artifacts, not the identity proof root.
+
 ## Identity
 
 Files:
@@ -39,7 +45,7 @@ SDK rails:
 - `connect.checkoutSession`
 - `commerce.oneClickCheckout`
 
-Tenant checkout is host-scoped. A customer must log in with Receiz ID on the merchant store host before wallet-first checkout can proceed.
+Tenant checkout is host-scoped. A customer can proceed from a verified identity proof object, continued Receiz ID proof, or delegated tenant permission. Wallet-first checkout applies Receiz wallet balance first and uses card fallback only for the delta.
 
 ## Customers And Merchants
 
@@ -61,7 +67,7 @@ SDK rails:
 - `merchants.profile`
 - `merchants.capabilities`
 
-These rails are exposed in `@receiz/sdk@97.5.0`. The app treats customer accounts as tenant-scoped storefront accounts: the same Receiz ID can authenticate on multiple stores, but orders, rewards, assets, and permissions are projected for the active subdomain or custom domain only. SDK `doctor()` reports delegated-token, tenant, customer, merchant, commerce, media, domain, and public-store requirements directly.
+These rails are exposed in `@receiz/sdk@97.5.0`. The app treats customer accounts as tenant-scoped storefront projections over Receiz proof. The same proof-bearing Receiz identity can be used across multiple stores, but orders, rewards, assets, and permissions are projected for the active subdomain or custom domain. SDK `doctor()` reports delegated-token, tenant, customer, merchant, commerce, media, domain, and public-store requirements directly.
 
 ## Merchant Settlement
 

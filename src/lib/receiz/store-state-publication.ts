@@ -25,7 +25,7 @@ function failedReceizResponse(value: unknown) {
 
 export async function publishReceizStoreState(accessToken: string | undefined, record: StoreStateRecord) {
   if (!accessToken) {
-    return { ok: false, skipped: true, error: "receiz_login_required" };
+    return { ok: false, skipped: true, error: "receiz_authority_required" };
   }
 
   const receiz = createReceizCommerceAdapter({

@@ -13,7 +13,7 @@ import {
   subdomainForSlug
 } from "@/lib/hosting/domain-utils";
 import { BASE_STORAGE_KEY, currentHostContext, hostContextFromHost, type HostContext } from "@/lib/hosting/host-context";
-import { merchantServerSessionRequirement, type MerchantServerAction } from "@/lib/hosting/merchant-session-gate";
+import { merchantProofAuthorityRequirement, type MerchantAuthorityAction } from "@/lib/hosting/merchant-proof-authority";
 import { checkoutTenantHost } from "@/lib/checkout/checkout-request";
 import type { CommerceImportInput, CommerceImportResult } from "@/lib/import/commerce-importer";
 import { selectClientInitialState } from "@/lib/storage/client-state";
@@ -997,12 +997,12 @@ async function fetchPublishedStoreProjection(tenantHost?: string) {
   return response.json() as Promise<unknown>;
 }
 
-class ReceizLoginRequiredError extends Error {
+class ReceizAuthorityRequiredError extends Error {
   connectUrl: string;
 
-  constructor(connectUrl: string, message = "Receiz rails authorization is required for this server action. Continue with Receiz ID, then try again.") {
+  constructor(connectUrl: string, message = "Present a verified Receiz proof object, or continue with Receiz ID proof, then try again.") {
     super(message);
-    this.name = "ReceizLoginRequiredError";
+    this.name = "ReceizAuthorityRequiredError";
     this.connectUrl = connectUrl;
   }
 }
@@ -1025,7 +1025,7 @@ function hasPendingPublish(storageKey: string) {
 async function postJson<T>(
   url: string,
   body: Record<string, unknown>,
-  options: { deferLoginRedirect?: boolean } = {}
+  options: { deferAuthorityRedirect?: boolean } = {}
 ): Promise<T> {
   const response = await fetch(url, {
     method: "POST",
@@ -1035,10 +1035,10 @@ async function postJson<T>(
   const payload = await response.json().catch(() => ({}));
 
   if (response.status === 401 && typeof payload.connectUrl === "string") {
-    if (!options.deferLoginRedirect && typeof window !== "undefined") {
+    if (!options.deferAuthorityRedirect && typeof window !== "undefined") {
       window.location.assign(payload.connectUrl);
     }
-    throw new ReceizLoginRequiredError(payload.connectUrl, String(payload.message ?? "Receiz rails authorization required"));
+    throw new ReceizAuthorityRequiredError(payload.connectUrl, String(payload.message ?? "Receiz authority required"));
   }
 
   if (!response.ok || payload.ok === false) {
@@ -1186,7 +1186,7 @@ function publishedStatePayload(state: CommerceState) {
   };
 }
 
-function merchantSessionPayload(state: CommerceState) {
+function merchantProofPayload(state: CommerceState) {
   return {
     auth: {
       receizId: {
@@ -1442,16 +1442,16 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
     };
   }, [hostContext.surface, hydrated, state.hosting.customDomain.domain, state.hosting.subdomain]);
 
-  const ensureMerchantServerSession = useCallback(async (action: MerchantServerAction) => {
+  const ensureMerchantProofAuthority = useCallback(async (action: MerchantAuthorityAction) => {
     if (typeof window === "undefined" || process.env.NEXT_PUBLIC_AUTH_MODE !== "receiz_id") {
       return true;
     }
 
     const snapshot = stateRef.current;
     const result = await fetchReceizProfile().catch(() => null);
-    const gate = merchantServerSessionRequirement({
+    const gate = merchantProofAuthorityRequirement({
       action,
-      connected: Boolean(result?.connected),
+      delegatedPermission: Boolean(result?.connected),
       handle: result?.profile?.handle,
       localReceizIdConnected: snapshot.auth.receizId.connected,
       localProofVerified: snapshot.auth.receizId.localProofVerified
@@ -1650,7 +1650,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
           return;
         }
 
-        if (!(await ensureMerchantServerSession("custom_domain"))) {
+        if (!(await ensureMerchantProofAuthority("custom_domain"))) {
           return;
         }
 
@@ -1675,7 +1675,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
           const result = await postJson<{ hosting: CommerceState["hosting"] }>("/api/hosting", {
             action: "custom_domain",
             domain: normalizedDomain,
-            merchantSession: merchantSessionPayload(stateRef.current)
+            merchantProof: merchantProofPayload(stateRef.current)
           });
           setState((current) => ({
             ...current,
@@ -1717,7 +1717,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
           return;
         }
 
-        if (!(await ensureMerchantServerSession("verify_domain"))) {
+        if (!(await ensureMerchantProofAuthority("verify_domain"))) {
           return;
         }
 
@@ -1725,7 +1725,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
           const result = await postJson<{ hosting: CommerceState["hosting"] }>("/api/hosting", {
             action: "verify_domain",
             domain: normalizedDomain,
-            merchantSession: merchantSessionPayload(stateRef.current)
+            merchantProof: merchantProofPayload(stateRef.current)
           });
           setState((current) => ({
             ...current,
@@ -1769,7 +1769,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
           }>("/api/hosting", {
             action: "plan",
             plan,
-            merchantSession: merchantSessionPayload(stateRef.current)
+            merchantProof: merchantProofPayload(stateRef.current)
           });
           setState((current) => ({
             ...current,
@@ -1803,7 +1803,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
           const result = await postJson<{ billing: CommerceState["billing"] }>("/api/hosting", {
             action: "payment",
             paymentMethodLabel: label,
-            merchantSession: merchantSessionPayload(stateRef.current)
+            merchantProof: merchantProofPayload(stateRef.current)
           });
           setState((current) => ({
             ...current,
@@ -2173,7 +2173,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
       },
       publish() {
         void (async () => {
-          if (!(await ensureMerchantServerSession("publish"))) {
+          if (!(await ensureMerchantProofAuthority("publish"))) {
             return;
           }
 
@@ -2188,11 +2188,11 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
             void postJson<{
               hosting: CommerceState["hosting"];
               state?: Partial<CommerceState>;
-            }>("/api/hosting", {
-              action: "publish",
-              merchantSession: merchantSessionPayload(publishRequestState),
-              state: publishedStatePayload(publishRequestState)
-            }, { deferLoginRedirect: true })
+          }>("/api/hosting", {
+            action: "publish",
+            merchantProof: merchantProofPayload(publishRequestState),
+            state: publishedStatePayload(publishRequestState)
+          }, { deferAuthorityRedirect: true })
               .then((result) => {
                 clearPendingPublish(publishHostContext.storageKey);
                 setState((latest) => ({
@@ -2201,12 +2201,12 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
                 }));
               })
               .catch((error) => {
-                if (error instanceof ReceizLoginRequiredError) {
+                if (error instanceof ReceizAuthorityRequiredError) {
                   clearPendingPublish(publishHostContext.storageKey);
                   setState((latest) => ({
                     ...latest,
                     proofEvents: [
-                      makeEvent("SITE_PUBLISHED", "Receiz ID required to publish. Continue with Receiz ID in Account, then publish again."),
+                      makeEvent("SITE_PUBLISHED", "Receiz proof object required to publish. Restore a verified proof object or continue with Receiz ID proof, then publish again."),
                       ...latest.proofEvents
                     ]
                   }));
@@ -2429,10 +2429,10 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
             tenantHost: checkoutTenantHost(checkoutSnapshot),
             merchantReceizId: checkoutSnapshot.hosting.merchantReceizId,
             customerReceizId: checkoutSnapshot.auth.receizId.handle,
-            merchantSession: merchantSessionPayload(checkoutSnapshot),
+            merchantProof: merchantProofPayload(checkoutSnapshot),
             successUrl: `${window.location.origin}/?checkout=success`,
             cancelUrl: `${window.location.origin}/?checkout=cancel`
-          }, { deferLoginRedirect: true });
+          }, { deferAuthorityRedirect: true });
 
           setState((current) => {
             const base = identity.apply(current);
@@ -2478,7 +2478,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
             };
           });
         } catch (error) {
-          if (error instanceof ReceizLoginRequiredError) {
+          if (error instanceof ReceizAuthorityRequiredError) {
             setState((current) => {
               const base = identity.apply(current);
               const id = `card-${Date.now()}`;
@@ -2569,7 +2569,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
         }));
       }
     }),
-    [ensureMerchantServerSession]
+    [ensureMerchantProofAuthority]
   );
 
   useEffect(() => {

@@ -18,17 +18,17 @@ describe("hosting billing settlement", () => {
     assert.equal(billing.invoices[0]?.status, "open");
   });
 
-  it("marks live or Identity Seal platform billing as active only when the receipt is paid", () => {
+  it("marks live or proof object platform billing as active only when the receipt is paid", () => {
     const billing = hostingBillingFromPlatformPayment(baseState().billing, "pro", {
       ok: true,
-      mode: "identity_seal_wallet_first",
+      mode: "proof_object_wallet_first",
       paid: true,
       amountUsd: "49.00",
-      message: "Identity Seal authorized platform settlement."
+      message: "Verified Receiz proof object authorized platform settlement."
     });
 
     assert.equal(billing.status, "active");
-    assert.equal(billing.paymentMethodLabel, "Identity Seal wallet-first billing");
+    assert.equal(billing.paymentMethodLabel, "Proof object wallet-first billing");
     assert.equal(billing.invoices[0]?.amountLabel, "$49.00");
     assert.equal(billing.invoices[0]?.status, "paid");
   });

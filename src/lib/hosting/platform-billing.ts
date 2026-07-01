@@ -15,7 +15,7 @@ function amountLabel(amountUsd: string | undefined) {
 
 function paymentMethodLabel(receipt: PlatformBillingReceipt) {
   if (receipt.paid && receipt.mode === "live") return "Receiz live billing";
-  if (receipt.paid && receipt.mode === "identity_seal_wallet_first") return "Identity Seal wallet-first billing";
+  if (receipt.paid && receipt.mode === "proof_object_wallet_first") return "Proof object wallet-first billing";
   if (receipt.paid && receipt.mode === "no_charge") return "No-charge hosting";
   if (receipt.mode === "sandbox") return "Sandbox billing - payment not collected";
   return "Payment pending";
