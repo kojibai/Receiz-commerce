@@ -30,8 +30,8 @@ export function HostingBillingPanel({
           <strong>{billing.monthlyTotalLabel}</strong>
           <p>{billing.paymentMethodLabel}</p>
         </div>
-        <Button onClick={() => onAddPayment("Visa ending 4242")} variant="outline">
-          Add payment
+        <Button onClick={() => onAddPayment("Receiz wallet + card fallback")} variant="outline">
+          Connect billing
         </Button>
       </div>
       <div className="plan-choice-list">
@@ -52,6 +52,12 @@ export function HostingBillingPanel({
         ))}
       </div>
       <div className="settings-list">
+        {billing.invoices[0] ? (
+          <div>
+            <span>Latest invoice</span>
+            <strong>{billing.invoices[0].amountLabel} · {billing.invoices[0].status}</strong>
+          </div>
+        ) : null}
         <div><span>Trial</span><strong>{billing.trialEndsAt}</strong></div>
         <div><span>{platform.freeSubdomainLabel}</span><strong>{hosting.subdomain}</strong></div>
         <div><span>{platform.customDomainLabel}</span><strong>{hosting.customDomain.domain}</strong></div>

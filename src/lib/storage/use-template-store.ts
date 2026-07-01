@@ -14,6 +14,7 @@ import {
 } from "@/lib/hosting/domain-utils";
 import { BASE_STORAGE_KEY, currentHostContext, hostContextFromHost, type HostContext } from "@/lib/hosting/host-context";
 import { merchantServerSessionRequirement, type MerchantServerAction } from "@/lib/hosting/merchant-session-gate";
+import { checkoutTenantHost } from "@/lib/checkout/checkout-request";
 import type { CommerceImportInput, CommerceImportResult } from "@/lib/import/commerce-importer";
 import { selectClientInitialState } from "@/lib/storage/client-state";
 import { safeGetLocalStorage, safeRemoveLocalStorage, safeSetLocalStorage } from "@/lib/storage/browser-storage";
@@ -1791,9 +1792,9 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
           ...current,
           billing: {
             ...current.billing,
-            status: "active",
-            paymentMethodLabel: label,
-            trialEndsAt: "Active subscription"
+            status: "trial",
+            paymentMethodLabel: `${label} connecting`,
+            trialEndsAt: "Select a paid plan to collect payment"
           },
           proofEvents: [makeEvent("BILLING_METHOD_ADDED", `${label} added for hosting`), ...current.proofEvents]
         }));
@@ -2425,7 +2426,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
             description: `${checkoutSnapshot.brand.name} proof-sealed order`,
             shipping: customerShipping(checkoutSnapshot.auth.customer),
             tenantSlug: checkoutSnapshot.hosting.tenantSlug,
-            tenantHost: checkoutSnapshot.hosting.subdomain,
+            tenantHost: checkoutTenantHost(checkoutSnapshot),
             merchantReceizId: checkoutSnapshot.hosting.merchantReceizId,
             customerReceizId: checkoutSnapshot.auth.receizId.handle,
             merchantSession: merchantSessionPayload(checkoutSnapshot),

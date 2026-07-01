@@ -78,6 +78,7 @@ function mergeHostingForPublish(base: HostingConfig, input: unknown, owner: Publ
   const tenantSlug = ownerChanged ? tenantSlugFromOwner(owner, merged.tenantSlug || "store") : merged.tenantSlug;
   const subdomain = ownerChanged ? subdomainForSlug(tenantSlug) : merged.subdomain;
   const ownerCustomDomain = customDomainFromOwner(owner);
+  const shouldResetTemplateDomain = isTemplateCustomDomain(merged.customDomain.domain);
   const customDomain = ownerCustomDomain
     ? {
         ...merged.customDomain,
@@ -86,7 +87,7 @@ function mergeHostingForPublish(base: HostingConfig, input: unknown, owner: Publ
         status: merged.customDomain.status === "pending" ? "ready" : merged.customDomain.status,
         message: merged.customDomain.message || "Loaded from Receiz profile"
       }
-    : ownerChanged || isTemplateCustomDomain(merged.customDomain.domain)
+    : shouldResetTemplateDomain
       ? {
           ...base.customDomain,
           domain: "",

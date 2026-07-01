@@ -7,20 +7,23 @@ function usdLabelFromCents(cents: number) {
   return `$${(Math.max(0, cents) / 100).toFixed(2)}`;
 }
 
-export function identitySealCheckoutFunding(totalUsdCents: number) {
-  const walletAppliedUsdCents = Math.max(0, totalUsdCents);
+export function identitySealCheckoutFunding(totalUsdCents: number, walletBalanceUsdCents = totalUsdCents) {
+  const safeTotalUsdCents = Math.max(0, totalUsdCents);
+  const safeWalletBalanceUsdCents = Math.max(0, walletBalanceUsdCents);
+  const walletAppliedUsdCents = Math.min(safeTotalUsdCents, safeWalletBalanceUsdCents);
+  const cardDeltaUsdCents = Math.max(0, safeTotalUsdCents - walletAppliedUsdCents);
 
   return {
     strategy: "receiz_wallet_first" as const,
-    totalUsdCents: walletAppliedUsdCents,
-    walletBalanceUsdCents: walletAppliedUsdCents,
+    totalUsdCents: safeTotalUsdCents,
+    walletBalanceUsdCents: safeWalletBalanceUsdCents,
     walletAppliedUsdCents,
-    cardDeltaUsdCents: 0,
-    totalLabel: usdLabelFromCents(walletAppliedUsdCents),
-    walletBalanceLabel: usdLabelFromCents(walletAppliedUsdCents),
+    cardDeltaUsdCents,
+    totalLabel: usdLabelFromCents(safeTotalUsdCents),
+    walletBalanceLabel: usdLabelFromCents(safeWalletBalanceUsdCents),
     walletAppliedLabel: usdLabelFromCents(walletAppliedUsdCents),
-    cardDeltaLabel: "$0.00",
-    cardRequired: false
+    cardDeltaLabel: usdLabelFromCents(cardDeltaUsdCents),
+    cardRequired: cardDeltaUsdCents > 0
   };
 }
 

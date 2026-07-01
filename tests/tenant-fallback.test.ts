@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { hostContextFromHost } from "../src/lib/hosting/host-context.js";
 import { tenantFallbackState } from "../src/lib/hosting/tenant-state.js";
-import { resolvePageBySlug } from "../src/lib/storefront/content-routing.js";
+import { resolvePageBySlug, resolveProductBySlug } from "../src/lib/storefront/content-routing.js";
 import { baseState } from "./support/commerce-state.js";
 
 describe("tenant fallback state", () => {
@@ -109,5 +109,11 @@ describe("tenant fallback state", () => {
 
     assert.equal(resolvePageBySlug(state, "/about")?.slug, "/about");
     assert.equal(resolvePageBySlug(state, "/rewards")?.slug, "/rewards");
+  });
+
+  it("keeps product detail routes resolvable on fallback tenant storefronts", () => {
+    const state = tenantFallbackState(baseState(), hostContextFromHost("bjklock.receiz.app"));
+
+    assert.equal(resolveProductBySlug(state, "coffee-pack")?.id, "coffee-pack");
   });
 });

@@ -41,6 +41,21 @@ describe("Identity Seal checkout authority", () => {
     });
   });
 
+  it("applies the Identity Seal wallet first and requires card for the remaining delta", () => {
+    assert.deepEqual(identitySealCheckoutFunding(1800, 900), {
+      strategy: "receiz_wallet_first",
+      totalUsdCents: 1800,
+      walletBalanceUsdCents: 900,
+      walletAppliedUsdCents: 900,
+      cardDeltaUsdCents: 900,
+      totalLabel: "$18.00",
+      walletBalanceLabel: "$9.00",
+      walletAppliedLabel: "$9.00",
+      cardDeltaLabel: "$9.00",
+      cardRequired: true
+    });
+  });
+
   it("does not grant wallet authority to an unverified local identity", () => {
     const authority = checkoutWalletAuthority({
       scopedReceizAccess: false,

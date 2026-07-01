@@ -1,10 +1,22 @@
 "use client";
 
+import type { KeyboardEvent } from "react";
 import Link from "next/link";
 import { Icons } from "@/components/icons";
 import { Button, ProductVisual, SectionHeader, StatusPill } from "@/components/ui";
 import { productRoutePath } from "@/lib/storefront/product-purchase";
 import type { Product } from "@/types/domain";
+
+function openProductPath(path: string) {
+  window.location.assign(path);
+}
+
+function openProductPathFromKeyboard(event: KeyboardEvent<HTMLElement>, path: string) {
+  if (event.key === "Enter" || event.key === " ") {
+    event.preventDefault();
+    openProductPath(path);
+  }
+}
 
 export function ProductCatalog({
   brandImageUrl,
@@ -93,9 +105,19 @@ export function ProductCatalog({
 
       <div className="mobile-product-grid">
         {products.length ? (
-          products.slice(0, 4).map((product) => (
-            <article className="mobile-product-card" key={product.id}>
-              <Link className="mobile-product-link" href={productRoutePath(product)}>
+          products.slice(0, 4).map((product) => {
+            const productPath = productRoutePath(product);
+
+            return (
+            <article
+              className="mobile-product-card clickable-product-card"
+              key={product.id}
+              onClick={() => openProductPath(productPath)}
+              onKeyDown={(event) => openProductPathFromKeyboard(event, productPath)}
+              role="link"
+              tabIndex={0}
+            >
+              <Link className="mobile-product-link" href={productPath} onClick={(event) => event.stopPropagation()}>
                 <ProductVisual brandImageUrl={brandImageUrl} brandLabel={brandLabel} product={product} />
                 <strong>{product.name}</strong>
                 <p>{product.subtitle}</p>
@@ -105,7 +127,10 @@ export function ProductCatalog({
                 {showCartActions ? (
                   <button
                     aria-label={`Add ${product.name} to cart`}
-                    onClick={() => onAddToCart(product.id)}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onAddToCart(product.id);
+                    }}
                     type="button"
                   >
                     <Icons.cart size={18} />
@@ -113,7 +138,8 @@ export function ProductCatalog({
                 ) : null}
               </div>
             </article>
-          ))
+            );
+          })
         ) : (
           <div className="panel-empty-state">
             <Icons.products size={22} />

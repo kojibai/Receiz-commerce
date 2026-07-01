@@ -123,7 +123,7 @@ function recordId(prefix: string, tenantHost: string, recordedAt: string) {
   return `${prefix}:${tenantHost}:${stamp}`;
 }
 
-const MAX_INLINE_DATA_URL_CHARS = 24_000;
+const MAX_INLINE_DATA_URL_CHARS = 1_500_000;
 
 function compactInlineMedia(value: unknown): unknown {
   if (typeof value === "string") {

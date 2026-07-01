@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { platform } from "@/lib/platform";
 import type { DomainStatus, DomainVerificationRecord } from "@/types/domain";
 
@@ -20,6 +22,11 @@ type VercelDomainConfig = {
   teamSlug?: string;
 };
 
+type VercelProjectLink = {
+  projectId?: string;
+  orgId?: string;
+};
+
 export class VercelDomainError extends Error {
   status: number;
   payload: unknown;
@@ -32,16 +39,25 @@ export class VercelDomainError extends Error {
   }
 }
 
+function readVercelProjectLink(): VercelProjectLink {
+  try {
+    return JSON.parse(readFileSync(join(process.cwd(), ".vercel", "project.json"), "utf8")) as VercelProjectLink;
+  } catch {
+    return {};
+  }
+}
+
 export function getVercelDomainConfig(): VercelDomainConfig | null {
+  const projectLink = readVercelProjectLink();
   const apiToken = process.env.VERCEL_API_TOKEN ?? process.env.VERCEL_TOKEN;
-  const projectId = process.env.VERCEL_PROJECT_ID ?? process.env.VERCEL_PROJECT_NAME;
+  const projectId = process.env.VERCEL_PROJECT_ID ?? process.env.VERCEL_PROJECT_NAME ?? projectLink.projectId;
 
   if (!apiToken || !projectId) return null;
 
   return {
     apiToken,
     projectId,
-    teamId: process.env.VERCEL_TEAM_ID,
+    teamId: process.env.VERCEL_TEAM_ID ?? projectLink.orgId,
     teamSlug: process.env.VERCEL_TEAM_SLUG
   };
 }
@@ -205,6 +221,12 @@ export function customDomainStatusFromVercel(domain: string, vercelDomain: Verce
 }
 
 export function missingVercelEnvDomainStatus(domain: string): DomainStatus {
+  const projectLink = readVercelProjectLink();
+  const missing = [
+    process.env.VERCEL_API_TOKEN || process.env.VERCEL_TOKEN ? "" : "VERCEL_API_TOKEN",
+    process.env.VERCEL_PROJECT_ID || process.env.VERCEL_PROJECT_NAME || projectLink.projectId ? "" : "VERCEL_PROJECT_ID"
+  ].filter(Boolean);
+
   return {
     domain,
     status: "needs_vercel_env",
@@ -212,7 +234,7 @@ export function missingVercelEnvDomainStatus(domain: string): DomainStatus {
     verified: false,
     liveUrl: `https://${domain}`,
     dnsInstructions: [
-      "Set VERCEL_API_TOKEN and VERCEL_PROJECT_ID in Vercel env vars.",
+      `Set ${missing.join(" and ") || "Vercel domain automation env vars"} in Vercel env vars.`,
       `Add ${platform.domain} and *.${platform.domain} to this Vercel project for instant subdomains.`,
       `Point wildcard DNS *.${platform.domain} to ${process.env.VERCEL_CNAME_TARGET ?? "cname.vercel-dns-0.com"}.`
     ],

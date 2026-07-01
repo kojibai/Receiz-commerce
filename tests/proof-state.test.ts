@@ -462,8 +462,33 @@ describe("Receiz proof commerce state", () => {
     assert.equal(projected.proofEvents.length, 0);
   });
 
+  it("keeps merchant image data URLs large enough for Identity Seal local publishing", () => {
+    const imageDataUrl = `data:image/png;base64,${Buffer.alloc(96_000, "a").toString("base64")}`;
+    const record = buildStoreStateRecord(
+      {
+        ...baseState(),
+        brand: { ...baseState().brand, logoImageUrl: imageDataUrl },
+        products: [
+          {
+            ...baseState().products[0],
+            imageUrl: imageDataUrl
+          }
+        ]
+      },
+      {
+        actorReceizId: "boost.receiz.id",
+        tenantHost: "boost.receiz.app",
+        reason: "publish",
+        recordedAt: "2026-06-30T00:05:25.000Z"
+      }
+    );
+
+    assert.equal(record.state.brand.logoImageUrl, imageDataUrl);
+    assert.equal(record.state.products[0]?.imageUrl, imageDataUrl);
+  });
+
   it("omits oversized inline media from the published proof record", () => {
-    const hugeDataUrl = `data:image/png;base64,${"a".repeat(28_000)}`;
+    const hugeDataUrl = `data:image/png;base64,${"a".repeat(2_200_000)}`;
     const record = buildStoreStateRecord(
       {
         ...baseState(),

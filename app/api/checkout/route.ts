@@ -38,6 +38,19 @@ function centsFromValue(value: unknown) {
   return Number.isFinite(cents) ? Math.max(0, cents) : 0;
 }
 
+function centsFromUsdValue(value: unknown) {
+  if (typeof value !== "string" && typeof value !== "number") return null;
+  const amount = Number(String(value).replace(/[^0-9.]/g, ""));
+  if (!Number.isFinite(amount)) return null;
+  return Math.max(0, Math.round(amount * 100));
+}
+
+function walletBalanceCentsFromBody(body: Record<string, unknown>, totalUsdCents: number) {
+  if ("walletBalanceUsdCents" in body) return centsFromValue(body.walletBalanceUsdCents);
+  if ("walletBalanceCents" in body) return centsFromValue(body.walletBalanceCents);
+  return centsFromUsdValue(body.walletBalanceUsd ?? body.walletBalance ?? body.walletBalanceLabel) ?? totalUsdCents;
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
@@ -134,11 +147,11 @@ export async function POST(request: NextRequest) {
     const totalUsdCents = usdCentsFromAmount(amountFromBody(body));
     if (!hasScopedReceizAccess || !accessToken) {
       if (walletAuthority.ok && walletAuthority.source === "identity_seal") {
-        const funding = identitySealCheckoutFunding(totalUsdCents);
+        const funding = identitySealCheckoutFunding(totalUsdCents, walletBalanceCentsFromBody(body, totalUsdCents));
         const session = {
           ok: true,
           checkoutSessionId: `identity_seal_${Date.now()}`,
-          status: "wallet_reserved"
+          status: funding.cardRequired ? "card_required" : "wallet_reserved"
         };
         const commerceProjection = await recordCheckoutCommerceEvent({
           checkoutSessionId: session.checkoutSessionId,
@@ -149,8 +162,8 @@ export async function POST(request: NextRequest) {
           itemCount: Number(body.itemCount ?? 1),
           merchantReceizId,
           orderId: stringFromBody(body, "referenceId") ?? stringFromBody(body, "orderId") ?? session.checkoutSessionId,
-          paymentRail: "receiz_wallet",
-          settlementStatus: "wallet_reserved",
+          paymentRail: funding.cardRequired ? "wallet_card_split" : "receiz_wallet",
+          settlementStatus: funding.cardRequired ? "card_required" : "wallet_reserved",
           shipping: shippingFromBody(body.shipping),
           tenantHost: String(body.tenantHost ?? hostContext.tenantHost ?? host),
           totalLabel: funding.totalLabel
@@ -165,7 +178,9 @@ export async function POST(request: NextRequest) {
             handle: walletAuthority.handle,
             balanceUsdCents: funding.walletBalanceUsdCents,
             balanceLabel: funding.walletBalanceLabel,
-            message: "Identity Seal authorized Receiz wallet access."
+            message: funding.cardRequired
+              ? "Identity Seal authorized wallet-first checkout; card funds the remaining delta."
+              : "Identity Seal authorized Receiz wallet access."
           },
           paymentRails: paymentRails(merchantReceizId),
           funding,

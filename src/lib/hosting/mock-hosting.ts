@@ -71,6 +71,13 @@ export const mockHosting = {
     };
     return billing;
   },
+  updateBilling(input: Partial<typeof billing>) {
+    billing = {
+      ...billing,
+      ...input
+    };
+    return billing;
+  },
   getPublishChecklist() {
     return seedCommerceState.publish.checklist;
   }

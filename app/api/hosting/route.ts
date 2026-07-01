@@ -10,6 +10,7 @@ import {
   VercelDomainError,
   addProjectDomain,
   customDomainStatusFromVercel,
+  dnsInstructionsForDomain,
   hasVercelDomainConfig,
   missingVercelEnvDomainStatus,
   verifyProjectDomain,
@@ -17,6 +18,8 @@ import {
 } from "@/lib/hosting/vercel-domains";
 import { checkPublicDns } from "@/lib/hosting/dns-check";
 import { buildPublishedCommerceState } from "@/lib/hosting/published-state";
+import { hostingBillingFromPlatformPayment } from "@/lib/hosting/platform-billing";
+import { identitySealCheckoutFunding } from "@/lib/checkout/wallet-authority";
 import { platform } from "@/lib/platform";
 import { createReceizCommerceAdapter } from "@/lib/receiz/adapter";
 import { loadReceizConnectProfile } from "@/lib/receiz/connect-profile";
@@ -128,6 +131,7 @@ function domainErrorStatus(domain: string, error: unknown): DomainStatus {
     sslStatus: "unknown",
     verified: false,
     liveUrl: `https://${domain}`,
+    dnsInstructions: dnsInstructionsForDomain(domain),
     message: errorMessage(error),
     lastCheckedAt: new Date().toISOString()
   };
@@ -141,6 +145,11 @@ function amountForPlan(plan: HostingConfig["plan"]) {
 
 function isPositiveAmount(amountUsd: string) {
   return Number(amountUsd) > 0;
+}
+
+function centsFromAmountUsd(amountUsd: string) {
+  const amount = Number(String(amountUsd).replace(/[^0-9.]/g, ""));
+  return Number.isFinite(amount) ? Math.max(0, Math.round(amount * 100)) : 0;
 }
 
 async function recordReceizHostingEvent(
@@ -182,44 +191,48 @@ async function chargePlatformFee(
   const liveBilling = process.env.RECEIZ_PLATFORM_BILLING_MODE === "live";
 
   if (!liveBilling || !isPositiveAmount(input.amountUsd)) {
+    const noCharge = liveBilling && !isPositiveAmount(input.amountUsd);
     return {
       ok: true,
-      mode: liveBilling ? "no_charge" : "sandbox",
+      mode: noCharge ? "no_charge" : "sandbox",
       amountUsd: input.amountUsd,
+      paid: noCharge,
       message: liveBilling ? "No positive platform fee configured" : "Set RECEIZ_PLATFORM_BILLING_MODE=live to charge through Receiz"
     };
   }
 
-  if (!accessToken) {
-    if (input.authorizedByIdentitySeal) {
-      return {
-        ok: true,
-        mode: "identity_seal_authorized",
-        amountUsd: input.amountUsd,
-        message: "Identity Seal authorized platform settlement."
-      };
-    }
-
-    return { ...receizLoginRequired("/admin"), status: 401 };
-  }
-
   const recipientUserId = process.env.RECEIZ_PLATFORM_ACCOUNT_ID ?? process.env.RECEIZ_PLATFORM_USER_ID;
   if (!recipientUserId) {
-    if (input.authorizedByIdentitySeal) {
-      return {
-        ok: true,
-        mode: "identity_seal_authorized",
-        amountUsd: input.amountUsd,
-        message: "Identity Seal authorized platform billing; platform recipient is not configured."
-      };
-    }
-
     return {
       ok: false,
       status: 428,
       error: "missing_platform_receiz_account",
       message: "Set RECEIZ_PLATFORM_ACCOUNT_ID to collect platform/custom-domain fees into your Receiz account."
     };
+  }
+
+  if (!accessToken) {
+    if (input.authorizedByIdentitySeal) {
+      const funding = identitySealCheckoutFunding(centsFromAmountUsd(input.amountUsd));
+      return {
+        ok: true,
+        mode: "identity_seal_wallet_first",
+        amountUsd: input.amountUsd,
+        paid: !funding.cardRequired,
+        funding,
+        paymentRails: {
+          preferred: "receiz_wallet",
+          fallback: "credit_card",
+          settlement: "platform_receiz_reserve",
+          recipientUserId
+        },
+        message: funding.cardRequired
+          ? "Identity Seal authorized wallet-first platform billing; card funds the remaining delta."
+          : "Identity Seal authorized platform settlement."
+      };
+    }
+
+    return { ...receizLoginRequired("/admin"), status: 401 };
   }
 
   try {
@@ -242,19 +255,10 @@ async function chargePlatformFee(
       ok: true,
       mode: "live",
       amountUsd: input.amountUsd,
+      paid: true,
       transfer
     };
   } catch (error) {
-    if (input.authorizedByIdentitySeal) {
-      return {
-        ok: true,
-        mode: "identity_seal_authorized",
-        amountUsd: input.amountUsd,
-        warning: errorMessage(error),
-        message: "Identity Seal authorized platform billing; remote Receiz transfer mirror was skipped."
-      };
-    }
-
     return {
       ok: false,
       status: 402,
@@ -298,7 +302,7 @@ export async function POST(request: NextRequest) {
     );
     if (!merchantSession.ok) return merchantSession.response;
 
-    const platformBilling = await chargePlatformFee(accessToken, {
+    const platformBilling = await chargePlatformFee(merchantSession.source === "receiz_connect" ? accessToken : undefined, {
       amountUsd: amountForPlan(plan),
       note: `${platform.productName} ${plan} hosting plan`,
       idempotencyKey: `receiz-app:hosting-plan:${plan}`,
@@ -311,17 +315,31 @@ export async function POST(request: NextRequest) {
     }
 
     const result = mockHosting.selectHostingPlan(plan);
+    const billing = mockHosting.updateBilling(hostingBillingFromPlatformPayment(result.billing, plan, platformBilling));
     await recordReceizHostingEvent(accessToken, "hosting.plan.selected", {
       plan,
       platformBilling,
-      hosting: result.hosting
+      hosting: result.hosting,
+      billing
     });
 
-    return NextResponse.json({ ok: true, action, platformBilling, ...result });
+    return NextResponse.json({ ok: true, action, platformBilling, ...result, billing });
   }
 
   if (action === "payment") {
-    const billing = mockHosting.addBillingMethod("Receiz account billing");
+    const merchantSession = await requireMerchantSession(
+      accessToken,
+      "billing",
+      returnTo,
+      isRecord(body) ? body.merchantSession ?? body.state : null
+    );
+    if (!merchantSession.ok) return merchantSession.response;
+
+    const billing = mockHosting.updateBilling({
+      status: "trial",
+      paymentMethodLabel: "Receiz wallet + card fallback connected",
+      trialEndsAt: "Select a paid plan to collect payment"
+    });
     await recordReceizHostingEvent(accessToken, "hosting.billing.connected", { billing });
     return NextResponse.json({ ok: true, action, billing });
   }
@@ -342,7 +360,7 @@ export async function POST(request: NextRequest) {
     );
     if (!merchantSession.ok) return merchantSession.response;
 
-    const platformBilling = await chargePlatformFee(accessToken, {
+    const platformBilling = await chargePlatformFee(merchantSession.source === "receiz_connect" ? accessToken : undefined, {
       amountUsd: process.env.RECEIZ_CUSTOM_DOMAIN_SETUP_USD ?? "0.00",
       note: `${platform.productName} custom domain setup for ${domain}`,
       idempotencyKey: `receiz-app:custom-domain:${domain}`,

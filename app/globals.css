@@ -1291,6 +1291,15 @@ a {
   text-underline-offset: 3px;
 }
 
+.clickable-product-card {
+  cursor: pointer;
+}
+
+.clickable-product-card:focus-visible {
+  outline: 2px solid rgba(0, 122, 103, 0.42);
+  outline-offset: 3px;
+}
+
 .product-cell p {
   margin: 2px 0 0;
   color: var(--muted);

@@ -814,9 +814,24 @@ function MobileStorePanel({
 
       <div className="mobile-mini-products">
         {products.length ? (
-          products.slice(0, 2).map((product) => (
-            <article key={product.id}>
-              <Link className="mobile-mini-product-link" href={productRoutePath(product)}>
+          products.slice(0, 2).map((product) => {
+            const productPath = productRoutePath(product);
+
+            return (
+            <article
+              className="clickable-product-card"
+              key={product.id}
+              onClick={() => window.location.assign(productPath)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  window.location.assign(productPath);
+                }
+              }}
+              role="link"
+              tabIndex={0}
+            >
+              <Link className="mobile-mini-product-link" href={productPath} onClick={(event) => event.stopPropagation()}>
                 <ProductVisual brandImageUrl={state.brand.logoImageUrl} brandLabel={state.brand.logoText} product={product} />
                 <div className="mobile-mini-product-copy">
                   <strong>{product.name}</strong>
@@ -825,12 +840,20 @@ function MobileStorePanel({
                 </div>
               </Link>
               {tenantSurface ? (
-                <button aria-label={`Add ${product.name} to cart`} onClick={() => onAddToCart(product.id)} type="button">
+                <button
+                  aria-label={`Add ${product.name} to cart`}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onAddToCart(product.id);
+                  }}
+                  type="button"
+                >
                   <Icons.cart size={16} />
                 </button>
               ) : null}
             </article>
-          ))
+            );
+          })
         ) : (
           <div className="mobile-empty-state">
             <Icons.products size={24} />
