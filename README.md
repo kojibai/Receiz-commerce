@@ -208,6 +208,8 @@ For free subdomains to work, the Vercel project must receive the traffic:
 4. Set VERCEL_API_TOKEN and VERCEL_PROJECT_ID so /api/hosting can add and verify custom domains.
 ```
 
+If `.vercel/project.json` is present from a linked Vercel project, the app can read the project/team IDs from that file. A server-side `VERCEL_API_TOKEN` or `VERCEL_TOKEN` is still required for runtime custom-domain add/verify calls. Without it, `/api/hosting` returns `needs_vercel_env` plus DNS/env instructions instead of marking the domain connected.
+
 The app routes tenant hosts through `middleware.ts`. A request to `boost.receiz.app` is served by the same deployment with `tenant=boost`; a verified custom domain is served by the same deployment with `domain=thebrand.com`.
 
 ### Global Publish Sync
@@ -241,9 +243,9 @@ RECEIZ_DEFAULT_MERCHANT_RECEIZ_ID=
 RECEIZ_DEFAULT_SETTLEMENT_USER_ID=
 ```
 
-Production merchant checkout should use the merchant's connected Receiz account/state. The checkout API sends tenant host, merchant Receiz ID, and settlement recipient metadata into Receiz checkout so customer payments settle to the merchant's Receiz rails, not a Stripe account.
+Production merchant checkout should use the merchant's connected Receiz account/state or a verified local Identity Seal. The checkout API sends tenant host, merchant Receiz ID, and settlement recipient metadata into Receiz checkout so customer payments settle to the merchant's Receiz rails, not a Stripe account.
 
-Customer checkout on a tenant host requires that customer's scoped Receiz session for that exact host. A `receiz.app` platform login is not reused as the buyer session on `brand.receiz.app` or a custom domain.
+Customer checkout on a tenant host requires that customer's scoped Receiz session or verified Identity Seal for that exact host. A `receiz.app` platform login is not reused as the buyer session on `brand.receiz.app` or a custom domain.
 
 The checkout request is wallet-first:
 

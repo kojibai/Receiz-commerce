@@ -129,7 +129,7 @@ Code paths:
 
 Required checks:
 
-- Tenant checkout requires tenant-scoped Receiz ID.
+- Tenant checkout requires tenant-scoped Receiz ID or verified Identity Seal authority.
 - Wallet-first checkout can fall back to card delta.
 - Orders, customers, fulfillment, payment rail, and settlement state project into admin.
 - Checkout/proof writes are never queued offline by the PWA.
@@ -148,7 +148,7 @@ Code paths:
 Required checks:
 
 - Subdomain claim normalizes and reserves only valid `*.receiz.app` hosts.
-- Custom-domain connect and verify require a real Receiz server session.
+- Custom-domain connect and verify require a Receiz Connect session or verified Identity Seal authority.
 - Missing Vercel configuration returns actionable DNS/env messages.
 - Domain messages wrap in the admin UI.
 
