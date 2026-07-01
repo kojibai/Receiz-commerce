@@ -1,6 +1,13 @@
 import type { ProofEventType } from "@/types/domain";
 
-export type MerchantServerAction = "custom_domain" | "verify_domain" | "publish";
+export type MerchantServerAction =
+  | "account"
+  | "billing"
+  | "checkout"
+  | "custom_domain"
+  | "publish"
+  | "verify_domain"
+  | "wallet";
 export type MerchantServerSessionSource = "receiz_connect" | "identity_seal";
 
 export type MerchantServerSessionGate =
@@ -23,6 +30,18 @@ const ACTION_COPY: Record<
     message: string;
   }
 > = {
+  account: {
+    eventType: "RECEIZ_ID_CONNECTED",
+    message: "Sign in with Receiz ID before using account functions."
+  },
+  billing: {
+    eventType: "BILLING_METHOD_ADDED",
+    message: "Sign in with Receiz ID before changing billing."
+  },
+  checkout: {
+    eventType: "ORDER_VERIFIED",
+    message: "Sign in with Receiz ID before using checkout."
+  },
   custom_domain: {
     eventType: "DOMAIN_CONNECTED",
     message: "Sign in with Receiz ID before connecting a custom domain."
@@ -34,6 +53,10 @@ const ACTION_COPY: Record<
   publish: {
     eventType: "SITE_PUBLISHED",
     message: "Sign in with Receiz ID before publishing this store."
+  },
+  wallet: {
+    eventType: "ORDER_VERIFIED",
+    message: "Sign in with Receiz ID before using Receiz wallet."
   }
 };
 

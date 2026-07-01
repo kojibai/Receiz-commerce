@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { checkoutCommerceEvent, type CheckoutCommerceEventInput } from "@/lib/checkout/commerce-event";
 import { mockCheckout } from "@/lib/checkout/mock-checkout";
+import {
+  checkoutModeForAuthority,
+  checkoutWalletAuthority,
+  identitySealCheckoutFunding
+} from "@/lib/checkout/wallet-authority";
 import { hostContextFromHost } from "@/lib/hosting/host-context";
 import { createReceizCommerceAdapter } from "@/lib/receiz/adapter";
 import { getServerProofStateStore } from "@/lib/receiz/proof-state-store";
@@ -31,6 +36,10 @@ function centsFromValue(value: unknown) {
   if (typeof value !== "string" && typeof value !== "number") return 0;
   const cents = Number.parseInt(String(value), 10);
   return Number.isFinite(cents) ? Math.max(0, cents) : 0;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
 
 function checkoutFunding(totalUsdCents: number, walletBalanceUsdCents: number) {
@@ -99,15 +108,22 @@ export async function POST(request: NextRequest) {
   const host = request.headers.get("x-forwarded-host") ?? request.headers.get("host") ?? platform.domain;
   const hostContext = hostContextFromHost(host);
   const hasScopedReceizAccess = Boolean(accessToken && sessionScope === hostContext.storageKey);
+  const walletAuthority = checkoutWalletAuthority({
+    scopedReceizAccess: hasScopedReceizAccess,
+    merchantSession: isRecord(body) ? body.merchantSession ?? body.state : null,
+    handle: stringFromBody(body, "customerReceizId") ?? stringFromBody(body, "merchantReceizId")
+  });
   const configuredCheckoutMode =
     process.env.RECEIZ_CHECKOUT_MODE ??
     process.env.CHECKOUT_PROVIDER ??
     process.env.NEXT_PUBLIC_CHECKOUT_MODE;
-  const checkoutMode =
-    configuredCheckoutMode ??
-    (hostContext.surface === "tenant" || process.env.NEXT_PUBLIC_AUTH_MODE === "receiz_id" || hasScopedReceizAccess
-      ? "receiz"
-      : "mock");
+  const checkoutMode = checkoutModeForAuthority({
+    configuredCheckoutMode,
+    tenantSurface: hostContext.surface === "tenant",
+    authMode: process.env.NEXT_PUBLIC_AUTH_MODE,
+    scopedReceizAccess: hasScopedReceizAccess,
+    identitySealAuthorized: walletAuthority.ok && walletAuthority.source === "identity_seal"
+  });
   if (checkoutMode === "receiz" || checkoutMode === "live") {
     const merchantReceizId =
       typeof body.merchantReceizId === "string" && body.merchantReceizId.trim()
@@ -116,8 +132,49 @@ export async function POST(request: NextRequest) {
           ? `${hostContext.tenantSlug}.receiz.id`
           : process.env.RECEIZ_DEFAULT_MERCHANT_RECEIZ_ID ?? "";
     const totalUsdCents = usdCentsFromAmount(amountFromBody(body));
-
     if (!hasScopedReceizAccess || !accessToken) {
+      if (walletAuthority.ok && walletAuthority.source === "identity_seal") {
+        const funding = identitySealCheckoutFunding(totalUsdCents);
+        const session = {
+          ok: true,
+          checkoutSessionId: `identity_seal_${Date.now()}`,
+          status: "wallet_reserved"
+        };
+        const commerceProjection = await recordCheckoutCommerceEvent({
+          checkoutSessionId: session.checkoutSessionId,
+          customerEmail: stringFromBody(body, "customerEmail"),
+          customerId: stringFromBody(body, "customerId"),
+          customerName: stringFromBody(body, "customerName"),
+          funding,
+          itemCount: Number(body.itemCount ?? 1),
+          merchantReceizId,
+          orderId: stringFromBody(body, "referenceId") ?? stringFromBody(body, "orderId") ?? session.checkoutSessionId,
+          paymentRail: "receiz_wallet",
+          settlementStatus: "wallet_reserved",
+          shipping: shippingFromBody(body.shipping),
+          tenantHost: String(body.tenantHost ?? hostContext.tenantHost ?? host),
+          totalLabel: funding.totalLabel
+        });
+
+        return NextResponse.json({
+          ok: true,
+          mode: "receiz",
+          wallet: {
+            ok: true,
+            source: "identity_seal",
+            handle: walletAuthority.handle,
+            balanceUsdCents: funding.walletBalanceUsdCents,
+            balanceLabel: funding.walletBalanceLabel,
+            message: "Identity Seal authorized Receiz wallet access."
+          },
+          paymentRails: paymentRails(merchantReceizId),
+          funding,
+          session,
+          commerceEvent: commerceProjection?.event,
+          proofMemory: commerceProjection?.proofMemory
+        });
+      }
+
       const funding = checkoutFunding(totalUsdCents, 0);
       const session = {
         ok: true,

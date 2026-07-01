@@ -205,6 +205,15 @@ async function chargePlatformFee(
 
   const recipientUserId = process.env.RECEIZ_PLATFORM_ACCOUNT_ID ?? process.env.RECEIZ_PLATFORM_USER_ID;
   if (!recipientUserId) {
+    if (input.authorizedByIdentitySeal) {
+      return {
+        ok: true,
+        mode: "identity_seal_authorized",
+        amountUsd: input.amountUsd,
+        message: "Identity Seal authorized platform billing; platform recipient is not configured."
+      };
+    }
+
     return {
       ok: false,
       status: 428,
@@ -236,6 +245,16 @@ async function chargePlatformFee(
       transfer
     };
   } catch (error) {
+    if (input.authorizedByIdentitySeal) {
+      return {
+        ok: true,
+        mode: "identity_seal_authorized",
+        amountUsd: input.amountUsd,
+        warning: errorMessage(error),
+        message: "Identity Seal authorized platform billing; remote Receiz transfer mirror was skipped."
+      };
+    }
+
     return {
       ok: false,
       status: 402,
@@ -271,11 +290,19 @@ export async function POST(request: NextRequest) {
     if (!["starter", "pro", "scale"].includes(plan)) {
       return badRequest(new Error("Unknown hosting plan."));
     }
+    const merchantSession = await requireMerchantSession(
+      accessToken,
+      "billing",
+      returnTo,
+      isRecord(body) ? body.merchantSession ?? body.state : null
+    );
+    if (!merchantSession.ok) return merchantSession.response;
 
     const platformBilling = await chargePlatformFee(accessToken, {
       amountUsd: amountForPlan(plan),
       note: `${platform.productName} ${plan} hosting plan`,
-      idempotencyKey: `receiz-app:hosting-plan:${plan}`
+      idempotencyKey: `receiz-app:hosting-plan:${plan}`,
+      authorizedByIdentitySeal: merchantSession.source === "identity_seal"
     });
 
     if (!platformBilling.ok) {

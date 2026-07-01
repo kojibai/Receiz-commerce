@@ -20,8 +20,16 @@ describe("merchant server session gate", () => {
     assert.equal(gate.statusLabel, "Receiz ID sign-in required");
   });
 
-  it("accepts a verified Identity Seal session as a merchant session", () => {
-    const actions: MerchantServerAction[] = ["custom_domain", "verify_domain", "publish"];
+  it("accepts a verified Identity Seal session as full Receiz Connect account authority", () => {
+    const actions: MerchantServerAction[] = [
+      "account",
+      "billing",
+      "checkout",
+      "custom_domain",
+      "publish",
+      "verify_domain",
+      "wallet"
+    ];
 
     for (const action of actions) {
       const gate = merchantServerSessionRequirement({
@@ -40,9 +48,9 @@ describe("merchant server session gate", () => {
     }
   });
 
-  it("does not accept an unverified local Receiz ID as a merchant session", () => {
+  it("does not accept an unverified local Receiz ID as account authority", () => {
     const gate = merchantServerSessionRequirement({
-      action: "publish",
+      action: "wallet",
       connected: false,
       handle: "local-only.receiz.id",
       localReceizIdConnected: true,

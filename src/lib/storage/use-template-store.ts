@@ -1767,7 +1767,8 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
             billing: CommerceState["billing"];
           }>("/api/hosting", {
             action: "plan",
-            plan
+            plan,
+            merchantSession: merchantSessionPayload(stateRef.current)
           });
           setState((current) => ({
             ...current,
@@ -1800,7 +1801,8 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
         try {
           const result = await postJson<{ billing: CommerceState["billing"] }>("/api/hosting", {
             action: "payment",
-            paymentMethodLabel: label
+            paymentMethodLabel: label,
+            merchantSession: merchantSessionPayload(stateRef.current)
           });
           setState((current) => ({
             ...current,
@@ -2425,6 +2427,8 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
             tenantSlug: checkoutSnapshot.hosting.tenantSlug,
             tenantHost: checkoutSnapshot.hosting.subdomain,
             merchantReceizId: checkoutSnapshot.hosting.merchantReceizId,
+            customerReceizId: checkoutSnapshot.auth.receizId.handle,
+            merchantSession: merchantSessionPayload(checkoutSnapshot),
             successUrl: `${window.location.origin}/?checkout=success`,
             cancelUrl: `${window.location.origin}/?checkout=cancel`
           }, { deferLoginRedirect: true });

@@ -25,6 +25,7 @@
     "src/lib/media/image-upload.ts",
     "src/lib/storage/pending-publish.ts",
     "src/lib/storage/browser-storage.ts",
+    "src/lib/checkout/wallet-authority.ts",
     "src/lib/storefront/cart-summary.ts",
     "src/lib/storefront/local-identity-session.ts",
     "src/lib/storefront/product-purchase.ts",
