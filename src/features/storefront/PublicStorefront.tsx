@@ -15,6 +15,7 @@ import {
 import { platform } from "@/lib/platform";
 import { brandThemeStyle } from "@/lib/theme";
 import { useTemplateStore } from "@/lib/storage/use-template-store";
+import { buildCartSummary, type CartSummary } from "@/lib/storefront/cart-summary";
 import { customerForAccountSurface, customerReceizHandle } from "@/lib/storefront/customer-session";
 import type { BlogPost, CommerceState, CustomerAccount, Product, ReceizedAsset, Reward } from "@/types/domain";
 import type { HostContext } from "@/lib/hosting/host-context";
@@ -274,6 +275,12 @@ export function PublicStorefront({
               reward={reward}
               showAdminActions={!tenantSurface}
             />
+            <CartSummaryPanel
+              onCheckout={oneClickCheckout}
+              onQuantityChange={actions.setCartProductQuantity}
+              onRemove={actions.removeFromCart}
+              summary={buildCartSummary(state)}
+            />
             {tenantSurface ? null : <SealEvents events={state.proofEvents} />}
           </aside>
         </div>
@@ -287,6 +294,8 @@ export function PublicStorefront({
           onClaimReward={claimReward}
           onDownloadIdentitySeal={actions.downloadIdentitySealImage}
           onIssueReward={issueReward}
+          onQuantityChange={actions.setCartProductQuantity}
+          onRemoveFromCart={actions.removeFromCart}
           onSeal={sealObject}
           onCreateReceizId={createLocalReceizId}
           onExistingReceizId={connectExistingReceizId}
@@ -535,6 +544,8 @@ function MobileStage({
   onExistingReceizId,
   onIssueReward,
   onPlayComplete,
+  onQuantityChange,
+  onRemoveFromCart,
   onRestoreArtifact,
   onSeal,
   reward,
@@ -557,6 +568,8 @@ function MobileStage({
   onExistingReceizId: () => void | Promise<void>;
   onIssueReward: () => void;
   onPlayComplete: (beans: number) => void;
+  onQuantityChange: (productId: string, quantity: number) => void;
+  onRemoveFromCart: (productId: string) => void;
   onRestoreArtifact: (file: File) => void | Promise<void>;
   onSeal: () => void;
   reward: Reward | null;
@@ -612,10 +625,13 @@ function MobileStage({
         active={activeView === "account"}
         customer={customer}
         customerReceizHandle={customerReceizHandle}
+        onCheckout={onCheckout}
         onAttachPbiRecovery={onAttachPbiRecovery}
         onCreateReceizId={onCreateReceizId}
         onDownloadIdentitySeal={onDownloadIdentitySeal}
         onExistingReceizId={onExistingReceizId}
+        onQuantityChange={onQuantityChange}
+        onRemoveFromCart={onRemoveFromCart}
         onRestoreArtifact={onRestoreArtifact}
         showIdentityEntry={showIdentityEntry}
         showIdentityUpload={showIdentityUpload}
@@ -649,6 +665,84 @@ function MobilePane({
         </>
       ) : null}
     </section>
+  );
+}
+
+function CartSummaryPanel({
+  compact = false,
+  onCheckout,
+  onQuantityChange,
+  onRemove,
+  summary
+}: {
+  compact?: boolean;
+  onCheckout: () => void;
+  onQuantityChange: (productId: string, quantity: number) => void;
+  onRemove: (productId: string) => void;
+  summary: CartSummary;
+}) {
+  return (
+    <Panel className={compact ? "cart-summary-panel compact" : "cart-summary-panel"}>
+      <SectionHeader
+        title="Cart"
+        action={<StatusPill tone={summary.canCheckout ? "green" : "neutral"}>{summary.itemCount} items</StatusPill>}
+      />
+      {summary.lines.length ? (
+        <div className="cart-summary-lines">
+          {summary.lines.map((line) => (
+            <div className="cart-summary-line" key={line.productId}>
+              <div className="cart-summary-line-top">
+                <a className="cart-summary-line-link" href={line.productPath}>
+                  <strong>{line.name}</strong>
+                  <span>{line.subtitle}</span>
+                </a>
+                <em>{line.lineTotalLabel}</em>
+              </div>
+              <div className="cart-summary-controls">
+                <button
+                  aria-label={`Decrease ${line.name} quantity`}
+                  disabled={line.quantity <= 1}
+                  onClick={() => onQuantityChange(line.productId, line.quantity - 1)}
+                  type="button"
+                >
+                  -
+                </button>
+                <span aria-label={`${line.name} quantity`}>{line.quantity}</span>
+                <button
+                  aria-label={`Increase ${line.name} quantity`}
+                  onClick={() => onQuantityChange(line.productId, line.quantity + 1)}
+                  type="button"
+                >
+                  +
+                </button>
+                <button
+                  aria-label={`Remove ${line.name} from cart`}
+                  onClick={() => onRemove(line.productId)}
+                  type="button"
+                >
+                  <Icons.close size={14} />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="cart-summary-empty">
+          <Icons.cart size={20} />
+          <strong>Your cart is ready</strong>
+          <span>Add a product to unlock checkout.</span>
+        </div>
+      )}
+      <div className="cart-summary-total">
+        <span>{summary.paymentRailLabel}</span>
+        <strong>{summary.subtotalLabel}</strong>
+      </div>
+      <Button disabled={!summary.canCheckout} onClick={onCheckout} type="button" variant="primary">
+        <Icons.creditCard size={16} />
+        {summary.checkoutLabel}
+      </Button>
+      <span className="cart-summary-host">{summary.tenantHost}</span>
+    </Panel>
   );
 }
 
@@ -1019,6 +1113,9 @@ function MobileAccountPanel({
   onCreateReceizId,
   onDownloadIdentitySeal,
   onExistingReceizId,
+  onCheckout,
+  onQuantityChange,
+  onRemoveFromCart,
   onRestoreArtifact,
   showIdentityEntry,
   showIdentityUpload,
@@ -1032,6 +1129,9 @@ function MobileAccountPanel({
   onCreateReceizId: () => void | Promise<void>;
   onDownloadIdentitySeal: () => void | Promise<void>;
   onExistingReceizId: () => void | Promise<void>;
+  onCheckout: () => void;
+  onQuantityChange: (productId: string, quantity: number) => void;
+  onRemoveFromCart: (productId: string) => void;
   onRestoreArtifact: (file: File) => void | Promise<void>;
   showIdentityEntry: boolean;
   showIdentityUpload: boolean;
@@ -1120,6 +1220,13 @@ function MobileAccountPanel({
           </div>
         </div>
       ) : null}
+      <CartSummaryPanel
+        compact
+        onCheckout={onCheckout}
+        onQuantityChange={onQuantityChange}
+        onRemove={onRemoveFromCart}
+        summary={buildCartSummary(state)}
+      />
       <div className="mobile-stat-row">
         <div><strong>{customer.rewardsValueLabel}</strong><span>Rewards</span></div>
         <div><strong>{customer.beans}</strong><span>Beans</span></div>

@@ -2,6 +2,61 @@ import type { CommerceState } from "../../types/domain";
 import type { HostContext } from "./host-context";
 import { subdomainForSlug } from "./domain-utils";
 
+function systemPage(brandName: string, slug: "/about" | "/rewards" | "/account") {
+  const labels = {
+    "/about": {
+      title: `About ${brandName}`,
+      body: `${brandName} runs on Receiz proof rails for storefront state, Receiz ID, checkout, rewards, assets, and customer trust.`
+    },
+    "/rewards": {
+      title: `${brandName} Rewards`,
+      body: `Customers can earn, redeem, and carry ${brandName} rewards through Receiz ID and proof-sealed commerce actions.`
+    },
+    "/account": {
+      title: `${brandName} Account`,
+      body: `Receiz ID keeps orders, rewards, assets, and recovery portable for each ${brandName} customer.`
+    }
+  }[slug];
+
+  return {
+    id: slug.slice(1),
+    title: labels.title,
+    slug,
+    visibleInNav: true,
+    published: true,
+    sections: [
+      {
+        id: `${slug.slice(1)}-overview`,
+        kind: "content" as const,
+        title: labels.title,
+        body: labels.body
+      }
+    ],
+    seo: {
+      title: labels.title,
+      description: labels.body,
+      canonicalPath: slug,
+      keywords: [brandName, "Receiz", "proof commerce"],
+      socialImageUrl: null
+    }
+  };
+}
+
+function withRequiredTenantPages(state: CommerceState, brandName: string): CommerceState {
+  const required = ["/about", "/rewards", "/account"] as const;
+  const existingSlugs = new Set(state.pages.map((page) => page.slug.toLowerCase()));
+  const missingPages = required
+    .filter((slug) => !existingSlugs.has(slug))
+    .map((slug) => systemPage(brandName, slug));
+
+  if (missingPages.length === 0) return state;
+
+  return {
+    ...state,
+    pages: [...state.pages, ...missingPages]
+  };
+}
+
 function titleFromHost(value: string) {
   return value
     .split(".")[0]
@@ -155,7 +210,10 @@ export function tenantFallbackState(
     const brandName = isStoredTenant ? state.brand.name : titleFromHost(hostContext.tenantSlug);
     const logoText = logoTextFromHost(hostContext.tenantSlug);
     const trustedStoredTenant = isStoredTenant && (options.trustedPublishedState || !containsTemplateBrand(state, brandName));
-    const contentState = trustedStoredTenant ? state : tenantSafeFallbackContent(state, brandName);
+    const contentState = withRequiredTenantPages(
+      trustedStoredTenant ? state : tenantSafeFallbackContent(state, brandName),
+      brandName
+    );
 
     return {
       ...contentState,
@@ -224,7 +282,10 @@ export function tenantFallbackState(
     const brandName = isStoredDomain ? state.brand.name : titleFromHost(hostContext.customDomain);
     const logoText = logoTextFromHost(hostContext.customDomain);
     const trustedStoredDomain = isStoredDomain && (options.trustedPublishedState || !containsTemplateBrand(state, brandName));
-    const contentState = trustedStoredDomain ? state : tenantSafeFallbackContent(state, brandName);
+    const contentState = withRequiredTenantPages(
+      trustedStoredDomain ? state : tenantSafeFallbackContent(state, brandName),
+      brandName
+    );
 
     return {
       ...contentState,

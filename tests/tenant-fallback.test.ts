@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { hostContextFromHost } from "../src/lib/hosting/host-context.js";
 import { tenantFallbackState } from "../src/lib/hosting/tenant-state.js";
+import { resolvePageBySlug } from "../src/lib/storefront/content-routing.js";
 import { baseState } from "./support/commerce-state.js";
 
 describe("tenant fallback state", () => {
@@ -82,5 +83,31 @@ describe("tenant fallback state", () => {
     assert.equal(state.storefront.headline, "Bjklock proof shop");
     assert.equal(state.storefront.heroBody, "This is the real saved store.");
     assert.equal(state.hosting.customDomain.domain, "shop.bjklock.com");
+  });
+
+  it("adds required system pages to trusted tenant state so direct page URLs do not fall through to Vercel 404", () => {
+    const publishedTenant = {
+      ...baseState(),
+      pages: [],
+      blogPosts: [],
+      brand: {
+        ...baseState().brand,
+        name: "Bjklock Supply",
+        logoText: "bjk"
+      },
+      hosting: {
+        ...baseState().hosting,
+        tenantSlug: "bjklock",
+        subdomain: "bjklock.receiz.app"
+      }
+    };
+    const state = tenantFallbackState(
+      publishedTenant,
+      hostContextFromHost("bjklock.receiz.app"),
+      { trustedPublishedState: true }
+    );
+
+    assert.equal(resolvePageBySlug(state, "/about")?.slug, "/about");
+    assert.equal(resolvePageBySlug(state, "/rewards")?.slug, "/rewards");
   });
 });

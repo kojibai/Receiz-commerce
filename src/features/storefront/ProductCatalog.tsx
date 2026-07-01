@@ -3,11 +3,8 @@
 import Link from "next/link";
 import { Icons } from "@/components/icons";
 import { Button, ProductVisual, SectionHeader, StatusPill } from "@/components/ui";
+import { productRoutePath } from "@/lib/storefront/product-purchase";
 import type { Product } from "@/types/domain";
-
-function productHref(product: Product) {
-  return `/products/${product.seo?.canonicalPath?.split("/").filter(Boolean).at(-1) ?? product.id}`;
-}
 
 export function ProductCatalog({
   brandImageUrl,
@@ -29,9 +26,9 @@ export function ProductCatalog({
         action={
           showAdminActions ? (
             <div className="section-actions">
-              <button className="link-button" type="button">
-              View all products
-              </button>
+              <Link className="link-button" href="/products">
+                View all products
+              </Link>
               <Button onClick={() => window.location.assign("/admin")} variant="primary">Add product</Button>
             </div>
           ) : null
@@ -48,13 +45,13 @@ export function ProductCatalog({
         </div>
         {products.slice(0, 4).map((product) => (
           <div className="table-row" key={product.id}>
-            <div className="product-cell">
+            <Link className="product-cell product-cell-link" href={productRoutePath(product)}>
               <ProductVisual brandImageUrl={brandImageUrl} brandLabel={brandLabel} product={product} />
               <div>
-                <Link className="text-link" href={productHref(product)}>{product.name}</Link>
+                <strong>{product.name}</strong>
                 <p>{product.subtitle}</p>
               </div>
-            </div>
+            </Link>
             <span>{product.type.replace("_", " ")}</span>
             <span>{product.priceLabel}</span>
             <StatusPill tone="green">Active</StatusPill>
@@ -90,9 +87,11 @@ export function ProductCatalog({
         {products.length ? (
           products.slice(0, 4).map((product) => (
             <article className="mobile-product-card" key={product.id}>
-              <ProductVisual brandImageUrl={brandImageUrl} brandLabel={brandLabel} product={product} />
-              <Link className="text-link" href={productHref(product)}>{product.name}</Link>
-              <p>{product.subtitle}</p>
+              <Link className="mobile-product-link" href={productRoutePath(product)}>
+                <ProductVisual brandImageUrl={brandImageUrl} brandLabel={brandLabel} product={product} />
+                <strong>{product.name}</strong>
+                <p>{product.subtitle}</p>
+              </Link>
               <div>
                 <span>{product.priceLabel}</span>
                 <button

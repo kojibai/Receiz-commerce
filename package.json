@@ -19,13 +19,14 @@
     "node": ">=20.18.0"
   },
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
+    "dev": "node scripts/next-runtime-guard.mjs dev",
+    "build": "node scripts/next-runtime-guard.mjs build",
+    "start": "node scripts/next-runtime-guard.mjs start",
     "test": "tsc -p tsconfig.test.json && node scripts/patch-test-imports.mjs && node --test .test-build/tests/*.test.js",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
-    "receiz:doctor": "node scripts/receiz-doctor.mjs"
+    "receiz:doctor": "node scripts/receiz-doctor.mjs",
+    "release:check": "node scripts/release-check.mjs"
   },
   "dependencies": {
     "@receiz/sdk": "^97.5.0",

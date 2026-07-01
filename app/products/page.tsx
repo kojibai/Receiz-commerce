@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { BrandMark, ProductVisual, StatusPill } from "@/components/ui";
 import { loadStorefrontState, type StorefrontSearchParams } from "@/lib/storefront/server-state";
+import { productRoutePath } from "@/lib/storefront/product-purchase";
 
 type ProductsPageProps = {
   searchParams?: Promise<StorefrontSearchParams>;
@@ -28,7 +29,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
       </section>
       <section className="detail-grid">
         {activeProducts.map((product) => (
-          <Link className="detail-card product-detail-card" href={`/products/${product.seo?.canonicalPath?.split("/").filter(Boolean).at(-1) ?? product.id}`} key={product.id}>
+          <Link className="detail-card product-detail-card" href={productRoutePath(product)} key={product.id}>
             <ProductVisual brandImageUrl={state.brand.logoImageUrl} brandLabel={state.brand.logoText} product={product} />
             <div>
               <strong>{product.name}</strong>

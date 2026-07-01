@@ -322,6 +322,12 @@ Without `RECEIZ_ACCESS_TOKEN`, MCP should still be able to run public diagnostic
 
 `VERCEL_*` values are only for deployment/custom-domain automation if Vercel is hosting the SaaS. They are not commerce, payment, identity, or proof rails. After changing the production domain, update `NEXT_PUBLIC_SITE_URL` and `RECEIZ_ID_CALLBACK_URL` so Receiz ID redirect URLs use the correct origin. Never expose access tokens, webhook secrets, client secrets, or `VERCEL_API_TOKEN` with a `NEXT_PUBLIC_` prefix.
 
+### Production Readiness
+
+Use `docs/PRODUCTION_READINESS.md` as the release gate for both audiences this app serves: developers cloning a Receiz SDK commerce base and no-code merchants launching a real hosted business.
+
+The admin launch-readiness panel is powered by `src/lib/launch/readiness.ts` and checks SDK clone rails, no-code setup, Receiz ID/proof, catalog, checkout, domains, and production operations from the current store state.
+
 ## Developer Fork Path
 
 Developers can fork this repo and build custom commerce modules on the same Receiz SDK boundary. The app is structured so page components render projected proof truth and product controls without inventing a second source of truth.

@@ -3,6 +3,7 @@ node_modules/
 .next/
 out/
 dist/
+tmp/
 .test-build/
 *.tsbuildinfo
 .env.local
@@ -10,3 +11,4 @@ dist/
 .env*
 !.env.example
 .playwright-cli/
+output/playwright/
