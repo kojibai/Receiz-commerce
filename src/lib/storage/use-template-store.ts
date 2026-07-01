@@ -1184,6 +1184,50 @@ function publishedStatePayload(state: CommerceState) {
   };
 }
 
+function completePublishChecklistItem(state: CommerceState, id: string): CommerceState {
+  return {
+    ...state,
+    publish: {
+      ...state.publish,
+      checklist: state.publish.checklist.map((item) =>
+        item.id === id ? { ...item, complete: true, warning: false } : item
+      )
+    }
+  };
+}
+
+function mergePublishedPublicState(
+  current: CommerceState,
+  published: Partial<CommerceState> | undefined,
+  hosting: CommerceState["hosting"]
+): CommerceState {
+  if (!published) {
+    return {
+      ...current,
+      hosting
+    };
+  }
+
+  return {
+    ...current,
+    brand: published.brand ?? current.brand,
+    storefront: published.storefront ?? current.storefront,
+    hosting,
+    navigation: published.navigation ?? current.navigation,
+    pages: published.pages ?? current.pages,
+    blogPosts: published.blogPosts ?? current.blogPosts,
+    collections: published.collections ?? current.collections,
+    products: published.products ?? current.products,
+    rewards: published.rewards ?? current.rewards,
+    rewardRules: published.rewardRules ?? current.rewardRules,
+    assets: published.assets ?? current.assets,
+    qualifiers: published.qualifiers ?? current.qualifiers,
+    campaigns: published.campaigns ?? current.campaigns,
+    game: published.game ?? current.game,
+    checkout: published.checkout ?? current.checkout
+  };
+}
+
 async function receizIdentityForAutomaticCustomerSession(snapshot: CommerceState, reason: string) {
   if (snapshot.auth.receizId.connected) {
     return {
@@ -1407,7 +1451,12 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
             },
       proofEvents: [makeEvent(gate.eventType, gate.message), ...current.proofEvents]
     }));
-    window.location.assign(connectUrl);
+
+    if (action !== "publish") {
+      window.location.assign(connectUrl);
+    } else {
+      setReceizSessionPending(false);
+    }
 
     return false;
   }, []);
@@ -1429,7 +1478,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
       },
       saveTheme() {
         setState((current) => ({
-          ...current,
+          ...completePublishChecklistItem(current, "brand"),
           proofEvents: [makeEvent("THEME_UPDATED", `${current.brand.name} theme saved`), ...current.proofEvents]
         }));
       },
@@ -2083,15 +2132,17 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
             const publishHostContext = currentHostContext();
             markPendingPublish(publishHostContext.storageKey);
 
-            void postJson<{ hosting: CommerceState["hosting"] }>("/api/hosting", {
+            void postJson<{
+              hosting: CommerceState["hosting"];
+              state?: Partial<CommerceState>;
+            }>("/api/hosting", {
               action: "publish",
               state: publishedStatePayload(publishRequestState)
             }, { deferLoginRedirect: true })
               .then((result) => {
                 clearPendingPublish(publishHostContext.storageKey);
                 setState((latest) => ({
-                  ...latest,
-                  hosting: result.hosting,
+                  ...mergePublishedPublicState(latest, result.state, result.hosting),
                   proofEvents: [makeEvent("SITE_PUBLISHED", "Store published to Receiz proof rails"), ...latest.proofEvents]
                 }));
               })

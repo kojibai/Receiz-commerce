@@ -137,7 +137,86 @@ export function createInMemoryProofStateStore(ownerId?: string, initialValue?: R
 
 let serverProofStateStore: Promise<ProofStateStore> | null = null;
 
-export function getServerProofStateStore(ownerId = "receiz-app-commerce") {
-  serverProofStateStore ??= createInMemoryProofStateStore(ownerId);
-  return serverProofStateStore;
+export const DEFAULT_SERVER_PROOF_OWNER = "receiz-app-commerce";
+
+export type ServerProofStateStoreRegistry = {
+  storeForOwner(ownerId?: string): Promise<ProofStateStore>;
+};
+
+function normalizeOwnerId(ownerId?: string, fallback = DEFAULT_SERVER_PROOF_OWNER) {
+  return ownerId?.trim() || fallback;
+}
+
+async function createMirroredProofStateStore(ownerId: string, publicStorePromise: Promise<ProofStateStore>) {
+  const ownerStore = await createInMemoryProofStateStore(ownerId);
+  const publicStore = await publicStorePromise;
+
+  return {
+    async admitStoreRecord(record: StoreStateRecord) {
+      await ownerStore.admitStoreRecord(record);
+      await publicStore.admitStoreRecord(record);
+      return record;
+    },
+    async admitCommerceEvent(state: CommerceState, event: CommerceEventRecord) {
+      const result = await ownerStore.admitCommerceEvent(state, event);
+
+      if (result.admitted) {
+        await publicStore.admitCommerceEvent(state, event);
+      }
+
+      return result;
+    },
+    projectHost(baseState: CommerceState, tenantHost: string) {
+      return ownerStore.projectHost(baseState, tenantHost);
+    },
+    records() {
+      return ownerStore.records();
+    },
+    snapshot() {
+      return ownerStore.snapshot();
+    },
+    knownHead(limit?: number) {
+      return ownerStore.knownHead(limit);
+    },
+    flush() {
+      return ownerStore.flush();
+    }
+  } satisfies ProofStateStore;
+}
+
+export function createServerProofStateStoreRegistry(
+  defaultOwnerId = DEFAULT_SERVER_PROOF_OWNER
+): ServerProofStateStoreRegistry {
+  const publicOwnerId = normalizeOwnerId(defaultOwnerId);
+  const stores = new Map<string, Promise<ProofStateStore>>();
+  const publicStore = createInMemoryProofStateStore(publicOwnerId);
+  stores.set(publicOwnerId, publicStore);
+
+  return {
+    storeForOwner(ownerId = publicOwnerId) {
+      const normalizedOwnerId = normalizeOwnerId(ownerId, publicOwnerId);
+
+      if (normalizedOwnerId === publicOwnerId) {
+        return publicStore;
+      }
+
+      const existing = stores.get(normalizedOwnerId);
+      if (existing) return existing;
+
+      const mirroredStore = createMirroredProofStateStore(normalizedOwnerId, publicStore);
+      stores.set(normalizedOwnerId, mirroredStore);
+      return mirroredStore;
+    }
+  };
+}
+
+const serverProofStateRegistry = createServerProofStateStoreRegistry();
+
+export function getServerProofStateStore(ownerId = DEFAULT_SERVER_PROOF_OWNER) {
+  if (normalizeOwnerId(ownerId) === DEFAULT_SERVER_PROOF_OWNER) {
+    serverProofStateStore ??= serverProofStateRegistry.storeForOwner(DEFAULT_SERVER_PROOF_OWNER);
+    return serverProofStateStore;
+  }
+
+  return serverProofStateRegistry.storeForOwner(ownerId);
 }

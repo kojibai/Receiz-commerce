@@ -371,14 +371,14 @@ export async function POST(request: NextRequest) {
     const merchantSession = await requireMerchantSession(accessToken, "publish", returnTo);
     if (!merchantSession.ok) return merchantSession.response;
     const publishOwner = merchantSession.profile;
-    const hosting = {
+    const submittedHosting = {
       ...(isRecord(body.state) && isRecord(body.state.hosting) ? body.state.hosting : mockHosting.getHostingStatus()),
       published: true,
       lastPublishedAt: "now"
     };
     const state = buildPublishedCommerceState(mockStorage.getState(), {
       ...(isRecord(body.state) ? body.state : {}),
-      hosting
+      hosting: submittedHosting
     }, {
       customDomain: publishOwner?.customDomain,
       displayName: publishOwner?.name,
@@ -446,14 +446,15 @@ export async function POST(request: NextRequest) {
     });
 
     const receizRecord = await recordReceizHostingEvent(accessToken, "store.published", {
-      hosting,
+      hosting: publishState.hosting,
       storeStateRecordId: storeStateRecord.id
     });
 
     return NextResponse.json({
       ok: true,
       action,
-      hosting,
+      hosting: publishState.hosting,
+      state: publishState,
       storeStateRecord,
       storeStateReceizRecord,
       receizRecord,

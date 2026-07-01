@@ -170,6 +170,20 @@ describe("launch readiness", () => {
     assert.equal(readiness.score < 100, true);
   });
 
+  it("does not keep a brand blocker after valid brand fields are saved", () => {
+    const draft = readyState();
+    draft.publish.checklist = draft.publish.checklist.map((item) =>
+      item.id === "brand" ? { ...item, complete: false } : item
+    );
+    draft.brand.name = "BJK Lock Studio";
+    draft.brand.logoText = "bjk";
+
+    const readiness = buildLaunchReadiness(draft);
+
+    assert.equal(readiness.blockers.some((blocker) => blocker.id === "brand"), false);
+    assert.equal(readiness.launchGuide.find((step) => step.id === "brand")?.complete, true);
+  });
+
   it("surfaces clear blockers for a new incomplete merchant store", () => {
     const draft = readyState();
     draft.hosting.published = false;

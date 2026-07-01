@@ -101,6 +101,10 @@ function checklistComplete(state: CommerceState, id: string) {
   return Boolean(state.publish.checklist.find((item) => item.id === id)?.complete);
 }
 
+function hasCompleteBrandSettings(state: CommerceState) {
+  return Boolean(state.brand.name.trim() && state.brand.logoText.trim());
+}
+
 function publishedContentCount(state: CommerceState) {
   return (
     state.pages.filter((page) => page.published).length +
@@ -183,7 +187,7 @@ function launchGuideStep(input: Omit<LaunchGuideStep, "status">): Omit<LaunchGui
 }
 
 function buildLaunchGuide(state: CommerceState): LaunchGuideStep[] {
-  const brandReady = checklistComplete(state, "brand") && Boolean(state.brand.name && state.brand.logoText);
+  const brandReady = hasCompleteBrandSettings(state);
   const catalogReady =
     state.products.some((product) => product.status === "active") &&
     state.collections.some((collection) => collection.published);
@@ -308,7 +312,7 @@ export function buildLaunchReadiness(state: CommerceState): LaunchReadiness {
         {
           id: "brand",
           label: "Brand settings are complete",
-          complete: checklistComplete(state, "brand") && Boolean(state.brand.name && state.brand.logoText),
+          complete: hasCompleteBrandSettings(state),
           critical: true,
           actionLabel: "Open Brand and finish name, logo, colors, and storefront copy."
         },

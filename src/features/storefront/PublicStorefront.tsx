@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState, type ReactNode } from "react";
+import Link from "next/link";
 import { Icons } from "@/components/icons";
 import {
   BrandMark,
@@ -16,6 +17,7 @@ import { platform } from "@/lib/platform";
 import { brandThemeStyle } from "@/lib/theme";
 import { useTemplateStore } from "@/lib/storage/use-template-store";
 import { buildCartSummary, type CartSummary } from "@/lib/storefront/cart-summary";
+import { productRoutePath } from "@/lib/storefront/product-purchase";
 import { customerForAccountSurface, customerReceizHandle } from "@/lib/storefront/customer-session";
 import type { BlogPost, CommerceState, CustomerAccount, Product, ReceizedAsset, Reward } from "@/types/domain";
 import type { HostContext } from "@/lib/hosting/host-context";
@@ -799,11 +801,19 @@ function MobileStorePanel({
             )}
           </div>
         </div>
-        <div className="mobile-featured-product">
-          <BrandMark imageUrl={state.brand.logoImageUrl} label={state.brand.logoText} />
-          <strong>{firstProduct?.name ?? "Add products"}</strong>
-          <small>{firstProduct?.priceLabel ?? "Ready"}</small>
-        </div>
+        {firstProduct ? (
+          <Link className="mobile-featured-product" href={productRoutePath(firstProduct)}>
+            <BrandMark imageUrl={state.brand.logoImageUrl} label={state.brand.logoText} />
+            <strong>{firstProduct.name}</strong>
+            <small>{firstProduct.priceLabel}</small>
+          </Link>
+        ) : (
+          <div className="mobile-featured-product">
+            <BrandMark imageUrl={state.brand.logoImageUrl} label={state.brand.logoText} />
+            <strong>Add products</strong>
+            <small>Ready</small>
+          </div>
+        )}
       </div>
 
       <div className="mobile-category-row" aria-label="Shop categories">
@@ -818,12 +828,14 @@ function MobileStorePanel({
         {products.length ? (
           products.slice(0, 2).map((product) => (
             <article key={product.id}>
-              <ProductVisual brandImageUrl={state.brand.logoImageUrl} brandLabel={state.brand.logoText} product={product} />
-              <div>
-                <strong>{product.name}</strong>
-                <span>{product.subtitle}</span>
-                <b>{product.priceLabel}</b>
-              </div>
+              <Link className="mobile-mini-product-link" href={productRoutePath(product)}>
+                <ProductVisual brandImageUrl={state.brand.logoImageUrl} brandLabel={state.brand.logoText} product={product} />
+                <div className="mobile-mini-product-copy">
+                  <strong>{product.name}</strong>
+                  <span>{product.subtitle}</span>
+                  <b>{product.priceLabel}</b>
+                </div>
+              </Link>
               <button aria-label={`Add ${product.name} to cart`} onClick={() => onAddToCart(product.id)} type="button">
                 <Icons.cart size={16} />
               </button>

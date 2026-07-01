@@ -221,6 +221,8 @@ export async function POST(request: NextRequest) {
     {
       ok: true,
       action,
+      hosting: publishState.hosting,
+      state: publishState,
       record,
       receizRecord,
       proofMemory: {

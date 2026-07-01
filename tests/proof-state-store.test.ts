@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { buildStoreStateRecord } from "../src/lib/receiz/proof-state.js";
-import { createInMemoryProofStateStore } from "../src/lib/receiz/proof-state-store.js";
+import {
+  createInMemoryProofStateStore,
+  createServerProofStateStoreRegistry
+} from "../src/lib/receiz/proof-state-store.js";
 import type { CommerceState } from "../src/types/domain.js";
 import { baseState } from "./support/commerce-state.js";
 
@@ -69,6 +72,35 @@ describe("Receiz proof state store", () => {
     assert.equal(projected.storefront.homepageMode, "blog");
     assert.equal(projected.storefront.headline, "Rare proof gear");
     assert.equal(projected.collections[0]?.name, "Rare gear");
+  });
+
+  it("projects merchant-scoped publishes through the public tenant store", async () => {
+    const registry = createServerProofStateStoreRegistry();
+    const merchantStore = await registry.storeForOwner("bjklock.receiz.id");
+    const publicStore = await registry.storeForOwner();
+    const saved = {
+      ...baseState(),
+      brand: { ...baseState().brand, name: "Bjklock Supply", logoText: "bjk" },
+      hosting: {
+        ...baseState().hosting,
+        tenantSlug: "bjklock",
+        subdomain: "bjklock.receiz.app",
+        merchantReceizId: "bjklock.receiz.id"
+      }
+    } as CommerceState;
+
+    await merchantStore.admitStoreRecord(
+      buildStoreStateRecord(saved, {
+        actorReceizId: "bjklock.receiz.id",
+        tenantHost: "bjklock.receiz.app",
+        recordedAt: "2026-06-30T00:08:00.000Z"
+      })
+    );
+
+    const projected = publicStore.projectHost(baseState(), "bjklock.receiz.app");
+
+    assert.equal(projected.brand.name, "Bjklock Supply");
+    assert.equal(projected.hosting.merchantReceizId, "bjklock.receiz.id");
   });
 
   it("admits a commerce event once and persists the known head", async () => {

@@ -116,7 +116,7 @@
   .mobile-admin-stage {
     position: relative;
     min-height: 0;
-    padding: 10px 0;
+    padding: 10px 0 0;
     overflow: hidden;
   }
 
@@ -128,8 +128,9 @@
     overflow: auto;
     scrollbar-width: none;
     align-content: start;
-    gap: 10px;
-    padding-bottom: 2px;
+    gap: 12px;
+    padding: 0 2px max(96px, calc(82px + env(safe-area-inset-bottom)));
+    scroll-padding-bottom: max(96px, calc(82px + env(safe-area-inset-bottom)));
   }
 
   .mobile-admin-pane::-webkit-scrollbar {
@@ -138,6 +139,16 @@
 
   .mobile-admin-pane.active {
     display: grid;
+    grid-auto-rows: max-content;
+  }
+
+  .mobile-admin-pane > *,
+  .mobile-admin-pane .panel {
+    min-width: 0;
+  }
+
+  .mobile-admin-pane .panel {
+    overflow: hidden;
   }
 
   .mobile-admin-pane-heading {
@@ -345,6 +356,12 @@
   .mobile-admin-pane .domain-live-row strong {
     overflow-wrap: anywhere;
     text-overflow: clip;
+    white-space: normal;
+  }
+
+  .mobile-admin-pane .domain-live-row .status-pill,
+  .mobile-admin-pane .mobile-admin-pane-heading .status-pill {
+    max-width: 100%;
     white-space: normal;
   }
 
@@ -4442,6 +4459,8 @@ a {
     border-radius: 16px;
     background: rgba(255, 255, 255, 0.18);
     backdrop-filter: blur(14px);
+    color: inherit;
+    text-decoration: none;
   }
 
   .mobile-featured-product .brand-mark {
@@ -4503,7 +4522,7 @@ a {
   .mobile-mini-products article {
     position: relative;
     display: grid;
-    grid-template-rows: minmax(86px, 1fr) auto;
+    grid-template-rows: 1fr;
     gap: 8px;
     min-height: 178px;
     padding: 10px;
@@ -4511,6 +4530,15 @@ a {
     border: 1px solid var(--border);
     border-radius: 16px;
     background: #ffffff;
+  }
+
+  .mobile-mini-product-link {
+    display: grid;
+    grid-template-rows: minmax(86px, 1fr) auto;
+    gap: 8px;
+    min-width: 0;
+    color: inherit;
+    text-decoration: none;
   }
 
   .mobile-mini-products .product-visual {
@@ -4535,7 +4563,7 @@ a {
     height: clamp(30px, 12vw, 44px);
   }
 
-  .mobile-mini-products article > div:not(.product-visual) {
+  .mobile-mini-product-copy {
     display: grid;
     gap: 2px;
     min-width: 0;
@@ -5110,7 +5138,10 @@ a {
   }
 
   .account-page {
+    width: 100%;
+    max-width: 100%;
     padding: 12px;
+    overflow-x: hidden;
   }
 
   .account-header,
@@ -5119,10 +5150,78 @@ a {
     flex-direction: column;
   }
 
+  .account-header > div {
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+
+  .account-header .button {
+    flex: 1 1 140px;
+  }
+
+  .account-hero,
+  .account-hero > div:not(.avatar) {
+    width: 100%;
+    min-width: 0;
+  }
+
   .account-hero-metrics,
   .account-grid {
     grid-template-columns: 1fr;
     width: 100%;
+  }
+
+  .account-grid > .panel,
+  .account-page .catalog-panel {
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .identity-account-card,
+  .account-proof-strip {
+    grid-template-columns: 1fr;
+    justify-items: start;
+  }
+
+  .customer-account-scope,
+  .payment-rail-grid > div,
+  .shipping-profile {
+    flex-wrap: wrap;
+  }
+
+  .customer-account-scope > div,
+  .payment-rail-grid > div > div,
+  .shipping-profile > div {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .customer-order-card,
+  .simple-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .reward-card {
+    grid-template-columns: 1fr;
+  }
+
+  .reward-card .brand-mark {
+    width: 76px;
+    height: 76px;
+  }
+
+  .account-recovery-pills {
+    padding: 0 12px 12px;
+  }
+
+  .account-recovery-pill {
+    flex: 1 1 100%;
+    justify-content: flex-start;
+    min-height: 40px;
+    text-align: left;
+    white-space: normal;
   }
 }
 
@@ -5383,9 +5482,12 @@ a {
   }
 
   .mobile-mini-products article {
-    grid-template-rows: 74px auto;
     min-height: 156px;
     padding: 8px;
+  }
+
+  .mobile-mini-product-link {
+    grid-template-rows: 74px auto;
   }
 
   .mobile-mini-products .product-visual {
