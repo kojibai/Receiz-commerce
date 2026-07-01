@@ -15,6 +15,7 @@ import {
 import { platform } from "@/lib/platform";
 import { brandThemeStyle } from "@/lib/theme";
 import { useTemplateStore } from "@/lib/storage/use-template-store";
+import { buildCartSummary, type CartSummary } from "@/lib/storefront/cart-summary";
 import { customerForAccountSurface, customerReceizHandle } from "@/lib/storefront/customer-session";
 import type { BlogPost, CommerceState, CustomerAccount, Product, ReceizedAsset, Reward } from "@/types/domain";
 import type { HostContext } from "@/lib/hosting/host-context";
@@ -274,6 +275,7 @@ export function PublicStorefront({
               reward={reward}
               showAdminActions={!tenantSurface}
             />
+            <CartSummaryPanel onCheckout={oneClickCheckout} summary={buildCartSummary(state)} />
             {tenantSurface ? null : <SealEvents events={state.proofEvents} />}
           </aside>
         </div>
@@ -612,6 +614,7 @@ function MobileStage({
         active={activeView === "account"}
         customer={customer}
         customerReceizHandle={customerReceizHandle}
+        onCheckout={onCheckout}
         onAttachPbiRecovery={onAttachPbiRecovery}
         onCreateReceizId={onCreateReceizId}
         onDownloadIdentitySeal={onDownloadIdentitySeal}
@@ -649,6 +652,55 @@ function MobilePane({
         </>
       ) : null}
     </section>
+  );
+}
+
+function CartSummaryPanel({
+  compact = false,
+  onCheckout,
+  summary
+}: {
+  compact?: boolean;
+  onCheckout: () => void;
+  summary: CartSummary;
+}) {
+  return (
+    <Panel className={compact ? "cart-summary-panel compact" : "cart-summary-panel"}>
+      <SectionHeader
+        title="Cart"
+        action={<StatusPill tone={summary.canCheckout ? "green" : "neutral"}>{summary.itemCount} items</StatusPill>}
+      />
+      {summary.lines.length ? (
+        <div className="cart-summary-lines">
+          {summary.lines.map((line) => (
+            <a className="cart-summary-line" href={line.productPath} key={line.productId}>
+              <div>
+                <strong>{line.name}</strong>
+                <span>{line.subtitle}</span>
+              </div>
+              <em>
+                {line.quantity}x · {line.lineTotalLabel}
+              </em>
+            </a>
+          ))}
+        </div>
+      ) : (
+        <div className="cart-summary-empty">
+          <Icons.cart size={20} />
+          <strong>Your cart is ready</strong>
+          <span>Add a product to unlock checkout.</span>
+        </div>
+      )}
+      <div className="cart-summary-total">
+        <span>{summary.paymentRailLabel}</span>
+        <strong>{summary.subtotalLabel}</strong>
+      </div>
+      <Button disabled={!summary.canCheckout} onClick={onCheckout} type="button" variant="primary">
+        <Icons.creditCard size={16} />
+        {summary.checkoutLabel}
+      </Button>
+      <span className="cart-summary-host">{summary.tenantHost}</span>
+    </Panel>
   );
 }
 
@@ -1019,6 +1071,7 @@ function MobileAccountPanel({
   onCreateReceizId,
   onDownloadIdentitySeal,
   onExistingReceizId,
+  onCheckout,
   onRestoreArtifact,
   showIdentityEntry,
   showIdentityUpload,
@@ -1032,6 +1085,7 @@ function MobileAccountPanel({
   onCreateReceizId: () => void | Promise<void>;
   onDownloadIdentitySeal: () => void | Promise<void>;
   onExistingReceizId: () => void | Promise<void>;
+  onCheckout: () => void;
   onRestoreArtifact: (file: File) => void | Promise<void>;
   showIdentityEntry: boolean;
   showIdentityUpload: boolean;
@@ -1120,6 +1174,7 @@ function MobileAccountPanel({
           </div>
         </div>
       ) : null}
+      <CartSummaryPanel compact onCheckout={onCheckout} summary={buildCartSummary(state)} />
       <div className="mobile-stat-row">
         <div><strong>{customer.rewardsValueLabel}</strong><span>Rewards</span></div>
         <div><strong>{customer.beans}</strong><span>Beans</span></div>

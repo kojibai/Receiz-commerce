@@ -1737,6 +1737,122 @@ a {
   font-weight: 700;
 }
 
+.cart-summary-panel {
+  overflow: hidden;
+}
+
+.cart-summary-lines {
+  display: grid;
+  gap: 8px;
+  padding: 0 14px 12px;
+}
+
+.cart-summary-line {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: #ffffff;
+  color: inherit;
+  text-decoration: none;
+}
+
+.cart-summary-line div,
+.cart-summary-line strong,
+.cart-summary-line span,
+.cart-summary-line em,
+.cart-summary-host {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.cart-summary-line strong {
+  display: block;
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.2;
+}
+
+.cart-summary-line span {
+  display: block;
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.25;
+}
+
+.cart-summary-line em {
+  color: var(--receiz);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 850;
+  text-align: right;
+}
+
+.cart-summary-empty {
+  display: grid;
+  gap: 6px;
+  margin: 0 14px 12px;
+  padding: 12px;
+  border: 1px dashed rgba(0, 138, 106, 0.25);
+  border-radius: var(--radius);
+  color: var(--muted);
+  background: var(--receiz-soft);
+}
+
+.cart-summary-empty strong {
+  color: var(--text);
+  font-size: 13px;
+}
+
+.cart-summary-empty span {
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.cart-summary-total {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0 14px 12px;
+  padding: 10px 0;
+  border-top: 1px solid var(--border);
+}
+
+.cart-summary-total span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.cart-summary-total strong {
+  color: var(--text);
+  font-size: 18px;
+}
+
+.cart-summary-panel .button {
+  width: calc(100% - 28px);
+  margin: 0 14px;
+  justify-content: center;
+  gap: 8px;
+}
+
+.cart-summary-panel .button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.cart-summary-host {
+  display: block;
+  margin: 8px 14px 14px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.3;
+}
+
 .account-mini {
   display: grid;
   grid-template-columns: 42px 1fr auto;
