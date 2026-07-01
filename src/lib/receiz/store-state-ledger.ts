@@ -53,6 +53,15 @@ async function recoverReceizPublicProofStoreStateRecords(tenantHost: string) {
   const records: StoreStateRecord[] = [];
 
   try {
+    const restored = await receiz.client.publicStore.resolve({
+      host: normalizedHost
+    });
+    records.push(...extractStoreStateRecords(restored));
+  } catch {
+    // Public-store projection is the preferred 97.3 path; older records may only exist in app-state feeds.
+  }
+
+  try {
     const restored = await receiz.resolveTenant(normalizedHost, {
       schema: RECEIZ_PUBLIC_STORE_STATE_PROJECTION_SCHEMA,
       state: "published",

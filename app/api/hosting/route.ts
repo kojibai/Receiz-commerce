@@ -19,6 +19,7 @@ import { buildStoreStateRecord } from "@/lib/receiz/proof-state";
 import { getServerProofStateStore } from "@/lib/receiz/proof-state-store";
 import { publishReceizStoreState } from "@/lib/receiz/store-state-publication";
 import { receizAccessTokenFromRequest, receizLoginRequired } from "@/lib/receiz/session";
+import { prepareStoreStateMediaForPublish } from "@/lib/receiz/media-publication";
 import { mockStorage } from "@/lib/storage/mock-storage";
 import type { DomainStatus, HostingConfig } from "@/types/domain";
 
@@ -341,9 +342,34 @@ export async function POST(request: NextRequest) {
       merchantReceizId: publishOwner?.handle,
       tenantSlug: publishOwner?.subdomain
     });
-    const storeStateRecord = buildStoreStateRecord(state, {
-      actorReceizId: state.hosting.merchantReceizId || state.auth.receizId.handle,
-      tenantHost: state.hosting.customDomain.domain || state.hosting.subdomain,
+    const actorReceizId = state.hosting.merchantReceizId || state.auth.receizId.handle;
+    const tenantHost = state.hosting.customDomain.domain || state.hosting.subdomain;
+    const receiz = createReceizCommerceAdapter({
+      baseUrl: process.env.RECEIZ_BASE_URL,
+      accessToken
+    });
+    let publishState = state;
+
+    try {
+      publishState = await prepareStoreStateMediaForPublish(state, {
+        tenantHost,
+        merchantReceizId: actorReceizId,
+        upload: (file, options) => receiz.uploadMedia(file, options)
+      });
+    } catch (error) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error: "receiz_media_publish_failed",
+          message: errorMessage(error)
+        },
+        { status: 502 }
+      );
+    }
+
+    const storeStateRecord = buildStoreStateRecord(publishState, {
+      actorReceizId,
+      tenantHost,
       reason: "publish"
     });
     const proofStore = await getServerProofStateStore(storeStateRecord.merchantReceizId);

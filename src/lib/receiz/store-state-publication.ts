@@ -1,41 +1,18 @@
 import { platform } from "@/lib/platform";
 import { createReceizCommerceAdapter } from "./adapter";
 import { buildStoreStateConnectRecord, type StoreStateRecord } from "./proof-state";
-import {
-  RECEIZ_PUBLIC_STORE_STATE_FEED_SCHEMA,
-  createReceizPublicStoreStateRecord,
-  type JsonObject,
-  type ReceizAppStateFeed
-} from "@receiz/sdk";
+import { type JsonObject } from "@receiz/sdk";
 
 function hostUrl(host: string) {
   return `https://${host.trim().toLowerCase()}`;
 }
 
-function publicProofRecordsForStoreState(record: StoreStateRecord) {
-  const hosts = new Set(
+function publicStoreHostsForStoreState(record: StoreStateRecord) {
+  return new Set(
     [record.state.hosting.subdomain, record.state.hosting.customDomain.domain, record.tenantHost]
       .map((host) => host.trim().toLowerCase())
       .filter(Boolean)
   );
-  const connectRecord = buildStoreStateConnectRecord(record);
-
-  return [...hosts].map((host) => ({
-    ...createReceizPublicStoreStateRecord({
-      id: `store_state:${host}`,
-      sourceUrl: hostUrl(host),
-      externalCreatorId: record.merchantReceizId,
-      title: `${record.state.brand.name} storefront`,
-      state: "published",
-      platform: platform.productName,
-      namespace: host,
-      record: record as unknown as JsonObject,
-      data: {
-        storeStateRecord: record,
-        storeStateConnectRecord: connectRecord
-      } as unknown as JsonObject
-    })
-  }));
 }
 
 function receizError(error: unknown) {
@@ -56,30 +33,50 @@ export async function publishReceizStoreState(accessToken: string | undefined, r
     accessToken
   });
   const connectRecord = buildStoreStateConnectRecord(record);
-  const appStateFeed: ReceizAppStateFeed = {
-    schema: RECEIZ_PUBLIC_STORE_STATE_FEED_SCHEMA,
-    namespace: record.tenantHost,
-    externalCreatorId: record.merchantReceizId,
-    records: publicProofRecordsForStoreState(record)
-  };
+  const hosts = [...publicStoreHostsForStoreState(record)];
 
   try {
     const connect = await receiz.connectRecord(connectRecord);
-    const appState = await receiz.client.appState.publish(appStateFeed);
+    const publicStore = await Promise.all(
+      hosts.map((host) =>
+        receiz.client.publicStore.publish(
+          {
+            id: `store_state:${host}`,
+            tenantHost: host,
+            merchantReceizId: record.merchantReceizId,
+            title: `${record.state.brand.name} storefront`,
+            sourceUrl: hostUrl(host),
+            namespace: host,
+            projectionState: "published",
+            platform: platform.productName,
+            state: record as unknown as JsonObject,
+            record: record as unknown as JsonObject,
+            data: {
+              storeStateRecord: record,
+              storeStateConnectRecord: connectRecord
+            } as unknown as JsonObject
+          },
+          {
+            idempotencyKey: `store-state:${record.id}:${host}`
+          }
+        )
+      )
+    );
 
-    if (failedReceizResponse(connect) || failedReceizResponse(appState)) {
+    if (failedReceizResponse(connect) || publicStore.some(failedReceizResponse)) {
       return {
         ok: false,
         error: "receiz_store_state_publication_failed",
         connect,
-        appState
+        publicStore
       };
     }
 
     return {
       ok: true,
       connect,
-      appState
+      appState: publicStore,
+      publicStore
     };
   } catch (error) {
     return {

@@ -21,6 +21,7 @@ import type { HostContext } from "@/lib/hosting/host-context";
 import { PlayCampaign } from "@/features/play/PlayCampaign";
 import { ProductCatalog } from "@/features/storefront/ProductCatalog";
 import { ReceizIdAccess } from "@/features/storefront/ReceizIdAccess";
+import { ReceizAccountManagementPills, ReceizRecoveryPills } from "@/features/storefront/ReceizRecoveryPills";
 import { RewardDeck } from "@/features/storefront/RewardDeck";
 import { SealEvents } from "@/features/storefront/SealEvents";
 import {
@@ -69,6 +70,7 @@ export function PublicStorefront({
     if (!connected) {
       setIdentityUploadVisible(true);
       setMobileView("account");
+      actions.signInWithReceizId();
     }
     setMobileMenuOpen(false);
   };
@@ -224,7 +226,9 @@ export function PublicStorefront({
 
           <aside className="right-rail">
             <ReceizIdAccess
+              onAttachPbiRecovery={actions.attachPbiRecovery}
               onCreateReceizId={createLocalReceizId}
+              onDownloadIdentitySeal={actions.downloadIdentitySealImage}
               onExistingReceizId={connectExistingReceizId}
               onRestoreArtifact={restoreIdentityArtifact}
               receizId={state.auth.receizId}
@@ -245,8 +249,10 @@ export function PublicStorefront({
           customer={customer}
           customerReceizHandle={receizHandle}
           onAddToCart={actions.addToCart}
+          onAttachPbiRecovery={actions.attachPbiRecovery}
           onCheckout={oneClickCheckout}
           onClaimReward={claimReward}
+          onDownloadIdentitySeal={actions.downloadIdentitySealImage}
           onIssueReward={issueReward}
           onSeal={sealObject}
           onCreateReceizId={createLocalReceizId}
@@ -267,7 +273,6 @@ export function PublicStorefront({
           onClose={() => setMobileMenuOpen(false)}
           onNavigate={selectMobileView}
           onSeal={sealObject}
-          onCreateReceizId={createLocalReceizId}
           onExistingReceizId={connectExistingReceizId}
           open={mobileMenuOpen}
           state={state}
@@ -391,7 +396,6 @@ function MobileCommandMenu({
   activeView,
   homepageMode,
   onClose,
-  onCreateReceizId,
   onExistingReceizId,
   onNavigate,
   onSeal,
@@ -404,7 +408,6 @@ function MobileCommandMenu({
   customerReceizHandle: string;
   homepageMode: CommerceState["storefront"]["homepageMode"];
   onClose: () => void;
-  onCreateReceizId: () => void | Promise<void>;
   onExistingReceizId: () => void | Promise<void>;
   onNavigate: (view: MobileView) => void;
   onSeal: () => void;
@@ -455,19 +458,10 @@ function MobileCommandMenu({
 
         <div className="mobile-command-actions">
           {state.auth.receizId.connected ? null : (
-            <>
-              <OfficialReceizLoginButton
-                className="mobile-command-receiz-login"
-                onClick={() => runAction(onExistingReceizId)}
-              />
-              <button onClick={() => runAction(onCreateReceizId)} type="button">
-                <Icons.receiz size={21} />
-                <div>
-                  <strong>New Receiz ID</strong>
-                  <span>Create a new local Receiz ID</span>
-                </div>
-              </button>
-            </>
+            <OfficialReceizLoginButton
+              className="mobile-command-receiz-login"
+              onClick={() => runAction(onExistingReceizId)}
+            />
           )}
           {tenantSurface ? null : (
             <button onClick={() => runAction(onSeal)} type="button">
@@ -498,9 +492,11 @@ function MobileStage({
   campaignName,
   customer,
   onAddToCart,
+  onAttachPbiRecovery,
   onCheckout,
   onClaimReward,
   onCreateReceizId,
+  onDownloadIdentitySeal,
   onExistingReceizId,
   onIssueReward,
   onPlayComplete,
@@ -517,9 +513,11 @@ function MobileStage({
   customer: CustomerAccount;
   customerReceizHandle: string;
   onAddToCart: (productId: string) => void;
+  onAttachPbiRecovery: () => void | Promise<void>;
   onCheckout: () => void;
   onClaimReward: () => void;
   onCreateReceizId: () => void | Promise<void>;
+  onDownloadIdentitySeal: () => void | Promise<void>;
   onExistingReceizId: () => void | Promise<void>;
   onIssueReward: () => void;
   onPlayComplete: (beans: number) => void;
@@ -557,7 +555,9 @@ function MobileStage({
         active={activeView === "assets"}
         assets={state.assets}
         customerReceizHandle={customerReceizHandle}
+        onAttachPbiRecovery={onAttachPbiRecovery}
         onCreateReceizId={onCreateReceizId}
+        onDownloadIdentitySeal={onDownloadIdentitySeal}
         onExistingReceizId={onExistingReceizId}
         onRestoreArtifact={onRestoreArtifact}
         showIdentityUpload={showIdentityUpload}
@@ -574,7 +574,9 @@ function MobileStage({
         active={activeView === "account"}
         customer={customer}
         customerReceizHandle={customerReceizHandle}
+        onAttachPbiRecovery={onAttachPbiRecovery}
         onCreateReceizId={onCreateReceizId}
+        onDownloadIdentitySeal={onDownloadIdentitySeal}
         onExistingReceizId={onExistingReceizId}
         onRestoreArtifact={onRestoreArtifact}
         showIdentityUpload={showIdentityUpload}
@@ -853,31 +855,16 @@ function MobileIdentityActions({
 }) {
   return (
     <>
-      <div className="mobile-action-grid mobile-identity-actions">
+      <div className="mobile-action-grid mobile-identity-actions mobile-identity-actions-single">
         <OfficialReceizLoginButton className="mobile-official-receiz-login" onClick={onExistingReceizId} />
-        <button onClick={onCreateReceizId} type="button">
-          <Icons.receiz size={21} />
-          <span>New Receiz ID</span>
-        </button>
       </div>
       {showIdentityUpload ? (
-        <div className="mobile-identity-fallback">
-          <label className="button button-outline" htmlFor={inputId}>
-            <Icons.image size={17} />
-            Upload Identity Seal
-          </label>
-          <input
-            accept=".json,image/png,image/jpeg,image/webp"
-            id={inputId}
-            onChange={(event) => {
-              const file = event.currentTarget.files?.[0];
-              if (file) void onRestoreArtifact(file);
-              event.currentTarget.value = "";
-            }}
-            type="file"
-          />
-          <span>Use an Identity Seal image, Identity Record image, or Receiz Key from this device.</span>
-        </div>
+        <ReceizRecoveryPills
+          className="mobile-identity-pills"
+          inputId={inputId}
+          onPbiRecovery={onCreateReceizId}
+          onRestoreArtifact={onRestoreArtifact}
+        />
       ) : null}
     </>
   );
@@ -887,7 +874,9 @@ function MobileAssetsPanel({
   active,
   assets,
   customerReceizHandle,
+  onAttachPbiRecovery,
   onCreateReceizId,
+  onDownloadIdentitySeal,
   onExistingReceizId,
   onRestoreArtifact,
   showIdentityUpload,
@@ -897,7 +886,9 @@ function MobileAssetsPanel({
   active: boolean;
   assets: ReceizedAsset[];
   customerReceizHandle: string;
+  onAttachPbiRecovery: () => void | Promise<void>;
   onCreateReceizId: () => void | Promise<void>;
+  onDownloadIdentitySeal: () => void | Promise<void>;
   onExistingReceizId: () => void | Promise<void>;
   onRestoreArtifact: (file: File) => void | Promise<void>;
   showIdentityUpload: boolean;
@@ -924,6 +915,13 @@ function MobileAssetsPanel({
           showIdentityUpload={showIdentityUpload}
         />
       )}
+      {state.auth.receizId.connected ? (
+        <ReceizAccountManagementPills
+          className="mobile-identity-pills"
+          onAttachPbi={onAttachPbiRecovery}
+          onDownloadIdentitySeal={onDownloadIdentitySeal}
+        />
+      ) : null}
       <div className="mobile-asset-list">
         {assets.length ? (
           assets.slice(0, 3).map((asset) => (
@@ -968,7 +966,9 @@ function MobileAccountPanel({
   active,
   customer,
   customerReceizHandle,
+  onAttachPbiRecovery,
   onCreateReceizId,
+  onDownloadIdentitySeal,
   onExistingReceizId,
   onRestoreArtifact,
   showIdentityUpload,
@@ -978,7 +978,9 @@ function MobileAccountPanel({
   active: boolean;
   customer: CustomerAccount;
   customerReceizHandle: string;
+  onAttachPbiRecovery: () => void | Promise<void>;
   onCreateReceizId: () => void | Promise<void>;
+  onDownloadIdentitySeal: () => void | Promise<void>;
   onExistingReceizId: () => void | Promise<void>;
   onRestoreArtifact: (file: File) => void | Promise<void>;
   showIdentityUpload: boolean;
@@ -1000,9 +1002,6 @@ function MobileAccountPanel({
           <span><Icons.receiz size={15} /> {customerReceizHandle}</span>
         </div>
       </div>
-      <div className="mobile-account-receiz-badge">
-        <PoweredByReceizBadge />
-      </div>
       {state.auth.receizId.connected ? null : (
         <MobileIdentityActions
           inputId="mobile-account-receiz-identity-artifact"
@@ -1012,6 +1011,13 @@ function MobileAccountPanel({
           showIdentityUpload={showIdentityUpload}
         />
       )}
+      {state.auth.receizId.connected ? (
+        <ReceizAccountManagementPills
+          className="mobile-identity-pills"
+          onAttachPbi={onAttachPbiRecovery}
+          onDownloadIdentitySeal={onDownloadIdentitySeal}
+        />
+      ) : null}
       {tenantSurface ? (
         <div className="mobile-account-scope">
           <div>
@@ -1065,6 +1071,9 @@ function MobileAccountPanel({
           Admin Studio
         </Button>
       )}
+      <div className="mobile-account-receiz-badge">
+        <PoweredByReceizBadge />
+      </div>
     </MobilePane>
   );
 }

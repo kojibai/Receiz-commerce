@@ -64,6 +64,7 @@ import {
 import type { GameResult, Product, ProofEvent, ReceizedAsset, Reward, VerifiedObject } from "@/types/domain";
 import { makeId } from "@/lib/utils";
 import { platform } from "@/lib/platform";
+import { receizOidcScopesFromEnv } from "./oauth-scopes";
 
 export type ReceizCommerceAdapter = {
   sdkVersion: string;
@@ -263,31 +264,8 @@ function receizClientOptionsFromEnv(): ReceizClientOptions {
   };
 }
 
-function enabled(value: string | undefined) {
-  return value === "1" || value === "true";
-}
-
 function receizDoctorScopes() {
-  const scopes = [
-    "openid",
-    "profile",
-    "email",
-    "offline_access",
-    "receiz:record",
-    "receiz:seal",
-    "receiz:verify",
-    "receiz:wallet.read",
-    "receiz:wallet.transfer",
-    "receiz:payments.create",
-    "receiz:payments.read",
-    "receiz:notes.mint",
-    "receiz:notes.claim",
-    "receiz:notes.read"
-  ];
-
-  return enabled(process.env.RECEIZ_ENABLE_TWIN_SCOPES)
-    ? [...scopes, "receiz:twin.read", "receiz:twin.write"]
-    : scopes;
+  return receizOidcScopesFromEnv(process.env);
 }
 
 function defaultDoctorOptions(): ReceizCapabilitiesOptions {
@@ -398,22 +376,7 @@ export function createReceizCommerceAdapter(
         redirectUri: input.redirectUri,
         codeChallenge: input.codeChallenge,
         codeChallengeMethod: "S256",
-        scope: input.scopes ?? [
-          "openid",
-          "profile",
-          "email",
-          "offline_access",
-          "receiz:record",
-          "receiz:seal",
-          "receiz:verify",
-          "receiz:wallet.read",
-          "receiz:wallet.transfer",
-          "receiz:payments.create",
-          "receiz:payments.read",
-          "receiz:notes.mint",
-          "receiz:notes.claim",
-          "receiz:notes.read"
-        ],
+        scope: input.scopes ?? receizOidcScopesFromEnv(process.env),
         state: input.state,
         usernameHint: input.usernameHint
       });

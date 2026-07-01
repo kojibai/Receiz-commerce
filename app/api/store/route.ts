@@ -9,11 +9,15 @@ import { getServerProofStateStore } from "@/lib/receiz/proof-state-store";
 import { publishReceizStoreState } from "@/lib/receiz/store-state-publication";
 import { loadReceizConnectProfile } from "@/lib/receiz/connect-profile";
 import { receizAccessTokenFromRequest, receizLoginRequired } from "@/lib/receiz/session";
+import { createReceizCommerceAdapter } from "@/lib/receiz/adapter";
+import { prepareStoreStateMediaForPublish } from "@/lib/receiz/media-publication";
 import { mockStorage } from "@/lib/storage/mock-storage";
 import { tenantFallbackState } from "@/lib/hosting/tenant-state";
 import { hydrateProofStoreFromReceizStoreState } from "@/lib/receiz/store-state-ledger";
 import { buildPublishedCommerceState } from "@/lib/hosting/published-state";
 import type { CommerceState, StorefrontHomepageMode } from "@/types/domain";
+
+export const runtime = "nodejs";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
@@ -53,6 +57,10 @@ function mergePublishedState(input: unknown): CommerceState {
 
 function receizWriteSucceeded(result: unknown) {
   return !(isRecord(result) && result.ok === false);
+}
+
+function errorMessage(error: unknown) {
+  return error instanceof Error ? error.message : "Unknown error";
 }
 
 async function loadPublishOwner(accessToken: string | undefined) {
@@ -148,8 +156,35 @@ export async function POST(request: NextRequest) {
     tenantSlug: publishOwner?.subdomain
   });
   const tenantHost = state.hosting.customDomain.domain || state.hosting.subdomain || hostContext.tenantHost || host;
-  const record = buildStoreStateRecord(state, {
-    actorReceizId: state.hosting.merchantReceizId || state.auth.receizId.handle,
+  const actorReceizId = state.hosting.merchantReceizId || state.auth.receizId.handle;
+  let publishState = state;
+
+  if (accessToken) {
+    const receiz = createReceizCommerceAdapter({
+      baseUrl: process.env.RECEIZ_BASE_URL,
+      accessToken
+    });
+
+    try {
+      publishState = await prepareStoreStateMediaForPublish(state, {
+        tenantHost,
+        merchantReceizId: actorReceizId,
+        upload: (file, options) => receiz.uploadMedia(file, options)
+      });
+    } catch (error) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error: "receiz_media_publish_failed",
+          message: errorMessage(error)
+        },
+        { status: 502 }
+      );
+    }
+  }
+
+  const record = buildStoreStateRecord(publishState, {
+    actorReceizId,
     tenantHost,
     reason: "publish"
   });

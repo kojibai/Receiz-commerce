@@ -1,7 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { createReceizClient, type ReceizIdentityAccountProjection } from "@receiz/sdk";
+import {
+  appendReceizIdentityArtifactTrailerToPng,
+  createReceizClient,
+  type ReceizIdentityAccountProjection
+} from "@receiz/sdk";
 import { seedCommerceState } from "@/data/seed";
 import {
   normalizeCustomDomain,
@@ -122,6 +126,99 @@ function identityArtifactKind(file: File): CommerceState["auth"]["receizId"]["ar
   if (name.includes("receiz-id")) return "receiz_id";
 
   return "receiz_key";
+}
+
+function roundedRectPath(context: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, radius: number) {
+  const r = Math.min(radius, width / 2, height / 2);
+
+  context.beginPath();
+  context.moveTo(x + r, y);
+  context.lineTo(x + width - r, y);
+  context.quadraticCurveTo(x + width, y, x + width, y + r);
+  context.lineTo(x + width, y + height - r);
+  context.quadraticCurveTo(x + width, y + height, x + width - r, y + height);
+  context.lineTo(x + r, y + height);
+  context.quadraticCurveTo(x, y + height, x, y + height - r);
+  context.lineTo(x, y + r);
+  context.quadraticCurveTo(x, y, x + r, y);
+  context.closePath();
+}
+
+async function createIdentitySealImageBytes(keyFile: unknown, receizId: CommerceState["auth"]["receizId"]) {
+  if (typeof document === "undefined") throw new Error("identity_seal_browser_required");
+
+  const canvas = document.createElement("canvas");
+  canvas.width = 900;
+  canvas.height = 900;
+
+  const context = canvas.getContext("2d");
+  if (!context) throw new Error("identity_seal_canvas_required");
+
+  const gradient = context.createLinearGradient(0, 0, 900, 900);
+  gradient.addColorStop(0, "#001b2d");
+  gradient.addColorStop(0.52, "#00a58a");
+  gradient.addColorStop(1, "#ffffff");
+  context.fillStyle = gradient;
+  context.fillRect(0, 0, 900, 900);
+
+  context.fillStyle = "rgba(255,255,255,0.92)";
+  roundedRectPath(context, 86, 86, 728, 728, 74);
+  context.fill();
+
+  context.fillStyle = "#001b2d";
+  context.font = "800 58px Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif";
+  context.textAlign = "center";
+  context.fillText("Receiz ID", 450, 230);
+
+  context.strokeStyle = "#00a58a";
+  context.lineWidth = 18;
+  roundedRectPath(context, 320, 300, 260, 260, 74);
+  context.stroke();
+
+  context.fillStyle = "#00a58a";
+  context.beginPath();
+  context.moveTo(390, 424);
+  context.lineTo(438, 472);
+  context.lineTo(524, 374);
+  context.lineWidth = 28;
+  context.lineCap = "round";
+  context.lineJoin = "round";
+  context.stroke();
+
+  context.fillStyle = "#001b2d";
+  context.font = "800 42px Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif";
+  context.fillText(receizId.handle, 450, 650);
+
+  context.fillStyle = "#667085";
+  context.font = "600 28px Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif";
+  context.fillText("Identity Seal image", 450, 704);
+
+  const blob = await new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob((value) => {
+      if (value) resolve(value);
+      else reject(new Error("identity_seal_canvas_export_failed"));
+    }, "image/png");
+  });
+
+  const pngBytes = new Uint8Array(await blob.arrayBuffer());
+  return appendReceizIdentityArtifactTrailerToPng(pngBytes, keyFile as never);
+}
+
+function downloadIdentitySealBytes(bytes: Uint8Array, filename: string) {
+  const payload = new ArrayBuffer(bytes.byteLength);
+  new Uint8Array(payload).set(bytes);
+
+  const blob = new Blob([payload], { type: "image/png" });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+
+  anchor.href = url;
+  anchor.download = filename;
+  anchor.rel = "noopener";
+  document.body.append(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
 }
 
 function accountHandle(projection: ReceizIdentityAccountProjection | null, fallback: string) {
@@ -1326,6 +1423,119 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
             ]
           };
         });
+      },
+      attachPbiRecovery() {
+        const browserSession =
+          typeof window !== "undefined"
+            ? parseBrowserReceizIdSession(safeGetLocalStorage(window.localStorage, BROWSER_RECEIZ_ID_SESSION_KEY))
+            : null;
+        const keyFile = pendingBrowserIdentityKeyFileRef.current ?? browserSession?.keyFile;
+
+        if (!keyFile) {
+          setState((current) => ({
+            ...current,
+            auth: {
+              ...current.auth,
+              receizId: {
+                ...current.auth.receizId,
+                statusLabel: "Attach PBI after creating or uploading an Identity Seal"
+              }
+            },
+            proofEvents: [
+              makeEvent("RECEIZ_ID_CONNECTED", "PBI recovery needs a local Receiz ID or Identity Seal first"),
+              ...current.proofEvents
+            ]
+          }));
+          return;
+        }
+
+        pendingBrowserIdentityKeyFileRef.current = keyFile;
+        setState((current) => ({
+          ...current,
+          auth: {
+            ...current.auth,
+            receizId: {
+              ...current.auth.receizId,
+              artifactStatus: "verified",
+              localProofVerified: true,
+              statusLabel: "PBI recovery attached"
+            }
+          },
+          proofEvents: [
+            makeEvent("RECEIZ_ID_CONNECTED", `${current.auth.receizId.handle} attached PBI recovery`),
+            ...current.proofEvents
+          ]
+        }));
+      },
+      async downloadIdentitySealImage() {
+        const browserSession =
+          typeof window !== "undefined"
+            ? parseBrowserReceizIdSession(safeGetLocalStorage(window.localStorage, BROWSER_RECEIZ_ID_SESSION_KEY))
+            : null;
+        const keyFile = pendingBrowserIdentityKeyFileRef.current ?? browserSession?.keyFile;
+
+        if (!keyFile) {
+          setState((current) => ({
+            ...current,
+            auth: {
+              ...current.auth,
+              receizId: {
+                ...current.auth.receizId,
+                statusLabel: "Create or upload an Identity Seal before exporting"
+              }
+            },
+            proofEvents: [
+              makeEvent("RECEIZ_ID_CONNECTED", "Identity Seal export needs a local Receiz ID or uploaded seal"),
+              ...current.proofEvents
+            ]
+          }));
+          return;
+        }
+
+        try {
+          const snapshot = stateRef.current;
+          const bytes = await createIdentitySealImageBytes(keyFile, snapshot.auth.receizId);
+          const filename = `${slugify(snapshot.auth.receizId.handle.replace(/\.receiz\.id$/i, ""), "receiz-id")}-identity-seal.png`;
+          downloadIdentitySealBytes(bytes, filename);
+          pendingBrowserIdentityKeyFileRef.current = keyFile;
+
+          setState((current) => ({
+            ...current,
+            auth: {
+              ...current.auth,
+              receizId: {
+                ...current.auth.receizId,
+                accountImageLabel: "Identity Seal image",
+                artifactKind: "identity_seal",
+                artifactStatus: "verified",
+                localProofVerified: true,
+                statusLabel: "Identity Seal downloaded"
+              }
+            },
+            proofEvents: [
+              makeEvent("RECEIZ_ID_CONNECTED", `${current.auth.receizId.handle} downloaded an Identity Seal image`),
+              ...current.proofEvents
+            ]
+          }));
+        } catch (error) {
+          setState((current) => ({
+            ...current,
+            auth: {
+              ...current.auth,
+              receizId: {
+                ...current.auth.receizId,
+                statusLabel: "Identity Seal export failed"
+              }
+            },
+            proofEvents: [
+              makeEvent(
+                "RECEIZ_ID_CONNECTED",
+                error instanceof Error ? error.message : "Identity Seal export failed"
+              ),
+              ...current.proofEvents
+            ]
+          }));
+        }
       },
       publish() {
         setState((current) => {

@@ -1422,6 +1422,15 @@ a {
   padding: 0 14px 12px;
 }
 
+.identity-login-stack {
+  display: grid;
+  gap: 0;
+}
+
+.account-login-actions {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .identity-actions .button {
   width: 100%;
 }
@@ -1448,6 +1457,55 @@ a {
 
 .identity-actions > .official-receiz-login-button:only-child {
   grid-column: 1 / -1;
+}
+
+.account-recovery-pills {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+  padding: 0 14px 14px;
+}
+
+.account-recovery-pills input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.account-recovery-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 0;
+  min-height: 32px;
+  padding: 0 10px;
+  border: 1px solid rgba(0, 122, 103, 0.18);
+  border-radius: 999px;
+  color: var(--receiz);
+  background: rgba(0, 122, 103, 0.06);
+  font-size: 12px;
+  font-weight: 850;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.account-recovery-pill span {
+  min-width: 0;
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.account-recovery-pill:hover {
+  border-color: rgba(0, 122, 103, 0.32);
+  background: rgba(0, 122, 103, 0.1);
 }
 
 .identity-choice-actions .button {
@@ -1858,14 +1916,17 @@ a {
   font-weight: 800;
 }
 
-.account-powered-by-receiz {
+.account-bottom-powered {
   display: flex;
-  width: fit-content;
-  max-width: min(210px, 100%);
-  margin-top: 12px;
+  justify-content: center;
+  margin: 18px 0 0;
 }
 
-.account-powered-by-receiz img {
+.account-bottom-powered .powered-by-receiz-badge {
+  width: min(210px, 100%);
+}
+
+.account-bottom-powered img {
   height: auto;
 }
 
@@ -4204,6 +4265,10 @@ a {
     min-height: 58px;
   }
 
+  .mobile-identity-actions-single {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   .mobile-identity-actions .mobile-official-receiz-login {
     min-height: 58px;
     padding: 5px;
@@ -4214,6 +4279,17 @@ a {
 
   .mobile-identity-actions .mobile-official-receiz-login img {
     width: min(150px, 100%);
+  }
+
+  .mobile-identity-pills {
+    justify-content: center;
+    padding: 0;
+  }
+
+  .mobile-identity-pills .account-recovery-pill {
+    min-height: 34px;
+    padding-inline: 10px;
+    font-size: 11px;
   }
 
   .mobile-command-actions .mobile-command-receiz-login {
@@ -4310,6 +4386,7 @@ a {
     display: flex;
     justify-content: center;
     width: 100%;
+    margin-top: 2px;
   }
 
   .mobile-account-receiz-badge .powered-by-receiz-badge {

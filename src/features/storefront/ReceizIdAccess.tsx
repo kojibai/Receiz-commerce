@@ -1,17 +1,22 @@
 "use client";
 
 import { Icons } from "@/components/icons";
-import { Button, OfficialReceizLoginButton, Panel, SectionHeader, StatusPill } from "@/components/ui";
+import { OfficialReceizLoginButton, Panel, SectionHeader, StatusPill } from "@/components/ui";
+import { ReceizAccountManagementPills, ReceizRecoveryPills } from "@/features/storefront/ReceizRecoveryPills";
 import type { ReceizIdState } from "@/types/domain";
 
 export function ReceizIdAccess({
   onCreateReceizId,
   onExistingReceizId,
+  onAttachPbiRecovery,
+  onDownloadIdentitySeal,
   onRestoreArtifact,
   receizId,
   showUploadFallback
 }: {
+  onAttachPbiRecovery: () => void | Promise<void>;
   onCreateReceizId: () => void | Promise<void>;
+  onDownloadIdentitySeal: () => void | Promise<void>;
   onExistingReceizId: () => void | Promise<void>;
   onRestoreArtifact: (file: File) => void | Promise<void>;
   receizId: ReceizIdState;
@@ -33,33 +38,23 @@ export function ReceizIdAccess({
           </p>
         </div>
       </div>
+      {receizId.connected ? (
+        <ReceizAccountManagementPills
+          onAttachPbi={onAttachPbiRecovery}
+          onDownloadIdentitySeal={onDownloadIdentitySeal}
+        />
+      ) : null}
       {receizId.connected ? null : (
         <>
-        <div className="identity-actions identity-choice-actions">
+        <div className="identity-actions account-login-actions">
           <OfficialReceizLoginButton onClick={onExistingReceizId} />
-          <Button onClick={onCreateReceizId} variant="outline">
-            <Icons.receiz size={17} />
-            New Receiz ID
-          </Button>
         </div>
         {showUploadFallback ? (
-          <div className="identity-upload-fallback">
-            <label className="button button-outline" htmlFor="storefront-receiz-identity-artifact">
-              <Icons.image size={17} />
-              Upload Identity Seal
-            </label>
-            <input
-              accept=".json,image/png,image/jpeg,image/webp"
-              id="storefront-receiz-identity-artifact"
-              onChange={(event) => {
-                const file = event.currentTarget.files?.[0];
-                if (file) void onRestoreArtifact(file);
-                event.currentTarget.value = "";
-              }}
-              type="file"
-            />
-            <p>Use an Identity Seal image, Identity Record image, or Receiz Key from this device.</p>
-          </div>
+          <ReceizRecoveryPills
+            inputId="storefront-receiz-identity-artifact"
+            onPbiRecovery={onCreateReceizId}
+            onRestoreArtifact={onRestoreArtifact}
+          />
         ) : null}
         </>
       )}

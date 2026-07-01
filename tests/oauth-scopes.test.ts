@@ -7,6 +7,11 @@ describe("Receiz OIDC scopes", () => {
     const scopes = receizOidcScopesFromEnv({});
 
     assert.equal(scopes.includes("receiz:record"), true);
+    assert.equal(scopes.includes("offline_access"), true);
+    assert.equal(scopes.includes("receiz:wallet.read"), true);
+    assert.equal(scopes.includes("receiz:payments.create"), true);
+    assert.equal(scopes.includes("receiz:notes.read"), true);
+    assert.equal(new Set(scopes).size, scopes.length);
     assert.equal(scopes.includes("receiz:twin.read"), false);
     assert.equal(scopes.includes("receiz:twin.write"), false);
   });

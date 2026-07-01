@@ -19,6 +19,7 @@ import { ProductCatalog } from "@/features/storefront/ProductCatalog";
 import { platform } from "@/lib/platform";
 import type { CommerceState } from "@/types/domain";
 import type { HostContext } from "@/lib/hosting/host-context";
+import { ReceizAccountManagementPills, ReceizRecoveryPills } from "@/features/storefront/ReceizRecoveryPills";
 
 export function AccountDashboard({
   initialHostContext,
@@ -39,6 +40,12 @@ export function AccountDashboard({
   const storeHost = tenantSurface ? hostContext.tenantHost ?? state.hosting.liveUrl : state.hosting.liveUrl;
   const walletRailLabel = state.auth.receizId.connected ? "Receiz wallet ready" : "Sign in to use Receiz wallet";
   const checkoutFallbackLabel = "Credit card fallback";
+  const continueWithReceizId = async () => {
+    const connected = await actions.connectExistingReceizId();
+    if (!connected) {
+      actions.signInWithReceizId();
+    }
+  };
 
   return (
     <main className="account-page" style={brandThemeStyle(state.brand)}>
@@ -69,7 +76,6 @@ export function AccountDashboard({
           <span className="receiz-id-line">
             <Icons.receiz size={15} /> {receizHandle}
           </span>
-          <PoweredByReceizBadge className="account-powered-by-receiz" />
         </div>
         <div className="account-hero-metrics">
           <MetricCard label="Rewards" value={customer.rewardsValueLabel} />
@@ -112,10 +118,23 @@ export function AccountDashboard({
             </div>
           </div>
           {state.auth.receizId.connected ? null : (
-            <div className="identity-actions">
-              <OfficialReceizLoginButton onClick={actions.signInWithReceizId} />
+            <div className="identity-login-stack">
+              <div className="identity-actions account-login-actions">
+                <OfficialReceizLoginButton onClick={() => void continueWithReceizId()} />
+              </div>
+              <ReceizRecoveryPills
+                inputId="account-receiz-identity-artifact"
+                onPbiRecovery={actions.createReceizId}
+                onRestoreArtifact={actions.restoreReceizIdentityArtifact}
+              />
             </div>
           )}
+          {state.auth.receizId.connected ? (
+            <ReceizAccountManagementPills
+              onAttachPbi={actions.attachPbiRecovery}
+              onDownloadIdentitySeal={actions.downloadIdentitySealImage}
+            />
+          ) : null}
         </Panel>
 
         <Panel>
@@ -245,6 +264,9 @@ export function AccountDashboard({
         onAddToCart={actions.addToCart}
         showAdminActions={!tenantSurface}
       />
+      <div className="account-bottom-powered">
+        <PoweredByReceizBadge />
+      </div>
     </main>
   );
 }
