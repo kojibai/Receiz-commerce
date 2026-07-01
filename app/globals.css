@@ -1256,6 +1256,24 @@ a {
   gap: 10px;
 }
 
+.product-cell-link {
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
+}
+
+.product-cell-link strong {
+  display: block;
+  color: var(--text);
+  line-height: 1.2;
+}
+
+.product-cell-link:is(:hover, :focus-visible) strong {
+  color: var(--receiz);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 .product-cell p {
   margin: 2px 0 0;
   color: var(--muted);
@@ -1366,6 +1384,13 @@ a {
 
 .mobile-product-grid {
   display: none;
+}
+
+.mobile-product-link {
+  display: grid;
+  gap: 8px;
+  color: inherit;
+  text-decoration: none;
 }
 
 .reward-deck-panel,
@@ -4866,8 +4891,65 @@ a {
     grid-template-columns: 1fr;
   }
 
+  .desktop-table {
+    display: none;
+  }
+
   .mobile-product-grid {
+    display: grid;
     grid-template-columns: 1fr;
+    gap: 10px;
+    padding: 0 14px 14px;
+  }
+
+  .mobile-product-card {
+    display: grid;
+    gap: 10px;
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: #ffffff;
+  }
+
+  .mobile-product-link strong,
+  .mobile-product-link p {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .mobile-product-link strong {
+    color: var(--text);
+    font-size: 15px;
+    line-height: 1.2;
+  }
+
+  .mobile-product-link p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 12px;
+  }
+
+  .mobile-product-card > div:last-child {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .mobile-product-card > div:last-child span {
+    color: var(--receiz);
+    font-weight: 850;
+  }
+
+  .mobile-product-card > div:last-child button {
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--receiz);
+    background: var(--receiz-soft);
   }
 }
 
@@ -5383,6 +5465,100 @@ a {
   align-content: center;
 }
 
+.product-purchase-panel {
+  display: grid;
+  gap: 12px;
+}
+
+.product-purchase-card {
+  display: grid;
+  gap: 14px;
+  padding: 14px;
+  border: 1px solid rgba(0, 138, 106, 0.18);
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at 94% 16%, rgba(255, 189, 0, 0.18), transparent 28%),
+    linear-gradient(135deg, rgba(231, 248, 242, 0.92), rgba(255, 255, 255, 0.96));
+}
+
+.product-purchase-card > div:first-child {
+  display: grid;
+  gap: 5px;
+}
+
+.product-purchase-card > div:first-child strong {
+  color: var(--text);
+  font-size: 34px;
+  line-height: 1;
+}
+
+.product-purchase-card > div:first-child span:not(.status-pill) {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.product-purchase-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(140px, 0.55fr);
+  gap: 10px;
+}
+
+.product-purchase-actions .button {
+  min-width: 0;
+  justify-content: center;
+  gap: 8px;
+  white-space: normal;
+}
+
+.product-purchase-secondary-link {
+  justify-self: start;
+  color: var(--receiz);
+  font-size: 13px;
+  font-weight: 850;
+  text-decoration: none;
+}
+
+.product-purchase-secondary-link:is(:hover, :focus-visible) {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.product-purchase-facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.product-purchase-facts div {
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.product-purchase-facts span,
+.product-purchase-facts strong {
+  display: block;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.product-purchase-facts span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.product-purchase-facts strong {
+  margin-top: 4px;
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.25;
+}
+
 .detail-price-row {
   display: flex;
   flex-wrap: wrap;
@@ -5778,6 +5954,15 @@ a {
 
   .detail-price-row strong {
     font-size: 28px;
+  }
+
+  .product-purchase-actions,
+  .product-purchase-facts {
+    grid-template-columns: 1fr;
+  }
+
+  .product-purchase-card > div:first-child strong {
+    font-size: 30px;
   }
 
   .product-detail-card {

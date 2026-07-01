@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { BrandMark, ProductVisual, StatusPill } from "@/components/ui";
 import { loadStorefrontState, type StorefrontSearchParams } from "@/lib/storefront/server-state";
 import { resolveProductBySlug } from "@/lib/storefront/content-routing";
+import { ProductPurchasePanel } from "@/features/storefront/ProductPurchasePanel";
 
 type ProductPageProps = {
   params: Promise<{ slug: string }>;
@@ -33,7 +34,7 @@ export async function generateMetadata({ params, searchParams }: ProductPageProp
 
 export default async function ProductDetailPage({ params, searchParams }: ProductPageProps) {
   const { slug } = await params;
-  const { state } = await loadStorefrontState(await searchParams);
+  const { hostContext, state } = await loadStorefrontState(await searchParams);
   const product = resolveProductBySlug(state, slug);
 
   if (!product) notFound();
@@ -57,11 +58,7 @@ export default async function ProductDetailPage({ params, searchParams }: Produc
           </StatusPill>
           <h1>{product.name}</h1>
           <p>{product.description ?? product.subtitle}</p>
-          <div className="detail-price-row">
-            <strong>{product.priceLabel}</strong>
-            <span>{product.inventoryLabel} available</span>
-          </div>
-          <Link className="detail-primary-action" href="/#products">Add with Receiz checkout</Link>
+          <ProductPurchasePanel initialHostContext={hostContext} initialState={state} product={product} />
         </div>
       </section>
       <section className="detail-proof-band">

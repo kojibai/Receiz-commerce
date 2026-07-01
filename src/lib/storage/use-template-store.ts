@@ -19,6 +19,7 @@ import { safeGetLocalStorage, safeRemoveLocalStorage, safeSetLocalStorage } from
 import { pendingPublishStorageKey, shouldResumePendingPublish } from "@/lib/storage/pending-publish";
 import { mergeStoreApiProjection } from "@/lib/storefront/store-api-projection";
 import { applyLocalReceizIdentitySession } from "@/lib/storefront/local-identity-session";
+import { stateWithCartProduct } from "@/lib/storefront/product-purchase";
 import {
   applyBrowserReceizIdSession,
   applyTenantCustomerSession,
@@ -2114,21 +2115,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
         }));
       },
       addToCart(productId: string) {
-        setState((current) => {
-          const existing = current.cart.lines.find((line) => line.productId === productId);
-          return {
-            ...current,
-            cart: {
-              lines: existing
-                ? current.cart.lines.map((line) =>
-                    line.productId === productId
-                      ? { ...line, quantity: line.quantity + 1 }
-                      : line
-                  )
-                : [...current.cart.lines, { productId, quantity: 1 }]
-            }
-          };
-        });
+        setState((current) => stateWithCartProduct(current, productId));
       },
       completeMockCheckout() {
         setState((current) => {
@@ -2163,13 +2150,20 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
           };
         });
       },
-      async startCheckout() {
-        const identity = await receizIdentityForAutomaticCustomerSession(stateRef.current, "one-click checkout");
+      async startCheckout(productId?: string) {
+        const checkoutBase = productId ? stateWithCartProduct(stateRef.current, productId) : stateRef.current;
+
+        if (productId) {
+          stateRef.current = checkoutBase;
+          setState(checkoutBase);
+        }
+
+        const identity = await receizIdentityForAutomaticCustomerSession(checkoutBase, "one-click checkout");
         if (identity.keyFile) {
           pendingBrowserIdentityKeyFileRef.current = identity.keyFile;
         }
 
-        const checkoutSnapshot = identity.apply(stateRef.current);
+        const checkoutSnapshot = identity.apply(checkoutBase);
         const checkoutMode = process.env.NEXT_PUBLIC_CHECKOUT_MODE ?? checkoutSnapshot.checkout.mode;
         const totalLabel = `$${cartAmountUsd(checkoutSnapshot)}`;
         const itemCount = Math.max(1, checkoutSnapshot.cart.lines.length);
