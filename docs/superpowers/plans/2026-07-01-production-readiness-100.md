@@ -17,7 +17,7 @@
 - Test: `tests/launch-readiness.test.ts`
 - Modify: `tsconfig.test.json`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```ts
 import assert from "node:assert/strict";
@@ -65,13 +65,13 @@ describe("launch readiness", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `pnpm test`
 
 Expected: TypeScript fails because `src/lib/launch/readiness.ts` does not exist.
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 Create `src/lib/launch/readiness.ts` with exported types and `buildLaunchReadiness(state: CommerceState): LaunchReadiness`.
 
@@ -82,11 +82,11 @@ The model must:
 - Return `score`, `grade`, `categories`, `blockers`, and `nextActions`.
 - Treat the existing seed state as 100/100.
 
-- [ ] **Step 4: Include the module in test TypeScript config**
+- [x] **Step 4: Include the module in test TypeScript config**
 
 Add `src/lib/launch/readiness.ts` and `src/data/seed.ts` to `tsconfig.test.json`.
 
-- [ ] **Step 5: Run tests to verify green**
+- [x] **Step 5: Run tests to verify green**
 
 Run: `pnpm test`
 
@@ -99,17 +99,17 @@ Expected: all tests pass.
 - Modify: `src/features/admin/AdminStudio.tsx`
 - Modify: `app/globals.css`
 
-- [ ] **Step 1: Write a focused test for render-safe content**
+- [x] **Step 1: Write a focused test for render-safe content**
 
 Add assertions to `tests/launch-readiness.test.ts` that `buildLaunchReadiness(seedCommerceState)` exposes category labels and next actions suitable for a no-code admin panel.
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `pnpm test`
 
 Expected: failure if labels/actions are missing from the readiness model.
 
-- [ ] **Step 3: Create `LaunchReadinessPanel`**
+- [x] **Step 3: Create `LaunchReadinessPanel`**
 
 The panel must show:
 - Overall score and grade.
@@ -117,7 +117,7 @@ The panel must show:
 - Critical blockers when present.
 - “Developer clone rails” facts from the readiness model so clone builders learn the SDK rails in-app.
 
-- [ ] **Step 4: Mount in desktop and mobile admin launch surfaces**
+- [x] **Step 4: Mount in desktop and mobile admin launch surfaces**
 
 Import `LaunchReadinessPanel` in `AdminStudio.tsx`.
 
@@ -125,7 +125,7 @@ Place it:
 - After `TwinLaunchPanel` in the desktop admin grid.
 - After the mobile snapshot in the launch mobile pane.
 
-- [ ] **Step 5: Style without disrupting existing layout**
+- [x] **Step 5: Style without disrupting existing layout**
 
 Add responsive CSS for:
 - `.launch-readiness-panel`
@@ -135,7 +135,7 @@ Add responsive CSS for:
 - `.readiness-blockers`
 - `.readiness-sdk-rails`
 
-- [ ] **Step 6: Verify**
+- [x] **Step 6: Verify**
 
 Run: `pnpm typecheck` and `pnpm test`.
 
@@ -147,7 +147,7 @@ Expected: both pass.
 - Create: `docs/PRODUCTION_READINESS.md`
 - Modify: `README.md`
 
-- [ ] **Step 1: Write docs grounded in code paths**
+- [x] **Step 1: Write docs grounded in code paths**
 
 Create a guide with:
 - What the app is for: developer clone template and no-code production commerce app.
@@ -156,11 +156,11 @@ Create a guide with:
 - Code path map for each gate.
 - Commands: `pnpm receiz:doctor`, `pnpm test`, `pnpm typecheck`.
 
-- [ ] **Step 2: Link guide from README**
+- [x] **Step 2: Link guide from README**
 
 Add a short “Production Readiness” section near SDK Doctor/MCP.
 
-- [ ] **Step 3: Verify docs references**
+- [x] **Step 3: Verify docs references**
 
 Run: `rg -n "PRODUCTION_READINESS|LaunchReadiness|buildLaunchReadiness|receiz:doctor" README.md docs src tests`.
 
@@ -171,14 +171,14 @@ Expected: the new guide and app code are discoverable.
 **Files:**
 - No new files.
 
-- [ ] **Step 1: Run full verification**
+- [x] **Step 1: Run full verification**
 
 Run:
 - `pnpm test`
 - `pnpm typecheck`
 - `RECEIZ_DOCTOR_TENANT_HOST=boost.receiz.app pnpm receiz:doctor`
 
-- [ ] **Step 2: Review git diff**
+- [x] **Step 2: Review git diff**
 
 Run: `git diff --stat` and `git diff --check`.
 

@@ -89,6 +89,19 @@ describe("launch readiness", () => {
     assert.equal(readiness.nextActions.length > 0, true);
   });
 
+  it("exposes audience guidance for no-code merchants and developer clones", () => {
+    const readiness = buildLaunchReadiness(readyState());
+
+    assert.deepEqual(
+      readiness.audiences.map((audience) => audience.id),
+      ["merchant", "developer"]
+    );
+    assert.equal(readiness.audiences[0]?.label, "No-code merchant");
+    assert.equal(readiness.audiences[1]?.label, "Developer clone");
+    assert.ok(readiness.audiences[0]?.summary.includes("button"));
+    assert.ok(readiness.audiences[1]?.summary.includes("@receiz/sdk"));
+  });
+
   it("surfaces clear blockers for a new incomplete merchant store", () => {
     const draft = readyState();
     draft.hosting.published = false;

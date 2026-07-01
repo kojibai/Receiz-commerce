@@ -34,11 +34,18 @@ export type LaunchReadinessBlocker = {
   actionLabel: string;
 };
 
+export type LaunchReadinessAudience = {
+  id: "merchant" | "developer";
+  label: string;
+  summary: string;
+};
+
 export type LaunchReadiness = {
   score: number;
   grade: "A+" | "A" | "B" | "C" | "D";
   status: "elite_ready" | "nearly_ready" | "needs_work";
   summary: string;
+  audiences: LaunchReadinessAudience[];
   categories: LaunchReadinessCategory[];
   blockers: LaunchReadinessBlocker[];
   nextActions: string[];
@@ -372,6 +379,18 @@ export function buildLaunchReadiness(state: CommerceState): LaunchReadiness {
     grade: gradeForScore(score),
     status: statusForScore(score, blockers),
     summary: summaryForReadiness(score, blockers),
+    audiences: [
+      {
+        id: "merchant",
+        label: "No-code merchant",
+        summary: "Build a real storefront with buttons for brand, catalog, rewards, domains, Receiz ID, checkout, and publish."
+      },
+      {
+        id: "developer",
+        label: "Developer clone",
+        summary: "Fork the app and use the @receiz/sdk adapter, doctor, scopes, public-store publish, and app-state recovery rails."
+      }
+    ],
     categories,
     blockers,
     nextActions: nextActionsFor(categories, blockers),

@@ -11,6 +11,7 @@ import { CommerceImportPanel } from "@/features/admin/CommerceImportPanel";
 import { HostingBillingPanel } from "@/features/admin/HostingBillingPanel";
 import { HostingDomainsPanel } from "@/features/admin/HostingDomainsPanel";
 import { LaunchRailsPanel } from "@/features/admin/LaunchRailsPanel";
+import { LaunchReadinessPanel } from "@/features/admin/LaunchReadinessPanel";
 import { PageBuilderPanel } from "@/features/admin/PageBuilderPanel";
 import { ProductEditorPanel } from "@/features/admin/ProductEditorPanel";
 import { PublishChecklist } from "@/features/admin/PublishChecklist";
@@ -65,6 +66,7 @@ export function AdminStudio() {
               onLaunch={actions.launchWithTwinBrief}
               state={state}
             />
+            <LaunchReadinessPanel state={state} />
             <LaunchRailsPanel state={state} />
             <BrandPanel
               onBrandUpdate={actions.updateBrand}
@@ -499,6 +501,7 @@ function MobileAdminConsole({
             onLaunch={actions.launchWithTwinBrief}
             state={state}
           />
+          <LaunchReadinessPanel compact state={state} />
           <LaunchRailsPanel state={state} />
           <PublishChecklist onPublish={actions.publish} publish={state.publish} />
         </MobileAdminPane>
