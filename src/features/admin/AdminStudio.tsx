@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, type ReactNode } from "react";
+import { useState, type FormEvent, type ReactNode } from "react";
 import { Icons } from "@/components/icons";
 import { BrandMark, Button, MetricCard, Panel, SealEventTimeline, SectionHeader, StatusPill } from "@/components/ui";
 import { useTemplateStore } from "@/lib/storage/use-template-store";
@@ -61,6 +61,10 @@ export function AdminStudio() {
 
         <div className="admin-layout-grid">
           <div className="admin-main-grid">
+            <TwinLaunchPanel
+              onLaunch={actions.launchWithTwinBrief}
+              state={state}
+            />
             <LaunchRailsPanel state={state} />
             <BrandPanel
               onBrandUpdate={actions.updateBrand}
@@ -299,6 +303,67 @@ function AdminStatusCard({
   );
 }
 
+function TwinLaunchPanel({
+  compact = false,
+  onLaunch,
+  state
+}: {
+  compact?: boolean;
+  onLaunch: TemplateActions["launchWithTwinBrief"];
+  state: ReturnType<typeof useTemplateStore>["state"];
+}) {
+  const [brief, setBrief] = useState("");
+  const [lastBuilt, setLastBuilt] = useState(state.brand.name);
+  const examples = [
+    "A coffee club with rewards and member access",
+    "A fitness coaching store with digital programs",
+    "A limited drop brand with early access passes"
+  ];
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const trimmed = brief.trim();
+    if (!trimmed) return;
+
+    onLaunch(trimmed);
+    setLastBuilt(trimmed);
+    setBrief("");
+  };
+
+  return (
+    <Panel className={compact ? "admin-panel twin-launch-panel compact" : "admin-panel twin-launch-panel"}>
+      <SectionHeader
+        title="Twin launch"
+        action={<StatusPill tone="green">Operator</StatusPill>}
+      />
+      <form className="twin-launch-form" onSubmit={handleSubmit}>
+        <label className="builder-field twin-launch-prompt">
+          <span>Business brief</span>
+          <textarea
+            value={brief}
+            onChange={(event) => setBrief(event.target.value)}
+            placeholder="A coffee club called Nova Roast with subscriptions, rewards, a story-driven home page, and two starter products."
+            rows={compact ? 3 : 4}
+          />
+        </label>
+        <div className="twin-launch-actions">
+          <Button disabled={!brief.trim()} type="submit" variant="primary">
+            <Icons.sparkle size={17} />
+            Build with Twin
+          </Button>
+          <span>{lastBuilt === state.brand.name ? state.brand.name : "Ready to publish"}</span>
+        </div>
+        <div className="twin-launch-chips" aria-label="Example business briefs">
+          {examples.map((example) => (
+            <button key={example} onClick={() => setBrief(example)} type="button">
+              {example}
+            </button>
+          ))}
+        </div>
+      </form>
+    </Panel>
+  );
+}
+
 function CommerceOpsPanel({
   compact = false,
   state
@@ -429,6 +494,11 @@ function MobileAdminConsole({
               <span>Store</span>
             </div>
           </div>
+          <TwinLaunchPanel
+            compact
+            onLaunch={actions.launchWithTwinBrief}
+            state={state}
+          />
           <LaunchRailsPanel state={state} />
           <PublishChecklist onPublish={actions.publish} publish={state.publish} />
         </MobileAdminPane>

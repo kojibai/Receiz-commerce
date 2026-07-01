@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useRef } from "react";
 import { Icons } from "@/components/icons";
 import {
   MetricCard,
@@ -46,12 +47,22 @@ export function AccountDashboard({
       ? "Account ready"
       : "Receiz rails ready"
     : state.auth.receizId.statusLabel;
+  const autoAdmittedRef = useRef(false);
   const continueWithReceizId = async () => {
     const connected = await actions.connectExistingReceizId();
     if (!connected && !tenantSurface) {
       actions.signInWithReceizId();
     }
   };
+
+  useEffect(() => {
+    if (!tenantSurface || autoAdmittedRef.current || !hydrated || receizSessionPending || state.auth.receizId.connected) {
+      return;
+    }
+
+    autoAdmittedRef.current = true;
+    void actions.ensureCustomerSession(`${state.brand.name} account`);
+  }, [actions, hydrated, receizSessionPending, state.auth.receizId.connected, state.brand.name, tenantSurface]);
 
   return (
     <main className="account-page" style={brandThemeStyle(state.brand)}>
@@ -136,10 +147,17 @@ export function AccountDashboard({
             </div>
           ) : null}
           {state.auth.receizId.connected ? (
-            <ReceizAccountManagementPills
-              onAttachPbi={actions.attachPbiRecovery}
-              onDownloadIdentitySeal={actions.downloadIdentitySealImage}
-            />
+            <div className="identity-login-stack">
+              <ReceizAccountManagementPills
+                onAttachPbi={actions.attachPbiRecovery}
+                onDownloadIdentitySeal={actions.downloadIdentitySealImage}
+              />
+              <ReceizRecoveryPills
+                inputId="account-receiz-identity-switch"
+                onPbiRecovery={actions.createReceizId}
+                onRestoreArtifact={actions.restoreReceizIdentityArtifact}
+              />
+            </div>
           ) : null}
         </Panel>
 

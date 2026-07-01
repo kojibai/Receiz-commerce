@@ -189,7 +189,7 @@ function PageEditor({
 }) {
   const [twinLoading, setTwinLoading] = useState(false);
   const [twinError, setTwinError] = useState("");
-  const askTwin = async () => {
+  const fillWithTwin = async () => {
     if (!activePage) return;
     setTwinLoading(true);
     setTwinError("");
@@ -248,8 +248,8 @@ function PageEditor({
             <TwinAssistRow
               error={twinError}
               loading={twinLoading}
-              onClick={askTwin}
-              text="Use your Receiz Twin to draft this page from the store brand, proof rails, and current outline."
+              onClick={fillWithTwin}
+              text="Receiz Twin fills this page with brand copy, proof language, and SEO."
             />
           ) : null}
           <label className="builder-field">
@@ -345,7 +345,7 @@ function BlogEditor({
 }) {
   const [twinLoading, setTwinLoading] = useState(false);
   const [twinError, setTwinError] = useState("");
-  const askTwin = async () => {
+  const fillWithTwin = async () => {
     if (!activePost) return;
     setTwinLoading(true);
     setTwinError("");
@@ -399,8 +399,8 @@ function BlogEditor({
             <TwinAssistRow
               error={twinError}
               loading={twinLoading}
-              onClick={askTwin}
-              text="Use your Receiz Twin to write the post, summary, tags, and SEO from the brand voice."
+              onClick={fillWithTwin}
+              text="Receiz Twin fills this post with article copy, summary, tags, and SEO."
             />
           ) : null}
           <label className="builder-field">
@@ -533,7 +533,7 @@ function TwinAssistRow({
     <div className="twin-assist-row">
       <button disabled={loading} onClick={onClick} type="button">
         <Icons.sparkle size={17} />
-        <span>{loading ? "Asking Twin..." : "Ask Receiz Twin"}</span>
+        <span>{loading ? "Filling..." : "Fill with Twin"}</span>
       </button>
       <small>{error || text}</small>
     </div>

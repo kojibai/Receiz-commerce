@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { Icons } from "@/components/icons";
 import {
   BrandMark,
@@ -55,12 +55,43 @@ export function PublicStorefront({
   const showIdentityEntry = identityActionsReady && !state.auth.receizId.connected;
   const showIdentityUploadFallback = showIdentityEntry && (identityUploadVisible || !state.auth.receizId.connected);
 
+  const ensureTenantCustomerSession = useCallback(
+    async (reason: string) => {
+      if (!tenantSurface || state.auth.receizId.connected) return true;
+      if (!identityActionsReady) return false;
+
+      await actions.ensureCustomerSession(reason);
+      setIdentityUploadVisible(false);
+      return true;
+    },
+    [actions, identityActionsReady, state.auth.receizId.connected, tenantSurface]
+  );
   const sealObject = () => actions.appendProofEvent("OBJECT_VERIFIED", "Coffee Pack · Serial #BC-88421");
   const issueReward = () => actions.appendProofEvent("REWARD_ISSUED", `${reward?.name ?? "Reward"} · ${state.brand.name}`);
-  const claimReward = () => actions.appendProofEvent("REWARD_CLAIMED", `${reward?.name ?? "Reward"} claimed`);
+  const claimReward = () => {
+    void (async () => {
+      await ensureTenantCustomerSession("claim rewards");
+      actions.appendProofEvent("REWARD_CLAIMED", `${reward?.name ?? "Reward"} claimed`);
+    })();
+  };
   const selectMobileView = (view: MobileView) => {
     setMobileView(view);
     setMobileMenuOpen(false);
+    if (view === "account" || view === "assets" || view === "rewards") {
+      void ensureTenantCustomerSession(`${view} account`);
+    }
+  };
+  const addToCart = (productId: string) => {
+    void (async () => {
+      await ensureTenantCustomerSession("cart");
+      actions.addToCart(productId);
+    })();
+  };
+  const completeGame = (beans: number) => {
+    void (async () => {
+      await ensureTenantCustomerSession("reward game");
+      actions.appendProofEvent("GAME_COMPLETED", `${campaignName} · ${beans} beans`);
+    })();
   };
   const restoreIdentityArtifact = async (file: File) => {
     await actions.restoreReceizIdentityArtifact(file);
@@ -97,6 +128,12 @@ export function PublicStorefront({
     }
   }, [homepageMode]);
 
+  useEffect(() => {
+    if (mobileView === "account" || mobileView === "assets" || mobileView === "rewards") {
+      void ensureTenantCustomerSession(`${mobileView} account`);
+    }
+  }, [ensureTenantCustomerSession, mobileView]);
+
   return (
     <main className={tenantSurface ? "commerce-app tenant-store" : "commerce-app"} style={brandThemeStyle(state.brand)}>
       <StoreSidebar state={state} tenantSurface={tenantSurface} />
@@ -126,15 +163,13 @@ export function PublicStorefront({
                   brandImageUrl={state.brand.logoImageUrl}
                   brandLabel={state.brand.logoText}
                   products={state.products}
-                  onAddToCart={actions.addToCart}
+                  onAddToCart={addToCart}
                   showAdminActions={!tenantSurface}
                 />
                 <PlayCampaign
                   campaignName={campaignName}
                   enabled={gameEnabled}
-                  onComplete={(beans) =>
-                    actions.appendProofEvent("GAME_COMPLETED", `${campaignName} · ${beans} beans`)
-                  }
+                  onComplete={completeGame}
                 />
               </>
             ) : homepageMode === "game" ? (
@@ -142,15 +177,13 @@ export function PublicStorefront({
                 <PlayCampaign
                   campaignName={campaignName}
                   enabled={gameEnabled}
-                  onComplete={(beans) =>
-                    actions.appendProofEvent("GAME_COMPLETED", `${campaignName} · ${beans} beans`)
-                  }
+                  onComplete={completeGame}
                 />
                 <ProductCatalog
                   brandImageUrl={state.brand.logoImageUrl}
                   brandLabel={state.brand.logoText}
                   products={state.products}
-                  onAddToCart={actions.addToCart}
+                  onAddToCart={addToCart}
                   showAdminActions={!tenantSurface}
                 />
                 <BlogHighlights posts={state.blogPosts} showAdminActions={!tenantSurface} />
@@ -196,16 +229,14 @@ export function PublicStorefront({
                 <PlayCampaign
                   campaignName={campaignName}
                   enabled={gameEnabled}
-                  onComplete={(beans) =>
-                    actions.appendProofEvent("GAME_COMPLETED", `${campaignName} · ${beans} beans`)
-                  }
+                  onComplete={completeGame}
                 />
 
                 <ProductCatalog
                   brandImageUrl={state.brand.logoImageUrl}
                   brandLabel={state.brand.logoText}
                   products={state.products}
-                  onAddToCart={actions.addToCart}
+                  onAddToCart={addToCart}
                   showAdminActions={!tenantSurface}
                 />
 
@@ -250,7 +281,7 @@ export function PublicStorefront({
           activeView={mobileView}
           customer={customer}
           customerReceizHandle={receizHandle}
-          onAddToCart={actions.addToCart}
+          onAddToCart={addToCart}
           onAttachPbiRecovery={actions.attachPbiRecovery}
           onCheckout={oneClickCheckout}
           onClaimReward={claimReward}
@@ -263,9 +294,7 @@ export function PublicStorefront({
           showIdentityEntry={showIdentityEntry}
           showIdentityUpload={showIdentityUploadFallback}
           tenantSurface={tenantSurface}
-          onPlayComplete={(beans) =>
-            actions.appendProofEvent("GAME_COMPLETED", `${campaignName} · ${beans} beans`)
-          }
+          onPlayComplete={completeGame}
           campaignName={campaignName}
           reward={reward}
           state={state}
@@ -928,11 +957,19 @@ function MobileAssetsPanel({
         />
       ) : null}
       {state.auth.receizId.connected ? (
-        <ReceizAccountManagementPills
-          className="mobile-identity-pills"
-          onAttachPbi={onAttachPbiRecovery}
-          onDownloadIdentitySeal={onDownloadIdentitySeal}
-        />
+        <>
+          <ReceizAccountManagementPills
+            className="mobile-identity-pills"
+            onAttachPbi={onAttachPbiRecovery}
+            onDownloadIdentitySeal={onDownloadIdentitySeal}
+          />
+          <ReceizRecoveryPills
+            className="mobile-identity-pills"
+            inputId="mobile-assets-receiz-identity-switch"
+            onPbiRecovery={onCreateReceizId}
+            onRestoreArtifact={onRestoreArtifact}
+          />
+        </>
       ) : null}
       <div className="mobile-asset-list">
         {assets.length ? (
@@ -1026,11 +1063,19 @@ function MobileAccountPanel({
         />
       ) : null}
       {state.auth.receizId.connected ? (
-        <ReceizAccountManagementPills
-          className="mobile-identity-pills"
-          onAttachPbi={onAttachPbiRecovery}
-          onDownloadIdentitySeal={onDownloadIdentitySeal}
-        />
+        <>
+          <ReceizAccountManagementPills
+            className="mobile-identity-pills"
+            onAttachPbi={onAttachPbiRecovery}
+            onDownloadIdentitySeal={onDownloadIdentitySeal}
+          />
+          <ReceizRecoveryPills
+            className="mobile-identity-pills"
+            inputId="mobile-account-receiz-identity-switch"
+            onPbiRecovery={onCreateReceizId}
+            onRestoreArtifact={onRestoreArtifact}
+          />
+        </>
       ) : null}
       {tenantSurface ? (
         <div className="mobile-account-scope">

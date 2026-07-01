@@ -118,6 +118,435 @@ function productWithDefaults(product: Product): Product {
   };
 }
 
+const DEFAULT_PRODUCT_IDS = new Set(["coffee-pack", "cold-brew", "ceramic-mug", "gift-card"]);
+const DEFAULT_PAGE_IDS = new Set(["home", "shop", "rewards", "game", "about", "account"]);
+const DEFAULT_BLOG_POST_IDS = new Set(["blog-origin-roast", "blog-rewards-guide"]);
+
+function titleCase(value: string) {
+  return value
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((word) => `${word.slice(0, 1).toUpperCase()}${word.slice(1).toLowerCase()}`)
+    .join(" ");
+}
+
+function brandInitials(value: string) {
+  const initials = value
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((word) => word.slice(0, 1).toLowerCase())
+    .join("");
+
+  return initials || "rz";
+}
+
+function compactSentence(value: string, maxLength = 152) {
+  const clean = value.replace(/\s+/g, " ").trim();
+  if (clean.length <= maxLength) return clean;
+
+  return `${clean.slice(0, maxLength - 1).trim()}...`;
+}
+
+function brandNameFromTwinBrief(brief: string, fallback: string) {
+  const explicit = brief.match(/(?:business called|business named|store called|store named|called|named|brand(?:ed)? as)\s+["']?([^,.!?"]{2,56})/i);
+  if (explicit?.[1]) {
+    const name = explicit[1].split(/\s+(?:with|for|that|where|who)\s+/i)[0];
+    return titleCase(name);
+  }
+
+  const stopWords = new Set([
+    "a",
+    "an",
+    "and",
+    "app",
+    "brand",
+    "build",
+    "business",
+    "create",
+    "for",
+    "i",
+    "is",
+    "launch",
+    "make",
+    "my",
+    "of",
+    "shop",
+    "site",
+    "store",
+    "that",
+    "the",
+    "to",
+    "want",
+    "website"
+  ]);
+  const words = brief
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .split(/\s+/)
+    .filter((word) => word.length > 2 && !stopWords.has(word))
+    .slice(0, 3);
+
+  return words.length ? titleCase(words.join(" ")) : fallback;
+}
+
+function twinBusinessProfile(brief: string) {
+  const lower = brief.toLowerCase();
+
+  if (/(coffee|cafe|espresso|roast|bean|brew)/.test(lower)) {
+    return {
+      category: "Coffee",
+      signature: "Signature roast",
+      access: "Member tasting pass",
+      heroBody: "Fresh drops, verified sourcing, member rewards, and proof-sealed coffee customers can trust.",
+      story: "How every roast carries a proof trail",
+      storyTag: "sourcing",
+      productTone: "bag" as const,
+      palette: ["#4d1f78", "#00a88a", "#ff8f70"]
+    };
+  }
+
+  if (/(fitness|gym|training|wellness|health|coach)/.test(lower)) {
+    return {
+      category: "Training",
+      signature: "Starter training pack",
+      access: "Member access pass",
+      heroBody: "Programs, products, access, and rewards that stay attached to each customer Receiz ID.",
+      story: "How members unlock verified progress rewards",
+      storyTag: "wellness",
+      productTone: "class" as const,
+      palette: ["#111827", "#00a88a", "#ffbd00"]
+    };
+  }
+
+  if (/(fashion|clothing|streetwear|apparel|drop|merch)/.test(lower)) {
+    return {
+      category: "Drops",
+      signature: "Signature drop",
+      access: "Early access pass",
+      heroBody: "Limited products, gated access, and proof-sealed member perks for every drop.",
+      story: "How proof-sealed drops protect members",
+      storyTag: "drops",
+      productTone: "card" as const,
+      palette: ["#121212", "#00a88a", "#ff6b86"]
+    };
+  }
+
+  if (/(course|education|creator|community|membership|lesson)/.test(lower)) {
+    return {
+      category: "Access",
+      signature: "Starter resource pack",
+      access: "Community access pass",
+      heroBody: "Sell access, digital products, rewards, and proof-sealed member benefits from one mobile storefront.",
+      story: "How members use proof-sealed access",
+      storyTag: "members",
+      productTone: "access" as const,
+      palette: ["#1f3a8a", "#00a88a", "#ffbd00"]
+    };
+  }
+
+  return {
+    category: "Featured",
+    signature: "Signature product",
+    access: "Member perk",
+    heroBody: "Products, payments, rewards, access, and proof-sealed customer accounts in one store.",
+    story: "How proof-sealed commerce works here",
+    storyTag: "proof",
+    productTone: "bag" as const,
+    palette: ["#122033", "#00a88a", "#ff6b86"]
+  };
+}
+
+function homepageModeFromTwinBrief(brief: string, current: StorefrontHomepageMode): StorefrontHomepageMode {
+  const lower = brief.toLowerCase();
+  if (/\b(blog|publication|journal|stories|content)\b/.test(lower)) return "blog";
+  if (/\b(game|play|quest|arcade|challenge)\b/.test(lower)) return "game";
+  return current || "store";
+}
+
+function buildTwinLaunchState(current: CommerceState, brief: string): CommerceState {
+  const brandName = brandNameFromTwinBrief(brief, current.brand.name || "Receiz Store");
+  const profile = twinBusinessProfile(brief);
+  const baseSlug = slugify(brandName, "store");
+  const logoText = current.brand.logoImageUrl ? current.brand.logoText : brandInitials(brandName);
+  const [primaryColor, secondaryColor, accentColor] = profile.palette;
+  const productAId = `${baseSlug}-signature`;
+  const productBId = `${baseSlug}-access`;
+  const rewardId = `${baseSlug}-reward`;
+  const now = new Date().toISOString();
+  const heroBody = compactSentence(brief, 168) || profile.heroBody;
+  const starterProducts: Product[] = [
+    productWithDefaults({
+      id: productAId,
+      name: profile.signature,
+      subtitle: `${brandName} proof-sealed product`,
+      type: "physical",
+      priceLabel: "$18.00",
+      status: "active",
+      inventoryLabel: "100",
+      rewardEligible: true,
+      sealed: true,
+      imageTone: profile.productTone,
+      imageUrl: current.products[0]?.imageUrl ?? null,
+      description: `${profile.signature} from ${brandName}. Every purchase can create a proof-sealed order, reward progress, and customer account history.`,
+      seo: {
+        title: `${profile.signature} | ${brandName}`,
+        description: `${brandName} ${profile.signature.toLowerCase()} with Receiz ID checkout, rewards, and proof-sealed order history.`,
+        canonicalPath: `/products/${slugify(profile.signature, "product")}`,
+        keywords: [brandName, profile.category, "Receiz", "proof-sealed commerce"],
+        socialImageUrl: current.products[0]?.imageUrl ?? current.brand.logoImageUrl
+      }
+    }),
+    productWithDefaults({
+      id: productBId,
+      name: profile.access,
+      subtitle: `${brandName} customer benefit`,
+      type: "access",
+      priceLabel: "$9.00",
+      status: "active",
+      inventoryLabel: "Unlimited",
+      rewardEligible: true,
+      sealed: true,
+      imageTone: "access",
+      imageUrl: current.products[1]?.imageUrl ?? null,
+      description: `${profile.access} gives customers a native account, store rewards, and portable Receiz proof for ${brandName}.`,
+      seo: {
+        title: `${profile.access} | ${brandName}`,
+        description: `Buy ${profile.access.toLowerCase()} from ${brandName} with wallet-first Receiz checkout and proof-sealed account benefits.`,
+        canonicalPath: `/products/${slugify(profile.access, "access")}`,
+        keywords: [brandName, "access", "Receiz rewards", "proof object"],
+        socialImageUrl: current.products[1]?.imageUrl ?? current.brand.logoImageUrl
+      }
+    })
+  ];
+  const starterCollections: CommerceState["collections"] = [
+    {
+      id: `${baseSlug}-featured`,
+      name: profile.category,
+      slug: slugify(profile.category, "featured"),
+      productIds: [productAId],
+      published: true
+    },
+    {
+      id: `${baseSlug}-access`,
+      name: "Access",
+      slug: "access",
+      productIds: [productBId],
+      published: true
+    },
+    {
+      id: `${baseSlug}-rewards`,
+      name: "Rewards",
+      slug: "rewards",
+      productIds: [productAId, productBId],
+      published: true
+    },
+    {
+      id: `${baseSlug}-drops`,
+      name: "Drops",
+      slug: "drops",
+      productIds: [productAId],
+      published: true
+    }
+  ];
+  const starterPages: SitePage[] = [
+    pageWithDefaults({
+      id: `${baseSlug}-about`,
+      title: `About ${brandName}`,
+      slug: "/about",
+      visibleInNav: true,
+      published: true,
+      sections: [
+        {
+          id: `${baseSlug}-about-hero`,
+          kind: "hero",
+          title: `About ${brandName}`,
+          body: `${brandName} is built around ${profile.category.toLowerCase()}, customer accounts, rewards, and proof-sealed commerce. ${profile.heroBody}`
+        }
+      ],
+      seo: {
+        title: `About ${brandName}`,
+        description: `${brandName} store, rewards, and proof-sealed customer experience.`,
+        canonicalPath: "/about",
+        keywords: [brandName, profile.category, "Receiz"],
+        socialImageUrl: current.brand.logoImageUrl
+      }
+    }),
+    pageWithDefaults({
+      id: `${baseSlug}-rewards-page`,
+      title: `${brandName} rewards`,
+      slug: "/rewards",
+      visibleInNav: true,
+      published: true,
+      sections: [
+        {
+          id: `${baseSlug}-rewards-hero`,
+          kind: "rewards",
+          title: "Rewards built into every action",
+          body: "Customers can earn perks from purchases, proof actions, member access, campaigns, and game completion."
+        }
+      ],
+      seo: {
+        title: `${brandName} rewards`,
+        description: `Earn proof-sealed rewards at ${brandName}.`,
+        canonicalPath: "/rewards",
+        keywords: [brandName, "rewards", "Receiz ID"],
+        socialImageUrl: current.brand.logoImageUrl
+      }
+    }),
+    pageWithDefaults({
+      id: `${baseSlug}-proof-page`,
+      title: "Shipping and proof",
+      slug: "/shipping-and-proof",
+      visibleInNav: true,
+      published: true,
+      sections: [
+        {
+          id: `${baseSlug}-proof-hero`,
+          kind: "content",
+          title: "Proof-sealed orders",
+          body: "Each checkout can attach payment rail, settlement status, shipping detail, and proof history to the customer account for this store."
+        }
+      ],
+      seo: {
+        title: `Shipping and proof | ${brandName}`,
+        description: `How ${brandName} handles checkout, shipping, and proof-sealed orders.`,
+        canonicalPath: "/shipping-and-proof",
+        keywords: [brandName, "shipping", "proof-sealed orders"],
+        socialImageUrl: current.brand.logoImageUrl
+      }
+    })
+  ];
+  const starterPosts: BlogPost[] = [
+    blogPostWithDefaults({
+      id: `${baseSlug}-story`,
+      title: `${profile.story}`,
+      slug: `/blog/${slugify(profile.story, "story")}`,
+      excerpt: `A customer-friendly look at how ${brandName} connects products, accounts, rewards, and proof.`,
+      body: `${brandName} uses Receiz ID, wallet-first checkout, proof-sealed orders, and reward rules to make every customer action portable and verifiable. ${heroBody}`,
+      authorName: brandName,
+      coverImageUrl: current.blogPosts[0]?.coverImageUrl ?? current.brand.logoImageUrl,
+      tags: [profile.storyTag, "Receiz", "rewards"],
+      featured: true,
+      status: "published",
+      publishedAt: now,
+      seo: {
+        title: `${profile.story} | ${brandName}`,
+        description: `Learn how ${brandName} uses proof-sealed commerce and Receiz rewards.`,
+        canonicalPath: `/blog/${slugify(profile.story, "story")}`,
+        keywords: [brandName, profile.storyTag, "Receiz"],
+        socialImageUrl: current.blogPosts[0]?.coverImageUrl ?? current.brand.logoImageUrl
+      }
+    })
+  ];
+  const hasStarterCatalog = current.products.length === 0 || current.products.some((product) => DEFAULT_PRODUCT_IDS.has(product.id));
+  const hasStarterPages = current.pages.length === 0 || current.pages.some((page) => DEFAULT_PAGE_IDS.has(page.id));
+  const hasStarterPosts = current.blogPosts.length === 0 || current.blogPosts.some((post) => DEFAULT_BLOG_POST_IDS.has(post.id));
+
+  return {
+    ...current,
+    brand: {
+      ...current.brand,
+      name: brandName,
+      logoText,
+      tagline: `${profile.category} with proof-sealed rewards`,
+      primaryColor,
+      secondaryColor,
+      accentColor,
+      neutralColor: "#111827",
+      backgroundColor: current.brand.backgroundColor || "#ffffff"
+    },
+    storefront: {
+      ...current.storefront,
+      homepageMode: homepageModeFromTwinBrief(brief, current.storefront.homepageMode),
+      headline: brandName,
+      subheadline: `${brandName} is ready for products, payments, rewards, and proof.`,
+      heroBody,
+      ctaLabel: "Shop now"
+    },
+    hosting: {
+      ...current.hosting,
+      merchantReceizId: current.auth.receizId.connected ? current.auth.receizId.handle : current.hosting.merchantReceizId,
+      settlementAccountLabel: `${brandName} Receiz account`
+    },
+    navigation: current.navigation.map((item) =>
+      item.id === "blog" || item.id === "account" || item.id === "rewards" ? { ...item, visible: true } : item
+    ),
+    products: hasStarterCatalog
+      ? starterProducts
+      : [...starterProducts, ...current.products.filter((product) => product.id !== productAId && product.id !== productBId)],
+    collections: hasStarterCatalog
+      ? starterCollections
+      : [
+          ...starterCollections,
+          ...current.collections.filter((collection) => !starterCollections.some((starter) => starter.id === collection.id))
+        ],
+    pages: hasStarterPages
+      ? starterPages
+      : [...starterPages, ...current.pages.filter((page) => !starterPages.some((starter) => starter.slug === page.slug))],
+    blogPosts: hasStarterPosts
+      ? starterPosts
+      : [...starterPosts, ...current.blogPosts.filter((post) => !starterPosts.some((starter) => starter.slug === post.slug))],
+    rewards: [
+      {
+        ...(current.rewards[0] ?? {
+          id: rewardId,
+          type: "coupon" as const,
+          progress: 0,
+          target: 1,
+          status: "active" as const,
+          transferability: ["redeem_only" as const, "shareable" as const],
+          expiresAt: "No expiration"
+        }),
+        id: rewardId,
+        name: `${brandName} member reward`,
+        description: `Earn a ${brandName} benefit from purchases, proof actions, and campaigns.`,
+        requirement: "Complete a purchase, claim an access pass, or finish the reward game.",
+        status: "active"
+      },
+      ...current.rewards.slice(1)
+    ],
+    rewardRules: [
+      {
+        id: `${baseSlug}-purchase-rule`,
+        label: "Purchase reward",
+        trigger: "Proof-sealed order completed",
+        rewardId,
+        active: true
+      },
+      {
+        id: `${baseSlug}-game-rule`,
+        label: "Game completion",
+        trigger: "Customer completes branded reward game",
+        rewardId,
+        active: true
+      }
+    ],
+    campaigns: [
+      {
+        ...(current.campaigns[0] ?? {
+          id: `${baseSlug}-campaign`,
+          enabled: true,
+          eligibleObjectIds: [],
+          scoreRule: "Purchase, verify, or complete game actions.",
+          rewardId
+        }),
+        name: `${brandName} reward quest`,
+        enabled: true,
+        rewardId
+      },
+      ...current.campaigns.slice(1)
+    ],
+    game: {
+      ...current.game,
+      enabled: true,
+      campaignId: current.campaigns[0]?.id ?? `${baseSlug}-campaign`
+    },
+    proofEvents: [makeEvent("THEME_UPDATED", `Receiz Twin built ${brandName} from merchant brief`), ...current.proofEvents]
+  };
+}
+
 function identityArtifactKind(file: File): CommerceState["auth"]["receizId"]["artifactKind"] {
   const name = file.name.toLowerCase();
 
@@ -746,11 +1175,11 @@ function publishedStatePayload(state: CommerceState) {
   };
 }
 
-async function receizIdentityForOneClickCheckout(snapshot: CommerceState) {
+async function receizIdentityForAutomaticCustomerSession(snapshot: CommerceState, reason: string) {
   if (snapshot.auth.receizId.connected) {
     return {
       keyFile: null as unknown | null,
-      detail: `${snapshot.auth.receizId.handle} ready for one-click checkout`,
+      detail: "",
       apply: (state: CommerceState) => state
     };
   }
@@ -763,7 +1192,7 @@ async function receizIdentityForOneClickCheckout(snapshot: CommerceState) {
     if (existingBrowserSession) {
       return {
         keyFile: existingBrowserSession.keyFile ?? null,
-        detail: `${existingBrowserSession.receizId.handle} continued for one-click checkout`,
+        detail: `${existingBrowserSession.receizId.handle} continued for ${reason}`,
         apply: (state: CommerceState) => applyBrowserReceizIdSession(state, existingBrowserSession)
       };
     }
@@ -791,7 +1220,7 @@ async function receizIdentityForOneClickCheckout(snapshot: CommerceState) {
 
   return {
     keyFile,
-    detail: `${handle} created for one-click checkout`,
+    detail: `${handle} created for ${reason}`,
     apply: (state: CommerceState) =>
       applyLocalReceizIdentitySession(
         state,
@@ -945,6 +1374,12 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
           ...current,
           storefront: { ...current.storefront, ...input }
         }));
+      },
+      launchWithTwinBrief(brief: string) {
+        const trimmed = brief.trim();
+        if (!trimmed) return;
+
+        setState((current) => buildTwinLaunchState(current, trimmed));
       },
       setHomepageMode(mode: StorefrontHomepageMode) {
         setState((current) => ({
@@ -1346,6 +1781,28 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
           ]
         }));
       },
+      async ensureCustomerSession(reason = "this store") {
+        const snapshot = stateRef.current;
+        if (snapshot.auth.receizId.connected) return true;
+
+        const identity = await receizIdentityForAutomaticCustomerSession(snapshot, reason);
+        if (identity.keyFile) {
+          pendingBrowserIdentityKeyFileRef.current = identity.keyFile;
+        }
+
+        setState((current) => {
+          const nextState = identity.apply(current);
+
+          return {
+            ...nextState,
+            proofEvents: identity.detail
+              ? [makeEvent("RECEIZ_ID_CONNECTED", identity.detail), ...nextState.proofEvents]
+              : nextState.proofEvents
+          };
+        });
+
+        return true;
+      },
       async restoreReceizIdentityArtifact(file: File) {
         const client = createReceizClient();
         let projection: ReceizIdentityAccountProjection | null = null;
@@ -1704,7 +2161,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
         });
       },
       async startCheckout() {
-        const identity = await receizIdentityForOneClickCheckout(stateRef.current);
+        const identity = await receizIdentityForAutomaticCustomerSession(stateRef.current, "one-click checkout");
         if (identity.keyFile) {
           pendingBrowserIdentityKeyFileRef.current = identity.keyFile;
         }

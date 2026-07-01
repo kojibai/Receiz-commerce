@@ -106,7 +106,7 @@ export function ProductEditorPanel({
       : [...collection.productIds, productId];
     onUpdateCollection(collection.id, { productIds });
   };
-  const askTwin = async () => {
+  const fillWithTwin = async () => {
     if (!activeProduct) return;
     setTwinLoading(true);
     setTwinError("");
@@ -237,11 +237,11 @@ export function ProductEditorPanel({
           <div className="builder-editor">
             {twinEnabled ? (
               <div className="twin-assist-row">
-                <button disabled={twinLoading} onClick={askTwin} type="button">
+                <button disabled={twinLoading} onClick={fillWithTwin} type="button">
                   <Icons.sparkle size={17} />
-                  <span>{twinLoading ? "Asking Twin..." : "Ask Receiz Twin"}</span>
+                  <span>{twinLoading ? "Filling product..." : "Fill with Twin"}</span>
                 </button>
-                <small>{twinError || "Use your Receiz Twin to write product copy, proof language, and SEO."}</small>
+                <small>{twinError || "Receiz Twin writes the name, proof copy, SEO, and product positioning."}</small>
               </div>
             ) : null}
             <div className="product-editor-preview">

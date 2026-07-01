@@ -2194,6 +2194,70 @@ a {
   padding: 0 0 12px;
 }
 
+.twin-launch-panel {
+  display: grid;
+  align-content: start;
+  grid-column: 1 / -1;
+  overflow: visible;
+  border-color: rgba(0, 138, 106, 0.22);
+  background:
+    linear-gradient(135deg, rgba(231, 248, 242, 0.94), rgba(255, 255, 255, 0.98) 48%, rgba(255, 247, 223, 0.62)),
+    var(--surface);
+}
+
+.twin-launch-form {
+  display: grid;
+  gap: 12px;
+  padding: 0 14px 4px;
+}
+
+.twin-launch-prompt textarea {
+  min-height: 108px;
+  resize: vertical;
+}
+
+.twin-launch-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.twin-launch-actions > span {
+  min-width: 0;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.twin-launch-actions .button:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+  box-shadow: none;
+}
+
+.twin-launch-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.twin-launch-chips button {
+  max-width: 100%;
+  padding: 8px 10px;
+  border: 1px solid rgba(0, 138, 106, 0.2);
+  border-radius: 999px;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.78);
+  font-size: 12px;
+  font-weight: 750;
+  text-align: left;
+}
+
+.twin-launch-panel.compact .twin-launch-prompt textarea {
+  min-height: 84px;
+}
+
 .homepage-mode-panel {
   grid-column: 1 / -1;
 }
