@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { mockHosting } from "@/lib/hosting/mock-hosting";
 import { normalizeCustomDomain, normalizeTenantSlug, subdomainForSlug } from "@/lib/hosting/domain-utils";
+import { merchantServerSessionRequirement, type MerchantServerAction } from "@/lib/hosting/merchant-session-gate";
 import {
   VercelDomainError,
   addProjectDomain,
@@ -59,6 +60,38 @@ async function loadPublishOwner(accessToken: string | undefined) {
     console.error("[publish] Receiz profile unavailable", { error: errorMessage(error) });
     return null;
   }
+}
+
+async function requireMerchantSession(
+  accessToken: string | undefined,
+  action: MerchantServerAction,
+  returnTo: string
+) {
+  const profile = await loadPublishOwner(accessToken);
+  const gate = merchantServerSessionRequirement({
+    action,
+    connected: Boolean(profile),
+    handle: profile?.handle
+  });
+
+  if (gate.ok) {
+    return {
+      ok: true as const,
+      profile,
+      handle: gate.handle
+    };
+  }
+
+  return {
+    ok: false as const,
+    response: NextResponse.json(
+      {
+        ...receizLoginRequired(returnTo),
+        message: gate.message
+      },
+      { status: 401 }
+    )
+  };
 }
 
 function returnToFromRequest(request: NextRequest) {
@@ -256,6 +289,10 @@ export async function POST(request: NextRequest) {
     } catch (error) {
       return badRequest(error);
     }
+
+    const merchantSession = await requireMerchantSession(accessToken, "custom_domain", returnTo);
+    if (!merchantSession.ok) return merchantSession.response;
+
     const platformBilling = await chargePlatformFee(accessToken, {
       amountUsd: process.env.RECEIZ_CUSTOM_DOMAIN_SETUP_USD ?? "0.00",
       note: `${platform.productName} custom domain setup for ${domain}`,
@@ -300,6 +337,10 @@ export async function POST(request: NextRequest) {
     } catch (error) {
       return badRequest(error);
     }
+
+    const merchantSession = await requireMerchantSession(accessToken, "verify_domain", returnTo);
+    if (!merchantSession.ok) return merchantSession.response;
+
     let customDomain: DomainStatus;
 
     try {
@@ -327,7 +368,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(receizLoginRequired(returnTo), { status: 401 });
     }
 
-    const publishOwner = await loadPublishOwner(accessToken);
+    const merchantSession = await requireMerchantSession(accessToken, "publish", returnTo);
+    if (!merchantSession.ok) return merchantSession.response;
+    const publishOwner = merchantSession.profile;
     const hosting = {
       ...(isRecord(body.state) && isRecord(body.state.hosting) ? body.state.hosting : mockHosting.getHostingStatus()),
       published: true,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   appendReceizIdentityArtifactTrailerToPng,
   createReceizClient,
@@ -13,6 +13,7 @@ import {
   subdomainForSlug
 } from "@/lib/hosting/domain-utils";
 import { BASE_STORAGE_KEY, currentHostContext, hostContextFromHost, type HostContext } from "@/lib/hosting/host-context";
+import { merchantServerSessionRequirement, type MerchantServerAction } from "@/lib/hosting/merchant-session-gate";
 import type { CommerceImportInput, CommerceImportResult } from "@/lib/import/commerce-importer";
 import { selectClientInitialState } from "@/lib/storage/client-state";
 import { safeGetLocalStorage, safeRemoveLocalStorage, safeSetLocalStorage } from "@/lib/storage/browser-storage";
@@ -1356,6 +1357,61 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
     };
   }, [hostContext.host, hostContext.surface, hostContext.tenantHost, hydrated]);
 
+  const ensureMerchantServerSession = useCallback(async (action: MerchantServerAction) => {
+    if (typeof window === "undefined" || process.env.NEXT_PUBLIC_AUTH_MODE !== "receiz_id") {
+      return true;
+    }
+
+    const snapshot = stateRef.current;
+    const result = await fetchReceizProfile().catch(() => null);
+    const gate = merchantServerSessionRequirement({
+      action,
+      connected: Boolean(result?.connected),
+      handle: result?.profile?.handle,
+      localReceizIdConnected: snapshot.auth.receizId.connected,
+      localProofVerified: snapshot.auth.receizId.localProofVerified
+    });
+
+    if (gate.ok) {
+      if (result?.profile) {
+        const surface = result.surface ?? currentHostContext().surface;
+        setState((current) => applyReceizProfile(current, result.profile!, surface));
+      }
+
+      return true;
+    }
+
+    const returnTo = `${window.location.pathname}${window.location.search}` || "/admin";
+    const connectUrl = `/api/auth/receiz/start?returnTo=${encodeURIComponent(returnTo)}`;
+
+    setReceizSessionPending(true);
+    setState((current) => ({
+      ...current,
+      auth: {
+        ...current.auth,
+        receizId: {
+          ...current.auth.receizId,
+          statusLabel: gate.statusLabel
+        }
+      },
+      hosting:
+        action === "publish"
+          ? current.hosting
+          : {
+              ...current.hosting,
+              customDomain: {
+                ...current.hosting.customDomain,
+                status: current.hosting.customDomain.status === "active" ? "active" : "pending",
+                message: gate.message
+              }
+            },
+      proofEvents: [makeEvent(gate.eventType, gate.message), ...current.proofEvents]
+    }));
+    window.location.assign(connectUrl);
+
+    return false;
+  }, []);
+
   const actions = useMemo(
     () => ({
       reset() {
@@ -1496,6 +1552,10 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
           return;
         }
 
+        if (!(await ensureMerchantServerSession("custom_domain"))) {
+          return;
+        }
+
         setState((current) => ({
           ...current,
           hosting: {
@@ -1555,6 +1615,10 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
             ...current,
             proofEvents: [makeEvent("DOMAIN_CONNECTED", error instanceof Error ? error.message : "Invalid custom domain"), ...current.proofEvents]
           }));
+          return;
+        }
+
+        if (!(await ensureMerchantServerSession("verify_domain"))) {
           return;
         }
 
@@ -2006,54 +2070,60 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
         }
       },
       publish() {
-        setState((current) => {
-          const publishRequestState = {
-            ...current,
-            hosting: { ...current.hosting, published: true, lastPublishedAt: "now" }
-          };
-          const publishHostContext = currentHostContext();
-          markPendingPublish(publishHostContext.storageKey);
+        void (async () => {
+          if (!(await ensureMerchantServerSession("publish"))) {
+            return;
+          }
 
-          void postJson<{ hosting: CommerceState["hosting"] }>("/api/hosting", {
-            action: "publish",
-            state: publishedStatePayload(publishRequestState)
-          }, { deferLoginRedirect: true })
-            .then((result) => {
-              clearPendingPublish(publishHostContext.storageKey);
-              setState((latest) => ({
-                ...latest,
-                hosting: result.hosting,
-                proofEvents: [makeEvent("SITE_PUBLISHED", "Store published to Receiz proof rails"), ...latest.proofEvents]
-              }));
-            })
-            .catch((error) => {
-              if (error instanceof ReceizLoginRequiredError) {
+          setState((current) => {
+            const publishRequestState = {
+              ...current,
+              hosting: { ...current.hosting, published: true, lastPublishedAt: "now" }
+            };
+            const publishHostContext = currentHostContext();
+            markPendingPublish(publishHostContext.storageKey);
+
+            void postJson<{ hosting: CommerceState["hosting"] }>("/api/hosting", {
+              action: "publish",
+              state: publishedStatePayload(publishRequestState)
+            }, { deferLoginRedirect: true })
+              .then((result) => {
+                clearPendingPublish(publishHostContext.storageKey);
+                setState((latest) => ({
+                  ...latest,
+                  hosting: result.hosting,
+                  proofEvents: [makeEvent("SITE_PUBLISHED", "Store published to Receiz proof rails"), ...latest.proofEvents]
+                }));
+              })
+              .catch((error) => {
+                if (error instanceof ReceizLoginRequiredError) {
+                  clearPendingPublish(publishHostContext.storageKey);
+                  setState((latest) => ({
+                    ...latest,
+                    proofEvents: [
+                      makeEvent("SITE_PUBLISHED", "Receiz ID required to publish. Continue with Receiz ID in Account, then publish again."),
+                      ...latest.proofEvents
+                    ]
+                  }));
+                  return;
+                }
+
                 clearPendingPublish(publishHostContext.storageKey);
                 setState((latest) => ({
                   ...latest,
                   proofEvents: [
-                    makeEvent("SITE_PUBLISHED", "Receiz ID required to publish. Continue with Receiz ID in Account, then publish again."),
+                    makeEvent("SITE_PUBLISHED", error instanceof Error ? error.message : "Publish sync failed"),
                     ...latest.proofEvents
                   ]
                 }));
-                return;
-              }
+              });
 
-              clearPendingPublish(publishHostContext.storageKey);
-              setState((latest) => ({
-                ...latest,
-                proofEvents: [
-                  makeEvent("SITE_PUBLISHED", error instanceof Error ? error.message : "Publish sync failed"),
-                  ...latest.proofEvents
-                ]
-              }));
-            });
-
-          return {
-            ...current,
-            proofEvents: [makeEvent("SITE_PUBLISHED", "Publishing store to Receiz proof rails"), ...current.proofEvents]
-          };
-        });
+            return {
+              ...current,
+              proofEvents: [makeEvent("SITE_PUBLISHED", "Publishing store to Receiz proof rails"), ...current.proofEvents]
+            };
+          });
+        })();
       },
       addPage(page: SitePage) {
         const nextPage = pageWithDefaults(page);
@@ -2389,7 +2459,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
         }));
       }
     }),
-    []
+    [ensureMerchantServerSession]
   );
 
   useEffect(() => {
