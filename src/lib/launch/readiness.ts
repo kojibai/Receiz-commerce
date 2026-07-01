@@ -138,6 +138,10 @@ function hasReceizIdentityRail(state: CommerceState) {
   );
 }
 
+function hasProductionCheckout(state: CommerceState) {
+  return state.checkout.mode === "live";
+}
+
 function gradeForScore(score: number): LaunchReadiness["grade"] {
   if (score >= 100) return "A+";
   if (score >= 90) return "A";
@@ -193,7 +197,7 @@ function buildLaunchGuide(state: CommerceState): LaunchGuideStep[] {
     state.collections.some((collection) => collection.published);
   const contentReady = checklistComplete(state, "pages") && publishedContentCount(state) > 0;
   const rewardsReady = checklistComplete(state, "rewards") && state.rewardRules.some((rule) => rule.active);
-  const checkoutReady = checklistComplete(state, "checkout") && state.checkout.mode === "live";
+  const checkoutReady = hasProductionCheckout(state);
   const domainsReady = hasLiveDomain(state) && hasCustomDomain(state);
   const publishReady = state.hosting.published && Boolean(state.hosting.lastPublishedAt);
 
@@ -393,7 +397,7 @@ export function buildLaunchReadiness(state: CommerceState): LaunchReadiness {
         {
           id: "checkout_live",
           label: "Checkout configuration is complete",
-          complete: checklistComplete(state, "checkout") && state.checkout.mode === "live",
+          complete: hasProductionCheckout(state),
           critical: true,
           actionLabel: "Open Checkout mode and switch to Receiz checkout."
         },

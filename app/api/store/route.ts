@@ -15,6 +15,10 @@ import { mockStorage } from "@/lib/storage/mock-storage";
 import { tenantFallbackState } from "@/lib/hosting/tenant-state";
 import { hydrateProofStoreFromReceizStoreState } from "@/lib/receiz/store-state-ledger";
 import { buildPublishedCommerceState } from "@/lib/hosting/published-state";
+import {
+  merchantLocalIdentitySessionFromState,
+  merchantServerSessionRequirement
+} from "@/lib/hosting/merchant-session-gate";
 import type { CommerceState, StorefrontHomepageMode } from "@/types/domain";
 
 export const runtime = "nodejs";
@@ -79,6 +83,40 @@ async function loadPublishOwner(accessToken: string | undefined) {
   } catch {
     return null;
   }
+}
+
+async function requireStorePublishSession(accessToken: string | undefined, localIdentityState?: unknown) {
+  const profile = await loadPublishOwner(accessToken);
+  const localIdentity = merchantLocalIdentitySessionFromState(localIdentityState);
+  const tokenOnlySession = Boolean(accessToken) && !localIdentity.localProofVerified;
+  const gate = merchantServerSessionRequirement({
+    action: "publish",
+    connected: Boolean(profile) || tokenOnlySession,
+    handle: profile?.handle ?? localIdentity.handle,
+    localReceizIdConnected: localIdentity.connected,
+    localProofVerified: localIdentity.localProofVerified
+  });
+
+  if (gate.ok) {
+    return {
+      ok: true as const,
+      profile,
+      handle: gate.handle,
+      source: gate.source,
+      localIdentity
+    };
+  }
+
+  return {
+    ok: false as const,
+    response: NextResponse.json(
+      {
+        ...receizLoginRequired("/admin"),
+        message: gate.message
+      },
+      { status: 401, headers: noStoreHeaders }
+    )
+  };
 }
 
 export async function GET(request: NextRequest) {
@@ -161,22 +199,24 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, error: "unknown_action" }, { status: 400 });
   }
 
-  if (!accessToken && process.env.NEXT_PUBLIC_AUTH_MODE === "receiz_id") {
-    return NextResponse.json(receizLoginRequired("/admin"), { status: 401, headers: noStoreHeaders });
-  }
+  const merchantSession = await requireStorePublishSession(
+    accessToken,
+    isRecord(body) ? body.merchantSession ?? body.state : null
+  );
+  if (!merchantSession.ok) return merchantSession.response;
 
-  const publishOwner = await loadPublishOwner(accessToken);
+  const publishOwner = merchantSession.profile;
   const state = buildPublishedCommerceState(mockStorage.getState(), mergePublishedState(isRecord(body) ? body.state : null), {
     customDomain: publishOwner?.customDomain,
-    displayName: publishOwner?.name,
-    merchantReceizId: publishOwner?.handle,
+    displayName: publishOwner?.name ?? merchantSession.localIdentity.displayName,
+    merchantReceizId: publishOwner?.handle ?? merchantSession.handle,
     tenantSlug: publishOwner?.subdomain
   });
   const tenantHost = state.hosting.customDomain.domain || state.hosting.subdomain || hostContext.tenantHost || host;
   const actorReceizId = state.hosting.merchantReceizId || state.auth.receizId.handle;
   let publishState = state;
 
-  if (accessToken) {
+  if (accessToken && merchantSession.source === "receiz_connect") {
     const receiz = createReceizCommerceAdapter({
       baseUrl: process.env.RECEIZ_BASE_URL,
       accessToken
@@ -207,20 +247,38 @@ export async function POST(request: NextRequest) {
   });
   const proofStore = await getServerProofStateStore(record.merchantReceizId);
   await proofStore.admitStoreRecord(record);
-  const receizRecord = await publishReceizStoreState(accessToken, record);
+  let receizRecord: unknown =
+    merchantSession.source === "identity_seal"
+      ? {
+          ok: true,
+          skipped: true,
+          mode: "identity_seal_authorized",
+          message: "Identity Seal authorized local proof-state publish."
+        }
+      : await publishReceizStoreState(accessToken, record);
 
   if (!receizWriteSucceeded(receizRecord)) {
     const error = isRecord(receizRecord) ? String(receizRecord.error ?? "receiz_store_state_record_failed") : "receiz_store_state_record_failed";
 
-    return NextResponse.json(
-      {
-        ok: false,
-        error: "receiz_store_state_record_failed",
-        message: error,
-        receizRecord
-      },
-      { status: error === "receiz_login_required" ? 401 : 502, headers: noStoreHeaders }
-    );
+    if (merchantSession.localIdentity.connected && merchantSession.localIdentity.localProofVerified) {
+      receizRecord = {
+        ok: true,
+        skipped: true,
+        mode: "identity_seal_authorized",
+        warning: error,
+        remote: receizRecord
+      };
+    } else {
+      return NextResponse.json(
+        {
+          ok: false,
+          error: "receiz_store_state_record_failed",
+          message: error,
+          receizRecord
+        },
+        { status: error === "receiz_login_required" ? 401 : 502, headers: noStoreHeaders }
+      );
+    }
   }
 
   return NextResponse.json(

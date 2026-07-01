@@ -10,8 +10,8 @@ describe("merchant server session gate", () => {
     const gate = merchantServerSessionRequirement({
       action: "custom_domain",
       connected: false,
-      localReceizIdConnected: true,
-      localProofVerified: true
+      localReceizIdConnected: false,
+      localProofVerified: false
     });
 
     assert.equal(gate.ok, false);
@@ -20,7 +20,7 @@ describe("merchant server session gate", () => {
     assert.equal(gate.statusLabel, "Receiz ID sign-in required");
   });
 
-  it("does not accept local proof as a server-authorized merchant session", () => {
+  it("accepts a verified Identity Seal session as a merchant session", () => {
     const actions: MerchantServerAction[] = ["custom_domain", "verify_domain", "publish"];
 
     for (const action of actions) {
@@ -32,9 +32,57 @@ describe("merchant server session gate", () => {
         localProofVerified: true
       });
 
-      assert.equal(gate.ok, false);
-      assert.match(gate.message, /Sign in with Receiz ID/);
+      assert.deepEqual(gate, {
+        ok: true,
+        handle: "local-only.receiz.id",
+        source: "identity_seal"
+      });
     }
+  });
+
+  it("does not accept an unverified local Receiz ID as a merchant session", () => {
+    const gate = merchantServerSessionRequirement({
+      action: "publish",
+      connected: false,
+      handle: "local-only.receiz.id",
+      localReceizIdConnected: true,
+      localProofVerified: false
+    });
+
+    assert.equal(gate.ok, false);
+    assert.match(gate.message, /Sign in with Receiz ID/);
+  });
+
+  it("falls back to a stable handle for verified local Identity Seal sessions without a handle", () => {
+    const gate = merchantServerSessionRequirement({
+      action: "publish",
+      connected: false,
+      handle: "",
+      localReceizIdConnected: true,
+      localProofVerified: true
+    });
+
+    assert.deepEqual(gate, {
+      ok: true,
+      handle: "identity-seal",
+      source: "identity_seal"
+    });
+  });
+
+  it("prefers the Receiz Connect profile when both server and local sessions are present", () => {
+    const gate = merchantServerSessionRequirement({
+      action: "publish",
+      connected: true,
+      handle: "owner.receiz.id",
+      localReceizIdConnected: true,
+      localProofVerified: true
+    });
+
+    assert.deepEqual(gate, {
+      ok: true,
+      handle: "owner.receiz.id",
+      source: "receiz_connect"
+    });
   });
 
   it("allows merchant server actions when a Receiz Connect profile is signed in", () => {
@@ -48,7 +96,8 @@ describe("merchant server session gate", () => {
 
     assert.deepEqual(gate, {
       ok: true,
-      handle: "owner.receiz.id"
+      handle: "owner.receiz.id",
+      source: "receiz_connect"
     });
   });
 
@@ -63,7 +112,8 @@ describe("merchant server session gate", () => {
 
     assert.deepEqual(gate, {
       ok: true,
-      handle: "receiz-connected"
+      handle: "receiz-connected",
+      source: "receiz_connect"
     });
   });
 });

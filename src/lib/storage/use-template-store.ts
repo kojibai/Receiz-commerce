@@ -1185,6 +1185,19 @@ function publishedStatePayload(state: CommerceState) {
   };
 }
 
+function merchantSessionPayload(state: CommerceState) {
+  return {
+    auth: {
+      receizId: {
+        connected: state.auth.receizId.connected,
+        handle: state.auth.receizId.handle,
+        displayName: state.auth.receizId.displayName,
+        localProofVerified: state.auth.receizId.localProofVerified
+      }
+    }
+  };
+}
+
 function completePublishChecklistItem(state: CommerceState, id: string): CommerceState {
   return {
     ...state,
@@ -1545,6 +1558,14 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
                 : mode === "live"
                   ? "Receiz checkout"
                   : "Receiz delegated checkout"
+          },
+          publish: {
+            ...current.publish,
+            checklist: current.publish.checklist.map((item) =>
+              item.id === "checkout"
+                ? { ...item, complete: mode === "live", warning: mode !== "live" }
+                : item
+            )
           }
         }));
       },
@@ -1652,7 +1673,8 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
         try {
           const result = await postJson<{ hosting: CommerceState["hosting"] }>("/api/hosting", {
             action: "custom_domain",
-            domain: normalizedDomain
+            domain: normalizedDomain,
+            merchantSession: merchantSessionPayload(stateRef.current)
           });
           setState((current) => ({
             ...current,
@@ -1701,7 +1723,8 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
         try {
           const result = await postJson<{ hosting: CommerceState["hosting"] }>("/api/hosting", {
             action: "verify_domain",
-            domain: normalizedDomain
+            domain: normalizedDomain,
+            merchantSession: merchantSessionPayload(stateRef.current)
           });
           setState((current) => ({
             ...current,
@@ -2164,6 +2187,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
               state?: Partial<CommerceState>;
             }>("/api/hosting", {
               action: "publish",
+              merchantSession: merchantSessionPayload(publishRequestState),
               state: publishedStatePayload(publishRequestState)
             }, { deferLoginRedirect: true })
               .then((result) => {

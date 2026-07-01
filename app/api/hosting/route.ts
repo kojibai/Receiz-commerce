@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { mockHosting } from "@/lib/hosting/mock-hosting";
 import { normalizeCustomDomain, normalizeTenantSlug, subdomainForSlug } from "@/lib/hosting/domain-utils";
-import { merchantServerSessionRequirement, type MerchantServerAction } from "@/lib/hosting/merchant-session-gate";
+import {
+  merchantLocalIdentitySessionFromState,
+  merchantServerSessionRequirement,
+  type MerchantServerAction
+} from "@/lib/hosting/merchant-session-gate";
 import {
   VercelDomainError,
   addProjectDomain,
@@ -65,20 +69,27 @@ async function loadPublishOwner(accessToken: string | undefined) {
 async function requireMerchantSession(
   accessToken: string | undefined,
   action: MerchantServerAction,
-  returnTo: string
+  returnTo: string,
+  localIdentityState?: unknown
 ) {
   const profile = await loadPublishOwner(accessToken);
+  const localIdentity = merchantLocalIdentitySessionFromState(localIdentityState);
+  const tokenOnlySession = Boolean(accessToken) && !localIdentity.localProofVerified;
   const gate = merchantServerSessionRequirement({
     action,
-    connected: Boolean(accessToken),
-    handle: profile?.handle
+    connected: Boolean(profile) || tokenOnlySession,
+    handle: profile?.handle ?? localIdentity.handle,
+    localReceizIdConnected: localIdentity.connected,
+    localProofVerified: localIdentity.localProofVerified
   });
 
   if (gate.ok) {
     return {
       ok: true as const,
       profile,
-      handle: gate.handle
+      handle: gate.handle,
+      source: gate.source,
+      localIdentity
     };
   }
 
@@ -165,6 +176,7 @@ async function chargePlatformFee(
     amountUsd: string;
     note: string;
     idempotencyKey: string;
+    authorizedByIdentitySeal?: boolean;
   }
 ) {
   const liveBilling = process.env.RECEIZ_PLATFORM_BILLING_MODE === "live";
@@ -179,6 +191,15 @@ async function chargePlatformFee(
   }
 
   if (!accessToken) {
+    if (input.authorizedByIdentitySeal) {
+      return {
+        ok: true,
+        mode: "identity_seal_authorized",
+        amountUsd: input.amountUsd,
+        message: "Identity Seal authorized platform settlement."
+      };
+    }
+
     return { ...receizLoginRequired("/admin"), status: 401 };
   }
 
@@ -279,10 +300,6 @@ export async function POST(request: NextRequest) {
   }
 
   if (action === "custom_domain") {
-    if (!accessToken) {
-      return NextResponse.json(receizLoginRequired(returnTo), { status: 401 });
-    }
-
     let domain = "";
     try {
       domain = normalizeCustomDomain(String(body.domain ?? body.customDomain ?? ""));
@@ -290,13 +307,19 @@ export async function POST(request: NextRequest) {
       return badRequest(error);
     }
 
-    const merchantSession = await requireMerchantSession(accessToken, "custom_domain", returnTo);
+    const merchantSession = await requireMerchantSession(
+      accessToken,
+      "custom_domain",
+      returnTo,
+      isRecord(body) ? body.merchantSession ?? body.state : null
+    );
     if (!merchantSession.ok) return merchantSession.response;
 
     const platformBilling = await chargePlatformFee(accessToken, {
       amountUsd: process.env.RECEIZ_CUSTOM_DOMAIN_SETUP_USD ?? "0.00",
       note: `${platform.productName} custom domain setup for ${domain}`,
-      idempotencyKey: `receiz-app:custom-domain:${domain}`
+      idempotencyKey: `receiz-app:custom-domain:${domain}`,
+      authorizedByIdentitySeal: merchantSession.source === "identity_seal"
     });
 
     if (!platformBilling.ok) {
@@ -327,10 +350,6 @@ export async function POST(request: NextRequest) {
   }
 
   if (action === "verify_domain") {
-    if (!accessToken) {
-      return NextResponse.json(receizLoginRequired(returnTo), { status: 401 });
-    }
-
     let domain = "";
     try {
       domain = normalizeCustomDomain(String(body.domain ?? ""));
@@ -338,7 +357,12 @@ export async function POST(request: NextRequest) {
       return badRequest(error);
     }
 
-    const merchantSession = await requireMerchantSession(accessToken, "verify_domain", returnTo);
+    const merchantSession = await requireMerchantSession(
+      accessToken,
+      "verify_domain",
+      returnTo,
+      isRecord(body) ? body.merchantSession ?? body.state : null
+    );
     if (!merchantSession.ok) return merchantSession.response;
 
     let customDomain: DomainStatus;
@@ -364,11 +388,12 @@ export async function POST(request: NextRequest) {
   }
 
   if (action === "publish") {
-    if (!accessToken) {
-      return NextResponse.json(receizLoginRequired(returnTo), { status: 401 });
-    }
-
-    const merchantSession = await requireMerchantSession(accessToken, "publish", returnTo);
+    const merchantSession = await requireMerchantSession(
+      accessToken,
+      "publish",
+      returnTo,
+      isRecord(body) ? body.merchantSession ?? body.state : null
+    );
     if (!merchantSession.ok) return merchantSession.response;
     const publishOwner = merchantSession.profile;
     const submittedHosting = {
@@ -381,33 +406,36 @@ export async function POST(request: NextRequest) {
       hosting: submittedHosting
     }, {
       customDomain: publishOwner?.customDomain,
-      displayName: publishOwner?.name,
-      merchantReceizId: publishOwner?.handle,
+      displayName: publishOwner?.name ?? merchantSession.localIdentity.displayName,
+      merchantReceizId: publishOwner?.handle ?? merchantSession.handle,
       tenantSlug: publishOwner?.subdomain
     });
     const actorReceizId = state.hosting.merchantReceizId || state.auth.receizId.handle;
     const tenantHost = state.hosting.customDomain.domain || state.hosting.subdomain;
-    const receiz = createReceizCommerceAdapter({
-      baseUrl: process.env.RECEIZ_BASE_URL,
-      accessToken
-    });
     let publishState = state;
 
-    try {
-      publishState = await prepareStoreStateMediaForPublish(state, {
-        tenantHost,
-        merchantReceizId: actorReceizId,
-        upload: (file, options) => receiz.uploadMedia(file, options)
+    if (accessToken && merchantSession.source === "receiz_connect") {
+      const receiz = createReceizCommerceAdapter({
+        baseUrl: process.env.RECEIZ_BASE_URL,
+        accessToken
       });
-    } catch (error) {
-      return NextResponse.json(
-        {
-          ok: false,
-          error: "receiz_media_publish_failed",
-          message: errorMessage(error)
-        },
-        { status: 502 }
-      );
+
+      try {
+        publishState = await prepareStoreStateMediaForPublish(state, {
+          tenantHost,
+          merchantReceizId: actorReceizId,
+          upload: (file, options) => receiz.uploadMedia(file, options)
+        });
+      } catch (error) {
+        return NextResponse.json(
+          {
+            ok: false,
+            error: "receiz_media_publish_failed",
+            message: errorMessage(error)
+          },
+          { status: 502 }
+        );
+      }
     }
 
     const storeStateRecord = buildStoreStateRecord(publishState, {
@@ -417,26 +445,51 @@ export async function POST(request: NextRequest) {
     });
     const proofStore = await getServerProofStateStore(storeStateRecord.merchantReceizId);
     await proofStore.admitStoreRecord(storeStateRecord);
-    const storeStateReceizRecord = await publishReceizStoreState(accessToken, storeStateRecord);
+    let storeStateReceizRecord: unknown =
+      merchantSession.source === "identity_seal"
+        ? {
+            ok: true,
+            skipped: true,
+            mode: "identity_seal_authorized",
+            message: "Identity Seal authorized local proof-state publish."
+          }
+        : await publishReceizStoreState(accessToken, storeStateRecord);
 
     if (!receizWriteSucceeded(storeStateReceizRecord)) {
       const error = isRecord(storeStateReceizRecord) ? String(storeStateReceizRecord.error ?? "receiz_store_state_record_failed") : "receiz_store_state_record_failed";
-      console.error("[publish] Receiz store-state record failed", {
-        tenantHost: storeStateRecord.tenantHost,
-        merchantReceizId: storeStateRecord.merchantReceizId,
-        storeStateRecordId: storeStateRecord.id,
-        error
-      });
 
-      return NextResponse.json(
-        {
-          ok: false,
-          error: "receiz_store_state_record_failed",
-          message: error,
-          storeStateReceizRecord
-        },
-        { status: error === "receiz_login_required" ? 401 : 502 }
-      );
+      if (merchantSession.localIdentity.connected && merchantSession.localIdentity.localProofVerified) {
+        console.warn("[publish] Receiz remote mirror skipped after Identity Seal authorization", {
+          tenantHost: storeStateRecord.tenantHost,
+          merchantReceizId: storeStateRecord.merchantReceizId,
+          storeStateRecordId: storeStateRecord.id,
+          error
+        });
+        storeStateReceizRecord = {
+          ok: true,
+          skipped: true,
+          mode: "identity_seal_authorized",
+          warning: error,
+          remote: storeStateReceizRecord
+        };
+      } else {
+        console.error("[publish] Receiz store-state record failed", {
+          tenantHost: storeStateRecord.tenantHost,
+          merchantReceizId: storeStateRecord.merchantReceizId,
+          storeStateRecordId: storeStateRecord.id,
+          error
+        });
+
+        return NextResponse.json(
+          {
+            ok: false,
+            error: "receiz_store_state_record_failed",
+            message: error,
+            storeStateReceizRecord
+          },
+          { status: error === "receiz_login_required" ? 401 : 502 }
+        );
+      }
     }
 
     console.info("[publish] Receiz store-state record written", {

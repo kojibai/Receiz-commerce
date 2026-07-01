@@ -184,6 +184,20 @@ describe("launch readiness", () => {
     assert.equal(readiness.launchGuide.find((step) => step.id === "brand")?.complete, true);
   });
 
+  it("does not keep a checkout blocker after Receiz checkout is enabled", () => {
+    const draft = readyState();
+    draft.publish.checklist = draft.publish.checklist.map((item) =>
+      item.id === "checkout" ? { ...item, complete: false } : item
+    );
+    draft.checkout.mode = "live";
+    draft.checkout.label = "Receiz checkout";
+
+    const readiness = buildLaunchReadiness(draft);
+
+    assert.equal(readiness.blockers.some((blocker) => blocker.id === "checkout_live"), false);
+    assert.equal(readiness.launchGuide.find((step) => step.id === "checkout")?.complete, true);
+  });
+
   it("surfaces clear blockers for a new incomplete merchant store", () => {
     const draft = readyState();
     draft.hosting.published = false;
