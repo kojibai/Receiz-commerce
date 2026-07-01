@@ -1,6 +1,6 @@
-import { platform } from "@/lib/platform";
-import { createReceizCommerceAdapter } from "./adapter";
+import { platform } from "../platform";
 import { buildStoreStateConnectRecord, type StoreStateRecord } from "./proof-state";
+import type { ProofStateStore } from "./proof-state-store";
 import { type JsonObject } from "@receiz/sdk";
 
 function hostUrl(host: string) {
@@ -23,19 +23,24 @@ function failedReceizResponse(value: unknown) {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value) && (value as { ok?: unknown }).ok === false;
 }
 
+export function receizStoreStateWriteSucceeded(result: unknown) {
+  return !failedReceizResponse(result);
+}
+
 export async function publishReceizStoreState(accessToken: string | undefined, record: StoreStateRecord) {
   if (!accessToken) {
-    return { ok: false, skipped: true, error: "receiz_authority_required" };
+    return { ok: false, skipped: true, error: "receiz_public_store_write_rail_missing" };
   }
 
-  const receiz = createReceizCommerceAdapter({
-    baseUrl: process.env.RECEIZ_BASE_URL,
-    accessToken
-  });
   const connectRecord = buildStoreStateConnectRecord(record);
   const hosts = [...publicStoreHostsForStoreState(record)];
 
   try {
+    const { createReceizCommerceAdapter } = await import("./adapter");
+    const receiz = createReceizCommerceAdapter({
+      baseUrl: process.env.RECEIZ_BASE_URL,
+      accessToken
+    });
     const connect = await receiz.connectRecord(connectRecord);
     const publicStore = await Promise.all(
       hosts.map((host) =>
@@ -84,4 +89,24 @@ export async function publishReceizStoreState(accessToken: string | undefined, r
       error: receizError(error)
     };
   }
+}
+
+export async function publishAndAdmitReceizStoreState({
+  accessToken,
+  proofStore,
+  publish = publishReceizStoreState,
+  record
+}: {
+  accessToken: string | undefined;
+  proofStore: ProofStateStore;
+  publish?: (accessToken: string | undefined, record: StoreStateRecord) => Promise<unknown>;
+  record: StoreStateRecord;
+}) {
+  const receizRecord = await publish(accessToken, record);
+
+  if (receizStoreStateWriteSucceeded(receizRecord)) {
+    await proofStore.admitStoreRecord(record);
+  }
+
+  return receizRecord;
 }

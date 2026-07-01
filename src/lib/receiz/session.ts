@@ -30,7 +30,7 @@ export function receizAuthorityRequired(returnTo = "/admin") {
   return {
     ok: false,
     error: "receiz_authority_required",
-    message: "Present a verified Receiz proof object, or continue with Receiz ID proof for this site, then try again.",
+    message: "Create or restore a verified Receiz proof object in app, then try again.",
     connectUrl: `/api/auth/receiz/start?returnTo=${encodeURIComponent(returnTo)}`
   };
 }

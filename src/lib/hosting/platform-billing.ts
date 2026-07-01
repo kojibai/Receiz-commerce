@@ -46,3 +46,25 @@ export function hostingBillingFromPlatformPayment(
     ]
   };
 }
+
+export function hostingPlanUpdateFromPlatformPayment(
+  current: HostingConfig,
+  plan: HostingConfig["plan"],
+  receipt: PlatformBillingReceipt
+): { ok: true; hosting: HostingConfig; message: string } | { ok: false; hosting: HostingConfig; message: string } {
+  if (plan !== "starter" && !(receipt.ok && receipt.paid === true)) {
+    return {
+      ok: false,
+      hosting: current,
+      message: receipt.message
+        ? `Payment not confirmed: ${receipt.message}`
+        : "Paid hosting requires confirmed Receiz wallet or card settlement."
+    };
+  }
+
+  return {
+    ok: true,
+    hosting: { ...current, plan },
+    message: plan === "starter" ? "Free starter hosting active" : "Paid hosting confirmed"
+  };
+}

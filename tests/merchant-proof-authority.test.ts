@@ -16,7 +16,7 @@ describe("merchant proof authority gate", () => {
 
     assert.equal(gate.ok, false);
     assert.equal(gate.eventType, "DOMAIN_CONNECTED");
-    assert.equal(gate.message, "Present a verified Receiz proof object or continue with Receiz ID proof before connecting a custom domain.");
+    assert.equal(gate.message, "Create or restore a verified Receiz proof object in app before connecting a custom domain.");
     assert.equal(gate.statusLabel, "Receiz proof object required");
   });
 

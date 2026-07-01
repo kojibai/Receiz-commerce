@@ -770,9 +770,9 @@ function createFreshMerchantWorkspace(current: CommerceState, profile: ReceizPro
     },
     storefront: {
       homepageMode: "store",
-      headline: "Proof-sealed commerce",
-      subheadline: "Sell products, access, benefits, and Receized assets.",
-      heroBody: "Your store is ready for products, payments, rewards, and proof.",
+      headline: "",
+      subheadline: "",
+      heroBody: "",
       ctaLabel: "Shop now"
     },
     hosting: {
@@ -783,6 +783,7 @@ function createFreshMerchantWorkspace(current: CommerceState, profile: ReceizPro
       liveUrl: `https://${subdomain}`,
       merchantReceizId: handle,
       settlementAccountLabel: `${displayName} Receiz account`,
+      plan: "starter",
       published: false,
       lastPublishedAt: "Not published",
       subdomainStatus: {
@@ -793,7 +794,7 @@ function createFreshMerchantWorkspace(current: CommerceState, profile: ReceizPro
         verified: false,
         dnsResolved: false,
         liveUrl: `https://${subdomain}`,
-        message: "Choose and claim this free Receiz.app subdomain"
+        message: "Free Receiz.app subdomain ready to claim"
       },
       customDomain: {
         ...seedCommerceState.hosting.customDomain,
@@ -813,10 +814,10 @@ function createFreshMerchantWorkspace(current: CommerceState, profile: ReceizPro
       status: "trial",
       paymentMethodLabel: "No payment method yet",
       monthlyTotalLabel: "$0 / mo",
-      trialEndsAt: "Free subdomain available",
+      trialEndsAt: "Free starter hosting",
       invoices: []
     },
-    navigation: seedCommerceState.navigation,
+    navigation: [],
     pages: [],
     blogPosts: [],
     collections: [],
@@ -900,7 +901,7 @@ function applyReceizProfile(
   }
 
   const ownerKey = ownerKeyFromProfile(profile);
-  const resetTemplate = current.auth.workspaceOwnerId !== ownerKey && current.hosting.published;
+  const resetTemplate = current.auth.workspaceOwnerId !== ownerKey;
   const base = resetTemplate ? createFreshMerchantWorkspace(current, profile) : current;
   const handle = normalizeProfileHandle(profile.handle, base.auth.receizId.handle);
   const displayName = displayNameFromProfile(profile);
@@ -1003,7 +1004,7 @@ async function fetchPublishedStoreProjection(tenantHost?: string) {
 class ReceizAuthorityRequiredError extends Error {
   connectUrl: string;
 
-  constructor(connectUrl: string, message = "Present a verified Receiz proof object, or continue with Receiz ID proof, then try again.") {
+  constructor(connectUrl: string, message = "Create or restore a verified Receiz proof object in app, then try again.") {
     super(message);
     this.name = "ReceizAuthorityRequiredError";
     this.connectUrl = connectUrl;
@@ -1049,6 +1050,19 @@ async function postJson<T>(
   }
 
   return payload as T;
+}
+
+type StoreStateSyncResponse = {
+  ok?: boolean;
+  skipped?: boolean;
+  reason?: string;
+  message?: string;
+  error?: string;
+};
+
+function storeStateSyncError(sync: StoreStateSyncResponse | undefined) {
+  if (!sync || sync.ok !== false) return "";
+  return sync.message || sync.error || "Storefront proof-state sync failed";
 }
 
 function priceFromLabel(label: string) {
@@ -1246,6 +1260,47 @@ function mergePublishedPublicState(
   };
 }
 
+async function createLocalReceizIdentitySessionInput(snapshot: CommerceState, fallbackDisplayName: string) {
+  const client = createReceizClient();
+  let projection: ReceizIdentityAccountProjection | null = null;
+  let keyFile: unknown | null = null;
+  let handle = `${slugify(snapshot.brand.logoText || snapshot.brand.name, "customer")}-${makeId("id").slice(-6)}`;
+  let displayName = fallbackDisplayName;
+  let createdProof = false;
+
+  try {
+    const identity = await client.identity.createReceizId({
+      username: handle,
+      displayName,
+      deviceName: snapshot.brand.name
+    });
+    keyFile = identity.keyFile;
+    projection = await client.identity.projectAccount(identity.keyFile);
+    handle = accountHandle(projection, `${handle}.receiz.id`);
+    displayName = projection?.owner.displayName ?? displayName;
+    createdProof = true;
+  } catch {
+    handle = handle.includes(".") ? handle : `${handle}.receiz.id`;
+  }
+
+  return {
+    keyFile,
+    input: {
+      accountImageLabel: "Local Receiz ID",
+      artifactKind: "receiz_id" as const,
+      artifactStatus: createdProof || projection?.portableStateVerified ? ("verified" as const) : ("pending" as const),
+      displayName,
+      email: projection?.owner.email ?? undefined,
+      handle,
+      keyId: projection?.keyId ?? snapshot.auth.receizId.keyId,
+      localProofVerified: createdProof || Boolean(projection?.portableStateVerified),
+      loginMode: "new_receiz_id" as const,
+      portableStateStatus: createdProof || projection?.portableStateVerified ? ("verified" as const) : ("missing" as const),
+      statusLabel: createdProof || projection?.portableStateVerified ? "Receiz ID locally verified" : "Receiz ID proof pending"
+    }
+  };
+}
+
 async function receizIdentityForAutomaticCustomerSession(snapshot: CommerceState, reason: string) {
   if (snapshot.auth.receizId.connected) {
     return {
@@ -1269,45 +1324,15 @@ async function receizIdentityForAutomaticCustomerSession(snapshot: CommerceState
     }
   }
 
-  const client = createReceizClient();
-  let projection: ReceizIdentityAccountProjection | null = null;
-  let keyFile: unknown | null = null;
-  let handle = `${slugify(snapshot.brand.logoText || snapshot.brand.name, "customer")}-${makeId("id").slice(-6)}`;
-  let displayName = "Receiz customer";
-
-  try {
-    const identity = await client.identity.createReceizId({
-      username: handle,
-      displayName,
-      deviceName: snapshot.brand.name
-    });
-    keyFile = identity.keyFile;
-    projection = await client.identity.projectAccount(identity.keyFile);
-    handle = accountHandle(projection, `${handle}.receiz.id`);
-    displayName = projection?.owner.displayName ?? displayName;
-  } catch {
-    handle = handle.includes(".") ? handle : `${handle}.receiz.id`;
-  }
+  const identity = await createLocalReceizIdentitySessionInput(snapshot, "Receiz customer");
 
   return {
-    keyFile,
-    detail: `${handle} created for ${reason}`,
+    keyFile: identity.keyFile,
+    detail: `${identity.input.handle} created for ${reason}`,
     apply: (state: CommerceState) =>
       applyLocalReceizIdentitySession(
         state,
-        {
-          accountImageLabel: "Local Receiz ID",
-          artifactKind: "receiz_id",
-          artifactStatus: projection?.portableStateVerified ? "verified" : "created",
-          displayName,
-          email: projection?.owner.email ?? undefined,
-          handle,
-          keyId: projection?.keyId ?? state.auth.receizId.keyId,
-          localProofVerified: Boolean(projection?.portableStateVerified),
-          loginMode: "new_receiz_id",
-          portableStateStatus: projection?.portableStateStatus ?? "missing",
-          statusLabel: projection?.portableStateVerified ? "New Receiz ID locally verified" : "New Receiz ID created"
-        },
+        identity.input,
         currentHostContext().surface === "tenant"
       )
   };
@@ -1482,9 +1507,6 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
       return true;
     }
 
-    const returnTo = `${window.location.pathname}${window.location.search}` || "/admin";
-    const connectUrl = `/api/auth/receiz/start?returnTo=${encodeURIComponent(returnTo)}`;
-
     setReceizSessionPending(true);
     setState((current) => ({
       ...current,
@@ -1508,12 +1530,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
             },
       proofEvents: [makeEvent(gate.eventType, gate.message), ...current.proofEvents]
     }));
-
-    if (action !== "publish") {
-      window.location.assign(connectUrl);
-    } else {
-      setReceizSessionPending(false);
-    }
+    setReceizSessionPending(false);
 
     return false;
   }, []);
@@ -1673,7 +1690,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
         }
 
         if (!(await ensureMerchantProofAuthority("custom_domain"))) {
-          setActionFeedback("domains.customDomain", "error", "Restore a verified Identity Seal or continue with Receiz ID");
+          setActionFeedback("domains.customDomain", "error", "Create or restore a verified Receiz proof object in app");
           return;
         }
 
@@ -1696,21 +1713,32 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
         }));
 
         try {
-          const result = await postJson<{ hosting: CommerceState["hosting"] }>("/api/hosting", {
+          const result = await postJson<{ hosting: CommerceState["hosting"]; storeStateSync?: StoreStateSyncResponse }>("/api/hosting", {
             action: "custom_domain",
             domain: normalizedDomain,
-            merchantProof: merchantProofPayload(stateRef.current)
+            merchantProof: merchantProofPayload(stateRef.current),
+            state: stateRef.current
           });
+          const syncError = storeStateSyncError(result.storeStateSync);
           setActionFeedback(
             "domains.customDomain",
-            "success",
-            result.hosting.customDomain.status === "active" ? `${normalizedDomain} connected` : "DNS records ready"
+            syncError ? "error" : "success",
+            syncError
+              ? `Domain connected; storefront sync failed: ${syncError}`
+              : result.hosting.customDomain.status === "active"
+                ? `${normalizedDomain} connected and storefront synced`
+                : "DNS records ready"
           );
           setState((current) => ({
             ...current,
             hosting: mergeCustomDomainHostingResponse(current.hosting, result.hosting),
             proofEvents: [
-              makeEvent("DOMAIN_CONNECTED", `${result.hosting.customDomain.message ?? normalizedDomain} · ${result.hosting.customDomain.status}`),
+              makeEvent(
+                "DOMAIN_CONNECTED",
+                syncError
+                  ? `${normalizedDomain} connected; storefront sync failed`
+                  : `${result.hosting.customDomain.message ?? normalizedDomain} · ${result.hosting.customDomain.status}`
+              ),
               ...current.proofEvents
             ]
           }));
@@ -1749,7 +1777,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
         }
 
         if (!(await ensureMerchantProofAuthority("verify_domain"))) {
-          setActionFeedback("domains.verifyDomain", "error", "Restore a verified Identity Seal or continue with Receiz ID");
+          setActionFeedback("domains.verifyDomain", "error", "Create or restore a verified Receiz proof object in app");
           return;
         }
 
@@ -1774,21 +1802,30 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
         }));
 
         try {
-          const result = await postJson<{ hosting: CommerceState["hosting"] }>("/api/hosting", {
+          const result = await postJson<{ hosting: CommerceState["hosting"]; storeStateSync?: StoreStateSyncResponse }>("/api/hosting", {
             action: "verify_domain",
             domain: normalizedDomain,
-            merchantProof: merchantProofPayload(stateRef.current)
+            merchantProof: merchantProofPayload(stateRef.current),
+            state: stateRef.current
           });
+          const syncError = storeStateSyncError(result.storeStateSync);
           setActionFeedback(
             "domains.verifyDomain",
-            result.hosting.customDomain.status === "active" ? "success" : "pending",
-            result.hosting.customDomain.message ?? `${normalizedDomain} checked`
+            syncError ? "error" : result.hosting.customDomain.status === "active" ? "success" : "pending",
+            syncError
+              ? `DNS verified; storefront sync failed: ${syncError}`
+              : result.hosting.customDomain.message ?? `${normalizedDomain} checked`
           );
           setState((current) => ({
             ...current,
             hosting: mergeCustomDomainHostingResponse(current.hosting, result.hosting),
             proofEvents: [
-              makeEvent("DOMAIN_CONNECTED", `${result.hosting.customDomain.message ?? normalizedDomain} · ${result.hosting.customDomain.status}`),
+              makeEvent(
+                "DOMAIN_CONNECTED",
+                syncError
+                  ? `${normalizedDomain} DNS verified; storefront sync failed`
+                  : `${result.hosting.customDomain.message ?? normalizedDomain} · ${result.hosting.customDomain.status}`
+              ),
               ...current.proofEvents
             ]
           }));
@@ -1817,21 +1854,13 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
       },
       async selectHostingPlan(plan: CommerceState["hosting"]["plan"]) {
         setActionFeedback("billing.plan", "pending", `Selecting ${plan}`);
-        setState((current) => {
-          const selected = current.billing.plans.find((item) => item.id === plan);
-          return {
-            ...current,
-            hosting: { ...current.hosting, plan },
-            billing: {
-              ...current.billing,
-              monthlyTotalLabel: selected?.priceLabel ?? current.billing.monthlyTotalLabel
-            },
-            proofEvents: [
-              makeEvent("HOSTING_PLAN_UPDATED", `${selected?.name ?? plan} hosting plan selected`),
-              ...current.proofEvents
-            ]
-          };
-        });
+        setState((current) => ({
+          ...current,
+          proofEvents: [
+            makeEvent("HOSTING_PLAN_UPDATED", `${plan} hosting plan payment requested`),
+            ...current.proofEvents
+          ]
+        }));
 
         try {
           const result = await postJson<{
@@ -1896,42 +1925,47 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
           }));
         }
       },
-      signInWithReceizId() {
-        if (typeof window !== "undefined" && process.env.NEXT_PUBLIC_AUTH_MODE === "receiz_id") {
-          const returnTo = `${window.location.pathname}${window.location.search}`;
-          window.location.assign(`/api/auth/receiz/start?returnTo=${encodeURIComponent(returnTo || "/account")}`);
-          return;
+      async signInWithReceizId() {
+        const snapshot = stateRef.current;
+        const identity = await createLocalReceizIdentitySessionInput(snapshot, snapshot.brand.name || "Receiz merchant");
+
+        if (identity.keyFile) {
+          pendingBrowserIdentityKeyFileRef.current = identity.keyFile;
         }
 
-        setState((current) => ({
-          ...current,
-          auth: {
-            ...current.auth,
-            receizId: {
-              ...current.auth.receizId,
-              connected: true,
-              loginMode: "existing_receiz_id",
-              statusLabel: "Signed in with existing Receiz ID"
-            }
-          },
-          proofEvents: [
-            makeEvent("RECEIZ_ID_CONNECTED", `${current.auth.receizId.handle} signed in`),
-            ...current.proofEvents
-          ]
-        }));
+        setState((current) => {
+          const tenantSurface = currentHostContext().surface === "tenant";
+          const nextState = applyLocalReceizIdentitySession(
+            current,
+            identity.input,
+            tenantSurface
+          );
+
+          return {
+            ...nextState,
+            proofEvents: [
+              makeEvent("RECEIZ_ID_CONNECTED", `${identity.input.handle} signed in with local proof`),
+              ...(tenantSurface ? current.proofEvents : [])
+            ]
+          };
+        });
       },
       async connectExistingReceizId() {
         if (typeof window !== "undefined" && process.env.NEXT_PUBLIC_AUTH_MODE === "receiz_id") {
           const result = await fetchReceizProfile().catch(() => null);
           if (result?.connected && result.profile) {
             const surface = result.surface ?? currentHostContext().surface;
-            setState((current) => ({
-              ...applyReceizProfile(current, result.profile!, surface),
-              proofEvents: [
-                makeEvent("RECEIZ_ID_CONNECTED", `${normalizeProfileHandle(result.profile!.handle, current.auth.receizId.handle)} signed in`),
-                ...current.proofEvents
-              ]
-            }));
+            setState((current) => {
+              const nextState = applyReceizProfile(current, result.profile!, surface);
+
+              return {
+                ...nextState,
+                proofEvents: [
+                  makeEvent("RECEIZ_ID_CONNECTED", `${normalizeProfileHandle(result.profile!.handle, current.auth.receizId.handle)} signed in`),
+                  ...(surface === "tenant" ? current.proofEvents : [])
+                ]
+              };
+            });
             return true;
           }
         }
@@ -1942,13 +1976,35 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
           );
 
           if (browserSession) {
-            setState((current) => ({
-              ...applyBrowserReceizIdSession(current, browserSession),
-              proofEvents: [
-                makeEvent("RECEIZ_ID_CONNECTED", `${browserSession.receizId.handle} continued from browser proof memory`),
-                ...current.proofEvents
-              ]
-            }));
+            setState((current) => {
+              const tenantSurface = currentHostContext().surface === "tenant";
+              const nextState = tenantSurface
+                ? applyBrowserReceizIdSession(current, browserSession)
+                : applyLocalReceizIdentitySession(
+                    current,
+                    {
+                      accountImageLabel: browserSession.receizId.accountImageLabel,
+                      artifactKind: browserSession.receizId.artifactKind,
+                      artifactStatus: browserSession.receizId.artifactStatus,
+                      displayName: browserSession.receizId.displayName,
+                      handle: browserSession.receizId.handle,
+                      keyId: browserSession.receizId.keyId,
+                      localProofVerified: browserSession.receizId.localProofVerified,
+                      loginMode: browserSession.receizId.loginMode,
+                      portableStateStatus: browserSession.receizId.portableStateStatus,
+                      statusLabel: browserSession.receizId.statusLabel
+                    },
+                    false
+                  );
+
+              return {
+                ...nextState,
+                proofEvents: [
+                  makeEvent("RECEIZ_ID_CONNECTED", `${browserSession.receizId.handle} continued from browser proof memory`),
+                  ...(tenantSurface ? current.proofEvents : [])
+                ]
+              };
+            });
             return true;
           }
         }
@@ -1978,58 +2034,59 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
             : null;
 
         if (existingBrowserSession) {
-          setState((current) => ({
-            ...applyBrowserReceizIdSession(current, existingBrowserSession),
-            proofEvents: [
-              makeEvent("RECEIZ_ID_CONNECTED", `${existingBrowserSession.receizId.handle} continued from browser proof memory`),
-              ...current.proofEvents
-            ]
-          }));
+          setState((current) => {
+            const tenantSurface = currentHostContext().surface === "tenant";
+            const nextState = tenantSurface
+              ? applyBrowserReceizIdSession(current, existingBrowserSession)
+              : applyLocalReceizIdentitySession(
+                  current,
+                  {
+                    accountImageLabel: existingBrowserSession.receizId.accountImageLabel,
+                    artifactKind: existingBrowserSession.receizId.artifactKind,
+                    artifactStatus: existingBrowserSession.receizId.artifactStatus,
+                    displayName: existingBrowserSession.receizId.displayName,
+                    handle: existingBrowserSession.receizId.handle,
+                    keyId: existingBrowserSession.receizId.keyId,
+                    localProofVerified: existingBrowserSession.receizId.localProofVerified,
+                    loginMode: existingBrowserSession.receizId.loginMode,
+                    portableStateStatus: existingBrowserSession.receizId.portableStateStatus,
+                    statusLabel: existingBrowserSession.receizId.statusLabel
+                  },
+                  false
+                );
+
+            return {
+              ...nextState,
+              proofEvents: [
+                makeEvent("RECEIZ_ID_CONNECTED", `${existingBrowserSession.receizId.handle} continued from browser proof memory`),
+                ...(tenantSurface ? current.proofEvents : [])
+              ]
+            };
+          });
           return;
         }
 
-        const client = createReceizClient();
-        let projection: ReceizIdentityAccountProjection | null = null;
-        let handle = `${slugify(snapshot.brand.logoText || snapshot.brand.name, "customer")}-${makeId("id").slice(-6)}`;
-        let displayName = "Receiz customer";
-
-        try {
-          const identity = await client.identity.createReceizId({
-            username: handle,
-            displayName,
-            deviceName: snapshot.brand.name
-          });
+        const identity = await createLocalReceizIdentitySessionInput(snapshot, "Receiz customer");
+        if (identity.keyFile) {
           pendingBrowserIdentityKeyFileRef.current = identity.keyFile;
-          projection = await client.identity.projectAccount(identity.keyFile);
-          handle = accountHandle(projection, `${handle}.receiz.id`);
-          displayName = projection?.owner.displayName ?? displayName;
-        } catch {
-          handle = handle.includes(".") ? handle : `${handle}.receiz.id`;
         }
 
-        setState((current) => ({
-          ...applyLocalReceizIdentitySession(
+        setState((current) => {
+          const tenantSurface = currentHostContext().surface === "tenant";
+          const nextState = applyLocalReceizIdentitySession(
             current,
-            {
-              accountImageLabel: "Local Receiz ID",
-              artifactKind: "receiz_id",
-              artifactStatus: projection?.portableStateVerified ? "verified" : "created",
-              displayName,
-              email: projection?.owner.email ?? undefined,
-              handle,
-              keyId: projection?.keyId ?? current.auth.receizId.keyId,
-              localProofVerified: Boolean(projection?.portableStateVerified),
-              loginMode: "new_receiz_id",
-              portableStateStatus: projection?.portableStateStatus ?? "missing",
-              statusLabel: projection?.portableStateVerified ? "New Receiz ID locally verified" : "New Receiz ID created"
-            },
-            currentHostContext().surface === "tenant"
-          ),
-          proofEvents: [
-            makeEvent("RECEIZ_ID_CONNECTED", `${handle} created locally`),
-            ...current.proofEvents
-          ]
-        }));
+            identity.input,
+            tenantSurface
+          );
+
+          return {
+            ...nextState,
+            proofEvents: [
+              makeEvent("RECEIZ_ID_CONNECTED", `${identity.input.handle} created locally`),
+              ...(tenantSurface ? current.proofEvents : [])
+            ]
+          };
+        });
       },
       async ensureCustomerSession(reason = "this store") {
         const snapshot = stateRef.current;
@@ -2068,6 +2125,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
         }
 
         setState((current) => {
+          const tenantSurface = currentHostContext().surface === "tenant";
           const artifactKind = identityArtifactKind(file);
           const handle = accountHandle(projection, current.auth.receizId.handle);
           const displayName = projection?.owner.displayName ?? current.auth.receizId.displayName;
@@ -2096,7 +2154,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
                   portableStateStatus,
                   statusLabel
                 },
-                currentHostContext().surface === "tenant"
+                tenantSurface
               );
 
           if (!failed && keyFileForBrowserMemory) {
@@ -2129,7 +2187,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
                   ? `${file.name} could not be restored`
                   : `${handle} restored from ${artifactKind.replace(/_/g, " ")}`
               ),
-              ...current.proofEvents
+              ...(tenantSurface ? current.proofEvents : [])
             ]
           };
         });
@@ -2250,7 +2308,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
       publish() {
         void (async () => {
           if (!(await ensureMerchantProofAuthority("publish"))) {
-            setActionFeedback("publish", "error", "Restore a verified Identity Seal or continue with Receiz ID");
+            setActionFeedback("publish", "error", "Create or restore a verified Receiz proof object in app");
             return;
           }
 
@@ -2286,7 +2344,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
                   setState((latest) => ({
                     ...latest,
                     proofEvents: [
-                      makeEvent("SITE_PUBLISHED", "Receiz proof object required to publish. Restore a verified proof object or continue with Receiz ID proof, then publish again."),
+                      makeEvent("SITE_PUBLISHED", "Receiz proof object required to publish. Create or restore a verified proof object in app, then publish again."),
                       ...latest.proofEvents
                     ]
                   }));

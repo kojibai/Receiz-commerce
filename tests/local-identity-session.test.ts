@@ -52,4 +52,41 @@ describe("local Receiz identity sessions", () => {
     assert.equal(state.auth.signedInAs, baseState().auth.signedInAs);
     assert.equal(state.auth.receizId.handle, "owner.receiz.id");
   });
+
+  it("turns platform proof login into a user-owned empty merchant workspace", () => {
+    const state = applyLocalReceizIdentitySession(
+      baseState(),
+      {
+        accountImageLabel: "identity-seal.png",
+        artifactKind: "identity_seal",
+        artifactStatus: "verified",
+        displayName: "BJ Klock",
+        handle: "bjklock.receiz.id",
+        keyId: "rzid_bjklock",
+        localProofVerified: true,
+        loginMode: "restored_identity_artifact",
+        portableStateStatus: "verified",
+        statusLabel: "Identity artifact locally verified"
+      },
+      false
+    );
+
+    assert.equal(state.auth.signedInAs, "admin");
+    assert.equal(state.auth.receizId.handle, "bjklock.receiz.id");
+    assert.equal(state.auth.workspaceOwnerId, "bjklock.receiz.id");
+    assert.equal(state.brand.name, "BJ Klock");
+    assert.equal(state.brand.logoText, "bjklock");
+    assert.equal(state.hosting.tenantSlug, "bjklock");
+    assert.equal(state.hosting.subdomain, "bjklock.receiz.app");
+    assert.equal(state.hosting.merchantReceizId, "bjklock.receiz.id");
+    assert.equal(state.hosting.plan, "starter");
+    assert.equal(state.hosting.published, false);
+    assert.equal(state.billing.status, "trial");
+    assert.equal(state.billing.monthlyTotalLabel, "$0 / mo");
+    assert.deepEqual(state.products, []);
+    assert.deepEqual(state.collections, []);
+    assert.deepEqual(state.pages, []);
+    assert.deepEqual(state.blogPosts, []);
+    assert.equal(JSON.stringify(state).includes("Boost"), false);
+  });
 });

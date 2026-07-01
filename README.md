@@ -225,9 +225,9 @@ The app routes tenant hosts through `middleware.ts`. A request to `boost.receiz.
 
 ### Global Publish Sync
 
-The admin editor can stage changes locally, but a hosted subdomain/custom domain is only globally live after publish writes a Receiz store-state record. Production publish is authorized by the merchant's verified Receiz proof object. When the app needs remote SDK/API writes, continued Receiz ID proof can mint delegated Connect permission from the secure server cookie, but that token is only a permission artifact beneath the proof object. Vercel function memory is not durable and is never treated as the global source of truth.
+The admin editor can stage changes locally, but a hosted subdomain/custom domain is only globally live after publish writes a Receiz store-state record. Production publish is authorized by the merchant's verified Receiz proof object. User-facing Receiz ID login happens in app: create a Receiz proof object or restore a Receiz Key, Identity Record image, or Identity Seal image. Connect/OIDC is only an optional delegated write transport for server-side SDK calls after proof exists; it is not the identity authority and it is not the normal login screen. Vercel function memory is not durable and is never treated as the global source of truth.
 
-Publish appends first. `/api/store` and `/api/hosting` send the public store projection through the SDK append rail, require the returned `kaiUpulse`/`kaiPulseEternal`, anchor id, and proof bundle, then create the store-state record. `publicStore.publish()` uses `storeStateRecord.updatedKaiUpulse` for idempotency. If the append coordinate is missing, the app fails the publish instead of deriving a local timestamp or accepting an incomplete record.
+Publish writes durable public-store proof first. `/api/store` and `/api/hosting` build the store-state proof object and call the SDK public-store rail. Only after that durable write succeeds does the app admit the record into server proof memory. If the public-store write rail is missing or the SDK write fails, publish fails visibly; the app must not show a warm-memory success that disappears on a deploy or cold start.
 
 After publishing, verify the public tenant projection:
 
@@ -235,7 +235,7 @@ After publishing, verify the public tenant projection:
 curl -sS https://your-subdomain.receiz.app/api/store
 ```
 
-The response should show saved brand/content, `source: "published"`, `publishedState: true`, `proofMemory.entries` greater than `0`, and `proofMemory.knownHead.afterKaiUpulse`. If the Kai head is missing, the response is incomplete proof truth and the client must not merge it over the local proof store. If publish returns `receiz_authority_required`, restore or present a verified proof object, or continue with Receiz ID proof for delegated remote writes, then publish again.
+The response should show saved brand/content, `source: "published"`, `publishedState: true`, and `proofMemory.entries` greater than `0`. If publish returns `receiz_public_store_write_rail_missing`, set `RECEIZ_ACCESS_TOKEN` or `RECEIZ_CONNECT_ACCESS_TOKEN` for this deployment's server-side public-store write rail, then publish again. If publish returns `receiz_authority_required`, create or restore a verified Receiz proof object in app, then publish again.
 
 Receiz settlement for platform fees we collect:
 
@@ -256,9 +256,9 @@ RECEIZ_DEFAULT_MERCHANT_RECEIZ_ID=
 RECEIZ_DEFAULT_SETTLEMENT_USER_ID=
 ```
 
-Production merchant checkout should use the merchant's verified Receiz proof object, continued Receiz ID proof, or delegated Connect permission. The checkout API sends tenant host, merchant Receiz ID, and settlement recipient metadata into Receiz checkout so customer payments settle to the merchant's Receiz rails, not a Stripe account.
+Production merchant checkout should use the merchant's verified Receiz proof object or delegated Connect permission derived beneath that proof. The checkout API sends tenant host, merchant Receiz ID, and settlement recipient metadata into Receiz checkout so customer payments settle to the merchant's Receiz rails, not a Stripe account.
 
-Customer checkout on a tenant host requires customer proof for that store: a verified identity object, continued Receiz ID proof, or scoped delegated permission. A `receiz.app` platform login is not reused as buyer authority on `brand.receiz.app` or a custom domain.
+Customer checkout on a tenant host requires customer proof for that store: a verified identity object or scoped delegated permission derived beneath that proof. A `receiz.app` platform login is not reused as buyer authority on `brand.receiz.app` or a custom domain.
 
 The checkout request is wallet-first:
 
@@ -290,19 +290,17 @@ RECEIZ_ENABLE_WORLD_SCOPES=true
 
 `@receiz/sdk@97.5.0` exposes typed Twin, World, public-store, customer, merchant, commerce, media, and domain namespaces. The frontend hides Receiz Twin buttons unless the capability flag is enabled and the SDK namespace is present. If you are testing against an older Receiz OIDC client, set `RECEIZ_ENABLE_TWIN_SCOPES=false` or `RECEIZ_ENABLE_WORLD_SCOPES=false` before login so Receiz does not reject the authorization request with `invalid_scope`.
 
-Do not add a Receiz access token for normal OIDC login. The setup is:
+Do not send normal users out to Receiz.com for login. The setup is:
 
 ```txt
-Receiz client ID + client secret in Vercel
--> user clicks Connect Receiz
--> receiz.com asks the user to approve scopes
--> receiz.com redirects to /api/auth/receiz/callback with a code
--> this app exchanges the code for an access token
--> this app stores that generated token in a secure server cookie
--> checkout/wallet/payment calls use that generated token
+User clicks Sign in with Receiz
+-> app creates or restores a local Receiz proof object with the SDK
+-> app projects that proof into the merchant/customer workspace
+-> app defaults merchant hosting to username.receiz.app on the free Starter plan
+-> paid plans and custom-domain upgrades stay locked until Receiz wallet/card settlement is confirmed
 ```
 
-Only set one of these if Receiz explicitly gives you a static app-level or service token. Most deployments should not set them:
+Set one of these for the deployment's server-side public-store write rail so published sites survive deploys and cold starts:
 
 ```bash
 RECEIZ_ACCESS_TOKEN=

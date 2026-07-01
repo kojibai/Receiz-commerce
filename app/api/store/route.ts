@@ -6,7 +6,10 @@ import {
   storeStateProjectionSource
 } from "@/lib/receiz/proof-state";
 import { getServerProofStateStore } from "@/lib/receiz/proof-state-store";
-import { publishReceizStoreState } from "@/lib/receiz/store-state-publication";
+import {
+  publishAndAdmitReceizStoreState,
+  receizStoreStateWriteSucceeded
+} from "@/lib/receiz/store-state-publication";
 import { loadReceizConnectProfile } from "@/lib/receiz/connect-profile";
 import { receizAccessTokenFromRequest, receizAuthorityRequired } from "@/lib/receiz/session";
 import { createReceizCommerceAdapter } from "@/lib/receiz/adapter";
@@ -67,12 +70,20 @@ function mergePublishedState(input: unknown): CommerceState {
   };
 }
 
-function receizWriteSucceeded(result: unknown) {
-  return !(isRecord(result) && result.ok === false);
-}
-
 function errorMessage(error: unknown) {
   return error instanceof Error ? error.message : "Unknown error";
+}
+
+function publicStoreWriteFailureMessage(error: string) {
+  if (error === "receiz_public_store_write_rail_missing") {
+    return "Receiz public-store write rail is not configured for this deployment. The proof object is valid, but the live storefront cannot append durable public state until RECEIZ_ACCESS_TOKEN or RECEIZ_CONNECT_ACCESS_TOKEN is set.";
+  }
+
+  if (error === "receiz_authority_required") {
+    return "Receiz public-store write permission is missing. Restore proof authority in app and configure the app write rail before publishing.";
+  }
+
+  return error;
 }
 
 async function loadPublishOwner(accessToken: string | undefined) {
@@ -246,22 +257,23 @@ export async function POST(request: NextRequest) {
     reason: "publish"
   });
   const proofStore = await getServerProofStateStore(record.merchantReceizId);
-  await proofStore.admitStoreRecord(record);
-  const receizRecord = await publishReceizStoreState(accessToken, record);
+  const receizRecord = await publishAndAdmitReceizStoreState({
+    accessToken,
+    record,
+    proofStore
+  });
 
-  if (!receizWriteSucceeded(receizRecord)) {
+  if (!receizStoreStateWriteSucceeded(receizRecord)) {
     const error = isRecord(receizRecord) ? String(receizRecord.error ?? "receiz_store_state_record_failed") : "receiz_store_state_record_failed";
 
     return NextResponse.json(
       {
         ok: false,
         error: "receiz_store_state_record_failed",
-        message: error === "receiz_authority_required"
-          ? "The proof object authorized publish locally, but the durable Receiz public-store write needs a valid server write rail before the live site can update cold-starts."
-          : error,
+        message: publicStoreWriteFailureMessage(error),
         receizRecord
       },
-      { status: error === "receiz_authority_required" ? 401 : 502, headers: noStoreHeaders }
+      { status: error === "receiz_authority_required" || error === "receiz_public_store_write_rail_missing" ? 428 : 502, headers: noStoreHeaders }
     );
   }
 

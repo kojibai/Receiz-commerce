@@ -18,15 +18,22 @@ import {
   wildcardDomainStatusFromVercel
 } from "@/lib/hosting/vercel-domains";
 import { checkPublicDns, checkVercelDomainDns } from "@/lib/hosting/dns-check";
+import { buildPublishedStateForHostingSync } from "@/lib/hosting/published-domain-sync";
 import { buildPublishedCommerceState } from "@/lib/hosting/published-state";
-import { hostingBillingFromPlatformPayment } from "@/lib/hosting/platform-billing";
+import {
+  hostingBillingFromPlatformPayment,
+  hostingPlanUpdateFromPlatformPayment
+} from "@/lib/hosting/platform-billing";
 import { proofObjectCheckoutFunding } from "@/lib/checkout/wallet-authority";
 import { platform } from "@/lib/platform";
 import { createReceizCommerceAdapter } from "@/lib/receiz/adapter";
 import { loadReceizConnectProfile } from "@/lib/receiz/connect-profile";
 import { buildStoreStateRecord } from "@/lib/receiz/proof-state";
 import { getServerProofStateStore } from "@/lib/receiz/proof-state-store";
-import { publishReceizStoreState } from "@/lib/receiz/store-state-publication";
+import {
+  publishAndAdmitReceizStoreState,
+  receizStoreStateWriteSucceeded
+} from "@/lib/receiz/store-state-publication";
 import { receizAccessTokenFromRequest, receizAuthorityRequired } from "@/lib/receiz/session";
 import { prepareStoreStateMediaForPublish } from "@/lib/receiz/media-publication";
 import { mockStorage } from "@/lib/storage/mock-storage";
@@ -55,8 +62,16 @@ function badRequest(error: unknown) {
   );
 }
 
-function receizWriteSucceeded(result: unknown) {
-  return !(isRecord(result) && result.ok === false);
+function publicStoreWriteFailureMessage(error: string) {
+  if (error === "receiz_public_store_write_rail_missing") {
+    return "Receiz public-store write rail is not configured for this deployment. The proof object is valid, but the live storefront cannot append durable public state until RECEIZ_ACCESS_TOKEN or RECEIZ_CONNECT_ACCESS_TOKEN is set.";
+  }
+
+  if (error === "receiz_authority_required") {
+    return "Receiz public-store write permission is missing. Restore proof authority in app and configure the app write rail before publishing.";
+  }
+
+  return error;
 }
 
 async function loadPublishOwner(accessToken: string | undefined) {
@@ -139,6 +154,16 @@ function domainErrorStatus(domain: string, error: unknown): DomainStatus {
   };
 }
 
+function customDomainCanServeStorefront(customDomain: DomainStatus) {
+  return Boolean(
+    customDomain.domain &&
+      customDomain.verified &&
+      customDomain.dnsResolved &&
+      (customDomain.status === "active" || customDomain.status === "ready") &&
+      customDomain.sslStatus === "valid"
+  );
+}
+
 function amountForPlan(plan: HostingConfig["plan"]) {
   if (plan === "starter") return "0.00";
   if (plan === "scale") return process.env.RECEIZ_SCALE_PLAN_USD ?? "199.00";
@@ -192,14 +217,23 @@ async function chargePlatformFee(
 ) {
   const liveBilling = process.env.RECEIZ_PLATFORM_BILLING_MODE === "live";
 
-  if (!liveBilling || !isPositiveAmount(input.amountUsd)) {
-    const noCharge = liveBilling && !isPositiveAmount(input.amountUsd);
+  if (!isPositiveAmount(input.amountUsd)) {
     return {
       ok: true,
-      mode: noCharge ? "no_charge" : "sandbox",
+      mode: "no_charge",
       amountUsd: input.amountUsd,
-      paid: noCharge,
-      message: liveBilling ? "No positive platform fee configured" : "Set RECEIZ_PLATFORM_BILLING_MODE=live to charge through Receiz"
+      paid: true,
+      message: "No positive platform fee configured"
+    };
+  }
+
+  if (!liveBilling) {
+    return {
+      ok: true,
+      mode: "sandbox",
+      amountUsd: input.amountUsd,
+      paid: false,
+      message: "Set RECEIZ_PLATFORM_BILLING_MODE=live to charge through Receiz"
     };
   }
 
@@ -270,6 +304,92 @@ async function chargePlatformFee(
   }
 }
 
+async function syncPublishedStoreStateForHosting(input: {
+  accessToken: string | undefined;
+  submittedState: unknown;
+  hosting: HostingConfig;
+  merchantAuthority: {
+    profile: Awaited<ReturnType<typeof loadPublishOwner>>;
+    handle: string;
+    source: "delegated_permission" | "proof_object";
+    localIdentity: ReturnType<typeof merchantLocalProofObjectFromState>;
+  };
+}) {
+  const state = buildPublishedStateForHostingSync(mockStorage.getState(), input.submittedState, input.hosting, {
+    customDomain: input.merchantAuthority.profile?.customDomain,
+    displayName: input.merchantAuthority.profile?.name ?? input.merchantAuthority.localIdentity.displayName,
+    merchantReceizId: input.merchantAuthority.profile?.handle ?? input.merchantAuthority.handle,
+    tenantSlug: input.merchantAuthority.profile?.subdomain
+  });
+
+  if (!state) {
+    return {
+      ok: true as const,
+      skipped: true as const,
+      reason: "workspace_not_published"
+    };
+  }
+
+  const actorReceizId = state.hosting.merchantReceizId || state.auth.receizId.handle;
+  const tenantHost = state.hosting.customDomain.domain || state.hosting.subdomain;
+  let publishState = state;
+
+  if (input.accessToken && input.merchantAuthority.source === "delegated_permission") {
+    const receiz = createReceizCommerceAdapter({
+      baseUrl: process.env.RECEIZ_BASE_URL,
+      accessToken: input.accessToken
+    });
+
+    try {
+      publishState = await prepareStoreStateMediaForPublish(state, {
+        tenantHost,
+        merchantReceizId: actorReceizId,
+        upload: (file, options) => receiz.uploadMedia(file, options)
+      });
+    } catch (error) {
+      return {
+        ok: false as const,
+        error: "receiz_media_publish_failed",
+        message: errorMessage(error)
+      };
+    }
+  }
+
+  const storeStateRecord = buildStoreStateRecord(publishState, {
+    actorReceizId,
+    tenantHost,
+    reason: "sync"
+  });
+  const proofStore = await getServerProofStateStore(storeStateRecord.merchantReceizId);
+  const storeStateReceizRecord = await publishAndAdmitReceizStoreState({
+    accessToken: input.accessToken,
+    record: storeStateRecord,
+    proofStore
+  });
+
+  if (!receizStoreStateWriteSucceeded(storeStateReceizRecord)) {
+    const error = isRecord(storeStateReceizRecord)
+      ? String(storeStateReceizRecord.error ?? "receiz_store_state_record_failed")
+      : "receiz_store_state_record_failed";
+
+    return {
+      ok: false as const,
+      error,
+      message: publicStoreWriteFailureMessage(error),
+      storeStateRecord,
+      storeStateReceizRecord
+    };
+  }
+
+  return {
+    ok: true as const,
+    skipped: false as const,
+    state: publishState,
+    storeStateRecord,
+    storeStateReceizRecord
+  };
+}
+
 export async function GET() {
   return NextResponse.json({
     ok: true,
@@ -314,6 +434,21 @@ export async function POST(request: NextRequest) {
     if (!platformBilling.ok) {
       const status = Number(platformBilling.status ?? 402);
       return NextResponse.json(platformBilling, { status });
+    }
+
+    const planUpdate = hostingPlanUpdateFromPlatformPayment(mockHosting.getHostingStatus(), plan, platformBilling);
+    if (!planUpdate.ok) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error: "hosting_plan_payment_required",
+          message: planUpdate.message,
+          platformBilling,
+          hosting: planUpdate.hosting,
+          billing: mockHosting.getBillingStatus()
+        },
+        { status: 402 }
+      );
     }
 
     const result = mockHosting.selectHostingPlan(plan);
@@ -393,8 +528,20 @@ export async function POST(request: NextRequest) {
       customDomain,
       platformBilling
     });
+    const storeStateSync = customDomainCanServeStorefront(customDomain)
+      ? await syncPublishedStoreStateForHosting({
+          accessToken,
+          submittedState: isRecord(body) ? body.state : null,
+          hosting,
+          merchantAuthority
+        })
+      : {
+          ok: true as const,
+          skipped: true as const,
+          reason: "domain_not_live"
+        };
 
-    return NextResponse.json({ ok: true, action, hosting, platformBilling, receizRecord });
+    return NextResponse.json({ ok: true, action, hosting, platformBilling, receizRecord, storeStateSync });
   }
 
   if (action === "verify_domain") {
@@ -432,8 +579,20 @@ export async function POST(request: NextRequest) {
       domain,
       customDomain
     });
+    const storeStateSync = customDomainCanServeStorefront(customDomain)
+      ? await syncPublishedStoreStateForHosting({
+          accessToken,
+          submittedState: isRecord(body) ? body.state : null,
+          hosting,
+          merchantAuthority
+        })
+      : {
+          ok: true as const,
+          skipped: true as const,
+          reason: "domain_not_live"
+        };
 
-    return NextResponse.json({ ok: true, action, hosting, receizRecord });
+    return NextResponse.json({ ok: true, action, hosting, receizRecord, storeStateSync });
   }
 
   if (action === "publish") {
@@ -493,10 +652,13 @@ export async function POST(request: NextRequest) {
       reason: "publish"
     });
     const proofStore = await getServerProofStateStore(storeStateRecord.merchantReceizId);
-    await proofStore.admitStoreRecord(storeStateRecord);
-    const storeStateReceizRecord = await publishReceizStoreState(accessToken, storeStateRecord);
+    const storeStateReceizRecord = await publishAndAdmitReceizStoreState({
+      accessToken,
+      record: storeStateRecord,
+      proofStore
+    });
 
-    if (!receizWriteSucceeded(storeStateReceizRecord)) {
+    if (!receizStoreStateWriteSucceeded(storeStateReceizRecord)) {
       const error = isRecord(storeStateReceizRecord) ? String(storeStateReceizRecord.error ?? "receiz_store_state_record_failed") : "receiz_store_state_record_failed";
 
       console.error("[publish] Receiz store-state record failed", {
@@ -510,12 +672,10 @@ export async function POST(request: NextRequest) {
         {
           ok: false,
           error: "receiz_store_state_record_failed",
-          message: error === "receiz_authority_required"
-            ? "The proof object authorized publish locally, but the durable Receiz public-store write needs a valid server write rail before the live site can update cold-starts."
-            : error,
+          message: publicStoreWriteFailureMessage(error),
           storeStateReceizRecord
         },
-        { status: error === "receiz_authority_required" ? 401 : 502 }
+        { status: error === "receiz_authority_required" || error === "receiz_public_store_write_rail_missing" ? 428 : 502 }
       );
     }
 

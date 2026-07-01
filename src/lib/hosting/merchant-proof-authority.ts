@@ -32,31 +32,31 @@ const ACTION_COPY: Record<
 > = {
   account: {
     eventType: "RECEIZ_ID_CONNECTED",
-    message: "Present a verified Receiz proof object or continue with Receiz ID proof before using account functions."
+    message: "Create or restore a verified Receiz proof object in app before using account functions."
   },
   billing: {
     eventType: "BILLING_METHOD_ADDED",
-    message: "Present a verified Receiz proof object or continue with Receiz ID proof before changing billing."
+    message: "Create or restore a verified Receiz proof object in app before changing billing."
   },
   checkout: {
     eventType: "ORDER_VERIFIED",
-    message: "Present a verified Receiz proof object or continue with Receiz ID proof before using checkout."
+    message: "Create or restore a verified Receiz proof object in app before using checkout."
   },
   custom_domain: {
     eventType: "DOMAIN_CONNECTED",
-    message: "Present a verified Receiz proof object or continue with Receiz ID proof before connecting a custom domain."
+    message: "Create or restore a verified Receiz proof object in app before connecting a custom domain."
   },
   verify_domain: {
     eventType: "DOMAIN_CONNECTED",
-    message: "Present a verified Receiz proof object or continue with Receiz ID proof before verifying a custom domain."
+    message: "Create or restore a verified Receiz proof object in app before verifying a custom domain."
   },
   publish: {
     eventType: "SITE_PUBLISHED",
-    message: "Present a verified Receiz proof object or continue with Receiz ID proof before publishing this store."
+    message: "Create or restore a verified Receiz proof object in app before publishing this store."
   },
   wallet: {
     eventType: "ORDER_VERIFIED",
-    message: "Present a verified Receiz proof object or continue with Receiz ID proof before using Receiz wallet."
+    message: "Create or restore a verified Receiz proof object in app before using Receiz wallet."
   }
 };
 

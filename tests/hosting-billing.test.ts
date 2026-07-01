@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { hostingBillingFromPlatformPayment } from "../src/lib/hosting/platform-billing.js";
+import {
+  hostingBillingFromPlatformPayment,
+  hostingPlanUpdateFromPlatformPayment
+} from "../src/lib/hosting/platform-billing.js";
 import { baseState } from "./support/commerce-state.js";
 
 describe("hosting billing settlement", () => {
@@ -31,5 +34,32 @@ describe("hosting billing settlement", () => {
     assert.equal(billing.paymentMethodLabel, "Proof object wallet-first billing");
     assert.equal(billing.invoices[0]?.amountLabel, "$49.00");
     assert.equal(billing.invoices[0]?.status, "paid");
+  });
+
+  it("does not move to a paid hosting plan until payment is confirmed", () => {
+    const current = { ...baseState().hosting, plan: "starter" as const };
+    const result = hostingPlanUpdateFromPlatformPayment(current, "pro", {
+      ok: true,
+      mode: "proof_object_wallet_first",
+      paid: false,
+      amountUsd: "49.00",
+      message: "Card funds the remaining delta."
+    });
+
+    assert.equal(result.ok, false);
+    assert.equal(result.hosting.plan, current.plan);
+    assert.match(result.message, /payment/i);
+  });
+
+  it("allows the free starter plan without paid settlement", () => {
+    const result = hostingPlanUpdateFromPlatformPayment(baseState().hosting, "starter", {
+      ok: true,
+      mode: "no_charge",
+      paid: true,
+      amountUsd: "0.00"
+    });
+
+    assert.equal(result.ok, true);
+    assert.equal(result.hosting.plan, "starter");
   });
 });
