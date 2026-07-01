@@ -1,6 +1,7 @@
 import type { ComponentPropsWithoutRef, HTMLAttributes, ReactNode } from "react";
 import { cx } from "@/lib/utils";
 import { Icons } from "@/components/icons";
+import { ProofEventAge } from "@/components/ProofEventAge";
 import type { Product, ProofEvent, Reward } from "@/types/domain";
 
 export function Button({
@@ -245,7 +246,7 @@ export function SealEventTimeline({ events }: { events: ProofEvent[] }) {
             <strong>{event.title}</strong>
             <p>{event.detail}</p>
           </div>
-          <small>{event.timestampLabel}</small>
+          <ProofEventAge event={event} />
         </div>
       ))}
     </div>

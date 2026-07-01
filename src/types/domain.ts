@@ -374,6 +374,7 @@ export type ProofEvent = {
   detail: string;
   status: "verified" | "success" | "linked" | "sealed";
   timestampLabel: string;
+  createdAt?: string;
 };
 
 export type ReceizConnectionState = {

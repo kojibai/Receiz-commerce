@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
+import { InlineActionFeedback } from "@/components/ActionFeedback";
 import { Icons } from "@/components/icons";
 import {
   BrandMark,
@@ -19,8 +20,10 @@ import { useTemplateStore } from "@/lib/storage/use-template-store";
 import { buildCartSummary, type CartSummary } from "@/lib/storefront/cart-summary";
 import { productRoutePath } from "@/lib/storefront/product-purchase";
 import { customerForAccountSurface, customerReceizHandle } from "@/lib/storefront/customer-session";
+import type { ActionFeedbackState } from "@/types/action-feedback";
 import type { BlogPost, CommerceState, CustomerAccount, Product, ReceizedAsset, Reward } from "@/types/domain";
 import type { HostContext } from "@/lib/hosting/host-context";
+import { FloatingCart } from "@/features/storefront/FloatingCart";
 import { PlayCampaign } from "@/features/play/PlayCampaign";
 import { ProductCatalog } from "@/features/storefront/ProductCatalog";
 import { ReceizIdAccess } from "@/features/storefront/ReceizIdAccess";
@@ -50,10 +53,12 @@ export function PublicStorefront({
   initialHostContext?: HostContext;
   initialState?: CommerceState;
 }) {
-  const { state, actions, hostContext, hydrated, receizSessionPending } = useTemplateStore(initialState, initialHostContext);
+  const { state, actions, actionFeedback, hostContext, hydrated, receizSessionPending } = useTemplateStore(initialState, initialHostContext);
   const [mobileView, setMobileView] = useState<MobileView>("store");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [identityUploadVisible, setIdentityUploadVisible] = useState(false);
+  const [cartOpen, setCartOpen] = useState(false);
+  const [cartPulseProductId, setCartPulseProductId] = useState<string | null>(null);
   const tenantSurface = hostContext.surface === "tenant";
   const customer = customerForAccountSurface(state, tenantSurface);
   const receizHandle = customerReceizHandle(state, customer);
@@ -61,6 +66,7 @@ export function PublicStorefront({
   const campaignName = state.campaigns[0]?.name ?? "Reward Challenge";
   const homepageMode = state.storefront.homepageMode ?? "store";
   const gameEnabled = state.game.enabled || homepageMode === "game";
+  const cartSummary = buildCartSummary(state);
   const identityActionsReady = hydrated && !receizSessionPending;
   const showIdentityEntry = identityActionsReady && !state.auth.receizId.connected;
   const showIdentityUploadFallback = showIdentityEntry && (identityUploadVisible || !state.auth.receizId.connected);
@@ -91,6 +97,16 @@ export function PublicStorefront({
   );
   const sealObject = () => actions.appendProofEvent("OBJECT_VERIFIED", "Coffee Pack · Serial #BC-88421");
   const issueReward = () => actions.appendProofEvent("REWARD_ISSUED", `${reward?.name ?? "Reward"} · ${state.brand.name}`);
+  const triggerCartFeedback = (productId: string) => {
+    if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+      navigator.vibrate(12);
+    }
+    setCartPulseProductId(productId);
+    window.setTimeout(() => {
+      setCartPulseProductId((currentProductId) => (currentProductId === productId ? null : currentProductId));
+    }, 650);
+    setCartOpen(true);
+  };
   const claimReward = () => {
     void (async () => {
       await ensureTenantCustomerSession("claim rewards");
@@ -111,6 +127,7 @@ export function PublicStorefront({
     void (async () => {
       await ensureTenantCustomerSession("cart");
       actions.addToCart(productId);
+      triggerCartFeedback(productId);
     })();
   };
   const completeGame = (beans: number) => {
@@ -155,6 +172,12 @@ export function PublicStorefront({
     }
   }, [ensureTenantCustomerSession, mobileView]);
 
+  useEffect(() => {
+    if (!cartSummary.lines.length) {
+      setCartOpen(false);
+    }
+  }, [cartSummary.lines.length]);
+
   return (
     <main className={tenantSurface ? "commerce-app tenant-store" : "commerce-app"} style={brandThemeStyle(state.brand)}>
       <StoreSidebar state={state} tenantSurface={tenantSurface} />
@@ -181,6 +204,7 @@ export function PublicStorefront({
                   state={state}
                 />
                 <ProductCatalog
+                  addedProductId={cartPulseProductId}
                   brandImageUrl={state.brand.logoImageUrl}
                   brandLabel={state.brand.logoText}
                   products={state.products}
@@ -202,6 +226,7 @@ export function PublicStorefront({
                   onComplete={completeGame}
                 />
                 <ProductCatalog
+                  addedProductId={cartPulseProductId}
                   brandImageUrl={state.brand.logoImageUrl}
                   brandLabel={state.brand.logoText}
                   products={state.products}
@@ -256,6 +281,7 @@ export function PublicStorefront({
                 />
 
                 <ProductCatalog
+                  addedProductId={cartPulseProductId}
                   brandImageUrl={state.brand.logoImageUrl}
                   brandLabel={state.brand.logoText}
                   products={state.products}
@@ -298,10 +324,11 @@ export function PublicStorefront({
             />
             {tenantSurface ? (
               <CartSummaryPanel
+                checkoutFeedback={actionFeedback.checkout}
                 onCheckout={oneClickCheckout}
                 onQuantityChange={actions.setCartProductQuantity}
                 onRemove={actions.removeFromCart}
-                summary={buildCartSummary(state)}
+                summary={cartSummary}
               />
             ) : null}
             {tenantSurface ? null : <SealEvents events={state.proofEvents} />}
@@ -309,10 +336,12 @@ export function PublicStorefront({
         </div>
         <MobileStage
           activeView={mobileView}
+          addedProductId={cartPulseProductId}
           customer={customer}
           customerReceizHandle={receizHandle}
           onAddToCart={addToCart}
           onCheckout={oneClickCheckout}
+          checkoutFeedback={actionFeedback.checkout}
           onClaimReward={claimReward}
           onDownloadIdentitySeal={actions.downloadIdentitySealImage}
           onIssueReward={issueReward}
@@ -342,6 +371,18 @@ export function PublicStorefront({
           tenantSurface={tenantSurface}
           customerReceizHandle={receizHandle}
         />
+        {tenantSurface ? (
+          <FloatingCart
+            checkoutFeedback={actionFeedback.checkout}
+            onCheckout={oneClickCheckout}
+            onClose={() => setCartOpen(false)}
+            onOpen={() => setCartOpen(true)}
+            onQuantityChange={actions.setCartProductQuantity}
+            onRemove={actions.removeFromCart}
+            open={cartOpen}
+            summary={cartSummary}
+          />
+        ) : null}
         <BottomNav activeView={mobileView} onChange={selectMobileView} storeLabel={homepageMode === "blog" ? "Blog" : "Store"} />
       </div>
     </main>
@@ -554,8 +595,10 @@ function MobileCommandMenu({
 
 function MobileStage({
   activeView,
+  addedProductId,
   campaignName,
   customer,
+  checkoutFeedback,
   onAddToCart,
   onCheckout,
   onClaimReward,
@@ -575,8 +618,10 @@ function MobileStage({
   tenantSurface
 }: {
   activeView: MobileView;
+  addedProductId?: string | null;
   campaignName: string;
   customer: CustomerAccount;
+  checkoutFeedback?: ActionFeedbackState;
   customerReceizHandle: string;
   onAddToCart: (productId: string) => void;
   onCheckout: () => void;
@@ -599,6 +644,7 @@ function MobileStage({
     <div className="mobile-stage" data-active-view={activeView}>
       <MobileStorePanel
         active={activeView === "store"}
+        addedProductId={addedProductId}
         blogPosts={state.blogPosts}
         collections={state.collections}
         onAddToCart={onAddToCart}
@@ -638,6 +684,7 @@ function MobileStage({
       />
       <MobileAccountPanel
         active={activeView === "account"}
+        checkoutFeedback={checkoutFeedback}
         customer={customer}
         customerReceizHandle={customerReceizHandle}
         onCheckout={onCheckout}
@@ -682,12 +729,14 @@ function MobilePane({
 }
 
 function CartSummaryPanel({
+  checkoutFeedback,
   compact = false,
   onCheckout,
   onQuantityChange,
   onRemove,
   summary
 }: {
+  checkoutFeedback?: ActionFeedbackState;
   compact?: boolean;
   onCheckout: () => void;
   onQuantityChange: (productId: string, quantity: number) => void;
@@ -752,8 +801,9 @@ function CartSummaryPanel({
       </div>
       <Button disabled={!summary.canCheckout} onClick={onCheckout} type="button" variant="primary">
         <Icons.creditCard size={16} />
-        {summary.checkoutLabel}
+        {checkoutFeedback?.status === "pending" ? "Starting checkout" : checkoutFeedback?.status === "success" ? "Checkout recorded" : summary.checkoutLabel}
       </Button>
+      <InlineActionFeedback feedback={checkoutFeedback} />
       <span className="cart-summary-host">{summary.tenantHost}</span>
     </Panel>
   );
@@ -761,6 +811,7 @@ function CartSummaryPanel({
 
 function MobileStorePanel({
   active,
+  addedProductId,
   products,
   blogPosts,
   collections,
@@ -771,6 +822,7 @@ function MobileStorePanel({
   onSeal
 }: {
   active: boolean;
+  addedProductId?: string | null;
   blogPosts: BlogPost[];
   collections: CommerceState["collections"];
   products: Product[];
@@ -865,6 +917,7 @@ function MobileStorePanel({
               {tenantSurface ? (
                 <button
                   aria-label={`Add ${product.name} to cart`}
+                  className={addedProductId === product.id ? "cart-add-button added" : "cart-add-button"}
                   onClick={(event) => {
                     event.stopPropagation();
                     onAddToCart(product.id);
@@ -1145,6 +1198,7 @@ function MobilePlayPanel({
 
 function MobileAccountPanel({
   active,
+  checkoutFeedback,
   customer,
   customerReceizHandle,
   onDownloadIdentitySeal,
@@ -1159,6 +1213,7 @@ function MobileAccountPanel({
   tenantSurface
 }: {
   active: boolean;
+  checkoutFeedback?: ActionFeedbackState;
   customer: CustomerAccount;
   customerReceizHandle: string;
   onDownloadIdentitySeal: () => void | Promise<void>;
@@ -1261,6 +1316,7 @@ function MobileAccountPanel({
       ) : null}
       {tenantSurface ? (
         <CartSummaryPanel
+          checkoutFeedback={checkoutFeedback}
           onCheckout={onCheckout}
           onQuantityChange={onQuantityChange}
           onRemove={onRemoveFromCart}

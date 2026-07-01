@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef } from "react";
+import { InlineActionFeedback } from "@/components/ActionFeedback";
 import { Icons } from "@/components/icons";
 import {
   Button,
@@ -31,7 +32,7 @@ export function AccountDashboard({
   initialHostContext?: HostContext;
   initialState?: CommerceState;
 }) {
-  const { state, actions, hostContext, hydrated, receizSessionPending } = useTemplateStore(initialState, initialHostContext);
+  const { state, actions, actionFeedback, hostContext, hydrated, receizSessionPending } = useTemplateStore(initialState, initialHostContext);
   const tenantSurface = hostContext.surface === "tenant";
   const customer = customerForAccountSurface(state, tenantSurface);
   const receizHandle = customerReceizHandle(state, customer);
@@ -240,8 +241,9 @@ export function AccountDashboard({
             </div>
             <Button disabled={!cartSummary.canCheckout} onClick={() => void actions.startCheckout()} type="button" variant="primary">
               <Icons.creditCard size={16} />
-              {cartSummary.checkoutLabel}
+              {actionFeedback.checkout?.status === "pending" ? "Starting checkout" : actionFeedback.checkout?.status === "success" ? "Checkout recorded" : cartSummary.checkoutLabel}
             </Button>
+            <InlineActionFeedback feedback={actionFeedback.checkout} />
             <span className="cart-summary-host">{cartSummary.tenantHost}</span>
           </Panel>
         ) : null}

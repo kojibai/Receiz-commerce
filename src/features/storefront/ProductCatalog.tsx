@@ -21,11 +21,13 @@ function openProductPathFromKeyboard(event: KeyboardEvent<HTMLElement>, path: st
 export function ProductCatalog({
   brandImageUrl,
   brandLabel,
+  addedProductId,
   showAdminActions = true,
   showCartActions = true,
   products,
   onAddToCart
 }: {
+  addedProductId?: string | null;
   brandImageUrl?: string | null;
   brandLabel: string;
   showAdminActions?: boolean;
@@ -79,6 +81,7 @@ export function ProductCatalog({
                 {showCartActions ? (
                   <button
                     aria-label={`Add ${product.name} to cart`}
+                    className={addedProductId === product.id ? "cart-add-button added" : "cart-add-button"}
                     onClick={() => onAddToCart(product.id)}
                     type="button"
                   >
@@ -127,6 +130,7 @@ export function ProductCatalog({
                 {showCartActions ? (
                   <button
                     aria-label={`Add ${product.name} to cart`}
+                    className={addedProductId === product.id ? "cart-add-button added" : "cart-add-button"}
                     onClick={(event) => {
                       event.stopPropagation();
                       onAddToCart(product.id);

@@ -385,7 +385,8 @@ function proofEventForCommerceEvent(event: CommerceEventRecord, order: Order): P
     title: settled ? "ORDER_VERIFIED" : "CHECKOUT_RECORDED",
     detail: `${order.id} · ${order.paymentRail ?? "receiz_checkout"} · ${event.merchantReceizId}`,
     status: settled ? "verified" : "linked",
-    timestampLabel: "now"
+    timestampLabel: "now",
+    createdAt: event.createdAt
   };
 }
 

@@ -37,6 +37,7 @@ import {
   parseTenantCustomerSession,
   tenantCustomerSessionKey
 } from "@/lib/storefront/tenant-customer-session";
+import type { ActionFeedbackMap, ActionFeedbackStatus } from "@/types/action-feedback";
 import type { BlogPost, CommerceState, CustomerAccount, Order, Product, ProofEvent, SitePage, StorefrontHomepageMode } from "@/types/domain";
 import { makeId } from "@/lib/utils";
 
@@ -65,7 +66,8 @@ function makeEvent(type: ProofEvent["type"], detail: string): ProofEvent {
     title: type,
     detail,
     status,
-    timestampLabel: "now"
+    timestampLabel: "now",
+    createdAt: new Date().toISOString()
   };
 }
 
@@ -1315,10 +1317,23 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
   const [state, setState] = useState<CommerceState>(initialState);
   const [hydrated, setHydrated] = useState(false);
   const [receizSessionPending, setReceizSessionPending] = useState(false);
+  const [actionFeedback, setActionFeedbackState] = useState<ActionFeedbackMap>({});
   const [hostContext, setHostContext] = useState<HostContext>(() => initialHostContext ?? hostContextFromHost(null));
   const stateRef = useRef(initialState);
   const pendingBrowserIdentityKeyFileRef = useRef<unknown | null>(null);
   const publishResumeAttemptedRef = useRef(false);
+
+  const setActionFeedback = useCallback((id: string, status: ActionFeedbackStatus, message: string) => {
+    setActionFeedbackState((current) => ({
+      ...current,
+      [id]: {
+        id,
+        message,
+        status,
+        updatedAt: Date.now()
+      }
+    }));
+  }, []);
 
   useEffect(() => {
     stateRef.current = state;
@@ -1519,6 +1534,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
         }));
       },
       saveTheme() {
+        setActionFeedback("brand.saveTheme", "success", "Theme saved");
         setState((current) => ({
           ...completePublishChecklistItem(current, "brand"),
           proofEvents: [makeEvent("THEME_UPDATED", `${current.brand.name} theme saved`), ...current.proofEvents]
@@ -1579,6 +1595,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
           tenantSlug = normalizeTenantSlug(subdomain);
           domain = subdomainForSlug(tenantSlug);
         } catch (error) {
+          setActionFeedback("domains.subdomain", "error", error instanceof Error ? error.message : "Invalid subdomain");
           setState((current) => ({
             ...current,
             proofEvents: [makeEvent("DOMAIN_CONNECTED", error instanceof Error ? error.message : "Invalid subdomain"), ...current.proofEvents]
@@ -1586,6 +1603,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
           return;
         }
 
+        setActionFeedback("domains.subdomain", "pending", `Claiming ${domain}`);
         setState((current) => ({
           ...current,
           hosting: {
@@ -1611,6 +1629,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
             action: "subdomain",
             subdomain: domain
           });
+          setActionFeedback("domains.subdomain", "success", `${result.hosting.subdomain} claimed`);
           setState((current) => ({
             ...current,
             hosting: result.hosting,
@@ -1620,6 +1639,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
             ]
           }));
         } catch (error) {
+          setActionFeedback("domains.subdomain", "error", error instanceof Error ? error.message : "Subdomain claim failed");
           setState((current) => ({
             ...current,
             hosting: {
@@ -1644,6 +1664,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
         try {
           normalizedDomain = normalizeCustomDomain(domain);
         } catch (error) {
+          setActionFeedback("domains.customDomain", "error", error instanceof Error ? error.message : "Invalid custom domain");
           setState((current) => ({
             ...current,
             proofEvents: [makeEvent("DOMAIN_CONNECTED", error instanceof Error ? error.message : "Invalid custom domain"), ...current.proofEvents]
@@ -1652,9 +1673,11 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
         }
 
         if (!(await ensureMerchantProofAuthority("custom_domain"))) {
+          setActionFeedback("domains.customDomain", "error", "Restore a verified Identity Seal or continue with Receiz ID");
           return;
         }
 
+        setActionFeedback("domains.customDomain", "pending", `Connecting ${normalizedDomain}`);
         setState((current) => ({
           ...current,
           hosting: {
@@ -1678,6 +1701,11 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
             domain: normalizedDomain,
             merchantProof: merchantProofPayload(stateRef.current)
           });
+          setActionFeedback(
+            "domains.customDomain",
+            "success",
+            result.hosting.customDomain.status === "active" ? `${normalizedDomain} connected` : "DNS records ready"
+          );
           setState((current) => ({
             ...current,
             hosting: mergeCustomDomainHostingResponse(current.hosting, result.hosting),
@@ -1687,6 +1715,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
             ]
           }));
         } catch (error) {
+          setActionFeedback("domains.customDomain", "error", error instanceof Error ? error.message : "Custom domain failed");
           setState((current) => ({
             ...current,
             hosting: {
@@ -1711,6 +1740,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
         try {
           normalizedDomain = normalizeCustomDomain(domain);
         } catch (error) {
+          setActionFeedback("domains.verifyDomain", "error", error instanceof Error ? error.message : "Invalid custom domain");
           setState((current) => ({
             ...current,
             proofEvents: [makeEvent("DOMAIN_CONNECTED", error instanceof Error ? error.message : "Invalid custom domain"), ...current.proofEvents]
@@ -1719,9 +1749,11 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
         }
 
         if (!(await ensureMerchantProofAuthority("verify_domain"))) {
+          setActionFeedback("domains.verifyDomain", "error", "Restore a verified Identity Seal or continue with Receiz ID");
           return;
         }
 
+        setActionFeedback("domains.verifyDomain", "pending", `Checking DNS for ${normalizedDomain}`);
         setState((current) => ({
           ...current,
           hosting: {
@@ -1747,6 +1779,11 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
             domain: normalizedDomain,
             merchantProof: merchantProofPayload(stateRef.current)
           });
+          setActionFeedback(
+            "domains.verifyDomain",
+            result.hosting.customDomain.status === "active" ? "success" : "pending",
+            result.hosting.customDomain.message ?? `${normalizedDomain} checked`
+          );
           setState((current) => ({
             ...current,
             hosting: mergeCustomDomainHostingResponse(current.hosting, result.hosting),
@@ -1756,6 +1793,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
             ]
           }));
         } catch (error) {
+          setActionFeedback("domains.verifyDomain", "error", error instanceof Error ? error.message : "Domain verification failed");
           setState((current) => ({
             ...current,
             hosting: {
@@ -1778,6 +1816,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
         }
       },
       async selectHostingPlan(plan: CommerceState["hosting"]["plan"]) {
+        setActionFeedback("billing.plan", "pending", `Selecting ${plan}`);
         setState((current) => {
           const selected = current.billing.plans.find((item) => item.id === plan);
           return {
@@ -1803,6 +1842,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
             plan,
             merchantProof: merchantProofPayload(stateRef.current)
           });
+          setActionFeedback("billing.plan", "success", `${plan} plan synced`);
           setState((current) => ({
             ...current,
             hosting: result.hosting,
@@ -1810,6 +1850,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
             proofEvents: [makeEvent("HOSTING_PLAN_UPDATED", `${plan} plan synced with Receiz billing`), ...current.proofEvents]
           }));
         } catch (error) {
+          setActionFeedback("billing.plan", "error", error instanceof Error ? error.message : "Hosting plan sync failed");
           setState((current) => ({
             ...current,
             proofEvents: [
@@ -1820,6 +1861,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
         }
       },
       async addBillingMethod(label: string) {
+        setActionFeedback("billing.payment", "pending", `${label} connecting`);
         setState((current) => ({
           ...current,
           billing: {
@@ -1837,12 +1879,14 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
             paymentMethodLabel: label,
             merchantProof: merchantProofPayload(stateRef.current)
           });
+          setActionFeedback("billing.payment", "success", "Billing synced");
           setState((current) => ({
             ...current,
             billing: result.billing,
             proofEvents: [makeEvent("BILLING_METHOD_ADDED", "Receiz account billing synced"), ...current.proofEvents]
           }));
         } catch (error) {
+          setActionFeedback("billing.payment", "error", error instanceof Error ? error.message : "Billing sync failed");
           setState((current) => ({
             ...current,
             proofEvents: [
@@ -2206,9 +2250,11 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
       publish() {
         void (async () => {
           if (!(await ensureMerchantProofAuthority("publish"))) {
+            setActionFeedback("publish", "error", "Restore a verified Identity Seal or continue with Receiz ID");
             return;
           }
 
+          setActionFeedback("publish", "pending", "Publishing store");
           setState((current) => {
             const publishRequestState = {
               ...current,
@@ -2227,6 +2273,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
           }, { deferAuthorityRedirect: true })
               .then((result) => {
                 clearPendingPublish(publishHostContext.storageKey);
+                setActionFeedback("publish", "success", "Store published");
                 setState((latest) => ({
                   ...mergePublishedPublicState(latest, result.state, result.hosting),
                   proofEvents: [makeEvent("SITE_PUBLISHED", "Store published to Receiz proof rails"), ...latest.proofEvents]
@@ -2235,6 +2282,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
               .catch((error) => {
                 if (error instanceof ReceizAuthorityRequiredError) {
                   clearPendingPublish(publishHostContext.storageKey);
+                  setActionFeedback("publish", "error", "Receiz proof object required to publish");
                   setState((latest) => ({
                     ...latest,
                     proofEvents: [
@@ -2246,6 +2294,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
                 }
 
                 clearPendingPublish(publishHostContext.storageKey);
+                setActionFeedback("publish", "error", error instanceof Error ? error.message : "Publish sync failed");
                 setState((latest) => ({
                   ...latest,
                   proofEvents: [
@@ -2368,6 +2417,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
         });
       },
       async startCheckout(productId?: string) {
+        setActionFeedback("checkout", "pending", "Starting checkout");
         const checkoutBase = productId ? stateWithCartProduct(stateRef.current, productId) : stateRef.current;
 
         if (productId) {
@@ -2428,6 +2478,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
               ]
             };
           });
+          setActionFeedback("checkout", "success", "Order sealed");
           return;
         }
 
@@ -2509,6 +2560,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
               ]
             };
           });
+          setActionFeedback("checkout", "success", "Checkout recorded");
         } catch (error) {
           if (error instanceof ReceizAuthorityRequiredError) {
             setState((current) => {
@@ -2549,9 +2601,11 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
                 ]
               };
             });
+            setActionFeedback("checkout", "success", "Card delta ready");
             return;
           }
 
+          setActionFeedback("checkout", "error", error instanceof Error ? error.message : "Receiz checkout failed");
           setState((latest) => ({
             ...latest,
             proofEvents: [
@@ -2601,7 +2655,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
         }));
       }
     }),
-    [ensureMerchantProofAuthority]
+    [ensureMerchantProofAuthority, setActionFeedback]
   );
 
   useEffect(() => {
@@ -2621,5 +2675,5 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
     actions.publish();
   }, [actions, hostContext.storageKey, hostContext.surface, hydrated]);
 
-  return { state, actions, hydrated, hostContext, receizSessionPending };
+  return { state, actions, actionFeedback, hydrated, hostContext, receizSessionPending };
 }

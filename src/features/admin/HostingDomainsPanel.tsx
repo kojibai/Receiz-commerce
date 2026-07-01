@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { InlineActionFeedback } from "@/components/ActionFeedback";
 import { Icons } from "@/components/icons";
 import { Button, Panel, SectionHeader, StatusPill } from "@/components/ui";
+import type { ActionFeedbackState } from "@/types/action-feedback";
 import type { DomainStatus, HostingConfig } from "@/types/domain";
 import { platform } from "@/lib/platform";
 
@@ -17,12 +19,18 @@ export function HostingDomainsPanel({
   hosting,
   onSubdomain,
   onCustomDomain,
-  onVerifyDomain
+  onVerifyDomain,
+  subdomainFeedback,
+  customDomainFeedback,
+  verifyDomainFeedback
 }: {
   hosting: HostingConfig;
   onSubdomain: (value: string) => void | Promise<void>;
   onCustomDomain: (value: string) => void | Promise<void>;
   onVerifyDomain: (value: string) => void | Promise<void>;
+  subdomainFeedback?: ActionFeedbackState;
+  customDomainFeedback?: ActionFeedbackState;
+  verifyDomainFeedback?: ActionFeedbackState;
 }) {
   const [subdomainDraft, setSubdomainDraft] = useState(hosting.subdomain);
   const [customDomainDraft, setCustomDomainDraft] = useState(hosting.customDomain.domain);
@@ -85,9 +93,10 @@ export function HostingDomainsPanel({
               onChange={(event) => setSubdomainDraft(event.target.value)}
             />
             <Button onClick={claimSubdomain} variant="outline">
-              Claim
+              {subdomainFeedback?.status === "pending" ? "Claiming" : subdomainFeedback?.status === "success" ? "Claimed" : "Claim"}
             </Button>
           </div>
+          <InlineActionFeedback feedback={subdomainFeedback} />
         </label>
         <div className="domain-live-row">
           <div>
@@ -108,9 +117,10 @@ export function HostingDomainsPanel({
               onChange={(event) => setCustomDomainDraft(event.target.value)}
             />
             <Button onClick={connectCustomDomain} variant="outline">
-              Connect
+              {customDomainFeedback?.status === "pending" ? "Connecting" : customDomainFeedback?.status === "success" ? "Connected" : "Connect"}
             </Button>
           </div>
+          <InlineActionFeedback feedback={customDomainFeedback} />
         </label>
         <div className="domain-status-row">
           <span>SSL certificate</span>
@@ -176,12 +186,16 @@ export function HostingDomainsPanel({
             <Button disabled={verifying || !hosting.customDomain.domain} onClick={verifyCustomDomain} variant="outline">
               {verifying ? "Checking DNS" : "Verify DNS"}
             </Button>
+            <InlineActionFeedback feedback={verifyDomainFeedback} />
           </div>
         ) : null}
       </div>
-      <Button disabled={verifying || !hosting.customDomain.domain} onClick={verifyCustomDomain} variant="outline">
-        Manage hosting
-      </Button>
+      <div className="action-feedback-stack">
+        <Button disabled={verifying || !hosting.customDomain.domain} onClick={verifyCustomDomain} variant="outline">
+          Manage hosting
+        </Button>
+        <InlineActionFeedback feedback={verifyDomainFeedback} />
+      </div>
     </Panel>
   );
 }

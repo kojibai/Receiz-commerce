@@ -1,21 +1,39 @@
 "use client";
 
+import { InlineActionFeedback } from "@/components/ActionFeedback";
 import { BrandMark, Button, Panel, SectionHeader } from "@/components/ui";
 import { ImageUploadField } from "@/features/admin/ImageUploadField";
+import type { ActionFeedbackState } from "@/types/action-feedback";
 import type { CommerceState } from "@/types/domain";
 
 export function BrandPanel({
   state,
   onBrandUpdate,
-  onSaveTheme
+  onSaveTheme,
+  saveFeedback
 }: {
   state: CommerceState;
   onBrandUpdate: (value: Partial<CommerceState["brand"]>) => void;
   onSaveTheme: () => void;
+  saveFeedback?: ActionFeedbackState;
 }) {
   return (
     <Panel className="admin-panel brand-panel">
-      <SectionHeader title="Brand theme" action={<Button onClick={onSaveTheme} variant="outline">Save theme</Button>} />
+      <SectionHeader
+        title="Brand theme"
+        action={
+          <div className="action-feedback-stack compact">
+            <Button
+              className={saveFeedback ? `action-button-${saveFeedback.status}` : undefined}
+              onClick={onSaveTheme}
+              variant="outline"
+            >
+              {saveFeedback?.status === "success" ? "Saved" : "Save theme"}
+            </Button>
+            <InlineActionFeedback feedback={saveFeedback} />
+          </div>
+        }
+      />
       <div className="brand-editor">
         <div>
           <span className="field-label">Logo</span>

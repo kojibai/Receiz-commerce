@@ -279,7 +279,8 @@ function event(type: ProofEvent["type"], detail: string): ProofEvent {
     title: type,
     detail,
     status: type === "ASSET_RECEIZED" ? "sealed" : "verified",
-    timestampLabel: "now"
+    timestampLabel: "now",
+    createdAt: new Date().toISOString()
   };
 }
 

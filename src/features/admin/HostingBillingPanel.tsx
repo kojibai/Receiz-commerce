@@ -1,7 +1,9 @@
 "use client";
 
+import { InlineActionFeedback } from "@/components/ActionFeedback";
 import { Icons } from "@/components/icons";
 import { Button, Panel, SectionHeader, StatusPill } from "@/components/ui";
+import type { ActionFeedbackState } from "@/types/action-feedback";
 import type { BillingConfig, HostingConfig } from "@/types/domain";
 import { platform } from "@/lib/platform";
 
@@ -9,12 +11,16 @@ export function HostingBillingPanel({
   billing,
   hosting,
   onAddPayment,
-  onSelectPlan
+  onSelectPlan,
+  paymentFeedback,
+  planFeedback
 }: {
   billing: BillingConfig;
   hosting: HostingConfig;
   onAddPayment: (label: string) => void;
   onSelectPlan: (plan: HostingConfig["plan"]) => void;
+  paymentFeedback?: ActionFeedbackState;
+  planFeedback?: ActionFeedbackState;
 }) {
   return (
     <Panel className="admin-panel hosting-billing-panel">
@@ -30,9 +36,12 @@ export function HostingBillingPanel({
           <strong>{billing.monthlyTotalLabel}</strong>
           <p>{billing.paymentMethodLabel}</p>
         </div>
-        <Button onClick={() => onAddPayment("Receiz wallet + card fallback")} variant="outline">
-          Connect billing
-        </Button>
+        <div className="action-feedback-stack compact">
+          <Button onClick={() => onAddPayment("Receiz wallet + card fallback")} variant="outline">
+            {paymentFeedback?.status === "pending" ? "Connecting" : paymentFeedback?.status === "success" ? "Connected" : "Connect billing"}
+          </Button>
+          <InlineActionFeedback feedback={paymentFeedback} />
+        </div>
       </div>
       <div className="plan-choice-list">
         {billing.plans.map((plan) => (
@@ -51,6 +60,7 @@ export function HostingBillingPanel({
           </button>
         ))}
       </div>
+      <InlineActionFeedback feedback={planFeedback} />
       <div className="settings-list">
         {billing.invoices[0] ? (
           <div>

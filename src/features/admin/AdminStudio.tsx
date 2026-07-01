@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState, type FormEvent, type ReactNode } from "react";
+import { InlineActionFeedback } from "@/components/ActionFeedback";
 import { Icons } from "@/components/icons";
 import { BrandMark, Button, MetricCard, Panel, SealEventTimeline, SectionHeader, StatusPill } from "@/components/ui";
 import { useTemplateStore } from "@/lib/storage/use-template-store";
@@ -17,6 +18,7 @@ import { ProductEditorPanel } from "@/features/admin/ProductEditorPanel";
 import { PublishChecklist } from "@/features/admin/PublishChecklist";
 import { ReceizIdentityPanel } from "@/features/admin/ReceizIdentityPanel";
 import { RewardsRulesPanel } from "@/features/admin/RewardsRulesPanel";
+import type { ActionFeedbackMap } from "@/types/action-feedback";
 import type { StorefrontHomepageMode } from "@/types/domain";
 
 type TemplateActions = ReturnType<typeof useTemplateStore>["actions"];
@@ -32,12 +34,12 @@ const adminMobileTabs = [
 ] as const;
 
 export function AdminStudio() {
-  const { state, actions } = useTemplateStore();
+  const { state, actions, actionFeedback } = useTemplateStore();
   const campaignName = state.campaigns[0]?.name ?? "Reward Challenge";
 
   return (
-    <AdminShell onPublish={actions.publish} state={state}>
-      <MobileAdminConsole actions={actions} campaignName={campaignName} state={state} />
+    <AdminShell onPublish={actions.publish} publishFeedback={actionFeedback.publish} state={state}>
+      <MobileAdminConsole actionFeedback={actionFeedback} actions={actions} campaignName={campaignName} state={state} />
       <div className="admin-content">
         <div className="admin-heading">
           <div>
@@ -69,6 +71,7 @@ export function AdminStudio() {
             <LaunchReadinessPanel state={state} />
             <LaunchRailsPanel state={state} />
             <BrandPanel
+              saveFeedback={actionFeedback["brand.saveTheme"]}
               onBrandUpdate={actions.updateBrand}
               onSaveTheme={actions.saveTheme}
               state={state}
@@ -88,6 +91,8 @@ export function AdminStudio() {
               hosting={state.hosting}
               onAddPayment={actions.addBillingMethod}
               onSelectPlan={actions.selectHostingPlan}
+              paymentFeedback={actionFeedback["billing.payment"]}
+              planFeedback={actionFeedback["billing.plan"]}
             />
             <PageBuilderPanel
               authorName={state.brand.name}
@@ -112,10 +117,13 @@ export function AdminStudio() {
             />
             <RewardsRulesPanel rules={state.rewardRules} />
             <HostingDomainsPanel
+              customDomainFeedback={actionFeedback["domains.customDomain"]}
               hosting={state.hosting}
               onCustomDomain={actions.connectCustomDomain}
               onSubdomain={actions.claimSubdomain}
               onVerifyDomain={actions.verifyCustomDomain}
+              subdomainFeedback={actionFeedback["domains.subdomain"]}
+              verifyDomainFeedback={actionFeedback["domains.verifyDomain"]}
             />
             <Panel className="admin-panel">
               <SectionHeader title="Game module" />
@@ -183,7 +191,7 @@ export function AdminStudio() {
               <MetricCard label="Average order value" value="$20.61" delta="+1.2%" />
             </Panel>
             <CommerceOpsPanel state={state} />
-            <PublishChecklist onPublish={actions.publish} publish={state.publish} />
+            <PublishChecklist onPublish={actions.publish} publish={state.publish} publishFeedback={actionFeedback.publish} />
           </div>
 
           <aside className="admin-right-rail">
@@ -448,10 +456,12 @@ function CommerceOpsPanel({
 }
 
 function MobileAdminConsole({
+  actionFeedback,
   actions,
   campaignName,
   state
 }: {
+  actionFeedback: ActionFeedbackMap;
   actions: TemplateActions;
   campaignName: string;
   state: ReturnType<typeof useTemplateStore>["state"];
@@ -472,9 +482,15 @@ function MobileAdminConsole({
         <StatusPill tone={state.auth.receizId.connected ? "green" : "gold"}>
           {state.auth.receizId.connected ? "Receiz" : "Connect"}
         </StatusPill>
-        <button aria-label="Publish store" className="mobile-admin-publish" onClick={actions.publish} type="button">
-          <Icons.external size={17} />
+        <button
+          aria-label="Publish store"
+          className={actionFeedback.publish ? `mobile-admin-publish action-button-${actionFeedback.publish.status}` : "mobile-admin-publish"}
+          onClick={actions.publish}
+          type="button"
+        >
+          {actionFeedback.publish?.status === "success" ? <Icons.check size={17} /> : <Icons.external size={17} />}
         </button>
+        <InlineActionFeedback className="mobile-admin-publish-feedback" feedback={actionFeedback.publish} />
       </header>
 
       <div className="mobile-admin-stage" data-active-view={activeView}>
@@ -503,11 +519,12 @@ function MobileAdminConsole({
           />
           <LaunchReadinessPanel compact state={state} />
           <LaunchRailsPanel state={state} />
-          <PublishChecklist onPublish={actions.publish} publish={state.publish} />
+          <PublishChecklist onPublish={actions.publish} publish={state.publish} publishFeedback={actionFeedback.publish} />
         </MobileAdminPane>
 
         <MobileAdminPane active={activeView === "brand"} title="Brand" action={<StatusPill tone="green">Theme</StatusPill>}>
           <BrandPanel
+            saveFeedback={actionFeedback["brand.saveTheme"]}
             onBrandUpdate={actions.updateBrand}
             onSaveTheme={actions.saveTheme}
             state={state}
@@ -590,16 +607,21 @@ function MobileAdminConsole({
 
         <MobileAdminPane active={activeView === "domains"} title="Domains" action={<StatusPill tone="gold">{state.billing.monthlyTotalLabel}</StatusPill>}>
           <HostingDomainsPanel
+            customDomainFeedback={actionFeedback["domains.customDomain"]}
             hosting={state.hosting}
             onCustomDomain={actions.connectCustomDomain}
             onSubdomain={actions.claimSubdomain}
             onVerifyDomain={actions.verifyCustomDomain}
+            subdomainFeedback={actionFeedback["domains.subdomain"]}
+            verifyDomainFeedback={actionFeedback["domains.verifyDomain"]}
           />
           <HostingBillingPanel
             billing={state.billing}
             hosting={state.hosting}
             onAddPayment={actions.addBillingMethod}
             onSelectPlan={actions.selectHostingPlan}
+            paymentFeedback={actionFeedback["billing.payment"]}
+            planFeedback={actionFeedback["billing.plan"]}
           />
         </MobileAdminPane>
 

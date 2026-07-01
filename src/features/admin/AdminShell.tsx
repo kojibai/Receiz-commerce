@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { InlineActionFeedback } from "@/components/ActionFeedback";
 import { Icons } from "@/components/icons";
 import { BrandMark, Button } from "@/components/ui";
 import type { CommerceState } from "@/types/domain";
+import type { ActionFeedbackState } from "@/types/action-feedback";
 import { cx } from "@/lib/utils";
 import { brandThemeStyle } from "@/lib/theme";
 import { platform } from "@/lib/platform";
@@ -34,11 +36,13 @@ const nav = [
 export function AdminShell({
   state,
   children,
-  onPublish
+  onPublish,
+  publishFeedback
 }: {
   state: CommerceState;
   children: ReactNode;
   onPublish: () => void;
+  publishFeedback?: ActionFeedbackState;
 }) {
   return (
     <main className="admin-app" style={brandThemeStyle(state.brand)}>
@@ -78,11 +82,22 @@ export function AdminShell({
               <span className="mobile-label">Preview</span>
               <Icons.external size={15} />
             </Link>
-            <Button onClick={onPublish} variant="primary">
-              <span className="desktop-label">Publish changes</span>
-              <span className="mobile-label">Publish</span>
-              <Icons.chevronDown size={15} />
-            </Button>
+            <div className="publish-action-stack">
+              <Button
+                className={publishFeedback ? `action-button-${publishFeedback.status}` : undefined}
+                onClick={onPublish}
+                variant="primary"
+              >
+                <span className="desktop-label">
+                  {publishFeedback?.status === "pending" ? "Publishing" : publishFeedback?.status === "success" ? "Published" : "Publish changes"}
+                </span>
+                <span className="mobile-label">
+                  {publishFeedback?.status === "pending" ? "Publishing" : publishFeedback?.status === "success" ? "Published" : "Publish"}
+                </span>
+                {publishFeedback?.status === "success" ? <Icons.check size={15} /> : <Icons.chevronDown size={15} />}
+              </Button>
+              <InlineActionFeedback feedback={publishFeedback} />
+            </div>
             <button aria-label="Open help" className="icon-button" type="button">
               <Icons.help size={18} />
             </button>
