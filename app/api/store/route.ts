@@ -8,6 +8,7 @@ import {
 import { getServerProofStateStore } from "@/lib/receiz/proof-state-store";
 import {
   publishAndAdmitReceizStoreState,
+  receizStoreStateSyncCompleted,
   receizStoreStateWriteSucceeded
 } from "@/lib/receiz/store-state-publication";
 import { loadReceizConnectProfile } from "@/lib/receiz/connect-profile";
@@ -75,12 +76,8 @@ function errorMessage(error: unknown) {
 }
 
 function publicStoreWriteFailureMessage(error: string) {
-  if (error === "receiz_public_store_write_rail_missing") {
-    return "Receiz public-store write rail is not configured for this deployment. The proof object is valid, but the live storefront cannot append durable public state until RECEIZ_ACCESS_TOKEN or RECEIZ_CONNECT_ACCESS_TOKEN is set.";
-  }
-
   if (error === "receiz_authority_required") {
-    return "Receiz public-store write permission is missing. Restore proof authority in app and configure the app write rail before publishing.";
+    return "Receiz public-store sync needs proof-authorized write permission. The proof object was admitted locally first.";
   }
 
   return error;
@@ -262,19 +259,16 @@ export async function POST(request: NextRequest) {
     record,
     proofStore
   });
+  const storeStateSyncOk = receizStoreStateWriteSucceeded(receizRecord);
+  const storeStateSynced = receizStoreStateSyncCompleted(receizRecord);
+  let storeStateSyncWarning: string | undefined;
 
-  if (!receizStoreStateWriteSucceeded(receizRecord)) {
+  if (!storeStateSyncOk) {
     const error = isRecord(receizRecord) ? String(receizRecord.error ?? "receiz_store_state_record_failed") : "receiz_store_state_record_failed";
 
-    return NextResponse.json(
-      {
-        ok: false,
-        error: "receiz_store_state_record_failed",
-        message: publicStoreWriteFailureMessage(error),
-        receizRecord
-      },
-      { status: error === "receiz_authority_required" || error === "receiz_public_store_write_rail_missing" ? 428 : 502, headers: noStoreHeaders }
-    );
+    storeStateSyncWarning = publicStoreWriteFailureMessage(error);
+  } else if (!storeStateSynced) {
+    storeStateSyncWarning = "Receiz public-store sync is pending; the proof object was admitted locally first.";
   }
 
   return NextResponse.json(
@@ -285,6 +279,12 @@ export async function POST(request: NextRequest) {
       state: publishState,
       record,
       receizRecord,
+      storeStateSync: {
+        ok: storeStateSyncOk,
+        synced: storeStateSynced,
+        warning: storeStateSyncWarning,
+        result: receizRecord
+      },
       proofMemory: {
         knownHead: proofStore.knownHead(100),
         entries: proofStore.snapshot().head.count

@@ -225,9 +225,9 @@ The app routes tenant hosts through `middleware.ts`. A request to `boost.receiz.
 
 ### Global Publish Sync
 
-The admin editor can stage changes locally, but a hosted subdomain/custom domain is only globally live after publish writes a Receiz store-state record. Production publish is authorized by the merchant's verified Receiz proof object. User-facing Receiz ID login happens in app: create a Receiz proof object or restore a Receiz Key, Identity Record image, or Identity Seal image. Connect/OIDC is only an optional delegated write transport for server-side SDK calls after proof exists; it is not the identity authority and it is not the normal login screen. Vercel function memory is not durable and is never treated as the global source of truth.
+The admin editor can stage changes locally, but a hosted subdomain/custom domain is only globally durable after the same Receiz store-state proof object is synced to the public proof rail. Production publish is authorized by the merchant's verified Receiz proof object. User-facing Receiz ID login happens in app: create a Receiz proof object or restore a Receiz Key, Identity Record image, or Identity Seal image. Connect/OIDC may carry delegated write permission beneath that proof, but it is not the identity authority and it is not the normal login screen. Vercel function memory is not durable and is never treated as the global source of truth.
 
-Publish writes durable public-store proof first. `/api/store` and `/api/hosting` build the store-state proof object and call the SDK public-store rail. Only after that durable write succeeds does the app admit the record into server proof memory. If the public-store write rail is missing or the SDK write fails, publish fails visibly; the app must not show a warm-memory success that disappears on a deploy or cold start.
+Publish admits the verified store-state proof object locally first so the edge/user sees the newest append immediately, then it syncs that same append to the SDK public-store rail. Local admission and public sync are both required parts of the product loop, but sync never outranks or blocks the already-admitted proof object. If sync cannot complete, the app must keep rendering the newest local proof state and surface sync status as a sync problem, not as an identity failure or an env-token requirement for the merchant.
 
 After publishing, verify the public tenant projection:
 
@@ -235,7 +235,7 @@ After publishing, verify the public tenant projection:
 curl -sS https://your-subdomain.receiz.app/api/store
 ```
 
-The response should show saved brand/content, `source: "published"`, `publishedState: true`, and `proofMemory.entries` greater than `0`. If publish returns `receiz_public_store_write_rail_missing`, set `RECEIZ_ACCESS_TOKEN` or `RECEIZ_CONNECT_ACCESS_TOKEN` for this deployment's server-side public-store write rail, then publish again. If publish returns `receiz_authority_required`, create or restore a verified Receiz proof object in app, then publish again.
+The response should show saved brand/content, `source: "published"`, `publishedState: true`, and `proofMemory.entries` greater than `0`. If publish returns `receiz_authority_required`, create or restore a verified Receiz proof object in app, then publish again. If `storeStateSync.ok` is false, local proof admission succeeded and the remaining issue is public proof-rail sync for redeploy/cold-start recovery.
 
 Receiz settlement for platform fees we collect:
 
@@ -300,13 +300,6 @@ User clicks Sign in with Receiz
 -> paid plans and custom-domain upgrades stay locked until Receiz wallet/card settlement is confirmed
 ```
 
-Set one of these for the deployment's server-side public-store write rail so published sites survive deploys and cold starts:
-
-```bash
-RECEIZ_ACCESS_TOKEN=
-RECEIZ_CONNECT_ACCESS_TOKEN=
-```
-
 ### SDK Doctor And MCP
 
 Run the local SDK doctor before shipping or debugging auth/domain/publish issues:
@@ -327,11 +320,11 @@ startup_timeout_sec = 120
 
 [mcp_servers.receiz.env]
 RECEIZ_BASE_URL = "https://receiz.com"
-# Required only for publish/write MCP tools:
+# Only for delegated agent write tools; not merchant login authority:
 # RECEIZ_ACCESS_TOKEN = "delegated_agent_access_token"
 ```
 
-Without `RECEIZ_ACCESS_TOKEN`, MCP should still be able to run public diagnostics and public resolve/read tools. With a delegated token, MCP can publish/resolve app state, write public-store projections, verify assets, inspect proof objects, and make agent-driven setup much faster. MCP never becomes the authority; it only helps inspect or invoke the SDK/API rails.
+Without a delegated agent token, MCP should still be able to run public diagnostics and public resolve/read tools. With a delegated token, MCP can publish/resolve app state, write public-store projections, verify assets, inspect proof objects, and make agent-driven setup faster. MCP never becomes the authority; it only helps inspect or invoke the SDK/API rails beneath the proof object.
 
 `VERCEL_*` values are only for deployment/custom-domain automation if Vercel is hosting the SaaS. They are not commerce, payment, identity, or proof rails. After changing the production domain, update `NEXT_PUBLIC_SITE_URL` and `RECEIZ_ID_CALLBACK_URL` so Receiz ID redirect URLs use the correct origin. Never expose access tokens, webhook secrets, client secrets, or `VERCEL_API_TOKEN` with a `NEXT_PUBLIC_` prefix.
 

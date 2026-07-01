@@ -23,13 +23,26 @@ function failedReceizResponse(value: unknown) {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value) && (value as { ok?: unknown }).ok === false;
 }
 
+function skippedReceizSync(value: unknown) {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value) && (value as { skipped?: unknown }).skipped === true;
+}
+
 export function receizStoreStateWriteSucceeded(result: unknown) {
   return !failedReceizResponse(result);
 }
 
+export function receizStoreStateSyncCompleted(result: unknown) {
+  return receizStoreStateWriteSucceeded(result) && !skippedReceizSync(result);
+}
+
 export async function publishReceizStoreState(accessToken: string | undefined, record: StoreStateRecord) {
   if (!accessToken) {
-    return { ok: false, skipped: true, error: "receiz_public_store_write_rail_missing" };
+    return {
+      ok: true,
+      skipped: true,
+      reason: "public_proof_sync_pending",
+      message: "Store-state proof object admitted locally; public proof sync is pending for this request."
+    };
   }
 
   const connectRecord = buildStoreStateConnectRecord(record);
@@ -102,11 +115,8 @@ export async function publishAndAdmitReceizStoreState({
   publish?: (accessToken: string | undefined, record: StoreStateRecord) => Promise<unknown>;
   record: StoreStateRecord;
 }) {
+  await proofStore.admitStoreRecord(record);
   const receizRecord = await publish(accessToken, record);
-
-  if (receizStoreStateWriteSucceeded(receizRecord)) {
-    await proofStore.admitStoreRecord(record);
-  }
 
   return receizRecord;
 }

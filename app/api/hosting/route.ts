@@ -32,6 +32,7 @@ import { buildStoreStateRecord } from "@/lib/receiz/proof-state";
 import { getServerProofStateStore } from "@/lib/receiz/proof-state-store";
 import {
   publishAndAdmitReceizStoreState,
+  receizStoreStateSyncCompleted,
   receizStoreStateWriteSucceeded
 } from "@/lib/receiz/store-state-publication";
 import { receizAccessTokenFromRequest, receizAuthorityRequired } from "@/lib/receiz/session";
@@ -63,12 +64,8 @@ function badRequest(error: unknown) {
 }
 
 function publicStoreWriteFailureMessage(error: string) {
-  if (error === "receiz_public_store_write_rail_missing") {
-    return "Receiz public-store write rail is not configured for this deployment. The proof object is valid, but the live storefront cannot append durable public state until RECEIZ_ACCESS_TOKEN or RECEIZ_CONNECT_ACCESS_TOKEN is set.";
-  }
-
   if (error === "receiz_authority_required") {
-    return "Receiz public-store write permission is missing. Restore proof authority in app and configure the app write rail before publishing.";
+    return "Receiz public-store sync needs proof-authorized write permission. The proof object was admitted locally first.";
   }
 
   return error;
@@ -366,16 +363,29 @@ async function syncPublishedStoreStateForHosting(input: {
     record: storeStateRecord,
     proofStore
   });
+  const storeStateSyncOk = receizStoreStateWriteSucceeded(storeStateReceizRecord);
+  const storeStateSynced = receizStoreStateSyncCompleted(storeStateReceizRecord);
 
-  if (!receizStoreStateWriteSucceeded(storeStateReceizRecord)) {
+  if (!storeStateSyncOk) {
     const error = isRecord(storeStateReceizRecord)
       ? String(storeStateReceizRecord.error ?? "receiz_store_state_record_failed")
       : "receiz_store_state_record_failed";
 
     return {
-      ok: false as const,
+      ok: true as const,
+      synced: false as const,
       error,
-      message: publicStoreWriteFailureMessage(error),
+      warning: publicStoreWriteFailureMessage(error),
+      storeStateRecord,
+      storeStateReceizRecord
+    };
+  }
+
+  if (!storeStateSynced) {
+    return {
+      ok: true as const,
+      synced: false as const,
+      warning: "Receiz public-store sync is pending; the proof object was admitted locally first.",
       storeStateRecord,
       storeStateReceizRecord
     };
@@ -383,6 +393,7 @@ async function syncPublishedStoreStateForHosting(input: {
 
   return {
     ok: true as const,
+    synced: true as const,
     skipped: false as const,
     state: publishState,
     storeStateRecord,
@@ -657,8 +668,11 @@ export async function POST(request: NextRequest) {
       record: storeStateRecord,
       proofStore
     });
+    const storeStateSyncOk = receizStoreStateWriteSucceeded(storeStateReceizRecord);
+    const storeStateSynced = receizStoreStateSyncCompleted(storeStateReceizRecord);
+    let storeStateSyncWarning: string | undefined;
 
-    if (!receizStoreStateWriteSucceeded(storeStateReceizRecord)) {
+    if (!storeStateSyncOk) {
       const error = isRecord(storeStateReceizRecord) ? String(storeStateReceizRecord.error ?? "receiz_store_state_record_failed") : "receiz_store_state_record_failed";
 
       console.error("[publish] Receiz store-state record failed", {
@@ -667,16 +681,9 @@ export async function POST(request: NextRequest) {
         storeStateRecordId: storeStateRecord.id,
         error
       });
-
-      return NextResponse.json(
-        {
-          ok: false,
-          error: "receiz_store_state_record_failed",
-          message: publicStoreWriteFailureMessage(error),
-          storeStateReceizRecord
-        },
-        { status: error === "receiz_authority_required" || error === "receiz_public_store_write_rail_missing" ? 428 : 502 }
-      );
+      storeStateSyncWarning = publicStoreWriteFailureMessage(error);
+    } else if (!storeStateSynced) {
+      storeStateSyncWarning = "Receiz public-store sync is pending; the proof object was admitted locally first.";
     }
 
     console.info("[publish] Receiz store-state record written", {
@@ -697,6 +704,12 @@ export async function POST(request: NextRequest) {
       state: publishState,
       storeStateRecord,
       storeStateReceizRecord,
+      storeStateSync: {
+        ok: storeStateSyncOk,
+        synced: storeStateSynced,
+        warning: storeStateSyncWarning,
+        result: storeStateReceizRecord
+      },
       receizRecord,
       proofMemory: {
         knownHead: proofStore.knownHead(100),

@@ -7,29 +7,10 @@ import type { ProofStateStore } from "./proof-state-store";
 import { RECEIZ_PUBLIC_STORE_STATE_PROJECTION_SCHEMA } from "@receiz/sdk";
 
 const DEFAULT_LEDGER_LIMIT = 500;
-const DEFAULT_PUBLIC_RECOVERY_ATTEMPTS = 3;
-const DEFAULT_PUBLIC_RECOVERY_BACKOFF_MS = 120;
 
 function ledgerLimit() {
   const parsed = Number.parseInt(process.env.RECEIZ_STORE_STATE_LEDGER_LIMIT ?? "", 10);
   return Number.isFinite(parsed) && parsed > 0 ? Math.min(parsed, 500) : DEFAULT_LEDGER_LIMIT;
-}
-
-function publicRecoveryAttempts() {
-  const parsed = Number.parseInt(process.env.RECEIZ_STORE_STATE_RECOVERY_ATTEMPTS ?? "", 10);
-  return Number.isFinite(parsed) && parsed > 0 ? Math.min(parsed, 5) : DEFAULT_PUBLIC_RECOVERY_ATTEMPTS;
-}
-
-function publicRecoveryBackoffMs(attempt: number) {
-  const parsed = Number.parseInt(process.env.RECEIZ_STORE_STATE_RECOVERY_BACKOFF_MS ?? "", 10);
-  const base = Number.isFinite(parsed) && parsed >= 0 ? Math.min(parsed, 1000) : DEFAULT_PUBLIC_RECOVERY_BACKOFF_MS;
-  return base * attempt;
-}
-
-function wait(ms: number) {
-  return new Promise<void>((resolve) => {
-    setTimeout(resolve, ms);
-  });
 }
 
 function uniqueRecords(records: StoreStateRecord[]) {
@@ -103,19 +84,6 @@ async function recoverReceizPublicProofStoreStateRecords(tenantHost: string) {
   return records.filter((record) => storeStateRecordMatchesTenantHost(record, tenantHost));
 }
 
-async function recoverReceizPublicProofStoreStateRecordsWithRetry(tenantHost: string) {
-  const attempts = publicRecoveryAttempts();
-
-  for (let attempt = 1; attempt <= attempts; attempt += 1) {
-    const records = await recoverReceizPublicProofStoreStateRecords(tenantHost);
-    if (records.length > 0 || attempt === attempts) return records;
-
-    await wait(publicRecoveryBackoffMs(attempt));
-  }
-
-  return [];
-}
-
 export async function recoverReceizStoreStateRecords(tenantHost: string) {
   const records: StoreStateRecord[] = [];
 
@@ -136,7 +104,7 @@ export async function recoverReceizStoreStateRecords(tenantHost: string) {
   }
 
   try {
-    records.push(...(await recoverReceizPublicProofStoreStateRecordsWithRetry(tenantHost)));
+    records.push(...(await recoverReceizPublicProofStoreStateRecords(tenantHost)));
   } catch {
     // Keep tenant rendering resilient if Receiz public proof is temporarily unavailable.
   }

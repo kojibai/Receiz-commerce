@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 import { buildStoreStateRecord } from "../src/lib/receiz/proof-state.js";
 import {
   publishAndAdmitReceizStoreState,
+  receizStoreStateSyncCompleted,
   receizStoreStateWriteSucceeded
 } from "../src/lib/receiz/store-state-publication.js";
 import type { ProofStateStore } from "../src/lib/receiz/proof-state-store.js";
@@ -23,7 +24,7 @@ function proofStoreSpy() {
 }
 
 describe("Receiz store-state publication", () => {
-  it("does not admit warm server state when durable public-store publish fails", async () => {
+  it("admits proof-object store state when delegated public-store transport is unavailable", async () => {
     const record = buildStoreStateRecord(baseState(), {
       actorReceizId: "boost.receiz.id",
       tenantHost: "boost.receiz.app",
@@ -34,15 +35,36 @@ describe("Receiz store-state publication", () => {
     const result = await publishAndAdmitReceizStoreState({
       accessToken: undefined,
       record,
+      proofStore: store
+    });
+
+    assert.equal(receizStoreStateWriteSucceeded(result), true);
+    assert.equal(receizStoreStateSyncCompleted(result), false);
+    assert.deepEqual(admitted, [record.id]);
+    assert.equal((result as { skipped?: boolean }).skipped, true);
+  });
+
+  it("keeps local proof admission even when delegated remote sync reports a failure", async () => {
+    const record = buildStoreStateRecord(baseState(), {
+      actorReceizId: "boost.receiz.id",
+      tenantHost: "boost.receiz.app",
+      ...receizAppendFixture("2026-07-01T20:00:30.000Z")
+    });
+    const { admitted, store } = proofStoreSpy();
+
+    const result = await publishAndAdmitReceizStoreState({
+      accessToken: "receiz_write_rail",
+      record,
       proofStore: store,
-      publish: async () => ({ ok: false, error: "receiz_public_store_write_rail_missing" })
+      publish: async () => ({ ok: false, error: "remote_sync_failed" })
     });
 
     assert.equal(receizStoreStateWriteSucceeded(result), false);
-    assert.deepEqual(admitted, []);
+    assert.equal(receizStoreStateSyncCompleted(result), false);
+    assert.deepEqual(admitted, [record.id]);
   });
 
-  it("admits the store-state record only after durable public-store publish succeeds", async () => {
+  it("admits the store-state record when delegated public-store publish succeeds", async () => {
     const record = buildStoreStateRecord(baseState(), {
       actorReceizId: "boost.receiz.id",
       tenantHost: "boost.receiz.app",
@@ -58,6 +80,7 @@ describe("Receiz store-state publication", () => {
     });
 
     assert.equal(receizStoreStateWriteSucceeded(result), true);
+    assert.equal(receizStoreStateSyncCompleted(result), true);
     assert.deepEqual(admitted, [record.id]);
   });
 });

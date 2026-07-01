@@ -1054,15 +1054,21 @@ async function postJson<T>(
 
 type StoreStateSyncResponse = {
   ok?: boolean;
+  synced?: boolean;
   skipped?: boolean;
   reason?: string;
   message?: string;
+  warning?: string;
   error?: string;
 };
 
 function storeStateSyncError(sync: StoreStateSyncResponse | undefined) {
   if (!sync || sync.ok !== false) return "";
   return sync.message || sync.error || "Storefront proof-state sync failed";
+}
+
+function storeStateSyncPending(sync: StoreStateSyncResponse | undefined) {
+  return Boolean(sync && sync.ok === true && sync.synced === false);
 }
 
 function priceFromLabel(label: string) {
@@ -1720,11 +1726,14 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
             state: stateRef.current
           });
           const syncError = storeStateSyncError(result.storeStateSync);
+          const syncPending = storeStateSyncPending(result.storeStateSync);
           setActionFeedback(
             "domains.customDomain",
-            syncError ? "error" : "success",
+            syncError ? "error" : syncPending ? "pending" : "success",
             syncError
               ? `Domain connected; storefront sync failed: ${syncError}`
+              : syncPending
+                ? `${normalizedDomain} connected; storefront proof admitted and sync pending`
               : result.hosting.customDomain.status === "active"
                 ? `${normalizedDomain} connected and storefront synced`
                 : "DNS records ready"
@@ -1737,6 +1746,8 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
                 "DOMAIN_CONNECTED",
                 syncError
                   ? `${normalizedDomain} connected; storefront sync failed`
+                  : syncPending
+                    ? `${normalizedDomain} connected; storefront proof admitted and sync pending`
                   : `${result.hosting.customDomain.message ?? normalizedDomain} · ${result.hosting.customDomain.status}`
               ),
               ...current.proofEvents
@@ -1809,11 +1820,14 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
             state: stateRef.current
           });
           const syncError = storeStateSyncError(result.storeStateSync);
+          const syncPending = storeStateSyncPending(result.storeStateSync);
           setActionFeedback(
             "domains.verifyDomain",
-            syncError ? "error" : result.hosting.customDomain.status === "active" ? "success" : "pending",
+            syncError ? "error" : syncPending ? "pending" : result.hosting.customDomain.status === "active" ? "success" : "pending",
             syncError
               ? `DNS verified; storefront sync failed: ${syncError}`
+              : syncPending
+                ? "DNS verified; storefront proof admitted and sync pending"
               : result.hosting.customDomain.message ?? `${normalizedDomain} checked`
           );
           setState((current) => ({
@@ -1824,6 +1838,8 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
                 "DOMAIN_CONNECTED",
                 syncError
                   ? `${normalizedDomain} DNS verified; storefront sync failed`
+                  : syncPending
+                    ? `${normalizedDomain} DNS verified; storefront proof admitted and sync pending`
                   : `${result.hosting.customDomain.message ?? normalizedDomain} · ${result.hosting.customDomain.status}`
               ),
               ...current.proofEvents
