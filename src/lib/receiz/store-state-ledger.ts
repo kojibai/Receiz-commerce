@@ -1,8 +1,6 @@
 import {
   isStoreStateRecord,
-  storeStateRecordHostAliases,
   storeStateRecordMatchesTenantHost,
-  storeStateRecordsForTenantHost,
   type StoreStateRecord
 } from "./proof-state";
 import type { ProofStateStore } from "./proof-state-store";
@@ -45,7 +43,7 @@ export function extractStoreStateRecords(value: unknown): StoreStateRecord[] {
   return uniqueRecords(collectStoreStateRecords(value));
 }
 
-async function recoverReceizPublicProofStoreStateRecordsForHost(tenantHost: string) {
+async function recoverReceizPublicProofStoreStateRecords(tenantHost: string) {
   const { createReceizCommerceAdapter } = await import("./adapter");
   const receiz = createReceizCommerceAdapter({
     baseUrl: process.env.RECEIZ_BASE_URL
@@ -60,7 +58,7 @@ async function recoverReceizPublicProofStoreStateRecordsForHost(tenantHost: stri
     });
     records.push(...extractStoreStateRecords(restored));
   } catch {
-    // Continue through the other SDK public projection reads; incomplete records are filtered below.
+    // Public-store projection is the preferred 97.3 path; older records may only exist in app-state feeds.
   }
 
   try {
@@ -71,7 +69,7 @@ async function recoverReceizPublicProofStoreStateRecordsForHost(tenantHost: stri
     });
     records.push(...extractStoreStateRecords(restored));
   } catch {
-    // Continue through URL-addressed SDK public projection reads.
+    // Fall through to raw public-proof reads for older registry records.
   }
 
   for (const url of urls) {
@@ -79,36 +77,11 @@ async function recoverReceizPublicProofStoreStateRecordsForHost(tenantHost: stri
       const appState = await receiz.client.appState.byUrl(url);
       records.push(...extractStoreStateRecords(appState));
     } catch {
-      // Missing public projections are expected for unpublished stores.
+      // Missing public projections are expected for unpublished or legacy stores.
     }
   }
 
-  return records;
-}
-
-async function recoverReceizPublicProofStoreStateRecords(tenantHost: string) {
-  const normalizedHost = tenantHost.trim().toLowerCase();
-  const queue = [normalizedHost];
-  const queued = new Set(queue);
-  const records: StoreStateRecord[] = [];
-
-  while (queue.length) {
-    const host = queue.shift();
-    if (!host) continue;
-
-    records.push(...(await recoverReceizPublicProofStoreStateRecordsForHost(host)));
-
-    for (const record of storeStateRecordsForTenantHost(records, tenantHost)) {
-      for (const alias of storeStateRecordHostAliases(record)) {
-        if (!queued.has(alias) && queued.size < 12) {
-          queued.add(alias);
-          queue.push(alias);
-        }
-      }
-    }
-  }
-
-  return storeStateRecordsForTenantHost(uniqueRecords(records), tenantHost);
+  return records.filter((record) => storeStateRecordMatchesTenantHost(record, tenantHost));
 }
 
 export async function recoverReceizStoreStateRecords(tenantHost: string) {
@@ -121,7 +94,11 @@ export async function recoverReceizStoreStateRecords(tenantHost: string) {
     });
     const ledger = await receiz.actionLedger({ limit: ledgerLimit() });
 
-    records.push(...storeStateRecordsForTenantHost(extractStoreStateRecords(ledger), tenantHost));
+    records.push(
+      ...extractStoreStateRecords(ledger).filter((record) =>
+        storeStateRecordMatchesTenantHost(record, tenantHost)
+      )
+    );
   } catch {
     // The public action ledger is additive only. Public-proof recovery below is the durable storefront path.
   }
@@ -141,9 +118,12 @@ export async function admitRecoveredStoreStateRecords(
   recovered: StoreStateRecord[]
 ) {
   const knownRecordIds = new Set(
-    storeStateRecordsForTenantHost(proofStore.records(), tenantHost).map((record) => record.id)
+    proofStore
+      .records()
+      .filter((record) => isStoreStateRecord(record) && storeStateRecordMatchesTenantHost(record, tenantHost))
+      .map((record) => record.id)
   );
-  const matchingRecords = storeStateRecordsForTenantHost(recovered, tenantHost);
+  const matchingRecords = recovered.filter((record) => storeStateRecordMatchesTenantHost(record, tenantHost));
   let admitted = 0;
 
   for (const record of matchingRecords) {

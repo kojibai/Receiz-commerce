@@ -1,24 +1,9 @@
 import type { StoreStateRecordInput } from "../../src/lib/receiz/proof-state.js";
 
-type AppendFixture = Pick<
-  StoreStateRecordInput,
-  "recordedAt" | "updatedKaiUpulse" | "appendAnchorId" | "appendProof"
->;
+type AppendFixture = Pick<StoreStateRecordInput, "recordedAt">;
 
-export function receizAppendFixture(recordedAt: string, kaiUpulse?: string | number): AppendFixture {
-  const updatedKaiUpulse = kaiUpulse ?? recordedAt.replace(/[^0-9]/g, "");
-  const appendAnchorId = `anchor-${String(updatedKaiUpulse).replace(/[^0-9a-z]/gi, "")}`;
-
+export function receizAppendFixture(recordedAt: string, _kaiUpulse?: string | number): AppendFixture {
   return {
-    recordedAt,
-    updatedKaiUpulse,
-    appendAnchorId,
-    appendProof: {
-      kind: "receiz.proof_bundle",
-      kaiPulseEternal: String(updatedKaiUpulse),
-      kaiKlok: String(updatedKaiUpulse),
-      anchorId: appendAnchorId,
-      ts: recordedAt
-    }
+    recordedAt
   };
 }

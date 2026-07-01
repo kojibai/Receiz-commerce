@@ -47,9 +47,6 @@ export type StoreStateRecord = {
   type: "store.state.published";
   reason: "publish" | "sync" | "restore";
   recordedAt: string;
-  updatedKaiUpulse?: string | number;
-  appendAnchorId?: string;
-  appendProof?: Record<string, unknown> | null;
   actorReceizId: string;
   tenantHost: string;
   tenantSlug: string;
@@ -109,10 +106,7 @@ export type StoreStateRecordInput = {
   actorReceizId: string;
   tenantHost?: string;
   reason?: StoreStateRecord["reason"];
-  recordedAt: string;
-  updatedKaiUpulse: string | number;
-  appendAnchorId: string;
-  appendProof?: Record<string, unknown> | null;
+  recordedAt?: string;
 };
 
 function stableSlug(value: string) {
@@ -127,32 +121,6 @@ function stableSlug(value: string) {
 function recordId(prefix: string, tenantHost: string, recordedAt: string) {
   const stamp = recordedAt.replace(/[^0-9a-z]/gi, "");
   return `${prefix}:${tenantHost}:${stamp}`;
-}
-
-function hasKaiUpulse(value: unknown): value is string | number {
-  return typeof value === "string" || typeof value === "number";
-}
-
-function normalizeKaiForCompare(value: string | number) {
-  return String(value).trim().replace(/^\+/, "");
-}
-
-export function compareStoreStateKaiUpulse(leftValue: string | number, rightValue: string | number) {
-  const left = normalizeKaiForCompare(leftValue);
-  const right = normalizeKaiForCompare(rightValue);
-  const [leftWholeRaw = "", leftFractionRaw = ""] = left.split(".");
-  const [rightWholeRaw = "", rightFractionRaw = ""] = right.split(".");
-  const leftWhole = leftWholeRaw.replace(/^0+/, "") || "0";
-  const rightWhole = rightWholeRaw.replace(/^0+/, "") || "0";
-
-  if (leftWhole.length !== rightWhole.length) return leftWhole.length > rightWhole.length ? 1 : -1;
-  if (leftWhole !== rightWhole) return leftWhole > rightWhole ? 1 : -1;
-
-  const maxFractionLength = Math.max(leftFractionRaw.length, rightFractionRaw.length);
-  const leftFraction = leftFractionRaw.padEnd(maxFractionLength, "0");
-  const rightFraction = rightFractionRaw.padEnd(maxFractionLength, "0");
-  if (leftFraction === rightFraction) return 0;
-  return leftFraction > rightFraction ? 1 : -1;
 }
 
 const MAX_INLINE_DATA_URL_CHARS = 1_500_000;
@@ -177,7 +145,7 @@ function compactPublishedState<T>(value: T): T {
   return compactInlineMedia(structuredClone(value)) as T;
 }
 
-export function publishedStoreStateFromCommerceState(state: CommerceState): PublishedStoreState {
+function clonePublishedState(state: CommerceState): PublishedStoreState {
   return {
     brand: compactPublishedState(state.brand),
     storefront: compactPublishedState(state.storefront),
@@ -206,15 +174,7 @@ function tenantHostFromState(state: CommerceState, inputHost?: string) {
 }
 
 export function buildStoreStateRecord(state: CommerceState, input: StoreStateRecordInput): StoreStateRecord {
-  if (!hasKaiUpulse(input.updatedKaiUpulse)) {
-    throw new Error("receiz_store_state_missing_kai_upulse");
-  }
-
-  if (!input.appendAnchorId.trim()) {
-    throw new Error("receiz_store_state_missing_append_anchor");
-  }
-
-  const recordedAt = input.recordedAt;
+  const recordedAt = input.recordedAt ?? new Date().toISOString();
   const tenantHost = tenantHostFromState(state, input.tenantHost);
   const tenantSlug = state.hosting.tenantSlug || stableSlug(tenantHost);
   const merchantReceizId = state.hosting.merchantReceizId || input.actorReceizId;
@@ -225,14 +185,11 @@ export function buildStoreStateRecord(state: CommerceState, input: StoreStateRec
     type: "store.state.published",
     reason: input.reason ?? "publish",
     recordedAt,
-    updatedKaiUpulse: input.updatedKaiUpulse,
-    appendAnchorId: input.appendAnchorId,
-    appendProof: input.appendProof ?? null,
     actorReceizId: input.actorReceizId,
     tenantHost,
     tenantSlug,
     merchantReceizId,
-    state: publishedStoreStateFromCommerceState(state)
+    state: clonePublishedState(state)
   };
 }
 
@@ -261,114 +218,28 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 export function isStoreStateRecord(value: unknown): value is StoreStateRecord {
-  return (
-    isRecord(value) &&
-    value.schema === STORE_STATE_SCHEMA &&
-    typeof value.id === "string" &&
-    typeof value.recordedAt === "string" &&
-    typeof value.tenantHost === "string" &&
-    typeof value.tenantSlug === "string" &&
-    typeof value.merchantReceizId === "string" &&
-    isRecord(value.state)
-  );
+  return isRecord(value) && value.schema === STORE_STATE_SCHEMA && isRecord(value.state);
 }
 
 export function isCommerceEventRecord(value: unknown): value is CommerceEventRecord {
   return isRecord(value) && value.schema === COMMERCE_EVENT_SCHEMA && isRecord(value.data);
 }
 
-function normalizeHost(value?: string | null) {
-  return value?.trim().toLowerCase() ?? "";
-}
-
-function recordHostAliases(record: StoreStateRecord) {
-  return new Set(
-    [record.tenantHost, record.state.hosting.subdomain, record.state.hosting.customDomain.domain]
-      .map((host) => normalizeHost(host))
-      .filter(Boolean)
-  );
-}
-
-function recordMatchesAnyHost(record: StoreStateRecord, aliases: Set<string>) {
-  for (const alias of recordHostAliases(record)) {
-    if (aliases.has(alias)) return true;
-  }
-
-  return false;
-}
-
-export function storeStateRecordHostAliases(record: StoreStateRecord) {
-  return [...recordHostAliases(record)];
-}
-
-export function storeStateTenantAliasSet(records: unknown[], tenantHost: string) {
-  const aliases = new Set([normalizeHost(tenantHost)].filter(Boolean));
-  let changed = true;
-
-  while (changed) {
-    changed = false;
-
-    for (const record of records.filter(isStoreStateRecord)) {
-      if (!recordMatchesAnyHost(record, aliases)) continue;
-
-      for (const alias of recordHostAliases(record)) {
-        if (!aliases.has(alias)) {
-          aliases.add(alias);
-          changed = true;
-        }
-      }
-    }
-  }
-
-  return aliases;
-}
-
-export function storeStateRecordsForTenantHost(records: unknown[], tenantHost: string) {
-  const aliases = storeStateTenantAliasSet(records, tenantHost);
-
-  return records
-    .filter(isStoreStateRecord)
-    .filter((record) => recordMatchesAnyHost(record, aliases));
-}
-
 export function storeStateRecordMatchesTenantHost(record: StoreStateRecord, tenantHost: string) {
   const normalized = tenantHost.trim().toLowerCase();
-  return recordHostAliases(record).has(normalized);
-}
-
-export function storeStateRecordOrderValue(record: StoreStateRecord) {
-  if (hasKaiUpulse(record.updatedKaiUpulse)) return record.updatedKaiUpulse;
-
-  const recordedAtStamp = record.recordedAt.replace(/[^0-9]/g, "");
-  if (recordedAtStamp) return recordedAtStamp;
-
-  const parsed = Date.parse(record.recordedAt);
-  return Number.isFinite(parsed) ? parsed : 0;
-}
-
-export function compareStoreStateRecords(left: StoreStateRecord, right: StoreStateRecord) {
-  const kaiOrder = compareStoreStateKaiUpulse(
-    storeStateRecordOrderValue(left),
-    storeStateRecordOrderValue(right)
+  return (
+    record.tenantHost === normalized ||
+    record.state.hosting.subdomain.toLowerCase() === normalized ||
+    record.state.hosting.customDomain.domain.toLowerCase() === normalized
   );
-  if (kaiOrder !== 0) return kaiOrder;
-
-  const leftRecorded = Date.parse(left.recordedAt);
-  const rightRecorded = Date.parse(right.recordedAt);
-  if (Number.isFinite(leftRecorded) && Number.isFinite(rightRecorded) && leftRecorded !== rightRecorded) {
-    return leftRecorded > rightRecorded ? 1 : -1;
-  }
-
-  const leftAnchor = left.appendAnchorId ?? "";
-  const rightAnchor = right.appendAnchorId ?? "";
-  if (leftAnchor !== rightAnchor) return leftAnchor > rightAnchor ? 1 : -1;
-
-  if (left.id === right.id) return 0;
-  return left.id > right.id ? 1 : -1;
 }
 
 export function storeStateProjectionSource(records: unknown[], tenantHost: string): "published" | "fallback" {
-  return storeStateRecordsForTenantHost(records, tenantHost).length ? "published" : "fallback";
+  return records
+    .filter(isStoreStateRecord)
+    .some((record) => storeStateRecordMatchesTenantHost(record, tenantHost))
+    ? "published"
+    : "fallback";
 }
 
 export function projectStoreStateFromRecords(
@@ -376,22 +247,16 @@ export function projectStoreStateFromRecords(
   records: unknown[],
   tenantHost: string
 ): CommerceState {
-  const latest = storeStateRecordsForTenantHost(records, tenantHost)
-    .sort((left, right) => compareStoreStateRecords(right, left))[0];
+  const latest = records
+    .filter(isStoreStateRecord)
+    .filter((record) => storeStateRecordMatchesTenantHost(record, tenantHost))
+    .sort((left, right) => Date.parse(right.recordedAt) - Date.parse(left.recordedAt))[0];
 
   if (!latest) return baseState;
 
   return {
     ...baseState,
     ...latest.state,
-    hosting: {
-      ...latest.state.hosting,
-      storeProofHead: {
-        afterEntryId: latest.id,
-        afterKaiUpulse: storeStateRecordOrderValue(latest),
-        afterCreatedAt: latest.recordedAt
-      }
-    },
     cart: { lines: [] },
     orders: [],
     customers: [],
@@ -404,6 +269,10 @@ export function projectStoreStateFromRecords(
     },
     proofEvents: []
   };
+}
+
+function normalizeHost(value?: string | null) {
+  return value?.trim().toLowerCase() ?? "";
 }
 
 function commerceTenantAliases(state: CommerceState, tenantHost: string) {

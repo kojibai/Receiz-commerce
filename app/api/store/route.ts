@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { hostContextFromHost } from "@/lib/hosting/host-context";
 import { platform } from "@/lib/platform";
 import {
-  isStoreStateRecord,
+  buildStoreStateRecord,
   storeStateProjectionSource
 } from "@/lib/receiz/proof-state";
 import { getServerProofStateStore } from "@/lib/receiz/proof-state-store";
@@ -240,11 +240,14 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  const receizRecord = await publishReceizStoreState(accessToken, publishState, {
+  const record = buildStoreStateRecord(publishState, {
     actorReceizId,
     tenantHost,
     reason: "publish"
   });
+  const proofStore = await getServerProofStateStore(record.merchantReceizId);
+  await proofStore.admitStoreRecord(record);
+  const receizRecord = await publishReceizStoreState(accessToken, record);
 
   if (!receizWriteSucceeded(receizRecord)) {
     const error = isRecord(receizRecord) ? String(receizRecord.error ?? "receiz_store_state_record_failed") : "receiz_store_state_record_failed";
@@ -261,21 +264,6 @@ export async function POST(request: NextRequest) {
       { status: error === "receiz_authority_required" ? 401 : 502, headers: noStoreHeaders }
     );
   }
-
-  if (!isRecord(receizRecord) || !isStoreStateRecord(receizRecord.record)) {
-    return NextResponse.json(
-      {
-        ok: false,
-        error: "receiz_store_state_record_missing",
-        message: "Receiz store-state publish completed without a completed proof record."
-      },
-      { status: 502, headers: noStoreHeaders }
-    );
-  }
-
-  const record = receizRecord.record;
-  const proofStore = await getServerProofStateStore(String(record.merchantReceizId));
-  await proofStore.admitStoreRecord(record);
 
   return NextResponse.json(
     {

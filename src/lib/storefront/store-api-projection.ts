@@ -1,5 +1,4 @@
-import type { CommerceState, ReceizStoreProofHead } from "@/types/domain";
-import { compareStoreStateKaiUpulse } from "../receiz/proof-state";
+import type { CommerceState } from "@/types/domain";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
@@ -24,41 +23,8 @@ const arrayFields = [
 
 const objectFields = ["brand", "storefront", "hosting", "game", "checkout", "receiz"] as const;
 
-function proofHeadFromInput(input: Record<string, unknown>): ReceizStoreProofHead | null {
-  const proofMemory = input.proofMemory;
-  if (!isRecord(proofMemory)) return null;
-
-  const knownHead = proofMemory.knownHead;
-  if (!isRecord(knownHead)) return null;
-
-  return {
-    afterEntryId: typeof knownHead.afterEntryId === "string" ? knownHead.afterEntryId : null,
-    afterKaiUpulse:
-      typeof knownHead.afterKaiUpulse === "string" || typeof knownHead.afterKaiUpulse === "number"
-        ? knownHead.afterKaiUpulse
-        : null,
-    afterCreatedAt: typeof knownHead.afterCreatedAt === "string" ? knownHead.afterCreatedAt : null
-  };
-}
-
-function hasKaiUpulse(value: unknown): value is string | number {
-  return typeof value === "string" || typeof value === "number";
-}
-
-function compareProofHeads(left?: ReceizStoreProofHead | null, right?: ReceizStoreProofHead | null) {
-  if (!hasKaiUpulse(left?.afterKaiUpulse) || !hasKaiUpulse(right?.afterKaiUpulse)) return 0;
-  return compareStoreStateKaiUpulse(left.afterKaiUpulse, right.afterKaiUpulse);
-}
-
 export function mergeStoreApiProjection(baseState: CommerceState, input: unknown): CommerceState | null {
   if (!isRecord(input) || input.ok !== true || input.publishedState !== true) return null;
-  const incomingProofHead = proofHeadFromInput(input);
-  const currentProofHead = baseState.hosting.storeProofHead;
-
-  if (!hasKaiUpulse(incomingProofHead?.afterKaiUpulse)) return null;
-  if (incomingProofHead && currentProofHead && compareProofHeads(incomingProofHead, currentProofHead) < 0) {
-    return null;
-  }
 
   let next: CommerceState = { ...baseState };
 
@@ -85,15 +51,7 @@ export function mergeStoreApiProjection(baseState: CommerceState, input: unknown
     }
   }
 
-  return incomingProofHead
-    ? {
-        ...next,
-        hosting: {
-          ...next.hosting,
-          storeProofHead: incomingProofHead
-        }
-      }
-    : next;
+  return next;
 }
 
 function mergeById<T extends { id: string }>(remote: T[], local: T[]) {

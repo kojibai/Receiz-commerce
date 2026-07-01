@@ -178,17 +178,18 @@ describe("Receiz proof commerce state", () => {
     assert.equal(record.state.hosting.published, true);
   });
 
-  it("keeps baseline timestamp record identity even when Kai pulse repeats", () => {
+  it("builds the baseline publish record before any append coordinate exists", () => {
     const record = buildStoreStateRecord(baseState(), {
       actorReceizId: "boost.receiz.id",
       tenantHost: "boost.receiz.app",
       reason: "publish",
-      ...receizAppendFixture("2026-06-30T00:00:01.123Z", "777")
+      recordedAt: "2026-06-30T00:00:01.123Z"
     });
 
     assert.equal(record.id, "store_state:boost.receiz.app:20260630T000001123Z");
-    assert.equal(record.updatedKaiUpulse, "777");
-    assert.equal(record.appendAnchorId, "anchor-777");
+    assert.equal("updatedKaiUpulse" in record, false);
+    assert.equal("appendAnchorId" in record, false);
+    assert.equal("appendProof" in record, false);
   });
 
   it("accepts baseline published store records without Kai and append anchor", () => {
@@ -216,39 +217,6 @@ describe("Receiz proof commerce state", () => {
 
     assert.equal(isStoreStateRecord(legacyRecord), true);
     assert.equal(projectStoreStateFromRecords(baseState(), [legacyRecord], "bjklock.receiz.app").brand.name, "Baseline Saved Store");
-  });
-
-  it("projects the latest saved state when two appends share the same Kai pulse", () => {
-    const oldRecord = buildStoreStateRecord(
-      {
-        ...baseState(),
-        brand: { ...baseState().brand, name: "Old saved store" }
-      },
-      {
-        actorReceizId: "boost.receiz.id",
-        tenantHost: "boost.receiz.app",
-        reason: "publish",
-        ...receizAppendFixture("2026-06-30T00:00:00.000Z", "777")
-      }
-    );
-    const latestRecord = buildStoreStateRecord(
-      {
-        ...baseState(),
-        brand: { ...baseState().brand, name: "Latest saved store" }
-      },
-      {
-        actorReceizId: "boost.receiz.id",
-        tenantHost: "boost.receiz.app",
-        reason: "publish",
-        ...receizAppendFixture("2026-06-30T00:01:00.000Z", "777")
-      }
-    );
-
-    const projected = projectStoreStateFromRecords(baseState(), [oldRecord, latestRecord], "boost.receiz.app");
-
-    assert.equal(projected.brand.name, "Latest saved store");
-    assert.equal(projected.hosting.storeProofHead?.afterEntryId, latestRecord.id);
-    assert.equal(projected.hosting.storeProofHead?.afterKaiUpulse, "777");
   });
 
   it("projects the newest published store state for the requested host", () => {
@@ -323,64 +291,6 @@ describe("Receiz proof commerce state", () => {
 
     assert.equal(projectStoreStateFromRecords(baseState(), [record], "shop.bjklock.com").brand.name, "BJK Lock Store");
     assert.equal(projectStoreStateFromRecords(baseState(), [record], "bjklock.receiz.app").brand.name, "BJK Lock Store");
-  });
-
-  it("projects the newest subdomain append through a custom-domain alias learned from proof history", () => {
-    const oldState = {
-      ...baseState(),
-      brand: { ...baseState().brand, name: "Old custom domain store" },
-      hosting: {
-        ...baseState().hosting,
-        tenantSlug: "bjklock",
-        subdomain: "bjklock.receiz.app",
-        liveUrl: "https://shop.bjklock.com",
-        customDomain: {
-          ...baseState().hosting.customDomain,
-          domain: "shop.bjklock.com",
-          liveUrl: "https://shop.bjklock.com",
-          status: "active" as const,
-          sslStatus: "valid" as const,
-          verified: true,
-          dnsResolved: true
-        }
-      }
-    };
-    const latestSubdomainState = {
-      ...oldState,
-      brand: { ...oldState.brand, name: "Latest saved subdomain store" },
-      hosting: {
-        ...oldState.hosting,
-        liveUrl: "https://bjklock.receiz.app",
-        customDomain: {
-          ...baseState().hosting.customDomain,
-          domain: "",
-          liveUrl: "",
-          status: "pending" as const,
-          sslStatus: "pending" as const,
-          verified: false,
-          dnsResolved: false
-        }
-      },
-      products: [{ ...oldState.products[0], id: "latest-product", name: "Latest product" }]
-    };
-    const oldRecord = buildStoreStateRecord(oldState, {
-      actorReceizId: "bjklock.receiz.id",
-      tenantHost: "shop.bjklock.com",
-      reason: "publish",
-      ...receizAppendFixture("2026-06-30T00:04:00.000Z")
-    });
-    const latestRecord = buildStoreStateRecord(latestSubdomainState, {
-      actorReceizId: "bjklock.receiz.id",
-      tenantHost: "bjklock.receiz.app",
-      reason: "publish",
-      ...receizAppendFixture("2026-06-30T00:05:00.000Z")
-    });
-
-    const projected = projectStoreStateFromRecords(baseState(), [oldRecord, latestRecord], "shop.bjklock.com");
-
-    assert.equal(projected.brand.name, "Latest saved subdomain store");
-    assert.equal(projected.products[0]?.name, "Latest product");
-    assert.equal(projected.hosting.subdomain, "bjklock.receiz.app");
   });
 
   it("preserves the submitted merchant host when building a published state", () => {

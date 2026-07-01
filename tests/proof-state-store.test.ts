@@ -35,9 +35,6 @@ describe("Receiz proof state store", () => {
     const projected = store.projectHost(baseState(), "boost.receiz.app");
 
     assert.equal(projected.brand.name, "Boost Prime");
-    assert.equal(projected.hosting.storeProofHead?.afterEntryId, newest.id);
-    assert.equal(projected.hosting.storeProofHead?.afterKaiUpulse, newest.updatedKaiUpulse);
-    assert.equal(store.knownHead(10).afterKaiUpulse, newest.updatedKaiUpulse);
     assert.equal(store.snapshot().head.count, 2);
   });
 

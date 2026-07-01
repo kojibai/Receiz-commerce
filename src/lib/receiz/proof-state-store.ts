@@ -16,7 +16,6 @@ import {
   isStoreStateRecord,
   projectCommerceEventsFromRecords,
   projectStoreStateFromRecords,
-  storeStateRecordOrderValue,
   type CommerceEventRecord,
   type StoreStateRecord
 } from "./proof-state";
@@ -39,7 +38,6 @@ function entryFromStoreRecord(record: StoreStateRecord): ReceizProofRegisterEntr
     id: record.id,
     kind: STORE_STATE_SCHEMA,
     createdAt: record.recordedAt,
-    kaiUpulse: storeStateRecordOrderValue(record),
     payload: record as unknown as JsonObject,
     projection: {
       schema: "receiz.app.store_state_projection.v1",
