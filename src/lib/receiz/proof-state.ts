@@ -47,9 +47,9 @@ export type StoreStateRecord = {
   type: "store.state.published";
   reason: "publish" | "sync" | "restore";
   recordedAt: string;
-  updatedKaiUpulse: string | number;
-  appendAnchorId: string;
-  appendProof: Record<string, unknown> | null;
+  updatedKaiUpulse?: string | number;
+  appendAnchorId?: string;
+  appendProof?: Record<string, unknown> | null;
   actorReceizId: string;
   tenantHost: string;
   tenantSlug: string;
@@ -264,10 +264,12 @@ export function isStoreStateRecord(value: unknown): value is StoreStateRecord {
   return (
     isRecord(value) &&
     value.schema === STORE_STATE_SCHEMA &&
-    isRecord(value.state) &&
-    hasKaiUpulse(value.updatedKaiUpulse) &&
-    typeof value.appendAnchorId === "string" &&
-    value.appendAnchorId.trim().length > 0
+    typeof value.id === "string" &&
+    typeof value.recordedAt === "string" &&
+    typeof value.tenantHost === "string" &&
+    typeof value.tenantSlug === "string" &&
+    typeof value.merchantReceizId === "string" &&
+    isRecord(value.state)
   );
 }
 
@@ -334,6 +336,16 @@ export function storeStateRecordMatchesTenantHost(record: StoreStateRecord, tena
   return recordHostAliases(record).has(normalized);
 }
 
+export function storeStateRecordOrderValue(record: StoreStateRecord) {
+  if (hasKaiUpulse(record.updatedKaiUpulse)) return record.updatedKaiUpulse;
+
+  const recordedAtStamp = record.recordedAt.replace(/[^0-9]/g, "");
+  if (recordedAtStamp) return recordedAtStamp;
+
+  const parsed = Date.parse(record.recordedAt);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
 export function storeStateProjectionSource(records: unknown[], tenantHost: string): "published" | "fallback" {
   return storeStateRecordsForTenantHost(records, tenantHost).length ? "published" : "fallback";
 }
@@ -344,7 +356,7 @@ export function projectStoreStateFromRecords(
   tenantHost: string
 ): CommerceState {
   const latest = storeStateRecordsForTenantHost(records, tenantHost)
-    .sort((left, right) => compareStoreStateKaiUpulse(right.updatedKaiUpulse, left.updatedKaiUpulse))[0];
+    .sort((left, right) => compareStoreStateKaiUpulse(storeStateRecordOrderValue(right), storeStateRecordOrderValue(left)))[0];
 
   if (!latest) return baseState;
 
@@ -355,7 +367,7 @@ export function projectStoreStateFromRecords(
       ...latest.state.hosting,
       storeProofHead: {
         afterEntryId: latest.id,
-        afterKaiUpulse: latest.updatedKaiUpulse,
+        afterKaiUpulse: storeStateRecordOrderValue(latest),
         afterCreatedAt: latest.recordedAt
       }
     },

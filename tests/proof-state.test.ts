@@ -178,22 +178,31 @@ describe("Receiz proof commerce state", () => {
     assert.equal(record.state.hosting.published, true);
   });
 
-  it("rejects incomplete store state records without Kai and append anchor", () => {
-    assert.equal(
-      isStoreStateRecord({
-        schema: STORE_STATE_SCHEMA,
-        id: "store_state:boost.receiz.app:missing",
-        type: "store.state.published",
-        reason: "publish",
-        recordedAt: "2026-06-30T00:00:00.000Z",
-        actorReceizId: "boost.receiz.id",
-        tenantHost: "boost.receiz.app",
-        tenantSlug: "boost",
-        merchantReceizId: "boost.receiz.id",
-        state: {}
-      }),
-      false
-    );
+  it("accepts baseline published store records without Kai and append anchor", () => {
+    const legacyRecord = {
+      schema: STORE_STATE_SCHEMA,
+      id: "store_state:bjklock.receiz.app:20260630000000000",
+      type: "store.state.published",
+      reason: "publish",
+      recordedAt: "2026-06-30T00:00:00.000Z",
+      actorReceizId: "bjklock.receiz.id",
+      tenantHost: "bjklock.receiz.app",
+      tenantSlug: "bjklock",
+      merchantReceizId: "bjklock.receiz.id",
+      state: {
+        ...baseState(),
+        brand: { ...baseState().brand, name: "Baseline Saved Store" },
+        hosting: {
+          ...baseState().hosting,
+          tenantSlug: "bjklock",
+          subdomain: "bjklock.receiz.app",
+          merchantReceizId: "bjklock.receiz.id"
+        }
+      }
+    };
+
+    assert.equal(isStoreStateRecord(legacyRecord), true);
+    assert.equal(projectStoreStateFromRecords(baseState(), [legacyRecord], "bjklock.receiz.app").brand.name, "Baseline Saved Store");
   });
 
   it("projects the newest published store state for the requested host", () => {
