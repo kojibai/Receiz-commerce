@@ -24,6 +24,7 @@ export function ProductPurchasePanel({
   const [status, setStatus] = useState<"idle" | "adding" | "added" | "checkout">("idle");
   const identityReady = hydrated && !receizSessionPending;
   const tenantSurface = hostContext.surface === "tenant";
+  const purchaseActionsEnabled = tenantSurface;
 
   const ensureCustomerSession = async (reason: string) => {
     if (!tenantSurface || state.auth.receizId.connected || !identityReady) return;
@@ -52,19 +53,33 @@ export function ProductPurchasePanel({
           <strong>{model.priceLabel}</strong>
           <span>{model.inventoryLabel} available</span>
         </div>
-        <div className="product-purchase-actions">
-          <Button onClick={checkout} type="button" variant="primary">
-            <Icons.creditCard size={17} />
-            {status === "checkout" ? "Starting checkout" : model.primaryActionLabel}
-          </Button>
-          <Button onClick={addToCart} type="button" variant="outline">
-            <Icons.cart size={17} />
-            {status === "adding" ? "Adding" : status === "added" ? "Added to cart" : model.secondaryActionLabel}
-          </Button>
-        </div>
-        <Link className="product-purchase-secondary-link" href="/#products">
-          Continue shopping
-        </Link>
+        {purchaseActionsEnabled ? (
+          <>
+            <div className="product-purchase-actions">
+              <Button onClick={checkout} type="button" variant="primary">
+                <Icons.creditCard size={17} />
+                {status === "checkout" ? "Starting checkout" : model.primaryActionLabel}
+              </Button>
+              <Button onClick={addToCart} type="button" variant="outline">
+                <Icons.cart size={17} />
+                {status === "adding" ? "Adding" : status === "added" ? "Added to cart" : model.secondaryActionLabel}
+              </Button>
+            </div>
+            <Link className="product-purchase-secondary-link" href="/#products">
+              Continue shopping
+            </Link>
+          </>
+        ) : (
+          <div className="product-platform-actions">
+            <Link className="button button-primary" href="/admin">
+              <Icons.sliders size={17} />
+              Edit in Admin Studio
+            </Link>
+            <Link className="product-purchase-secondary-link" href="/#products">
+              Back to catalog
+            </Link>
+          </div>
+        )}
       </div>
 
       <div className="product-purchase-facts">

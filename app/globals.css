@@ -4356,10 +4356,23 @@ a {
     display: flex;
     flex-direction: column;
     gap: 10px;
+    min-height: 0;
+    overflow-y: auto;
+    padding-bottom: 10px;
     opacity: 0;
     pointer-events: none;
+    scrollbar-width: none;
     transform: translateY(8px);
     transition: opacity 160ms ease, transform 160ms ease;
+  }
+
+  .mobile-pane::-webkit-scrollbar {
+    display: none;
+  }
+
+  .mobile-pane > * {
+    flex: 0 0 auto;
+    min-width: 0;
   }
 
   .mobile-pane.active {
@@ -4940,8 +4953,8 @@ a {
 
   .mobile-receiz-id-card,
   .mobile-account-card {
-    grid-template-columns: 44px minmax(0, 1fr);
-    align-items: center;
+    grid-template-columns: 54px minmax(0, 1fr);
+    align-items: start;
     border-color: var(--border);
   }
 
@@ -4960,11 +4973,83 @@ a {
     font-weight: 800;
   }
 
+  .mobile-account-profile-copy {
+    display: grid;
+    gap: 4px;
+    min-width: 0;
+  }
+
+  .mobile-account-name-line {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  .mobile-account-name-line h3 {
+    flex: 1 1 128px;
+    min-width: 0;
+    margin: 0;
+  }
+
+  .mobile-account-name-line .status-pill {
+    max-width: 100%;
+    padding: 5px 8px;
+    color: #7a4a00;
+    font-size: 10px;
+    white-space: nowrap;
+  }
+
+  .mobile-account-metrics {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 5px;
+    margin-top: 4px;
+  }
+
+  .mobile-account-metrics span {
+    display: grid;
+    gap: 1px;
+    min-width: 0;
+    min-height: 38px;
+    padding: 6px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    color: var(--muted);
+    background: var(--surface-soft);
+    font-size: clamp(8.5px, 2.6vw, 10px);
+    font-weight: 750;
+    line-height: 1;
+  }
+
+  .mobile-account-metrics strong {
+    color: var(--text);
+    font-size: clamp(10px, 3vw, 12px);
+    font-weight: 900;
+  }
+
+  .mobile-account-seal-tools {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    min-width: 0;
+  }
+
+  .mobile-account-seal-tools .mobile-identity-pills {
+    padding: 0;
+  }
+
+  .mobile-account-seal-tools .account-recovery-pill {
+    width: 100%;
+  }
+
   .mobile-account-receiz-badge {
     display: flex;
     justify-content: center;
     width: 100%;
-    margin-top: auto;
+    margin-top: 0;
     padding-bottom: 2px;
   }
 
@@ -5222,6 +5307,22 @@ a {
     min-height: 40px;
     text-align: left;
     white-space: normal;
+  }
+
+  .mobile-identity-pills.account-recovery-pills {
+    justify-content: stretch;
+    gap: 6px;
+    padding: 0;
+  }
+
+  .mobile-identity-pills .account-recovery-pill {
+    flex: 1 1 auto;
+    justify-content: center;
+    min-height: 34px;
+    padding: 0 9px;
+    font-size: 11px;
+    line-height: 1;
+    text-align: center;
   }
 }
 
@@ -5880,6 +5981,17 @@ a {
   justify-content: center;
   gap: 8px;
   white-space: normal;
+}
+
+.product-platform-actions {
+  display: grid;
+  gap: 10px;
+}
+
+.product-platform-actions .button {
+  justify-self: start;
+  gap: 8px;
+  text-decoration: none;
 }
 
 .product-purchase-secondary-link {

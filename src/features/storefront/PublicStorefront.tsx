@@ -109,11 +109,6 @@ export function PublicStorefront({
     }
     setMobileMenuOpen(false);
   };
-  const createLocalReceizId = async () => {
-    await actions.createReceizId();
-    setIdentityUploadVisible(false);
-    setMobileMenuOpen(false);
-  };
   const oneClickCheckout = async () => {
     await actions.startCheckout();
     setIdentityUploadVisible(false);
@@ -168,6 +163,7 @@ export function PublicStorefront({
                   products={state.products}
                   onAddToCart={addToCart}
                   showAdminActions={!tenantSurface}
+                  showCartActions={tenantSurface}
                 />
                 <PlayCampaign
                   campaignName={campaignName}
@@ -188,6 +184,7 @@ export function PublicStorefront({
                   products={state.products}
                   onAddToCart={addToCart}
                   showAdminActions={!tenantSurface}
+                  showCartActions={tenantSurface}
                 />
                 <BlogHighlights posts={state.blogPosts} showAdminActions={!tenantSurface} />
               </>
@@ -241,6 +238,7 @@ export function PublicStorefront({
                   products={state.products}
                   onAddToCart={addToCart}
                   showAdminActions={!tenantSurface}
+                  showCartActions={tenantSurface}
                 />
 
                 <BlogHighlights posts={state.blogPosts} showAdminActions={!tenantSurface} />
@@ -262,8 +260,6 @@ export function PublicStorefront({
           <aside className="right-rail">
             <ReceizIdAccess
               identityActionsReady={identityActionsReady}
-              onAttachPbiRecovery={actions.attachPbiRecovery}
-              onCreateReceizId={createLocalReceizId}
               onDownloadIdentitySeal={actions.downloadIdentitySealImage}
               onExistingReceizId={connectExistingReceizId}
               onRestoreArtifact={restoreIdentityArtifact}
@@ -277,12 +273,14 @@ export function PublicStorefront({
               reward={reward}
               showAdminActions={!tenantSurface}
             />
-            <CartSummaryPanel
-              onCheckout={oneClickCheckout}
-              onQuantityChange={actions.setCartProductQuantity}
-              onRemove={actions.removeFromCart}
-              summary={buildCartSummary(state)}
-            />
+            {tenantSurface ? (
+              <CartSummaryPanel
+                onCheckout={oneClickCheckout}
+                onQuantityChange={actions.setCartProductQuantity}
+                onRemove={actions.removeFromCart}
+                summary={buildCartSummary(state)}
+              />
+            ) : null}
             {tenantSurface ? null : <SealEvents events={state.proofEvents} />}
           </aside>
         </div>
@@ -291,7 +289,6 @@ export function PublicStorefront({
           customer={customer}
           customerReceizHandle={receizHandle}
           onAddToCart={addToCart}
-          onAttachPbiRecovery={actions.attachPbiRecovery}
           onCheckout={oneClickCheckout}
           onClaimReward={claimReward}
           onDownloadIdentitySeal={actions.downloadIdentitySealImage}
@@ -299,7 +296,6 @@ export function PublicStorefront({
           onQuantityChange={actions.setCartProductQuantity}
           onRemoveFromCart={actions.removeFromCart}
           onSeal={sealObject}
-          onCreateReceizId={createLocalReceizId}
           onExistingReceizId={connectExistingReceizId}
           onRestoreArtifact={restoreIdentityArtifact}
           showIdentityEntry={showIdentityEntry}
@@ -538,10 +534,8 @@ function MobileStage({
   campaignName,
   customer,
   onAddToCart,
-  onAttachPbiRecovery,
   onCheckout,
   onClaimReward,
-  onCreateReceizId,
   onDownloadIdentitySeal,
   onExistingReceizId,
   onIssueReward,
@@ -562,10 +556,8 @@ function MobileStage({
   customer: CustomerAccount;
   customerReceizHandle: string;
   onAddToCart: (productId: string) => void;
-  onAttachPbiRecovery: () => void | Promise<void>;
   onCheckout: () => void;
   onClaimReward: () => void;
-  onCreateReceizId: () => void | Promise<void>;
   onDownloadIdentitySeal: () => void | Promise<void>;
   onExistingReceizId: () => void | Promise<void>;
   onIssueReward: () => void;
@@ -607,8 +599,6 @@ function MobileStage({
         active={activeView === "assets"}
         assets={state.assets}
         customerReceizHandle={customerReceizHandle}
-        onAttachPbiRecovery={onAttachPbiRecovery}
-        onCreateReceizId={onCreateReceizId}
         onDownloadIdentitySeal={onDownloadIdentitySeal}
         onExistingReceizId={onExistingReceizId}
         onRestoreArtifact={onRestoreArtifact}
@@ -628,8 +618,6 @@ function MobileStage({
         customer={customer}
         customerReceizHandle={customerReceizHandle}
         onCheckout={onCheckout}
-        onAttachPbiRecovery={onAttachPbiRecovery}
-        onCreateReceizId={onCreateReceizId}
         onDownloadIdentitySeal={onDownloadIdentitySeal}
         onExistingReceizId={onExistingReceizId}
         onQuantityChange={onQuantityChange}
@@ -836,9 +824,11 @@ function MobileStorePanel({
                   <b>{product.priceLabel}</b>
                 </div>
               </Link>
-              <button aria-label={`Add ${product.name} to cart`} onClick={() => onAddToCart(product.id)} type="button">
-                <Icons.cart size={16} />
-              </button>
+              {tenantSurface ? (
+                <button aria-label={`Add ${product.name} to cart`} onClick={() => onAddToCart(product.id)} type="button">
+                  <Icons.cart size={16} />
+                </button>
+              ) : null}
             </article>
           ))
         ) : (
@@ -987,13 +977,11 @@ function MobileRewardsPanel({
 
 function MobileIdentityActions({
   inputId,
-  onCreateReceizId,
   onExistingReceizId,
   onRestoreArtifact,
   showIdentityUpload
 }: {
   inputId: string;
-  onCreateReceizId: () => void | Promise<void>;
   onExistingReceizId: () => void | Promise<void>;
   onRestoreArtifact: (file: File) => void | Promise<void>;
   showIdentityUpload: boolean;
@@ -1007,7 +995,6 @@ function MobileIdentityActions({
         <ReceizRecoveryPills
           className="mobile-identity-pills"
           inputId={inputId}
-          onPbiRecovery={onCreateReceizId}
           onRestoreArtifact={onRestoreArtifact}
         />
       ) : null}
@@ -1019,8 +1006,6 @@ function MobileAssetsPanel({
   active,
   assets,
   customerReceizHandle,
-  onAttachPbiRecovery,
-  onCreateReceizId,
   onDownloadIdentitySeal,
   onExistingReceizId,
   onRestoreArtifact,
@@ -1032,8 +1017,6 @@ function MobileAssetsPanel({
   active: boolean;
   assets: ReceizedAsset[];
   customerReceizHandle: string;
-  onAttachPbiRecovery: () => void | Promise<void>;
-  onCreateReceizId: () => void | Promise<void>;
   onDownloadIdentitySeal: () => void | Promise<void>;
   onExistingReceizId: () => void | Promise<void>;
   onRestoreArtifact: (file: File) => void | Promise<void>;
@@ -1056,7 +1039,6 @@ function MobileAssetsPanel({
       {showIdentityEntry ? (
         <MobileIdentityActions
           inputId="mobile-assets-receiz-identity-artifact"
-          onCreateReceizId={onCreateReceizId}
           onExistingReceizId={onExistingReceizId}
           onRestoreArtifact={onRestoreArtifact}
           showIdentityUpload={showIdentityUpload}
@@ -1066,13 +1048,11 @@ function MobileAssetsPanel({
         <>
           <ReceizAccountManagementPills
             className="mobile-identity-pills"
-            onAttachPbi={onAttachPbiRecovery}
             onDownloadIdentitySeal={onDownloadIdentitySeal}
           />
           <ReceizRecoveryPills
             className="mobile-identity-pills"
             inputId="mobile-assets-receiz-identity-switch"
-            onPbiRecovery={onCreateReceizId}
             onRestoreArtifact={onRestoreArtifact}
           />
         </>
@@ -1121,8 +1101,6 @@ function MobileAccountPanel({
   active,
   customer,
   customerReceizHandle,
-  onAttachPbiRecovery,
-  onCreateReceizId,
   onDownloadIdentitySeal,
   onExistingReceizId,
   onCheckout,
@@ -1137,8 +1115,6 @@ function MobileAccountPanel({
   active: boolean;
   customer: CustomerAccount;
   customerReceizHandle: string;
-  onAttachPbiRecovery: () => void | Promise<void>;
-  onCreateReceizId: () => void | Promise<void>;
   onDownloadIdentitySeal: () => void | Promise<void>;
   onExistingReceizId: () => void | Promise<void>;
   onCheckout: () => void;
@@ -1159,35 +1135,40 @@ function MobileAccountPanel({
     <MobilePane active={active} action={<StatusPill tone="green">{customer.tier}</StatusPill>} title="Account">
       <div className="mobile-account-card">
         <div className="avatar large-avatar">{customer.name.slice(0, 1)}</div>
-        <div>
-          <h3>{customer.name}</h3>
+        <div className="mobile-account-profile-copy">
+          <div className="mobile-account-name-line">
+            <h3>{customer.name}</h3>
+            <StatusPill tone="gold">{customer.rewardsValueLabel}</StatusPill>
+          </div>
           <p>{tenantSurface ? `Customer account for ${state.brand.name}` : customer.email}</p>
           <span><Icons.receiz size={15} /> {customerReceizHandle}</span>
+          <div className="mobile-account-metrics">
+            <span><strong>{customer.rewardsValueLabel}</strong>Rewards</span>
+            <span><strong>{customer.beans}</strong>Beans</span>
+            <span><strong>{customer.streak}</strong>Streak</span>
+          </div>
         </div>
+        {state.auth.receizId.connected ? (
+          <div className="mobile-account-seal-tools">
+            <ReceizAccountManagementPills
+              className="mobile-identity-pills"
+              onDownloadIdentitySeal={onDownloadIdentitySeal}
+            />
+            <ReceizRecoveryPills
+              className="mobile-identity-pills"
+              inputId="mobile-account-receiz-identity-switch"
+              onRestoreArtifact={onRestoreArtifact}
+            />
+          </div>
+        ) : null}
       </div>
       {showIdentityEntry ? (
         <MobileIdentityActions
           inputId="mobile-account-receiz-identity-artifact"
-          onCreateReceizId={onCreateReceizId}
           onExistingReceizId={onExistingReceizId}
           onRestoreArtifact={onRestoreArtifact}
           showIdentityUpload={showIdentityUpload}
         />
-      ) : null}
-      {state.auth.receizId.connected ? (
-        <>
-          <ReceizAccountManagementPills
-            className="mobile-identity-pills"
-            onAttachPbi={onAttachPbiRecovery}
-            onDownloadIdentitySeal={onDownloadIdentitySeal}
-          />
-          <ReceizRecoveryPills
-            className="mobile-identity-pills"
-            inputId="mobile-account-receiz-identity-switch"
-            onPbiRecovery={onCreateReceizId}
-            onRestoreArtifact={onRestoreArtifact}
-          />
-        </>
       ) : null}
       {tenantSurface ? (
         <div className="mobile-account-scope">
@@ -1232,18 +1213,14 @@ function MobileAccountPanel({
           </div>
         </div>
       ) : null}
-      <CartSummaryPanel
-        compact
-        onCheckout={onCheckout}
-        onQuantityChange={onQuantityChange}
-        onRemove={onRemoveFromCart}
-        summary={buildCartSummary(state)}
-      />
-      <div className="mobile-stat-row">
-        <div><strong>{customer.rewardsValueLabel}</strong><span>Rewards</span></div>
-        <div><strong>{customer.beans}</strong><span>Beans</span></div>
-        <div><strong>{customer.streak}</strong><span>Streak</span></div>
-      </div>
+      {tenantSurface ? (
+        <CartSummaryPanel
+          onCheckout={onCheckout}
+          onQuantityChange={onQuantityChange}
+          onRemove={onRemoveFromCart}
+          summary={buildCartSummary(state)}
+        />
+      ) : null}
       {tenantSurface ? null : (
         <Button className="mobile-admin-button" variant="outline" onClick={() => window.location.assign("/admin")}>
           Admin Studio

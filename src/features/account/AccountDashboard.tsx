@@ -141,7 +141,6 @@ export function AccountDashboard({
               </div>
               <ReceizRecoveryPills
                 inputId="account-receiz-identity-artifact"
-                onPbiRecovery={actions.createReceizId}
                 onRestoreArtifact={actions.restoreReceizIdentityArtifact}
               />
             </div>
@@ -149,12 +148,10 @@ export function AccountDashboard({
           {state.auth.receizId.connected ? (
             <div className="identity-login-stack">
               <ReceizAccountManagementPills
-                onAttachPbi={actions.attachPbiRecovery}
                 onDownloadIdentitySeal={actions.downloadIdentitySealImage}
               />
               <ReceizRecoveryPills
                 inputId="account-receiz-identity-switch"
-                onPbiRecovery={actions.createReceizId}
                 onRestoreArtifact={actions.restoreReceizIdentityArtifact}
               />
             </div>
@@ -287,6 +284,7 @@ export function AccountDashboard({
         products={state.products.slice(0, 4)}
         onAddToCart={actions.addToCart}
         showAdminActions={!tenantSurface}
+        showCartActions={tenantSurface}
       />
       <div className="account-bottom-powered">
         <PoweredByReceizBadge />

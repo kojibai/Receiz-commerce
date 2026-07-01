@@ -6,9 +6,7 @@ import { ReceizAccountManagementPills, ReceizRecoveryPills } from "@/features/st
 import type { ReceizIdState } from "@/types/domain";
 
 export function ReceizIdAccess({
-  onCreateReceizId,
   onExistingReceizId,
-  onAttachPbiRecovery,
   onDownloadIdentitySeal,
   onRestoreArtifact,
   identityActionsReady,
@@ -16,8 +14,6 @@ export function ReceizIdAccess({
   showUploadFallback
 }: {
   identityActionsReady: boolean;
-  onAttachPbiRecovery: () => void | Promise<void>;
-  onCreateReceizId: () => void | Promise<void>;
   onDownloadIdentitySeal: () => void | Promise<void>;
   onExistingReceizId: () => void | Promise<void>;
   onRestoreArtifact: (file: File) => void | Promise<void>;
@@ -44,7 +40,6 @@ export function ReceizIdAccess({
       </div>
       {receizId.connected ? (
         <ReceizAccountManagementPills
-          onAttachPbi={onAttachPbiRecovery}
           onDownloadIdentitySeal={onDownloadIdentitySeal}
         />
       ) : null}
@@ -56,7 +51,6 @@ export function ReceizIdAccess({
           {showUploadFallback ? (
             <ReceizRecoveryPills
               inputId="storefront-receiz-identity-artifact"
-              onPbiRecovery={onCreateReceizId}
               onRestoreArtifact={onRestoreArtifact}
             />
           ) : null}

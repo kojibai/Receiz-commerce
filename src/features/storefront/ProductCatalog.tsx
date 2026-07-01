@@ -10,15 +10,19 @@ export function ProductCatalog({
   brandImageUrl,
   brandLabel,
   showAdminActions = true,
+  showCartActions = true,
   products,
   onAddToCart
 }: {
   brandImageUrl?: string | null;
   brandLabel: string;
   showAdminActions?: boolean;
+  showCartActions?: boolean;
   products: Product[];
   onAddToCart: (productId: string) => void;
 }) {
+  const showProductActions = showAdminActions || showCartActions;
+
   return (
     <section className="panel catalog-panel" id="products">
       <SectionHeader
@@ -41,7 +45,7 @@ export function ProductCatalog({
           <span>Price</span>
           <span>Status</span>
           <span>Receiz</span>
-          {showAdminActions ? <span>Actions</span> : null}
+          {showProductActions ? <span>Actions</span> : null}
         </div>
         {products.slice(0, 4).map((product) => (
           <div className="table-row" key={product.id}>
@@ -58,18 +62,22 @@ export function ProductCatalog({
             <span className="verified-cell">
               <Icons.seal size={15} /> {product.sealed ? "Sealed" : "Ready"}
             </span>
-            {showAdminActions ? (
+            {showProductActions ? (
               <div className="row-actions">
-                <button
-                  aria-label={`Add ${product.name} to cart`}
-                  onClick={() => onAddToCart(product.id)}
-                  type="button"
-                >
-                  <Icons.cart size={15} />
-                </button>
-                <button aria-label={`Edit ${product.name}`} type="button">
-                  <Icons.sliders size={15} />
-                </button>
+                {showCartActions ? (
+                  <button
+                    aria-label={`Add ${product.name} to cart`}
+                    onClick={() => onAddToCart(product.id)}
+                    type="button"
+                  >
+                    <Icons.cart size={15} />
+                  </button>
+                ) : null}
+                {showAdminActions ? (
+                  <button aria-label={`Edit ${product.name}`} type="button">
+                    <Icons.sliders size={15} />
+                  </button>
+                ) : null}
               </div>
             ) : null}
           </div>
@@ -94,13 +102,15 @@ export function ProductCatalog({
               </Link>
               <div>
                 <span>{product.priceLabel}</span>
-                <button
-                  aria-label={`Add ${product.name} to cart`}
-                  onClick={() => onAddToCart(product.id)}
-                  type="button"
-                >
-                  <Icons.cart size={18} />
-                </button>
+                {showCartActions ? (
+                  <button
+                    aria-label={`Add ${product.name} to cart`}
+                    onClick={() => onAddToCart(product.id)}
+                    type="button"
+                  >
+                    <Icons.cart size={18} />
+                  </button>
+                ) : null}
               </div>
             </article>
           ))
