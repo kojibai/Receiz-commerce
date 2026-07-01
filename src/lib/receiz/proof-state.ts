@@ -275,21 +275,67 @@ export function isCommerceEventRecord(value: unknown): value is CommerceEventRec
   return isRecord(value) && value.schema === COMMERCE_EVENT_SCHEMA && isRecord(value.data);
 }
 
-export function storeStateRecordMatchesTenantHost(record: StoreStateRecord, tenantHost: string) {
-  const normalized = tenantHost.trim().toLowerCase();
-  return (
-    record.tenantHost === normalized ||
-    record.state.hosting.subdomain.toLowerCase() === normalized ||
-    record.state.hosting.customDomain.domain.toLowerCase() === normalized
+function normalizeHost(value?: string | null) {
+  return value?.trim().toLowerCase() ?? "";
+}
+
+function recordHostAliases(record: StoreStateRecord) {
+  return new Set(
+    [record.tenantHost, record.state.hosting.subdomain, record.state.hosting.customDomain.domain]
+      .map((host) => normalizeHost(host))
+      .filter(Boolean)
   );
 }
 
-export function storeStateProjectionSource(records: unknown[], tenantHost: string): "published" | "fallback" {
+function recordMatchesAnyHost(record: StoreStateRecord, aliases: Set<string>) {
+  for (const alias of recordHostAliases(record)) {
+    if (aliases.has(alias)) return true;
+  }
+
+  return false;
+}
+
+export function storeStateRecordHostAliases(record: StoreStateRecord) {
+  return [...recordHostAliases(record)];
+}
+
+export function storeStateTenantAliasSet(records: unknown[], tenantHost: string) {
+  const aliases = new Set([normalizeHost(tenantHost)].filter(Boolean));
+  let changed = true;
+
+  while (changed) {
+    changed = false;
+
+    for (const record of records.filter(isStoreStateRecord)) {
+      if (!recordMatchesAnyHost(record, aliases)) continue;
+
+      for (const alias of recordHostAliases(record)) {
+        if (!aliases.has(alias)) {
+          aliases.add(alias);
+          changed = true;
+        }
+      }
+    }
+  }
+
+  return aliases;
+}
+
+export function storeStateRecordsForTenantHost(records: unknown[], tenantHost: string) {
+  const aliases = storeStateTenantAliasSet(records, tenantHost);
+
   return records
     .filter(isStoreStateRecord)
-    .some((record) => storeStateRecordMatchesTenantHost(record, tenantHost))
-    ? "published"
-    : "fallback";
+    .filter((record) => recordMatchesAnyHost(record, aliases));
+}
+
+export function storeStateRecordMatchesTenantHost(record: StoreStateRecord, tenantHost: string) {
+  const normalized = tenantHost.trim().toLowerCase();
+  return recordHostAliases(record).has(normalized);
+}
+
+export function storeStateProjectionSource(records: unknown[], tenantHost: string): "published" | "fallback" {
+  return storeStateRecordsForTenantHost(records, tenantHost).length ? "published" : "fallback";
 }
 
 export function projectStoreStateFromRecords(
@@ -297,9 +343,7 @@ export function projectStoreStateFromRecords(
   records: unknown[],
   tenantHost: string
 ): CommerceState {
-  const latest = records
-    .filter(isStoreStateRecord)
-    .filter((record) => storeStateRecordMatchesTenantHost(record, tenantHost))
+  const latest = storeStateRecordsForTenantHost(records, tenantHost)
     .sort((left, right) => compareStoreStateKaiUpulse(right.updatedKaiUpulse, left.updatedKaiUpulse))[0];
 
   if (!latest) return baseState;
@@ -327,10 +371,6 @@ export function projectStoreStateFromRecords(
     },
     proofEvents: []
   };
-}
-
-function normalizeHost(value?: string | null) {
-  return value?.trim().toLowerCase() ?? "";
 }
 
 function commerceTenantAliases(state: CommerceState, tenantHost: string) {

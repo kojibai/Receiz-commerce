@@ -18,6 +18,7 @@ import { checkoutTenantHost } from "@/lib/checkout/checkout-request";
 import type { CommerceImportInput, CommerceImportResult } from "@/lib/import/commerce-importer";
 import { selectClientInitialState } from "@/lib/storage/client-state";
 import { safeGetLocalStorage, safeRemoveLocalStorage, safeSetLocalStorage } from "@/lib/storage/browser-storage";
+import { mergeCustomDomainHostingResponse } from "@/lib/storage/hosting-response";
 import { pendingPublishStorageKey, shouldResumePendingPublish } from "@/lib/storage/pending-publish";
 import { mergeStoreApiProjection, mergeStoreCommerceProjection } from "@/lib/storefront/store-api-projection";
 import { applyLocalReceizIdentitySession } from "@/lib/storefront/local-identity-session";
@@ -1679,7 +1680,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
           });
           setState((current) => ({
             ...current,
-            hosting: result.hosting,
+            hosting: mergeCustomDomainHostingResponse(current.hosting, result.hosting),
             proofEvents: [
               makeEvent("DOMAIN_CONNECTED", `${result.hosting.customDomain.message ?? normalizedDomain} · ${result.hosting.customDomain.status}`),
               ...current.proofEvents
@@ -1748,7 +1749,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
           });
           setState((current) => ({
             ...current,
-            hosting: result.hosting,
+            hosting: mergeCustomDomainHostingResponse(current.hosting, result.hosting),
             proofEvents: [
               makeEvent("DOMAIN_CONNECTED", `${result.hosting.customDomain.message ?? normalizedDomain} · ${result.hosting.customDomain.status}`),
               ...current.proofEvents

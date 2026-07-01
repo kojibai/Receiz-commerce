@@ -270,6 +270,64 @@ describe("Receiz proof commerce state", () => {
     assert.equal(projectStoreStateFromRecords(baseState(), [record], "bjklock.receiz.app").brand.name, "BJK Lock Store");
   });
 
+  it("projects the newest subdomain append through a custom-domain alias learned from proof history", () => {
+    const oldState = {
+      ...baseState(),
+      brand: { ...baseState().brand, name: "Old custom domain store" },
+      hosting: {
+        ...baseState().hosting,
+        tenantSlug: "bjklock",
+        subdomain: "bjklock.receiz.app",
+        liveUrl: "https://shop.bjklock.com",
+        customDomain: {
+          ...baseState().hosting.customDomain,
+          domain: "shop.bjklock.com",
+          liveUrl: "https://shop.bjklock.com",
+          status: "active" as const,
+          sslStatus: "valid" as const,
+          verified: true,
+          dnsResolved: true
+        }
+      }
+    };
+    const latestSubdomainState = {
+      ...oldState,
+      brand: { ...oldState.brand, name: "Latest saved subdomain store" },
+      hosting: {
+        ...oldState.hosting,
+        liveUrl: "https://bjklock.receiz.app",
+        customDomain: {
+          ...baseState().hosting.customDomain,
+          domain: "",
+          liveUrl: "",
+          status: "pending" as const,
+          sslStatus: "pending" as const,
+          verified: false,
+          dnsResolved: false
+        }
+      },
+      products: [{ ...oldState.products[0], id: "latest-product", name: "Latest product" }]
+    };
+    const oldRecord = buildStoreStateRecord(oldState, {
+      actorReceizId: "bjklock.receiz.id",
+      tenantHost: "shop.bjklock.com",
+      reason: "publish",
+      ...receizAppendFixture("2026-06-30T00:04:00.000Z")
+    });
+    const latestRecord = buildStoreStateRecord(latestSubdomainState, {
+      actorReceizId: "bjklock.receiz.id",
+      tenantHost: "bjklock.receiz.app",
+      reason: "publish",
+      ...receizAppendFixture("2026-06-30T00:05:00.000Z")
+    });
+
+    const projected = projectStoreStateFromRecords(baseState(), [oldRecord, latestRecord], "shop.bjklock.com");
+
+    assert.equal(projected.brand.name, "Latest saved subdomain store");
+    assert.equal(projected.products[0]?.name, "Latest product");
+    assert.equal(projected.hosting.subdomain, "bjklock.receiz.app");
+  });
+
   it("preserves the submitted merchant host when building a published state", () => {
     const savedImageUrl =
       "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=";

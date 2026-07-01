@@ -1,6 +1,8 @@
 import {
   isStoreStateRecord,
+  storeStateRecordHostAliases,
   storeStateRecordMatchesTenantHost,
+  storeStateRecordsForTenantHost,
   type StoreStateRecord
 } from "./proof-state";
 import type { ProofStateStore } from "./proof-state-store";
@@ -43,7 +45,7 @@ export function extractStoreStateRecords(value: unknown): StoreStateRecord[] {
   return uniqueRecords(collectStoreStateRecords(value));
 }
 
-async function recoverReceizPublicProofStoreStateRecords(tenantHost: string) {
+async function recoverReceizPublicProofStoreStateRecordsForHost(tenantHost: string) {
   const { createReceizCommerceAdapter } = await import("./adapter");
   const receiz = createReceizCommerceAdapter({
     baseUrl: process.env.RECEIZ_BASE_URL
@@ -81,7 +83,32 @@ async function recoverReceizPublicProofStoreStateRecords(tenantHost: string) {
     }
   }
 
-  return records.filter((record) => storeStateRecordMatchesTenantHost(record, tenantHost));
+  return records;
+}
+
+async function recoverReceizPublicProofStoreStateRecords(tenantHost: string) {
+  const normalizedHost = tenantHost.trim().toLowerCase();
+  const queue = [normalizedHost];
+  const queued = new Set(queue);
+  const records: StoreStateRecord[] = [];
+
+  while (queue.length) {
+    const host = queue.shift();
+    if (!host) continue;
+
+    records.push(...(await recoverReceizPublicProofStoreStateRecordsForHost(host)));
+
+    for (const record of storeStateRecordsForTenantHost(records, tenantHost)) {
+      for (const alias of storeStateRecordHostAliases(record)) {
+        if (!queued.has(alias) && queued.size < 12) {
+          queued.add(alias);
+          queue.push(alias);
+        }
+      }
+    }
+  }
+
+  return storeStateRecordsForTenantHost(uniqueRecords(records), tenantHost);
 }
 
 export async function recoverReceizStoreStateRecords(tenantHost: string) {
@@ -94,11 +121,7 @@ export async function recoverReceizStoreStateRecords(tenantHost: string) {
     });
     const ledger = await receiz.actionLedger({ limit: ledgerLimit() });
 
-    records.push(
-      ...extractStoreStateRecords(ledger).filter((record) =>
-        storeStateRecordMatchesTenantHost(record, tenantHost)
-      )
-    );
+    records.push(...storeStateRecordsForTenantHost(extractStoreStateRecords(ledger), tenantHost));
   } catch {
     // The public action ledger is additive only. Public-proof recovery below is the durable storefront path.
   }
@@ -118,12 +141,9 @@ export async function admitRecoveredStoreStateRecords(
   recovered: StoreStateRecord[]
 ) {
   const knownRecordIds = new Set(
-    proofStore
-      .records()
-      .filter((record) => isStoreStateRecord(record) && storeStateRecordMatchesTenantHost(record, tenantHost))
-      .map((record) => record.id)
+    storeStateRecordsForTenantHost(proofStore.records(), tenantHost).map((record) => record.id)
   );
-  const matchingRecords = recovered.filter((record) => storeStateRecordMatchesTenantHost(record, tenantHost));
+  const matchingRecords = storeStateRecordsForTenantHost(recovered, tenantHost);
   let admitted = 0;
 
   for (const record of matchingRecords) {
