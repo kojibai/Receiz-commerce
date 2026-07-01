@@ -24,10 +24,11 @@
     "start": "next start",
     "test": "tsc -p tsconfig.test.json && node scripts/patch-test-imports.mjs && node --test .test-build/tests/*.test.js",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "receiz:doctor": "node scripts/receiz-doctor.mjs"
   },
   "dependencies": {
-    "@receiz/sdk": "^97.3.0",
+    "@receiz/sdk": "^97.5.0",
     "lucide-react": "^0.468.0",
     "next": "^15.0.0",
     "react": "^19.0.0",

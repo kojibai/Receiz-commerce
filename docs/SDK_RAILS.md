@@ -61,7 +61,7 @@ SDK rails:
 - `merchants.profile`
 - `merchants.capabilities`
 
-These rails are exposed in `@receiz/sdk@97.3.0`. The app treats customer accounts as tenant-scoped storefront accounts: the same Receiz ID can authenticate on multiple stores, but orders, rewards, assets, and permissions are projected for the active subdomain or custom domain only. SDK `doctor()` reports delegated-token, tenant, customer, merchant, commerce, media, domain, and public-store requirements directly.
+These rails are exposed in `@receiz/sdk@97.5.0`. The app treats customer accounts as tenant-scoped storefront accounts: the same Receiz ID can authenticate on multiple stores, but orders, rewards, assets, and permissions are projected for the active subdomain or custom domain only. SDK `doctor()` reports delegated-token, tenant, customer, merchant, commerce, media, domain, and public-store requirements directly.
 
 ## Merchant Settlement
 
@@ -180,4 +180,4 @@ Receiz Twin/World buttons are hidden unless both are true:
 - The relevant `NEXT_PUBLIC_RECEIZ_*_ENABLED` flag is set.
 - The installed `@receiz/sdk` client exposes the matching namespace.
 
-With `@receiz/sdk@97.3.0`, typed app-state, public-store, Twin, World, commerce runtime, domain, customer, merchant, media, portability, and release namespaces are exposed. The publish path uploads inline merchant media with `media.upload()` before writing state with `publicStore.publish()`, so published subdomains and custom domains render durable Receiz media URLs instead of stripped local data URLs. The frontend still hides optional Twin/World buttons when the matching env flag is disabled.
+With `@receiz/sdk@97.5.0`, typed app-state, public-store, Twin, World, commerce runtime, domain, customer, merchant, media, portability, and release namespaces are exposed. The publish path uploads inline merchant media with `media.upload()` before writing state with `publicStore.publish()`, so published subdomains and custom domains render durable Receiz media URLs instead of stripped local data URLs. The frontend still hides optional Twin/World buttons when the matching env flag is disabled.

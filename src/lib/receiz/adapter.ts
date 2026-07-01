@@ -20,11 +20,15 @@ import {
   type ReceizClient,
   type ReceizClientOptions,
   type ReceizCommerceRuntimeRequest,
+  type ReceizCustomerSessionBootstrapRequest,
+  type ReceizCustomerSessionBootstrapResponse,
   type ReceizCustomerSessionRequest,
   type ReceizDeviceIdentity,
   type ReceizDoctorReport,
   type ReceizIdContinueRequest,
   type ReceizIdempotencyOptions,
+  type ReceizEnsureTenantSessionInput,
+  type ReceizEnsureTenantSessionResult,
   type ReceizIdentityAccountProjection,
   type ReceizIdentityLoginProof,
   type ReceizJobRequest,
@@ -105,6 +109,7 @@ export type ReceizCommerceAdapter = {
     signatureB64Url: string;
   }): Promise<boolean>;
   continueReceizId(identity: ReceizDeviceIdentity, next?: string): Promise<JsonObject>;
+  ensureTenantSession(input: ReceizEnsureTenantSessionInput): ReceizEnsureTenantSessionResult;
   createProofRegister(ownerId?: string): ReceizProofRegister;
   createProofMemory(options?: ReceizProofMemoryOptions): Promise<ReceizProofMemory>;
   proofMemoryAdditionsQuery(
@@ -130,6 +135,10 @@ export type ReceizCommerceAdapter = {
   twinApproval(): Promise<TwinApprovalResponse>;
   approveTwinPromotion(body: TwinPromotionApprovalInput): Promise<TwinApprovalResponse>;
   oneClickCheckout(body: ReceizOneClickCheckoutRequest): Promise<ReceizOneClickCheckoutResponse>;
+  customerBootstrapSession(
+    body: ReceizCustomerSessionBootstrapRequest,
+    idempotencyKey?: string
+  ): Promise<ReceizCustomerSessionBootstrapResponse>;
   customerSession(body: ReceizCustomerSessionRequest, idempotencyKey?: string): Promise<JsonObject>;
   customerPortal(body: ReceizTenantRuntimeRequest): Promise<JsonObject>;
   customerOrders(query?: ReceizSearchRequest): Promise<JsonObject>;
@@ -153,9 +162,26 @@ export type ReceizCommerceAdapter = {
     options?: { schema?: string; state?: string; requiredDataKey?: string }
   ): Promise<import("@receiz/sdk").ReceizAppStateRestoreResult<TData>>;
   createRefund(body: ReceizCommerceRuntimeRequest, options?: ReceizIdempotencyOptions): Promise<JsonObject>;
+  createSubscription(body: ReceizCommerceRuntimeRequest, options?: ReceizIdempotencyOptions): Promise<JsonObject>;
+  cancelSubscription(
+    subscriptionId: string,
+    body: ReceizCommerceRuntimeRequest,
+    options?: ReceizIdempotencyOptions
+  ): Promise<JsonObject>;
   reserveInventory(body: ReceizCommerceRuntimeRequest, options?: ReceizIdempotencyOptions): Promise<JsonObject>;
+  adjustInventory(body: ReceizCommerceRuntimeRequest, options?: ReceizIdempotencyOptions): Promise<JsonObject>;
   quoteShipping(body: ReceizCommerceRuntimeRequest): Promise<JsonObject>;
+  updateShipping(body: ReceizCommerceRuntimeRequest, options?: ReceizIdempotencyOptions): Promise<JsonObject>;
   quoteTax(body: ReceizCommerceRuntimeRequest): Promise<JsonObject>;
+  createDiscount(body: ReceizCommerceRuntimeRequest, options?: ReceizIdempotencyOptions): Promise<JsonObject>;
+  redeemDiscount(body: ReceizCommerceRuntimeRequest, options?: ReceizIdempotencyOptions): Promise<JsonObject>;
+  issueGiftCard(body: ReceizCommerceRuntimeRequest, options?: ReceizIdempotencyOptions): Promise<JsonObject>;
+  redeemGiftCard(body: ReceizCommerceRuntimeRequest, options?: ReceizIdempotencyOptions): Promise<JsonObject>;
+  issueAccessPass(body: ReceizCommerceRuntimeRequest, options?: ReceizIdempotencyOptions): Promise<JsonObject>;
+  verifyAccessPass(body: ReceizCommerceRuntimeRequest): Promise<JsonObject>;
+  updateFulfillment(body: ReceizCommerceRuntimeRequest, options?: ReceizIdempotencyOptions): Promise<JsonObject>;
+  createPayout(body: ReceizCommerceRuntimeRequest, options?: ReceizIdempotencyOptions): Promise<JsonObject>;
+  payoutStatus(query?: { tenantHost?: string; payoutId?: string }): Promise<JsonObject>;
   auditAppend(body: ReceizAuditAppendRequest, options?: ReceizIdempotencyOptions): Promise<JsonObject>;
   searchProducts(body: ReceizSearchRequest): Promise<JsonObject>;
   enqueueJob(body: ReceizJobRequest): Promise<JsonObject>;
@@ -344,7 +370,7 @@ export function createReceizCommerceAdapter(
           needsToken("twin", "Delegated Twin mandates, intents, mind import/export, and promotion approval"),
           needsTenantToken("customers", "Tenant-scoped customer sessions, orders, rewards, and assets"),
           needsTenantToken("merchants", "Merchant onboarding, profile, and runtime capability checks"),
-          capabilityStatus("commerce", "commerce", "One-click checkout, refunds, inventory, shipping, tax, and payouts"),
+          capabilityStatus("commerce", "commerce", "One-click checkout, refunds, subscriptions, discounts, inventory, fulfillment, tax, and payouts"),
           capabilityStatus("rewards", "rewards", "Receiz reward routes and benefit state"),
           capabilityStatus("media", "media", "Receiz media uploads and transformations"),
           capabilityStatus("domains", "domains", "Subdomain, custom-domain, and tenant resolution helpers"),
@@ -413,6 +439,9 @@ export function createReceizCommerceAdapter(
     continueReceizId(identity, next) {
       return client.identity.continueReceizId(identity, { next });
     },
+    ensureTenantSession(input) {
+      return client.identity.ensureTenantSession(input);
+    },
     createProofRegister(ownerId) {
       return client.proofMemory.createRegister({ ownerId });
     },
@@ -479,6 +508,9 @@ export function createReceizCommerceAdapter(
     oneClickCheckout(body) {
       return client.commerce.oneClickCheckout(body);
     },
+    customerBootstrapSession(body, idempotencyKey) {
+      return client.customers.bootstrapSession(body, { idempotencyKey });
+    },
     customerSession(body, idempotencyKey) {
       return client.customers.session(body, { idempotencyKey });
     },
@@ -539,14 +571,53 @@ export function createReceizCommerceAdapter(
     createRefund(body, options) {
       return client.commerce.refunds.create(body, options);
     },
+    createSubscription(body, options) {
+      return client.commerce.subscriptions.create(body, options);
+    },
+    cancelSubscription(subscriptionId, body, options) {
+      return client.commerce.subscriptions.cancel(subscriptionId, body, options);
+    },
     reserveInventory(body, options) {
       return client.commerce.inventory.reserve(body, options);
+    },
+    adjustInventory(body, options) {
+      return client.commerce.inventory.adjust(body, options);
     },
     quoteShipping(body) {
       return client.commerce.shipping.quote(body);
     },
+    updateShipping(body, options) {
+      return client.commerce.shipping.update(body, options);
+    },
     quoteTax(body) {
       return client.commerce.tax.quote(body);
+    },
+    createDiscount(body, options) {
+      return client.commerce.discounts.create(body, options);
+    },
+    redeemDiscount(body, options) {
+      return client.commerce.discounts.redeem(body, options);
+    },
+    issueGiftCard(body, options) {
+      return client.commerce.giftCards.issue(body, options);
+    },
+    redeemGiftCard(body, options) {
+      return client.commerce.giftCards.redeem(body, options);
+    },
+    issueAccessPass(body, options) {
+      return client.commerce.accessPasses.issue(body, options);
+    },
+    verifyAccessPass(body) {
+      return client.commerce.accessPasses.verify(body);
+    },
+    updateFulfillment(body, options) {
+      return client.commerce.fulfillment.update(body, options);
+    },
+    createPayout(body, options) {
+      return client.commerce.payouts.create(body, options);
+    },
+    payoutStatus(query) {
+      return client.commerce.payouts.status(query);
     },
     auditAppend(body, options) {
       return client.audit.append(body, options);

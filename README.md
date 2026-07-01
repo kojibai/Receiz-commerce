@@ -118,6 +118,36 @@ OIDC registration:
 - Public client: leave unchecked for this Vercel/Next.js app.
 - Client secret: keep server-only in `RECEIZ_CLIENT_SECRET`.
 - PKCE: still used through `/api/auth/receiz/start`.
+- Scopes: use the full Receiz Commerce Cloud scope set:
+
+```txt
+email
+offline_access
+openid
+profile
+receiz:app_state.read
+receiz:app_state.write
+receiz:domains.read
+receiz:domains.write
+receiz:media.read
+receiz:media.write
+receiz:notes.claim
+receiz:notes.mint
+receiz:notes.read
+receiz:payments.create
+receiz:payments.read
+receiz:public_store.read
+receiz:public_store.write
+receiz:record
+receiz:seal
+receiz:twin.read
+receiz:twin.write
+receiz:verify
+receiz:wallet.read
+receiz:wallet.transfer
+receiz:world.read
+receiz:world.write
+```
 - Browser-only, mobile, or static forks should register a separate public client.
 
 Set these required environment variables in Vercel:
@@ -234,15 +264,16 @@ RECEIZ_CUSTOM_DOMAIN_PLAN_ID=
 RECEIZ_HOSTING_PRO_PLAN_ID=
 ```
 
-Optional Receiz Twin/World content assistance:
+Receiz Twin/World content assistance:
 
 ```bash
-NEXT_PUBLIC_RECEIZ_TWIN_ENABLED=false
-NEXT_PUBLIC_RECEIZ_WORLD_ENABLED=false
-RECEIZ_ENABLE_TWIN_SCOPES=false
+NEXT_PUBLIC_RECEIZ_TWIN_ENABLED=true
+NEXT_PUBLIC_RECEIZ_WORLD_ENABLED=true
+RECEIZ_ENABLE_TWIN_SCOPES=true
+RECEIZ_ENABLE_WORLD_SCOPES=true
 ```
 
-`@receiz/sdk@97.3.0` exposes typed Twin, World, public-store, customer, merchant, commerce, media, and domain namespaces. Keep the Twin flags disabled until the Receiz OIDC client has `receiz:twin.read` plus `receiz:twin.write` enabled. The frontend hides Receiz Twin buttons unless the capability flag is enabled and the SDK namespace is present. `RECEIZ_ENABLE_TWIN_SCOPES=true` should only be set after those scopes are accepted by the Receiz OIDC client; otherwise login will fail with `invalid_scope`.
+`@receiz/sdk@97.5.0` exposes typed Twin, World, public-store, customer, merchant, commerce, media, and domain namespaces. The frontend hides Receiz Twin buttons unless the capability flag is enabled and the SDK namespace is present. If you are testing against an older Receiz OIDC client, set `RECEIZ_ENABLE_TWIN_SCOPES=false` or `RECEIZ_ENABLE_WORLD_SCOPES=false` before login so Receiz does not reject the authorization request with `invalid_scope`.
 
 Do not add a Receiz access token for normal OIDC login. The setup is:
 
@@ -262,6 +293,32 @@ Only set one of these if Receiz explicitly gives you a static app-level or servi
 RECEIZ_ACCESS_TOKEN=
 RECEIZ_CONNECT_ACCESS_TOKEN=
 ```
+
+### SDK Doctor And MCP
+
+Run the local SDK doctor before shipping or debugging auth/domain/publish issues:
+
+```bash
+pnpm receiz:doctor
+```
+
+The script prints SDK version, requested scopes, callback URL, tenant host, missing rails, warnings, and whether a delegated token is present. It never prints token values.
+
+For MCP-capable agents such as Codex, add Receiz as an MCP server in the agent config:
+
+```toml
+[mcp_servers.receiz]
+command = "npx"
+args = ["-y", "@receiz/mcp-server@97.5.0"]
+startup_timeout_sec = 120
+
+[mcp_servers.receiz.env]
+RECEIZ_BASE_URL = "https://receiz.com"
+# Required only for publish/write MCP tools:
+# RECEIZ_ACCESS_TOKEN = "delegated_agent_access_token"
+```
+
+Without `RECEIZ_ACCESS_TOKEN`, MCP should still be able to run public diagnostics and public resolve/read tools. With a delegated token, MCP can publish/resolve app state, write public-store projections, verify assets, inspect proof objects, and make agent-driven setup much faster.
 
 `VERCEL_*` values are only for deployment/custom-domain automation if Vercel is hosting the SaaS. They are not commerce, payment, identity, or proof rails. After changing the production domain, update `NEXT_PUBLIC_SITE_URL` and `RECEIZ_ID_CALLBACK_URL` so Receiz ID redirect URLs use the correct origin. Never expose access tokens, webhook secrets, client secrets, or `VERCEL_API_TOKEN` with a `NEXT_PUBLIC_` prefix.
 

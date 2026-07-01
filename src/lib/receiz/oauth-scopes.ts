@@ -26,6 +26,8 @@ const RECEIZ_APP_RAILS: ReceizRailScopeKey[] = [
 ];
 
 const RECEIZ_NOTE_SCOPES = ["receiz:notes.mint", "receiz:notes.claim", "receiz:notes.read"];
+const RECEIZ_WORLD_OIDC_SCOPES = ["receiz:world.read", "receiz:world.write"];
+export const RECEIZ_TWIN_OIDC_SCOPES = ["receiz:twin.read", "receiz:twin.write"];
 
 function uniqueScopes(scopes: string[]) {
   return Array.from(new Set(scopes));
@@ -34,19 +36,21 @@ function uniqueScopes(scopes: string[]) {
 export const RECEIZ_BASE_OIDC_SCOPES = [
   "offline_access",
   ...receizOidcScopesForRails(...RECEIZ_APP_RAILS),
-  ...RECEIZ_NOTE_SCOPES
+  ...RECEIZ_NOTE_SCOPES,
+  ...RECEIZ_WORLD_OIDC_SCOPES,
+  ...RECEIZ_TWIN_OIDC_SCOPES
 ];
 
-export const RECEIZ_TWIN_OIDC_SCOPES = ["receiz:twin.read", "receiz:twin.write"];
-
-function enabled(value: string | undefined) {
-  return value === "1" || value === "true";
+function disabled(value: string | undefined) {
+  return value === "0" || value === "false";
 }
 
 export function receizOidcScopesFromEnv(env: Partial<Record<string, string | undefined>>) {
-  const scopes = enabled(env.RECEIZ_ENABLE_TWIN_SCOPES)
-    ? [...RECEIZ_BASE_OIDC_SCOPES, ...RECEIZ_TWIN_OIDC_SCOPES]
-    : RECEIZ_BASE_OIDC_SCOPES;
+  const scopes = RECEIZ_BASE_OIDC_SCOPES.filter((scope) => {
+    if (scope.startsWith("receiz:twin.")) return !disabled(env.RECEIZ_ENABLE_TWIN_SCOPES);
+    if (scope.startsWith("receiz:world.")) return !disabled(env.RECEIZ_ENABLE_WORLD_SCOPES);
+    return true;
+  });
 
   return uniqueScopes(scopes);
 }
