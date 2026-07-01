@@ -102,6 +102,18 @@ describe("launch readiness", () => {
     assert.ok(readiness.audiences[1]?.summary.includes("@receiz/sdk"));
   });
 
+  it("points production operators at the isolated release check", () => {
+    const readiness = buildLaunchReadiness(readyState());
+    const productionOps = readiness.categories.find((category) => category.id === "production_ops");
+
+    assert.ok(productionOps);
+    assert.equal(productionOps.actionLabel, "Run pnpm release:check before deploy.");
+    assert.deepEqual(readiness.nextActions, [
+      "Run pnpm release:check before production deploy.",
+      "Publish the store-state record through Receiz after merchant edits."
+    ]);
+  });
+
   it("surfaces clear blockers for a new incomplete merchant store", () => {
     const draft = readyState();
     draft.hosting.published = false;

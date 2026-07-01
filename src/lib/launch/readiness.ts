@@ -162,8 +162,7 @@ function nextActionsFor(categories: LaunchReadinessCategory[], blockers: LaunchR
   return actions.length > 0
     ? actions.slice(0, 4)
     : [
-        "Run pnpm receiz:doctor before production deploy.",
-        "Run pnpm test and pnpm typecheck before publishing clone changes.",
+        "Run pnpm release:check before production deploy.",
         "Publish the store-state record through Receiz after merchant edits."
       ];
 }
@@ -335,8 +334,8 @@ export function buildLaunchReadiness(state: CommerceState): LaunchReadiness {
     category({
       id: "production_ops",
       label: "Production operations",
-      summary: "Publish state, recovery, PWA safety, and release checks are visible before launch.",
-      readyAction: "Run release checks before deploy.",
+      summary: "Publish state, recovery, PWA safety, and isolated release checks are visible before launch.",
+      readyAction: "Run pnpm release:check before deploy.",
       checks: [
         {
           id: "publish",
@@ -353,9 +352,9 @@ export function buildLaunchReadiness(state: CommerceState): LaunchReadiness {
         },
         {
           id: "release_checks",
-          label: "Release verification commands are documented",
+          label: "Isolated release check is documented",
           complete: true,
-          actionLabel: "Run pnpm test, pnpm typecheck, and pnpm receiz:doctor."
+          actionLabel: "Run pnpm release:check before deploy."
         }
       ]
     })

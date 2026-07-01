@@ -41,7 +41,7 @@ Required checks:
 - `@receiz/sdk` stays the only SDK boundary.
 - OIDC scopes include public-store, app-state, wallet, payments, domains, media, Twin/World, record, seal, and verify rails.
 - New Receiz calls are added through the adapter, not scattered across components.
-- `pnpm receiz:doctor` reports no missing rails or warnings for the target tenant.
+- `pnpm release:check` reports no type, lint, build, test, or Receiz doctor failures for the target tenant.
 
 ### 2. No-Code Merchant Setup
 
@@ -173,17 +173,19 @@ Required checks:
 
 ## Release Commands
 
-Run these before shipping:
+Run this before shipping:
 
 ```bash
-pnpm test
-pnpm typecheck
-pnpm receiz:doctor
+pnpm release:check
 ```
 
-For tenant-specific checks:
+`pnpm release:check` runs tests, typecheck, lint, a guarded production build, and Receiz doctor in order.
+`pnpm dev`, `pnpm start`, and `pnpm build` use `scripts/next-runtime-guard.mjs` so a local Next runtime cannot share `.next` with a release build.
+
+For tenant-specific checks, pass the tenant host through the release gate or doctor:
 
 ```bash
+RECEIZ_DOCTOR_TENANT_HOST=boost.receiz.app pnpm release:check
 RECEIZ_DOCTOR_TENANT_HOST=boost.receiz.app pnpm receiz:doctor
 ```
 

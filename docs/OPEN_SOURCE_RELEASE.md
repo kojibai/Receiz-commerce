@@ -4,9 +4,7 @@ Use this before tagging or announcing the public template.
 
 ## Required Gates
 
-- `pnpm typecheck`
-- `pnpm lint`
-- `pnpm build`
+- `pnpm release:check`
 - Mobile admin visual QA at 390px and 430px widths
 - Tenant storefront QA on a subdomain host
 - Platform admin QA on `receiz.app`
@@ -35,6 +33,11 @@ Use this before tagging or announcing the public template.
 - `.vercel` ignored and not committed
 - No screenshots or generated artifacts that contain secrets
 - Package name, description, and README match the public project
+
+## Local Runtime Safety
+
+`pnpm dev`, `pnpm start`, and `pnpm build` are routed through `scripts/next-runtime-guard.mjs`.
+Stop the local dev or production preview server before running `pnpm release:check` so the production build has exclusive access to `.next`.
 
 ## Receiz SDK Rails Demonstrated
 
