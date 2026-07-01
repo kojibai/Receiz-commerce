@@ -3,7 +3,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BrandMark, StatusPill } from "@/components/ui";
 import { resolveBlogPostBySlug } from "@/lib/storefront/content-routing";
+import { shouldHydratePlatformMerchantRoute } from "@/lib/storefront/platform-merchant-route";
 import { loadStorefrontState, type StorefrontSearchParams } from "@/lib/storefront/server-state";
+import { PlatformMerchantBlogRoute } from "@/features/storefront/PlatformMerchantRoutes";
 
 type BlogPageProps = {
   params: Promise<{ slug: string }>;
@@ -33,8 +35,12 @@ export async function generateMetadata({ params, searchParams }: BlogPageProps):
 
 export default async function BlogDetailPage({ params, searchParams }: BlogPageProps) {
   const { slug } = await params;
-  const { state } = await loadStorefrontState(await searchParams);
+  const { hostContext, state } = await loadStorefrontState(await searchParams);
   const post = resolveBlogPostBySlug(state, slug);
+
+  if (shouldHydratePlatformMerchantRoute(hostContext, Boolean(post))) {
+    return <PlatformMerchantBlogRoute initialHostContext={hostContext} initialState={state} slug={slug} />;
+  }
 
   if (!post) notFound();
 

@@ -4,6 +4,8 @@ import { notFound } from "next/navigation";
 import { BrandMark, ProductVisual, StatusPill } from "@/components/ui";
 import { loadStorefrontState, type StorefrontSearchParams } from "@/lib/storefront/server-state";
 import { resolveProductBySlug } from "@/lib/storefront/content-routing";
+import { shouldHydratePlatformMerchantRoute } from "@/lib/storefront/platform-merchant-route";
+import { PlatformMerchantProductRoute } from "@/features/storefront/PlatformMerchantRoutes";
 import { ProductDetailBottomNav } from "@/features/storefront/ProductDetailBottomNav";
 import { ProductPurchasePanel } from "@/features/storefront/ProductPurchasePanel";
 
@@ -37,6 +39,10 @@ export default async function ProductDetailPage({ params, searchParams }: Produc
   const { slug } = await params;
   const { hostContext, state } = await loadStorefrontState(await searchParams);
   const product = resolveProductBySlug(state, slug);
+
+  if (shouldHydratePlatformMerchantRoute(hostContext, Boolean(product))) {
+    return <PlatformMerchantProductRoute initialHostContext={hostContext} initialState={state} slug={slug} />;
+  }
 
   if (!product) notFound();
 
