@@ -114,6 +114,62 @@ describe("launch readiness", () => {
     ]);
   });
 
+  it("builds a sequenced no-code merchant launch guide", () => {
+    const draft = readyState();
+    draft.receiz.connected = false;
+    draft.auth.receizId.connected = false;
+    draft.auth.receizId.localProofVerified = false;
+    draft.products = [];
+    draft.collections = [];
+    draft.pages = draft.pages.map((page) => ({ ...page, published: false }));
+    draft.blogPosts = [];
+    draft.rewardRules = [];
+    draft.checkout.mode = "mock";
+    draft.hosting.customDomain = {
+      domain: "",
+      status: "pending",
+      sslStatus: "unknown",
+      verified: false,
+      liveUrl: ""
+    };
+    draft.hosting.published = false;
+    draft.hosting.lastPublishedAt = "";
+
+    const readiness = buildLaunchReadiness(draft);
+
+    assert.deepEqual(
+      readiness.launchGuide.map((step) => step.id),
+      ["receiz_id", "brand", "catalog", "content", "rewards", "checkout", "domains", "publish"]
+    );
+    assert.equal(readiness.launchGuide.filter((step) => step.status === "current").length, 1);
+    assert.equal(readiness.launchGuide[0]?.status, "current");
+    assert.equal(readiness.launchGuide[0]?.title, "Sign in with Receiz ID");
+    assert.equal(readiness.launchGuide[1]?.status, "queued");
+    assert.ok(readiness.launchGuide[2]?.description.includes("products"));
+  });
+
+  it("marks every guide step done for an elite-ready launch", () => {
+    const readiness = buildLaunchReadiness(readyState());
+
+    assert.equal(readiness.score, 100);
+    assert.equal(readiness.launchGuide.every((step) => step.status === "done"), true);
+  });
+
+  it("does not mark sandbox checkout as production-ready", () => {
+    const sandbox = readyState();
+    sandbox.checkout.mode = "mock";
+    sandbox.checkout.label = "Receiz sandbox";
+
+    const readiness = buildLaunchReadiness(sandbox);
+    const checkout = readiness.categories.find((category) => category.id === "checkout");
+    const checkoutStep = readiness.launchGuide.find((step) => step.id === "checkout");
+
+    assert.ok(checkout);
+    assert.equal(checkout.status, "blocked");
+    assert.equal(checkoutStep?.status, "current");
+    assert.equal(readiness.score < 100, true);
+  });
+
   it("surfaces clear blockers for a new incomplete merchant store", () => {
     const draft = readyState();
     draft.hosting.published = false;

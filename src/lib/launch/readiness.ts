@@ -40,6 +40,16 @@ export type LaunchReadinessAudience = {
   summary: string;
 };
 
+export type LaunchGuideStep = {
+  id: "receiz_id" | "brand" | "catalog" | "content" | "rewards" | "checkout" | "domains" | "publish";
+  title: string;
+  description: string;
+  actionLabel: string;
+  categoryId: LaunchReadinessCategoryId;
+  complete: boolean;
+  status: "done" | "current" | "queued";
+};
+
 export type LaunchReadiness = {
   score: number;
   grade: "A+" | "A" | "B" | "C" | "D";
@@ -48,6 +58,7 @@ export type LaunchReadiness = {
   audiences: LaunchReadinessAudience[];
   categories: LaunchReadinessCategory[];
   blockers: LaunchReadinessBlocker[];
+  launchGuide: LaunchGuideStep[];
   nextActions: string[];
   sdkRails: string[];
 };
@@ -165,6 +176,99 @@ function nextActionsFor(categories: LaunchReadinessCategory[], blockers: LaunchR
         "Run pnpm release:check before production deploy.",
         "Publish the store-state record through Receiz after merchant edits."
       ];
+}
+
+function launchGuideStep(input: Omit<LaunchGuideStep, "status">): Omit<LaunchGuideStep, "status"> {
+  return input;
+}
+
+function buildLaunchGuide(state: CommerceState): LaunchGuideStep[] {
+  const brandReady = checklistComplete(state, "brand") && Boolean(state.brand.name && state.brand.logoText);
+  const catalogReady =
+    state.products.some((product) => product.status === "active") &&
+    state.collections.some((collection) => collection.published);
+  const contentReady = checklistComplete(state, "pages") && publishedContentCount(state) > 0;
+  const rewardsReady = checklistComplete(state, "rewards") && state.rewardRules.some((rule) => rule.active);
+  const checkoutReady = checklistComplete(state, "checkout") && state.checkout.mode === "live";
+  const domainsReady = hasLiveDomain(state) && hasCustomDomain(state);
+  const publishReady = state.hosting.published && Boolean(state.hosting.lastPublishedAt);
+
+  const steps = [
+    launchGuideStep({
+      id: "receiz_id",
+      title: "Sign in with Receiz ID",
+      description: "Connect the merchant owner before checkout, domains, proof, and publish actions.",
+      actionLabel: "Open Receiz ID",
+      categoryId: "receiz_identity",
+      complete: hasReceizIdentityRail(state)
+    }),
+    launchGuideStep({
+      id: "brand",
+      title: "Set brand and storefront copy",
+      description: "Finish the name, logo, colors, headline, and public storefront message.",
+      actionLabel: "Open Brand",
+      categoryId: "no_code_setup",
+      complete: brandReady
+    }),
+    launchGuideStep({
+      id: "catalog",
+      title: "Add products and collections",
+      description: "Add active products, publish a collection, and seal at least one product.",
+      actionLabel: "Open Product builder",
+      categoryId: "catalog",
+      complete: catalogReady
+    }),
+    launchGuideStep({
+      id: "content",
+      title: "Publish pages or stories",
+      description: "Publish system pages, navigation, and at least one story or page.",
+      actionLabel: "Open Content builder",
+      categoryId: "no_code_setup",
+      complete: contentReady
+    }),
+    launchGuideStep({
+      id: "rewards",
+      title: "Activate rewards",
+      description: "Create customer rewards so purchases, claims, and perks have a live path.",
+      actionLabel: "Open Rewards",
+      categoryId: "no_code_setup",
+      complete: rewardsReady
+    }),
+    launchGuideStep({
+      id: "checkout",
+      title: "Enable checkout",
+      description: "Use Receiz checkout with merchant settlement metadata and order projection.",
+      actionLabel: "Open Checkout mode",
+      categoryId: "checkout",
+      complete: checkoutReady
+    }),
+    launchGuideStep({
+      id: "domains",
+      title: "Connect domains",
+      description: "Verify the free Receiz subdomain and the merchant custom domain.",
+      actionLabel: "Open Domains",
+      categoryId: "domains",
+      complete: domainsReady
+    }),
+    launchGuideStep({
+      id: "publish",
+      title: "Publish and verify",
+      description: "Publish the Receiz store-state record, then verify the hosted storefront.",
+      actionLabel: "Publish store",
+      categoryId: "production_ops",
+      complete: publishReady
+    })
+  ];
+  const currentIndex = steps.findIndex((step) => !step.complete);
+
+  return steps.map((step, index) => ({
+    ...step,
+    status: step.complete && (currentIndex === -1 || index < currentIndex)
+      ? "done"
+      : index === currentIndex
+        ? "current"
+        : "queued"
+  }));
 }
 
 export function buildLaunchReadiness(state: CommerceState): LaunchReadiness {
@@ -285,9 +389,9 @@ export function buildLaunchReadiness(state: CommerceState): LaunchReadiness {
         {
           id: "checkout_live",
           label: "Checkout configuration is complete",
-          complete: checklistComplete(state, "checkout"),
+          complete: checklistComplete(state, "checkout") && state.checkout.mode === "live",
           critical: true,
-          actionLabel: "Open Checkout mode and complete Receiz checkout configuration."
+          actionLabel: "Open Checkout mode and switch to Receiz checkout."
         },
         {
           id: "merchant_settlement",
@@ -392,6 +496,7 @@ export function buildLaunchReadiness(state: CommerceState): LaunchReadiness {
     ],
     categories,
     blockers,
+    launchGuide: buildLaunchGuide(state),
     nextActions: nextActionsFor(categories, blockers),
     sdkRails: [
       "identity.ensureTenantSession",

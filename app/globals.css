@@ -2534,10 +2534,117 @@ a {
 .readiness-category-list,
 .readiness-blockers,
 .readiness-next-actions,
+.readiness-guide,
 .readiness-sdk-rails {
   display: grid;
   gap: 8px;
   padding: 0 14px 12px;
+}
+
+.readiness-guide {
+  gap: 10px;
+}
+
+.readiness-guide-head,
+.readiness-guide-row {
+  min-width: 0;
+}
+
+.readiness-guide-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.readiness-guide-head strong {
+  color: var(--text);
+  font-size: 13px;
+}
+
+.readiness-guide-head span {
+  color: var(--receiz);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.readiness-guide-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.readiness-guide-row {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: start;
+  min-height: 96px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: #ffffff;
+}
+
+.readiness-guide-row.current {
+  border-color: rgba(255, 189, 46, 0.5);
+  background: linear-gradient(135deg, #fff9e8, #ffffff);
+}
+
+.readiness-guide-row.done {
+  border-color: rgba(0, 138, 106, 0.18);
+  background: rgba(0, 138, 106, 0.04);
+}
+
+.readiness-guide-row > span:first-child {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  color: var(--receiz);
+  background: var(--receiz-soft);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.readiness-guide-row.current > span:first-child {
+  color: #8a5b00;
+  background: var(--amber-soft);
+}
+
+.readiness-guide-row > div {
+  min-width: 0;
+}
+
+.readiness-guide-row strong,
+.readiness-guide-row p,
+.readiness-guide-row em {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.readiness-guide-row strong {
+  display: block;
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.2;
+}
+
+.readiness-guide-row p {
+  margin: 4px 0 7px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.readiness-guide-row em {
+  display: block;
+  color: var(--receiz);
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 850;
+  line-height: 1.25;
 }
 
 .readiness-category-row {
@@ -2626,7 +2733,8 @@ a {
 }
 
 .launch-readiness-panel.compact .readiness-score-card,
-.launch-readiness-panel.compact .readiness-audience-grid {
+.launch-readiness-panel.compact .readiness-audience-grid,
+.launch-readiness-panel.compact .readiness-guide-list {
   grid-template-columns: 1fr;
 }
 

@@ -11,3 +11,4 @@ tmp/
 .env*
 !.env.example
 .playwright-cli/
+output/playwright/

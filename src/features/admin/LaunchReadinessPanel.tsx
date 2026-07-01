@@ -15,6 +15,12 @@ function categoryTone(status: ReturnType<typeof buildLaunchReadiness>["categorie
   return "pink";
 }
 
+function guideTone(status: ReturnType<typeof buildLaunchReadiness>["launchGuide"][number]["status"]) {
+  if (status === "done") return "green";
+  if (status === "current") return "gold";
+  return "neutral";
+}
+
 export function LaunchReadinessPanel({
   compact = false,
   state
@@ -24,6 +30,9 @@ export function LaunchReadinessPanel({
 }) {
   const readiness = buildLaunchReadiness(state);
   const categories = compact ? readiness.categories.slice(0, 4) : readiness.categories;
+  const guideSteps = compact
+    ? readiness.launchGuide.filter((step) => step.status !== "done").slice(0, 4)
+    : readiness.launchGuide;
 
   return (
     <Panel className={compact ? "admin-panel launch-readiness-panel compact" : "admin-panel launch-readiness-panel"}>
@@ -54,6 +63,28 @@ export function LaunchReadinessPanel({
             </div>
           </div>
         ))}
+      </div>
+
+      <div className="readiness-guide">
+        <div className="readiness-guide-head">
+          <strong>Guided launch path</strong>
+          <span>{readiness.launchGuide.filter((step) => step.status === "done").length} / {readiness.launchGuide.length}</span>
+        </div>
+        <div className="readiness-guide-list">
+          {guideSteps.map((step, index) => (
+            <div className={`readiness-guide-row ${step.status}`} key={step.id}>
+              <span>{String(index + 1).padStart(2, "0")}</span>
+              <div>
+                <strong>{step.title}</strong>
+                <p>{step.description}</p>
+                <em>{step.actionLabel}</em>
+              </div>
+              <StatusPill tone={guideTone(step.status)}>
+                {step.status === "done" ? "Done" : step.status === "current" ? "Now" : "Next"}
+              </StatusPill>
+            </div>
+          ))}
+        </div>
       </div>
 
       <div className="readiness-category-list">
