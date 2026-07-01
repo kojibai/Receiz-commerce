@@ -5,6 +5,7 @@ const RECEIZ_APP_RAILS: ReceizRailScopeKey[] = [
   "proofStore",
   "wallet",
   "payments",
+  "appState",
   "publicStore",
   "commerce",
   "rewards",

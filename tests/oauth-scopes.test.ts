@@ -10,6 +10,8 @@ describe("Receiz OIDC scopes", () => {
     assert.equal(scopes.includes("offline_access"), true);
     assert.equal(scopes.includes("receiz:wallet.read"), true);
     assert.equal(scopes.includes("receiz:payments.create"), true);
+    assert.equal(scopes.includes("receiz:app_state.read"), true);
+    assert.equal(scopes.includes("receiz:app_state.write"), true);
     assert.equal(scopes.includes("receiz:notes.read"), true);
     assert.equal(new Set(scopes).size, scopes.length);
     assert.equal(scopes.includes("receiz:twin.read"), true);
