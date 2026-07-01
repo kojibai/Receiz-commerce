@@ -19,7 +19,11 @@ import { safeGetLocalStorage, safeRemoveLocalStorage, safeSetLocalStorage } from
 import { pendingPublishStorageKey, shouldResumePendingPublish } from "@/lib/storage/pending-publish";
 import { mergeStoreApiProjection } from "@/lib/storefront/store-api-projection";
 import { applyLocalReceizIdentitySession } from "@/lib/storefront/local-identity-session";
-import { stateWithCartProduct } from "@/lib/storefront/product-purchase";
+import {
+  stateWithCartProduct,
+  stateWithCartQuantity,
+  stateWithoutCartProduct
+} from "@/lib/storefront/product-purchase";
 import {
   applyBrowserReceizIdSession,
   applyTenantCustomerSession,
@@ -2116,6 +2120,12 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
       },
       addToCart(productId: string) {
         setState((current) => stateWithCartProduct(current, productId));
+      },
+      setCartProductQuantity(productId: string, quantity: number) {
+        setState((current) => stateWithCartQuantity(current, productId, quantity));
+      },
+      removeFromCart(productId: string) {
+        setState((current) => stateWithoutCartProduct(current, productId));
       },
       completeMockCheckout() {
         setState((current) => {

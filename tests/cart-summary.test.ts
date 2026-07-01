@@ -1,7 +1,11 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { buildCartSummary } from "../src/lib/storefront/cart-summary.js";
-import { stateWithCartProduct } from "../src/lib/storefront/product-purchase.js";
+import {
+  stateWithCartProduct,
+  stateWithCartQuantity,
+  stateWithoutCartProduct
+} from "../src/lib/storefront/product-purchase.js";
 import { baseState } from "./support/commerce-state.js";
 
 describe("cart summary", () => {
@@ -45,5 +49,17 @@ describe("cart summary", () => {
     assert.equal(summary.canCheckout, false);
     assert.equal(summary.checkoutLabel, "Add products to checkout");
     assert.equal(summary.lines.length, 0);
+  });
+
+  it("updates and removes cart line quantities immutably", () => {
+    const state = stateWithCartProduct(stateWithCartProduct(baseState(), "coffee-pack"), "coffee-pack");
+    const withThree = stateWithCartQuantity(state, "coffee-pack", 3);
+    const withZero = stateWithCartQuantity(withThree, "coffee-pack", 0);
+    const withoutProduct = stateWithoutCartProduct(withThree, "coffee-pack");
+
+    assert.equal(state.cart.lines[0]?.quantity, 2);
+    assert.deepEqual(withThree.cart.lines, [{ productId: "coffee-pack", quantity: 3 }]);
+    assert.deepEqual(withZero.cart.lines, []);
+    assert.deepEqual(withoutProduct.cart.lines, []);
   });
 });

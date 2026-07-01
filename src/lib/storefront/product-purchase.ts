@@ -38,6 +38,35 @@ export function stateWithCartProduct(state: CommerceState, productId: string): C
   };
 }
 
+export function stateWithCartQuantity(state: CommerceState, productId: string, quantity: number): CommerceState {
+  const safeQuantity = Math.floor(quantity);
+  const existing = state.cart.lines.find((line) => line.productId === productId);
+
+  if (safeQuantity <= 0) {
+    return stateWithoutCartProduct(state, productId);
+  }
+
+  return {
+    ...state,
+    cart: {
+      lines: existing
+        ? state.cart.lines.map((line) =>
+            line.productId === productId ? { ...line, quantity: safeQuantity } : line
+          )
+        : [...state.cart.lines, { productId, quantity: safeQuantity }]
+    }
+  };
+}
+
+export function stateWithoutCartProduct(state: CommerceState, productId: string): CommerceState {
+  return {
+    ...state,
+    cart: {
+      lines: state.cart.lines.filter((line) => line.productId !== productId)
+    }
+  };
+}
+
 export function buildProductPurchaseModel(state: CommerceState, product: Product): ProductPurchaseModel {
   const settlementId = state.hosting.merchantReceizId || state.auth.receizId.handle || "Receiz merchant";
   const storeHost = state.hosting.customDomain.domain || state.hosting.subdomain;
