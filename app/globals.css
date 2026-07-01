@@ -6517,6 +6517,10 @@ a {
     grid-template-columns: 1fr;
   }
 
+  .product-detail-copy .product-purchase-facts {
+    margin-top: 104px;
+  }
+
   .product-purchase-card > div:first-child strong {
     font-size: 30px;
   }
