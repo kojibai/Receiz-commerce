@@ -127,13 +127,28 @@ export type ClientStorageSnapshot = {
   base?: string | null;
 };
 
+function tenantSessionState(fallbackState: CommerceState, raw: string | null | undefined): CommerceState {
+  if (!raw) return fallbackState;
+
+  try {
+    const stored = migrateStoredState(JSON.parse(raw), fallbackState);
+
+    return {
+      ...fallbackState,
+      cart: stored.cart
+    };
+  } catch {
+    return fallbackState;
+  }
+}
+
 export function selectClientInitialState(
   hostContext: HostContext,
   fallbackState: CommerceState,
   storage: ClientStorageSnapshot = { scoped: null, base: null }
 ): CommerceState {
   if (hostContext.surface === "tenant") {
-    return fallbackState;
+    return tenantSessionState(fallbackState, storage.scoped);
   }
 
   const raw = storage.scoped ?? storage.base ?? null;

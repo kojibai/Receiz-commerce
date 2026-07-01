@@ -51,6 +51,49 @@ describe("client initial commerce state", () => {
     assert.equal(state.storefront.heroBody, "This is the saved storefront.");
   });
 
+  it("preserves tenant cart storage without replacing published storefront content", () => {
+    const publishedTenant = {
+      ...baseState(),
+      brand: {
+        ...baseState().brand,
+        name: "Bjklock Supply",
+        logoText: "bjk"
+      },
+      storefront: {
+        ...baseState().storefront,
+        headline: "Published storefront"
+      },
+      hosting: {
+        ...baseState().hosting,
+        tenantSlug: "bjklock",
+        subdomain: "bjklock.receiz.app"
+      }
+    };
+    const storedTenantSession = {
+      ...baseState(),
+      brand: {
+        ...baseState().brand,
+        name: "Stale browser storefront"
+      },
+      storefront: {
+        ...baseState().storefront,
+        headline: "Stale headline"
+      },
+      cart: {
+        lines: [{ productId: "coffee-pack", quantity: 2 }]
+      }
+    };
+
+    const state = selectClientInitialState(hostContextFromHost("bjklock.localhost:3001"), publishedTenant, {
+      scoped: JSON.stringify(storedTenantSession),
+      base: JSON.stringify(baseState())
+    });
+
+    assert.equal(state.brand.name, "Bjklock Supply");
+    assert.equal(state.storefront.headline, "Published storefront");
+    assert.deepEqual(state.cart.lines, [{ productId: "coffee-pack", quantity: 2 }]);
+  });
+
   it("still hydrates platform admin from platform browser storage", () => {
     const storedWorkspace = {
       ...baseState(),

@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+import { checkoutCommerceEvent, type CheckoutCommerceEventInput } from "@/lib/checkout/commerce-event";
 import { mockCheckout } from "@/lib/checkout/mock-checkout";
 import { hostContextFromHost } from "@/lib/hosting/host-context";
 import { createReceizCommerceAdapter } from "@/lib/receiz/adapter";
+import { getServerProofStateStore } from "@/lib/receiz/proof-state-store";
 import { platform } from "@/lib/platform";
+import { mockStorage } from "@/lib/storage/mock-storage";
+import type { Order } from "@/types/domain";
 
 function amountFromBody(body: Record<string, unknown>) {
   const explicit = body.amountUsd ?? body.amount;
@@ -56,6 +60,38 @@ function paymentRails(merchantReceizId: string) {
   };
 }
 
+function stringFromBody(body: Record<string, unknown>, key: string) {
+  const value = body[key];
+  return typeof value === "string" && value.trim() ? value.trim() : undefined;
+}
+
+function shippingFromBody(value: unknown): Order["shipping"] | undefined {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
+  return value as Order["shipping"];
+}
+
+async function recordCheckoutCommerceEvent(input: CheckoutCommerceEventInput) {
+  try {
+    const event = checkoutCommerceEvent(input);
+    const proofStore = await getServerProofStateStore(event.merchantReceizId);
+    const result = await proofStore.admitCommerceEvent(mockStorage.getState(), event);
+
+    return {
+      admitted: result.admitted,
+      event,
+      proofMemory: {
+        knownHead: proofStore.knownHead(100),
+        entries: proofStore.snapshot().head.count
+      }
+    };
+  } catch (error) {
+    console.error("[checkout] commerce event projection failed", {
+      error: error instanceof Error ? error.message : "Unknown error"
+    });
+    return null;
+  }
+}
+
 export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => ({}));
   const accessToken = request.cookies.get("receiz_access_token")?.value;
@@ -83,6 +119,26 @@ export async function POST(request: NextRequest) {
 
     if (!hasScopedReceizAccess || !accessToken) {
       const funding = checkoutFunding(totalUsdCents, 0);
+      const session = {
+        ok: true,
+        checkoutSessionId: `in_app_${Date.now()}`,
+        status: funding.cardRequired ? "card_required" : "wallet_reserved"
+      };
+      const commerceProjection = await recordCheckoutCommerceEvent({
+        checkoutSessionId: session.checkoutSessionId,
+        customerEmail: stringFromBody(body, "customerEmail"),
+        customerId: stringFromBody(body, "customerId"),
+        customerName: stringFromBody(body, "customerName"),
+        funding,
+        itemCount: Number(body.itemCount ?? 1),
+        merchantReceizId,
+        orderId: stringFromBody(body, "referenceId") ?? stringFromBody(body, "orderId") ?? session.checkoutSessionId,
+        paymentRail: "card_fallback",
+        settlementStatus: funding.cardRequired ? "card_required" : "wallet_reserved",
+        shipping: shippingFromBody(body.shipping),
+        tenantHost: String(body.tenantHost ?? hostContext.tenantHost ?? host),
+        totalLabel: funding.totalLabel
+      });
 
       return NextResponse.json({
         ok: true,
@@ -94,11 +150,9 @@ export async function POST(request: NextRequest) {
         },
         paymentRails: paymentRails(merchantReceizId),
         funding,
-        session: {
-          ok: true,
-          checkoutSessionId: `in_app_${Date.now()}`,
-          status: funding.cardRequired ? "card_required" : "wallet_reserved"
-        }
+        session,
+        commerceEvent: commerceProjection?.event,
+        proofMemory: commerceProjection?.proofMemory
       });
     }
 
@@ -146,6 +200,24 @@ export async function POST(request: NextRequest) {
       checkoutSessionId: checkout.orderId ?? `receiz_${Date.now()}`,
       status: funding.cardRequired ? "card_required" : "wallet_reserved"
     };
+    const commerceProjection = await recordCheckoutCommerceEvent({
+      checkoutSessionId: session.checkoutSessionId,
+      customerEmail: stringFromBody(body, "customerEmail"),
+      customerId: stringFromBody(body, "customerId"),
+      customerName: stringFromBody(body, "customerName"),
+      funding,
+      itemCount: Number(body.itemCount ?? 1),
+      merchantReceizId,
+      orderId: stringFromBody(body, "referenceId") ?? stringFromBody(body, "orderId") ?? session.checkoutSessionId,
+      paymentRail: funding.cardRequired ? "wallet_card_split" : "receiz_wallet",
+      proofBundle: checkout.proofObject && typeof checkout.proofObject === "object" && !Array.isArray(checkout.proofObject)
+        ? (checkout.proofObject as Record<string, unknown>)
+        : null,
+      settlementStatus: funding.cardRequired ? "card_required" : "wallet_reserved",
+      shipping: shippingFromBody(body.shipping),
+      tenantHost: String(body.tenantHost ?? hostContext.tenantHost ?? host),
+      totalLabel: funding.totalLabel
+    });
 
     return NextResponse.json({
       ok: true,
@@ -155,7 +227,9 @@ export async function POST(request: NextRequest) {
       funding,
       proofObject: checkout.proofObject,
       events: checkout.events,
-      session
+      session,
+      commerceEvent: commerceProjection?.event,
+      proofMemory: commerceProjection?.proofMemory
     });
   }
 
@@ -165,6 +239,31 @@ export async function POST(request: NextRequest) {
     status: "mock_paid",
     itemCount: Number(body.itemCount ?? 1)
   });
+  const merchantReceizId =
+    typeof body.merchantReceizId === "string" && body.merchantReceizId.trim()
+      ? body.merchantReceizId.trim()
+      : hostContext.tenantSlug
+        ? `${hostContext.tenantSlug}.receiz.id`
+        : process.env.RECEIZ_DEFAULT_MERCHANT_RECEIZ_ID ?? "merchant.receiz.id";
+  const commerceProjection = await recordCheckoutCommerceEvent({
+    checkoutSessionId: order.checkoutSessionId,
+    customerEmail: stringFromBody(body, "customerEmail"),
+    customerId: order.customerId,
+    customerName: stringFromBody(body, "customerName"),
+    itemCount: order.itemCount,
+    merchantReceizId,
+    orderId: order.id,
+    paymentRail: "sandbox",
+    settlementStatus: "sandbox",
+    shipping: shippingFromBody(body.shipping),
+    tenantHost: String(body.tenantHost ?? hostContext.tenantHost ?? host),
+    totalLabel: order.totalLabel
+  });
 
-  return NextResponse.json({ ok: true, order });
+  return NextResponse.json({
+    ok: true,
+    order,
+    commerceEvent: commerceProjection?.event,
+    proofMemory: commerceProjection?.proofMemory
+  });
 }

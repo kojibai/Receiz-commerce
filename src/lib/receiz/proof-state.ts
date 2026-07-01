@@ -271,8 +271,20 @@ export function projectStoreStateFromRecords(
   };
 }
 
-function matchesCommerceTenant(event: CommerceEventRecord, tenantHost: string) {
-  return event.tenantHost.trim().toLowerCase() === tenantHost.trim().toLowerCase();
+function normalizeHost(value?: string | null) {
+  return value?.trim().toLowerCase() ?? "";
+}
+
+function commerceTenantAliases(state: CommerceState, tenantHost: string) {
+  return new Set(
+    [tenantHost, state.hosting.subdomain, state.hosting.customDomain.domain]
+      .map((host) => normalizeHost(host))
+      .filter(Boolean)
+  );
+}
+
+function matchesCommerceTenant(event: CommerceEventRecord, aliases: Set<string>) {
+  return aliases.has(normalizeHost(event.tenantHost));
 }
 
 export function projectCommerceEventsFromRecords(
@@ -280,9 +292,11 @@ export function projectCommerceEventsFromRecords(
   records: unknown[],
   tenantHost: string
 ): CommerceState {
+  const aliases = commerceTenantAliases(baseState, tenantHost);
+
   return records
     .filter(isCommerceEventRecord)
-    .filter((event) => matchesCommerceTenant(event, tenantHost))
+    .filter((event) => matchesCommerceTenant(event, aliases))
     .sort((left, right) => Date.parse(left.createdAt) - Date.parse(right.createdAt))
     .reduce((projected, event) => admitCommerceEvent(projected, event).state, baseState);
 }

@@ -84,18 +84,23 @@ async function loadPublishOwner(accessToken: string | undefined) {
 export async function GET(request: NextRequest) {
   const host = request.headers.get("x-forwarded-host") ?? request.headers.get("host") ?? platform.domain;
   const hostContext = hostContextFromHost(host);
+  const tenantHostParam = request.nextUrl.searchParams.get("tenantHost");
+  const projectionHostContext =
+    hostContext.surface === "tenant" || !tenantHostParam
+      ? hostContext
+      : hostContextFromHost(tenantHostParam);
   const proofStore = await getServerProofStateStore();
-  const tenantHost = hostContext.tenantHost ?? hostContext.host;
+  const tenantHost = projectionHostContext.tenantHost ?? projectionHostContext.host;
   let recovery = { admitted: 0, recovered: 0 };
 
-  if (hostContext.surface === "tenant") {
+  if (projectionHostContext.surface === "tenant") {
     recovery = await hydrateProofStoreFromReceizStoreState(proofStore, tenantHost);
   }
 
-  const projectionSource = hostContext.surface === "tenant" ? storeStateProjectionSource(proofStore.records(), tenantHost) : "platform";
+  const projectionSource = projectionHostContext.surface === "tenant" ? storeStateProjectionSource(proofStore.records(), tenantHost) : "platform";
   const trustedPublishedState = projectionSource === "published";
 
-  if (hostContext.surface === "tenant" && projectionSource === "fallback") {
+  if (projectionHostContext.surface === "tenant" && projectionSource === "fallback") {
     console.info("[store] tenant fallback projection", {
       tenantHost,
       recovered: recovery.recovered,
@@ -104,8 +109,8 @@ export async function GET(request: NextRequest) {
   }
 
   const projectedState =
-    hostContext.surface === "tenant"
-      ? tenantFallbackState(proofStore.projectHost(mockStorage.getState(), tenantHost), hostContext, { trustedPublishedState })
+    projectionHostContext.surface === "tenant"
+      ? tenantFallbackState(proofStore.projectHost(mockStorage.getState(), tenantHost), projectionHostContext, { trustedPublishedState })
       : mockStorage.getState();
 
   return NextResponse.json(
@@ -113,7 +118,8 @@ export async function GET(request: NextRequest) {
       ok: true,
       source: projectionSource,
       publishedState: trustedPublishedState,
-      hostContext,
+      hostContext: projectionHostContext,
+      requestHostContext: hostContext,
       storefront: projectedState.storefront,
       brand: projectedState.brand,
       navigation: projectedState.navigation,

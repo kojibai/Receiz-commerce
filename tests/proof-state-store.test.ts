@@ -103,6 +103,115 @@ describe("Receiz proof state store", () => {
     assert.equal(projected.hosting.merchantReceizId, "bjklock.receiz.id");
   });
 
+  it("projects merchant-scoped checkout events through the public tenant store", async () => {
+    const registry = createServerProofStateStoreRegistry();
+    const merchantStore = await registry.storeForOwner("bjklock.receiz.id");
+    const publicStore = await registry.storeForOwner();
+    const saved = {
+      ...baseState(),
+      brand: { ...baseState().brand, name: "Bjklock Supply", logoText: "bjk" },
+      hosting: {
+        ...baseState().hosting,
+        tenantSlug: "bjklock",
+        subdomain: "bjklock.receiz.app",
+        merchantReceizId: "bjklock.receiz.id"
+      }
+    } as CommerceState;
+
+    await merchantStore.admitStoreRecord(
+      buildStoreStateRecord(saved, {
+        actorReceizId: "bjklock.receiz.id",
+        tenantHost: "bjklock.receiz.app",
+        recordedAt: "2026-06-30T00:09:00.000Z"
+      })
+    );
+    await merchantStore.admitCommerceEvent(saved, {
+      schema: "receiz.app.commerce_event.v1",
+      id: "checkout:bjklock.receiz.app:in_app_123",
+      type: "checkout.requires_card",
+      createdAt: "2026-06-30T00:10:00.000Z",
+      tenantHost: "bjklock.receiz.app",
+      merchantReceizId: "bjklock.receiz.id",
+      data: {
+        orderId: "order-123",
+        checkoutSessionId: "in_app_123",
+        customerId: "customer-buyer",
+        customerEmail: "buyer@example.com",
+        customerName: "Buyer Example",
+        totalLabel: "$18.00",
+        itemCount: 1,
+        paymentRail: "card_fallback",
+        settlementStatus: "card_required"
+      }
+    });
+
+    const projected = publicStore.projectHost(baseState(), "bjklock.receiz.app");
+
+    assert.equal(projected.brand.name, "Bjklock Supply");
+    assert.equal(projected.orders.length, 1);
+    assert.equal(projected.orders[0]?.id, "order-123");
+    assert.equal(projected.orders[0]?.settlementStatus, "card_required");
+    assert.equal(projected.customers[0]?.name, "Buyer Example");
+  });
+
+  it("projects subdomain checkout events when the tenant is opened by custom domain", async () => {
+    const registry = createServerProofStateStoreRegistry();
+    const merchantStore = await registry.storeForOwner("bjklock.receiz.id");
+    const publicStore = await registry.storeForOwner();
+    const saved = {
+      ...baseState(),
+      brand: { ...baseState().brand, name: "Bjklock Supply", logoText: "bjk" },
+      hosting: {
+        ...baseState().hosting,
+        tenantSlug: "bjklock",
+        subdomain: "bjklock.receiz.app",
+        liveUrl: "https://shop.bjklock.com",
+        merchantReceizId: "bjklock.receiz.id",
+        customDomain: {
+          ...baseState().hosting.customDomain,
+          domain: "shop.bjklock.com",
+          status: "active",
+          sslStatus: "valid",
+          verified: true
+        }
+      }
+    } as CommerceState;
+
+    await merchantStore.admitStoreRecord(
+      buildStoreStateRecord(saved, {
+        actorReceizId: "bjklock.receiz.id",
+        tenantHost: "shop.bjklock.com",
+        recordedAt: "2026-06-30T00:11:00.000Z"
+      })
+    );
+    await merchantStore.admitCommerceEvent(saved, {
+      schema: "receiz.app.commerce_event.v1",
+      id: "checkout:bjklock.receiz.app:in_app_456",
+      type: "checkout.requires_card",
+      createdAt: "2026-06-30T00:12:00.000Z",
+      tenantHost: "bjklock.receiz.app",
+      merchantReceizId: "bjklock.receiz.id",
+      data: {
+        orderId: "order-456",
+        checkoutSessionId: "in_app_456",
+        customerId: "customer-custom-domain",
+        customerEmail: "domain-buyer@example.com",
+        customerName: "Domain Buyer",
+        totalLabel: "$24.00",
+        itemCount: 1,
+        paymentRail: "card_fallback",
+        settlementStatus: "card_required"
+      }
+    });
+
+    const projected = publicStore.projectHost(baseState(), "shop.bjklock.com");
+
+    assert.equal(projected.brand.name, "Bjklock Supply");
+    assert.equal(projected.orders.length, 1);
+    assert.equal(projected.orders[0]?.id, "order-456");
+    assert.equal(projected.customers[0]?.email, "domain-buyer@example.com");
+  });
+
   it("admits a commerce event once and persists the known head", async () => {
     const store = await createInMemoryProofStateStore("test-owner");
     const event = {

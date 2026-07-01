@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef } from "react";
 import { Icons } from "@/components/icons";
 import {
+  Button,
   MetricCard,
   OfficialReceizLoginButton,
   Panel,
@@ -15,6 +16,7 @@ import {
 } from "@/components/ui";
 import { brandThemeStyle } from "@/lib/theme";
 import { useTemplateStore } from "@/lib/storage/use-template-store";
+import { buildCartSummary } from "@/lib/storefront/cart-summary";
 import { customerForAccountSurface, customerReceizHandle } from "@/lib/storefront/customer-session";
 import { ProductCatalog } from "@/features/storefront/ProductCatalog";
 import { platform } from "@/lib/platform";
@@ -38,6 +40,7 @@ export function AccountDashboard({
   const rewards = state.rewards.filter((reward) => customer.rewardIds.includes(reward.id));
   const shipping = customer.shippingAddress ?? orders.find((order) => order.shipping)?.shipping;
   const recentProofs = state.proofEvents.slice(0, 6);
+  const cartSummary = buildCartSummary(state);
   const storeHost = tenantSurface ? hostContext.tenantHost ?? state.hosting.liveUrl : state.hosting.liveUrl;
   const walletRailLabel = state.auth.receizId.connected ? "Receiz wallet ready" : "Sign in to use Receiz wallet";
   const checkoutFallbackLabel = "Credit card fallback";
@@ -178,6 +181,70 @@ export function AccountDashboard({
             </div>
           </div>
         </Panel>
+
+        {tenantSurface ? (
+          <Panel className="cart-summary-panel account-cart-panel">
+            <SectionHeader
+              title="Cart"
+              action={<StatusPill tone={cartSummary.canCheckout ? "green" : "neutral"}>{cartSummary.itemCount} items</StatusPill>}
+            />
+            {cartSummary.lines.length ? (
+              <div className="cart-summary-lines">
+                {cartSummary.lines.map((line) => (
+                  <div className="cart-summary-line" key={line.productId}>
+                    <div className="cart-summary-line-top">
+                      <Link className="cart-summary-line-link" href={line.productPath}>
+                        <strong>{line.name}</strong>
+                        <span>{line.subtitle}</span>
+                      </Link>
+                      <em>{line.lineTotalLabel}</em>
+                    </div>
+                    <div className="cart-summary-controls">
+                      <button
+                        aria-label={`Decrease ${line.name} quantity`}
+                        disabled={line.quantity <= 1}
+                        onClick={() => actions.setCartProductQuantity(line.productId, line.quantity - 1)}
+                        type="button"
+                      >
+                        -
+                      </button>
+                      <span aria-label={`${line.name} quantity`}>{line.quantity}</span>
+                      <button
+                        aria-label={`Increase ${line.name} quantity`}
+                        onClick={() => actions.setCartProductQuantity(line.productId, line.quantity + 1)}
+                        type="button"
+                      >
+                        +
+                      </button>
+                      <button
+                        aria-label={`Remove ${line.name} from cart`}
+                        onClick={() => actions.removeFromCart(line.productId)}
+                        type="button"
+                      >
+                        <Icons.close size={14} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="cart-summary-empty">
+                <Icons.cart size={20} />
+                <strong>Your cart is ready</strong>
+                <span>Add products from {state.brand.name} to checkout with Receiz.</span>
+              </div>
+            )}
+            <div className="cart-summary-total">
+              <span>{cartSummary.paymentRailLabel}</span>
+              <strong>{cartSummary.subtotalLabel}</strong>
+            </div>
+            <Button disabled={!cartSummary.canCheckout} onClick={() => void actions.startCheckout()} type="button" variant="primary">
+              <Icons.creditCard size={16} />
+              {cartSummary.checkoutLabel}
+            </Button>
+            <span className="cart-summary-host">{cartSummary.tenantHost}</span>
+          </Panel>
+        ) : null}
 
         <Panel>
           <SectionHeader title="Shipping profile" action={<StatusPill tone={shipping ? "green" : "neutral"}>{shipping ? "Saved" : "Checkout"}</StatusPill>} />

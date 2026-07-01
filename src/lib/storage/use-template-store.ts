@@ -18,7 +18,7 @@ import type { CommerceImportInput, CommerceImportResult } from "@/lib/import/com
 import { selectClientInitialState } from "@/lib/storage/client-state";
 import { safeGetLocalStorage, safeRemoveLocalStorage, safeSetLocalStorage } from "@/lib/storage/browser-storage";
 import { pendingPublishStorageKey, shouldResumePendingPublish } from "@/lib/storage/pending-publish";
-import { mergeStoreApiProjection } from "@/lib/storefront/store-api-projection";
+import { mergeStoreApiProjection, mergeStoreCommerceProjection } from "@/lib/storefront/store-api-projection";
 import { applyLocalReceizIdentitySession } from "@/lib/storefront/local-identity-session";
 import {
   stateWithCartProduct,
@@ -981,8 +981,9 @@ async function fetchReceizProfile(): Promise<ReceizProfileResponse | null> {
   return (await response.json()) as ReceizProfileResponse;
 }
 
-async function fetchPublishedStoreProjection() {
-  const response = await fetch("/api/store", {
+async function fetchPublishedStoreProjection(tenantHost?: string) {
+  const endpoint = tenantHost ? `/api/store?tenantHost=${encodeURIComponent(tenantHost)}` : "/api/store";
+  const response = await fetch(endpoint, {
     cache: "no-store",
     headers: {
       accept: "application/json",
@@ -1359,6 +1360,12 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
   }, [hostContext.storageKey, hostContext.surface, hydrated, state]);
 
   useEffect(() => {
+    if (!hydrated || hostContext.surface !== "tenant") return;
+
+    safeSetLocalStorage(window.localStorage, hostContext.storageKey, JSON.stringify({ cart: state.cart }));
+  }, [hostContext.storageKey, hostContext.surface, hydrated, state.cart]);
+
+  useEffect(() => {
     if (!hydrated || !state.auth.receizId.connected) return;
 
     const previous = parseBrowserReceizIdSession(safeGetLocalStorage(window.localStorage, BROWSER_RECEIZ_ID_SESSION_KEY));
@@ -1400,6 +1407,26 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
       cancelled = true;
     };
   }, [hostContext.host, hostContext.surface, hostContext.tenantHost, hydrated]);
+
+  useEffect(() => {
+    if (!hydrated || hostContext.surface !== "platform") return;
+
+    const tenantHost = state.hosting.customDomain.domain || state.hosting.subdomain;
+    if (!tenantHost) return;
+
+    let cancelled = false;
+
+    void fetchPublishedStoreProjection(tenantHost)
+      .then((projection) => {
+        if (cancelled || !projection) return;
+        setState((current) => mergeStoreCommerceProjection(current, projection) ?? current);
+      })
+      .catch(() => undefined);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [hostContext.surface, hydrated, state.hosting.customDomain.domain, state.hosting.subdomain]);
 
   const ensureMerchantServerSession = useCallback(async (action: MerchantServerAction) => {
     if (typeof window === "undefined" || process.env.NEXT_PUBLIC_AUTH_MODE !== "receiz_id") {
@@ -2346,6 +2373,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
         }
 
         try {
+          const checkoutReferenceId = `order-${Date.now()}`;
           const result = await postJson<{
             session?: {
               checkoutUrl?: string;
@@ -2366,8 +2394,10 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
             itemCount,
             customerId: checkoutSnapshot.auth.customer.id,
             customerEmail: checkoutSnapshot.auth.customer.email,
-            referenceId: `order-${Date.now()}`,
+            customerName: checkoutSnapshot.auth.customer.name,
+            referenceId: checkoutReferenceId,
             description: `${checkoutSnapshot.brand.name} proof-sealed order`,
+            shipping: customerShipping(checkoutSnapshot.auth.customer),
             tenantSlug: checkoutSnapshot.hosting.tenantSlug,
             tenantHost: checkoutSnapshot.hosting.subdomain,
             merchantReceizId: checkoutSnapshot.hosting.merchantReceizId,
@@ -2384,7 +2414,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
               receizHandle: base.auth.receizId.handle
             };
             const order = {
-              id: checkoutSessionId.replace(/^checkout[_-]/, "").slice(0, 18) || `${Date.now()}`,
+              id: checkoutReferenceId,
               customerId: customer.id,
               customerEmail: customer.email,
               totalLabel,
