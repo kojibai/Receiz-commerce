@@ -178,6 +178,19 @@ describe("Receiz proof commerce state", () => {
     assert.equal(record.state.hosting.published, true);
   });
 
+  it("keeps baseline timestamp record identity even when Kai pulse repeats", () => {
+    const record = buildStoreStateRecord(baseState(), {
+      actorReceizId: "boost.receiz.id",
+      tenantHost: "boost.receiz.app",
+      reason: "publish",
+      ...receizAppendFixture("2026-06-30T00:00:01.123Z", "777")
+    });
+
+    assert.equal(record.id, "store_state:boost.receiz.app:20260630T000001123Z");
+    assert.equal(record.updatedKaiUpulse, "777");
+    assert.equal(record.appendAnchorId, "anchor-777");
+  });
+
   it("accepts baseline published store records without Kai and append anchor", () => {
     const legacyRecord = {
       schema: STORE_STATE_SCHEMA,
@@ -203,6 +216,39 @@ describe("Receiz proof commerce state", () => {
 
     assert.equal(isStoreStateRecord(legacyRecord), true);
     assert.equal(projectStoreStateFromRecords(baseState(), [legacyRecord], "bjklock.receiz.app").brand.name, "Baseline Saved Store");
+  });
+
+  it("projects the latest saved state when two appends share the same Kai pulse", () => {
+    const oldRecord = buildStoreStateRecord(
+      {
+        ...baseState(),
+        brand: { ...baseState().brand, name: "Old saved store" }
+      },
+      {
+        actorReceizId: "boost.receiz.id",
+        tenantHost: "boost.receiz.app",
+        reason: "publish",
+        ...receizAppendFixture("2026-06-30T00:00:00.000Z", "777")
+      }
+    );
+    const latestRecord = buildStoreStateRecord(
+      {
+        ...baseState(),
+        brand: { ...baseState().brand, name: "Latest saved store" }
+      },
+      {
+        actorReceizId: "boost.receiz.id",
+        tenantHost: "boost.receiz.app",
+        reason: "publish",
+        ...receizAppendFixture("2026-06-30T00:01:00.000Z", "777")
+      }
+    );
+
+    const projected = projectStoreStateFromRecords(baseState(), [oldRecord, latestRecord], "boost.receiz.app");
+
+    assert.equal(projected.brand.name, "Latest saved store");
+    assert.equal(projected.hosting.storeProofHead?.afterEntryId, latestRecord.id);
+    assert.equal(projected.hosting.storeProofHead?.afterKaiUpulse, "777");
   });
 
   it("projects the newest published store state for the requested host", () => {

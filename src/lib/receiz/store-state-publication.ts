@@ -145,6 +145,33 @@ export function extractReceizStoreAppendCoordinate(value: unknown) {
   return null;
 }
 
+export function buildStoreStatePublicStorePublications(record: StoreStateRecord) {
+  const connectRecord = buildStoreStateConnectRecord(record);
+
+  return [...publicStoreHostsForStoreState(record)].map((host) => ({
+    host,
+    payload: {
+      id: `store_state:${host}`,
+      tenantHost: host,
+      merchantReceizId: record.merchantReceizId,
+      title: `${record.state.brand.name} storefront`,
+      sourceUrl: hostUrl(host),
+      namespace: host,
+      projectionState: "published",
+      platform: platform.productName,
+      state: record as unknown as JsonObject,
+      record: record as unknown as JsonObject,
+      data: {
+        storeStateRecord: record,
+        storeStateConnectRecord: connectRecord
+      } as unknown as JsonObject
+    },
+    options: {
+      idempotencyKey: `store-state:${record.id}:${host}`
+    }
+  }));
+}
+
 function buildStoreStateAppendRequest(
   state: CommerceState,
   input: {
@@ -216,32 +243,9 @@ export async function publishReceizStoreState(
       appendAnchorId: appendCoordinate.anchorId,
       appendProof: appendCoordinate.proof
     });
-    const connectRecord = buildStoreStateConnectRecord(record);
-    const hosts = [...publicStoreHostsForStoreState(record)];
+    const publications = buildStoreStatePublicStorePublications(record);
     const publicStore = await Promise.all(
-      hosts.map((host) =>
-        receiz.client.publicStore.publish(
-          {
-            id: `store_state:${host}`,
-            tenantHost: host,
-            merchantReceizId: record.merchantReceizId,
-            title: `${record.state.brand.name} storefront`,
-            sourceUrl: hostUrl(host),
-            namespace: host,
-            projectionState: "published",
-            platform: platform.productName,
-            state: record as unknown as JsonObject,
-            record: record as unknown as JsonObject,
-            data: {
-              storeStateRecord: record,
-              storeStateConnectRecord: connectRecord
-            } as unknown as JsonObject
-          },
-          {
-            idempotencyKey: `storefront:${record.updatedKaiUpulse}:${host}`
-          }
-        )
-      )
+      publications.map((publication) => receiz.client.publicStore.publish(publication.payload, publication.options))
     );
 
     if (publicStore.some(failedReceizResponse)) {

@@ -124,8 +124,8 @@ function stableSlug(value: string) {
     .replace(/^-|-$/g, "");
 }
 
-function recordId(prefix: string, tenantHost: string, updatedKaiUpulse: string | number) {
-  const stamp = String(updatedKaiUpulse).replace(/[^0-9a-z]/gi, "");
+function recordId(prefix: string, tenantHost: string, recordedAt: string) {
+  const stamp = recordedAt.replace(/[^0-9a-z]/gi, "");
   return `${prefix}:${tenantHost}:${stamp}`;
 }
 
@@ -221,7 +221,7 @@ export function buildStoreStateRecord(state: CommerceState, input: StoreStateRec
 
   return {
     schema: STORE_STATE_SCHEMA,
-    id: recordId("store_state", tenantHost, input.updatedKaiUpulse),
+    id: recordId("store_state", tenantHost, recordedAt),
     type: "store.state.published",
     reason: input.reason ?? "publish",
     recordedAt,
@@ -346,6 +346,27 @@ export function storeStateRecordOrderValue(record: StoreStateRecord) {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
+export function compareStoreStateRecords(left: StoreStateRecord, right: StoreStateRecord) {
+  const kaiOrder = compareStoreStateKaiUpulse(
+    storeStateRecordOrderValue(left),
+    storeStateRecordOrderValue(right)
+  );
+  if (kaiOrder !== 0) return kaiOrder;
+
+  const leftRecorded = Date.parse(left.recordedAt);
+  const rightRecorded = Date.parse(right.recordedAt);
+  if (Number.isFinite(leftRecorded) && Number.isFinite(rightRecorded) && leftRecorded !== rightRecorded) {
+    return leftRecorded > rightRecorded ? 1 : -1;
+  }
+
+  const leftAnchor = left.appendAnchorId ?? "";
+  const rightAnchor = right.appendAnchorId ?? "";
+  if (leftAnchor !== rightAnchor) return leftAnchor > rightAnchor ? 1 : -1;
+
+  if (left.id === right.id) return 0;
+  return left.id > right.id ? 1 : -1;
+}
+
 export function storeStateProjectionSource(records: unknown[], tenantHost: string): "published" | "fallback" {
   return storeStateRecordsForTenantHost(records, tenantHost).length ? "published" : "fallback";
 }
@@ -356,7 +377,7 @@ export function projectStoreStateFromRecords(
   tenantHost: string
 ): CommerceState {
   const latest = storeStateRecordsForTenantHost(records, tenantHost)
-    .sort((left, right) => compareStoreStateKaiUpulse(storeStateRecordOrderValue(right), storeStateRecordOrderValue(left)))[0];
+    .sort((left, right) => compareStoreStateRecords(right, left))[0];
 
   if (!latest) return baseState;
 
