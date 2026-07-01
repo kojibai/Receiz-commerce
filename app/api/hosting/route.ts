@@ -16,7 +16,7 @@ import {
   verifyProjectDomain,
   wildcardDomainStatusFromVercel
 } from "@/lib/hosting/vercel-domains";
-import { checkPublicDns } from "@/lib/hosting/dns-check";
+import { checkPublicDns, checkVercelDomainDns } from "@/lib/hosting/dns-check";
 import { buildPublishedCommerceState } from "@/lib/hosting/published-state";
 import { hostingBillingFromPlatformPayment } from "@/lib/hosting/platform-billing";
 import { proofObjectCheckoutFunding } from "@/lib/checkout/wallet-authority";
@@ -375,13 +375,14 @@ export async function POST(request: NextRequest) {
     let customDomain: DomainStatus;
     try {
       const vercelDomain = await addProjectDomain(domain);
-      customDomain = customDomainStatusFromVercel(domain, vercelDomain);
+      const dns = await checkVercelDomainDns(domain);
+      customDomain = customDomainStatusFromVercel(domain, vercelDomain, dns);
     } catch (error) {
       customDomain = domainErrorStatus(domain, error);
     }
 
     const hosting = {
-      ...mockHosting.connectCustomDomain(domain),
+      ...mockHosting.updateCustomDomain(customDomain),
       mode: "hosted_platform" as const,
       customDomain
     };
@@ -414,13 +415,14 @@ export async function POST(request: NextRequest) {
 
     try {
       const vercelDomain = await verifyProjectDomain(domain);
-      customDomain = customDomainStatusFromVercel(domain, vercelDomain);
+      const dns = await checkVercelDomainDns(domain);
+      customDomain = customDomainStatusFromVercel(domain, vercelDomain, dns);
     } catch (error) {
       customDomain = domainErrorStatus(domain, error);
     }
 
     const hosting = {
-      ...mockHosting.connectCustomDomain(domain),
+      ...mockHosting.updateCustomDomain(customDomain),
       mode: "hosted_platform" as const,
       customDomain
     };
@@ -490,51 +492,29 @@ export async function POST(request: NextRequest) {
     });
     const proofStore = await getServerProofStateStore(storeStateRecord.merchantReceizId);
     await proofStore.admitStoreRecord(storeStateRecord);
-    let storeStateReceizRecord: unknown =
-      merchantAuthority.source === "proof_object"
-        ? {
-            ok: true,
-            skipped: true,
-            mode: "proof_object_authorized",
-            message: "Verified Receiz proof object authorized local proof-state publish."
-          }
-        : await publishReceizStoreState(accessToken, storeStateRecord);
+    const storeStateReceizRecord = await publishReceizStoreState(accessToken, storeStateRecord);
 
     if (!receizWriteSucceeded(storeStateReceizRecord)) {
       const error = isRecord(storeStateReceizRecord) ? String(storeStateReceizRecord.error ?? "receiz_store_state_record_failed") : "receiz_store_state_record_failed";
 
-      if (merchantAuthority.localIdentity.connected && merchantAuthority.localIdentity.localProofVerified) {
-        console.warn("[publish] Receiz remote mirror skipped after proof object authorization", {
-          tenantHost: storeStateRecord.tenantHost,
-          merchantReceizId: storeStateRecord.merchantReceizId,
-          storeStateRecordId: storeStateRecord.id,
-          error
-        });
-        storeStateReceizRecord = {
-          ok: true,
-          skipped: true,
-          mode: "proof_object_authorized",
-          warning: error,
-          remote: storeStateReceizRecord
-        };
-      } else {
-        console.error("[publish] Receiz store-state record failed", {
-          tenantHost: storeStateRecord.tenantHost,
-          merchantReceizId: storeStateRecord.merchantReceizId,
-          storeStateRecordId: storeStateRecord.id,
-          error
-        });
+      console.error("[publish] Receiz store-state record failed", {
+        tenantHost: storeStateRecord.tenantHost,
+        merchantReceizId: storeStateRecord.merchantReceizId,
+        storeStateRecordId: storeStateRecord.id,
+        error
+      });
 
-        return NextResponse.json(
-          {
-            ok: false,
-            error: "receiz_store_state_record_failed",
-            message: error,
-            storeStateReceizRecord
-          },
-          { status: error === "receiz_authority_required" ? 401 : 502 }
-        );
-      }
+      return NextResponse.json(
+        {
+          ok: false,
+          error: "receiz_store_state_record_failed",
+          message: error === "receiz_authority_required"
+            ? "The proof object authorized publish locally, but the durable Receiz public-store write needs a valid server write rail before the live site can update cold-starts."
+            : error,
+          storeStateReceizRecord
+        },
+        { status: error === "receiz_authority_required" ? 401 : 502 }
+      );
     }
 
     console.info("[publish] Receiz store-state record written", {

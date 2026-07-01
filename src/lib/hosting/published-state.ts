@@ -1,5 +1,6 @@
 import type { CommerceState, HostingConfig } from "../../types/domain";
 import { normalizeCustomDomain, normalizeTenantSlug, subdomainForSlug } from "./domain-utils";
+import { dnsInstructionsForDomain } from "./vercel-domains";
 
 export type PublishOwner = {
   customDomain?: string;
@@ -44,6 +45,45 @@ function isTemplateCustomDomain(value: string | undefined) {
   return domain === "www.boostcoffee.com" || domain === "boostcoffee.com";
 }
 
+function customDomainHasProof(domain: HostingConfig["customDomain"]) {
+  return Boolean(domain.domain && domain.verified && domain.dnsResolved);
+}
+
+function sanitizeCustomDomain(domain: HostingConfig["customDomain"]): HostingConfig["customDomain"] {
+  if (!domain.domain) {
+    return {
+      ...domain,
+      verified: false,
+      dnsResolved: false
+    };
+  }
+
+  if (customDomainHasProof(domain)) {
+    return {
+      ...domain,
+      status: domain.status === "pending" ? "active" : domain.status,
+      sslStatus: "valid",
+      liveUrl: domain.liveUrl || `https://${domain.domain}`,
+      dnsInstructions: domain.dnsInstructions ?? []
+    };
+  }
+
+  const keepStatus = domain.status === "needs_vercel_env" || domain.status === "error";
+
+  return {
+    ...domain,
+    status: keepStatus ? domain.status : "needs_dns",
+    sslStatus: keepStatus ? domain.sslStatus : "pending",
+    verified: false,
+    dnsResolved: false,
+    liveUrl: domain.liveUrl || `https://${domain.domain}`,
+    dnsInstructions: domain.dnsInstructions?.length ? domain.dnsInstructions : dnsInstructionsForDomain(domain.domain),
+    message: keepStatus
+      ? domain.message
+      : "Add DNS records, then verify again"
+  };
+}
+
 function stripTemplatePublishedContent(state: CommerceState): CommerceState {
   if (state.hosting.merchantReceizId === "boost.receiz.id") return state;
 
@@ -80,13 +120,12 @@ function mergeHostingForPublish(base: HostingConfig, input: unknown, owner: Publ
   const ownerCustomDomain = customDomainFromOwner(owner);
   const shouldResetTemplateDomain = isTemplateCustomDomain(merged.customDomain.domain);
   const customDomain = ownerCustomDomain
-    ? {
+    ? sanitizeCustomDomain({
         ...merged.customDomain,
         domain: ownerCustomDomain,
         liveUrl: `https://${ownerCustomDomain}`,
-        status: merged.customDomain.status === "pending" ? "ready" : merged.customDomain.status,
         message: merged.customDomain.message || "Loaded from Receiz profile"
-      }
+      })
     : shouldResetTemplateDomain
       ? {
           ...base.customDomain,
@@ -98,14 +137,15 @@ function mergeHostingForPublish(base: HostingConfig, input: unknown, owner: Publ
           dnsResolved: false,
           message: "Connect a custom domain when ready"
         }
-      : merged.customDomain;
+      : sanitizeCustomDomain(merged.customDomain);
+  const customDomainLive = customDomainHasProof(customDomain);
 
   return {
     ...merged,
     mode: "hosted_platform",
     tenantSlug,
     subdomain,
-    liveUrl: customDomain.domain ? `https://${customDomain.domain}` : `https://${subdomain}`,
+    liveUrl: customDomainLive ? customDomain.liveUrl || `https://${customDomain.domain}` : `https://${subdomain}`,
     merchantReceizId: ownerHandle,
     settlementAccountLabel: `${owner.displayName || ownerHandle} Receiz account`,
     subdomainStatus: {

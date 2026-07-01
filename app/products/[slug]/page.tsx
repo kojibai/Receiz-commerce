@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { BrandMark, ProductVisual, StatusPill } from "@/components/ui";
 import { loadStorefrontState, type StorefrontSearchParams } from "@/lib/storefront/server-state";
 import { resolveProductBySlug } from "@/lib/storefront/content-routing";
+import { ProductDetailBottomNav } from "@/features/storefront/ProductDetailBottomNav";
 import { ProductPurchasePanel } from "@/features/storefront/ProductPurchasePanel";
 
 type ProductPageProps = {
@@ -75,6 +76,7 @@ export default async function ProductDetailPage({ params, searchParams }: Produc
           <span>{state.hosting.customDomain.domain || state.hosting.subdomain}</span>
         </div>
       </section>
+      <ProductDetailBottomNav />
     </main>
   );
 }

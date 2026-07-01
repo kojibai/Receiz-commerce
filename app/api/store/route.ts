@@ -247,38 +247,22 @@ export async function POST(request: NextRequest) {
   });
   const proofStore = await getServerProofStateStore(record.merchantReceizId);
   await proofStore.admitStoreRecord(record);
-  let receizRecord: unknown =
-    merchantAuthority.source === "proof_object"
-      ? {
-          ok: true,
-          skipped: true,
-          mode: "proof_object_authorized",
-          message: "Verified Receiz proof object authorized local proof-state publish."
-        }
-      : await publishReceizStoreState(accessToken, record);
+  const receizRecord = await publishReceizStoreState(accessToken, record);
 
   if (!receizWriteSucceeded(receizRecord)) {
     const error = isRecord(receizRecord) ? String(receizRecord.error ?? "receiz_store_state_record_failed") : "receiz_store_state_record_failed";
 
-    if (merchantAuthority.localIdentity.connected && merchantAuthority.localIdentity.localProofVerified) {
-      receizRecord = {
-        ok: true,
-        skipped: true,
-        mode: "proof_object_authorized",
-        warning: error,
-        remote: receizRecord
-      };
-    } else {
-      return NextResponse.json(
-        {
-          ok: false,
-          error: "receiz_store_state_record_failed",
-          message: error,
-          receizRecord
-        },
-        { status: error === "receiz_authority_required" ? 401 : 502, headers: noStoreHeaders }
-      );
-    }
+    return NextResponse.json(
+      {
+        ok: false,
+        error: "receiz_store_state_record_failed",
+        message: error === "receiz_authority_required"
+          ? "The proof object authorized publish locally, but the durable Receiz public-store write needs a valid server write rail before the live site can update cold-starts."
+          : error,
+        receizRecord
+      },
+      { status: error === "receiz_authority_required" ? 401 : 502, headers: noStoreHeaders }
+    );
   }
 
   return NextResponse.json(

@@ -123,8 +123,9 @@ function hasLiveDomain(state: CommerceState) {
 function hasCustomDomain(state: CommerceState) {
   return Boolean(
     state.hosting.customDomain.domain &&
-      (state.hosting.customDomain.verified ||
-        state.hosting.customDomain.status === "active" ||
+      state.hosting.customDomain.verified &&
+      state.hosting.customDomain.dnsResolved &&
+      (state.hosting.customDomain.status === "active" ||
         state.hosting.customDomain.status === "ready")
   );
 }

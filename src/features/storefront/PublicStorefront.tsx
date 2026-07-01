@@ -36,6 +36,13 @@ import {
   StoreTopbar
 } from "@/features/storefront/StoreShell";
 
+const mobileViews = new Set<MobileView>(["store", "rewards", "assets", "play", "account"]);
+
+function mobileViewFromHash(hash: string): MobileView | null {
+  const value = hash.replace(/^#/, "");
+  return mobileViews.has(value as MobileView) ? (value as MobileView) : null;
+}
+
 export function PublicStorefront({
   initialHostContext,
   initialState
@@ -57,6 +64,19 @@ export function PublicStorefront({
   const identityActionsReady = hydrated && !receizSessionPending;
   const showIdentityEntry = identityActionsReady && !state.auth.receizId.connected;
   const showIdentityUploadFallback = showIdentityEntry && (identityUploadVisible || !state.auth.receizId.connected);
+
+  useEffect(() => {
+    const syncViewFromHash = () => {
+      const view = mobileViewFromHash(window.location.hash);
+      if (view) {
+        setMobileView(view);
+      }
+    };
+
+    syncViewFromHash();
+    window.addEventListener("hashchange", syncViewFromHash);
+    return () => window.removeEventListener("hashchange", syncViewFromHash);
+  }, []);
 
   const ensureTenantCustomerSession = useCallback(
     async (reason: string) => {
@@ -80,6 +100,9 @@ export function PublicStorefront({
   const selectMobileView = (view: MobileView) => {
     setMobileView(view);
     setMobileMenuOpen(false);
+    if (window.location.hash !== `#${view}`) {
+      window.history.replaceState(null, "", `#${view}`);
+    }
     if (view === "account" || view === "assets" || view === "rewards") {
       void ensureTenantCustomerSession(`${view} account`);
     }

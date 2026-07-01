@@ -10,6 +10,7 @@ function readyState() {
     status: "ready",
     sslStatus: "valid",
     verified: true,
+    dnsResolved: true,
     liveUrl: "https://www.boostcoffee.com"
   };
   state.collections = [
@@ -196,6 +197,27 @@ describe("launch readiness", () => {
 
     assert.equal(readiness.blockers.some((blocker) => blocker.id === "checkout_live"), false);
     assert.equal(readiness.launchGuide.find((step) => step.id === "checkout")?.complete, true);
+  });
+
+  it("does not mark a custom domain ready until public DNS propagation is proven", () => {
+    const draft = readyState();
+    draft.hosting.customDomain = {
+      domain: "shop.bjk.ceo",
+      status: "active",
+      sslStatus: "valid",
+      verified: true,
+      dnsResolved: false,
+      liveUrl: "https://shop.bjk.ceo"
+    };
+
+    const readiness = buildLaunchReadiness(draft);
+
+    assert.equal(
+      readiness.categories
+        .find((category) => category.id === "domains")
+        ?.checks.find((check) => check.id === "custom_domain")?.complete,
+      false
+    );
   });
 
   it("surfaces clear blockers for a new incomplete merchant store", () => {

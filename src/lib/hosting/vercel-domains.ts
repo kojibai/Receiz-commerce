@@ -1,7 +1,8 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { platform } from "@/lib/platform";
+import { platform } from "../platform";
 import type { DomainStatus, DomainVerificationRecord } from "@/types/domain";
+import type { PublicDnsCheck } from "./dns-check";
 
 type VercelProjectDomain = {
   name: string;
@@ -203,20 +204,32 @@ export function wildcardDomainStatusFromVercel(domain: string, vercelDomain: Ver
   };
 }
 
-export function customDomainStatusFromVercel(domain: string, vercelDomain: VercelProjectDomain): DomainStatus {
-  const verified = vercelDomain.verified === true || vercelDomain.verified === "true";
+export function customDomainStatusFromVercel(
+  domain: string,
+  vercelDomain: VercelProjectDomain,
+  dnsCheck?: PublicDnsCheck
+): DomainStatus {
+  const vercelVerified = vercelDomain.verified === true || vercelDomain.verified === "true";
+  const dnsResolved = dnsCheck?.resolved === true;
+  const verified = vercelVerified && dnsResolved;
   const verification = vercelDomain.verification ?? [];
+  const dnsInstructions = dnsInstructionsForDomain(domain, verification);
 
   return {
     domain,
     status: verified ? "active" : "needs_dns",
     sslStatus: verified ? "valid" : "pending",
     verified,
+    dnsResolved,
     liveUrl: `https://${domain}`,
     verification,
-    dnsInstructions: verified ? [] : dnsInstructionsForDomain(domain, verification),
+    dnsInstructions: verified ? [] : dnsInstructions,
     lastCheckedAt: new Date().toISOString(),
-    message: verified ? "Domain verified and SSL ready" : "Add the DNS records, then verify again"
+    message: verified
+      ? "Domain verified, DNS propagated, and SSL ready"
+      : vercelVerified
+        ? `Vercel domain is verified, but DNS has not propagated to ${dnsCheck?.expectedRecords?.join(" or ") ?? "Vercel"} yet`
+        : "Add the DNS records, then verify again"
   };
 }
 

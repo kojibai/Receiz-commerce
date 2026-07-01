@@ -1,6 +1,7 @@
 import { seedCommerceState } from "@/data/seed";
 import { normalizeCustomDomain, normalizeTenantSlug, subdomainForSlug } from "@/lib/hosting/domain-utils";
-import type { HostingMode } from "@/types/domain";
+import { dnsInstructionsForDomain } from "@/lib/hosting/vercel-domains";
+import type { DomainStatus, HostingMode } from "@/types/domain";
 
 let hosting = seedCommerceState.hosting;
 let billing = seedCommerceState.billing;
@@ -37,12 +38,23 @@ export const mockHosting = {
       ...hosting,
       customDomain: {
         domain: normalizedDomain,
-        status: "connected",
-        sslStatus: "valid",
-        verified: true,
+        status: "needs_dns",
+        sslStatus: "pending",
+        verified: false,
+        dnsResolved: false,
         liveUrl: `https://${normalizedDomain}`,
-        message: "Mock custom domain connected"
+        dnsInstructions: dnsInstructionsForDomain(normalizedDomain),
+        message: "Add DNS records, then verify again"
       }
+    };
+    return hosting;
+  },
+  updateCustomDomain(customDomain: DomainStatus) {
+    const customDomainLive = Boolean(customDomain.domain && customDomain.verified && customDomain.dnsResolved);
+    hosting = {
+      ...hosting,
+      customDomain,
+      liveUrl: customDomainLive ? customDomain.liveUrl ?? `https://${customDomain.domain}` : `https://${hosting.subdomain}`
     };
     return hosting;
   },
