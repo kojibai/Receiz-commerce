@@ -48,10 +48,10 @@ export function merchantServerSessionRequirement(input: {
 }): MerchantServerSessionGate {
   const handle = normalizedHandle(input.handle);
 
-  if (input.connected && handle) {
+  if (input.connected) {
     return {
       ok: true,
-      handle
+      handle: handle || "receiz-connected"
     };
   }
 

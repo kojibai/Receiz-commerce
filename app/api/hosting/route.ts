@@ -70,7 +70,7 @@ async function requireMerchantSession(
   const profile = await loadPublishOwner(accessToken);
   const gate = merchantServerSessionRequirement({
     action,
-    connected: Boolean(profile),
+    connected: Boolean(accessToken),
     handle: profile?.handle
   });
 

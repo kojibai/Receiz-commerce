@@ -17,6 +17,7 @@
     "src/lib/receiz/connect-url.ts",
     "src/lib/receiz/oauth-state.ts",
     "src/lib/receiz/oauth-scopes.ts",
+    "src/lib/receiz/session.ts",
     "src/lib/launch/readiness.ts",
     "src/lib/pwa/cache-policy.ts",
     "src/lib/pwa/manifest.ts",

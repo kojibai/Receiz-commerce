@@ -51,4 +51,19 @@ describe("merchant server session gate", () => {
       handle: "owner.receiz.id"
     });
   });
+
+  it("allows a server Receiz session even when userinfo does not expose a handle", () => {
+    const gate = merchantServerSessionRequirement({
+      action: "publish",
+      connected: true,
+      handle: "",
+      localReceizIdConnected: true,
+      localProofVerified: true
+    });
+
+    assert.deepEqual(gate, {
+      ok: true,
+      handle: "receiz-connected"
+    });
+  });
 });
