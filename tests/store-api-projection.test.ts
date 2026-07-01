@@ -9,6 +9,13 @@ describe("store API projection merge", () => {
     const merged = mergeStoreApiProjection(base, {
       ok: true,
       publishedState: true,
+      proofMemory: {
+        knownHead: {
+          afterEntryId: "store_state:bjklock.receiz.app:20260701203000000",
+          afterKaiUpulse: "20260701203000000",
+          afterCreatedAt: "2026-07-01T20:30:00.000Z"
+        }
+      },
       brand: { name: "BJ Klock", logoText: "bjklock" },
       hosting: { subdomain: "bjklock.receiz.app", liveUrl: "https://bjklock.receiz.app" },
       products: [{ ...base.products[0], id: "new-product", name: "New product" }],
@@ -25,9 +32,85 @@ describe("store API projection merge", () => {
     assert.equal(merged.collections[0]?.productIds[0], "new-product");
   });
 
+  it("rejects published tenant responses without a proof-memory Kai head", () => {
+    assert.equal(
+      mergeStoreApiProjection(baseState(), {
+        ok: true,
+        publishedState: true,
+        brand: { name: "No proof head" }
+      }),
+      null
+    );
+  });
+
   it("ignores fallback or failed API responses", () => {
     assert.equal(mergeStoreApiProjection(baseState(), { ok: true, publishedState: false }), null);
     assert.equal(mergeStoreApiProjection(baseState(), { ok: false, publishedState: true }), null);
+  });
+
+  it("does not merge an older append head over a newer local proof-store head", () => {
+    const base = {
+      ...baseState(),
+      brand: { ...baseState().brand, name: "Fresh storefront" },
+      hosting: {
+        ...baseState().hosting,
+        storeProofHead: {
+          afterEntryId: "store_state:bjklock.receiz.app:20260701T203000000Z",
+          afterKaiUpulse: "20260701203000000",
+          afterCreatedAt: "2026-07-01T20:30:00.000Z"
+        }
+      }
+    };
+
+    const merged = mergeStoreApiProjection(base, {
+      ok: true,
+      publishedState: true,
+      proofMemory: {
+        knownHead: {
+          afterEntryId: "store_state:bjklock.receiz.app:20260701T190000000Z",
+          afterKaiUpulse: "20260701190000000",
+          afterCreatedAt: "2026-07-01T19:00:00.000Z"
+        }
+      },
+      brand: { name: "Older storefront" },
+      products: [{ ...base.products[0], id: "older-product", name: "Older product" }]
+    });
+
+    assert.equal(merged, null);
+  });
+
+  it("merges a newer append head and stores it as the new local proof boundary", () => {
+    const base = {
+      ...baseState(),
+      brand: { ...baseState().brand, name: "Old storefront" },
+      hosting: {
+        ...baseState().hosting,
+        storeProofHead: {
+          afterEntryId: "store_state:bjklock.receiz.app:20260701T190000000Z",
+          afterKaiUpulse: "20260701190000000",
+          afterCreatedAt: "2026-07-01T19:00:00.000Z"
+        }
+      }
+    };
+
+    const merged = mergeStoreApiProjection(base, {
+      ok: true,
+      publishedState: true,
+      proofMemory: {
+        knownHead: {
+          afterEntryId: "store_state:bjklock.receiz.app:20260701T203000000Z",
+          afterKaiUpulse: "20260701203000000",
+          afterCreatedAt: "2026-07-01T20:30:00.000Z"
+        }
+      },
+      brand: { name: "Fresh storefront" },
+      products: [{ ...base.products[0], id: "fresh-product", name: "Fresh product" }]
+    });
+
+    assert.ok(merged);
+    assert.equal(merged.brand.name, "Fresh storefront");
+    assert.equal(merged.products[0]?.id, "fresh-product");
+    assert.equal(merged.hosting.storeProofHead?.afterKaiUpulse, "20260701203000000");
   });
 
   it("merges tenant commerce projection without replacing draft storefront content", () => {

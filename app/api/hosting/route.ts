@@ -11,6 +11,7 @@ import {
   addProjectDomain,
   customDomainStatusFromVercel,
   dnsInstructionsForDomain,
+  dnsRecordsForDomain,
   hasVercelDomainConfig,
   missingVercelEnvDomainStatus,
   verifyProjectDomain,
@@ -23,7 +24,7 @@ import { proofObjectCheckoutFunding } from "@/lib/checkout/wallet-authority";
 import { platform } from "@/lib/platform";
 import { createReceizCommerceAdapter } from "@/lib/receiz/adapter";
 import { loadReceizConnectProfile } from "@/lib/receiz/connect-profile";
-import { buildStoreStateRecord } from "@/lib/receiz/proof-state";
+import { isStoreStateRecord } from "@/lib/receiz/proof-state";
 import { getServerProofStateStore } from "@/lib/receiz/proof-state-store";
 import { publishReceizStoreState } from "@/lib/receiz/store-state-publication";
 import { receizAccessTokenFromRequest, receizAuthorityRequired } from "@/lib/receiz/session";
@@ -131,6 +132,7 @@ function domainErrorStatus(domain: string, error: unknown): DomainStatus {
     sslStatus: "unknown",
     verified: false,
     liveUrl: `https://${domain}`,
+    dnsRecords: dnsRecordsForDomain(domain),
     dnsInstructions: dnsInstructionsForDomain(domain),
     message: errorMessage(error),
     lastCheckedAt: new Date().toISOString()
@@ -485,22 +487,18 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const storeStateRecord = buildStoreStateRecord(publishState, {
+    const storeStateReceizRecord = await publishReceizStoreState(accessToken, publishState, {
       actorReceizId,
       tenantHost,
       reason: "publish"
     });
-    const proofStore = await getServerProofStateStore(storeStateRecord.merchantReceizId);
-    await proofStore.admitStoreRecord(storeStateRecord);
-    const storeStateReceizRecord = await publishReceizStoreState(accessToken, storeStateRecord);
 
     if (!receizWriteSucceeded(storeStateReceizRecord)) {
       const error = isRecord(storeStateReceizRecord) ? String(storeStateReceizRecord.error ?? "receiz_store_state_record_failed") : "receiz_store_state_record_failed";
 
       console.error("[publish] Receiz store-state record failed", {
-        tenantHost: storeStateRecord.tenantHost,
-        merchantReceizId: storeStateRecord.merchantReceizId,
-        storeStateRecordId: storeStateRecord.id,
+        tenantHost,
+        merchantReceizId: actorReceizId,
         error
       });
 
@@ -516,6 +514,21 @@ export async function POST(request: NextRequest) {
         { status: error === "receiz_authority_required" ? 401 : 502 }
       );
     }
+
+    if (!isRecord(storeStateReceizRecord) || !isStoreStateRecord(storeStateReceizRecord.record)) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error: "receiz_store_state_record_missing",
+          message: "Receiz store-state publish completed without a completed proof record."
+        },
+        { status: 502 }
+      );
+    }
+
+    const storeStateRecord = storeStateReceizRecord.record;
+    const proofStore = await getServerProofStateStore(storeStateRecord.merchantReceizId);
+    await proofStore.admitStoreRecord(storeStateRecord);
 
     console.info("[publish] Receiz store-state record written", {
       tenantHost: storeStateRecord.tenantHost,

@@ -1,6 +1,6 @@
 import { seedCommerceState } from "@/data/seed";
 import { normalizeCustomDomain, normalizeTenantSlug, subdomainForSlug } from "@/lib/hosting/domain-utils";
-import { dnsInstructionsForDomain } from "@/lib/hosting/vercel-domains";
+import { dnsInstructionsForDomain, dnsRecordsForDomain } from "@/lib/hosting/vercel-domains";
 import type { DomainStatus, HostingMode } from "@/types/domain";
 
 let hosting = seedCommerceState.hosting;
@@ -43,6 +43,7 @@ export const mockHosting = {
         verified: false,
         dnsResolved: false,
         liveUrl: `https://${normalizedDomain}`,
+        dnsRecords: dnsRecordsForDomain(normalizedDomain),
         dnsInstructions: dnsInstructionsForDomain(normalizedDomain),
         message: "Add DNS records, then verify again"
       }

@@ -1,6 +1,6 @@
 import type { CommerceState, HostingConfig } from "../../types/domain";
 import { normalizeCustomDomain, normalizeTenantSlug, subdomainForSlug } from "./domain-utils";
-import { dnsInstructionsForDomain } from "./vercel-domains";
+import { dnsInstructionsForDomain, dnsRecordsForDomain } from "./vercel-domains";
 
 export type PublishOwner = {
   customDomain?: string;
@@ -64,6 +64,7 @@ function sanitizeCustomDomain(domain: HostingConfig["customDomain"]): HostingCon
       status: domain.status === "pending" ? "active" : domain.status,
       sslStatus: "valid",
       liveUrl: domain.liveUrl || `https://${domain.domain}`,
+      dnsRecords: domain.dnsRecords ?? [],
       dnsInstructions: domain.dnsInstructions ?? []
     };
   }
@@ -77,6 +78,7 @@ function sanitizeCustomDomain(domain: HostingConfig["customDomain"]): HostingCon
     verified: false,
     dnsResolved: false,
     liveUrl: domain.liveUrl || `https://${domain.domain}`,
+    dnsRecords: domain.dnsRecords?.length ? domain.dnsRecords : dnsRecordsForDomain(domain.domain),
     dnsInstructions: domain.dnsInstructions?.length ? domain.dnsInstructions : dnsInstructionsForDomain(domain.domain),
     message: keepStatus
       ? domain.message

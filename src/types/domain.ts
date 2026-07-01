@@ -58,11 +58,24 @@ export type BrandConfig = {
 
 export type HostingMode = "mock_hosted" | "hosted_platform" | "self_hosted";
 
+export type ReceizStoreProofHead = {
+  afterEntryId: string | null;
+  afterKaiUpulse: string | number | null;
+  afterCreatedAt: string | null;
+};
+
 export type DomainVerificationRecord = {
   type: string;
   domain: string;
   value: string;
   reason?: string;
+};
+
+export type DomainDnsRecord = {
+  type: string;
+  host: string;
+  value: string;
+  label: string;
 };
 
 export type DomainStatus = {
@@ -81,6 +94,7 @@ export type DomainStatus = {
   dnsResolved?: boolean;
   liveUrl?: string;
   verification?: DomainVerificationRecord[];
+  dnsRecords?: DomainDnsRecord[];
   dnsInstructions?: string[];
   lastCheckedAt?: string;
   message?: string;
@@ -98,6 +112,7 @@ export type HostingConfig = {
   plan: "starter" | "pro" | "scale";
   published: boolean;
   lastPublishedAt: string;
+  storeProofHead?: ReceizStoreProofHead;
 };
 
 export type HostingPlan = {

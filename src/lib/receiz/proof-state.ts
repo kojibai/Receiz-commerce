@@ -47,6 +47,9 @@ export type StoreStateRecord = {
   type: "store.state.published";
   reason: "publish" | "sync" | "restore";
   recordedAt: string;
+  updatedKaiUpulse: string | number;
+  appendAnchorId: string;
+  appendProof: Record<string, unknown> | null;
   actorReceizId: string;
   tenantHost: string;
   tenantSlug: string;
@@ -106,7 +109,10 @@ export type StoreStateRecordInput = {
   actorReceizId: string;
   tenantHost?: string;
   reason?: StoreStateRecord["reason"];
-  recordedAt?: string;
+  recordedAt: string;
+  updatedKaiUpulse: string | number;
+  appendAnchorId: string;
+  appendProof?: Record<string, unknown> | null;
 };
 
 function stableSlug(value: string) {
@@ -118,9 +124,35 @@ function stableSlug(value: string) {
     .replace(/^-|-$/g, "");
 }
 
-function recordId(prefix: string, tenantHost: string, recordedAt: string) {
-  const stamp = recordedAt.replace(/[^0-9a-z]/gi, "");
+function recordId(prefix: string, tenantHost: string, updatedKaiUpulse: string | number) {
+  const stamp = String(updatedKaiUpulse).replace(/[^0-9a-z]/gi, "");
   return `${prefix}:${tenantHost}:${stamp}`;
+}
+
+function hasKaiUpulse(value: unknown): value is string | number {
+  return typeof value === "string" || typeof value === "number";
+}
+
+function normalizeKaiForCompare(value: string | number) {
+  return String(value).trim().replace(/^\+/, "");
+}
+
+export function compareStoreStateKaiUpulse(leftValue: string | number, rightValue: string | number) {
+  const left = normalizeKaiForCompare(leftValue);
+  const right = normalizeKaiForCompare(rightValue);
+  const [leftWholeRaw = "", leftFractionRaw = ""] = left.split(".");
+  const [rightWholeRaw = "", rightFractionRaw = ""] = right.split(".");
+  const leftWhole = leftWholeRaw.replace(/^0+/, "") || "0";
+  const rightWhole = rightWholeRaw.replace(/^0+/, "") || "0";
+
+  if (leftWhole.length !== rightWhole.length) return leftWhole.length > rightWhole.length ? 1 : -1;
+  if (leftWhole !== rightWhole) return leftWhole > rightWhole ? 1 : -1;
+
+  const maxFractionLength = Math.max(leftFractionRaw.length, rightFractionRaw.length);
+  const leftFraction = leftFractionRaw.padEnd(maxFractionLength, "0");
+  const rightFraction = rightFractionRaw.padEnd(maxFractionLength, "0");
+  if (leftFraction === rightFraction) return 0;
+  return leftFraction > rightFraction ? 1 : -1;
 }
 
 const MAX_INLINE_DATA_URL_CHARS = 1_500_000;
@@ -145,7 +177,7 @@ function compactPublishedState<T>(value: T): T {
   return compactInlineMedia(structuredClone(value)) as T;
 }
 
-function clonePublishedState(state: CommerceState): PublishedStoreState {
+export function publishedStoreStateFromCommerceState(state: CommerceState): PublishedStoreState {
   return {
     brand: compactPublishedState(state.brand),
     storefront: compactPublishedState(state.storefront),
@@ -174,22 +206,33 @@ function tenantHostFromState(state: CommerceState, inputHost?: string) {
 }
 
 export function buildStoreStateRecord(state: CommerceState, input: StoreStateRecordInput): StoreStateRecord {
-  const recordedAt = input.recordedAt ?? new Date().toISOString();
+  if (!hasKaiUpulse(input.updatedKaiUpulse)) {
+    throw new Error("receiz_store_state_missing_kai_upulse");
+  }
+
+  if (!input.appendAnchorId.trim()) {
+    throw new Error("receiz_store_state_missing_append_anchor");
+  }
+
+  const recordedAt = input.recordedAt;
   const tenantHost = tenantHostFromState(state, input.tenantHost);
   const tenantSlug = state.hosting.tenantSlug || stableSlug(tenantHost);
   const merchantReceizId = state.hosting.merchantReceizId || input.actorReceizId;
 
   return {
     schema: STORE_STATE_SCHEMA,
-    id: recordId("store_state", tenantHost, recordedAt),
+    id: recordId("store_state", tenantHost, input.updatedKaiUpulse),
     type: "store.state.published",
     reason: input.reason ?? "publish",
     recordedAt,
+    updatedKaiUpulse: input.updatedKaiUpulse,
+    appendAnchorId: input.appendAnchorId,
+    appendProof: input.appendProof ?? null,
     actorReceizId: input.actorReceizId,
     tenantHost,
     tenantSlug,
     merchantReceizId,
-    state: clonePublishedState(state)
+    state: publishedStoreStateFromCommerceState(state)
   };
 }
 
@@ -218,7 +261,14 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 export function isStoreStateRecord(value: unknown): value is StoreStateRecord {
-  return isRecord(value) && value.schema === STORE_STATE_SCHEMA && isRecord(value.state);
+  return (
+    isRecord(value) &&
+    value.schema === STORE_STATE_SCHEMA &&
+    isRecord(value.state) &&
+    hasKaiUpulse(value.updatedKaiUpulse) &&
+    typeof value.appendAnchorId === "string" &&
+    value.appendAnchorId.trim().length > 0
+  );
 }
 
 export function isCommerceEventRecord(value: unknown): value is CommerceEventRecord {
@@ -250,13 +300,21 @@ export function projectStoreStateFromRecords(
   const latest = records
     .filter(isStoreStateRecord)
     .filter((record) => storeStateRecordMatchesTenantHost(record, tenantHost))
-    .sort((left, right) => Date.parse(right.recordedAt) - Date.parse(left.recordedAt))[0];
+    .sort((left, right) => compareStoreStateKaiUpulse(right.updatedKaiUpulse, left.updatedKaiUpulse))[0];
 
   if (!latest) return baseState;
 
   return {
     ...baseState,
     ...latest.state,
+    hosting: {
+      ...latest.state.hosting,
+      storeProofHead: {
+        afterEntryId: latest.id,
+        afterKaiUpulse: latest.updatedKaiUpulse,
+        afterCreatedAt: latest.recordedAt
+      }
+    },
     cart: { lines: [] },
     orders: [],
     customers: [],

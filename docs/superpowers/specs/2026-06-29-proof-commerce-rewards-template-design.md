@@ -4,7 +4,7 @@ Date: 2026-06-29
 
 ## Purpose
 
-Build a forkable full-stack Receiz template and hosted launch experience that lets a brand launch a customizable business website, store, marketplace, customer account system, or rewards game without writing backend code. The product should feel like a more advanced Shopify for proof-sealed commerce and reward games: a brand can set up its public site, sell products or Receized assets, manage customers and orders, enable proof-sealed rewards, and optionally add play-to-earn campaigns.
+Build a forkable full-stack Receiz template and hosted launch experience that lets a brand launch a customizable business website, store, marketplace, customer account system, or rewards game without writing backend code. The product should feel Receiz-native for proof-sealed commerce and reward games: a brand can set up its public site, sell products or Receized assets, manage customers and orders, enable proof-sealed rewards, and optionally add play-to-earn campaigns.
 
 The core offer is:
 
@@ -650,4 +650,4 @@ Before implementation is considered complete:
 
 ## Approval
 
-This spec reflects the updated direction: a full-stack, Shopify-style proof-sealed commerce template where a brand can launch a customizable business website, store, customer accounts, hosted subdomain or custom domain, admin panel, proof-sealed rewards, Receized assets, and optional reward games using the Receiz SDK. It supports both no-code hosted operators and developers who want to fork the code.
+This spec reflects the updated direction: a full-stack Receiz-native proof-sealed commerce template where a brand can launch a customizable business website, store, customer accounts, hosted subdomain or custom domain, admin panel, proof-sealed rewards, Receized assets, and optional reward games using the Receiz SDK. It supports both no-code hosted operators and developers who want to fork the code.

@@ -7,11 +7,13 @@ import {
   admitCommerceEvent,
   buildStoreStateConnectRecord,
   buildStoreStateRecord,
+  isStoreStateRecord,
   storeStateProjectionSource,
   storeStateRecordMatchesTenantHost,
   projectStoreStateFromRecords
 } from "../src/lib/receiz/proof-state.js";
 import { buildPublishedCommerceState } from "../src/lib/hosting/published-state.js";
+import { receizAppendFixture } from "./support/receiz-append.js";
 
 function baseState(): CommerceState {
   return {
@@ -162,7 +164,8 @@ describe("Receiz proof commerce state", () => {
     const record = buildStoreStateRecord(state, {
       actorReceizId: "boost.receiz.id",
       tenantHost: "boost.receiz.app",
-      reason: "publish"
+      reason: "publish",
+      ...receizAppendFixture("2026-06-30T00:00:00.000Z")
     });
 
     assert.equal(record.schema, STORE_STATE_SCHEMA);
@@ -175,12 +178,30 @@ describe("Receiz proof commerce state", () => {
     assert.equal(record.state.hosting.published, true);
   });
 
+  it("rejects incomplete store state records without Kai and append anchor", () => {
+    assert.equal(
+      isStoreStateRecord({
+        schema: STORE_STATE_SCHEMA,
+        id: "store_state:boost.receiz.app:missing",
+        type: "store.state.published",
+        reason: "publish",
+        recordedAt: "2026-06-30T00:00:00.000Z",
+        actorReceizId: "boost.receiz.id",
+        tenantHost: "boost.receiz.app",
+        tenantSlug: "boost",
+        merchantReceizId: "boost.receiz.id",
+        state: {}
+      }),
+      false
+    );
+  });
+
   it("projects the newest published store state for the requested host", () => {
     const boost = buildStoreStateRecord(baseState(), {
       actorReceizId: "boost.receiz.id",
       tenantHost: "boost.receiz.app",
       reason: "publish",
-      recordedAt: "2026-06-30T00:00:00.000Z"
+      ...receizAppendFixture("2026-06-30T00:00:00.000Z")
     });
     const latest = buildStoreStateRecord(
       {
@@ -191,7 +212,7 @@ describe("Receiz proof commerce state", () => {
         actorReceizId: "boost.receiz.id",
         tenantHost: "boost.receiz.app",
         reason: "publish",
-        recordedAt: "2026-06-30T00:01:00.000Z"
+        ...receizAppendFixture("2026-06-30T00:01:00.000Z")
       }
     );
     const other = buildStoreStateRecord(
@@ -209,7 +230,7 @@ describe("Receiz proof commerce state", () => {
         actorReceizId: "other.receiz.id",
         tenantHost: "other.receiz.app",
         reason: "publish",
-        recordedAt: "2026-06-30T00:02:00.000Z"
+        ...receizAppendFixture("2026-06-30T00:02:00.000Z")
       }
     );
 
@@ -242,7 +263,7 @@ describe("Receiz proof commerce state", () => {
       actorReceizId: "bjklock.receiz.id",
       tenantHost: "shop.bjklock.com",
       reason: "publish",
-      recordedAt: "2026-06-30T00:04:00.000Z"
+      ...receizAppendFixture("2026-06-30T00:04:00.000Z")
     });
 
     assert.equal(projectStoreStateFromRecords(baseState(), [record], "shop.bjklock.com").brand.name, "BJK Lock Store");
@@ -286,7 +307,7 @@ describe("Receiz proof commerce state", () => {
       actorReceizId: state.hosting.merchantReceizId,
       tenantHost: state.hosting.customDomain.domain || state.hosting.subdomain,
       reason: "publish",
-      recordedAt: "2026-06-30T00:05:00.000Z"
+      ...receizAppendFixture("2026-06-30T00:05:00.000Z")
     });
 
     assert.equal(state.hosting.subdomain, "bjklock.receiz.app");
@@ -451,7 +472,7 @@ describe("Receiz proof commerce state", () => {
         actorReceizId: "bjklock.receiz.id",
         tenantHost: "bjklock.receiz.app",
         reason: "publish",
-        recordedAt: "2026-06-30T00:05:15.000Z"
+        ...receizAppendFixture("2026-06-30T00:05:15.000Z")
       }
     );
     const projected = projectStoreStateFromRecords(base, [record], "bjklock.receiz.app");
@@ -479,7 +500,7 @@ describe("Receiz proof commerce state", () => {
         actorReceizId: "boost.receiz.id",
         tenantHost: "boost.receiz.app",
         reason: "publish",
-        recordedAt: "2026-06-30T00:05:25.000Z"
+        ...receizAppendFixture("2026-06-30T00:05:25.000Z")
       }
     );
 
@@ -504,7 +525,7 @@ describe("Receiz proof commerce state", () => {
         actorReceizId: "boost.receiz.id",
         tenantHost: "boost.receiz.app",
         reason: "publish",
-        recordedAt: "2026-06-30T00:05:30.000Z"
+        ...receizAppendFixture("2026-06-30T00:05:30.000Z")
       }
     );
 
@@ -518,7 +539,7 @@ describe("Receiz proof commerce state", () => {
       actorReceizId: "boost.receiz.id",
       tenantHost: "boost.receiz.app",
       reason: "publish",
-      recordedAt: "2026-06-30T00:06:00.000Z"
+      ...receizAppendFixture("2026-06-30T00:06:00.000Z")
     });
     const connectRecord = buildStoreStateConnectRecord(record);
 

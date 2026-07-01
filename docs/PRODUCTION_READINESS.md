@@ -15,16 +15,19 @@ Production truth comes from:
 - Identity artifacts: Receiz Key, Identity Record, and Identity Seal.
 - Verified local proof projections admitted into proof memory.
 - Verified appends, ownership appends, and settlement ledger rows.
-- Receiz public-store and app-state records.
+- Receiz public-store and app-state projections that carry complete proof objects.
 - Receiz SDK/API rails that verify, project, publish, or append that truth.
 
 Connect/OIDC tokens are delegated permission artifacts for remote SDK/API reads and writes after proof has been established. They are not the proof root. A verified proof object is enough authority for the account, wallet, checkout, publish, billing, and domain actions this app can perform locally or route into the correct remote rail.
 
+Kai-Klok is the deterministic state machine for proof coordinates. Every published storefront state must be stamped by a Receiz append/proof response with Kai pulse and anchor. The app must not derive store authority from Chronos timestamps, caches, response order, local browser storage, Vercel memory, Supabase, Stripe, Shopify, or any outside system.
+
 The app follows this first-paint rule:
 
 1. Resolve durable public store state by tenant host or URL.
-2. Render the stored proof projection immediately.
-3. Append verified additions in the background without replacing known truth.
+2. Accept only complete store-state proof objects carrying Kai and anchor.
+3. Render the stored proof projection immediately.
+4. Append verified additions after the known Kai/proof head without replacing known truth.
 
 ## 100/100 Gates
 
@@ -98,10 +101,14 @@ Code paths:
 
 Required checks:
 
-- Publish writes a Receiz store-state record.
+- Publish appends through Receiz SDK rails first and requires the returned Kai pulse, anchor id, and proof bundle.
+- Publish writes a complete Receiz store-state record with `updatedKaiUpulse`, `appendAnchorId`, and `appendProof`.
 - Public-store publish includes the latest pages, blog posts, products, collections, rewards, assets, game, checkout, and hosting state.
-- Tenant reads use `no-store` and recover the latest public-store/app-state projection.
+- Public-store idempotency is based on `storeStateRecord.updatedKaiUpulse`.
+- Tenant reads use `no-store` and recover the latest public-store/app-state projection carrying Kai/anchor.
+- Client merges require `proofMemory.knownHead.afterKaiUpulse`; older Kai heads and missing heads do not merge.
 - Tenant fallback always includes system pages for `/about`, `/rewards`, and `/account` so direct URLs do not fall through to platform 404s.
+- Tests `store-state-publication.test.ts`, `proof-state.test.ts`, `proof-state-store.test.ts`, and `store-api-projection.test.ts` must pass before release.
 
 ### 5. Media Durability
 

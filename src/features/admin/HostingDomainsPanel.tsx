@@ -20,12 +20,14 @@ export function HostingDomainsPanel({
   onVerifyDomain
 }: {
   hosting: HostingConfig;
-  onSubdomain: (value: string) => void;
-  onCustomDomain: (value: string) => void;
-  onVerifyDomain: (value: string) => void;
+  onSubdomain: (value: string) => void | Promise<void>;
+  onCustomDomain: (value: string) => void | Promise<void>;
+  onVerifyDomain: (value: string) => void | Promise<void>;
 }) {
   const [subdomainDraft, setSubdomainDraft] = useState(hosting.subdomain);
   const [customDomainDraft, setCustomDomainDraft] = useState(hosting.customDomain.domain);
+  const [copiedRecord, setCopiedRecord] = useState<string | null>(null);
+  const [verifying, setVerifying] = useState(false);
 
   useEffect(() => {
     setSubdomainDraft(hosting.subdomain);
@@ -44,6 +46,28 @@ export function HostingDomainsPanel({
     const value = customDomainDraft.trim();
     if (value) onCustomDomain(value);
   };
+
+  const verifyCustomDomain = async () => {
+    const value = (hosting.customDomain.domain || customDomainDraft).trim();
+    if (!value || verifying) return;
+
+    setVerifying(true);
+    try {
+      await onVerifyDomain(value);
+    } finally {
+      setVerifying(false);
+    }
+  };
+
+  const copyRecordValue = async (key: string, value: string) => {
+    if (!navigator.clipboard) return;
+
+    await navigator.clipboard.writeText(value);
+    setCopiedRecord(key);
+    window.setTimeout(() => setCopiedRecord((current) => (current === key ? null : current)), 1600);
+  };
+
+  const dnsRecords = hosting.customDomain.dnsRecords ?? [];
 
   return (
     <Panel className="admin-panel">
@@ -113,18 +137,49 @@ export function HostingDomainsPanel({
         {hosting.customDomain.dnsInstructions?.length ? (
           <div className="domain-proof-box">
             <strong>DNS records to add</strong>
-            <ul>
-              {hosting.customDomain.dnsInstructions.map((instruction) => (
-                <li key={instruction}>{instruction}</li>
-              ))}
-            </ul>
-            <Button onClick={() => onVerifyDomain(hosting.customDomain.domain)} variant="outline">
-              Verify DNS
+            {dnsRecords.length ? (
+              <div className="domain-dns-record-list">
+                {dnsRecords.map((record) => {
+                  const key = `${record.type}:${record.host}:${record.value}`;
+                  return (
+                    <div className="domain-dns-record" key={key}>
+                      <span>{record.type}</span>
+                      <div>
+                        <strong>{record.host}</strong>
+                        <code>{record.value}</code>
+                      </div>
+                      <button
+                        aria-label={`Copy ${record.type} value ${record.value}`}
+                        className="icon-button domain-copy-button"
+                        onClick={() => void copyRecordValue(key, record.value)}
+                        type="button"
+                      >
+                        <Icons.copy size={15} />
+                        <small>{copiedRecord === key ? "Copied" : "Copy"}</small>
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <ul>
+                {hosting.customDomain.dnsInstructions.map((instruction) => (
+                  <li key={instruction}>{instruction}</li>
+                ))}
+              </ul>
+            )}
+            {hosting.customDomain.lastCheckedAt ? (
+              <small className="domain-last-checked">
+                Last checked {hosting.customDomain.lastCheckedAt === "now" ? "now" : new Date(hosting.customDomain.lastCheckedAt).toLocaleTimeString()}
+              </small>
+            ) : null}
+            <Button disabled={verifying || !hosting.customDomain.domain} onClick={verifyCustomDomain} variant="outline">
+              {verifying ? "Checking DNS" : "Verify DNS"}
             </Button>
           </div>
         ) : null}
       </div>
-      <Button onClick={() => onVerifyDomain(hosting.customDomain.domain)} variant="outline">
+      <Button disabled={verifying || !hosting.customDomain.domain} onClick={verifyCustomDomain} variant="outline">
         Manage hosting
       </Button>
     </Panel>

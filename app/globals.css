@@ -3034,6 +3034,71 @@ a {
   overflow-wrap: anywhere;
 }
 
+.domain-dns-record-list {
+  display: grid;
+  gap: 8px;
+}
+
+.domain-dns-record {
+  display: grid;
+  grid-template-columns: minmax(52px, auto) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid rgba(0, 122, 103, 0.18);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.domain-dns-record > span {
+  min-width: 0;
+  color: var(--receiz);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0;
+}
+
+.domain-dns-record div {
+  min-width: 0;
+}
+
+.domain-dns-record strong,
+.domain-dns-record code {
+  display: block;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.domain-dns-record strong {
+  color: var(--text);
+  font-size: 11px;
+}
+
+.domain-dns-record code {
+  margin-top: 2px;
+  color: var(--muted);
+  font-family: inherit;
+  font-size: 11px;
+}
+
+.domain-copy-button {
+  width: auto;
+  min-width: 42px;
+  gap: 3px;
+  padding: 0 7px;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.domain-copy-button small {
+  font-size: 9px;
+}
+
+.domain-last-checked {
+  color: var(--muted);
+  font-size: 10px;
+}
+
 .domain-proof-box .button {
   justify-self: start;
 }

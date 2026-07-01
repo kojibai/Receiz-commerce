@@ -19,7 +19,7 @@ describe("published commerce state", () => {
           verified: true,
           dnsResolved: true,
           message: "Domain verified and SSL ready",
-          dnsInstructions: ["Point shop.bjk.ceo CNAME to cname.vercel-dns-0.com"]
+          dnsInstructions: ["Point shop.bjk.ceo CNAME to custom.receiz.app"]
         }
       }
     };
@@ -72,8 +72,16 @@ describe("published commerce state", () => {
     assert.equal(published.hosting.customDomain.sslStatus, "pending");
     assert.equal(published.hosting.customDomain.verified, false);
     assert.equal(published.hosting.customDomain.dnsResolved, false);
+    assert.deepEqual(published.hosting.customDomain.dnsRecords, [
+      {
+        type: "CNAME",
+        host: "shop.bjk.ceo",
+        value: "custom.receiz.app",
+        label: "Point shop.bjk.ceo to custom.receiz.app"
+      }
+    ]);
     assert.deepEqual(published.hosting.customDomain.dnsInstructions, [
-      "Point shop.bjk.ceo CNAME to cname.vercel-dns-0.com"
+      "Point shop.bjk.ceo CNAME to custom.receiz.app"
     ]);
     assert.equal(published.hosting.liveUrl, "https://bjklock.receiz.app");
   });

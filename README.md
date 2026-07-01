@@ -27,6 +27,8 @@ The object carries the proof. A Receiz Key, Identity Record image, Identity Seal
 
 `@receiz/sdk` is the typed way to verify, project, admit, publish, and sync that proof truth. Receiz MCP is agent tooling over the SDK/API surface. Connect/OIDC tokens are scoped permission artifacts for remote reads and writes after proof has been established; they are not the identity proof root and do not outrank a verified proof object.
 
+Kai-Klok is the deterministic proof-state machine. Each proof object is uniquely stamped with its Kai pulse and anchor, and that stamp is recomputable from the open-source Kai-Klok canon: https://github.com/kojibai/klok. This app must never invent a replacement ordering rule. Chronos timestamps, server response order, CDN state, browser storage, Vercel function memory, and framework cache state are not authority.
+
 The SDK integration follows the Receiz order:
 
 - Verify or validate carried proof truth.
@@ -34,6 +36,8 @@ The SDK integration follows the Receiz order:
 - Admit it once into durable proof memory.
 - Resume from the known Kai/proof head.
 - Append later verified additions without rediscovering known truth.
+
+Storefront publish follows the same law. The app calls the Receiz append rail through the SDK, requires the returned Kai pulse, anchor, and proof bundle, then builds the public store-state proof object with `updatedKaiUpulse` and `appendAnchorId`. Only that completed object is admitted into proof memory and published through `publicStore.publish()`. A public-store response without `proofMemory.knownHead.afterKaiUpulse` is ignored by the client, and the newest admitted Kai append always wins.
 
 No Supabase, Stripe, or app database is required for product truth. Local browser state in this template is demo composition only; proof memory is admitted proof truth, not a cache.
 
@@ -201,6 +205,7 @@ VERCEL_TEAM_ID=
 VERCEL_TEAM_SLUG=
 VERCEL_PROJECT_ID=
 VERCEL_API_TOKEN=
+RECEIZ_CUSTOM_DOMAIN_CNAME_TARGET=custom.receiz.app
 VERCEL_CNAME_TARGET=cname.vercel-dns-0.com
 VERCEL_APEX_A_RECORD=76.76.21.21
 ```
@@ -222,13 +227,15 @@ The app routes tenant hosts through `middleware.ts`. A request to `boost.receiz.
 
 The admin editor can stage changes locally, but a hosted subdomain/custom domain is only globally live after publish writes a Receiz store-state record. Production publish is authorized by the merchant's verified Receiz proof object. When the app needs remote SDK/API writes, continued Receiz ID proof can mint delegated Connect permission from the secure server cookie, but that token is only a permission artifact beneath the proof object. Vercel function memory is not durable and is never treated as the global source of truth.
 
+Publish appends first. `/api/store` and `/api/hosting` send the public store projection through the SDK append rail, require the returned `kaiUpulse`/`kaiPulseEternal`, anchor id, and proof bundle, then create the store-state record. `publicStore.publish()` uses `storeStateRecord.updatedKaiUpulse` for idempotency. If the append coordinate is missing, the app fails the publish instead of deriving a local timestamp or accepting an incomplete record.
+
 After publishing, verify the public tenant projection:
 
 ```bash
 curl -sS https://your-subdomain.receiz.app/api/store
 ```
 
-The response should show saved brand/content, `source: "published"`, `publishedState: true`, and `proofMemory.entries` greater than `0`. If it shows `source: "fallback"` or `proofMemory.entries: 0`, the live app did not recover a Receiz store-state record and will render the safe fallback storefront. If publish returns `receiz_authority_required`, restore or present a verified proof object, or continue with Receiz ID proof for delegated remote writes, then publish again.
+The response should show saved brand/content, `source: "published"`, `publishedState: true`, `proofMemory.entries` greater than `0`, and `proofMemory.knownHead.afterKaiUpulse`. If the Kai head is missing, the response is incomplete proof truth and the client must not merge it over the local proof store. If publish returns `receiz_authority_required`, restore or present a verified proof object, or continue with Receiz ID proof for delegated remote writes, then publish again.
 
 Receiz settlement for platform fees we collect:
 

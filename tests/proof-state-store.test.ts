@@ -7,6 +7,7 @@ import {
 } from "../src/lib/receiz/proof-state-store.js";
 import type { CommerceState } from "../src/types/domain.js";
 import { baseState } from "./support/commerce-state.js";
+import { receizAppendFixture } from "./support/receiz-append.js";
 
 describe("Receiz proof state store", () => {
   it("adopts newest published tenant state from proof memory", async () => {
@@ -14,7 +15,7 @@ describe("Receiz proof state store", () => {
     const first = buildStoreStateRecord(baseState(), {
       actorReceizId: "boost.receiz.id",
       tenantHost: "boost.receiz.app",
-      recordedAt: "2026-06-30T00:00:00.000Z"
+      ...receizAppendFixture("2026-06-30T00:00:00.000Z")
     });
     const newest = buildStoreStateRecord(
       {
@@ -24,7 +25,7 @@ describe("Receiz proof state store", () => {
       {
         actorReceizId: "boost.receiz.id",
         tenantHost: "boost.receiz.app",
-        recordedAt: "2026-06-30T00:02:00.000Z"
+        ...receizAppendFixture("2026-06-30T00:02:00.000Z")
       }
     );
 
@@ -34,6 +35,9 @@ describe("Receiz proof state store", () => {
     const projected = store.projectHost(baseState(), "boost.receiz.app");
 
     assert.equal(projected.brand.name, "Boost Prime");
+    assert.equal(projected.hosting.storeProofHead?.afterEntryId, newest.id);
+    assert.equal(projected.hosting.storeProofHead?.afterKaiUpulse, newest.updatedKaiUpulse);
+    assert.equal(store.knownHead(10).afterKaiUpulse, newest.updatedKaiUpulse);
     assert.equal(store.snapshot().head.count, 2);
   });
 
@@ -62,7 +66,7 @@ describe("Receiz proof state store", () => {
       buildStoreStateRecord(saved, {
         actorReceizId: "bjklock.receiz.id",
         tenantHost: "bjklock.receiz.app",
-        recordedAt: "2026-06-30T00:05:00.000Z"
+        ...receizAppendFixture("2026-06-30T00:05:00.000Z")
       })
     );
 
@@ -93,7 +97,7 @@ describe("Receiz proof state store", () => {
       buildStoreStateRecord(saved, {
         actorReceizId: "bjklock.receiz.id",
         tenantHost: "bjklock.receiz.app",
-        recordedAt: "2026-06-30T00:08:00.000Z"
+        ...receizAppendFixture("2026-06-30T00:08:00.000Z")
       })
     );
 
@@ -122,7 +126,7 @@ describe("Receiz proof state store", () => {
       buildStoreStateRecord(saved, {
         actorReceizId: "bjklock.receiz.id",
         tenantHost: "bjklock.receiz.app",
-        recordedAt: "2026-06-30T00:09:00.000Z"
+        ...receizAppendFixture("2026-06-30T00:09:00.000Z")
       })
     );
     await merchantStore.admitCommerceEvent(saved, {
@@ -181,7 +185,7 @@ describe("Receiz proof state store", () => {
       buildStoreStateRecord(saved, {
         actorReceizId: "bjklock.receiz.id",
         tenantHost: "shop.bjklock.com",
-        recordedAt: "2026-06-30T00:11:00.000Z"
+        ...receizAppendFixture("2026-06-30T00:11:00.000Z")
       })
     );
     await merchantStore.admitCommerceEvent(saved, {
@@ -245,7 +249,7 @@ describe("Receiz proof state store", () => {
       buildStoreStateRecord(baseState(), {
         actorReceizId: "boost.receiz.id",
         tenantHost: "boost.receiz.app",
-        recordedAt: "2026-06-30T00:00:00.000Z"
+        ...receizAppendFixture("2026-06-30T00:00:00.000Z")
       })
     );
     await store.admitCommerceEvent(baseState(), {

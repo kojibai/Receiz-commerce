@@ -6,6 +6,7 @@ import {
   type ReceizMediaUploadLike
 } from "../src/lib/receiz/media-publication.js";
 import { baseState } from "./support/commerce-state.js";
+import { receizAppendFixture } from "./support/receiz-append.js";
 
 function dataUrl(label: string) {
   return `data:image/png;base64,${Buffer.from(`image:${label}`).toString("base64")}`;
@@ -95,7 +96,7 @@ describe("Receiz media publication", () => {
       actorReceizId: "boost.receiz.id",
       tenantHost: "boost.receiz.app",
       reason: "publish",
-      recordedAt: "2026-06-30T00:00:00.000Z"
+      ...receizAppendFixture("2026-06-30T00:00:00.000Z")
     });
 
     assert.equal(record.state.brand.logoImageUrl, prepared.brand.logoImageUrl);

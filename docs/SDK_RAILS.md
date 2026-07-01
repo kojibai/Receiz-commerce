@@ -8,6 +8,8 @@ The proof object is the authority. Receiz Key, Identity Record, Identity Seal, s
 
 The SDK is convenience and typed transport around that truth. It verifies, projects, admits into proof memory, publishes public-store/app-state records, and calls remote rails when delegated permission is needed. Receiz MCP is agent-callable tooling over the SDK/API surface; it does not create, replace, or outrank proof truth. Connect/OIDC access tokens authorize scoped remote calls after proof, but they are permission artifacts, not the identity proof root.
 
+Kai-Klok is the deterministic state machine behind the proof coordinate. Storefront state must be ordered only by the Kai pulse carried by the append/proof object. Do not rank store truth by server timestamps, response arrival order, cache freshness, localStorage writes, Vercel memory, Stripe/Shopify state, or any non-Receiz system. If a needed coordinate is missing from the SDK/MCP rail, treat that as a missing Receiz contract and fail the path visibly.
+
 ## Identity
 
 Files:
@@ -115,6 +117,9 @@ Files:
 
 SDK rails:
 
+- `connect.record`
+- `publicStore.publish`
+- `publicStore.resolve`
 - `appState.publish`
 - `appState.publishRecord`
 - `appState.createPublicStoreRecord`
@@ -124,7 +129,24 @@ SDK rails:
 - `appState.byNamespace`
 - `appState.byId`
 
-Admin publish writes the public storefront projection through the SDK public-store app-state record helpers. Tenant cold starts first recover the latest public store projection through `domains.resolveTenant`, then fall back to raw public app-state reads for older registry records. This is the Receiz-only durability path that lets the app avoid Supabase, Redis, Vercel KV, Shopify, or a custom database for public storefront state.
+Admin publish writes the public storefront projection through the SDK. The sequence is fixed:
+
+1. Build the public store projection only.
+2. Append through the SDK (`connect.record`) and require the returned Kai pulse, anchor id, and proof bundle.
+3. Build `StoreStateRecord` with `updatedKaiUpulse`, `appendAnchorId`, and `appendProof`.
+4. Admit that completed object into SDK proof memory.
+5. Publish through `publicStore.publish()` with idempotency based on `storeStateRecord.updatedKaiUpulse`.
+
+Tenant cold starts recover public store projections through `publicStore.resolve`, `domains.resolveTenant`, and SDK app-state reads. The recovered object is accepted only when it is a complete store-state proof object carrying Kai and anchor. Client merges require `proofMemory.knownHead.afterKaiUpulse`; older heads are ignored and missing heads do not merge.
+
+Implementation anchors:
+
+- `src/lib/receiz/store-state-publication.ts` extracts the SDK-returned Kai/anchor before record construction.
+- `src/lib/receiz/proof-state.ts` rejects incomplete store-state records and orders records by Kai.
+- `src/lib/receiz/proof-state-store.ts` admits the completed record into SDK proof memory with `kaiUpulse`.
+- `src/lib/storefront/store-api-projection.ts` rejects public-store responses without a proof-memory Kai head.
+
+This is the Receiz-only durability path that lets the app avoid Supabase, Redis, Vercel KV, Shopify, Stripe, or a custom database for public storefront truth.
 
 ## App Runtime Rails
 

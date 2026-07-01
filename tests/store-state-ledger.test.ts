@@ -4,6 +4,7 @@ import { buildStoreStateConnectRecord, buildStoreStateRecord } from "../src/lib/
 import { createInMemoryProofStateStore } from "../src/lib/receiz/proof-state-store.js";
 import { admitRecoveredStoreStateRecords, extractStoreStateRecords } from "../src/lib/receiz/store-state-ledger.js";
 import { baseState } from "./support/commerce-state.js";
+import { receizAppendFixture } from "./support/receiz-append.js";
 
 describe("Receiz store-state ledger recovery", () => {
   it("extracts published store records from nested ledger event payloads", () => {
@@ -23,7 +24,7 @@ describe("Receiz store-state ledger recovery", () => {
     const record = buildStoreStateRecord(state, {
       actorReceizId: "bjklock.receiz.id",
       tenantHost: "shop.bjklock.com",
-      recordedAt: "2026-06-30T12:00:00.000Z"
+      ...receizAppendFixture("2026-06-30T12:00:00.000Z")
     });
 
     const ledger = {
@@ -63,7 +64,7 @@ describe("Receiz store-state ledger recovery", () => {
     const record = buildStoreStateRecord(state, {
       actorReceizId: "bjklock.receiz.id",
       tenantHost: "bjklock.receiz.app",
-      recordedAt: "2026-06-30T16:00:00.000Z"
+      ...receizAppendFixture("2026-06-30T16:00:00.000Z")
     });
     const publicProof = {
       ok: true,
@@ -97,7 +98,7 @@ describe("Receiz store-state ledger recovery", () => {
     const record = buildStoreStateRecord(state, {
       actorReceizId: "proof-coffee.receiz.id",
       tenantHost: "proof-coffee.receiz.app",
-      recordedAt: "2026-06-30T17:00:00.000Z"
+      ...receizAppendFixture("2026-06-30T17:00:00.000Z")
     });
     const response = {
       ok: true,
@@ -157,12 +158,12 @@ describe("Receiz store-state ledger recovery", () => {
     const oldRecord = buildStoreStateRecord(oldState, {
       actorReceizId: "bjklock.receiz.id",
       tenantHost,
-      recordedAt: "2026-06-30T12:00:00.000Z"
+      ...receizAppendFixture("2026-06-30T12:00:00.000Z")
     });
     const newRecord = buildStoreStateRecord(newState, {
       actorReceizId: "bjklock.receiz.id",
       tenantHost,
-      recordedAt: "2026-06-30T16:00:00.000Z"
+      ...receizAppendFixture("2026-06-30T16:00:00.000Z")
     });
 
     await store.admitStoreRecord(oldRecord);

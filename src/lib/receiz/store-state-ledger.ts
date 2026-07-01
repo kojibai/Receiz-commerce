@@ -58,7 +58,7 @@ async function recoverReceizPublicProofStoreStateRecords(tenantHost: string) {
     });
     records.push(...extractStoreStateRecords(restored));
   } catch {
-    // Public-store projection is the preferred 97.3 path; older records may only exist in app-state feeds.
+    // Continue through the other SDK public projection reads; incomplete records are filtered below.
   }
 
   try {
@@ -69,7 +69,7 @@ async function recoverReceizPublicProofStoreStateRecords(tenantHost: string) {
     });
     records.push(...extractStoreStateRecords(restored));
   } catch {
-    // Fall through to raw public-proof reads for older registry records.
+    // Continue through URL-addressed SDK public projection reads.
   }
 
   for (const url of urls) {
@@ -77,7 +77,7 @@ async function recoverReceizPublicProofStoreStateRecords(tenantHost: string) {
       const appState = await receiz.client.appState.byUrl(url);
       records.push(...extractStoreStateRecords(appState));
     } catch {
-      // Missing public projections are expected for unpublished or legacy stores.
+      // Missing public projections are expected for unpublished stores.
     }
   }
 

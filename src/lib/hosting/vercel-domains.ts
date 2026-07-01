@@ -1,7 +1,8 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { platform } from "../platform";
-import type { DomainStatus, DomainVerificationRecord } from "@/types/domain";
+import type { DomainDnsRecord, DomainStatus, DomainVerificationRecord } from "@/types/domain";
+import { receizCustomDomainCnameTarget } from "./dns-check";
 import type { PublicDnsCheck } from "./dns-check";
 
 type VercelProjectDomain = {
@@ -166,19 +167,49 @@ export async function verifyProjectDomain(domain: string) {
   );
 }
 
-export function dnsInstructionsForDomain(domain: string, verification: DomainVerificationRecord[] = []) {
-  const instructions = verification.map((record) =>
-    `Add ${record.type} record ${record.domain} with value ${record.value}`
-  );
+function routingDnsRecordForDomain(domain: string): DomainDnsRecord {
   const apex = domain.split(".").length === 2;
 
-  instructions.push(
-    apex
-      ? `Point ${domain} A record to ${process.env.VERCEL_APEX_A_RECORD ?? "76.76.21.21"}`
-      : `Point ${domain} CNAME to ${process.env.VERCEL_CNAME_TARGET ?? "cname.vercel-dns-0.com"}`
-  );
+  if (apex) {
+    const value = process.env.VERCEL_APEX_A_RECORD ?? "76.76.21.21";
+    return {
+      type: "A",
+      host: domain,
+      value,
+      label: `Point ${domain} to ${value}`
+    };
+  }
 
-  return instructions;
+  const value = receizCustomDomainCnameTarget();
+  return {
+    type: "CNAME",
+    host: domain,
+    value,
+    label: `Point ${domain} to ${value}`
+  };
+}
+
+function instructionForDnsRecord(record: DomainDnsRecord) {
+  if (record.type === "A" || record.type === "CNAME") {
+    return `Point ${record.host} ${record.type} to ${record.value}`;
+  }
+
+  return `Add ${record.type} record ${record.host} with value ${record.value}`;
+}
+
+export function dnsRecordsForDomain(domain: string, verification: DomainVerificationRecord[] = []) {
+  const verificationRecords = verification.map((record) => ({
+    type: record.type,
+    host: record.domain,
+    value: record.value,
+    label: `Add ${record.type} record for ${record.domain}`
+  }));
+
+  return [...verificationRecords, routingDnsRecordForDomain(domain)];
+}
+
+export function dnsInstructionsForDomain(domain: string, verification: DomainVerificationRecord[] = []) {
+  return dnsRecordsForDomain(domain, verification).map(instructionForDnsRecord);
 }
 
 export function wildcardDomainStatusFromVercel(domain: string, vercelDomain: VercelProjectDomain): DomainStatus {
@@ -213,6 +244,7 @@ export function customDomainStatusFromVercel(
   const dnsResolved = dnsCheck?.resolved === true;
   const verified = vercelVerified && dnsResolved;
   const verification = vercelDomain.verification ?? [];
+  const dnsRecords = dnsRecordsForDomain(domain, verification);
   const dnsInstructions = dnsInstructionsForDomain(domain, verification);
 
   return {
@@ -223,6 +255,7 @@ export function customDomainStatusFromVercel(
     dnsResolved,
     liveUrl: `https://${domain}`,
     verification,
+    dnsRecords: verified ? [] : dnsRecords,
     dnsInstructions: verified ? [] : dnsInstructions,
     lastCheckedAt: new Date().toISOString(),
     message: verified
@@ -246,6 +279,7 @@ export function missingVercelEnvDomainStatus(domain: string): DomainStatus {
     sslStatus: "unknown",
     verified: false,
     liveUrl: `https://${domain}`,
+    dnsRecords: dnsRecordsForDomain(domain),
     dnsInstructions: [
       `Set ${missing.join(" and ") || "Vercel domain automation env vars"} in Vercel env vars.`,
       `Add ${platform.domain} and *.${platform.domain} to this Vercel project for instant subdomains.`,

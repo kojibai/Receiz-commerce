@@ -38,6 +38,7 @@ function entryFromStoreRecord(record: StoreStateRecord): ReceizProofRegisterEntr
     id: record.id,
     kind: STORE_STATE_SCHEMA,
     createdAt: record.recordedAt,
+    kaiUpulse: record.updatedKaiUpulse,
     payload: record as unknown as JsonObject,
     projection: {
       schema: "receiz.app.store_state_projection.v1",

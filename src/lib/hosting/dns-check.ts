@@ -40,10 +40,16 @@ function isApexDomain(hostname: string) {
   return hostname.trim().split(".").filter(Boolean).length === 2;
 }
 
+export function receizCustomDomainCnameTarget() {
+  return process.env.RECEIZ_CUSTOM_DOMAIN_CNAME_TARGET ??
+    process.env.NEXT_PUBLIC_RECEIZ_CUSTOM_DOMAIN_CNAME_TARGET ??
+    "custom.receiz.app";
+}
+
 export function expectedVercelDnsRecordsForDomain(hostname: string) {
   return isApexDomain(hostname)
     ? [process.env.VERCEL_APEX_A_RECORD ?? "76.76.21.21"]
-    : [process.env.VERCEL_CNAME_TARGET ?? "cname.vercel-dns-0.com"];
+    : [receizCustomDomainCnameTarget()];
 }
 
 export async function checkVercelDomainDns(hostname: string): Promise<PublicDnsCheck> {

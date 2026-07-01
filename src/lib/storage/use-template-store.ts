@@ -1721,6 +1721,25 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
           return;
         }
 
+        setState((current) => ({
+          ...current,
+          hosting: {
+            ...current.hosting,
+            customDomain: {
+              ...current.hosting.customDomain,
+              domain: normalizedDomain,
+              status: current.hosting.customDomain.status === "active" ? "active" : "needs_dns",
+              sslStatus: current.hosting.customDomain.sslStatus === "valid" ? "valid" : "pending",
+              verified: false,
+              dnsResolved: false,
+              liveUrl: `https://${normalizedDomain}`,
+              lastCheckedAt: new Date().toISOString(),
+              message: "Checking DNS propagation"
+            }
+          },
+          proofEvents: [makeEvent("DOMAIN_CONNECTED", `${normalizedDomain} DNS verification requested`), ...current.proofEvents]
+        }));
+
         try {
           const result = await postJson<{ hosting: CommerceState["hosting"] }>("/api/hosting", {
             action: "verify_domain",
@@ -1738,6 +1757,18 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
         } catch (error) {
           setState((current) => ({
             ...current,
+            hosting: {
+              ...current.hosting,
+              customDomain: {
+                ...current.hosting.customDomain,
+                status: "error",
+                sslStatus: "unknown",
+                verified: false,
+                dnsResolved: false,
+                lastCheckedAt: new Date().toISOString(),
+                message: error instanceof Error ? error.message : "Domain verification failed"
+              }
+            },
             proofEvents: [
               makeEvent("DOMAIN_CONNECTED", error instanceof Error ? error.message : "Domain verification failed"),
               ...current.proofEvents
