@@ -11,7 +11,9 @@ describe("mobile storefront layout CSS", () => {
     assert.match(css, /\.bottom-nav button\s*\{[\s\S]*padding:\s*0;[\s\S]*\}/);
   });
 
-  it("keeps Exchange market controls in a compact mobile row without horizontal scroll", () => {
-    assert.match(css, /@media \(max-width:\s*760px\)\s*\{[\s\S]*\.exchange-market-list\s*\{[\s\S]*grid-template-columns:\s*repeat\(4,\s*minmax\(0,\s*1fr\)\);[\s\S]*overflow-x:\s*visible;[\s\S]*\}/);
+  it("keeps Exchange market controls in a compact horizontal mobile rail", () => {
+    assert.match(css, /@media \(max-width:\s*760px\)\s*\{[\s\S]*\.exchange-market-list\s*\{[\s\S]*display:\s*flex;[\s\S]*overflow-x:\s*auto;[\s\S]*\}/);
+    assert.match(css, /@media \(max-width:\s*760px\)\s*\{[\s\S]*\.exchange-market-list > \*\s*\{[\s\S]*flex:\s*0 0 clamp\(74px,\s*23vw,\s*104px\);[\s\S]*\}/);
+    assert.match(css, /\.exchange-market-list button,\s*\.exchange-list-asset-button\s*\{/);
   });
 });

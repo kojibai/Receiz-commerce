@@ -263,8 +263,8 @@ export function PublicStorefront({
     actions.selectExchangeAsset(assetId);
     setMobileMenuOpen(false);
   };
-  const listExchangeAsset = () => {
-    actions.listExchangeAsset();
+  const listExchangeAsset = async (file?: File) => {
+    await actions.listExchangeAsset(file);
     setMobileView("exchange");
     if (typeof navigator !== "undefined" && "vibrate" in navigator) {
       navigator.vibrate(10);
@@ -361,6 +361,7 @@ export function PublicStorefront({
             ) : homepageMode === "exchange" ? (
               <>
                 <ExchangeTradingDesk
+                  listAssetFeedback={actionFeedback["exchange.listAsset"]}
                   onListAsset={listExchangeAsset}
                   onProvideLiquidity={provideExchangeLiquidity}
                   onSelectAsset={selectExchangeAsset}
@@ -455,6 +456,7 @@ export function PublicStorefront({
                 />
                 <ExchangeTradingDesk
                   compact
+                  listAssetFeedback={actionFeedback["exchange.listAsset"]}
                   onListAsset={listExchangeAsset}
                   onProvideLiquidity={provideExchangeLiquidity}
                   onSelectAsset={selectExchangeAsset}
@@ -515,6 +517,7 @@ export function PublicStorefront({
           onAddToCart={addToCart}
           onCheckout={oneClickCheckout}
           onProductOpen={openProductOverlay}
+          exchangeListAssetFeedback={actionFeedback["exchange.listAsset"]}
           onExchangeListAsset={listExchangeAsset}
           onExchangeLiquidity={provideExchangeLiquidity}
           onExchangeSelectAsset={selectExchangeAsset}
@@ -982,6 +985,7 @@ function MobileStage({
   campaignName,
   customer,
   checkoutFeedback,
+  exchangeListAssetFeedback,
   onAddToCart,
   onCheckout,
   onExchangeListAsset,
@@ -1011,9 +1015,10 @@ function MobileStage({
   customer: CustomerAccount;
   checkoutFeedback?: ActionFeedbackState;
   customerReceizHandle: string;
+  exchangeListAssetFeedback?: ActionFeedbackState;
   onAddToCart: (productId: string) => void;
   onCheckout: () => void;
-  onExchangeListAsset: () => void;
+  onExchangeListAsset: (file?: File) => void | Promise<void>;
   onExchangeLiquidity: (assetId: string, amountCents: number) => void;
   onExchangeSelectAsset: (assetId: string) => void;
   onExchangeTrade: (assetId: string, side: ExchangeTradeSide, shares: number) => void;
@@ -1060,6 +1065,7 @@ function MobileStage({
       />
       <MobileExchangePanel
         active={activeView === "exchange"}
+        listAssetFeedback={exchangeListAssetFeedback}
         onListAsset={onExchangeListAsset}
         onProvideLiquidity={onExchangeLiquidity}
         onSelectAsset={onExchangeSelectAsset}
@@ -1214,6 +1220,7 @@ function CartSummaryPanel({
 
 function ExchangeTradingDesk({
   compact = false,
+  listAssetFeedback,
   onListAsset,
   onProvideLiquidity,
   onSelectAsset,
@@ -1222,7 +1229,8 @@ function ExchangeTradingDesk({
   tenantSurface: _tenantSurface
 }: {
   compact?: boolean;
-  onListAsset: () => void;
+  listAssetFeedback?: ActionFeedbackState;
+  onListAsset: (file?: File) => void | Promise<void>;
   onProvideLiquidity: (assetId: string, amountCents: number) => void;
   onSelectAsset: (assetId: string) => void;
   onTrade: (assetId: string, side: ExchangeTradeSide, shares: number) => void;
@@ -1236,7 +1244,9 @@ function ExchangeTradingDesk({
   const [shares, setShares] = useState(8);
   const [liquidityCents, setLiquidityCents] = useState(5_000);
   const [pulse, setPulse] = useState(false);
+  const [listingUploadPending, setListingUploadPending] = useState(false);
   const preview = selectedRaw ? buildExchangeTradePreview(selectedRaw, side, shares, state.exchange.walletBalanceCents) : null;
+  const listInputId = compact ? "mobile-exchange-proof-object" : "desktop-exchange-proof-object";
 
   const runTrade = () => {
     if (!selectedRaw || !preview?.shares) return;
@@ -1252,6 +1262,16 @@ function ExchangeTradingDesk({
     window.setTimeout(() => setPulse(false), 700);
   };
 
+  const handleListAssetFile = async (file: File | undefined) => {
+    if (!file) return;
+    setListingUploadPending(true);
+    try {
+      await onListAsset(file);
+    } finally {
+      setListingUploadPending(false);
+    }
+  };
+
   return (
     <section className={compact ? "exchange-desk compact" : "exchange-desk"} id="exchange">
       <SectionHeader
@@ -1264,6 +1284,26 @@ function ExchangeTradingDesk({
             <Icons.analytics size={17} />
             <span>Proof markets</span>
           </div>
+          <input
+            accept=".json,application/json,image/png,image/jpeg,image/webp"
+            className="exchange-proof-object-input"
+            id={listInputId}
+            onChange={(event) => {
+              const file = event.currentTarget.files?.[0];
+              void handleListAssetFile(file);
+              event.currentTarget.value = "";
+            }}
+            type="file"
+          />
+          <label
+            aria-busy={listingUploadPending}
+            className={listingUploadPending ? "exchange-list-asset-button pending" : "exchange-list-asset-button"}
+            htmlFor={listInputId}
+          >
+            <Icons.seal size={18} />
+            <span>{listingUploadPending ? "Verifying" : "List asset"}</span>
+          </label>
+          <InlineActionFeedback className="exchange-list-feedback" feedback={listAssetFeedback} />
           {desk.assets.length ? (
             desk.assets.map((asset) => (
               <button
@@ -1288,10 +1328,6 @@ function ExchangeTradingDesk({
               <span>List a Receiz asset to open the market.</span>
             </div>
           )}
-          <button className="exchange-list-asset-button" onClick={onListAsset} type="button">
-            <Icons.seal size={18} />
-            <span>List asset</span>
-          </button>
         </aside>
 
         {selected && selectedRaw && preview ? (
@@ -1397,7 +1433,7 @@ function ExchangeTradingDesk({
             <Icons.assets size={24} />
             <strong>Open the first market</strong>
             <span>List a Receiz asset to create the first proof-object exchange book.</span>
-            <Button onClick={onListAsset} type="button" variant="primary">List asset</Button>
+            <label className="button button-primary exchange-empty-upload-button" htmlFor={listInputId}>List asset</label>
           </div>
         )}
       </div>
@@ -1497,6 +1533,7 @@ function ExchangeProofTape({ asset }: { asset: NonNullable<ReturnType<typeof pro
 
 function MobileExchangePanel({
   active,
+  listAssetFeedback,
   onListAsset,
   onProvideLiquidity,
   onSelectAsset,
@@ -1505,7 +1542,8 @@ function MobileExchangePanel({
   tenantSurface
 }: {
   active: boolean;
-  onListAsset: () => void;
+  listAssetFeedback?: ActionFeedbackState;
+  onListAsset: (file?: File) => void | Promise<void>;
   onProvideLiquidity: (assetId: string, amountCents: number) => void;
   onSelectAsset: (assetId: string) => void;
   onTrade: (assetId: string, side: ExchangeTradeSide, shares: number) => void;
@@ -1518,6 +1556,7 @@ function MobileExchangePanel({
     <MobilePane active={active} action={<StatusPill tone="green">{selected?.symbol ?? "Live"}</StatusPill>} title="Exchange">
       <ExchangeTradingDesk
         compact
+        listAssetFeedback={listAssetFeedback}
         onListAsset={onListAsset}
         onProvideLiquidity={onProvideLiquidity}
         onSelectAsset={onSelectAsset}

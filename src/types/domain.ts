@@ -338,6 +338,13 @@ export type ReceizedAsset = {
   status: "owned" | "listed" | "sold" | "locked";
   priceLabel: string;
   proofSource: string;
+  manifest?: ReceizAssetManifestProjection;
+  verifiedArtifact?: {
+    filename: string;
+    kind: string;
+    verifiedAt: string;
+    warnings: string[];
+  };
 };
 
 export type AssetListing = {

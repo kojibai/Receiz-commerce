@@ -288,17 +288,20 @@ export function stateWithListedExchangeAsset(state: CommerceState, input: Exchan
   const sourcePriceLabel = input.source === "asset" ? input.asset.priceLabel : input.product.priceLabel;
   const sourceProof = input.source === "asset" ? input.asset.proofSource : input.product.id;
   const sourceType = input.source === "asset" ? input.asset.type : input.product.type;
+  const sourceManifest = input.source === "asset" ? input.asset.manifest : undefined;
   const basePriceCents = centsFromPriceLabel(sourcePriceLabel, 1_000);
   const shareCount = Math.max(100, Math.min(1_000, Math.round(basePriceCents / 10) * 10));
   const deterministicValueCents = Math.max(basePriceCents * 100, 10_000);
   const lastPriceCents = Math.max(1, Math.round(deterministicValueCents / shareCount));
   const safeTitle = sanitizeCoordinatePart(title);
   const assetId = `exchange-${sourceId}`;
+  const proofObjectId = sourceManifest?.assetId ?? `asset:${sourceId}:${sourceProof}`;
+  const verifyUrl = sourceManifest?.links.verify || sourceManifest?.proof.verifyUrl || `https://receiz.com/v/${safeTitle}/${sourceProof}`;
   const kaiPulse = kaiPulseFor(recordedAt, {
     id: assetId,
     manifest: {
       proof: {
-        kaiPulseEternal: String(Date.parse(recordedAt) || 0)
+        kaiPulseEternal: sourceManifest?.proof.kaiPulseEternal ?? String(Date.parse(recordedAt) || 0)
       }
     }
   } as ExchangeAsset);
@@ -311,7 +314,7 @@ export function stateWithListedExchangeAsset(state: CommerceState, input: Exchan
     kaiPulse,
     appendAnchorId: `anchor:${assetId}:${kaiPulse}`,
     appendHash: appendHashFor([assetId, "listed", input.actorReceizId, recordedAt]),
-    proofObjectId: `asset:${sourceId}:${sourceProof}`
+    proofObjectId
   };
   const nextAsset: ExchangeAsset = {
     id: assetId,
@@ -327,27 +330,41 @@ export function stateWithListedExchangeAsset(state: CommerceState, input: Exchan
             ? "benefit"
             : "physical",
     status: "listed",
-    manifest: {
-      schema: "receiz.asset_manifest.v1",
-      assetId: append.proofObjectId,
-      assetType: "market_certificate",
-      proof: {
-        kind: "receiz.proof_bundle",
-        verifyUrl: `https://receiz.com/v/${safeTitle}/${sourceProof}/${kaiPulse}`,
-        kaiPulseEternal: kaiPulse,
-        kaiKlok: `kai:${kaiPulse}`,
-        receizClaimId: `${safeTitle}-${sourceProof}`.replace(/[^a-z0-9]/gi, "").slice(0, 32) || assetId,
-        artifactSha256Basis: append.appendHash
-      },
-      owner: {
-        receizSubject: input.actorReceizId,
-        displayName: input.actorReceizId,
-        custody: "fractionalized"
-      },
-      links: {
-        verify: `https://receiz.com/v/${safeTitle}/${sourceProof}/${kaiPulse}`
-      }
-    },
+    manifest: sourceManifest
+      ? {
+          ...sourceManifest,
+          owner: {
+            ...sourceManifest.owner,
+            receizSubject: sourceManifest.owner.receizSubject || input.actorReceizId,
+            displayName: sourceManifest.owner.displayName || input.actorReceizId,
+            custody: "fractionalized"
+          },
+          links: {
+            ...sourceManifest.links,
+            verify: sourceManifest.links.verify || verifyUrl
+          }
+        }
+      : {
+          schema: "receiz.asset_manifest.v1",
+          assetId: append.proofObjectId,
+          assetType: "market_certificate",
+          proof: {
+            kind: "receiz.proof_bundle",
+            verifyUrl: `https://receiz.com/v/${safeTitle}/${sourceProof}/${kaiPulse}`,
+            kaiPulseEternal: kaiPulse,
+            kaiKlok: `kai:${kaiPulse}`,
+            receizClaimId: `${safeTitle}-${sourceProof}`.replace(/[^a-z0-9]/gi, "").slice(0, 32) || assetId,
+            artifactSha256Basis: append.appendHash
+          },
+          owner: {
+            receizSubject: input.actorReceizId,
+            displayName: input.actorReceizId,
+            custody: "fractionalized"
+          },
+          links: {
+            verify: `https://receiz.com/v/${safeTitle}/${sourceProof}/${kaiPulse}`
+          }
+        },
     ownerReceizId: input.actorReceizId,
     deterministicValueCents,
     shareCount,

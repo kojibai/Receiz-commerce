@@ -4,6 +4,7 @@ import {
   buildExchangeTradePreview,
   exchangeAssetSnapshot,
   projectExchangeDesk,
+  stateWithListedExchangeAsset,
   stateWithExchangeLiquidity,
   stateWithExchangeTrade
 } from "../src/lib/storefront/proof-exchange.js";
@@ -34,6 +35,89 @@ describe("proof exchange", () => {
     assert.equal(preview.cardDeltaCents, 11_900);
     assert.equal(preview.cardRequired, true);
     assert.equal(preview.resultingShares, 8);
+  });
+
+  it("lists uploaded proof-object manifests without replacing the verified source", () => {
+    const state = baseState();
+    const listed = stateWithListedExchangeAsset(
+      {
+        ...state,
+        assets: [
+          {
+            id: "proof-uploaded-pass",
+            name: "Uploaded pass",
+            type: "limited_drop",
+            ownerId: "merchant.receiz.id",
+            status: "owned",
+            priceLabel: "$1.00",
+            proofSource: "claim-uploaded-pass",
+            manifest: {
+              schema: "receiz.asset_manifest.v1",
+              assetId: "asset_uploaded_pass",
+              assetType: "proof_object",
+              proof: {
+                kind: "receiz.proof_bundle",
+                verifyUrl: "https://receiz.com/v/uploaded-pass/claim-uploaded-pass/1782965191557178",
+                kaiPulseEternal: "1782965191557178",
+                kaiKlok: "kai:1782965191557178",
+                receizClaimId: "claim-uploaded-pass",
+                artifactSha256Basis: "sha256:uploaded-pass"
+              },
+              owner: {
+                receizSubject: "merchant.receiz.id",
+                displayName: "Merchant",
+                custody: "current"
+              },
+              links: {
+                verify: "https://receiz.com/v/uploaded-pass/claim-uploaded-pass/1782965191557178"
+              }
+            }
+          }
+        ]
+      },
+      {
+        source: "asset",
+        asset: {
+          id: "proof-uploaded-pass",
+          name: "Uploaded pass",
+          type: "limited_drop",
+          ownerId: "merchant.receiz.id",
+          status: "owned",
+          priceLabel: "$1.00",
+          proofSource: "claim-uploaded-pass",
+          manifest: {
+            schema: "receiz.asset_manifest.v1",
+            assetId: "asset_uploaded_pass",
+            assetType: "proof_object",
+            proof: {
+              kind: "receiz.proof_bundle",
+              verifyUrl: "https://receiz.com/v/uploaded-pass/claim-uploaded-pass/1782965191557178",
+              kaiPulseEternal: "1782965191557178",
+              kaiKlok: "kai:1782965191557178",
+              receizClaimId: "claim-uploaded-pass",
+              artifactSha256Basis: "sha256:uploaded-pass"
+            },
+            owner: {
+              receizSubject: "merchant.receiz.id",
+              displayName: "Merchant",
+              custody: "current"
+            },
+            links: {
+              verify: "https://receiz.com/v/uploaded-pass/claim-uploaded-pass/1782965191557178"
+            }
+          }
+        },
+        actorReceizId: "merchant.receiz.id",
+        recordedAt: "2026-07-01T12:10:00.000Z"
+      }
+    );
+    const asset = listed.exchange.assets[0]!;
+
+    assert.equal(asset.manifest.assetId, "asset_uploaded_pass");
+    assert.equal(asset.manifest.proof.receizClaimId, "claim-uploaded-pass");
+    assert.equal(asset.manifest.owner.custody, "fractionalized");
+    assert.equal(asset.appendEvents[0]?.proofObjectId, "asset_uploaded_pass");
+    assert.equal(listed.assets[0]?.status, "listed");
   });
 
   it("appends a market trade and mints child ownership proof locally", () => {

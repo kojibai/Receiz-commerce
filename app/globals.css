@@ -5191,10 +5191,10 @@ a {
   .mobile-receiz-id-card,
   .mobile-account-card {
     display: grid;
-    gap: 12px;
-    padding: 14px;
+    gap: 9px;
+    padding: 11px;
     border: 1px solid var(--receiz);
-    border-radius: 18px;
+    border-radius: 16px;
     background: #ffffff;
   }
 
@@ -5215,8 +5215,8 @@ a {
   .mobile-reward-card h3,
   .mobile-account-card h3 {
     margin: 6px 0 4px;
-    font-size: clamp(19px, 6.4vw, 23px);
-    line-height: 1.05;
+    font-size: clamp(17px, 5.7vw, 21px);
+    line-height: 1;
     overflow-wrap: anywhere;
   }
 
@@ -5229,7 +5229,7 @@ a {
     margin: 0;
     color: var(--muted);
     font-size: clamp(10px, 3.2vw, 12px);
-    line-height: 1.18;
+    line-height: 1.1;
     overflow-wrap: anywhere;
   }
 
@@ -5357,15 +5357,15 @@ a {
 
   .mobile-receiz-id-card,
   .mobile-account-card {
-    grid-template-columns: 54px minmax(0, 1fr);
+    grid-template-columns: 48px minmax(0, 1fr);
     align-items: start;
     border-color: var(--border);
   }
 
   .mobile-account-card .large-avatar {
-    width: 54px;
-    height: 54px;
-    font-size: 18px;
+    width: 48px;
+    height: 48px;
+    font-size: 17px;
   }
 
   .mobile-account-card span {
@@ -5379,7 +5379,7 @@ a {
 
   .mobile-account-profile-copy {
     display: grid;
-    gap: 4px;
+    gap: 3px;
     min-width: 0;
   }
 
@@ -5408,18 +5408,18 @@ a {
   .mobile-account-metrics {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 5px;
-    margin-top: 4px;
+    gap: 4px;
+    margin-top: 2px;
   }
 
   .mobile-account-metrics span {
     display: grid;
     gap: 1px;
     min-width: 0;
-    min-height: 38px;
-    padding: 6px;
+    min-height: 32px;
+    padding: 5px;
     border: 1px solid var(--border);
-    border-radius: 12px;
+    border-radius: 10px;
     color: var(--muted);
     background: var(--surface-soft);
     font-size: clamp(8.5px, 2.6vw, 10px);
@@ -5437,7 +5437,7 @@ a {
     grid-column: 1 / -1;
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 6px;
+    gap: 5px;
     min-width: 0;
   }
 
@@ -5447,6 +5447,7 @@ a {
 
   .mobile-account-seal-tools .account-recovery-pill {
     width: 100%;
+    min-height: 30px;
   }
 
   .mobile-account-receiz-badge {
@@ -5469,7 +5470,7 @@ a {
   .mobile-account-scope {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
+    gap: 6px;
   }
 
   .mobile-account-scope div {
@@ -5477,10 +5478,10 @@ a {
     grid-template-columns: 20px minmax(0, 1fr);
     gap: 2px 7px;
     min-width: 0;
-    min-height: 58px;
-    padding: 9px;
+    min-height: 48px;
+    padding: 7px;
     border: 1px solid var(--border);
-    border-radius: 15px;
+    border-radius: 13px;
     background: #ffffff;
   }
 
@@ -5511,17 +5512,17 @@ a {
   .mobile-checkout-summary {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 8px;
+    gap: 6px;
   }
 
   .mobile-checkout-summary div {
     display: grid;
     gap: 3px;
     min-width: 0;
-    min-height: 74px;
-    padding: 10px;
+    min-height: 60px;
+    padding: 7px;
     border: 1px solid color-mix(in srgb, var(--receiz) 20%, var(--border));
-    border-radius: 15px;
+    border-radius: 13px;
     background: color-mix(in srgb, var(--receiz) 7%, white);
   }
 
@@ -6349,6 +6350,10 @@ a {
   border-radius: 18px;
 }
 
+.product-detail-media .uploaded-product-visual img {
+  object-fit: contain;
+}
+
 .product-detail-media .bag-visual .bag-label,
 .product-detail-media .can-body,
 .product-detail-media .mug-cup,
@@ -6532,7 +6537,8 @@ a {
   justify-content: flex-start;
 }
 
-.exchange-market-list button {
+.exchange-market-list button,
+.exchange-list-asset-button {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 7px;
@@ -6545,6 +6551,16 @@ a {
   color: var(--text);
   text-align: left;
   cursor: pointer;
+}
+
+.exchange-proof-object-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 .exchange-market-list button.active {
@@ -6589,6 +6605,20 @@ a {
   min-height: 42px !important;
   color: #005f50 !important;
   font-weight: 900;
+}
+
+.exchange-list-asset-button.pending {
+  border-color: rgba(0, 168, 138, 0.38);
+  background: rgba(0, 168, 138, 0.08);
+}
+
+.exchange-list-feedback {
+  min-height: 18px;
+  padding: 0 2px;
+}
+
+.exchange-empty-upload-button {
+  cursor: pointer;
 }
 
 .exchange-empty-list,
@@ -7074,14 +7104,33 @@ a {
   }
 
   .exchange-market-list {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    display: flex;
     gap: 4px;
-    overflow-x: visible;
-    padding-bottom: 0;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+  }
+
+  .exchange-market-list::-webkit-scrollbar {
+    display: none;
   }
 
   .exchange-market-list > * {
+    flex: 0 0 clamp(74px, 23vw, 104px);
     min-width: 0;
+    scroll-snap-align: start;
+  }
+
+  .exchange-market-list .exchange-terminal-kicker {
+    flex-basis: 34px;
+    place-content: center;
+    padding-inline: 0;
+  }
+
+  .exchange-market-list .exchange-list-feedback {
+    flex-basis: clamp(112px, 34vw, 150px);
+    align-self: center;
   }
 
   .exchange-terminal-kicker,
@@ -7090,7 +7139,8 @@ a {
     grid-column: auto;
   }
 
-  .exchange-market-list button {
+  .exchange-market-list button,
+  .exchange-list-asset-button {
     min-height: 38px;
     gap: 3px;
     padding: 5px;
@@ -7378,6 +7428,14 @@ a {
   min-height: 0;
   overflow: auto;
   padding: 14px;
+}
+
+.product-page-popover .storefront-product-detail {
+  min-height: 0;
+}
+
+.product-page-popover .detail-proof-band {
+  width: 100%;
 }
 
 button.product-purchase-secondary-link {
@@ -7884,6 +7942,209 @@ button.product-purchase-secondary-link {
   .product-detail-card .product-visual {
     width: 78px;
     height: 78px;
+  }
+
+  .product-page-popover-shell {
+    height: 100%;
+    max-height: 100%;
+  }
+
+  .product-page-popover-topbar {
+    grid-template-columns: 36px minmax(0, 1fr) 36px;
+    gap: 6px;
+    padding: 6px 7px;
+  }
+
+  .product-page-popover-topbar .icon-button {
+    width: 36px;
+    min-height: 36px;
+    border-radius: 12px;
+  }
+
+  .product-page-popover-body {
+    display: grid;
+    grid-template-rows: minmax(0, 1fr) auto;
+    gap: 6px;
+    overflow: hidden;
+    padding: 7px;
+  }
+
+  .product-page-popover .storefront-product-detail {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 7px;
+    align-content: start;
+    height: 100%;
+    min-height: 0;
+    margin: 0;
+    padding: 9px;
+    overflow: hidden;
+    border-radius: 16px;
+  }
+
+  .product-page-popover .product-detail-media {
+    height: clamp(152px, 31dvh, 244px);
+    min-height: 0;
+    border-radius: 16px;
+  }
+
+  .product-page-popover .product-detail-media .product-visual {
+    min-height: 0;
+    border-radius: 14px;
+  }
+
+  .product-page-popover .product-detail-copy {
+    gap: 7px;
+    align-content: start;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .product-page-popover .product-detail-copy > .status-pill {
+    min-height: 20px;
+    padding: 2px 7px;
+    font-size: 10px;
+  }
+
+  .product-page-popover .product-detail-copy h1 {
+    margin: 0;
+    font-size: clamp(24px, 6.2vw, 32px);
+    line-height: 0.98;
+  }
+
+  .product-page-popover .product-detail-copy p {
+    display: -webkit-box;
+    overflow: hidden;
+    font-size: clamp(11px, 3.2vw, 13px);
+    line-height: 1.18;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  .product-page-popover .product-purchase-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-height: 0;
+  }
+
+  .product-page-popover .product-purchase-facts {
+    order: -1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 0;
+  }
+
+  .product-page-popover .product-purchase-facts div {
+    display: flex;
+    flex: 1 1 calc(50% - 5px);
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px;
+    min-height: 27px;
+    padding: 4px 7px;
+    border-radius: 999px;
+  }
+
+  .product-page-popover .product-purchase-facts span {
+    font-size: 8.5px;
+    line-height: 1;
+  }
+
+  .product-page-popover .product-purchase-facts strong {
+    overflow: hidden;
+    font-size: 10px;
+    line-height: 1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .product-page-popover .product-purchase-card {
+    gap: 7px;
+    padding: 8px;
+    border-radius: 14px;
+  }
+
+  .product-page-popover .product-purchase-card > div:first-child {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 3px 7px;
+  }
+
+  .product-page-popover .product-purchase-card > div:first-child .status-pill {
+    grid-row: 1 / span 2;
+    grid-column: 2;
+    align-self: start;
+    justify-self: end;
+    min-height: 20px;
+    padding: 2px 7px;
+    font-size: 9.5px;
+  }
+
+  .product-page-popover .product-purchase-card > div:first-child strong {
+    grid-row: 1;
+    grid-column: 1;
+    font-size: clamp(20px, 6.4vw, 26px);
+  }
+
+  .product-page-popover .product-purchase-card > div:first-child span:not(.status-pill) {
+    grid-column: 1;
+    font-size: 10.5px;
+    line-height: 1;
+  }
+
+  .product-page-popover .product-purchase-actions {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 0.8fr);
+    gap: 6px;
+  }
+
+  .product-page-popover .product-purchase-actions .button {
+    min-height: 38px;
+    padding: 0 8px;
+    border-radius: 12px;
+    font-size: 11px;
+  }
+
+  .product-page-popover .product-purchase-secondary-link {
+    justify-self: center;
+    font-size: 11px;
+    line-height: 1;
+  }
+
+  .product-page-popover .action-feedback {
+    font-size: 10px;
+    line-height: 1;
+  }
+
+  .product-page-popover .detail-proof-band {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 5px;
+    margin: 0;
+  }
+
+  .product-page-popover .detail-proof-band div {
+    min-height: 26px;
+    padding: 5px 6px;
+    border-radius: 999px;
+  }
+
+  .product-page-popover .detail-proof-band strong,
+  .product-page-popover .detail-proof-band span {
+    overflow: hidden;
+    line-height: 1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .product-page-popover .detail-proof-band strong {
+    font-size: 9px;
+  }
+
+  .product-page-popover .detail-proof-band span {
+    margin-top: 2px;
+    font-size: 8.5px;
   }
 
   .pwa-controller {

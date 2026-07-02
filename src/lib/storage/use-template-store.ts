@@ -4,6 +4,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   appendReceizIdentityArtifactTrailerToPng,
   createReceizClient,
+  projectReceizAssetManifest,
+  type DocumentVerifyResponse,
+  type ReceizAssetManifestProjection as SdkReceizAssetManifestProjection,
   type ReceizIdentityAccountProjection,
   type ReceizMediaUploadOptions
 } from "@receiz/sdk";
@@ -50,7 +53,18 @@ import {
   tenantCustomerSessionKey
 } from "@/lib/storefront/tenant-customer-session";
 import type { ActionFeedbackMap, ActionFeedbackStatus } from "@/types/action-feedback";
-import type { BlogPost, CommerceState, CustomerAccount, Order, Product, ProofEvent, SitePage, StorefrontHomepageMode } from "@/types/domain";
+import type {
+  BlogPost,
+  CommerceState,
+  CustomerAccount,
+  Order,
+  Product,
+  ProofEvent,
+  ReceizAssetManifestProjection,
+  ReceizedAsset,
+  SitePage,
+  StorefrontHomepageMode
+} from "@/types/domain";
 import { makeId } from "@/lib/utils";
 import { compactPublishedState } from "@/lib/receiz/proof-state";
 
@@ -729,6 +743,226 @@ type ReceizProfileResponse = {
 function compactString(value: string | undefined, fallback: string) {
   const trimmed = value?.trim();
   return trimmed || fallback;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function stringField(record: Record<string, unknown> | undefined | null, key: string) {
+  const value = record?.[key];
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+function recordField(record: Record<string, unknown> | undefined | null, key: string) {
+  const value = record?.[key];
+  return isRecord(value) ? value : null;
+}
+
+function firstString(...values: Array<string | null | undefined>) {
+  return values.find((value) => typeof value === "string" && value.trim())?.trim() ?? null;
+}
+
+function custodyFromUnknown(value: unknown): ReceizAssetManifestProjection["owner"]["custody"] {
+  return value === "transferred" || value === "fractionalized" ? value : "current";
+}
+
+function normalizeReceizUrl(value: string | null | undefined, fallback: string) {
+  if (!value) return fallback;
+  if (value.startsWith("/")) return `https://receiz.com${value}`;
+  return value;
+}
+
+async function sha256BasisForBlob(file: Blob) {
+  try {
+    if (globalThis.crypto?.subtle) {
+      const digest = await globalThis.crypto.subtle.digest("SHA-256", await file.arrayBuffer());
+      const hex = Array.from(new Uint8Array(digest))
+        .map((byte) => byte.toString(16).padStart(2, "0"))
+        .join("");
+      return `sha256:${hex}`;
+    }
+  } catch {
+    // The SDK verification remains authoritative; this is only a local projection fallback.
+  }
+
+  return `sha256:${file.size}-${file.type || "receiz-proof-object"}`;
+}
+
+async function readManifestCandidate(file: File) {
+  const likelyJson = file.type.includes("json") || file.name.toLowerCase().endsWith(".json");
+  if (!likelyJson) return null;
+
+  try {
+    return JSON.parse(await file.text()) as unknown;
+  } catch {
+    return null;
+  }
+}
+
+function priceLabelFromProjection(projection: SdkReceizAssetManifestProjection | null) {
+  const row = projection?.rows.find((item) => /\b(value|price|floor)\b/i.test(item.label) && /^\$?\d/.test(item.value));
+  return row?.value ?? "$1.00";
+}
+
+function receizedAssetType(assetType: string): ReceizedAsset["type"] {
+  if (assetType === "market_certificate" || assetType === "wallet_note") return "benefit";
+  if (assetType === "profile_original" || assetType === "document") return "claim";
+  if (assetType === "proof_object") return "limited_drop";
+  return "access";
+}
+
+function domainManifestFromSdkProjection(
+  projection: SdkReceizAssetManifestProjection,
+  actorReceizId: string,
+  artifactSha256Basis: string
+): ReceizAssetManifestProjection {
+  const proof = projection.manifest.proof as Record<string, unknown>;
+  const owner = isRecord(projection.manifest.owner) ? projection.manifest.owner : null;
+  const assetId = projection.assetId || `proof-${makeId("asset").slice(-8)}`;
+  const kaiPulse = firstString(
+    stringField(proof, "kaiPulseEternal"),
+    stringField(proof, "kaiPulse"),
+    stringField(proof, "kaiUpulse"),
+    String(proof.createdAtMs ?? "")
+  ) ?? String(Date.now());
+  const claimId = firstString(
+    stringField(proof, "receizClaimId"),
+    stringField(proof, "claimId"),
+    assetId
+  ) ?? assetId;
+  const verifyUrl = normalizeReceizUrl(
+    firstString(projection.verifyUrl, stringField(proof, "verifyUrl"), stringField(proof, "verifyPath")),
+    `https://receiz.com/v/${slugify(projection.title || assetId, "asset")}/${claimId}/${kaiPulse}`
+  );
+
+  return {
+    schema: "receiz.asset_manifest.v1",
+    assetId,
+    assetType: projection.assetType,
+    proof: {
+      kind: firstString(stringField(proof, "kind"), projection.proofKind) ?? "receiz.proof_bundle",
+      verifyUrl,
+      kaiPulseEternal: kaiPulse,
+      kaiKlok: firstString(stringField(proof, "kaiKlok"), `kai:${kaiPulse}`) ?? `kai:${kaiPulse}`,
+      receizClaimId: claimId,
+      artifactSha256Basis:
+        firstString(
+          stringField(proof, "artifactSha256Basis"),
+          stringField(proof, "sigilClaimSeed"),
+          stringField(proof, "groth16ProofDigest")
+        ) ?? artifactSha256Basis
+    },
+    owner: {
+      receizSubject: stringField(owner, "receizSubject") ?? actorReceizId,
+      displayName: projection.ownerLabel ?? stringField(owner, "displayName") ?? actorReceizId,
+      custody: custodyFromUnknown(owner?.custody)
+    },
+    links: {
+      verify: verifyUrl,
+      asset: projection.primaryUrl ?? undefined
+    }
+  };
+}
+
+function domainManifestFromVerifiedArtifact(
+  file: File,
+  verified: DocumentVerifyResponse,
+  actorReceizId: string,
+  artifactSha256Basis: string
+): ReceizAssetManifestProjection {
+  const verifiedRecord = verified as Record<string, unknown>;
+  const bundle = recordField(verifiedRecord, "bundle");
+  const anchor = recordField(verifiedRecord, "anchor");
+  const pkg = recordField(verifiedRecord, "package");
+  const baseId = slugify(file.name.replace(/\.[a-z0-9]+$/i, ""), "proof-object");
+  const kaiPulse = firstString(
+    stringField(bundle, "kaiPulseEternal"),
+    stringField(bundle, "kaiPulse"),
+    stringField(anchor, "kaiPulse"),
+    String(Date.now())
+  ) ?? String(Date.now());
+  const claimId = firstString(
+    stringField(bundle, "receizClaimId"),
+    stringField(bundle, "claimId"),
+    stringField(anchor, "claimId"),
+    `${baseId}-${kaiPulse}`
+  ) ?? `${baseId}-${kaiPulse}`;
+  const assetId = firstString(stringField(bundle, "assetId"), stringField(pkg, "assetId"), `asset-${baseId}`) ?? `asset-${baseId}`;
+  const verifyUrl = normalizeReceizUrl(
+    firstString(stringField(bundle, "verifyUrl"), stringField(bundle, "verifyPath"), stringField(anchor, "verifyUrl")),
+    `https://receiz.com/v/${baseId}/${claimId}/${kaiPulse}`
+  );
+
+  return {
+    schema: "receiz.asset_manifest.v1",
+    assetId,
+    assetType: "proof_object",
+    proof: {
+      kind: firstString(verified.kind, stringField(bundle, "kind")) ?? "receiz.proof_bundle",
+      verifyUrl,
+      kaiPulseEternal: kaiPulse,
+      kaiKlok: firstString(stringField(bundle, "kaiKlok"), `kai:${kaiPulse}`) ?? `kai:${kaiPulse}`,
+      receizClaimId: claimId,
+      artifactSha256Basis:
+        firstString(
+          stringField(bundle, "artifactSha256Basis"),
+          stringField(bundle, "sigilClaimSeed"),
+          stringField(anchor, "appendHash")
+        ) ?? artifactSha256Basis
+    },
+    owner: {
+      receizSubject: actorReceizId,
+      displayName: actorReceizId,
+      custody: "current"
+    },
+    links: {
+      verify: verifyUrl
+    }
+  };
+}
+
+async function receizedAssetFromProofObject(file: File, actorReceizId: string): Promise<ReceizedAsset> {
+  const client = createReceizClient();
+  const verified = await client.verification.verifyArtifact(file);
+
+  if (!verified.ok) {
+    throw new Error(verified.errors.filter(Boolean).join(", ") || "Receiz proof object verification failed");
+  }
+
+  const artifactSha256Basis = await sha256BasisForBlob(file);
+  const manifestCandidate = await readManifestCandidate(file);
+  let projection: SdkReceizAssetManifestProjection | null = null;
+
+  if (manifestCandidate) {
+    try {
+      projection = projectReceizAssetManifest(manifestCandidate);
+    } catch {
+      projection = null;
+    }
+  }
+
+  const manifest = projection
+    ? domainManifestFromSdkProjection(projection, actorReceizId, artifactSha256Basis)
+    : domainManifestFromVerifiedArtifact(file, verified, actorReceizId, artifactSha256Basis);
+  const assetName = projection?.title || file.name.replace(/\.[a-z0-9]+$/i, "") || manifest.assetId;
+
+  return {
+    id: `proof-${slugify(manifest.assetId, "asset")}`,
+    name: titleCase(assetName.replace(/[-_]+/g, " ")),
+    type: receizedAssetType(manifest.assetType),
+    ownerId: actorReceizId,
+    status: "owned",
+    priceLabel: priceLabelFromProjection(projection),
+    proofSource: manifest.proof.receizClaimId || manifest.assetId,
+    manifest,
+    verifiedArtifact: {
+      filename: file.name || "Receiz proof object",
+      kind: verified.kind || manifest.proof.kind,
+      verifiedAt: new Date().toISOString(),
+      warnings: verified.warnings
+    }
+  };
 }
 
 function normalizeProfileHandle(value: string | undefined, fallback: string) {
@@ -2583,12 +2817,44 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
           }
         }));
       },
-      listExchangeAsset(sourceId?: string) {
+      async listExchangeAsset(source?: string | File) {
+        if (typeof File !== "undefined" && source instanceof File) {
+          const actorReceizId = stateRef.current.auth.receizId.handle || stateRef.current.hosting.merchantReceizId;
+          setActionFeedback("exchange.listAsset", "pending", `Verifying ${source.name || "Receiz proof object"}`);
+
+          try {
+            const asset = await receizedAssetFromProofObject(source, actorReceizId);
+            setState((current) => {
+              const currentWithAsset = {
+                ...current,
+                assets: current.assets.some((item) => item.id === asset.id)
+                  ? current.assets.map((item) => (item.id === asset.id ? { ...item, ...asset, status: "owned" as const } : item))
+                  : [asset, ...current.assets],
+                proofEvents: [makeEvent("OBJECT_VERIFIED", `${asset.name} proof object verified`), ...current.proofEvents]
+              };
+
+              return stateWithListedExchangeAsset(currentWithAsset, {
+                source: "asset",
+                asset,
+                actorReceizId
+              });
+            });
+            setActionFeedback("exchange.listAsset", "success", `${asset.name} listed`);
+          } catch (error) {
+            setActionFeedback(
+              "exchange.listAsset",
+              "error",
+              error instanceof Error ? error.message : "Receiz proof object verification failed"
+            );
+          }
+          return;
+        }
+
         setState((current) => {
           const actorReceizId = current.auth.receizId.handle || current.hosting.merchantReceizId;
           const alreadyListed = new Set(current.exchange.assets.map((asset) => asset.sourceAssetId));
           const ownedAsset =
-            (sourceId ? current.assets.find((asset) => asset.id === sourceId) : undefined) ??
+            (source ? current.assets.find((asset) => asset.id === source) : undefined) ??
             current.assets.find((asset) => !alreadyListed.has(asset.id));
           if (ownedAsset) {
             return stateWithListedExchangeAsset(current, {
@@ -2599,7 +2865,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
           }
 
           const product =
-            (sourceId ? current.products.find((item) => item.id === sourceId) : undefined) ??
+            (source ? current.products.find((item) => item.id === source) : undefined) ??
             current.products.find((item) => !alreadyListed.has(item.id));
           if (!product) return current;
 
