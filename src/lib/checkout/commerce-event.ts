@@ -16,6 +16,7 @@ export type CheckoutCommerceEventInput = {
   proofBundle?: Record<string, unknown> | null;
   receiptId?: string;
   settlementStatus?: Order["settlementStatus"];
+  fulfillment?: Order["fulfillment"];
   shipping?: Order["shipping"];
   tenantHost: string;
   totalLabel?: string;
@@ -63,6 +64,7 @@ export function checkoutCommerceEvent(input: CheckoutCommerceEventInput): Commer
       proofBundle: input.proofBundle ?? null,
       receiptId: input.receiptId,
       settlementStatus: input.settlementStatus,
+      fulfillment: input.fulfillment,
       shipping: input.shipping,
       totalLabel: input.totalLabel
     }

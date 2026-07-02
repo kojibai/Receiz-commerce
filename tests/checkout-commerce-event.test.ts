@@ -21,6 +21,11 @@ describe("checkout commerce events", () => {
       orderId: "order-123",
       paymentRail: "card_fallback",
       settlementStatus: "card_required",
+      fulfillment: {
+        kind: "physical_shipping",
+        status: "payment_required",
+        message: "Collect the card delta before creating the paid order."
+      },
       tenantHost: "bjklock.receiz.app",
       totalLabel: "$18.00"
     });
@@ -32,5 +37,6 @@ describe("checkout commerce events", () => {
     assert.equal(event.data.orderId, "order-123");
     assert.equal(event.data.customerName, "Buyer Example");
     assert.equal(event.data.funding?.cardDeltaLabel, "$18.00");
+    assert.equal(event.data.fulfillment?.status, "payment_required");
   });
 });

@@ -92,6 +92,7 @@ export type CommerceEventData = {
   paymentRail?: Order["paymentRail"];
   settlementStatus?: Order["settlementStatus"];
   funding?: Order["funding"];
+  fulfillment?: Order["fulfillment"];
   shipping?: Order["shipping"];
   receiptId?: string;
   proofBundle?: Record<string, unknown> | null;
@@ -341,15 +342,27 @@ function orderStatusFromEvent(event: CommerceEventRecord): Order["status"] {
 function eventOrder(state: CommerceState, event: CommerceEventRecord): Order {
   const customerId = event.data.customerId || `customer:${event.data.customerEmail || event.id}`;
   const orderId = event.data.orderId || event.data.checkoutSessionId || event.id;
+  const fulfillmentStatus = event.data.fulfillment?.status;
+  const status =
+    fulfillmentStatus === "shipping_required"
+      ? "pending"
+      : fulfillmentStatus === "payment_required"
+        ? "card_required"
+        : orderStatusFromEvent(event);
+  const sealed =
+    fulfillmentStatus === "ready_to_ship" ||
+    fulfillmentStatus === "delivery_queued" ||
+    fulfillmentStatus === "fulfilled" ||
+    (!fulfillmentStatus && (event.type === "checkout.settled" || event.type === "order.fulfilled"));
 
   return {
     id: orderId,
     customerId,
     customerEmail: event.data.customerEmail,
     totalLabel: event.data.totalLabel || "$0.00",
-    status: orderStatusFromEvent(event),
+    status,
     itemCount: event.data.itemCount ?? 1,
-    sealed: event.type === "checkout.settled" || event.type === "order.fulfilled",
+    sealed,
     createdAt: event.createdAt,
     merchantReceizId: event.merchantReceizId || state.hosting.merchantReceizId,
     tenantHost: event.tenantHost,
@@ -357,6 +370,7 @@ function eventOrder(state: CommerceState, event: CommerceEventRecord): Order {
     paymentRail: paymentRailFromEvent(event),
     settlementStatus: settlementStatusFromEvent(event),
     funding: event.data.funding,
+    fulfillment: event.data.fulfillment,
     shipping: event.data.shipping
   };
 }
@@ -459,6 +473,7 @@ export function commerceEventFromUnknown(value: unknown, fallbackHost: string): 
       settlementStatus:
         typeof data.settlementStatus === "string" ? (data.settlementStatus as Order["settlementStatus"]) : undefined,
       funding: isRecord(data.funding) ? (data.funding as Order["funding"]) : undefined,
+      fulfillment: isRecord(data.fulfillment) ? (data.fulfillment as Order["fulfillment"]) : undefined,
       shipping: isRecord(data.shipping) ? (data.shipping as Order["shipping"]) : undefined,
       receiptId: typeof data.receiptId === "string" ? data.receiptId : undefined,
       proofBundle: isRecord(data.proofBundle) ? data.proofBundle : null

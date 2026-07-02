@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { checkoutCommerceEvent, type CheckoutCommerceEventInput } from "@/lib/checkout/commerce-event";
+import { validShippingAddress } from "@/lib/checkout/customer-purchase";
 import { mockCheckout } from "@/lib/checkout/mock-checkout";
 import {
   checkoutModeForAuthority,
@@ -89,7 +90,68 @@ function stringFromBody(body: Record<string, unknown>, key: string) {
 
 function shippingFromBody(value: unknown): Order["shipping"] | undefined {
   if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
-  return value as Order["shipping"];
+  const shipping = value as Order["shipping"];
+  return validShippingAddress(shipping) ? shipping : undefined;
+}
+
+function fulfillmentFromBody(value: unknown): Order["fulfillment"] | undefined {
+  if (!isRecord(value)) return undefined;
+  const kind = value.kind === "physical_shipping" || value.kind === "mixed" || value.kind === "digital_delivery"
+    ? value.kind
+    : "digital_delivery";
+  const deliveryRails = Array.isArray(value.deliveryRails)
+    ? value.deliveryRails.filter((rail): rail is "receiz_communications" | "email" => rail === "receiz_communications" || rail === "email")
+    : undefined;
+
+  return {
+    kind,
+    status: "payment_required",
+    message: "Payment must settle before fulfillment starts.",
+    deliveryRails
+  };
+}
+
+function checkoutFulfillmentForFunding(input: {
+  funding: NonNullable<Order["funding"]>;
+  submitted?: Order["fulfillment"];
+  shipping?: Order["shipping"];
+}): Order["fulfillment"] {
+  const kind = input.submitted?.kind ?? "digital_delivery";
+  const deliveryRails = input.submitted?.deliveryRails;
+
+  if (input.funding.cardRequired) {
+    return {
+      kind,
+      status: "payment_required",
+      message: "Collect the card delta before creating the paid order.",
+      deliveryRails
+    };
+  }
+
+  if ((kind === "physical_shipping" || kind === "mixed") && !input.shipping) {
+    return {
+      kind,
+      status: "shipping_required",
+      message: "Payment received. Add shipping details to finish fulfillment.",
+      deliveryRails
+    };
+  }
+
+  if (kind === "physical_shipping" || kind === "mixed") {
+    return {
+      kind,
+      status: "ready_to_ship",
+      message: "Payment and shipping are attached. Merchant fulfillment is ready.",
+      deliveryRails
+    };
+  }
+
+  return {
+    kind,
+    status: "delivery_queued",
+    message: "Digital delivery queued through Receiz communications and email.",
+    deliveryRails: deliveryRails?.length ? deliveryRails : ["receiz_communications", "email"]
+  };
 }
 
 async function recordCheckoutCommerceEvent(input: CheckoutCommerceEventInput) {
@@ -148,6 +210,12 @@ export async function POST(request: NextRequest) {
     if (!hasScopedReceizAccess || !accessToken) {
       if (walletAuthority.ok && walletAuthority.source === "proof_object") {
         const funding = proofObjectCheckoutFunding(totalUsdCents, walletBalanceCentsFromBody(body, totalUsdCents));
+        const shipping = shippingFromBody(body.shipping);
+        const fulfillment = checkoutFulfillmentForFunding({
+          funding,
+          submitted: fulfillmentFromBody(body.fulfillment),
+          shipping
+        });
         const session = {
           ok: true,
           checkoutSessionId: `proof_object_${Date.now()}`,
@@ -164,7 +232,8 @@ export async function POST(request: NextRequest) {
           orderId: stringFromBody(body, "referenceId") ?? stringFromBody(body, "orderId") ?? session.checkoutSessionId,
           paymentRail: funding.cardRequired ? "wallet_card_split" : "receiz_wallet",
           settlementStatus: funding.cardRequired ? "card_required" : "wallet_reserved",
-          shipping: shippingFromBody(body.shipping),
+          fulfillment,
+          shipping,
           tenantHost: String(body.tenantHost ?? hostContext.tenantHost ?? host),
           totalLabel: funding.totalLabel
         });
@@ -191,6 +260,12 @@ export async function POST(request: NextRequest) {
       }
 
       const funding = checkoutFunding(totalUsdCents, 0);
+      const shipping = shippingFromBody(body.shipping);
+      const fulfillment = checkoutFulfillmentForFunding({
+        funding,
+        submitted: fulfillmentFromBody(body.fulfillment),
+        shipping
+      });
       const session = {
         ok: true,
         checkoutSessionId: `in_app_${Date.now()}`,
@@ -207,7 +282,8 @@ export async function POST(request: NextRequest) {
         orderId: stringFromBody(body, "referenceId") ?? stringFromBody(body, "orderId") ?? session.checkoutSessionId,
         paymentRail: "card_fallback",
         settlementStatus: funding.cardRequired ? "card_required" : "wallet_reserved",
-        shipping: shippingFromBody(body.shipping),
+        fulfillment,
+        shipping,
         tenantHost: String(body.tenantHost ?? hostContext.tenantHost ?? host),
         totalLabel: funding.totalLabel
       });
@@ -267,6 +343,12 @@ export async function POST(request: NextRequest) {
       cardDeltaLabel: usdLabelFromCents(cardDeltaUsdCents),
       cardRequired: cardDeltaUsdCents > 0
     };
+    const shipping = shippingFromBody(body.shipping);
+    const fulfillment = checkoutFulfillmentForFunding({
+      funding,
+      submitted: fulfillmentFromBody(body.fulfillment),
+      shipping
+    });
     const session = checkout.checkoutSession ?? {
       ok: checkout.ok,
       checkoutSessionId: checkout.orderId ?? `receiz_${Date.now()}`,
@@ -286,7 +368,8 @@ export async function POST(request: NextRequest) {
         ? (checkout.proofObject as Record<string, unknown>)
         : null,
       settlementStatus: funding.cardRequired ? "card_required" : "wallet_reserved",
-      shipping: shippingFromBody(body.shipping),
+      fulfillment,
+      shipping,
       tenantHost: String(body.tenantHost ?? hostContext.tenantHost ?? host),
       totalLabel: funding.totalLabel
     });
@@ -327,6 +410,17 @@ export async function POST(request: NextRequest) {
     orderId: order.id,
     paymentRail: "sandbox",
     settlementStatus: "sandbox",
+    fulfillment: checkoutFulfillmentForFunding({
+      funding: {
+        strategy: "receiz_wallet_first",
+        totalLabel: order.totalLabel,
+        walletAppliedLabel: order.totalLabel,
+        cardDeltaLabel: "$0.00",
+        cardRequired: false
+      },
+      submitted: fulfillmentFromBody(body.fulfillment),
+      shipping: shippingFromBody(body.shipping)
+    }),
     shipping: shippingFromBody(body.shipping),
     tenantHost: String(body.tenantHost ?? hostContext.tenantHost ?? host),
     totalLabel: order.totalLabel

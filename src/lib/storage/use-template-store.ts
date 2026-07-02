@@ -21,6 +21,7 @@ import { merchantProofAuthorityRequirement, type MerchantAuthorityAction } from 
 import { checkoutTenantHost } from "@/lib/checkout/checkout-request";
 import {
   checkoutCompletionState,
+  checkoutFulfillmentKind,
   checkoutOrderFulfillment,
   validShippingAddress
 } from "@/lib/checkout/customer-purchase";
@@ -3051,6 +3052,8 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
         const checkoutMode = process.env.NEXT_PUBLIC_CHECKOUT_MODE ?? checkoutSnapshot.checkout.mode;
         const totalLabel = `$${cartAmountUsd(checkoutSnapshot)}`;
         const itemCount = Math.max(1, checkoutSnapshot.cart.lines.length);
+        const checkoutProductList = checkoutProducts(checkoutSnapshot);
+        const checkoutFulfillmentKindValue = checkoutFulfillmentKind(checkoutProductList);
 
         if (checkoutMode === "mock") {
           const id = `${Math.floor(10000 + Math.random() * 89999)}`;
@@ -3137,6 +3140,15 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
             tenantHost: checkoutTenantHost(checkoutSnapshot),
             merchantReceizId: checkoutSnapshot.hosting.merchantReceizId,
             customerReceizId: checkoutSnapshot.auth.receizId.handle,
+            fulfillment: {
+              kind: checkoutFulfillmentKindValue,
+              status: "payment_required",
+              message: "Payment must settle before fulfillment starts.",
+              deliveryRails:
+                checkoutFulfillmentKindValue === "digital_delivery" || checkoutFulfillmentKindValue === "mixed"
+                  ? ["receiz_communications", "email"]
+                  : undefined
+            },
             merchantProof: merchantProof(checkoutSnapshot),
             successUrl: `${window.location.origin}/?checkout=success`,
             cancelUrl: `${window.location.origin}/?checkout=cancel`

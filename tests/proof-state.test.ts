@@ -670,14 +670,10 @@ describe("Receiz proof commerce state", () => {
         itemCount: 1,
         paymentRail: "receiz_wallet",
         settlementStatus: "settled",
-        shipping: {
-          name: "Lena Ortiz",
-          email: "lena@example.com",
-          line1: "10 Main St",
-          city: "New York",
-          region: "NY",
-          postalCode: "10001",
-          country: "US"
+        fulfillment: {
+          kind: "physical_shipping",
+          status: "shipping_required",
+          message: "Payment received. Add shipping details to finish fulfillment."
         }
       }
     } as const;
@@ -689,7 +685,9 @@ describe("Receiz proof commerce state", () => {
     assert.equal(second.admitted, false);
     assert.equal(second.state.orders.length, 1);
     assert.equal(second.state.customers.length, 1);
-    assert.equal(second.state.orders[0]?.status, "settled");
+    assert.equal(second.state.orders[0]?.status, "pending");
+    assert.equal(second.state.orders[0]?.sealed, false);
+    assert.equal(second.state.orders[0]?.fulfillment?.status, "shipping_required");
     assert.equal(second.state.orders[0]?.paymentRail, "receiz_wallet");
     assert.equal(second.state.orders[0]?.merchantReceizId, "boost.receiz.id");
     assert.equal(second.state.customers[0]?.email, "lena@example.com");
