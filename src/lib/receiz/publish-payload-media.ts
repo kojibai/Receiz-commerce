@@ -580,12 +580,15 @@ export async function preparePublishRequestBody<TStatePayload>({
     serializedBody = JSON.stringify(body);
   }
 
-  assertPublishRequestBodySize(serializedBody);
+  assertPublishRequestBodySize(serializedBody, maxBodyChars);
   return body;
 }
 
-export function assertPublishRequestBodySize(serializedBody: string) {
-  if (serializedBody.length <= PUBLISH_REQUEST_BODY_MAX_CHARS) return;
+export function assertPublishRequestBodySize(
+  serializedBody: string,
+  maxBodyChars = PUBLISH_REQUEST_BODY_MAX_CHARS
+) {
+  if (serializedBody.length <= maxBodyChars) return;
 
   throw new Error(
     "Publish media is still too large after Receiz media preparation. Remove or replace the largest image, then publish again."

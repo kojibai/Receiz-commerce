@@ -36,6 +36,7 @@ const adminMobileTabs = [
 export function AdminStudio() {
   const { state, actions, actionFeedback } = useTemplateStore();
   const campaignName = state.campaigns[0]?.name ?? "Reward Challenge";
+  const merchantReceizAccount = currentMerchantReceizAccount(state);
 
   return (
     <AdminShell onPublish={actions.publish} publishFeedback={actionFeedback.publish} state={state}>
@@ -89,6 +90,7 @@ export function AdminStudio() {
             <HostingBillingPanel
               billing={state.billing}
               hosting={state.hosting}
+              merchantReceizAccount={merchantReceizAccount}
               onAddPayment={actions.addBillingMethod}
               onSelectPlan={actions.selectHostingPlan}
               paymentFeedback={actionFeedback["billing.payment"]}
@@ -317,6 +319,12 @@ function AdminStatusCard({
       <Icons.chevronRight size={18} />
     </Panel>
   );
+}
+
+function currentMerchantReceizAccount(state: ReturnType<typeof useTemplateStore>["state"]) {
+  return state.auth.receizId.connected && state.auth.receizId.handle
+    ? state.auth.receizId.handle
+    : state.hosting.merchantReceizId;
 }
 
 function TwinLaunchPanel({
@@ -624,6 +632,7 @@ function MobileAdminConsole({
           <HostingBillingPanel
             billing={state.billing}
             hosting={state.hosting}
+            merchantReceizAccount={currentMerchantReceizAccount(state)}
             onAddPayment={actions.addBillingMethod}
             onSelectPlan={actions.selectHostingPlan}
             paymentFeedback={actionFeedback["billing.payment"]}

@@ -153,4 +153,78 @@ describe("publish payload media preparation", () => {
     assert.ok(body.state.products.some((item: Product) => item.imageUrl === null));
     assert.equal(body.state.products.some((item: Product) => item.imageUrl === hugeImage), false);
   });
+
+  it("honors the explicit browser transport budget after media fallback", async () => {
+    const image = imageDataUrl(180_000);
+    const product = baseState().products[0]!;
+    const state = {
+      ...baseState(),
+      brand: { ...baseState().brand, logoImageUrl: image },
+      products: Array.from({ length: 24 }, (_item, index) => ({
+        ...product,
+        id: `transport-product-${index}`,
+        name: `Transport Product ${index}`,
+        imageUrl: image
+      }))
+    };
+    const merchantProof = {
+      keyFile: {
+        schema: "receiz.identity_seal.v1",
+        payload: "p".repeat(720_000)
+      },
+      auth: {
+        receizId: {
+          connected: true,
+          handle: "merchant.receiz.id",
+          localProofVerified: true
+        }
+      }
+    };
+
+    const body = await preparePublishRequestBody({
+      action: "publish",
+      maxBodyChars: 1_100_000,
+      merchantProof,
+      state,
+      statePayload: (preparedState: CommerceState) => ({
+        products: preparedState.products,
+        hosting: preparedState.hosting,
+        brand: preparedState.brand
+      }),
+      media: {
+        tenantHost: "bjklock.receiz.app",
+        merchantReceizId: "merchant.receiz.id",
+        compress: async () => imageDataUrl(48_000)
+      }
+    });
+    const serialized = JSON.stringify(body);
+
+    assert.ok(serialized.length <= 1_100_000);
+    assert.doesNotThrow(() => assertPublishRequestBodySize(serialized, 1_100_000));
+  });
+
+  it("fails before fetch when the proof envelope alone exceeds the browser transport budget", async () => {
+    await assert.rejects(
+      preparePublishRequestBody({
+        action: "publish",
+        maxBodyChars: 900_000,
+        merchantProof: {
+          keyFile: {
+            schema: "receiz.identity_seal.v1",
+            payload: "p".repeat(1_050_000)
+          }
+        },
+        state: baseState(),
+        statePayload: (preparedState: CommerceState) => ({
+          hosting: preparedState.hosting,
+          brand: preparedState.brand,
+          products: preparedState.products
+        }),
+        media: {
+          tenantHost: "bjklock.receiz.app"
+        }
+      }),
+      /too large/
+    );
+  });
 });

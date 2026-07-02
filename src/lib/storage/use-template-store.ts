@@ -1335,10 +1335,10 @@ function hasPendingPublish(storageKey: string) {
 async function postJson<T>(
   url: string,
   body: Record<string, unknown>,
-  options: { deferAuthorityRedirect?: boolean } = {}
+  options: { deferAuthorityRedirect?: boolean; maxBodyChars?: number } = {}
 ): Promise<T> {
   const serializedBody = JSON.stringify(body);
-  assertPublishRequestBodySize(serializedBody);
+  assertPublishRequestBodySize(serializedBody, options.maxBodyChars);
 
   const response = await fetch(url, {
     method: "POST",
@@ -1498,6 +1498,26 @@ function appendUniqueById<T extends { id: string }>(current: T[], imported: T[])
   return [...imported.filter((item) => !seen.has(item.id)), ...current];
 }
 
+function currentMerchantReceizId(state: CommerceState) {
+  return state.auth.receizId.connected && state.auth.receizId.handle
+    ? state.auth.receizId.handle
+    : state.hosting.merchantReceizId;
+}
+
+function stateWithCurrentMerchantReceizAccount(state: CommerceState): CommerceState {
+  const merchantReceizId = currentMerchantReceizId(state);
+  if (!merchantReceizId || state.hosting.merchantReceizId === merchantReceizId) return state;
+
+  return {
+    ...state,
+    hosting: {
+      ...state.hosting,
+      merchantReceizId,
+      settlementAccountLabel: `${state.auth.receizId.displayName || state.brand.name || merchantReceizId} Receiz account`
+    }
+  };
+}
+
 function publishedStatePayload(state: CommerceState) {
   return compactPublishedState({
     brand: state.brand,
@@ -1524,21 +1544,26 @@ function publishTenantHost(state: CommerceState) {
   return state.hosting.customDomain.domain || state.hosting.subdomain || context.tenantHost || context.host;
 }
 
+const HOSTING_PUBLISH_REQUEST_BODY_MAX_CHARS = 1_600_000;
+
 async function prepareHostingStoreStateRequestBody(
   action: "custom_domain" | "verify_domain" | "publish",
   state: CommerceState,
   merchantProofValue: unknown,
   extra: Record<string, unknown> = {}
 ) {
+  const normalizedState = stateWithCurrentMerchantReceizAccount(state);
+
   return preparePublishRequestBody({
     action,
     extra,
+    maxBodyChars: HOSTING_PUBLISH_REQUEST_BODY_MAX_CHARS,
     merchantProof: merchantProofValue,
-    state,
+    state: normalizedState,
     statePayload: publishedStatePayload,
     media: {
-      tenantHost: publishTenantHost(state),
-      merchantReceizId: state.hosting.merchantReceizId || state.auth.receizId.handle,
+      tenantHost: publishTenantHost(normalizedState),
+      merchantReceizId: currentMerchantReceizId(normalizedState),
       upload: typeof window === "undefined" ? undefined : uploadPublishMedia,
       compress: compressInlineImageDataUrlForPublish
     }
@@ -1553,8 +1578,7 @@ function merchantProofPayload(state: CommerceState, keyFile?: unknown | null) {
         connected: state.auth.receizId.connected,
         handle: state.auth.receizId.handle,
         displayName: state.auth.receizId.displayName,
-        localProofVerified: state.auth.receizId.localProofVerified,
-        ...(keyFile ? { keyFile } : {})
+        localProofVerified: state.auth.receizId.localProofVerified
       }
     }
   };
@@ -2109,7 +2133,8 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
           const snapshot = stateRef.current;
           const result = await postJson<{ hosting: CommerceState["hosting"]; storeStateSync?: StoreStateSyncResponse }>(
             "/api/hosting",
-            await prepareHostingStoreStateRequestBody("custom_domain", snapshot, merchantProof(snapshot), { domain: normalizedDomain })
+            await prepareHostingStoreStateRequestBody("custom_domain", snapshot, merchantProof(snapshot), { domain: normalizedDomain }),
+            { maxBodyChars: HOSTING_PUBLISH_REQUEST_BODY_MAX_CHARS }
           );
           const syncError = storeStateSyncError(result.storeStateSync);
           const syncPending = storeStateSyncPending(result.storeStateSync);
@@ -2126,7 +2151,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
           );
           setState((current) => ({
             ...current,
-            hosting: mergeCustomDomainHostingResponse(current.hosting, result.hosting),
+            hosting: mergeCustomDomainHostingResponse(stateWithCurrentMerchantReceizAccount(current).hosting, result.hosting),
             proofEvents: [
               makeEvent(
                 "DOMAIN_CONNECTED",
@@ -2202,7 +2227,8 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
           const snapshot = stateRef.current;
           const result = await postJson<{ hosting: CommerceState["hosting"]; storeStateSync?: StoreStateSyncResponse }>(
             "/api/hosting",
-            await prepareHostingStoreStateRequestBody("verify_domain", snapshot, merchantProof(snapshot), { domain: normalizedDomain })
+            await prepareHostingStoreStateRequestBody("verify_domain", snapshot, merchantProof(snapshot), { domain: normalizedDomain }),
+            { maxBodyChars: HOSTING_PUBLISH_REQUEST_BODY_MAX_CHARS }
           );
           const syncError = storeStateSyncError(result.storeStateSync);
           const syncPending = storeStateSyncPending(result.storeStateSync);
@@ -2217,7 +2243,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
           );
           setState((current) => ({
             ...current,
-            hosting: mergeCustomDomainHostingResponse(current.hosting, result.hosting),
+            hosting: mergeCustomDomainHostingResponse(stateWithCurrentMerchantReceizAccount(current).hosting, result.hosting),
             proofEvents: [
               makeEvent(
                 "DOMAIN_CONNECTED",
@@ -2270,19 +2296,23 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
           }>("/api/hosting", {
             action: "plan",
             plan,
-            hosting: stateRef.current.hosting,
+            hosting: stateWithCurrentMerchantReceizAccount(stateRef.current).hosting,
             merchantProof: merchantProof(stateRef.current)
-          });
+          }, { maxBodyChars: HOSTING_PUBLISH_REQUEST_BODY_MAX_CHARS });
           setActionFeedback("billing.plan", "success", `${plan} plan synced`);
-          setState((current) => ({
-            ...current,
-            hosting: {
-              ...current.hosting,
-              plan: result.hosting.plan
-            },
-            billing: result.billing,
-            proofEvents: [makeEvent("HOSTING_PLAN_UPDATED", `${plan} plan synced with Receiz billing`), ...current.proofEvents]
-          }));
+          setState((current) => {
+            const ownerState = stateWithCurrentMerchantReceizAccount(current);
+
+            return {
+              ...ownerState,
+              hosting: {
+                ...ownerState.hosting,
+                plan: result.hosting.plan
+              },
+              billing: result.billing,
+              proofEvents: [makeEvent("HOSTING_PLAN_UPDATED", `${plan} plan synced with Receiz billing`), ...current.proofEvents]
+            };
+          });
         } catch (error) {
           setActionFeedback("billing.plan", "error", error instanceof Error ? error.message : "Hosting plan sync failed");
           setState((current) => ({
@@ -2312,7 +2342,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
             action: "payment",
             paymentMethodLabel: label,
             merchantProof: merchantProof(stateRef.current)
-          });
+          }, { maxBodyChars: HOSTING_PUBLISH_REQUEST_BODY_MAX_CHARS });
           setActionFeedback("billing.payment", "success", "Billing synced");
           setState((current) => ({
             ...current,
@@ -2719,10 +2749,10 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
 
           setActionFeedback("publish", "pending", "Publishing store");
           const publishHostContext = currentHostContext();
-          const publishRequestState = {
+          const publishRequestState = stateWithCurrentMerchantReceizAccount({
             ...stateRef.current,
             hosting: { ...stateRef.current.hosting, published: true, lastPublishedAt: "now" }
-          };
+          });
 
           markPendingPublish(publishHostContext.storageKey);
           setState((current) => ({
@@ -2738,7 +2768,10 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
             }>(
               "/api/hosting",
               await prepareHostingStoreStateRequestBody("publish", publishRequestState, merchantProof(publishRequestState)),
-              { deferAuthorityRedirect: true }
+              {
+                deferAuthorityRedirect: true,
+                maxBodyChars: HOSTING_PUBLISH_REQUEST_BODY_MAX_CHARS
+              }
             );
 
             const syncError = storeStateSyncError(result.storeStateSync);

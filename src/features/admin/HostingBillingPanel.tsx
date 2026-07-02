@@ -10,6 +10,7 @@ import { platform } from "@/lib/platform";
 export function HostingBillingPanel({
   billing,
   hosting,
+  merchantReceizAccount,
   onAddPayment,
   onSelectPlan,
   paymentFeedback,
@@ -17,11 +18,14 @@ export function HostingBillingPanel({
 }: {
   billing: BillingConfig;
   hosting: HostingConfig;
+  merchantReceizAccount?: string;
   onAddPayment: (label: string) => void;
   onSelectPlan: (plan: HostingConfig["plan"]) => void;
   paymentFeedback?: ActionFeedbackState;
   planFeedback?: ActionFeedbackState;
 }) {
+  const merchantAccount = merchantReceizAccount?.trim() || hosting.merchantReceizId;
+
   return (
     <Panel className="admin-panel hosting-billing-panel">
       <SectionHeader
@@ -72,7 +76,7 @@ export function HostingBillingPanel({
         <div><span>{platform.freeSubdomainLabel}</span><strong>{hosting.subdomain}</strong></div>
         <div><span>{platform.customDomainLabel}</span><strong>{hosting.customDomain.domain}</strong></div>
         <div><span>Live URL</span><strong>{hosting.liveUrl}</strong></div>
-        <div><span>Merchant Receiz account</span><strong>{hosting.merchantReceizId}</strong></div>
+        <div><span>Merchant Receiz account</span><strong>{merchantAccount}</strong></div>
       </div>
     </Panel>
   );

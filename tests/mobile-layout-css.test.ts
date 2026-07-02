@@ -23,4 +23,10 @@ describe("mobile storefront layout CSS", () => {
     assert.match(css, /@media \(max-width:\s*760px\)\s*\{[\s\S]*\.exchange-market-list > \*\s*\{[\s\S]*flex:\s*0 0 clamp\(74px,\s*23vw,\s*104px\);[\s\S]*\}/);
     assert.match(css, /\.exchange-market-list button,\s*\.exchange-list-asset-button\s*\{/);
   });
+
+  it("keeps the mobile account proof card compact above the cart", () => {
+    assert.match(css, /@media \(max-width:\s*760px\)\s*\{[\s\S]*\.mobile-account-card\s*\{[\s\S]*gap:\s*6px;[\s\S]*padding:\s*8px;[\s\S]*\}/);
+    assert.match(css, /@media \(max-width:\s*760px\)\s*\{[\s\S]*\.mobile-account-card \.large-avatar\s*\{[\s\S]*width:\s*40px;[\s\S]*height:\s*40px;[\s\S]*\}/);
+    assert.match(css, /@media \(max-width:\s*760px\)\s*\{[\s\S]*\.mobile-account-scope div\s*\{[\s\S]*min-height:\s*42px;[\s\S]*padding:\s*6px;[\s\S]*\}/);
+  });
 });
