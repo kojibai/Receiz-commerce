@@ -78,7 +78,6 @@ export function PublicStorefront({
   const { state, actions, actionFeedback, hostContext, hydrated, receizSessionPending } = useTemplateStore(initialState, initialHostContext);
   const [mobileView, setMobileView] = useState<MobileView>("store");
   const [selectedProductSlug, setSelectedProductSlug] = useState<string | null>(null);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [identityUploadVisible, setIdentityUploadVisible] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
   const [cartPulseProductId, setCartPulseProductId] = useState<string | null>(null);
@@ -173,7 +172,6 @@ export function PublicStorefront({
 
     setSelectedProductSlug(slug);
     setMobileView("store");
-    setMobileMenuOpen(false);
     if (typeof window !== "undefined" && window.location.hash !== hash) {
       window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}${hash}`);
     }
@@ -205,7 +203,6 @@ export function PublicStorefront({
   const selectMobileView = (view: MobileView) => {
     setSelectedProductSlug(null);
     setMobileView(view);
-    setMobileMenuOpen(false);
     if (!tenantSurface && view === "account") {
       void resolvePlatformMerchantAccount();
     }
@@ -232,7 +229,6 @@ export function PublicStorefront({
   const restoreIdentityArtifact = async (file: File) => {
     await actions.restoreReceizIdentityArtifact(file);
     setIdentityUploadVisible(false);
-    setMobileMenuOpen(false);
   };
   const connectExistingReceizId = async () => {
     const connected = await actions.connectExistingReceizId();
@@ -240,12 +236,10 @@ export function PublicStorefront({
       setIdentityUploadVisible(true);
       setMobileView("account");
     }
-    setMobileMenuOpen(false);
   };
   const oneClickCheckout = async () => {
     await actions.startCheckout();
     setIdentityUploadVisible(false);
-    setMobileMenuOpen(false);
     if (tenantSurface) {
       setMobileView("account");
     }
@@ -254,14 +248,12 @@ export function PublicStorefront({
     await ensureTenantCustomerSession("product checkout");
     await actions.startCheckout(productId);
     setIdentityUploadVisible(false);
-    setMobileMenuOpen(false);
     if (tenantSurface) {
       setMobileView("account");
     }
   };
   const selectExchangeAsset = (assetId: string) => {
     actions.selectExchangeAsset(assetId);
-    setMobileMenuOpen(false);
   };
   const listExchangeAsset = async (file?: File) => {
     await actions.listExchangeAsset(file);
@@ -323,9 +315,7 @@ export function PublicStorefront({
       <div className="app-body">
         <StoreTopbar state={state} tenantSurface={tenantSurface} />
         <MobileHeader
-          menuOpen={mobileMenuOpen}
           onAccount={() => selectMobileView("account")}
-          onMenu={() => setMobileMenuOpen((open) => !open)}
           state={state}
         />
         <div className="content-grid">
@@ -551,19 +541,6 @@ export function PublicStorefront({
             tenantSurface={tenantSurface}
           />
         ) : null}
-        <MobileCommandMenu
-          activeView={mobileView}
-          homepageMode={homepageMode}
-          onClose={() => setMobileMenuOpen(false)}
-          onNavigate={selectMobileView}
-          onSeal={sealObject}
-          onExistingReceizId={connectExistingReceizId}
-          open={mobileMenuOpen}
-          showIdentityEntry={showIdentityEntry}
-          state={state}
-          tenantSurface={tenantSurface}
-          customerReceizHandle={receizHandle}
-        />
         {tenantSurface ? (
           <FloatingCart
             checkoutFeedback={actionFeedback.checkout}
@@ -686,104 +663,6 @@ function BlogHomeSection({
         </div>
       )}
     </section>
-  );
-}
-
-function MobileCommandMenu({
-  activeView,
-  homepageMode,
-  onClose,
-  onExistingReceizId,
-  onNavigate,
-  onSeal,
-  open,
-  showIdentityEntry,
-  state,
-  customerReceizHandle,
-  tenantSurface
-}: {
-  activeView: MobileView;
-  customerReceizHandle: string;
-  homepageMode: CommerceState["storefront"]["homepageMode"];
-  onClose: () => void;
-  onExistingReceizId: () => void | Promise<void>;
-  onNavigate: (view: MobileView) => void;
-  onSeal: () => void;
-  open: boolean;
-  showIdentityEntry: boolean;
-  state: CommerceState;
-  tenantSurface: boolean;
-}) {
-  const navItems = [
-    ["store", homepageMode === "blog" ? "Blog" : "Store", homepageMode === "blog" ? Icons.book : Icons.store],
-    ["exchange", "Exchange", Icons.analytics],
-    ["rewards", "Rewards", Icons.gift],
-    ["assets", "Assets", Icons.assets],
-    ["play", "Play", Icons.game],
-    ["account", "Account", Icons.user]
-  ] as const;
-
-  const runAction = (action: () => void | Promise<void>) => {
-    void action();
-    onClose();
-  };
-
-  return (
-    <div aria-hidden={!open} className={open ? "mobile-command-menu open" : "mobile-command-menu"}>
-      <div aria-label="Mobile menu" aria-modal="true" className="mobile-command-sheet" role="dialog">
-        <div className="mobile-command-head">
-          <div>
-            <span>{state.hosting.subdomain}</span>
-            <strong>{state.brand.name}</strong>
-          </div>
-          <button aria-label="Close menu" className="icon-button" onClick={onClose} type="button">
-            <Icons.close size={22} />
-          </button>
-        </div>
-
-        <div className="mobile-command-grid" aria-label="Switch view">
-          {navItems.map(([view, label, Icon]) => (
-            <button
-              aria-current={activeView === view ? "page" : undefined}
-              className={activeView === view ? "active" : undefined}
-              key={view}
-              onClick={() => onNavigate(view)}
-              type="button"
-            >
-              <Icon size={20} />
-              <span>{label}</span>
-            </button>
-          ))}
-        </div>
-
-        <div className="mobile-command-actions">
-          {showIdentityEntry ? (
-            <OfficialReceizLoginButton
-              className="mobile-command-receiz-login"
-              onClick={() => runAction(onExistingReceizId)}
-            />
-          ) : null}
-          {tenantSurface ? null : (
-            <button onClick={() => runAction(onSeal)} type="button">
-              <Icons.seal size={21} />
-              <div>
-                <strong>Seal object</strong>
-                <span>Verify an asset, reward, or product</span>
-              </div>
-            </button>
-          )}
-          {tenantSurface ? null : (
-            <button onClick={() => window.location.assign("/admin")} type="button">
-              <Icons.settings size={21} />
-              <div>
-                <strong>Admin Studio</strong>
-                <span>Edit brand, store, rewards, and hosting</span>
-              </div>
-            </button>
-          )}
-        </div>
-      </div>
-    </div>
   );
 }
 
@@ -1593,15 +1472,58 @@ function MobileStorePanel({
   onProductOpen: (product: Product) => void;
   onSeal: () => void;
 }) {
+  const [activeCategory, setActiveCategory] = useState("all");
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const firstProduct = products[0];
   const firstPost = blogPosts.find((post) => post.status === "published") ?? blogPosts[0];
   const visibleCollections = collections.filter((collection) => collection.published).slice(0, 5);
-  const categoryLabels = visibleCollections.length
-    ? visibleCollections.map((collection) => collection.name)
-    : ["Featured", "Access", "Rewards", "Drops"];
+  const categoryItems = visibleCollections.length
+    ? visibleCollections.map((collection) => ({ id: collection.id, label: collection.name, productIds: collection.productIds }))
+    : [
+        { id: "featured", label: "Featured", productIds: [] },
+        { id: "access", label: "Access", productIds: [] },
+        { id: "rewards", label: "Rewards", productIds: [] },
+        { id: "drops", label: "Drops", productIds: [] }
+      ];
   const blogHome = state.storefront.homepageMode === "blog";
   const visibleHost = state.hosting.customDomain.domain || state.hosting.subdomain;
   const heroBody = state.storefront.heroBody || state.storefront.subheadline || state.brand.tagline;
+  const selectedCategory = categoryItems.find((category) => category.id === activeCategory) ?? null;
+  const normalizedSearch = searchQuery.trim().toLowerCase();
+  const searchedProducts = products.filter((product) => {
+    const categoryMatch =
+      !selectedCategory ||
+      selectedCategory.id === "featured" ||
+      (selectedCategory.productIds.length
+        ? selectedCategory.productIds.includes(product.id)
+        : selectedCategory.id === "access"
+          ? product.type === "access" || product.type === "benefit"
+          : selectedCategory.id === "rewards"
+            ? product.rewardEligible
+            : selectedCategory.id === "drops"
+              ? product.sealed
+              : true);
+
+    if (!categoryMatch) return false;
+    if (!normalizedSearch) return true;
+
+    return [
+      product.name,
+      product.subtitle,
+      product.description,
+      product.type,
+      product.priceLabel,
+      product.seo?.title,
+      product.seo?.description,
+      product.seo?.keywords?.join(" ")
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase()
+      .includes(normalizedSearch);
+  });
+  const displayProducts = searchedProducts.length || normalizedSearch || selectedCategory ? searchedProducts : products;
 
   return (
     <MobilePane active={active} action={<StatusPill tone="green">{blogHome ? "Stories" : "Live"}</StatusPill>} title={blogHome ? "Blog" : "Store"}>
@@ -1641,16 +1563,47 @@ function MobileStorePanel({
       </div>
 
       <div className="mobile-category-row" aria-label="Shop categories">
-        {categoryLabels.map((label) => (
-          <button key={label} type="button">
-            {label}
-          </button>
-        ))}
+        <button
+          aria-label={searchOpen ? "Close store search" : "Search store"}
+          className={searchOpen ? "mobile-store-search-button active" : "mobile-store-search-button"}
+          onClick={() => {
+            setSearchOpen((open) => !open);
+            if (searchOpen) setSearchQuery("");
+          }}
+          type="button"
+        >
+          <Icons.search size={15} />
+        </button>
+        <div className="mobile-category-scroll">
+          {categoryItems.map((category) => (
+            <button
+              aria-pressed={activeCategory === category.id}
+              className={activeCategory === category.id ? "active" : undefined}
+              key={category.id}
+              onClick={() => setActiveCategory((current) => (current === category.id ? "all" : category.id))}
+              type="button"
+            >
+              {category.label}
+            </button>
+          ))}
+        </div>
       </div>
+      {searchOpen ? (
+        <label className="mobile-store-search" aria-label="Search products">
+          <Icons.search size={15} />
+          <input
+            autoComplete="off"
+            onChange={(event) => setSearchQuery(event.target.value)}
+            placeholder="Search store"
+            type="search"
+            value={searchQuery}
+          />
+        </label>
+      ) : null}
 
       <div className="mobile-mini-products">
-        {products.length ? (
-          products.slice(0, 2).map((product) => (
+        {displayProducts.length ? (
+          displayProducts.map((product) => (
             <article
               className="clickable-product-card"
               key={product.id}
@@ -1690,8 +1643,14 @@ function MobileStorePanel({
         ) : (
           <div className="mobile-empty-state">
             <Icons.products size={24} />
-            <strong>No products yet</strong>
-            <span>{tenantSurface ? "This store is getting its catalog ready." : "Add products in Admin Studio to open the storefront."}</span>
+            <strong>{products.length ? "No matches" : "No products yet"}</strong>
+            <span>
+              {products.length
+                ? "Try another category or search."
+                : tenantSurface
+                  ? "This store is getting its catalog ready."
+                  : "Add products in Admin Studio to open the storefront."}
+            </span>
           </div>
         )}
       </div>

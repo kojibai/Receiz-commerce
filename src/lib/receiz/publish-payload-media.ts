@@ -34,6 +34,22 @@ export type PreparedPublishPayloadMedia = {
   warnings: string[];
 };
 
+export type PreparePublishRequestBodyOptions<TStatePayload> = {
+  action: string;
+  extra?: Record<string, unknown>;
+  maxBodyChars?: number;
+  media: PreparePublishPayloadMediaOptions;
+  merchantProof: unknown;
+  state: CommerceState;
+  statePayload: (state: CommerceState) => TStatePayload;
+};
+
+export type PreparedPublishRequestBody<TStatePayload> = Record<string, unknown> & {
+  action: string;
+  merchantProof: unknown;
+  state: TStatePayload;
+};
+
 const INLINE_IMAGE_DATA_URL = /^data:(image\/[a-z0-9.+-]+)(;base64)?,([\s\S]*)$/i;
 export const PUBLISH_INLINE_MEDIA_ITEM_MAX_CHARS = 120_000;
 export const PUBLISH_INLINE_MEDIA_TOTAL_MAX_CHARS = 900_000;
@@ -411,6 +427,22 @@ function shouldDropInlineMediaPath(path: string[]) {
   return path.at(-1) === "socialImageUrl";
 }
 
+function stripInlineMediaForRequestBudget<T>(value: T): T {
+  if (typeof value === "string") {
+    return (isInlineImageDataUrl(value) ? null : value) as T;
+  }
+
+  if (Array.isArray(value)) {
+    return value.map((item) => stripInlineMediaForRequestBudget(item)) as T;
+  }
+
+  if (!isRecord(value)) return value;
+
+  return Object.fromEntries(
+    Object.entries(value).map(([key, item]) => [key, stripInlineMediaForRequestBudget(item)])
+  ) as T;
+}
+
 export async function prepareStoreStateMediaForPublishPayload(
   state: CommerceState,
   options: PreparePublishPayloadMediaOptions
@@ -510,6 +542,46 @@ export async function prepareStoreStateMediaForPublishPayload(
     inlineChars: counters.inlineChars,
     warnings: Array.from(warnings)
   };
+}
+
+export async function preparePublishRequestBody<TStatePayload>({
+  action,
+  extra = {},
+  maxBodyChars = PUBLISH_REQUEST_BODY_MAX_CHARS,
+  media,
+  merchantProof,
+  state,
+  statePayload
+}: PreparePublishRequestBodyOptions<TStatePayload>): Promise<PreparedPublishRequestBody<TStatePayload>> {
+  const buildBody = (payloadState: TStatePayload) => ({
+    ...extra,
+    action,
+    merchantProof,
+    state: payloadState
+  }) as PreparedPublishRequestBody<TStatePayload>;
+  const strippedPayload = statePayload(stripInlineMediaForRequestBudget(state));
+  const strippedBodyChars = JSON.stringify(buildBody(strippedPayload)).length;
+  const reservedForEnvelope = Math.max(0, strippedBodyChars + 8_192);
+  const envelopeMediaBudget = Math.max(0, maxBodyChars - reservedForEnvelope);
+  const prepared = await prepareStoreStateMediaForPublishPayload(state, {
+    ...media,
+    totalMaxChars: Math.min(media.totalMaxChars ?? PUBLISH_INLINE_MEDIA_TOTAL_MAX_CHARS, envelopeMediaBudget)
+  });
+  let body = buildBody(statePayload(prepared.state));
+  let serializedBody = JSON.stringify(body);
+
+  if (serializedBody.length > maxBodyChars) {
+    const stripped = await prepareStoreStateMediaForPublishPayload(state, {
+      ...media,
+      itemMaxChars: 0,
+      totalMaxChars: 0
+    });
+    body = buildBody(statePayload(stripped.state));
+    serializedBody = JSON.stringify(body);
+  }
+
+  assertPublishRequestBodySize(serializedBody);
+  return body;
 }
 
 export function assertPublishRequestBodySize(serializedBody: string) {

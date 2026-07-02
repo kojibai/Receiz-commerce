@@ -146,14 +146,10 @@ export function StoreTopbar({
 }
 
 export function MobileHeader({
-  menuOpen,
   onAccount,
-  onMenu,
   state
 }: {
-  menuOpen: boolean;
   onAccount: () => void;
-  onMenu: () => void;
   state: CommerceState;
 }) {
   const visibleHost = state.hosting.customDomain.domain || state.hosting.subdomain;
@@ -172,15 +168,6 @@ export function MobileHeader({
       </div>
       <button aria-label="Open account" className="icon-button" onClick={onAccount} type="button">
         <Icons.user size={21} />
-      </button>
-      <button
-        aria-expanded={menuOpen}
-        aria-label={menuOpen ? "Close menu" : "Open menu"}
-        className="icon-button"
-        onClick={onMenu}
-        type="button"
-      >
-        {menuOpen ? <Icons.close size={23} /> : <Icons.menu size={24} />}
       </button>
     </header>
   );
@@ -202,8 +189,7 @@ export function BottomNav({
     ["exchange", "Exchange", Icons.analytics],
     ["rewards", "Rewards", Icons.gift],
     ["assets", "Assets", Icons.assets],
-    ["play", "Play", Icons.game],
-    ["account", "Account", Icons.user]
+    ["play", "Play", Icons.game]
   ] as const;
 
   return (

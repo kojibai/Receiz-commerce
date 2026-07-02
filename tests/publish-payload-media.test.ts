@@ -2,8 +2,10 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   assertPublishRequestBodySize,
+  preparePublishRequestBody,
   prepareStoreStateMediaForPublishPayload
 } from "../src/lib/receiz/publish-payload-media.js";
+import type { CommerceState, Product } from "../src/types/domain.js";
 import { baseState } from "./support/commerce-state.js";
 
 function imageDataUrl(size: number) {
@@ -15,7 +17,7 @@ describe("publish payload media preparation", () => {
     const hugeImage = imageDataUrl(1_200_000);
     const compressedImage = imageDataUrl(64_000);
     const product = baseState().products[0]!;
-    const state = {
+    const state: CommerceState = {
       ...baseState(),
       brand: { ...baseState().brand, logoImageUrl: hugeImage },
       products: [
@@ -99,5 +101,55 @@ describe("publish payload media preparation", () => {
 
     assert.equal(prepared.stripped, 1);
     assert.equal(prepared.state.brand.logoImageUrl, null);
+  });
+
+  it("sizes media against the final publish request envelope, not only the state payload", async () => {
+    const hugeImage = imageDataUrl(1_200_000);
+    const compressedImage = imageDataUrl(64_000);
+    const product = baseState().products[0]!;
+    const state = {
+      ...baseState(),
+      products: Array.from({ length: 14 }, (_item, index) => ({
+        ...product,
+        id: `product-${index}`,
+        name: `Product ${index}`,
+        imageUrl: hugeImage
+      }))
+    };
+    const merchantProof = {
+      auth: {
+        receizId: {
+          connected: true,
+          handle: "merchant.receiz.id",
+          localProofVerified: true,
+          keyFile: {
+            schema: "receiz.identity_seal.v1",
+            payload: "p".repeat(2_560_000)
+          }
+        }
+      }
+    };
+
+    const body = await preparePublishRequestBody({
+      action: "publish",
+      merchantProof,
+      state,
+      statePayload: (preparedState: CommerceState) => ({
+        products: preparedState.products,
+        hosting: preparedState.hosting,
+        brand: preparedState.brand
+      }),
+      media: {
+        tenantHost: "bjklock.receiz.app",
+        merchantReceizId: "merchant.receiz.id",
+        compress: async () => compressedImage
+      }
+    });
+    const serialized = JSON.stringify(body);
+
+    assert.doesNotThrow(() => assertPublishRequestBodySize(serialized));
+    assert.ok(serialized.length <= 3_000_000);
+    assert.ok(body.state.products.some((item: Product) => item.imageUrl === compressedImage));
+    assert.ok(body.state.products.some((item: Product) => item.imageUrl === null));
   });
 });

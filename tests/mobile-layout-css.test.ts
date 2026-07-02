@@ -5,10 +5,17 @@ import { describe, it } from "node:test";
 const css = readFileSync("app/globals.css", "utf8");
 
 describe("mobile storefront layout CSS", () => {
-  it("keeps the six-item storefront toolbar on one mobile row", () => {
-    assert.match(css, /\.bottom-nav\s*\{[\s\S]*grid-template-columns:\s*repeat\(6,\s*minmax\(0,\s*1fr\)\);[\s\S]*\}/);
+  it("keeps the five-item storefront toolbar on one mobile row", () => {
+    assert.match(css, /\.bottom-nav\s*\{[\s\S]*grid-template-columns:\s*repeat\(5,\s*minmax\(0,\s*1fr\)\);[\s\S]*\}/);
     assert.match(css, /\.bottom-nav button\s*\{[\s\S]*min-width:\s*0;[\s\S]*\}/);
     assert.match(css, /\.bottom-nav button\s*\{[\s\S]*padding:\s*0;[\s\S]*\}/);
+  });
+
+  it("keeps mobile storefront search and products in swipe rails", () => {
+    assert.match(css, /\.mobile-category-scroll\s*\{[\s\S]*display:\s*flex;[\s\S]*overflow-x:\s*auto;[\s\S]*\}/);
+    assert.match(css, /\.mobile-store-search-button\s*\{[\s\S]*width:\s*34px;[\s\S]*height:\s*34px;[\s\S]*\}/);
+    assert.match(css, /\.mobile-mini-products\s*\{[\s\S]*display:\s*flex;[\s\S]*overflow-x:\s*auto;[\s\S]*scroll-snap-type:\s*x mandatory;[\s\S]*\}/);
+    assert.match(css, /\.mobile-mini-products article\s*\{[\s\S]*flex:\s*0 0 calc\(\(100% - 10px\) \/ 2\);[\s\S]*scroll-snap-align:\s*start;[\s\S]*\}/);
   });
 
   it("keeps Exchange market controls in a compact horizontal mobile rail", () => {

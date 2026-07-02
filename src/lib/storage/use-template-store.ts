@@ -40,7 +40,7 @@ import {
 import {
   assertPublishRequestBodySize,
   compressInlineImageDataUrlForPublish,
-  prepareStoreStateMediaForPublishPayload
+  preparePublishRequestBody
 } from "@/lib/receiz/publish-payload-media";
 import { canonicalReceizVerifyUrl, receizVerifyUrl } from "@/lib/receiz/verify-url";
 import {
@@ -1521,15 +1521,25 @@ function publishTenantHost(state: CommerceState) {
   return state.hosting.customDomain.domain || state.hosting.subdomain || context.tenantHost || context.host;
 }
 
-async function preparePublishedStatePayload(state: CommerceState) {
-  const prepared = await prepareStoreStateMediaForPublishPayload(state, {
-    tenantHost: publishTenantHost(state),
-    merchantReceizId: state.hosting.merchantReceizId || state.auth.receizId.handle,
-    upload: typeof window === "undefined" ? undefined : uploadPublishMedia,
-    compress: compressInlineImageDataUrlForPublish
+async function prepareHostingStoreStateRequestBody(
+  action: "custom_domain" | "verify_domain" | "publish",
+  state: CommerceState,
+  merchantProofValue: unknown,
+  extra: Record<string, unknown> = {}
+) {
+  return preparePublishRequestBody({
+    action,
+    extra,
+    merchantProof: merchantProofValue,
+    state,
+    statePayload: publishedStatePayload,
+    media: {
+      tenantHost: publishTenantHost(state),
+      merchantReceizId: state.hosting.merchantReceizId || state.auth.receizId.handle,
+      upload: typeof window === "undefined" ? undefined : uploadPublishMedia,
+      compress: compressInlineImageDataUrlForPublish
+    }
   });
-
-  return publishedStatePayload(prepared.state);
 }
 
 function merchantProofPayload(state: CommerceState, keyFile?: unknown | null) {
@@ -2060,12 +2070,10 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
 
         try {
           const snapshot = stateRef.current;
-          const result = await postJson<{ hosting: CommerceState["hosting"]; storeStateSync?: StoreStateSyncResponse }>("/api/hosting", {
-            action: "custom_domain",
-            domain: normalizedDomain,
-            merchantProof: merchantProof(snapshot),
-            state: await preparePublishedStatePayload(snapshot)
-          });
+          const result = await postJson<{ hosting: CommerceState["hosting"]; storeStateSync?: StoreStateSyncResponse }>(
+            "/api/hosting",
+            await prepareHostingStoreStateRequestBody("custom_domain", snapshot, merchantProof(snapshot), { domain: normalizedDomain })
+          );
           const syncError = storeStateSyncError(result.storeStateSync);
           const syncPending = storeStateSyncPending(result.storeStateSync);
           setActionFeedback(
@@ -2155,12 +2163,10 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
 
         try {
           const snapshot = stateRef.current;
-          const result = await postJson<{ hosting: CommerceState["hosting"]; storeStateSync?: StoreStateSyncResponse }>("/api/hosting", {
-            action: "verify_domain",
-            domain: normalizedDomain,
-            merchantProof: merchantProof(snapshot),
-            state: await preparePublishedStatePayload(snapshot)
-          });
+          const result = await postJson<{ hosting: CommerceState["hosting"]; storeStateSync?: StoreStateSyncResponse }>(
+            "/api/hosting",
+            await prepareHostingStoreStateRequestBody("verify_domain", snapshot, merchantProof(snapshot), { domain: normalizedDomain })
+          );
           const syncError = storeStateSyncError(result.storeStateSync);
           const syncPending = storeStateSyncPending(result.storeStateSync);
           setActionFeedback(
@@ -2688,11 +2694,11 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
               hosting: CommerceState["hosting"];
               state?: Partial<CommerceState>;
               storeStateSync?: StoreStateSyncResponse;
-            }>("/api/hosting", {
-              action: "publish",
-              merchantProof: merchantProof(publishRequestState),
-              state: await preparePublishedStatePayload(publishRequestState)
-            }, { deferAuthorityRedirect: true });
+            }>(
+              "/api/hosting",
+              await prepareHostingStoreStateRequestBody("publish", publishRequestState, merchantProof(publishRequestState)),
+              { deferAuthorityRedirect: true }
+            );
 
             const syncError = storeStateSyncError(result.storeStateSync);
             const syncPending = storeStateSyncPending(result.storeStateSync);
