@@ -11,7 +11,7 @@ import { baseState } from "./support/commerce-state.js";
 import { receizAppendFixture } from "./support/receiz-append.js";
 
 describe("Receiz store-state ledger recovery", () => {
-  it("extracts published store records from nested ledger event payloads", () => {
+  it("does not recover storefront content from auxiliary connect pointers", () => {
     const state = {
       ...baseState(),
       brand: { ...baseState().brand, name: "Bjklock Supply" },
@@ -44,10 +44,7 @@ describe("Receiz store-state ledger recovery", () => {
 
     const records = extractStoreStateRecords(ledger);
 
-    assert.equal(records.length, 1);
-    assert.equal(records[0]?.state.brand.name, "Bjklock Supply");
-    assert.equal(records[0]?.state.hosting.subdomain, "bjklock.receiz.app");
-    assert.equal(records[0]?.state.hosting.customDomain.domain, "shop.bjklock.com");
+    assert.equal(records.length, 0);
   });
 
   it("extracts published store records from public proof registry records", () => {

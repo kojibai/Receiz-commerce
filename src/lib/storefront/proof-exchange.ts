@@ -307,7 +307,7 @@ export function stateWithListedExchangeAsset(state: CommerceState, input: Exchan
   } as ExchangeAsset);
   const verifyUrl = canonicalReceizVerifyUrl(
     sourceManifest?.links.verify || sourceManifest?.proof.verifyUrl,
-    receizVerifyUrl(safeTitle, sourceProof, kaiPulse)
+    receizVerifyUrl(sourceProof, kaiPulse)
   );
   const append: ExchangeAppendEvent = {
     id: `${assetId}:append:list:${stampPart(recordedAt)}`,

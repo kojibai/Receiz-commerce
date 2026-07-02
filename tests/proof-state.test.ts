@@ -600,7 +600,7 @@ describe("Receiz proof commerce state", () => {
     assert.equal(record.state.products[0]?.seo?.socialImageUrl, null);
     assert.equal(record.state.blogPosts[0]?.coverImageUrl, cameraRollDataUrl);
     assert.equal(record.state.blogPosts[0]?.seo.socialImageUrl, null);
-    assert.ok(JSON.stringify(buildStoreStateConnectRecord(record)).length < 2_000_000);
+    assert.ok(JSON.stringify(buildStoreStateConnectRecord(record)).length < 20_000);
   });
 
   it("omits oversized inline media from the published proof record", () => {
@@ -642,7 +642,10 @@ describe("Receiz proof commerce state", () => {
     assert.equal(connectRecord.event, "store.state.published");
     assert.equal(connectRecord.tenantHost, "boost.receiz.app");
     assert.equal(connectRecord.merchantReceizId, "boost.receiz.id");
-    assert.deepEqual(connectRecord.data.storeStateRecord, record);
+    assert.equal(connectRecord.data.storeStateRecordId, record.id);
+    assert.equal(connectRecord.data.tenantHost, record.tenantHost);
+    assert.equal(connectRecord.data.merchantReceizId, record.merchantReceizId);
+    assert.equal("storeStateRecord" in connectRecord.data, false);
     assert.equal("payload" in connectRecord.data, false);
   });
 

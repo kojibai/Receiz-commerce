@@ -63,21 +63,35 @@ function isReceizKeyFile(value: unknown): value is ReceizKeyFile {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
 
-function publicStorePublishInput(host: string, record: StoreStateRecord, connectRecord: JsonObject) {
+function publicStorePublishBase(host: string, record: StoreStateRecord) {
   return {
-    id: `store_state:${host}`,
     tenantHost: host,
     merchantReceizId: record.merchantReceizId,
     title: `${record.state.brand.name} storefront`,
     sourceUrl: hostUrl(host),
     namespace: host,
     projectionState: "published",
-    platform: platform.productName,
-    record: record as unknown as JsonObject,
-    data: {
-      storeStateRecord: record,
-      storeStateConnectRecord: connectRecord
-    } as unknown as JsonObject
+    platform: platform.productName
+  };
+}
+
+export function publicStorePublishInput(host: string, record: StoreStateRecord) {
+  return {
+    ...publicStorePublishBase(host, record),
+    state: record as unknown as JsonObject
+  };
+}
+
+export function publicStoreSignedPublishInput(
+  host: string,
+  record: StoreStateRecord,
+  proof: { keyFile: ReceizKeyFile; passphrase?: string }
+) {
+  return {
+    ...publicStorePublishBase(host, record),
+    storeStateRecord: record as unknown as JsonObject,
+    keyFile: proof.keyFile,
+    passphrase: proof.passphrase
   };
 }
 
@@ -110,26 +124,18 @@ export async function publishReceizStoreState(
     const publicStore = await Promise.all(
       hosts.map(async (host) => {
         const idempotencyKey = `store-state:${record.id}:${host}`;
-        const input = publicStorePublishInput(host, record, connectRecord as JsonObject);
 
         if (keyFile) {
-          const signed = await receiz.client.publicStore.signPublish({
-            ...input,
-            storeStateRecord: record as unknown as JsonObject,
+          return receiz.client.publicStore.publishWithIdentityProof(
+            publicStoreSignedPublishInput(host, record, {
             keyFile,
             passphrase: proof.passphrase
-          });
-
-          return receiz.client.publicStore.publishSigned(signed, { idempotencyKey });
+            }),
+            { idempotencyKey }
+          );
         }
 
-        return receiz.client.publicStore.publish(
-          {
-            ...input,
-            state: record as unknown as JsonObject
-          },
-          { idempotencyKey }
-        );
+        return receiz.client.publicStore.publish(publicStorePublishInput(host, record), { idempotencyKey });
       })
     );
 

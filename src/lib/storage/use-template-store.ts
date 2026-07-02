@@ -826,7 +826,7 @@ function domainManifestFromSdkProjection(
     stringField(proof, "claimId"),
     assetId
   ) ?? assetId;
-  const fallbackVerifyUrl = receizVerifyUrl(projection.title || assetId, claimId, kaiPulse);
+  const fallbackVerifyUrl = receizVerifyUrl(claimId, kaiPulse);
   const verifyUrl = canonicalReceizVerifyUrl(
     firstString(projection.verifyUrl, stringField(proof, "verifyUrl"), stringField(proof, "verifyPath")),
     fallbackVerifyUrl
@@ -885,7 +885,7 @@ function domainManifestFromVerifiedArtifact(
     `${baseId}-${kaiPulse}`
   ) ?? `${baseId}-${kaiPulse}`;
   const assetId = firstString(stringField(bundle, "assetId"), stringField(pkg, "assetId"), `asset-${baseId}`) ?? `asset-${baseId}`;
-  const fallbackVerifyUrl = receizVerifyUrl(baseId, claimId, kaiPulse);
+  const fallbackVerifyUrl = receizVerifyUrl(claimId, kaiPulse);
   const verifyUrl = canonicalReceizVerifyUrl(
     firstString(stringField(bundle, "verifyUrl"), stringField(bundle, "verifyPath"), stringField(anchor, "verifyUrl")),
     fallbackVerifyUrl
@@ -1569,6 +1569,37 @@ function completePublishChecklistItem(state: CommerceState, id: string): Commerc
   };
 }
 
+function shouldKeepCurrentMedia(key: string, current: unknown, published: unknown) {
+  return (
+    key.toLowerCase().endsWith("imageurl") &&
+    (published === null || published === "") &&
+    typeof current === "string" &&
+    current.trim().length > 0
+  );
+}
+
+function mergePublishedValue<T>(current: T, published: T | undefined, key = ""): T {
+  if (published === undefined) return current;
+  if (shouldKeepCurrentMedia(key, current, published)) return current;
+
+  if (Array.isArray(current) && Array.isArray(published)) {
+    return published.map((item, index) => mergePublishedValue(current[index], item, key)) as T;
+  }
+
+  if (isRecord(current) && isRecord(published)) {
+    const keys = new Set([...Object.keys(current), ...Object.keys(published)]);
+
+    return Object.fromEntries(
+      [...keys].map((childKey) => [
+        childKey,
+        mergePublishedValue(current[childKey], published[childKey], childKey)
+      ])
+    ) as T;
+  }
+
+  return published;
+}
+
 function mergePublishedPublicState(
   current: CommerceState,
   published: Partial<CommerceState> | undefined,
@@ -1583,22 +1614,22 @@ function mergePublishedPublicState(
 
   return {
     ...current,
-    brand: published.brand ?? current.brand,
-    storefront: published.storefront ?? current.storefront,
+    brand: mergePublishedValue(current.brand, published.brand),
+    storefront: mergePublishedValue(current.storefront, published.storefront),
     hosting,
-    navigation: published.navigation ?? current.navigation,
-    pages: published.pages ?? current.pages,
-    blogPosts: published.blogPosts ?? current.blogPosts,
-    collections: published.collections ?? current.collections,
-    products: published.products ?? current.products,
-    rewards: published.rewards ?? current.rewards,
-    rewardRules: published.rewardRules ?? current.rewardRules,
-    assets: published.assets ?? current.assets,
-    qualifiers: published.qualifiers ?? current.qualifiers,
-    campaigns: published.campaigns ?? current.campaigns,
-    exchange: published.exchange ?? current.exchange,
-    game: published.game ?? current.game,
-    checkout: published.checkout ?? current.checkout
+    navigation: mergePublishedValue(current.navigation, published.navigation),
+    pages: mergePublishedValue(current.pages, published.pages),
+    blogPosts: mergePublishedValue(current.blogPosts, published.blogPosts),
+    collections: mergePublishedValue(current.collections, published.collections),
+    products: mergePublishedValue(current.products, published.products),
+    rewards: mergePublishedValue(current.rewards, published.rewards),
+    rewardRules: mergePublishedValue(current.rewardRules, published.rewardRules),
+    assets: mergePublishedValue(current.assets, published.assets),
+    qualifiers: mergePublishedValue(current.qualifiers, published.qualifiers),
+    campaigns: mergePublishedValue(current.campaigns, published.campaigns),
+    exchange: mergePublishedValue(current.exchange, published.exchange),
+    game: mergePublishedValue(current.game, published.game),
+    checkout: mergePublishedValue(current.checkout, published.checkout)
   };
 }
 

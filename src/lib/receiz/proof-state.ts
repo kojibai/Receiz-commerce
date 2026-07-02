@@ -66,8 +66,11 @@ export type StoreStateConnectRecord = {
   merchantReceizId: string;
   data: {
     action: "store.published";
-    storeStateRecord: StoreStateRecord;
     storeStateRecordId: string;
+    tenantHost: string;
+    tenantSlug: string;
+    merchantReceizId: string;
+    recordedAt: string;
   };
 };
 
@@ -217,8 +220,11 @@ export function buildStoreStateConnectRecord(
     merchantReceizId: record.merchantReceizId,
     data: {
       action: "store.published",
-      storeStateRecord: record,
-      storeStateRecordId: record.id
+      storeStateRecordId: record.id,
+      tenantHost: record.tenantHost,
+      tenantSlug: record.tenantSlug,
+      merchantReceizId: record.merchantReceizId,
+      recordedAt: record.recordedAt
     }
   };
 }

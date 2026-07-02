@@ -3,6 +3,8 @@ import { describe, it } from "node:test";
 import { buildStoreStateRecord } from "../src/lib/receiz/proof-state.js";
 import {
   publishAndAdmitReceizStoreState,
+  publicStorePublishInput,
+  publicStoreSignedPublishInput,
   receizStoreStateSyncCompleted,
   receizStoreStateWriteSucceeded
 } from "../src/lib/receiz/store-state-publication.js";
@@ -24,6 +26,38 @@ function proofStoreSpy() {
 }
 
 describe("Receiz store-state publication", () => {
+  it("builds canonical SDK public-store input without duplicate state envelopes", () => {
+    const record = buildStoreStateRecord(baseState(), {
+      actorReceizId: "boost.receiz.id",
+      tenantHost: "boost.receiz.app",
+      ...receizAppendFixture("2026-07-01T19:59:00.000Z")
+    });
+    const input = publicStorePublishInput("boost.receiz.app", record);
+
+    assert.equal(input.tenantHost, "boost.receiz.app");
+    assert.equal(input.merchantReceizId, "boost.receiz.id");
+    assert.deepEqual(input.state, record);
+    assert.equal("record" in input, false);
+    assert.equal("data" in input, false);
+  });
+
+  it("builds canonical SDK signed public-store input for proof-owned publish", () => {
+    const record = buildStoreStateRecord(baseState(), {
+      actorReceizId: "boost.receiz.id",
+      tenantHost: "boost.receiz.app",
+      ...receizAppendFixture("2026-07-01T19:59:30.000Z")
+    });
+    const keyFile = { schema: "receiz.key.v1", crypto: { publicKeyRawB64u: "public-key" } };
+    const input = publicStoreSignedPublishInput("boost.receiz.app", record, { keyFile: keyFile as never });
+
+    assert.equal(input.tenantHost, "boost.receiz.app");
+    assert.equal(input.merchantReceizId, "boost.receiz.id");
+    assert.deepEqual(input.storeStateRecord, record);
+    assert.equal("state" in input, false);
+    assert.equal("record" in input, false);
+    assert.equal("data" in input, false);
+  });
+
   it("admits locally and still attempts public-store sync without delegated transport", async () => {
     const record = buildStoreStateRecord(baseState(), {
       actorReceizId: "boost.receiz.id",

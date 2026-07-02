@@ -132,7 +132,8 @@ describe("proof exchange", () => {
     });
     const asset = listed.exchange.assets[0]!;
 
-    assert.match(asset.manifest.proof.verifyUrl, /^https:\/\/receiz\.com\/v\//);
+    assert.equal(asset.manifest.proof.verifyUrl, "https://receiz.com/v/coffee-pack/1782907800000");
+    assert.equal(asset.manifest.proof.verifyUrl.includes("/coffee-pack-proof-object/"), false);
     assert.equal(asset.manifest.links.verify, asset.manifest.proof.verifyUrl);
   });
 
