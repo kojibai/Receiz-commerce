@@ -841,7 +841,7 @@ function domainManifestFromSdkProjection(
     assetId,
     assetType: projection.assetType,
     proof: {
-      kind: firstString(stringField(proof, "kind"), projection.proofKind) ?? "receiz.proof_bundle",
+      kind: "receiz.proof_bundle",
       verifyUrl,
       kaiPulseEternal: kaiPulse,
       kaiKlok: firstString(stringField(proof, "kaiKlok"), `kai:${kaiPulse}`) ?? `kai:${kaiPulse}`,
@@ -899,7 +899,7 @@ function domainManifestFromVerifiedArtifact(
     assetId,
     assetType: "proof_object",
     proof: {
-      kind: firstString(verified.kind, stringField(bundle, "kind")) ?? "receiz.proof_bundle",
+      kind: "receiz.proof_bundle",
       verifyUrl,
       kaiPulseEternal: kaiPulse,
       kaiKlok: firstString(stringField(bundle, "kaiKlok"), `kai:${kaiPulse}`) ?? `kai:${kaiPulse}`,
