@@ -24,6 +24,7 @@ import { platform } from "@/lib/platform";
 import type { CommerceState } from "@/types/domain";
 import type { HostContext } from "@/lib/hosting/host-context";
 import { ReceizAccountManagementPills, ReceizRecoveryPills } from "@/features/storefront/ReceizRecoveryPills";
+import { ShippingDetailsForm } from "@/features/storefront/ShippingDetailsForm";
 
 export function AccountDashboard({
   initialHostContext,
@@ -40,6 +41,7 @@ export function AccountDashboard({
   const orders = state.orders.filter((order) => order.customerId === customer.id);
   const rewards = state.rewards.filter((reward) => customer.rewardIds.includes(reward.id));
   const shipping = customer.shippingAddress ?? orders.find((order) => order.shipping)?.shipping;
+  const shippingOrder = orders.find((order) => order.fulfillment?.status === "shipping_required" || (order.status === "pending" && !order.shipping));
   const recentProofs = state.proofEvents.slice(0, 6);
   const cartSummary = buildCartSummary(state);
   const storeHost = tenantSurface ? hostContext.tenantHost ?? state.hosting.liveUrl : state.hosting.liveUrl;
@@ -241,7 +243,7 @@ export function AccountDashboard({
             </div>
             <Button disabled={!cartSummary.canCheckout} onClick={() => void actions.startCheckout()} type="button" variant="primary">
               <Icons.creditCard size={16} />
-              {actionFeedback.checkout?.status === "pending" ? "Starting checkout" : actionFeedback.checkout?.status === "success" ? "Checkout recorded" : cartSummary.checkoutLabel}
+              {actionFeedback.checkout?.status === "pending" ? "Starting checkout" : actionFeedback.checkout?.status === "success" ? "Payment recorded" : cartSummary.checkoutLabel}
             </Button>
             <InlineActionFeedback feedback={actionFeedback.checkout} />
             <span className="cart-summary-host">{cartSummary.tenantHost}</span>
@@ -266,6 +268,14 @@ export function AccountDashboard({
               </div>
             )}
           </div>
+          {shippingOrder ? (
+            <ShippingDetailsForm
+              customer={customer}
+              feedback={actionFeedback.shipping}
+              onSave={actions.updateCheckoutShipping}
+              order={shippingOrder}
+            />
+          ) : null}
         </Panel>
 
         <Panel>

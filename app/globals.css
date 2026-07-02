@@ -2535,6 +2535,66 @@ a {
   background: var(--surface-2);
 }
 
+.shipping-details-form {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, var(--receiz) 28%, var(--border));
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--receiz) 6%, white);
+}
+
+.shipping-details-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.shipping-details-heading span,
+.shipping-details-grid span {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.shipping-details-heading strong {
+  display: block;
+  margin-top: 2px;
+}
+
+.shipping-details-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.shipping-details-grid label {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.shipping-details-wide {
+  grid-column: 1 / -1;
+}
+
+.shipping-details-grid input {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 11px;
+  color: var(--ink);
+  background: white;
+  font: inherit;
+  font-size: 14px;
+}
+
 .customer-order-list,
 .account-reward-stack {
   display: grid;
@@ -4020,6 +4080,9 @@ a {
 .commerce-order-row span,
 .commerce-customer-row span,
 .commerce-customer-row em,
+.merchant-fulfillment-card span,
+.merchant-fulfillment-card p,
+.merchant-fulfillment-card em,
 .shipping-detail-card span,
 .shipping-detail-card p,
 .shipping-detail-card em {
@@ -4040,6 +4103,40 @@ a {
 }
 
 .shipping-detail-card p {
+  margin: 0;
+  line-height: 1.35;
+}
+
+.merchant-fulfillment-list {
+  display: grid;
+  gap: 8px;
+}
+
+.merchant-fulfillment-card {
+  display: grid;
+  gap: 7px;
+  padding: 10px;
+  border: 1px solid rgba(0, 138, 106, 0.18);
+  border-radius: var(--radius);
+  background: var(--receiz-soft);
+}
+
+.merchant-fulfillment-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.merchant-fulfillment-card strong,
+.merchant-fulfillment-card span,
+.merchant-fulfillment-card p,
+.merchant-fulfillment-card em {
+  min-width: 0;
+}
+
+.merchant-fulfillment-card p,
+.merchant-fulfillment-card em {
   margin: 0;
   line-height: 1.35;
 }

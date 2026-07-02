@@ -267,6 +267,13 @@ export type Order = {
     postalCode: string;
     country: string;
   };
+  fulfillment?: {
+    kind: "physical_shipping" | "digital_delivery" | "mixed";
+    status: "payment_required" | "shipping_required" | "ready_to_ship" | "delivery_queued" | "fulfilled";
+    message: string;
+    deliveryRails?: Array<"receiz_communications" | "email">;
+    updatedAt?: string;
+  };
 };
 
 export type CustomerAccount = {

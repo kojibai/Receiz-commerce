@@ -397,6 +397,7 @@ function CommerceOpsPanel({
 }) {
   const recentOrders = state.orders.slice(0, compact ? 3 : 5);
   const recentCustomers = state.customers.slice(0, compact ? 3 : 4);
+  const fulfillmentOrders = state.orders.slice(0, compact ? 3 : 5);
 
   return (
     <Panel className="admin-panel commerce-ops-panel">
@@ -447,14 +448,32 @@ function CommerceOpsPanel({
 
         <div className="commerce-ops-column shipping-column">
           <strong className="mini-section-title">Fulfillment</strong>
-          {recentOrders[0]?.shipping ? (
-            <div className="shipping-detail-card">
-              <span>{recentOrders[0].shipping.name}</span>
-              <strong>{recentOrders[0].shipping.line1}</strong>
-              <p>
-                {recentOrders[0].shipping.city}, {recentOrders[0].shipping.region} {recentOrders[0].shipping.postalCode}
-              </p>
-              <em>{recentOrders[0].tenantHost ?? state.hosting.subdomain}</em>
+          {fulfillmentOrders.length ? (
+            <div className="merchant-fulfillment-list">
+              {fulfillmentOrders.map((order) => (
+                <div className="merchant-fulfillment-card" key={order.id}>
+                  <div className="merchant-fulfillment-top">
+                    <div>
+                      <span>Order #{order.id}</span>
+                      <strong>{order.fulfillment?.message ?? order.status.replace(/_/g, " ")}</strong>
+                    </div>
+                    <StatusPill tone={order.fulfillment?.status === "shipping_required" || order.settlementStatus === "card_required" ? "gold" : "green"}>
+                      {order.fulfillment?.status?.replace(/_/g, " ") ?? order.status.replace(/_/g, " ")}
+                    </StatusPill>
+                  </div>
+                  {order.shipping ? (
+                    <p>
+                      {order.shipping.name} · {order.shipping.line1}
+                      {order.shipping.line2 ? `, ${order.shipping.line2}` : ""} · {order.shipping.city}, {order.shipping.region} {order.shipping.postalCode}
+                    </p>
+                  ) : (
+                    <p>{order.fulfillment?.status === "delivery_queued" ? "Digital delivery queued through Receiz communications and email." : "Waiting for customer shipping details after payment."}</p>
+                  )}
+                  <em>
+                    {order.totalLabel} · {order.paymentRail?.replace(/_/g, " ") ?? "receiz checkout"} · {order.tenantHost ?? state.hosting.subdomain}
+                  </em>
+                </div>
+              ))}
             </div>
           ) : (
             <div className="shipping-detail-card">

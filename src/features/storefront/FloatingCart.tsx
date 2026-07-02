@@ -82,7 +82,7 @@ export function FloatingCart({
           </div>
           <Button disabled={!summary.canCheckout} onClick={onCheckout} type="button" variant="primary">
             <Icons.creditCard size={15} />
-            {checkoutFeedback?.status === "pending" ? "Starting checkout" : checkoutFeedback?.status === "success" ? "Checkout recorded" : summary.checkoutLabel}
+            {checkoutFeedback?.status === "pending" ? "Starting checkout" : checkoutFeedback?.status === "success" ? "Payment recorded" : summary.checkoutLabel}
           </Button>
           <InlineActionFeedback feedback={checkoutFeedback} />
         </div>

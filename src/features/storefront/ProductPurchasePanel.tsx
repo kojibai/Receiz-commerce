@@ -92,7 +92,7 @@ export function ProductPurchasePanel({
                 {actionFeedback.checkout?.status === "pending" || status === "checkout"
                   ? "Starting checkout"
                   : actionFeedback.checkout?.status === "success"
-                    ? "Checkout recorded"
+                    ? "Payment recorded"
                     : model.primaryActionLabel}
               </Button>
               <Button

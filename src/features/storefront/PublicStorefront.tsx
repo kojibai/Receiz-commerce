@@ -32,7 +32,7 @@ import {
   shouldShowAccountIdentityEntry
 } from "@/lib/storefront/account-route-session";
 import type { ActionFeedbackState } from "@/types/action-feedback";
-import type { BlogPost, CommerceState, CustomerAccount, Product, ReceizedAsset, Reward } from "@/types/domain";
+import type { BlogPost, CommerceState, CustomerAccount, Order, Product, ReceizedAsset, Reward } from "@/types/domain";
 import type { HostContext } from "@/lib/hosting/host-context";
 import { FloatingCart } from "@/features/storefront/FloatingCart";
 import { PlayCampaign } from "@/features/play/PlayCampaign";
@@ -41,6 +41,7 @@ import { ReceizIdAccess } from "@/features/storefront/ReceizIdAccess";
 import { ReceizAccountManagementPills, ReceizRecoveryPills } from "@/features/storefront/ReceizRecoveryPills";
 import { RewardDeck } from "@/features/storefront/RewardDeck";
 import { SealEvents } from "@/features/storefront/SealEvents";
+import { ShippingDetailsForm } from "@/features/storefront/ShippingDetailsForm";
 import {
   BottomNav,
   HeroProduct,
@@ -508,6 +509,7 @@ export function PublicStorefront({
           onCheckout={oneClickCheckout}
           onProductOpen={openProductOverlay}
           exchangeListAssetFeedback={actionFeedback["exchange.listAsset"]}
+          shippingFeedback={actionFeedback.shipping}
           onExchangeListAsset={listExchangeAsset}
           onExchangeLiquidity={provideExchangeLiquidity}
           onExchangeSelectAsset={selectExchangeAsset}
@@ -519,6 +521,7 @@ export function PublicStorefront({
           onQuantityChange={actions.setCartProductQuantity}
           onRemoveFromCart={actions.removeFromCart}
           onSeal={sealObject}
+          onShippingSave={actions.updateCheckoutShipping}
           onExistingReceizId={connectExistingReceizId}
           onRestoreArtifact={restoreIdentityArtifact}
           showIdentityEntry={showIdentityEntry}
@@ -714,7 +717,7 @@ function StorefrontProductDetail({
                       {checkoutFeedback?.status === "pending"
                         ? "Starting checkout"
                         : checkoutFeedback?.status === "success"
-                          ? "Checkout recorded"
+                          ? "Payment recorded"
                           : model.primaryActionLabel}
                     </Button>
                     <Button
@@ -865,6 +868,7 @@ function MobileStage({
   customer,
   checkoutFeedback,
   exchangeListAssetFeedback,
+  shippingFeedback,
   onAddToCart,
   onCheckout,
   onExchangeListAsset,
@@ -881,6 +885,7 @@ function MobileStage({
   onRemoveFromCart,
   onRestoreArtifact,
   onSeal,
+  onShippingSave,
   reward,
   showIdentityEntry,
   showIdentityUpload,
@@ -895,6 +900,7 @@ function MobileStage({
   checkoutFeedback?: ActionFeedbackState;
   customerReceizHandle: string;
   exchangeListAssetFeedback?: ActionFeedbackState;
+  shippingFeedback?: ActionFeedbackState;
   onAddToCart: (productId: string) => void;
   onCheckout: () => void;
   onExchangeListAsset: (file?: File) => void | Promise<void>;
@@ -911,6 +917,7 @@ function MobileStage({
   onRemoveFromCart: (productId: string) => void;
   onRestoreArtifact: (file: File) => void | Promise<void>;
   onSeal: () => void;
+  onShippingSave: (orderId: string, shipping: NonNullable<Order["shipping"]>) => void;
   reward: Reward | null;
   showIdentityEntry: boolean;
   showIdentityUpload: boolean;
@@ -975,12 +982,14 @@ function MobileStage({
         checkoutFeedback={checkoutFeedback}
         customer={customer}
         customerReceizHandle={customerReceizHandle}
+        shippingFeedback={shippingFeedback}
         onCheckout={onCheckout}
         onDownloadIdentitySeal={onDownloadIdentitySeal}
         onExistingReceizId={onExistingReceizId}
         onQuantityChange={onQuantityChange}
         onRemoveFromCart={onRemoveFromCart}
         onRestoreArtifact={onRestoreArtifact}
+        onShippingSave={onShippingSave}
         showIdentityEntry={showIdentityEntry}
         showIdentityUpload={showIdentityUpload}
         state={state}
@@ -1089,7 +1098,7 @@ function CartSummaryPanel({
       </div>
       <Button disabled={!summary.canCheckout} onClick={onCheckout} type="button" variant="primary">
         <Icons.creditCard size={16} />
-        {checkoutFeedback?.status === "pending" ? "Starting checkout" : checkoutFeedback?.status === "success" ? "Checkout recorded" : summary.checkoutLabel}
+        {checkoutFeedback?.status === "pending" ? "Starting checkout" : checkoutFeedback?.status === "success" ? "Payment recorded" : summary.checkoutLabel}
       </Button>
       <InlineActionFeedback feedback={checkoutFeedback} />
       <span className="cart-summary-host">{summary.tenantHost}</span>
@@ -1917,12 +1926,14 @@ function MobileAccountPanel({
   checkoutFeedback,
   customer,
   customerReceizHandle,
+  shippingFeedback,
   onDownloadIdentitySeal,
   onExistingReceizId,
   onCheckout,
   onQuantityChange,
   onRemoveFromCart,
   onRestoreArtifact,
+  onShippingSave,
   showIdentityEntry,
   showIdentityUpload,
   state,
@@ -1932,12 +1943,14 @@ function MobileAccountPanel({
   checkoutFeedback?: ActionFeedbackState;
   customer: CustomerAccount;
   customerReceizHandle: string;
+  shippingFeedback?: ActionFeedbackState;
   onDownloadIdentitySeal: () => void | Promise<void>;
   onExistingReceizId: () => void | Promise<void>;
   onCheckout: () => void;
   onQuantityChange: (productId: string, quantity: number) => void;
   onRemoveFromCart: (productId: string) => void;
   onRestoreArtifact: (file: File) => void | Promise<void>;
+  onShippingSave: (orderId: string, shipping: NonNullable<Order["shipping"]>) => void;
   showIdentityEntry: boolean;
   showIdentityUpload: boolean;
   state: CommerceState;
@@ -1946,6 +1959,7 @@ function MobileAccountPanel({
   const tenantHost = state.hosting.customDomain.domain || state.hosting.subdomain;
   const customerOrders = state.orders.filter((order) => order.customerId === customer.id || order.customerEmail === customer.email);
   const latestOrder = customerOrders[0];
+  const shippingOrder = customerOrders.find((order) => order.fulfillment?.status === "shipping_required" || (order.status === "pending" && !order.shipping));
   const shippingReady = Boolean(customer.shippingAddress);
 
   return (
@@ -2029,6 +2043,14 @@ function MobileAccountPanel({
             <strong>{latestOrder.sealed ? "Sealed" : latestOrder.status.replace(/_/g, " ")}</strong>
           </div>
         </div>
+      ) : null}
+      {tenantSurface && shippingOrder ? (
+        <ShippingDetailsForm
+          customer={customer}
+          feedback={shippingFeedback}
+          onSave={onShippingSave}
+          order={shippingOrder}
+        />
       ) : null}
       {tenantSurface ? (
         <CartSummaryPanel

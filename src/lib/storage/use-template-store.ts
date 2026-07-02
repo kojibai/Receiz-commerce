@@ -19,6 +19,11 @@ import {
 import { BASE_STORAGE_KEY, currentHostContext, hostContextFromHost, type HostContext } from "@/lib/hosting/host-context";
 import { merchantProofAuthorityRequirement, type MerchantAuthorityAction } from "@/lib/hosting/merchant-proof-authority";
 import { checkoutTenantHost } from "@/lib/checkout/checkout-request";
+import {
+  checkoutCompletionState,
+  checkoutOrderFulfillment,
+  validShippingAddress
+} from "@/lib/checkout/customer-purchase";
 import type { CommerceImportInput, CommerceImportResult } from "@/lib/import/commerce-importer";
 import { selectClientInitialState } from "@/lib/storage/client-state";
 import { safeGetLocalStorage, safeRemoveLocalStorage, safeSetLocalStorage } from "@/lib/storage/browser-storage";
@@ -1456,37 +1461,32 @@ function railFromFunding(funding: NonNullable<Order["funding"]>): Order["payment
   return "receiz_checkout";
 }
 
-function statusFromFunding(funding: NonNullable<Order["funding"]>): Order["status"] {
-  return funding.cardRequired ? "card_required" : "settled";
-}
-
-function settlementFromFunding(funding: NonNullable<Order["funding"]>): Order["settlementStatus"] {
-  return funding.cardRequired ? "card_required" : "wallet_reserved";
+function checkoutProducts(state: CommerceState) {
+  return state.cart.lines
+    .map((line) => state.products.find((product) => product.id === line.productId))
+    .filter((product): product is Product => Boolean(product));
 }
 
 function customerShipping(customer: CustomerAccount) {
-  return (
-    customer.shippingAddress ?? {
-      name: customer.name,
-      email: customer.email,
-      line1: "Add shipping address",
-      city: "Pending",
-      region: "",
-      postalCode: "",
-      country: "US"
-    }
-  );
+  return validShippingAddress(customer.shippingAddress) ? customer.shippingAddress : undefined;
+}
+
+function checkoutCustomerShipping(state: CommerceState, customer: CustomerAccount) {
+  const existingCustomer = state.customers.find((item) => item.id === customer.id);
+  return customerShipping(customer) ?? (existingCustomer ? customerShipping(existingCustomer) : undefined);
 }
 
 function upsertCheckoutCustomer(customers: CustomerAccount[], customer: CustomerAccount, orderId: string) {
+  const existingCustomer = customers.find((item) => item.id === customer.id);
+  const shippingAddress = customerShipping(customer) ?? (existingCustomer ? customerShipping(existingCustomer) : undefined);
   const nextCustomer = {
     ...customer,
     receizHandle: customer.receizHandle,
-    shippingAddress: customerShipping(customer),
+    shippingAddress,
     orderIds: Array.from(new Set([orderId, ...customer.orderIds]))
   };
 
-  if (!customers.some((item) => item.id === customer.id)) {
+  if (!existingCustomer) {
     return [nextCustomer, ...customers];
   }
 
@@ -2993,21 +2993,35 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
             ...current.auth.customer,
             receizHandle: current.auth.receizId.handle
           };
+          const funding = {
+            ...fallbackFunding("$18.00", "$0.00"),
+            walletAppliedLabel: "$18.00",
+            walletBalanceLabel: "$18.00",
+            cardRequired: false
+          };
+          const shipping = checkoutCustomerShipping(current, customer);
+          const completion = checkoutCompletionState({
+            funding,
+            products: checkoutProducts(current),
+            shipping
+          });
           const order = {
             id,
             customerId: customer.id,
             customerEmail: customer.email,
             totalLabel: "$18.00",
-            status: "mock_paid" as const,
+            status: completion.orderStatus === "settled" ? ("mock_paid" as const) : completion.orderStatus,
             itemCount: Math.max(1, current.cart.lines.length),
-            sealed: true,
+            sealed: completion.sealed,
             createdAt: new Date().toISOString(),
             merchantReceizId: current.hosting.merchantReceizId,
             tenantHost: current.hosting.customDomain.domain || current.hosting.subdomain,
             checkoutSessionId: `mock-${id}`,
             paymentRail: "sandbox" as const,
             settlementStatus: "sandbox" as const,
-            shipping: customerShipping(customer)
+            funding,
+            shipping,
+            fulfillment: checkoutOrderFulfillment(completion)
           };
 
           return {
@@ -3015,7 +3029,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
             cart: { lines: [] },
             orders: [order, ...current.orders],
             customers: upsertCheckoutCustomer(current.customers, customer, order.id),
-            proofEvents: [makeEvent("ORDER_VERIFIED", `Order #${order.id} sealed`), ...current.proofEvents]
+            proofEvents: [makeEvent("ORDER_VERIFIED", completion.fulfillmentMessage), ...current.proofEvents]
           };
         });
       },
@@ -3046,27 +3060,35 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
               ...base.auth.customer,
               receizHandle: base.auth.receizId.handle
             };
+            const funding = {
+              ...fallbackFunding(totalLabel, "$0.00"),
+              walletAppliedLabel: totalLabel,
+              walletBalanceLabel: totalLabel,
+              cardRequired: false
+            };
+            const shipping = checkoutCustomerShipping(base, customer);
+            const completion = checkoutCompletionState({
+              funding,
+              products: checkoutProducts(base),
+              shipping
+            });
             const order = {
               id,
               customerId: customer.id,
               customerEmail: customer.email,
               totalLabel,
-              status: "mock_paid" as const,
+              status: completion.orderStatus === "settled" ? ("mock_paid" as const) : completion.orderStatus,
               itemCount,
-              sealed: true,
+              sealed: completion.sealed,
               createdAt: new Date().toISOString(),
               merchantReceizId: base.hosting.merchantReceizId,
               tenantHost: base.hosting.customDomain.domain || base.hosting.subdomain,
               checkoutSessionId: `mock-${id}`,
               paymentRail: "sandbox" as const,
               settlementStatus: "sandbox" as const,
-              funding: {
-                ...fallbackFunding(totalLabel, "$0.00"),
-                walletAppliedLabel: totalLabel,
-                walletBalanceLabel: totalLabel,
-                cardRequired: false
-              },
-              shipping: customerShipping(customer)
+              funding,
+              shipping,
+              fulfillment: checkoutOrderFulfillment(completion)
             };
 
             return {
@@ -3076,12 +3098,12 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
               customers: upsertCheckoutCustomer(base.customers, customer, order.id),
               proofEvents: [
                 makeEvent("RECEIZ_ID_CONNECTED", identity.detail),
-                makeEvent("ORDER_VERIFIED", `Order #${order.id} sealed`),
+                makeEvent("ORDER_VERIFIED", completion.fulfillmentMessage),
                 ...base.proofEvents
               ]
             };
           });
-          setActionFeedback("checkout", "success", "Order sealed");
+          setActionFeedback("checkout", "success", "Payment recorded");
           return;
         }
 
@@ -3110,7 +3132,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
             customerName: checkoutSnapshot.auth.customer.name,
             referenceId: checkoutReferenceId,
             description: `${checkoutSnapshot.brand.name} proof-sealed order`,
-            shipping: customerShipping(checkoutSnapshot.auth.customer),
+            shipping: checkoutCustomerShipping(checkoutSnapshot, checkoutSnapshot.auth.customer),
             tenantSlug: checkoutSnapshot.hosting.tenantSlug,
             tenantHost: checkoutTenantHost(checkoutSnapshot),
             merchantReceizId: checkoutSnapshot.hosting.merchantReceizId,
@@ -3120,30 +3142,68 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
             cancelUrl: `${window.location.origin}/?checkout=cancel`
           }, { deferAuthorityRedirect: true });
 
+          const funding = fundingFromPayload(result.funding, totalLabel);
+          if (funding.cardRequired) {
+            const checkoutUrl = result.session?.checkoutUrl;
+            setState((current) => {
+              const base = identity.apply(current);
+
+              return {
+                ...base,
+                proofEvents: [
+                  makeEvent("RECEIZ_ID_CONNECTED", identity.detail),
+                  makeEvent("ORDER_VERIFIED", `Wallet applied ${funding.walletAppliedLabel}; card delta ${funding.cardDeltaLabel} requires payment`),
+                  ...base.proofEvents
+                ]
+              };
+            });
+
+            if (checkoutUrl && typeof window !== "undefined") {
+              setActionFeedback("checkout", "pending", "Opening card payment");
+              window.location.assign(checkoutUrl);
+              return;
+            }
+
+            setActionFeedback(
+              "checkout",
+              result.session?.clientSecret ? "pending" : "error",
+              result.session?.clientSecret
+                ? "Card payment session ready. Complete the card delta before the order is created."
+                : "Card payment required, but Receiz did not return a card checkout URL."
+            );
+            return;
+          }
+
           setState((current) => {
             const base = identity.apply(current);
-            const funding = fundingFromPayload(result.funding, totalLabel);
             const checkoutSessionId = result.session?.checkoutSessionId ?? `receiz-${Date.now()}`;
             const customer = {
               ...base.auth.customer,
               receizHandle: base.auth.receizId.handle
             };
+            const shipping = checkoutCustomerShipping(base, customer);
+            const completion = checkoutCompletionState({
+              funding,
+              products: checkoutProducts(base),
+              shipping
+            });
             const order = {
               id: checkoutReferenceId,
               customerId: customer.id,
               customerEmail: customer.email,
               totalLabel,
-              status: statusFromFunding(funding),
+              status: completion.orderStatus,
               itemCount,
-              sealed: !funding.cardRequired,
+              sealed: completion.sealed,
               createdAt: new Date().toISOString(),
               merchantReceizId: result.paymentRails?.merchantReceizId ?? base.hosting.merchantReceizId,
               tenantHost: base.hosting.customDomain.domain || base.hosting.subdomain,
               checkoutSessionId,
               paymentRail: railFromFunding(funding),
-              settlementStatus: settlementFromFunding(funding),
+              settlementStatus: completion.settlementStatus,
               funding,
-              shipping: customerShipping(customer)
+              shipping,
+              fulfillment: checkoutOrderFulfillment(completion)
             };
 
             return {
@@ -3153,58 +3213,27 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
               customers: upsertCheckoutCustomer(base.customers, customer, order.id),
               proofEvents: [
                 makeEvent("RECEIZ_ID_CONNECTED", identity.detail),
-                makeEvent(
-                  "ORDER_VERIFIED",
-                  funding.cardRequired
-                    ? `Wallet applied ${funding.walletAppliedLabel}; card delta ${funding.cardDeltaLabel}`
-                    : `Receiz wallet funded ${funding.totalLabel} for ${order.merchantReceizId}`
-                ),
+                makeEvent("ORDER_VERIFIED", completion.fulfillmentMessage),
                 ...base.proofEvents
               ]
             };
           });
-          setActionFeedback("checkout", "success", "Checkout recorded");
+          setActionFeedback("checkout", "success", "Payment recorded");
         } catch (error) {
           if (error instanceof ReceizAuthorityRequiredError) {
             setState((current) => {
               const base = identity.apply(current);
-              const id = `card-${Date.now()}`;
-              const funding = fallbackFunding(totalLabel);
-              const customer = {
-                ...base.auth.customer,
-                receizHandle: base.auth.receizId.handle
-              };
-              const order = {
-                id,
-                customerId: customer.id,
-                customerEmail: customer.email,
-                totalLabel,
-                status: "card_required" as const,
-                itemCount,
-                sealed: false,
-                createdAt: new Date().toISOString(),
-                merchantReceizId: base.hosting.merchantReceizId,
-                tenantHost: base.hosting.customDomain.domain || base.hosting.subdomain,
-                checkoutSessionId: `in-app-${id}`,
-                paymentRail: "card_fallback" as const,
-                settlementStatus: "card_required" as const,
-                funding,
-                shipping: customerShipping(customer)
-              };
 
               return {
                 ...base,
-                cart: { lines: [] },
-                orders: [order, ...base.orders],
-                customers: upsertCheckoutCustomer(base.customers, customer, order.id),
                 proofEvents: [
                   makeEvent("RECEIZ_ID_CONNECTED", identity.detail),
-                  makeEvent("ORDER_VERIFIED", `Card delta ${funding.cardDeltaLabel} ready in app`),
+                  makeEvent("ORDER_VERIFIED", "Receiz checkout needs a payment rail before the order can be created"),
                   ...base.proofEvents
                 ]
               };
             });
-            setActionFeedback("checkout", "success", "Card delta ready");
+            setActionFeedback("checkout", "error", "Receiz checkout needs a payment rail before the order can be created.");
             return;
           }
 
@@ -3217,6 +3246,52 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
             ]
           }));
         }
+      },
+      updateCheckoutShipping(orderId: string, shipping: NonNullable<Order["shipping"]>) {
+        if (!validShippingAddress(shipping)) {
+          setActionFeedback("shipping", "error", "Enter a complete shipping address.");
+          return;
+        }
+
+        setState((current) => {
+          const order = current.orders.find((item) => item.id === orderId);
+          if (!order) return current;
+
+          const updatedAt = new Date().toISOString();
+          const updatedOrder = {
+            ...order,
+            shipping,
+            status: order.status === "pending" ? ("settled" as const) : order.status,
+            sealed: order.settlementStatus !== "card_required",
+            fulfillment: {
+              kind: order.fulfillment?.kind ?? "physical_shipping",
+              status: "ready_to_ship" as const,
+              message: "Shipping attached. Merchant fulfillment is ready.",
+              deliveryRails: order.fulfillment?.deliveryRails,
+              updatedAt
+            }
+          };
+
+          return {
+            ...current,
+            orders: current.orders.map((item) => (item.id === orderId ? updatedOrder : item)),
+            customers: current.customers.map((customer) =>
+              customer.id === order.customerId ? { ...customer, shippingAddress: shipping } : customer
+            ),
+            auth: {
+              ...current.auth,
+              customer:
+                current.auth.customer.id === order.customerId
+                  ? { ...current.auth.customer, shippingAddress: shipping }
+                  : current.auth.customer
+            },
+            proofEvents: [
+              makeEvent("ORDER_VERIFIED", `Shipping attached to order #${orderId}`),
+              ...current.proofEvents
+            ]
+          };
+        });
+        setActionFeedback("shipping", "success", "Shipping saved. Merchant fulfillment is ready.");
       },
       async importCommerceContent(input: Omit<CommerceImportInput, "payload"> & { rawContent?: string }) {
         const result = await postJson<{ imported: CommerceImportResult }>("/api/import", {
