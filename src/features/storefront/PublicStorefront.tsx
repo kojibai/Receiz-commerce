@@ -1290,7 +1290,7 @@ function ExchangeTradingDesk({
           )}
           <button className="exchange-list-asset-button" onClick={onListAsset} type="button">
             <Icons.seal size={18} />
-            <span>List Receiz asset</span>
+            <span>List asset</span>
           </button>
         </aside>
 

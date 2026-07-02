@@ -5613,7 +5613,7 @@ a {
     border: 0;
     color: var(--muted);
     background: transparent;
-    font-size: clamp(8px, 2.45vw, 10.5px);
+    font-size: clamp(7.5px, 2.3vw, 9.25px);
     line-height: 1;
     text-align: center;
   }
