@@ -34,6 +34,11 @@ import {
   type ExchangeTradeSide
 } from "@/lib/storefront/proof-exchange";
 import {
+  assertPublishRequestBodySize,
+  compressInlineImageDataUrlForPublish,
+  prepareStoreStateMediaForPublishPayload
+} from "@/lib/receiz/publish-payload-media";
+import {
   applyBrowserReceizIdSession,
   applyTenantCustomerSession,
   BROWSER_RECEIZ_ID_SESSION_KEY,
@@ -1068,10 +1073,13 @@ async function postJson<T>(
   body: Record<string, unknown>,
   options: { deferAuthorityRedirect?: boolean } = {}
 ): Promise<T> {
+  const serializedBody = JSON.stringify(body);
+  assertPublishRequestBodySize(serializedBody);
+
   const response = await fetch(url, {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify(body)
+    body: serializedBody
   });
   const payload = await response.json().catch(() => ({}));
 
@@ -1245,6 +1253,21 @@ function publishedStatePayload(state: CommerceState) {
     game: state.game,
     checkout: state.checkout
   });
+}
+
+function publishTenantHost(state: CommerceState) {
+  const context = currentHostContext();
+  return state.hosting.customDomain.domain || state.hosting.subdomain || context.tenantHost || context.host;
+}
+
+async function preparePublishedStatePayload(state: CommerceState) {
+  const prepared = await prepareStoreStateMediaForPublishPayload(state, {
+    tenantHost: publishTenantHost(state),
+    merchantReceizId: state.hosting.merchantReceizId || state.auth.receizId.handle,
+    compress: compressInlineImageDataUrlForPublish
+  });
+
+  return publishedStatePayload(prepared.state);
 }
 
 function merchantProofPayload(state: CommerceState, keyFile?: unknown | null) {
@@ -1774,11 +1797,12 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
         }));
 
         try {
+          const snapshot = stateRef.current;
           const result = await postJson<{ hosting: CommerceState["hosting"]; storeStateSync?: StoreStateSyncResponse }>("/api/hosting", {
             action: "custom_domain",
             domain: normalizedDomain,
-            merchantProof: merchantProof(stateRef.current),
-            state: stateRef.current
+            merchantProof: merchantProof(snapshot),
+            state: await preparePublishedStatePayload(snapshot)
           });
           const syncError = storeStateSyncError(result.storeStateSync);
           const syncPending = storeStateSyncPending(result.storeStateSync);
@@ -1868,11 +1892,12 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
         }));
 
         try {
+          const snapshot = stateRef.current;
           const result = await postJson<{ hosting: CommerceState["hosting"]; storeStateSync?: StoreStateSyncResponse }>("/api/hosting", {
             action: "verify_domain",
             domain: normalizedDomain,
-            merchantProof: merchantProof(stateRef.current),
-            state: stateRef.current
+            merchantProof: merchantProof(snapshot),
+            state: await preparePublishedStatePayload(snapshot)
           });
           const syncError = storeStateSyncError(result.storeStateSync);
           const syncPending = storeStateSyncPending(result.storeStateSync);
@@ -2384,75 +2409,73 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
           }
 
           setActionFeedback("publish", "pending", "Publishing store");
-          setState((current) => {
-            const publishRequestState = {
-              ...current,
-              hosting: { ...current.hosting, published: true, lastPublishedAt: "now" }
-            };
-            const publishHostContext = currentHostContext();
-            markPendingPublish(publishHostContext.storageKey);
+          const publishHostContext = currentHostContext();
+          const publishRequestState = {
+            ...stateRef.current,
+            hosting: { ...stateRef.current.hosting, published: true, lastPublishedAt: "now" }
+          };
 
-            void postJson<{
+          markPendingPublish(publishHostContext.storageKey);
+          setState((current) => ({
+            ...current,
+            proofEvents: [makeEvent("SITE_PUBLISHED", "Publishing store to Receiz proof rails"), ...current.proofEvents]
+          }));
+
+          try {
+            const result = await postJson<{
               hosting: CommerceState["hosting"];
               state?: Partial<CommerceState>;
               storeStateSync?: StoreStateSyncResponse;
-          }>("/api/hosting", {
-            action: "publish",
-            merchantProof: merchantProof(publishRequestState),
-            state: publishedStatePayload(publishRequestState)
-          }, { deferAuthorityRedirect: true })
-              .then((result) => {
-                const syncError = storeStateSyncError(result.storeStateSync);
-                const syncPending = storeStateSyncPending(result.storeStateSync);
+            }>("/api/hosting", {
+              action: "publish",
+              merchantProof: merchantProof(publishRequestState),
+              state: await preparePublishedStatePayload(publishRequestState)
+            }, { deferAuthorityRedirect: true });
 
-                clearPendingPublish(publishHostContext.storageKey);
+            const syncError = storeStateSyncError(result.storeStateSync);
+            const syncPending = storeStateSyncPending(result.storeStateSync);
 
-                if (syncError || syncPending) {
-                  const message = syncError || result.storeStateSync?.warning || "Receiz public-store sync is pending; publish is not durable yet.";
-                  setActionFeedback("publish", "error", message);
-                  setState((latest) => ({
-                    ...latest,
-                    proofEvents: [makeEvent("SITE_PUBLISHED", message), ...latest.proofEvents]
-                  }));
-                  return;
-                }
+            clearPendingPublish(publishHostContext.storageKey);
 
-                setActionFeedback("publish", "success", "Store published");
-                setState((latest) => ({
-                  ...mergePublishedPublicState(latest, result.state, result.hosting),
-                  proofEvents: [makeEvent("SITE_PUBLISHED", "Store published to Receiz proof rails"), ...latest.proofEvents]
-                }));
-              })
-              .catch((error) => {
-                if (error instanceof ReceizAuthorityRequiredError) {
-                  clearPendingPublish(publishHostContext.storageKey);
-                  setActionFeedback("publish", "error", "Receiz proof object required to publish");
-                  setState((latest) => ({
-                    ...latest,
-                    proofEvents: [
-                      makeEvent("SITE_PUBLISHED", "Receiz proof object required to publish. Create or restore a verified proof object in app, then publish again."),
-                      ...latest.proofEvents
-                    ]
-                  }));
-                  return;
-                }
+            if (syncError || syncPending) {
+              const message = syncError || result.storeStateSync?.warning || "Receiz public-store sync is pending; publish is not durable yet.";
+              setActionFeedback("publish", "error", message);
+              setState((latest) => ({
+                ...latest,
+                proofEvents: [makeEvent("SITE_PUBLISHED", message), ...latest.proofEvents]
+              }));
+              return;
+            }
 
-                clearPendingPublish(publishHostContext.storageKey);
-                setActionFeedback("publish", "error", error instanceof Error ? error.message : "Publish sync failed");
-                setState((latest) => ({
-                  ...latest,
-                  proofEvents: [
-                    makeEvent("SITE_PUBLISHED", error instanceof Error ? error.message : "Publish sync failed"),
-                    ...latest.proofEvents
-                  ]
-                }));
-              });
+            setActionFeedback("publish", "success", "Store published");
+            setState((latest) => ({
+              ...mergePublishedPublicState(latest, result.state, result.hosting),
+              proofEvents: [makeEvent("SITE_PUBLISHED", "Store published to Receiz proof rails"), ...latest.proofEvents]
+            }));
+          } catch (error) {
+            if (error instanceof ReceizAuthorityRequiredError) {
+              clearPendingPublish(publishHostContext.storageKey);
+              setActionFeedback("publish", "error", "Receiz proof object required to publish");
+              setState((latest) => ({
+                ...latest,
+                proofEvents: [
+                  makeEvent("SITE_PUBLISHED", "Receiz proof object required to publish. Create or restore a verified proof object in app, then publish again."),
+                  ...latest.proofEvents
+                ]
+              }));
+              return;
+            }
 
-            return {
-              ...current,
-              proofEvents: [makeEvent("SITE_PUBLISHED", "Publishing store to Receiz proof rails"), ...current.proofEvents]
-            };
-          });
+            clearPendingPublish(publishHostContext.storageKey);
+            setActionFeedback("publish", "error", error instanceof Error ? error.message : "Publish sync failed");
+            setState((latest) => ({
+              ...latest,
+              proofEvents: [
+                makeEvent("SITE_PUBLISHED", error instanceof Error ? error.message : "Publish sync failed"),
+                ...latest.proofEvents
+              ]
+            }));
+          }
         })();
       },
       addPage(page: SitePage) {
