@@ -62,11 +62,25 @@ describe("publish payload media preparation", () => {
     const prepared = await prepareStoreStateMediaForPublishPayload(state, {
       tenantHost: "bjklock.receiz.app",
       merchantReceizId: "bjklock.receiz.id",
-      upload: async () => ({ ok: true, media: { url: durableUrl } })
+      upload: async () => ({
+        ok: true,
+        media: { url: durableUrl, id: "media-proof-1" },
+        proof: {
+          appendAnchorId: "anchor-media-1",
+          kaiPulse: "1782746100000",
+          receizClaimId: "claim-media-1"
+        }
+      })
     });
 
     assert.equal(prepared.uploaded, 1);
     assert.equal(prepared.state.brand.logoImageUrl, durableUrl);
+    assert.equal(prepared.state.brand.logoImageProof?.schema, "receiz.media_proof_reference.v1");
+    assert.equal(prepared.state.brand.logoImageProof?.mediaUrl, durableUrl);
+    assert.equal(prepared.state.brand.logoImageProof?.proofObjectId, "claim-media-1");
+    assert.equal(prepared.state.brand.logoImageProof?.appendAnchorId, "anchor-media-1");
+    assert.equal(prepared.state.brand.logoImageProof?.kaiPulse, "1782746100000");
+    assert.match(prepared.state.brand.logoImageProof?.sourceHashSha256 ?? "", /^sha256:/);
   });
 
   it("strips inline media when it cannot be uploaded or compressed inside the payload budget", async () => {

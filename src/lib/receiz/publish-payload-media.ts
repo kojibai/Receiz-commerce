@@ -3,7 +3,7 @@ import type {
   ReceizMediaUploadOptions,
   ReceizMediaUploadResponse
 } from "@receiz/sdk";
-import type { CommerceState } from "@/types/domain";
+import type { BlogPost, CommerceState, MediaProofReference, Product } from "@/types/domain";
 
 export type PublishPayloadMediaUpload = (
   file: Blob,
@@ -49,6 +49,7 @@ const MEDIA_URL_KEYS = [
   "durableUrl",
   "cdnUrl"
 ];
+const PROOF_ID_KEYS = ["receizClaimId", "proofObjectId", "proofId", "id", "anchorId", "appendAnchorId"];
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
@@ -143,6 +144,39 @@ function findMediaUrl(value: unknown, depth = 0): string | null {
   return null;
 }
 
+function findNestedRecord(value: unknown, keys: string[], depth = 0): Record<string, unknown> | null {
+  if (depth > 4 || !isRecord(value)) return null;
+
+  for (const key of keys) {
+    const candidate = value[key];
+    if (isRecord(candidate)) return candidate;
+  }
+
+  for (const candidate of Object.values(value)) {
+    const nested = findNestedRecord(candidate, keys, depth + 1);
+    if (nested) return nested;
+  }
+
+  return null;
+}
+
+function findStringByKeys(value: unknown, keys: string[], depth = 0): string | null {
+  if (depth > 4) return null;
+  if (!isRecord(value)) return null;
+
+  for (const key of keys) {
+    const candidate = value[key];
+    if (typeof candidate === "string" && candidate.trim()) return candidate;
+  }
+
+  for (const candidate of Object.values(value)) {
+    const nested = findStringByKeys(candidate, keys, depth + 1);
+    if (nested) return nested;
+  }
+
+  return null;
+}
+
 async function stableHash(value: string) {
   const input = new TextEncoder().encode(value);
   const subtle = globalThis.crypto?.subtle;
@@ -156,6 +190,10 @@ async function stableHash(value: string) {
     .slice(0, 10)
     .map((byte) => byte.toString(16).padStart(2, "0"))
     .join("");
+}
+
+async function dataUrlHash(value: string) {
+  return `sha256:${await stableHash(value)}`;
 }
 
 async function blobToDataUrl(blob: Blob) {
@@ -272,15 +310,78 @@ export async function compressInlineImageDataUrlForPublish(
   return null;
 }
 
+function mediaProofReferenceFromUpload(
+  response: unknown,
+  mediaUrl: string | null,
+  sourceHashSha256: string
+): MediaProofReference {
+  const proof = findNestedRecord(response, ["proof", "appendProof", "proofBundle", "bundle"]);
+  const media = findNestedRecord(response, ["media", "asset", "file", "image", "result"]);
+  const proofObjectId =
+    findStringByKeys(proof, PROOF_ID_KEYS) ||
+    findStringByKeys(media, PROOF_ID_KEYS) ||
+    findStringByKeys(response, PROOF_ID_KEYS) ||
+    sourceHashSha256;
+
+  return {
+    schema: "receiz.media_proof_reference.v1",
+    proofObjectId,
+    sourceHashSha256,
+    mediaUrl,
+    kaiPulse:
+      findStringByKeys(response, ["kaiPulse", "kaiPulseEternal", "kai", "pulse"]) ??
+      findStringByKeys(proof, ["kaiPulse", "kaiPulseEternal", "kai", "pulse"]),
+    appendAnchorId:
+      findStringByKeys(response, ["appendAnchorId", "anchorId"]) ??
+      findStringByKeys(proof, ["appendAnchorId", "anchorId"]),
+    proof: proof ?? null
+  };
+}
+
+function applyMediaProofReference(root: unknown, path: string[], reference: MediaProofReference) {
+  if (!isRecord(root)) return;
+
+  const [topLevel, index, field, nestedField] = path;
+
+  if (topLevel === "brand" && field === undefined && path[1] === "logoImageUrl") {
+    (root as CommerceState).brand.logoImageProof = reference;
+    return;
+  }
+
+  if (topLevel === "products" && typeof index === "string" && field === "imageUrl") {
+    const product = (root as CommerceState).products[Number(index)] as Product | undefined;
+    if (product) product.imageProof = reference;
+    return;
+  }
+
+  if (topLevel === "products" && typeof index === "string" && field === "seo" && nestedField === "socialImageUrl") {
+    const product = (root as CommerceState).products[Number(index)] as Product | undefined;
+    if (product?.seo) product.seo.socialImageProof = reference;
+    return;
+  }
+
+  if (topLevel === "blogPosts" && typeof index === "string" && field === "coverImageUrl") {
+    const post = (root as CommerceState).blogPosts[Number(index)] as BlogPost | undefined;
+    if (post) post.coverImageProof = reference;
+    return;
+  }
+
+  if (topLevel === "blogPosts" && typeof index === "string" && field === "seo" && nestedField === "socialImageUrl") {
+    const post = (root as CommerceState).blogPosts[Number(index)] as BlogPost | undefined;
+    if (post?.seo) post.seo.socialImageProof = reference;
+  }
+}
+
 async function uploadInlineImage(
   dataUrl: string,
   path: string[],
   options: PreparePublishPayloadMediaOptions
-) {
+): Promise<{ mediaUrl: string; proofReference: MediaProofReference } | null> {
   if (!options.upload) return null;
 
   const { blob, extension, mimeType } = dataUrlToBlob(dataUrl);
   const hash = await stableHash(`${options.tenantHost}:${path.join(".")}:${dataUrl}`);
+  const sourceHashSha256 = await dataUrlHash(dataUrl);
   const response = await options.upload(blob, {
     tenantHost: options.tenantHost,
     purpose: mediaPurpose(path),
@@ -300,7 +401,10 @@ async function uploadInlineImage(
   const mediaUrl = findMediaUrl(response);
   if (!mediaUrl) throw new Error(`receiz_media_url_missing:${path.join(".")}`);
 
-  return mediaUrl;
+  return {
+    mediaUrl,
+    proofReference: mediaProofReferenceFromUpload(response, mediaUrl, sourceHashSha256)
+  };
 }
 
 function shouldDropInlineMediaPath(path: string[]) {
@@ -313,7 +417,8 @@ export async function prepareStoreStateMediaForPublishPayload(
 ): Promise<PreparedPublishPayloadMedia> {
   const itemMaxChars = options.itemMaxChars ?? PUBLISH_INLINE_MEDIA_ITEM_MAX_CHARS;
   const totalMaxChars = options.totalMaxChars ?? PUBLISH_INLINE_MEDIA_TOTAL_MAX_CHARS;
-  const uploaded = new Map<string, Promise<string | null>>();
+  const uploaded = new Map<string, Promise<{ mediaUrl: string; proofReference: MediaProofReference } | null>>();
+  const proofReferences: Array<{ path: string[]; reference: MediaProofReference }> = [];
   const warnings = new Set<string>();
   const counters = {
     uploaded: 0,
@@ -345,10 +450,11 @@ export async function prepareStoreStateMediaForPublishPayload(
         }
 
         if (uploadedUrl) {
-          const mediaUrl = await uploadedUrl;
-          if (mediaUrl) {
+          const media = await uploadedUrl;
+          if (media) {
             counters.uploaded += 1;
-            return mediaUrl;
+            proofReferences.push({ path, reference: media.proofReference });
+            return media.mediaUrl;
           }
         }
       } catch (error) {
@@ -390,7 +496,11 @@ export async function prepareStoreStateMediaForPublishPayload(
     return Object.fromEntries(entries);
   };
 
-  const preparedState = (await replace(state, [])) as CommerceState;
+  const preparedState = (await replace(structuredClone(state), [])) as CommerceState;
+
+  for (const { path, reference } of proofReferences) {
+    applyMediaProofReference(preparedState, path, reference);
+  }
 
   return {
     state: preparedState,

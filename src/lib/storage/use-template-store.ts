@@ -4,7 +4,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   appendReceizIdentityArtifactTrailerToPng,
   createReceizClient,
-  type ReceizIdentityAccountProjection
+  type ReceizIdentityAccountProjection,
+  type ReceizMediaUploadOptions
 } from "@receiz/sdk";
 import { seedCommerceState } from "@/data/seed";
 import {
@@ -1043,6 +1044,35 @@ async function fetchPublishedStoreProjection(tenantHost?: string) {
   return response.json() as Promise<unknown>;
 }
 
+async function uploadPublishMedia(file: Blob, options: ReceizMediaUploadOptions = {}) {
+  const form = new FormData();
+  const filename = typeof options.filename === "string" ? options.filename : "receiz-media";
+
+  form.set("file", file, filename);
+
+  for (const key of ["tenantHost", "purpose", "filename", "idempotencyKey"] as const) {
+    const value = options[key];
+    if (typeof value === "string" && value.trim()) {
+      form.set(key, value);
+    }
+  }
+
+  if (options.metadata && typeof options.metadata === "object") {
+    form.set("metadata", JSON.stringify(options.metadata));
+  }
+
+  const response = await fetch("/api/media", {
+    method: "POST",
+    body: form
+  });
+
+  return response.json().catch(() => ({
+    ok: false,
+    error: "receiz_media_upload_failed",
+    message: response.ok ? "Receiz media upload returned invalid JSON." : "Receiz media upload failed."
+  }));
+}
+
 class ReceizAuthorityRequiredError extends Error {
   connectUrl: string;
 
@@ -1264,6 +1294,7 @@ async function preparePublishedStatePayload(state: CommerceState) {
   const prepared = await prepareStoreStateMediaForPublishPayload(state, {
     tenantHost: publishTenantHost(state),
     merchantReceizId: state.hosting.merchantReceizId || state.auth.receizId.handle,
+    upload: typeof window === "undefined" ? undefined : uploadPublishMedia,
     compress: compressInlineImageDataUrlForPublish
   });
 

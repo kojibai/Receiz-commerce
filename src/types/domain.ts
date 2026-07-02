@@ -48,6 +48,7 @@ export type BrandConfig = {
   name: string;
   logoText: string;
   logoImageUrl: string | null;
+  logoImageProof?: MediaProofReference | null;
   tagline: string;
   primaryColor: string;
   secondaryColor: string;
@@ -154,6 +155,17 @@ export type SeoConfig = {
   canonicalPath: string;
   keywords: string[];
   socialImageUrl?: string | null;
+  socialImageProof?: MediaProofReference | null;
+};
+
+export type MediaProofReference = {
+  schema: "receiz.media_proof_reference.v1";
+  proofObjectId: string;
+  sourceHashSha256: string;
+  mediaUrl: string | null;
+  kaiPulse: string | number | null;
+  appendAnchorId: string | null;
+  proof: Record<string, unknown> | null;
 };
 
 export type PageSection = {
@@ -181,6 +193,7 @@ export type BlogPost = {
   body: string;
   authorName: string;
   coverImageUrl: string | null;
+  coverImageProof?: MediaProofReference | null;
   tags: string[];
   featured: boolean;
   status: "draft" | "published";
@@ -208,6 +221,7 @@ export type Product = {
   sealed: boolean;
   imageTone: "bag" | "can" | "mug" | "card" | "class" | "access";
   imageUrl?: string | null;
+  imageProof?: MediaProofReference | null;
   description?: string;
   seo?: SeoConfig;
 };
