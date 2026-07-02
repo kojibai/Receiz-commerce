@@ -9,6 +9,7 @@ import type {
   ProofEvent,
   ReceizedAsset
 } from "@/types/domain";
+import { canonicalReceizVerifyUrl, receizVerifyUrl } from "../receiz/verify-url";
 
 export type ExchangeTradeSide = "buy" | "sell";
 
@@ -296,7 +297,6 @@ export function stateWithListedExchangeAsset(state: CommerceState, input: Exchan
   const safeTitle = sanitizeCoordinatePart(title);
   const assetId = `exchange-${sourceId}`;
   const proofObjectId = sourceManifest?.assetId ?? `asset:${sourceId}:${sourceProof}`;
-  const verifyUrl = sourceManifest?.links.verify || sourceManifest?.proof.verifyUrl || `https://receiz.com/v/${safeTitle}/${sourceProof}`;
   const kaiPulse = kaiPulseFor(recordedAt, {
     id: assetId,
     manifest: {
@@ -305,6 +305,10 @@ export function stateWithListedExchangeAsset(state: CommerceState, input: Exchan
       }
     }
   } as ExchangeAsset);
+  const verifyUrl = canonicalReceizVerifyUrl(
+    sourceManifest?.links.verify || sourceManifest?.proof.verifyUrl,
+    receizVerifyUrl(safeTitle, sourceProof, kaiPulse)
+  );
   const append: ExchangeAppendEvent = {
     id: `${assetId}:append:list:${stampPart(recordedAt)}`,
     type: "asset.listed",
@@ -333,6 +337,10 @@ export function stateWithListedExchangeAsset(state: CommerceState, input: Exchan
     manifest: sourceManifest
       ? {
           ...sourceManifest,
+          proof: {
+            ...sourceManifest.proof,
+            verifyUrl
+          },
           owner: {
             ...sourceManifest.owner,
             receizSubject: sourceManifest.owner.receizSubject || input.actorReceizId,
@@ -341,7 +349,7 @@ export function stateWithListedExchangeAsset(state: CommerceState, input: Exchan
           },
           links: {
             ...sourceManifest.links,
-            verify: sourceManifest.links.verify || verifyUrl
+            verify: verifyUrl
           }
         }
       : {
@@ -350,7 +358,7 @@ export function stateWithListedExchangeAsset(state: CommerceState, input: Exchan
           assetType: "market_certificate",
           proof: {
             kind: "receiz.proof_bundle",
-            verifyUrl: `https://receiz.com/v/${safeTitle}/${sourceProof}/${kaiPulse}`,
+            verifyUrl,
             kaiPulseEternal: kaiPulse,
             kaiKlok: `kai:${kaiPulse}`,
             receizClaimId: `${safeTitle}-${sourceProof}`.replace(/[^a-z0-9]/gi, "").slice(0, 32) || assetId,
@@ -362,7 +370,7 @@ export function stateWithListedExchangeAsset(state: CommerceState, input: Exchan
             custody: "fractionalized"
           },
           links: {
-            verify: `https://receiz.com/v/${safeTitle}/${sourceProof}/${kaiPulse}`
+            verify: verifyUrl
           }
         },
     ownerReceizId: input.actorReceizId,

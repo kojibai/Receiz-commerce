@@ -1395,7 +1395,7 @@ function ExchangeTradingDesk({
                 </div>
                 <Button className={pulse ? "exchange-trade-button pulse" : "exchange-trade-button"} onClick={runTrade} type="button" variant="primary">
                   <Icons.receiz size={17} />
-                  {side === "buy" ? "Buy shares" : "Sell shares"}
+                  {side === "buy" ? "Buy" : "Sell"}
                 </Button>
                 <span className="exchange-ticket-note">
                   {preview.cardRequired ? "Receiz wallet funds first, card funds the delta." : desk.walletFirstLabel}

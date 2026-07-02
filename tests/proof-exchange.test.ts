@@ -115,9 +115,25 @@ describe("proof exchange", () => {
 
     assert.equal(asset.manifest.assetId, "asset_uploaded_pass");
     assert.equal(asset.manifest.proof.receizClaimId, "claim-uploaded-pass");
+    assert.equal(asset.manifest.proof.verifyUrl, "https://receiz.com/v/uploaded-pass/claim-uploaded-pass/1782965191557178");
+    assert.equal(asset.manifest.links.verify, "https://receiz.com/v/uploaded-pass/claim-uploaded-pass/1782965191557178");
     assert.equal(asset.manifest.owner.custody, "fractionalized");
     assert.equal(asset.appendEvents[0]?.proofObjectId, "asset_uploaded_pass");
     assert.equal(listed.assets[0]?.status, "listed");
+  });
+
+  it("uses a canonical Receiz /v proof URL for listed assets", () => {
+    const state = baseState();
+    const listed = stateWithListedExchangeAsset(state, {
+      source: "product",
+      product: state.products[0]!,
+      actorReceizId: "merchant.receiz.id",
+      recordedAt: "2026-07-01T12:10:00.000Z"
+    });
+    const asset = listed.exchange.assets[0]!;
+
+    assert.match(asset.manifest.proof.verifyUrl, /^https:\/\/receiz\.com\/v\//);
+    assert.equal(asset.manifest.links.verify, asset.manifest.proof.verifyUrl);
   });
 
   it("appends a market trade and mints child ownership proof locally", () => {

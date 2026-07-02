@@ -42,6 +42,7 @@ import {
   compressInlineImageDataUrlForPublish,
   prepareStoreStateMediaForPublishPayload
 } from "@/lib/receiz/publish-payload-media";
+import { canonicalReceizVerifyUrl, receizVerifyUrl } from "@/lib/receiz/verify-url";
 import {
   applyBrowserReceizIdSession,
   applyTenantCustomerSession,
@@ -767,12 +768,6 @@ function custodyFromUnknown(value: unknown): ReceizAssetManifestProjection["owne
   return value === "transferred" || value === "fractionalized" ? value : "current";
 }
 
-function normalizeReceizUrl(value: string | null | undefined, fallback: string) {
-  if (!value) return fallback;
-  if (value.startsWith("/")) return `https://receiz.com${value}`;
-  return value;
-}
-
 async function sha256BasisForBlob(file: Blob) {
   try {
     if (globalThis.crypto?.subtle) {
@@ -831,9 +826,10 @@ function domainManifestFromSdkProjection(
     stringField(proof, "claimId"),
     assetId
   ) ?? assetId;
-  const verifyUrl = normalizeReceizUrl(
+  const fallbackVerifyUrl = receizVerifyUrl(projection.title || assetId, claimId, kaiPulse);
+  const verifyUrl = canonicalReceizVerifyUrl(
     firstString(projection.verifyUrl, stringField(proof, "verifyUrl"), stringField(proof, "verifyPath")),
-    `https://receiz.com/v/${slugify(projection.title || assetId, "asset")}/${claimId}/${kaiPulse}`
+    fallbackVerifyUrl
   );
 
   return {
@@ -889,9 +885,10 @@ function domainManifestFromVerifiedArtifact(
     `${baseId}-${kaiPulse}`
   ) ?? `${baseId}-${kaiPulse}`;
   const assetId = firstString(stringField(bundle, "assetId"), stringField(pkg, "assetId"), `asset-${baseId}`) ?? `asset-${baseId}`;
-  const verifyUrl = normalizeReceizUrl(
+  const fallbackVerifyUrl = receizVerifyUrl(baseId, claimId, kaiPulse);
+  const verifyUrl = canonicalReceizVerifyUrl(
     firstString(stringField(bundle, "verifyUrl"), stringField(bundle, "verifyPath"), stringField(anchor, "verifyUrl")),
-    `https://receiz.com/v/${baseId}/${claimId}/${kaiPulse}`
+    fallbackVerifyUrl
   );
 
   return {

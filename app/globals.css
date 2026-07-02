@@ -7965,8 +7965,9 @@ button.product-purchase-secondary-link {
     display: grid;
     grid-template-rows: minmax(0, 1fr) auto;
     gap: 6px;
-    overflow: hidden;
+    overflow: hidden auto;
     padding: 7px;
+    -webkit-overflow-scrolling: touch;
   }
 
   .product-page-popover .storefront-product-detail {
@@ -7978,12 +7979,12 @@ button.product-purchase-secondary-link {
     min-height: 0;
     margin: 0;
     padding: 9px;
-    overflow: hidden;
+    overflow: visible;
     border-radius: 16px;
   }
 
   .product-page-popover .product-detail-media {
-    height: clamp(152px, 31dvh, 244px);
+    height: clamp(126px, 24dvh, 190px);
     min-height: 0;
     border-radius: 16px;
   }
@@ -7997,7 +7998,7 @@ button.product-purchase-secondary-link {
     gap: 7px;
     align-content: start;
     min-height: 0;
-    overflow: hidden;
+    overflow: visible;
   }
 
   .product-page-popover .product-detail-copy > .status-pill {
@@ -8013,12 +8014,9 @@ button.product-purchase-secondary-link {
   }
 
   .product-page-popover .product-detail-copy p {
-    display: -webkit-box;
-    overflow: hidden;
     font-size: clamp(11px, 3.2vw, 13px);
     line-height: 1.18;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
+    overflow-wrap: anywhere;
   }
 
   .product-page-popover .product-purchase-panel {
