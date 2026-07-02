@@ -59,6 +59,10 @@ function skippedReceizSync(value: unknown) {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value) && (value as { skipped?: unknown }).skipped === true;
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
 function isReceizKeyFile(value: unknown): value is ReceizKeyFile {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
@@ -101,6 +105,62 @@ export function receizStoreStateWriteSucceeded(result: unknown) {
 
 export function receizStoreStateSyncCompleted(result: unknown) {
   return receizStoreStateWriteSucceeded(result);
+}
+
+export function summarizeStoreStateRecord(record: StoreStateRecord) {
+  return {
+    id: record.id,
+    schema: record.schema,
+    type: record.type,
+    reason: record.reason,
+    recordedAt: record.recordedAt,
+    tenantHost: record.tenantHost,
+    tenantSlug: record.tenantSlug,
+    merchantReceizId: record.merchantReceizId
+  };
+}
+
+function summarizePublicStoreResult(value: unknown): JsonObject | unknown {
+  if (!isRecord(value)) return value;
+
+  return Object.fromEntries(
+    [
+      "ok",
+      "error",
+      "message",
+      "warning",
+      "skipped",
+      "reason",
+      "id",
+      "objectId",
+      "tenantHost",
+      "merchantReceizId",
+      "appendAnchorId",
+      "knownHead"
+    ]
+      .filter((key) => value[key] !== undefined)
+      .map((key) => [key, value[key]])
+  ) as JsonObject;
+}
+
+export function summarizeReceizStoreStatePublicationResult(result: unknown): JsonObject | unknown {
+  if (!isRecord(result)) return result;
+
+  const summary = summarizePublicStoreResult(result) as JsonObject;
+
+  if (Array.isArray(result.publicStore)) {
+    summary.publicStore = result.publicStore.map(summarizePublicStoreResult) as JsonObject[];
+  }
+
+  if (Array.isArray(result.appState)) {
+    summary.appState = result.appState.map(summarizePublicStoreResult) as JsonObject[];
+  }
+
+  if (isRecord(result.connect)) {
+    summary.connect = summarizePublicStoreResult(result.connect) as JsonObject;
+  }
+
+  return summary;
 }
 
 export async function publishReceizStoreState(

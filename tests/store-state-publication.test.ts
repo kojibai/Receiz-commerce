@@ -6,7 +6,9 @@ import {
   publicStorePublishInput,
   publicStoreSignedPublishInput,
   receizStoreStateSyncCompleted,
-  receizStoreStateWriteSucceeded
+  receizStoreStateWriteSucceeded,
+  summarizeReceizStoreStatePublicationResult,
+  summarizeStoreStateRecord
 } from "../src/lib/receiz/store-state-publication.js";
 import type { ProofStateStore } from "../src/lib/receiz/proof-state-store.js";
 import { baseState } from "./support/commerce-state.js";
@@ -162,5 +164,84 @@ describe("Receiz store-state publication", () => {
     assert.equal(receizStoreStateWriteSucceeded(result), true);
     assert.equal(receizStoreStateSyncCompleted(result), true);
     assert.deepEqual(admitted, [record.id]);
+  });
+
+  it("summarizes store-state records without echoing inline media", () => {
+    const largeInlineImage = `data:image/jpeg;base64,${"a".repeat(180_000)}`;
+    const state = {
+      ...baseState(),
+      brand: {
+        ...baseState().brand,
+        logoImageUrl: largeInlineImage
+      },
+      products: baseState().products.map((product, index) => ({
+        ...product,
+        imageUrl: index === 0 ? largeInlineImage : product.imageUrl
+      }))
+    };
+    const record = buildStoreStateRecord(state, {
+      actorReceizId: "boost.receiz.id",
+      tenantHost: "boost.receiz.app",
+      ...receizAppendFixture("2026-07-01T20:01:30.000Z")
+    });
+    const summary = summarizeStoreStateRecord(record);
+    const serialized = JSON.stringify(summary);
+
+    assert.equal(summary.id, record.id);
+    assert.equal(summary.tenantHost, "boost.receiz.app");
+    assert.equal(summary.merchantReceizId, "boost.receiz.id");
+    assert.equal("state" in summary, false);
+    assert.equal(serialized.includes("data:image"), false);
+    assert.ok(serialized.length < 1_200);
+  });
+
+  it("summarizes Receiz publication results without duplicating heavy state envelopes", () => {
+    const largeInlineImage = `data:image/jpeg;base64,${"b".repeat(220_000)}`;
+    const state = {
+      ...baseState(),
+      brand: {
+        ...baseState().brand,
+        logoImageUrl: largeInlineImage
+      },
+      products: baseState().products.map((product) => ({
+        ...product,
+        imageUrl: largeInlineImage
+      }))
+    };
+    const record = buildStoreStateRecord(state, {
+      actorReceizId: "boost.receiz.id",
+      tenantHost: "boost.receiz.app",
+      ...receizAppendFixture("2026-07-01T20:02:00.000Z")
+    });
+    const summary = summarizeReceizStoreStatePublicationResult({
+      ok: false,
+      error: "Payload Too Large",
+      publicStore: [
+        {
+          ok: false,
+          error: "Payload Too Large",
+          tenantHost: record.tenantHost,
+          storeStateRecord: record,
+          state: record
+        }
+      ],
+      appState: [
+        {
+          ok: false,
+          error: "Payload Too Large",
+          state: record
+        }
+      ],
+      connect: {
+        ok: true,
+        storeStateRecord: record
+      }
+    });
+    const serialized = JSON.stringify(summary);
+
+    assert.equal(serialized.includes("data:image"), false);
+    assert.equal(serialized.includes("storeStateRecord"), false);
+    assert.equal(serialized.includes("\"state\""), false);
+    assert.ok(serialized.length < 1_200);
   });
 });

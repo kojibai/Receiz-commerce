@@ -33,7 +33,9 @@ import { getServerProofStateStore } from "@/lib/receiz/proof-state-store";
 import {
   publishAndAdmitReceizStoreState,
   receizStoreStateSyncCompleted,
-  receizStoreStateWriteSucceeded
+  receizStoreStateWriteSucceeded,
+  summarizeReceizStoreStatePublicationResult,
+  summarizeStoreStateRecord
 } from "@/lib/receiz/store-state-publication";
 import { receizAccessTokenFromRequest, receizAuthorityRequired } from "@/lib/receiz/session";
 import { prepareStoreStateMediaForPublish } from "@/lib/receiz/media-publication";
@@ -391,6 +393,8 @@ async function syncPublishedStoreStateForHosting(input: {
   });
   const storeStateSyncOk = receizStoreStateWriteSucceeded(storeStateReceizRecord);
   const storeStateSynced = receizStoreStateSyncCompleted(storeStateReceizRecord);
+  const summarizedStoreStateRecord = summarizeStoreStateRecord(storeStateRecord);
+  const summarizedStoreStateReceizRecord = summarizeReceizStoreStatePublicationResult(storeStateReceizRecord);
 
   if (!storeStateSyncOk) {
     const error = isRecord(storeStateReceizRecord)
@@ -402,8 +406,8 @@ async function syncPublishedStoreStateForHosting(input: {
       synced: false as const,
       error,
       warning: publicStoreWriteFailureMessage(error),
-      storeStateRecord,
-      storeStateReceizRecord
+      storeStateRecord: summarizedStoreStateRecord,
+      storeStateReceizRecord: summarizedStoreStateReceizRecord
     };
   }
 
@@ -412,8 +416,8 @@ async function syncPublishedStoreStateForHosting(input: {
       ok: true as const,
       synced: false as const,
       warning: "Receiz public-store sync is pending; the proof object was admitted locally first.",
-      storeStateRecord,
-      storeStateReceizRecord
+      storeStateRecord: summarizedStoreStateRecord,
+      storeStateReceizRecord: summarizedStoreStateReceizRecord
     };
   }
 
@@ -421,9 +425,9 @@ async function syncPublishedStoreStateForHosting(input: {
     ok: true as const,
     synced: true as const,
     skipped: false as const,
-    state: publishState,
-    storeStateRecord,
-    storeStateReceizRecord
+    state: input.accessToken ? publishState : { hosting: publishState.hosting },
+    storeStateRecord: summarizedStoreStateRecord,
+    storeStateReceizRecord: summarizedStoreStateReceizRecord
   };
 }
 
@@ -702,6 +706,8 @@ export async function POST(request: NextRequest) {
     });
     const storeStateSyncOk = receizStoreStateWriteSucceeded(storeStateReceizRecord);
     const storeStateSynced = receizStoreStateSyncCompleted(storeStateReceizRecord);
+    const summarizedStoreStateRecord = summarizeStoreStateRecord(storeStateRecord);
+    const summarizedStoreStateReceizRecord = summarizeReceizStoreStatePublicationResult(storeStateReceizRecord);
     let storeStateSyncWarning: string | undefined;
 
     if (!storeStateSyncOk) {
@@ -733,14 +739,14 @@ export async function POST(request: NextRequest) {
       ok: true,
       action,
       hosting: publishState.hosting,
-      state: publishState,
-      storeStateRecord,
-      storeStateReceizRecord,
+      state: accessToken ? publishState : { hosting: publishState.hosting },
+      storeStateRecord: summarizedStoreStateRecord,
+      storeStateReceizRecord: summarizedStoreStateReceizRecord,
       storeStateSync: {
         ok: storeStateSyncOk,
         synced: storeStateSynced,
         warning: storeStateSyncWarning,
-        result: storeStateReceizRecord
+        result: summarizedStoreStateReceizRecord
       },
       receizRecord,
       proofMemory: {

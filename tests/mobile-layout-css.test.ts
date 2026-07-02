@@ -25,8 +25,11 @@ describe("mobile storefront layout CSS", () => {
   });
 
   it("keeps the mobile account proof card compact above the cart", () => {
-    assert.match(css, /@media \(max-width:\s*760px\)\s*\{[\s\S]*\.mobile-account-card\s*\{[\s\S]*gap:\s*6px;[\s\S]*padding:\s*8px;[\s\S]*\}/);
-    assert.match(css, /@media \(max-width:\s*760px\)\s*\{[\s\S]*\.mobile-account-card \.large-avatar\s*\{[\s\S]*width:\s*40px;[\s\S]*height:\s*40px;[\s\S]*\}/);
-    assert.match(css, /@media \(max-width:\s*760px\)\s*\{[\s\S]*\.mobile-account-scope div\s*\{[\s\S]*min-height:\s*42px;[\s\S]*padding:\s*6px;[\s\S]*\}/);
+    assert.match(css, /@media \(max-width:\s*760px\)\s*\{[\s\S]*\.mobile-header\s*\{[\s\S]*grid-template-columns:\s*64px 1fr auto auto;[\s\S]*padding:\s*10px 12px;[\s\S]*\}/);
+    assert.match(css, /@media \(max-width:\s*760px\)\s*\{[\s\S]*\.mobile-pane-heading\s*\{[\s\S]*min-height:\s*26px;[\s\S]*\}/);
+    assert.match(css, /@media \(max-width:\s*760px\)\s*\{[\s\S]*\.mobile-account-card\s*\{[\s\S]*gap:\s*5px;[\s\S]*padding:\s*6px;[\s\S]*\}/);
+    assert.match(css, /@media \(max-width:\s*760px\)\s*\{[\s\S]*\.mobile-account-card \.large-avatar\s*\{[\s\S]*width:\s*36px;[\s\S]*height:\s*36px;[\s\S]*\}/);
+    assert.match(css, /@media \(max-width:\s*760px\)\s*\{[\s\S]*\.mobile-account-scope div\s*\{[\s\S]*min-height:\s*36px;[\s\S]*padding:\s*5px;[\s\S]*\}/);
+    assert.match(css, /@media \(max-width:\s*760px\)\s*\{[\s\S]*\.mobile-pane \.cart-summary-empty\s*\{[\s\S]*grid-template-columns:\s*24px minmax\(0,\s*1fr\);[\s\S]*padding:\s*8px;[\s\S]*\}/);
   });
 });

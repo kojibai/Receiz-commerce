@@ -9,7 +9,9 @@ import { getServerProofStateStore } from "@/lib/receiz/proof-state-store";
 import {
   publishAndAdmitReceizStoreState,
   receizStoreStateSyncCompleted,
-  receizStoreStateWriteSucceeded
+  receizStoreStateWriteSucceeded,
+  summarizeReceizStoreStatePublicationResult,
+  summarizeStoreStateRecord
 } from "@/lib/receiz/store-state-publication";
 import { loadReceizConnectProfile } from "@/lib/receiz/connect-profile";
 import { receizAccessTokenFromRequest, receizAuthorityRequired } from "@/lib/receiz/session";
@@ -280,6 +282,8 @@ export async function POST(request: NextRequest) {
   });
   const storeStateSyncOk = receizStoreStateWriteSucceeded(receizRecord);
   const storeStateSynced = receizStoreStateSyncCompleted(receizRecord);
+  const summarizedStoreStateRecord = summarizeStoreStateRecord(record);
+  const summarizedReceizRecord = summarizeReceizStoreStatePublicationResult(receizRecord);
   let storeStateSyncWarning: string | undefined;
 
   if (!storeStateSyncOk) {
@@ -295,14 +299,14 @@ export async function POST(request: NextRequest) {
       ok: true,
       action,
       hosting: publishState.hosting,
-      state: publishState,
-      record,
-      receizRecord,
+      state: accessToken ? publishState : { hosting: publishState.hosting },
+      record: summarizedStoreStateRecord,
+      receizRecord: summarizedReceizRecord,
       storeStateSync: {
         ok: storeStateSyncOk,
         synced: storeStateSynced,
         warning: storeStateSyncWarning,
-        result: receizRecord
+        result: summarizedReceizRecord
       },
       proofMemory: {
         knownHead: proofStore.knownHead(100),

@@ -1545,6 +1545,8 @@ function publishTenantHost(state: CommerceState) {
 }
 
 const HOSTING_PUBLISH_REQUEST_BODY_MAX_CHARS = 1_600_000;
+const HOSTING_PUBLISH_INLINE_MEDIA_ITEM_MAX_CHARS = 36_000;
+const HOSTING_PUBLISH_INLINE_MEDIA_TOTAL_MAX_CHARS = 260_000;
 
 async function prepareHostingStoreStateRequestBody(
   action: "custom_domain" | "verify_domain" | "publish",
@@ -1564,6 +1566,8 @@ async function prepareHostingStoreStateRequestBody(
     media: {
       tenantHost: publishTenantHost(normalizedState),
       merchantReceizId: currentMerchantReceizId(normalizedState),
+      itemMaxChars: HOSTING_PUBLISH_INLINE_MEDIA_ITEM_MAX_CHARS,
+      totalMaxChars: HOSTING_PUBLISH_INLINE_MEDIA_TOTAL_MAX_CHARS,
       upload: typeof window === "undefined" ? undefined : uploadPublishMedia,
       compress: compressInlineImageDataUrlForPublish
     }

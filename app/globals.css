@@ -4562,17 +4562,17 @@ a {
 
   .mobile-header {
     display: grid;
-    grid-template-columns: 76px 1fr auto auto;
-    gap: 10px;
+    grid-template-columns: 64px 1fr auto auto;
+    gap: 8px;
     align-items: center;
-    padding: 14px 12px;
+    padding: 10px 12px;
     background: rgba(255, 255, 255, 0.94);
   }
 
   .mobile-header .brand-mark {
-    width: 64px;
-    height: 64px;
-    padding: 8px;
+    width: 56px;
+    height: 56px;
+    padding: 7px;
   }
 
   .mobile-header .brand-mark span {
@@ -4598,7 +4598,7 @@ a {
   .mobile-header strong {
     display: block;
     min-width: 0;
-    font-size: clamp(18px, 6.4vw, 25px);
+    font-size: clamp(16px, 5.7vw, 21px);
     line-height: 1.02;
     overflow-wrap: anywhere;
   }
@@ -4610,7 +4610,7 @@ a {
     gap: 5px;
     color: var(--muted);
     min-width: 0;
-    font-size: clamp(10px, 3.2vw, 13px);
+    font-size: clamp(9px, 2.9vw, 11.5px);
     line-height: 1.12;
     overflow-wrap: anywhere;
   }
@@ -4626,7 +4626,7 @@ a {
   .mobile-stage {
     position: relative;
     display: block;
-    height: calc(100dvh - 92px - 90px);
+    height: calc(100dvh - 78px - 90px);
     padding: 0 12px 8px;
     overflow: hidden;
   }
@@ -4667,13 +4667,13 @@ a {
     align-items: center;
     justify-content: space-between;
     gap: 10px;
-    min-height: 34px;
+    min-height: 26px;
   }
 
   .mobile-pane-heading h2 {
     margin: 0;
     color: var(--text);
-    font-size: clamp(20px, 6.8vw, 24px);
+    font-size: clamp(17px, 5.6vw, 20px);
     line-height: 1;
     overflow-wrap: anywhere;
   }
@@ -5151,8 +5151,8 @@ a {
   }
 
   .mobile-account-card {
-    gap: 6px;
-    padding: 8px;
+    gap: 5px;
+    padding: 6px;
   }
 
   .mobile-reward-card {
@@ -5172,7 +5172,7 @@ a {
   .mobile-reward-card h3,
   .mobile-account-card h3 {
     margin: 6px 0 4px;
-    font-size: clamp(17px, 5.7vw, 21px);
+    font-size: clamp(15px, 5vw, 18px);
     line-height: 1;
     overflow-wrap: anywhere;
   }
@@ -5185,7 +5185,7 @@ a {
   .mobile-asset-list span {
     margin: 0;
     color: var(--muted);
-    font-size: clamp(10px, 3.2vw, 12px);
+    font-size: clamp(9px, 2.9vw, 11px);
     line-height: 1.1;
     overflow-wrap: anywhere;
   }
@@ -5302,15 +5302,15 @@ a {
 
   .mobile-receiz-id-card,
   .mobile-account-card {
-    grid-template-columns: 48px minmax(0, 1fr);
+    grid-template-columns: 42px minmax(0, 1fr);
     align-items: start;
     border-color: var(--border);
   }
 
   .mobile-account-card .large-avatar {
-    width: 40px;
-    height: 40px;
-    font-size: 15px;
+    width: 36px;
+    height: 36px;
+    font-size: 14px;
   }
 
   .mobile-account-card span {
@@ -5324,7 +5324,7 @@ a {
 
   .mobile-account-profile-copy {
     display: grid;
-    gap: 3px;
+    gap: 2px;
     min-width: 0;
   }
 
@@ -5332,7 +5332,7 @@ a {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
     min-width: 0;
   }
 
@@ -5361,8 +5361,8 @@ a {
     display: grid;
     gap: 1px;
     min-width: 0;
-    min-height: 28px;
-    padding: 4px;
+    min-height: 24px;
+    padding: 3px 4px;
     border: 1px solid var(--border);
     border-radius: 10px;
     color: var(--muted);
@@ -5392,7 +5392,7 @@ a {
 
   .mobile-account-seal-tools .account-recovery-pill {
     width: 100%;
-    min-height: 28px;
+    min-height: 26px;
   }
 
   .mobile-account-receiz-badge {
@@ -5423,8 +5423,8 @@ a {
     grid-template-columns: 20px minmax(0, 1fr);
     gap: 2px 7px;
     min-width: 0;
-    min-height: 42px;
-    padding: 6px;
+    min-height: 36px;
+    padding: 5px;
     border: 1px solid var(--border);
     border-radius: 13px;
     background: #ffffff;
@@ -5445,13 +5445,60 @@ a {
 
   .mobile-account-scope span {
     color: var(--muted);
-    font-size: clamp(9px, 2.8vw, 10px);
+    font-size: clamp(8.5px, 2.7vw, 9.5px);
   }
 
   .mobile-account-scope strong {
     color: var(--text);
-    font-size: clamp(10px, 3vw, 11.5px);
+    font-size: clamp(9.5px, 2.8vw, 10.5px);
     font-weight: 850;
+  }
+
+  .mobile-pane .cart-summary-panel .section-header {
+    padding: 9px 12px 6px;
+  }
+
+  .mobile-pane .cart-summary-panel .section-header h2 {
+    font-size: 18px;
+  }
+
+  .mobile-pane .cart-summary-empty {
+    grid-template-columns: 24px minmax(0, 1fr);
+    gap: 2px 8px;
+    margin: 0 10px 8px;
+    padding: 8px;
+  }
+
+  .mobile-pane .cart-summary-empty svg {
+    grid-row: span 2;
+  }
+
+  .mobile-pane .cart-summary-empty strong {
+    font-size: 12px;
+  }
+
+  .mobile-pane .cart-summary-empty span {
+    font-size: 10.5px;
+    line-height: 1.2;
+  }
+
+  .mobile-pane .cart-summary-total {
+    margin: 0 10px 8px;
+    padding: 7px 0;
+  }
+
+  .mobile-pane .cart-summary-total strong {
+    font-size: 17px;
+  }
+
+  .mobile-pane .cart-summary-panel .button {
+    width: calc(100% - 20px);
+    min-height: 38px;
+    margin: 0 10px;
+  }
+
+  .mobile-pane .cart-summary-host {
+    margin: 6px 10px 8px;
   }
 
   .mobile-checkout-summary {
@@ -5808,15 +5855,15 @@ a {
   }
 
   .mobile-header {
-    grid-template-columns: 58px minmax(0, 1fr) 38px 38px;
-    gap: 8px;
-    padding: 10px;
+    grid-template-columns: 50px minmax(0, 1fr) 36px 36px;
+    gap: 7px;
+    padding: 7px 10px;
   }
 
   .mobile-header .brand-mark {
-    width: 54px;
-    height: 54px;
-    padding: 7px;
+    width: 46px;
+    height: 46px;
+    padding: 6px;
   }
 
   .mobile-header .brand-mark span {
@@ -5832,15 +5879,15 @@ a {
   }
 
   .mobile-header strong {
-    font-size: clamp(16px, 5.8vw, 20px);
+    font-size: clamp(15px, 5.1vw, 18px);
   }
 
   .mobile-header span {
-    font-size: clamp(9.5px, 3.1vw, 11px);
+    font-size: clamp(8.5px, 2.8vw, 10px);
   }
 
   .mobile-stage {
-    height: calc(100dvh - 76px - 82px);
+    height: calc(100dvh - 62px - 82px);
     padding: 0 10px 8px;
   }
 
@@ -5850,11 +5897,11 @@ a {
   }
 
   .mobile-pane-heading {
-    min-height: 30px;
+    min-height: 24px;
   }
 
   .mobile-pane-heading h2 {
-    font-size: 21px;
+    font-size: 18px;
   }
 
   .mobile-shop-hero {
@@ -5964,9 +6011,12 @@ a {
     font-size: 18px;
   }
 
-  .mobile-reward-card h3,
-  .mobile-account-card h3 {
+  .mobile-reward-card h3 {
     font-size: 20px;
+  }
+
+  .mobile-account-card h3 {
+    font-size: 17px;
   }
 
   .mobile-action-grid button {
@@ -5979,8 +6029,8 @@ a {
   }
 
   .mobile-account-scope div {
-    min-height: 42px;
-    padding: 6px;
+    min-height: 34px;
+    padding: 5px;
   }
 
   .mobile-checkout-summary {
@@ -5988,8 +6038,8 @@ a {
   }
 
   .mobile-checkout-summary div {
-    min-height: 66px;
-    padding: 8px;
+    min-height: 54px;
+    padding: 6px;
   }
 
   .mobile-play-wrap .game-tile {
