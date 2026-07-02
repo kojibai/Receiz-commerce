@@ -18,7 +18,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
           <BrandMark imageUrl={state.brand.logoImageUrl} label={state.brand.logoText} compact />
           <span>{state.brand.name}</span>
         </Link>
-        <Link className="detail-link" href="/account">Account</Link>
+        <Link className="detail-link" href="/#account">Account</Link>
       </header>
       <section className="detail-hero compact">
         <div>

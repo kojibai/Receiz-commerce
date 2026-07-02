@@ -1,5 +1,4 @@
 import type { CommerceState, CustomerAccount } from "@/types/domain";
-import type { HostContext } from "@/lib/hosting/host-context";
 
 export function guestCustomerForStore(state: CommerceState): CustomerAccount {
   return {
@@ -19,7 +18,11 @@ export function guestCustomerForStore(state: CommerceState): CustomerAccount {
 }
 
 export function customerForAccountSurface(state: CommerceState, tenantSurface: boolean): CustomerAccount {
-  if (tenantSurface && !state.auth.receizId.connected) {
+  if (tenantSurface) {
+    if (state.auth.signedInAs === "customer" && state.auth.receizId.connected) {
+      return state.auth.customer;
+    }
+
     return guestCustomerForStore(state);
   }
 
@@ -30,22 +33,9 @@ export function customerForAccountSurface(state: CommerceState, tenantSurface: b
   return state.customers[0] ?? state.auth.customer;
 }
 
-export function customerReceizHandle(state: CommerceState, customer: CustomerAccount) {
+export function customerReceizHandle(state: CommerceState, customer: CustomerAccount, tenantSurface = false) {
   if (customer.receizHandle) return customer.receizHandle;
+  if (tenantSurface && customer.id === "guest-customer") return "Receiz ID not connected";
   if (state.auth.receizId.connected) return state.auth.receizId.handle;
   return "Receiz ID not connected";
-}
-
-function normalizedPathname(pathname: string) {
-  const clean = (pathname.split(/[?#]/)[0] || "/").trim();
-  if (!clean || clean === "/") return "/";
-  return clean.replace(/\/+$/, "") || "/";
-}
-
-export function customerAccountRouteForSurface(
-  hostContext: Pick<HostContext, "surface">,
-  pathname = "/"
-) {
-  if (hostContext.surface !== "tenant") return null;
-  return normalizedPathname(pathname) === "/account" ? null : "/account";
 }

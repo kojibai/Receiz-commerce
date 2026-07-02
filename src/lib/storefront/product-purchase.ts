@@ -18,7 +18,7 @@ export type ProductPurchaseModel = {
 
 export function productRoutePath(product: Product) {
   const slug = slugifyRouteSegment(product.seo?.canonicalPath || product.id || product.name);
-  return `/products/${slug}`;
+  return `/#product=${encodeURIComponent(slug)}`;
 }
 
 export function stateWithCartProduct(state: CommerceState, productId: string): CommerceState {

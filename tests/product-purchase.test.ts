@@ -8,7 +8,7 @@ import {
 import { baseState } from "./support/commerce-state.js";
 
 describe("product purchase routing", () => {
-  it("builds canonical product paths from SEO paths or generated slugs", () => {
+  it("builds instant storefront hash product paths from SEO paths or generated slugs", () => {
     const state = baseState();
     const product = state.products[0]!;
 
@@ -23,9 +23,9 @@ describe("product purchase routing", () => {
           socialImageUrl: null
         }
       }),
-      "/products/house-blend"
+      "/#product=house-blend"
     );
-    assert.equal(productRoutePath(product), "/products/coffee-pack");
+    assert.equal(productRoutePath(product), "/#product=coffee-pack");
   });
 
   it("adds the selected product to a checkout cart snapshot", () => {

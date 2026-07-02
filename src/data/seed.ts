@@ -97,7 +97,7 @@ export const seedCommerceState: CommerceState = {
     { id: "assets", label: "Assets", href: "/#assets", visible: true },
     { id: "blog", label: "Blog", href: "/blog", visible: true },
     { id: "play", label: "Play", href: "/#play", visible: true },
-    { id: "account", label: "Account", href: "/account", visible: true },
+    { id: "account", label: "Account", href: "/#account", visible: true },
     { id: "admin", label: "Admin", href: "/admin", visible: true }
   ],
   pages: [

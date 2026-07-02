@@ -1064,7 +1064,7 @@ type StoreStateSyncResponse = {
 
 function storeStateSyncError(sync: StoreStateSyncResponse | undefined) {
   if (!sync || sync.ok !== false) return "";
-  return sync.message || sync.error || "Storefront proof-state sync failed";
+  return sync.warning || sync.message || sync.error || "Storefront proof-state sync failed";
 }
 
 function storeStateSyncPending(sync: StoreStateSyncResponse | undefined) {
@@ -2340,13 +2340,28 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
             void postJson<{
               hosting: CommerceState["hosting"];
               state?: Partial<CommerceState>;
+              storeStateSync?: StoreStateSyncResponse;
           }>("/api/hosting", {
             action: "publish",
             merchantProof: merchantProofPayload(publishRequestState),
             state: publishedStatePayload(publishRequestState)
           }, { deferAuthorityRedirect: true })
               .then((result) => {
+                const syncError = storeStateSyncError(result.storeStateSync);
+                const syncPending = storeStateSyncPending(result.storeStateSync);
+
                 clearPendingPublish(publishHostContext.storageKey);
+
+                if (syncError || syncPending) {
+                  const message = syncError || result.storeStateSync?.warning || "Receiz public-store sync is pending; publish is not durable yet.";
+                  setActionFeedback("publish", "error", message);
+                  setState((latest) => ({
+                    ...latest,
+                    proofEvents: [makeEvent("SITE_PUBLISHED", message), ...latest.proofEvents]
+                  }));
+                  return;
+                }
+
                 setActionFeedback("publish", "success", "Store published");
                 setState((latest) => ({
                   ...mergePublishedPublicState(latest, result.state, result.hosting),

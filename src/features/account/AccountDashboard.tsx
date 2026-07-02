@@ -35,7 +35,7 @@ export function AccountDashboard({
   const { state, actions, actionFeedback, hostContext, hydrated, receizSessionPending } = useTemplateStore(initialState, initialHostContext);
   const tenantSurface = hostContext.surface === "tenant";
   const customer = customerForAccountSurface(state, tenantSurface);
-  const receizHandle = customerReceizHandle(state, customer);
+  const receizHandle = customerReceizHandle(state, customer, tenantSurface);
   const ownedAssets = state.assets.filter((asset) => customer.assetIds.includes(asset.id));
   const orders = state.orders.filter((order) => order.customerId === customer.id);
   const rewards = state.rewards.filter((reward) => customer.rewardIds.includes(reward.id));

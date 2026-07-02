@@ -28,23 +28,14 @@ function skippedReceizSync(value: unknown) {
 }
 
 export function receizStoreStateWriteSucceeded(result: unknown) {
-  return !failedReceizResponse(result);
+  return !failedReceizResponse(result) && !skippedReceizSync(result);
 }
 
 export function receizStoreStateSyncCompleted(result: unknown) {
-  return receizStoreStateWriteSucceeded(result) && !skippedReceizSync(result);
+  return receizStoreStateWriteSucceeded(result);
 }
 
 export async function publishReceizStoreState(accessToken: string | undefined, record: StoreStateRecord) {
-  if (!accessToken) {
-    return {
-      ok: true,
-      skipped: true,
-      reason: "public_proof_sync_pending",
-      message: "Store-state proof object admitted locally; public proof sync is pending for this request."
-    };
-  }
-
   const connectRecord = buildStoreStateConnectRecord(record);
   const hosts = [...publicStoreHostsForStoreState(record)];
 

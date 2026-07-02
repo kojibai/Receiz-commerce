@@ -6444,6 +6444,21 @@ a {
   text-underline-offset: 3px;
 }
 
+button.product-purchase-secondary-link {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.storefront-product-detail {
+  width: 100%;
+}
+
+.mobile-pane .storefront-product-detail,
+.mobile-pane .detail-proof-band {
+  margin-bottom: 0;
+}
+
 .product-purchase-facts {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

@@ -131,7 +131,7 @@ export function StoreTopbar({
             <span>3</span>
           </button>
         )}
-        <Link className="brand-chip" href={tenantSurface ? "/account" : "/admin"}>
+        <Link className="brand-chip" href={tenantSurface ? "/#account" : "/admin"}>
           <BrandMark imageUrl={state.brand.logoImageUrl} label={state.brand.logoText} compact />
           <div>
             <strong>{state.brand.name}</strong>
