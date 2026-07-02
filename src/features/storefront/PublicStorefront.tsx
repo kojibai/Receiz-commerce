@@ -1884,7 +1884,7 @@ function MobileAssetsPanel({
         ) : (
           <div className="mobile-empty-row">
             <strong>No assets yet</strong>
-            <span>Sold products, benefits, and access can become Receized assets.</span>
+            <span>Purchased products, benefits, and access can become Receized assets.</span>
           </div>
         )}
       </div>

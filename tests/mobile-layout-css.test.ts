@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 
 const css = readFileSync("app/globals.css", "utf8");
+const storefront = readFileSync("src/features/storefront/PublicStorefront.tsx", "utf8");
 
 describe("mobile storefront layout CSS", () => {
   it("keeps the five-item storefront toolbar on one mobile row", () => {
@@ -31,5 +32,10 @@ describe("mobile storefront layout CSS", () => {
     assert.match(css, /@media \(max-width:\s*760px\)\s*\{[\s\S]*\.mobile-account-card \.large-avatar\s*\{[\s\S]*width:\s*36px;[\s\S]*height:\s*36px;[\s\S]*\}/);
     assert.match(css, /@media \(max-width:\s*760px\)\s*\{[\s\S]*\.mobile-account-scope div\s*\{[\s\S]*min-height:\s*36px;[\s\S]*padding:\s*5px;[\s\S]*\}/);
     assert.match(css, /@media \(max-width:\s*760px\)\s*\{[\s\S]*\.mobile-pane \.cart-summary-empty\s*\{[\s\S]*grid-template-columns:\s*24px minmax\(0,\s*1fr\);[\s\S]*padding:\s*8px;[\s\S]*\}/);
+  });
+
+  it("uses customer ownership language on the mobile assets page", () => {
+    assert.match(storefront, /Purchased products, benefits, and access can become Receized assets\./);
+    assert.doesNotMatch(storefront, /Sold products, benefits, and access can become Receized assets\./);
   });
 });
