@@ -335,7 +335,7 @@ async function syncPublishedStoreStateForHosting(input: {
   const tenantHost = state.hosting.customDomain.domain || state.hosting.subdomain;
   let publishState = state;
 
-  if (input.accessToken && input.merchantAuthority.source === "delegated_permission") {
+  if (input.accessToken) {
     const receiz = createReceizCommerceAdapter({
       baseUrl: process.env.RECEIZ_BASE_URL,
       accessToken: input.accessToken
@@ -641,7 +641,7 @@ export async function POST(request: NextRequest) {
     const tenantHost = state.hosting.customDomain.domain || state.hosting.subdomain;
     let publishState = state;
 
-    if (accessToken && merchantAuthority.source === "delegated_permission") {
+    if (accessToken) {
       const receiz = createReceizCommerceAdapter({
         baseUrl: process.env.RECEIZ_BASE_URL,
         accessToken

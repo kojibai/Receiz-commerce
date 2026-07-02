@@ -125,21 +125,28 @@ function recordId(prefix: string, tenantHost: string, recordedAt: string) {
   return `${prefix}:${tenantHost}:${stamp}`;
 }
 
-const MAX_INLINE_DATA_URL_CHARS = 150_000;
+const MAX_INLINE_DATA_URL_CHARS = 1_500_000;
 
-function compactInlineMedia(value: unknown): unknown {
+function shouldCompactInlineMedia(path: string[], value: string) {
+  const key = path.at(-1) ?? "";
+
+  if (key === "socialImageUrl") return true;
+  return value.length > MAX_INLINE_DATA_URL_CHARS;
+}
+
+function compactInlineMedia(value: unknown, path: string[] = []): unknown {
   if (typeof value === "string") {
-    return value.startsWith("data:") && value.length > MAX_INLINE_DATA_URL_CHARS ? null : value;
+    return value.startsWith("data:") && shouldCompactInlineMedia(path, value) ? null : value;
   }
 
   if (Array.isArray(value)) {
-    return value.map((item) => compactInlineMedia(item));
+    return value.map((item, index) => compactInlineMedia(item, [...path, String(index)]));
   }
 
   if (!value || typeof value !== "object") return value;
 
   return Object.fromEntries(
-    Object.entries(value).map(([key, item]) => [key, compactInlineMedia(item)])
+    Object.entries(value).map(([key, item]) => [key, compactInlineMedia(item, [...path, key])])
   );
 }
 

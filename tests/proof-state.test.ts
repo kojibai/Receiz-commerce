@@ -545,7 +545,7 @@ describe("Receiz proof commerce state", () => {
     assert.equal(record.state.products[0]?.imageUrl, imageDataUrl);
   });
 
-  it("omits camera-roll inline media that would bloat the public-store publish payload", () => {
+  it("keeps publish-safe visual inline media for Identity Seal signed storefronts", () => {
     const cameraRollDataUrl = `data:image/jpeg;base64,${Buffer.alloc(256_000, "a").toString("base64")}`;
     const record = buildStoreStateRecord(
       {
@@ -595,12 +595,12 @@ describe("Receiz proof commerce state", () => {
       }
     );
 
-    assert.equal(record.state.brand.logoImageUrl, null);
-    assert.equal(record.state.products[0]?.imageUrl, null);
+    assert.equal(record.state.brand.logoImageUrl, cameraRollDataUrl);
+    assert.equal(record.state.products[0]?.imageUrl, cameraRollDataUrl);
     assert.equal(record.state.products[0]?.seo?.socialImageUrl, null);
-    assert.equal(record.state.blogPosts[0]?.coverImageUrl, null);
+    assert.equal(record.state.blogPosts[0]?.coverImageUrl, cameraRollDataUrl);
     assert.equal(record.state.blogPosts[0]?.seo.socialImageUrl, null);
-    assert.ok(JSON.stringify(buildStoreStateConnectRecord(record)).length < cameraRollDataUrl.length);
+    assert.ok(JSON.stringify(buildStoreStateConnectRecord(record)).length < 2_000_000);
   });
 
   it("omits oversized inline media from the published proof record", () => {

@@ -1,4 +1,5 @@
 import {
+  STORE_STATE_SCHEMA,
   isStoreStateRecord,
   storeStateRecordMatchesTenantHost,
   type StoreStateRecord
@@ -43,17 +44,51 @@ export function extractStoreStateRecords(value: unknown): StoreStateRecord[] {
   return uniqueRecords(collectStoreStateRecords(value));
 }
 
-async function recoverReceizPublicProofStoreStateRecords(tenantHost: string) {
+export type ReceizPublicStoreStateRecoveryAdapter = {
+  client: {
+    publicStore: {
+      restoreLatest(input: { host: string; requiredSchema?: string }): Promise<unknown>;
+      resolve(input: { host: string }): Promise<unknown>;
+    };
+    appState: {
+      byUrl(url: string): Promise<unknown>;
+    };
+  };
+  resolveTenant(
+    host: string,
+    options?: { schema?: string; state?: string; requiredDataKey?: string }
+  ): Promise<unknown>;
+};
+
+async function createRecoveryAdapter(): Promise<ReceizPublicStoreStateRecoveryAdapter> {
   const { createReceizCommerceAdapter } = await import("./adapter");
-  const receiz = createReceizCommerceAdapter({
+
+  return createReceizCommerceAdapter({
     baseUrl: process.env.RECEIZ_BASE_URL
   });
+}
+
+export async function recoverReceizPublicProofStoreStateRecords(
+  tenantHost: string,
+  receiz?: ReceizPublicStoreStateRecoveryAdapter
+) {
+  const recoveryAdapter = receiz ?? await createRecoveryAdapter();
   const normalizedHost = tenantHost.trim().toLowerCase();
   const urls = [`https://${normalizedHost}`, `https://${normalizedHost}/`];
   const records: StoreStateRecord[] = [];
 
   try {
-    const restored = await receiz.client.publicStore.resolve({
+    const restored = await recoveryAdapter.client.publicStore.restoreLatest({
+      host: normalizedHost,
+      requiredSchema: STORE_STATE_SCHEMA
+    });
+    records.push(...extractStoreStateRecords(restored));
+  } catch {
+    // SDK 97.6 public-store latest recovery is the canonical cold-start path.
+  }
+
+  try {
+    const restored = await recoveryAdapter.client.publicStore.resolve({
       host: normalizedHost
     });
     records.push(...extractStoreStateRecords(restored));
@@ -62,7 +97,7 @@ async function recoverReceizPublicProofStoreStateRecords(tenantHost: string) {
   }
 
   try {
-    const restored = await receiz.resolveTenant(normalizedHost, {
+    const restored = await recoveryAdapter.resolveTenant(normalizedHost, {
       schema: RECEIZ_PUBLIC_STORE_STATE_PROJECTION_SCHEMA,
       state: "published",
       requiredDataKey: "storeStateRecord"
@@ -74,7 +109,7 @@ async function recoverReceizPublicProofStoreStateRecords(tenantHost: string) {
 
   for (const url of urls) {
     try {
-      const appState = await receiz.client.appState.byUrl(url);
+      const appState = await recoveryAdapter.client.appState.byUrl(url);
       records.push(...extractStoreStateRecords(appState));
     } catch {
       // Missing public projections are expected for unpublished or legacy stores.

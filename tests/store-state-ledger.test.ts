@@ -2,7 +2,11 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { buildStoreStateConnectRecord, buildStoreStateRecord } from "../src/lib/receiz/proof-state.js";
 import { createInMemoryProofStateStore } from "../src/lib/receiz/proof-state-store.js";
-import { admitRecoveredStoreStateRecords, extractStoreStateRecords } from "../src/lib/receiz/store-state-ledger.js";
+import {
+  admitRecoveredStoreStateRecords,
+  extractStoreStateRecords,
+  recoverReceizPublicProofStoreStateRecords
+} from "../src/lib/receiz/store-state-ledger.js";
 import { baseState } from "./support/commerce-state.js";
 import { receizAppendFixture } from "./support/receiz-append.js";
 
@@ -116,6 +120,52 @@ describe("Receiz store-state ledger recovery", () => {
     assert.equal(records.length, 1);
     assert.equal(records[0]?.state.brand.name, "Proof Coffee");
     assert.equal(records[0]?.state.products[0]?.name, "House roast");
+  });
+
+  it("recovers cold-start storefront state through the SDK public-store latest rail", async () => {
+    const state = {
+      ...baseState(),
+      brand: { ...baseState().brand, name: "Cold Start Store" },
+      hosting: {
+        ...baseState().hosting,
+        tenantSlug: "cold-start",
+        subdomain: "cold-start.receiz.app"
+      }
+    };
+    const record = buildStoreStateRecord(state, {
+      actorReceizId: "cold-start.receiz.id",
+      tenantHost: "cold-start.receiz.app",
+      ...receizAppendFixture("2026-07-01T18:00:00.000Z")
+    });
+    const calls: string[] = [];
+    const records = await recoverReceizPublicProofStoreStateRecords("cold-start.receiz.app", {
+      client: {
+        publicStore: {
+          restoreLatest: async (input: { host?: string; requiredSchema?: string }) => {
+            calls.push(`restoreLatest:${input.host}:${input.requiredSchema}`);
+            return { ok: true, storeStateRecord: record };
+          },
+          resolve: async () => {
+            calls.push("resolve");
+            return { ok: false };
+          }
+        },
+        appState: {
+          byUrl: async () => {
+            calls.push("byUrl");
+            return { ok: false };
+          }
+        }
+      },
+      resolveTenant: async () => {
+        calls.push("resolveTenant");
+        return { ok: false };
+      }
+    });
+
+    assert.equal(records.length, 1);
+    assert.equal(records[0]?.state.brand.name, "Cold Start Store");
+    assert.equal(calls[0], "restoreLatest:cold-start.receiz.app:receiz.app.store_state.v1");
   });
 
   it("admits newer recovered records when an older tenant record is already warm", async () => {

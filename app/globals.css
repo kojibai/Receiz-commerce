@@ -182,7 +182,7 @@
 
   .mobile-admin-snapshot {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 8px;
   }
 
@@ -5595,8 +5595,9 @@ a {
     left: 12px;
     z-index: 50;
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    padding: 8px;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 2px;
+    padding: 7px;
     border: 1px solid var(--border);
     border-radius: 18px;
     background: rgba(255, 255, 255, 0.94);
@@ -5607,18 +5608,26 @@ a {
   .bottom-nav button {
     display: grid;
     place-items: center;
-    gap: 4px;
+    gap: 3px;
+    min-width: 0;
     border: 0;
     color: var(--muted);
     background: transparent;
-    font-size: clamp(9.5px, 3vw, 12px);
+    font-size: clamp(8px, 2.45vw, 10.5px);
     line-height: 1;
     text-align: center;
   }
 
+  .bottom-nav button svg {
+    width: 21px;
+    height: 21px;
+  }
+
   .bottom-nav button span {
     max-width: 100%;
-    overflow-wrap: anywhere;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .bottom-nav button.active {
@@ -7054,7 +7063,7 @@ a {
   .exchange-terminal,
   .exchange-desk.compact .exchange-terminal {
     grid-template-columns: minmax(0, 1fr);
-    gap: 10px;
+    gap: 6px;
     padding: 0;
     border: 0;
     background: transparent;
@@ -7062,15 +7071,14 @@ a {
   }
 
   .exchange-market-list {
-    grid-auto-flow: column;
-    grid-auto-columns: minmax(138px, 58%);
-    overflow-x: auto;
-    padding-bottom: 2px;
-    scroll-snap-type: x mandatory;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 4px;
+    overflow-x: visible;
+    padding-bottom: 0;
   }
 
   .exchange-market-list > * {
-    scroll-snap-align: start;
+    min-width: 0;
   }
 
   .exchange-terminal-kicker,
@@ -7080,45 +7088,225 @@ a {
   }
 
   .exchange-market-list button {
-    min-height: 74px;
+    min-height: 38px;
+    gap: 3px;
+    padding: 5px;
+  }
+
+  .exchange-market-list strong {
+    font-size: 12px;
+  }
+
+  .exchange-market-list em,
+  .exchange-market-list small,
+  .exchange-terminal-kicker span {
+    display: none;
+  }
+
+  .exchange-market-list b {
+    font-size: 9px;
+  }
+
+  .exchange-list-asset-button {
+    grid-template-columns: 16px minmax(0, 1fr) !important;
+    min-height: 38px !important;
+    font-size: 9px;
+    line-height: 1;
   }
 
   .exchange-asset-header {
-    grid-template-columns: minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 6px;
+    padding: 6px;
+  }
+
+  .exchange-asset-header h3 {
+    margin: 2px 0 0;
+    font-size: 17px;
+  }
+
+  .exchange-asset-header p {
+    display: none;
   }
 
   .exchange-price-block {
-    justify-items: start;
+    justify-items: end;
+  }
+
+  .exchange-price-block strong {
+    font-size: 17px;
   }
 
   .exchange-metric-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 5px;
+  }
+
+  .exchange-metric-grid div,
+  .exchange-proof-strip div,
+  .exchange-ticket,
+  .exchange-liquidity-box,
+  .exchange-order-book,
+  .exchange-proof-tape {
+    padding: 5px;
+  }
+
+  .exchange-metric-grid span,
+  .exchange-proof-strip span {
+    font-size: 8px;
+  }
+
+  .exchange-metric-grid strong,
+  .exchange-proof-strip strong {
+    font-size: 10px;
   }
 
   .exchange-chart-wrap,
   .exchange-chart {
-    min-height: 236px;
+    min-height: 92px;
+  }
+
+  .exchange-chart {
+    padding: 5px;
   }
 
   .exchange-chart svg {
-    height: 178px;
+    height: 56px;
+  }
+
+  .exchange-chart-axis {
+    font-size: 8px;
+  }
+
+  .exchange-chart-axis strong {
+    font-size: 10px;
   }
 
   .exchange-proof-strip {
-    grid-template-columns: minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+    gap: 4px;
   }
 
   .exchange-proof-strip a {
     min-width: 0;
+    padding: 5px 6px;
+    font-size: 10px;
+  }
+
+  .exchange-proof-strip strong {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .exchange-depth-column {
     grid-column: auto;
-    grid-template-columns: minmax(0, 1fr);
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    gap: 5px;
+  }
+
+  .exchange-trade-column {
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.9fr);
+    gap: 5px;
+  }
+
+  .exchange-ticket {
+    grid-template-columns: 72px 58px minmax(0, 1fr);
+    gap: 4px;
+    align-items: end;
+  }
+
+  .exchange-ticket-toggle {
+    grid-template-columns: 1fr;
+    gap: 3px;
+  }
+
+  .exchange-ticket-toggle button,
+  .exchange-ticket input,
+  .exchange-liquidity-box input {
+    min-height: 28px;
+    height: 28px;
+    font-size: 11px;
+  }
+
+  .exchange-ticket-preview,
+  .exchange-ticket-note {
+    display: none;
+  }
+
+  .exchange-trade-button {
+    min-height: 32px;
+    padding-inline: 8px;
+    font-size: 11px;
+  }
+
+  .exchange-liquidity-box {
+    gap: 4px;
+  }
+
+  .exchange-liquidity-box > div span {
+    display: none;
+  }
+
+  .exchange-liquidity-box .button {
+    min-height: 32px;
+    padding-inline: 8px;
+    font-size: 11px;
+  }
+
+  .exchange-order-book {
+    gap: 4px;
+  }
+
+  .exchange-book-side div {
+    grid-template-columns: 34px minmax(0, 1fr);
+    padding: 4px 5px;
+    font-size: 10px;
+  }
+
+  .exchange-book-side div:nth-child(n + 3) {
+    display: none;
+  }
+
+  .exchange-mid-price {
+    padding: 5px;
+  }
+
+  .exchange-mid-price strong {
+    font-size: 13px;
   }
 
   .exchange-proof-tape {
-    max-height: none;
+    gap: 4px;
+    max-height: 108px;
+    overflow: hidden;
+  }
+
+  .exchange-tape-row {
+    grid-template-columns: 16px minmax(0, 1fr);
+    gap: 5px;
+    padding: 5px 0;
+  }
+
+  .exchange-tape-row:nth-of-type(n + 4) {
+    display: none;
+  }
+
+  .exchange-tape-row strong {
+    font-size: 10px;
+  }
+
+  .exchange-tape-row span,
+  .exchange-tape-row em {
+    font-size: 9px;
+  }
+
+  .exchange-tape-row em {
+    display: none;
+  }
+
+  .exchange-proof-tape {
+    max-height: 108px;
   }
 }
 

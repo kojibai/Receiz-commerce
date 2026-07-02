@@ -239,7 +239,7 @@ export async function POST(request: NextRequest) {
   const actorReceizId = state.hosting.merchantReceizId || state.auth.receizId.handle;
   let publishState = state;
 
-  if (accessToken && merchantAuthority.source === "delegated_permission") {
+  if (accessToken) {
     const receiz = createReceizCommerceAdapter({
       baseUrl: process.env.RECEIZ_BASE_URL,
       accessToken
