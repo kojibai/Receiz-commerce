@@ -1,4 +1,5 @@
 import type { CommerceState, CustomerAccount } from "@/types/domain";
+import type { HostContext } from "@/lib/hosting/host-context";
 
 export function guestCustomerForStore(state: CommerceState): CustomerAccount {
   return {
@@ -33,4 +34,18 @@ export function customerReceizHandle(state: CommerceState, customer: CustomerAcc
   if (customer.receizHandle) return customer.receizHandle;
   if (state.auth.receizId.connected) return state.auth.receizId.handle;
   return "Receiz ID not connected";
+}
+
+function normalizedPathname(pathname: string) {
+  const clean = (pathname.split(/[?#]/)[0] || "/").trim();
+  if (!clean || clean === "/") return "/";
+  return clean.replace(/\/+$/, "") || "/";
+}
+
+export function customerAccountRouteForSurface(
+  hostContext: Pick<HostContext, "surface">,
+  pathname = "/"
+) {
+  if (hostContext.surface !== "tenant") return null;
+  return normalizedPathname(pathname) === "/account" ? null : "/account";
 }

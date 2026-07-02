@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import { InlineActionFeedback } from "@/components/ActionFeedback";
 import { Icons } from "@/components/icons";
 import {
@@ -19,7 +20,7 @@ import { brandThemeStyle } from "@/lib/theme";
 import { useTemplateStore } from "@/lib/storage/use-template-store";
 import { buildCartSummary, type CartSummary } from "@/lib/storefront/cart-summary";
 import { productRoutePath } from "@/lib/storefront/product-purchase";
-import { customerForAccountSurface, customerReceizHandle } from "@/lib/storefront/customer-session";
+import { customerAccountRouteForSurface, customerForAccountSurface, customerReceizHandle } from "@/lib/storefront/customer-session";
 import type { ActionFeedbackState } from "@/types/action-feedback";
 import type { BlogPost, CommerceState, CustomerAccount, Product, ReceizedAsset, Reward } from "@/types/domain";
 import type { HostContext } from "@/lib/hosting/host-context";
@@ -54,6 +55,8 @@ export function PublicStorefront({
   initialState?: CommerceState;
 }) {
   const { state, actions, actionFeedback, hostContext, hydrated, receizSessionPending } = useTemplateStore(initialState, initialHostContext);
+  const pathname = usePathname();
+  const router = useRouter();
   const [mobileView, setMobileView] = useState<MobileView>("store");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [identityUploadVisible, setIdentityUploadVisible] = useState(false);
@@ -113,13 +116,35 @@ export function PublicStorefront({
       actions.appendProofEvent("REWARD_CLAIMED", `${reward?.name ?? "Reward"} claimed`);
     })();
   };
+  const openCustomerAccount = useCallback(() => {
+    void (async () => {
+      setMobileMenuOpen(false);
+      const sessionReady = await ensureTenantCustomerSession("customer account");
+      const route = sessionReady ? customerAccountRouteForSurface(hostContext, pathname) : null;
+
+      if (route) {
+        router.push(route);
+        return;
+      }
+
+      setMobileView("account");
+      if (window.location.hash !== "#account") {
+        window.history.replaceState(null, "", "#account");
+      }
+    })();
+  }, [ensureTenantCustomerSession, hostContext, pathname, router]);
   const selectMobileView = (view: MobileView) => {
+    if (view === "account") {
+      openCustomerAccount();
+      return;
+    }
+
     setMobileView(view);
     setMobileMenuOpen(false);
     if (window.location.hash !== `#${view}`) {
       window.history.replaceState(null, "", `#${view}`);
     }
-    if (view === "account" || view === "assets" || view === "rewards") {
+    if (view === "assets" || view === "rewards") {
       void ensureTenantCustomerSession(`${view} account`);
     }
   };

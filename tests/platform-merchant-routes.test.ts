@@ -9,8 +9,13 @@ describe("platform merchant route fallback", () => {
     assert.equal(shouldHydratePlatformMerchantRoute(hostContextFromHost("receiz.app"), true), true);
   });
 
-  it("keeps tenant subdomains and custom domains bound to published proof resolution", () => {
-    assert.equal(shouldHydratePlatformMerchantRoute(hostContextFromHost("bjklock.receiz.app"), false), false);
-    assert.equal(shouldHydratePlatformMerchantRoute(hostContextFromHost("shop.bjklock.com"), false), false);
+  it("keeps resolved tenant routes server-rendered from published proof state", () => {
+    assert.equal(shouldHydratePlatformMerchantRoute(hostContextFromHost("bjklock.receiz.app"), true), false);
+    assert.equal(shouldHydratePlatformMerchantRoute(hostContextFromHost("shop.bjklock.com"), true), false);
+  });
+
+  it("hydrates unresolved tenant routes instead of falling through to the Vercel 404", () => {
+    assert.equal(shouldHydratePlatformMerchantRoute(hostContextFromHost("bjklock.receiz.app"), false), true);
+    assert.equal(shouldHydratePlatformMerchantRoute(hostContextFromHost("shop.bjklock.com"), false), true);
   });
 });

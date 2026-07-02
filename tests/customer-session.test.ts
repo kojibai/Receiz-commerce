@@ -1,6 +1,11 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { customerForAccountSurface, customerReceizHandle } from "../src/lib/storefront/customer-session.js";
+import { hostContextFromHost } from "../src/lib/hosting/host-context.js";
+import {
+  customerAccountRouteForSurface,
+  customerForAccountSurface,
+  customerReceizHandle
+} from "../src/lib/storefront/customer-session.js";
 import { baseState } from "./support/commerce-state.js";
 
 describe("customer account surface", () => {
@@ -45,5 +50,12 @@ describe("customer account surface", () => {
 
     assert.equal(customer.name, "Jordan Buyer");
     assert.equal(customerReceizHandle(state, customer), "jordan.receiz.id");
+  });
+
+  it("routes tenant customer account actions to the account page", () => {
+    assert.equal(customerAccountRouteForSurface(hostContextFromHost("bjklock.receiz.app"), "/"), "/account");
+    assert.equal(customerAccountRouteForSurface(hostContextFromHost("shop.example.com"), "/products/signature-drop"), "/account");
+    assert.equal(customerAccountRouteForSurface(hostContextFromHost("shop.example.com"), "/account"), null);
+    assert.equal(customerAccountRouteForSurface(hostContextFromHost("receiz.app"), "/products/signature-drop"), null);
   });
 });
