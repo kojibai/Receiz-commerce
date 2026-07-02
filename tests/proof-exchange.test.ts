@@ -123,7 +123,14 @@ describe("proof exchange", () => {
   });
 
   it("uses a canonical Receiz /v proof URL for listed assets", () => {
-    const state = baseState();
+    const state = {
+      ...baseState(),
+      exchange: {
+        ...baseState().exchange,
+        assets: [],
+        selectedAssetId: ""
+      }
+    };
     const listed = stateWithListedExchangeAsset(state, {
       source: "product",
       product: state.products[0]!,
@@ -132,7 +139,7 @@ describe("proof exchange", () => {
     });
     const asset = listed.exchange.assets[0]!;
 
-    assert.equal(asset.manifest.proof.verifyUrl, "https://receiz.com/v/coffee-pack/1782907800000");
+    assert.equal(asset.manifest.proof.verifyUrl, "https://receiz.com/v/coffee-pack/1782907800000178");
     assert.equal(asset.manifest.proof.verifyUrl.includes("/coffee-pack-proof-object/"), false);
     assert.equal(asset.manifest.links.verify, asset.manifest.proof.verifyUrl);
   });

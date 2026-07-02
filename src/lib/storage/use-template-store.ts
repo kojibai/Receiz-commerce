@@ -25,7 +25,10 @@ import { safeGetLocalStorage, safeRemoveLocalStorage, safeSetLocalStorage } from
 import { mergeCustomDomainHostingResponse } from "@/lib/storage/hosting-response";
 import { pendingPublishStorageKey, shouldResumePendingPublish } from "@/lib/storage/pending-publish";
 import { mergeStoreApiProjection, mergeStoreCommerceProjection } from "@/lib/storefront/store-api-projection";
-import { applyLocalReceizIdentitySession } from "@/lib/storefront/local-identity-session";
+import {
+  applyLocalReceizIdentitySession,
+  applyPlatformBrowserReceizIdSession
+} from "@/lib/storefront/local-identity-session";
 import {
   stateWithCartProduct,
   stateWithCartQuantity,
@@ -53,6 +56,10 @@ import {
   parseTenantCustomerSession,
   tenantCustomerSessionKey
 } from "@/lib/storefront/tenant-customer-session";
+import {
+  receizProfileMatchesWorkspace,
+  receizProfileOwnerKey
+} from "@/lib/storage/receiz-profile-workspace";
 import type { ActionFeedbackMap, ActionFeedbackStatus } from "@/types/action-feedback";
 import type {
   BlogPost,
@@ -967,10 +974,6 @@ function normalizeProfileHandle(value: string | undefined, fallback: string) {
   return handle.includes(".") ? handle : `${handle}.receiz.id`;
 }
 
-function ownerKeyFromProfile(profile: ReceizProfile) {
-  return compactString(profile.id, compactString(profile.handle, compactString(profile.email, "receiz-account")));
-}
-
 function displayNameFromProfile(profile: ReceizProfile) {
   const fromHandle = profile.handle?.replace(/\.receiz\.id$/i, "").replace(/[._-]+/g, " ");
   return compactString(profile.name, compactString(fromHandle, "New Receiz Store"));
@@ -1174,8 +1177,8 @@ function applyReceizProfile(
     return applyCustomerReceizProfile(current, profile);
   }
 
-  const ownerKey = ownerKeyFromProfile(profile);
-  const resetTemplate = current.auth.workspaceOwnerId !== ownerKey;
+  const ownerKey = receizProfileOwnerKey(profile);
+  const resetTemplate = !receizProfileMatchesWorkspace(current, profile);
   const base = resetTemplate ? createFreshMerchantWorkspace(current, profile) : current;
   const handle = normalizeProfileHandle(profile.handle, base.auth.receizId.handle);
   const displayName = displayNameFromProfile(profile);
@@ -1760,9 +1763,12 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
     const restoredBrowserIdentitySession = parseBrowserReceizIdSession(
       safeGetLocalStorage(window.localStorage, BROWSER_RECEIZ_ID_SESSION_KEY)
     );
+    const storedState = readState(context, initialState);
     const restoredState = restoredCustomerSession
-      ? applyTenantCustomerSession(readState(context, initialState), restoredCustomerSession)
-      : applyBrowserReceizIdSession(readState(context, initialState), restoredBrowserIdentitySession);
+      ? applyTenantCustomerSession(storedState, restoredCustomerSession)
+      : context.surface === "tenant"
+        ? applyBrowserReceizIdSession(storedState, restoredBrowserIdentitySession)
+        : applyPlatformBrowserReceizIdSession(storedState, restoredBrowserIdentitySession);
 
     setHostContext(context);
     setState(restoredState);
@@ -2264,12 +2270,16 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
           }>("/api/hosting", {
             action: "plan",
             plan,
+            hosting: stateRef.current.hosting,
             merchantProof: merchantProof(stateRef.current)
           });
           setActionFeedback("billing.plan", "success", `${plan} plan synced`);
           setState((current) => ({
             ...current,
-            hosting: result.hosting,
+            hosting: {
+              ...current.hosting,
+              plan: result.hosting.plan
+            },
             billing: result.billing,
             proofEvents: [makeEvent("HOSTING_PLAN_UPDATED", `${plan} plan synced with Receiz billing`), ...current.proofEvents]
           }));

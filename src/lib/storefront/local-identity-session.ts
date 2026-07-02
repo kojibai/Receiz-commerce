@@ -1,4 +1,5 @@
 import type { CommerceState, CustomerAccount, ReceizIdState } from "@/types/domain";
+import type { BrowserReceizIdSession } from "@/lib/storefront/tenant-customer-session";
 
 export type LocalReceizIdentitySessionInput = {
   accountImageLabel?: string;
@@ -183,6 +184,42 @@ function platformMerchantWorkspace(
       }
     ]
   };
+}
+
+function browserSessionIdentityInput(session: BrowserReceizIdSession): LocalReceizIdentitySessionInput {
+  return {
+    accountImageLabel: session.receizId.accountImageLabel,
+    artifactKind: session.receizId.artifactKind,
+    artifactStatus: session.receizId.artifactStatus,
+    displayName: session.receizId.displayName,
+    email: session.customer.email,
+    handle: session.receizId.handle,
+    keyId: session.receizId.keyId,
+    localProofVerified: session.receizId.localProofVerified,
+    loginMode: session.receizId.loginMode,
+    portableStateStatus: session.receizId.portableStateStatus,
+    statusLabel: session.receizId.statusLabel
+  };
+}
+
+function isDemoPlatformWorkspace(current: CommerceState) {
+  return (
+    !current.auth.receizId.connected &&
+    !current.auth.workspaceOwnerId &&
+    current.hosting.tenantSlug === "boost" &&
+    current.hosting.merchantReceizId === "boost.receiz.id"
+  );
+}
+
+export function applyPlatformBrowserReceizIdSession(
+  current: CommerceState,
+  session: BrowserReceizIdSession | null
+): CommerceState {
+  if (!session) return current;
+  if (current.auth.receizId.connected || current.auth.workspaceOwnerId) return current;
+  if (!isDemoPlatformWorkspace(current)) return current;
+
+  return applyLocalReceizIdentitySession(current, browserSessionIdentityInput(session), false);
 }
 
 export function applyLocalReceizIdentitySession(

@@ -308,8 +308,7 @@ describe("Receiz proof commerce state", () => {
   });
 
   it("preserves the submitted merchant host when building a published state", () => {
-    const savedImageUrl =
-      "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=";
+    const savedImageUrl = "https://media.receiz.test/saved-espresso-kit.webp";
     const submitted = {
       brand: { ...baseState().brand, name: "Bjklock Supply" },
       hosting: {
@@ -520,7 +519,7 @@ describe("Receiz proof commerce state", () => {
     assert.equal(projected.proofEvents.length, 0);
   });
 
-  it("keeps merchant image data URLs large enough for Identity Seal local publishing", () => {
+  it("omits inline image data from published proof records", () => {
     const imageDataUrl = `data:image/png;base64,${Buffer.alloc(96_000, "a").toString("base64")}`;
     const record = buildStoreStateRecord(
       {
@@ -541,20 +540,24 @@ describe("Receiz proof commerce state", () => {
       }
     );
 
-    assert.equal(record.state.brand.logoImageUrl, imageDataUrl);
-    assert.equal(record.state.products[0]?.imageUrl, imageDataUrl);
+    assert.equal(record.state.brand.logoImageUrl, null);
+    assert.equal(record.state.products[0]?.imageUrl, null);
+    assert.equal(JSON.stringify(record.state).includes("data:image"), false);
   });
 
-  it("keeps publish-safe visual inline media for Identity Seal signed storefronts", () => {
+  it("keeps durable media URLs and strips duplicated inline social images for signed storefronts", () => {
     const cameraRollDataUrl = `data:image/jpeg;base64,${Buffer.alloc(256_000, "a").toString("base64")}`;
+    const durableProductUrl = "https://media.receiz.test/product.webp";
+    const durableLogoUrl = "https://media.receiz.test/logo.webp";
+    const durableCoverUrl = "https://media.receiz.test/cover.webp";
     const record = buildStoreStateRecord(
       {
         ...baseState(),
-        brand: { ...baseState().brand, logoImageUrl: cameraRollDataUrl },
+        brand: { ...baseState().brand, logoImageUrl: durableLogoUrl },
         products: [
           {
             ...baseState().products[0],
-            imageUrl: cameraRollDataUrl,
+            imageUrl: durableProductUrl,
             seo: {
               canonicalPath: "/products/coffee-pack",
               description: "Whole bean",
@@ -576,7 +579,7 @@ describe("Receiz proof commerce state", () => {
             featured: true,
             authorName: "Boost Coffee",
             tags: ["coffee"],
-            coverImageUrl: cameraRollDataUrl,
+            coverImageUrl: durableCoverUrl,
             seo: {
               canonicalPath: "/blog/origin",
               title: "Origin story",
@@ -595,10 +598,10 @@ describe("Receiz proof commerce state", () => {
       }
     );
 
-    assert.equal(record.state.brand.logoImageUrl, cameraRollDataUrl);
-    assert.equal(record.state.products[0]?.imageUrl, cameraRollDataUrl);
+    assert.equal(record.state.brand.logoImageUrl, durableLogoUrl);
+    assert.equal(record.state.products[0]?.imageUrl, durableProductUrl);
     assert.equal(record.state.products[0]?.seo?.socialImageUrl, null);
-    assert.equal(record.state.blogPosts[0]?.coverImageUrl, cameraRollDataUrl);
+    assert.equal(record.state.blogPosts[0]?.coverImageUrl, durableCoverUrl);
     assert.equal(record.state.blogPosts[0]?.seo.socialImageUrl, null);
     assert.ok(JSON.stringify(buildStoreStateConnectRecord(record)).length < 20_000);
   });

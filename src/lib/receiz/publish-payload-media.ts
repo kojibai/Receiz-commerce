@@ -567,7 +567,7 @@ export async function preparePublishRequestBody<TStatePayload>({
     ...media,
     totalMaxChars: Math.min(media.totalMaxChars ?? PUBLISH_INLINE_MEDIA_TOTAL_MAX_CHARS, envelopeMediaBudget)
   });
-  let body = buildBody(statePayload(prepared.state));
+  let body = buildBody(statePayload(stripInlineMediaForRequestBudget(prepared.state)));
   let serializedBody = JSON.stringify(body);
 
   if (serializedBody.length > maxBodyChars) {
@@ -576,7 +576,7 @@ export async function preparePublishRequestBody<TStatePayload>({
       itemMaxChars: 0,
       totalMaxChars: 0
     });
-    body = buildBody(statePayload(stripped.state));
+    body = buildBody(statePayload(stripInlineMediaForRequestBudget(stripped.state)));
     serializedBody = JSON.stringify(body);
   }
 

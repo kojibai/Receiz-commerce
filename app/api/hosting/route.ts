@@ -165,6 +165,24 @@ function customDomainCanServeStorefront(customDomain: DomainStatus) {
   );
 }
 
+function hostingFromRequest(value: unknown): HostingConfig {
+  const current = mockHosting.getHostingStatus();
+  if (!isRecord(value)) return current;
+
+  return {
+    ...current,
+    ...(value as Partial<HostingConfig>),
+    subdomainStatus: {
+      ...current.subdomainStatus,
+      ...(isRecord(value.subdomainStatus) ? value.subdomainStatus : {})
+    },
+    customDomain: {
+      ...current.customDomain,
+      ...(isRecord(value.customDomain) ? value.customDomain : {})
+    }
+  };
+}
+
 function amountForPlan(plan: HostingConfig["plan"]) {
   if (plan === "starter") return "0.00";
   if (plan === "scale") return process.env.RECEIZ_SCALE_PLAN_USD ?? "199.00";
@@ -455,7 +473,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(platformBilling, { status });
     }
 
-    const planUpdate = hostingPlanUpdateFromPlatformPayment(mockHosting.getHostingStatus(), plan, platformBilling);
+    const currentHosting = hostingFromRequest(isRecord(body) ? body.hosting ?? (isRecord(body.state) ? body.state.hosting : null) : null);
+    const planUpdate = hostingPlanUpdateFromPlatformPayment(currentHosting, plan, platformBilling);
     if (!planUpdate.ok) {
       return NextResponse.json(
         {
@@ -471,15 +490,16 @@ export async function POST(request: NextRequest) {
     }
 
     const result = mockHosting.selectHostingPlan(plan);
+    const hosting = planUpdate.hosting;
     const billing = mockHosting.updateBilling(hostingBillingFromPlatformPayment(result.billing, plan, platformBilling));
     await recordReceizHostingEvent(accessToken, "hosting.plan.selected", {
       plan,
       platformBilling,
-      hosting: result.hosting,
+      hosting,
       billing
     });
 
-    return NextResponse.json({ ok: true, action, platformBilling, ...result, billing });
+    return NextResponse.json({ ok: true, action, platformBilling, ...result, hosting, billing });
   }
 
   if (action === "payment") {

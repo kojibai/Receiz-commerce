@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { applyLocalReceizIdentitySession } from "../src/lib/storefront/local-identity-session.js";
+import {
+  applyLocalReceizIdentitySession,
+  applyPlatformBrowserReceizIdSession
+} from "../src/lib/storefront/local-identity-session.js";
+import type { BrowserReceizIdSession } from "../src/lib/storefront/tenant-customer-session.js";
 import { customerForAccountSurface, customerReceizHandle } from "../src/lib/storefront/customer-session.js";
 import { baseState } from "./support/commerce-state.js";
 
@@ -88,5 +92,96 @@ describe("local Receiz identity sessions", () => {
     assert.deepEqual(state.pages, []);
     assert.deepEqual(state.blogPosts, []);
     assert.equal(JSON.stringify(state).includes("Boost"), false);
+  });
+
+  it("does not let a browser Receiz customer session reset an existing platform merchant workspace", () => {
+    const current = applyLocalReceizIdentitySession(
+      baseState(),
+      {
+        displayName: "BJ Klock",
+        handle: "bjklock.receiz.id",
+        loginMode: "restored_identity_artifact",
+        statusLabel: "Identity artifact locally verified",
+        localProofVerified: true
+      },
+      false
+    );
+    const customized = {
+      ...current,
+      brand: { ...current.brand, name: "Limited Drop With" },
+      products: [
+        {
+          ...baseState().products[0]!,
+          id: "signature-drop",
+          name: "Signature drop"
+        }
+      ],
+      hosting: {
+        ...current.hosting,
+        subdomain: "bjklock.receiz.app",
+        customDomain: {
+          ...current.hosting.customDomain,
+          domain: "shop.bjk.ceo",
+          verified: true,
+          dnsResolved: true,
+          liveUrl: "https://shop.bjk.ceo"
+        }
+      }
+    };
+    const session: BrowserReceizIdSession = {
+      version: 1,
+      savedAt: "2026-07-02T00:00:00.000Z",
+      customer: {
+        ...customized.auth.customer,
+        receizHandle: "bjklock.receiz.id"
+      },
+      receizId: customized.auth.receizId
+    };
+    const restored = applyPlatformBrowserReceizIdSession(customized, session);
+
+    assert.equal(restored.auth.signedInAs, "admin");
+    assert.equal(restored.brand.name, "Limited Drop With");
+    assert.equal(restored.products[0]?.name, "Signature drop");
+    assert.equal(restored.hosting.subdomain, "bjklock.receiz.app");
+    assert.equal(restored.hosting.customDomain.domain, "shop.bjk.ceo");
+  });
+
+  it("uses a browser Receiz session only to clear the untouched platform demo workspace", () => {
+    const session: BrowserReceizIdSession = {
+      version: 1,
+      savedAt: "2026-07-02T00:00:00.000Z",
+      customer: {
+        ...baseState().auth.customer,
+        name: "BJ Klock",
+        receizHandle: "bjklock.receiz.id"
+      },
+      receizId: {
+        ...baseState().auth.receizId,
+        connected: true,
+        displayName: "BJ Klock",
+        handle: "bjklock.receiz.id",
+        localProofVerified: true,
+        statusLabel: "Identity artifact locally verified"
+      }
+    };
+    const restored = applyPlatformBrowserReceizIdSession(
+      {
+        ...baseState(),
+        auth: {
+          ...baseState().auth,
+          signedInAs: "customer",
+          receizId: {
+            ...baseState().auth.receizId,
+            connected: false
+          }
+        }
+      },
+      session
+    );
+
+    assert.equal(restored.auth.signedInAs, "admin");
+    assert.equal(restored.auth.workspaceOwnerId, "bjklock.receiz.id");
+    assert.equal(restored.hosting.subdomain, "bjklock.receiz.app");
+    assert.deepEqual(restored.products, []);
   });
 });
