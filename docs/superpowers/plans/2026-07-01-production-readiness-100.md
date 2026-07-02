@@ -6,7 +6,7 @@
 
 **Architecture:** Add a pure launch-readiness domain model that scores a `CommerceState` against Receiz SDK, proof, storefront, checkout, domain, business, and operations requirements. Render that model in admin as a click-oriented command center and document the same gates for developers cloning the repo.
 
-**Tech Stack:** Next.js App Router, React 19, TypeScript, `@receiz/sdk@97.5.0`, Node test runner, existing CSS/component primitives.
+**Tech Stack:** Next.js App Router, React 19, TypeScript, `@receiz/sdk@97.6.0`, Node test runner, existing CSS/component primitives.
 
 ---
 

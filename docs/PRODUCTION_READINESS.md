@@ -101,12 +101,12 @@ Code paths:
 
 Required checks:
 
-- Publish appends through Receiz SDK rails first and requires the returned Kai pulse, anchor id, and proof bundle.
-- Publish writes a complete Receiz store-state record with `updatedKaiUpulse`, `appendAnchorId`, and `appendProof`.
+- Publish admits the verified local store-state proof object first, then appends the signed public-store feed through Receiz SDK rails.
+- Signed public-store publish requires the returned Kai pulse, anchor id, known head, and proof bundle from the append result.
 - Public-store publish includes the latest pages, blog posts, products, collections, rewards, assets, game, checkout, and hosting state.
-- Public-store idempotency is based on `storeStateRecord.updatedKaiUpulse`.
-- Tenant reads use `no-store` and recover the latest public-store/app-state projection carrying Kai/anchor.
-- Client merges require `proofMemory.knownHead.afterKaiUpulse`; older Kai heads and missing heads do not merge.
+- Public-store idempotency is based on the store-state record id and host.
+- Tenant reads use `no-store` and recover the latest public-store/app-state projection from the public proof rail.
+- Client/server projection selection must prefer the newest verified append and must not let Vercel memory, browser cache, or stale framework state outrank proof truth.
 - Tenant fallback always includes system pages for `/about`, `/rewards`, and `/account` so direct URLs do not fall through to platform 404s.
 - Tests `store-state-publication.test.ts`, `proof-state.test.ts`, `proof-state-store.test.ts`, and `store-api-projection.test.ts` must pass before release.
 

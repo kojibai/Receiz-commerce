@@ -37,7 +37,7 @@ The SDK integration follows the Receiz order:
 - Resume from the known Kai/proof head.
 - Append later verified additions without rediscovering known truth.
 
-Storefront publish follows the same law. The app calls the Receiz append rail through the SDK, requires the returned Kai pulse, anchor, and proof bundle, then builds the public store-state proof object with `updatedKaiUpulse` and `appendAnchorId`. Only that completed object is admitted into proof memory and published through `publicStore.publish()`. A public-store response without `proofMemory.knownHead.afterKaiUpulse` is ignored by the client, and the newest admitted Kai append always wins.
+Storefront publish follows the same law. The app admits the merchant's verified store-state proof object locally first, signs the canonical public-store feed with the merchant Identity Seal/Receiz Key through `publicStore.signPublish()`, and appends it through `publicStore.publishSigned()`. The returned Kai pulse, append anchor, and proof bundle are the public append coordinate. Connect/OIDC tokens may support delegated agent or server operations, but they are not merchant login authority and they are not required for merchant-owned storefront sync.
 
 No Supabase, Stripe, or app database is required for product truth. Local browser state in this template is demo composition only; proof memory is admitted proof truth, not a cache.
 
@@ -288,7 +288,7 @@ RECEIZ_ENABLE_TWIN_SCOPES=true
 RECEIZ_ENABLE_WORLD_SCOPES=true
 ```
 
-`@receiz/sdk@97.5.0` exposes typed Twin, World, public-store, customer, merchant, commerce, media, and domain namespaces. The frontend hides Receiz Twin buttons unless the capability flag is enabled and the SDK namespace is present. If you are testing against an older Receiz OIDC client, set `RECEIZ_ENABLE_TWIN_SCOPES=false` or `RECEIZ_ENABLE_WORLD_SCOPES=false` before login so Receiz does not reject the authorization request with `invalid_scope`.
+`@receiz/sdk@97.6.0` exposes typed Twin, World, signed public-store publish, customer, merchant, commerce, media, and domain namespaces. The frontend hides Receiz Twin buttons unless the capability flag is enabled and the SDK namespace is present. If you are testing against an older Receiz OIDC client, set `RECEIZ_ENABLE_TWIN_SCOPES=false` or `RECEIZ_ENABLE_WORLD_SCOPES=false` before login so Receiz does not reject the authorization request with `invalid_scope`.
 
 Do not send normal users out to Receiz.com for login. The setup is:
 
@@ -315,16 +315,14 @@ For MCP-capable agents such as Codex, add Receiz as an MCP server in the agent c
 ```toml
 [mcp_servers.receiz]
 command = "npx"
-args = ["-y", "@receiz/mcp-server@97.5.0"]
+args = ["-y", "@receiz/mcp-server@97.6.0"]
 startup_timeout_sec = 120
 
 [mcp_servers.receiz.env]
 RECEIZ_BASE_URL = "https://receiz.com"
-# Only for delegated agent write tools; not merchant login authority:
-# RECEIZ_ACCESS_TOKEN = "delegated_agent_access_token"
 ```
 
-Without a delegated agent token, MCP should still be able to run public diagnostics and public resolve/read tools. With a delegated token, MCP can publish/resolve app state, write public-store projections, verify assets, inspect proof objects, and make agent-driven setup faster. MCP never becomes the authority; it only helps inspect or invoke the SDK/API rails beneath the proof object.
+Use `@receiz/mcp-server@97.6.0` for agent-side diagnostics and SDK/API rail calls. MCP never becomes the authority; it only helps inspect or invoke the SDK/API rails beneath the proof object. Merchant-owned public-store sync uses the signed proof object path, not an app-level login token.
 
 `VERCEL_*` values are only for deployment/custom-domain automation if Vercel is hosting the SaaS. They are not commerce, payment, identity, or proof rails. After changing the production domain, update `NEXT_PUBLIC_SITE_URL` and `RECEIZ_ID_CALLBACK_URL` so Receiz ID redirect URLs use the correct origin. Never expose access tokens, webhook secrets, client secrets, or `VERCEL_API_TOKEN` with a `NEXT_PUBLIC_` prefix.
 

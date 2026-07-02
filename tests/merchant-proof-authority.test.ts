@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
+  merchantLocalProofObjectFromState,
   merchantProofAuthorityRequirement,
   type MerchantAuthorityAction
 } from "../src/lib/hosting/merchant-proof-authority.js";
@@ -46,6 +47,32 @@ describe("merchant proof authority gate", () => {
         source: "proof_object"
       });
     }
+  });
+
+  it("carries the local Identity Seal key file for signed public-store publish", () => {
+    const keyFile = {
+      schema: "receiz.key.v1",
+      crypto: {
+        publicKeyRawB64u: "public-key"
+      }
+    };
+
+    const proof = merchantLocalProofObjectFromState({
+      keyFile,
+      auth: {
+        receizId: {
+          connected: true,
+          displayName: "Local Merchant",
+          handle: "local-only.receiz.id",
+          localProofVerified: true
+        }
+      }
+    });
+
+    assert.equal(proof.connected, true);
+    assert.equal(proof.localProofVerified, true);
+    assert.equal(proof.handle, "local-only.receiz.id");
+    assert.deepEqual(proof.keyFile, keyFile);
   });
 
   it("does not accept an unverified local proof object as authority", () => {

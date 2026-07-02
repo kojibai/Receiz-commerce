@@ -69,7 +69,7 @@ SDK rails:
 - `merchants.profile`
 - `merchants.capabilities`
 
-These rails are exposed in `@receiz/sdk@97.5.0`. The app treats customer accounts as tenant-scoped storefront projections over Receiz proof. The same proof-bearing Receiz identity can be used across multiple stores, but orders, rewards, assets, and permissions are projected for the active subdomain or custom domain. SDK `doctor()` reports delegated-token, tenant, customer, merchant, commerce, media, domain, and public-store requirements directly.
+These rails are exposed in `@receiz/sdk@97.6.0`. The app treats customer accounts as tenant-scoped storefront projections over Receiz proof. The same proof-bearing Receiz identity can be used across multiple stores, but orders, rewards, assets, and permissions are projected for the active subdomain or custom domain. SDK `doctor()` reports delegated-token, tenant, customer, merchant, commerce, media, domain, and public-store requirements directly.
 
 ## Merchant Settlement
 
@@ -119,6 +119,9 @@ SDK rails:
 
 - `connect.record`
 - `publicStore.publish`
+- `publicStore.signPublish`
+- `publicStore.publishSigned`
+- `publicStore.publishWithIdentityProof`
 - `publicStore.resolve`
 - `appState.publish`
 - `appState.publishRecord`
@@ -131,13 +134,13 @@ SDK rails:
 
 Admin publish writes the public storefront projection through the SDK. The sequence is fixed:
 
-1. Build the public store projection only.
-2. Append through the SDK (`connect.record`) and require the returned Kai pulse, anchor id, and proof bundle.
-3. Build `StoreStateRecord` with `updatedKaiUpulse`, `appendAnchorId`, and `appendProof`.
-4. Admit that completed object into SDK proof memory.
-5. Publish through `publicStore.publish()` with idempotency based on `storeStateRecord.updatedKaiUpulse`.
+1. Build the public store-state proof object from the merchant workspace.
+2. Admit that object locally so the user/edge has the newest proof immediately.
+3. If the merchant Identity Seal/Receiz Key is present, sign the canonical feed through `publicStore.signPublish()`.
+4. Append the signed feed through `publicStore.publishSigned()` and keep the returned Kai pulse, append anchor id, known head, and proof bundle as the public append coordinate.
+5. Treat `connect.record` as auxiliary delegated telemetry only. It can never block the signed public-store append or become merchant login authority.
 
-Tenant cold starts recover public store projections through `publicStore.resolve`, `domains.resolveTenant`, and SDK app-state reads. The recovered object is accepted only when it is a complete store-state proof object carrying Kai and anchor. Client merges require `proofMemory.knownHead.afterKaiUpulse`; older heads are ignored and missing heads do not merge.
+Tenant cold starts recover public store projections through `publicStore.resolve`, `domains.resolveTenant`, and SDK app-state reads. The newest verified append is admitted into proof memory and becomes the local proof store for that host. Older projections can remain in history, but they cannot replace the newest append.
 
 Implementation anchors:
 
@@ -208,4 +211,4 @@ Receiz Twin/World buttons are hidden unless both are true:
 - The relevant `NEXT_PUBLIC_RECEIZ_*_ENABLED` flag is set.
 - The installed `@receiz/sdk` client exposes the matching namespace.
 
-With `@receiz/sdk@97.5.0`, typed app-state, public-store, Twin, World, commerce runtime, domain, customer, merchant, media, portability, and release namespaces are exposed. The publish path uploads inline merchant media with `media.upload()` before writing state with `publicStore.publish()`, so published subdomains and custom domains render durable Receiz media URLs instead of stripped local data URLs. The frontend still hides optional Twin/World buttons when the matching env flag is disabled.
+With `@receiz/sdk@97.6.0`, typed app-state, signed public-store publish, Twin, World, commerce runtime, domain, customer, merchant, media, portability, and release namespaces are exposed. The publish path uploads inline merchant media with `media.upload()` when delegated media permission is available, then writes state through the signed public-store rail when the local Identity Seal key file is present, so published subdomains and custom domains render durable Receiz media URLs and the current proof object. The frontend still hides optional Twin/World buttons when the matching env flag is disabled.

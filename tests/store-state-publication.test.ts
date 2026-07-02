@@ -52,6 +52,44 @@ describe("Receiz store-state publication", () => {
     assert.equal(observedRecordId, record.id);
   });
 
+  it("passes the verified proof object to the public-store publish rail", async () => {
+    const record = buildStoreStateRecord(baseState(), {
+      actorReceizId: "boost.receiz.id",
+      tenantHost: "boost.receiz.app",
+      ...receizAppendFixture("2026-07-01T20:00:15.000Z")
+    });
+    const { admitted, store } = proofStoreSpy();
+    const keyFile = { schema: "receiz.key.v1", crypto: { publicKeyRawB64u: "public-key" } };
+    let observedProof: unknown;
+
+    const result = await publishAndAdmitReceizStoreState({
+      accessToken: undefined,
+      proof: { keyFile },
+      record,
+      proofStore: store,
+      publish: async (_accessToken, _publishedRecord, proof) => {
+        observedProof = proof;
+        return {
+          ok: true,
+          publicStore: [
+            {
+              ok: true,
+              knownHead: {
+                afterKaiUpulse: "kai-1782936015000",
+                appendAnchorId: "anchor-1782936015000"
+              }
+            }
+          ]
+        };
+      }
+    });
+
+    assert.equal(receizStoreStateWriteSucceeded(result), true);
+    assert.equal(receizStoreStateSyncCompleted(result), true);
+    assert.deepEqual(admitted, [record.id]);
+    assert.deepEqual(observedProof, { keyFile });
+  });
+
   it("keeps local proof admission even when delegated remote sync reports a failure", async () => {
     const record = buildStoreStateRecord(baseState(), {
       actorReceizId: "boost.receiz.id",

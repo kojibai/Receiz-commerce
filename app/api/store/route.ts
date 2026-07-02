@@ -80,6 +80,10 @@ function publicStoreWriteFailureMessage(error: string) {
     return "Receiz public-store sync needs proof-authorized write permission. The proof object was admitted locally first.";
   }
 
+  if (error === "receiz_access_token_required") {
+    return "Receiz public-store sync needs a signed local proof object append. Restore the Identity Seal in app, then publish again.";
+  }
+
   return error;
 }
 
@@ -257,7 +261,11 @@ export async function POST(request: NextRequest) {
   const receizRecord = await publishAndAdmitReceizStoreState({
     accessToken,
     record,
-    proofStore
+    proofStore,
+    proof: {
+      keyFile: merchantAuthority.localIdentity.keyFile,
+      passphrase: merchantAuthority.localIdentity.passphrase
+    }
   });
   const storeStateSyncOk = receizStoreStateWriteSucceeded(receizRecord);
   const storeStateSynced = receizStoreStateSyncCompleted(receizRecord);

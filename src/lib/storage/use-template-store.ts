@@ -1209,14 +1209,16 @@ function publishedStatePayload(state: CommerceState) {
   };
 }
 
-function merchantProofPayload(state: CommerceState) {
+function merchantProofPayload(state: CommerceState, keyFile?: unknown | null) {
   return {
+    ...(keyFile ? { keyFile } : {}),
     auth: {
       receizId: {
         connected: state.auth.receizId.connected,
         handle: state.auth.receizId.handle,
         displayName: state.auth.receizId.displayName,
-        localProofVerified: state.auth.receizId.localProofVerified
+        localProofVerified: state.auth.receizId.localProofVerified,
+        ...(keyFile ? { keyFile } : {})
       }
     }
   };
@@ -1353,6 +1355,20 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
   const stateRef = useRef(initialState);
   const pendingBrowserIdentityKeyFileRef = useRef<unknown | null>(null);
   const publishResumeAttemptedRef = useRef(false);
+
+  const merchantProofKeyFile = useCallback(() => {
+    if (pendingBrowserIdentityKeyFileRef.current) return pendingBrowserIdentityKeyFileRef.current;
+    if (typeof window === "undefined") return null;
+
+    return parseBrowserReceizIdSession(
+      safeGetLocalStorage(window.localStorage, BROWSER_RECEIZ_ID_SESSION_KEY)
+    )?.keyFile ?? null;
+  }, []);
+
+  const merchantProof = useCallback(
+    (snapshot: CommerceState) => merchantProofPayload(snapshot, merchantProofKeyFile()),
+    [merchantProofKeyFile]
+  );
 
   const setActionFeedback = useCallback((id: string, status: ActionFeedbackStatus, message: string) => {
     setActionFeedbackState((current) => ({
@@ -1722,7 +1738,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
           const result = await postJson<{ hosting: CommerceState["hosting"]; storeStateSync?: StoreStateSyncResponse }>("/api/hosting", {
             action: "custom_domain",
             domain: normalizedDomain,
-            merchantProof: merchantProofPayload(stateRef.current),
+            merchantProof: merchantProof(stateRef.current),
             state: stateRef.current
           });
           const syncError = storeStateSyncError(result.storeStateSync);
@@ -1816,7 +1832,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
           const result = await postJson<{ hosting: CommerceState["hosting"]; storeStateSync?: StoreStateSyncResponse }>("/api/hosting", {
             action: "verify_domain",
             domain: normalizedDomain,
-            merchantProof: merchantProofPayload(stateRef.current),
+            merchantProof: merchantProof(stateRef.current),
             state: stateRef.current
           });
           const syncError = storeStateSyncError(result.storeStateSync);
@@ -1885,7 +1901,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
           }>("/api/hosting", {
             action: "plan",
             plan,
-            merchantProof: merchantProofPayload(stateRef.current)
+            merchantProof: merchantProof(stateRef.current)
           });
           setActionFeedback("billing.plan", "success", `${plan} plan synced`);
           setState((current) => ({
@@ -1922,7 +1938,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
           const result = await postJson<{ billing: CommerceState["billing"] }>("/api/hosting", {
             action: "payment",
             paymentMethodLabel: label,
-            merchantProof: merchantProofPayload(stateRef.current)
+            merchantProof: merchantProof(stateRef.current)
           });
           setActionFeedback("billing.payment", "success", "Billing synced");
           setState((current) => ({
@@ -2343,7 +2359,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
               storeStateSync?: StoreStateSyncResponse;
           }>("/api/hosting", {
             action: "publish",
-            merchantProof: merchantProofPayload(publishRequestState),
+            merchantProof: merchantProof(publishRequestState),
             state: publishedStatePayload(publishRequestState)
           }, { deferAuthorityRedirect: true })
               .then((result) => {
@@ -2601,7 +2617,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
             tenantHost: checkoutTenantHost(checkoutSnapshot),
             merchantReceizId: checkoutSnapshot.hosting.merchantReceizId,
             customerReceizId: checkoutSnapshot.auth.receizId.handle,
-            merchantProof: merchantProofPayload(checkoutSnapshot),
+            merchantProof: merchantProof(checkoutSnapshot),
             successUrl: `${window.location.origin}/?checkout=success`,
             cancelUrl: `${window.location.origin}/?checkout=cancel`
           }, { deferAuthorityRedirect: true });
@@ -2744,7 +2760,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
         }));
       }
     }),
-    [ensureMerchantProofAuthority, setActionFeedback]
+    [ensureMerchantProofAuthority, merchantProof, setActionFeedback]
   );
 
   useEffect(() => {

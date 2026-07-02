@@ -68,6 +68,18 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
 
+function proofKeyFileFrom(value: Record<string, unknown>, receizId: Record<string, unknown>) {
+  const keyFile = isRecord(value.keyFile)
+    ? value.keyFile
+    : isRecord(value.identityKeyFile)
+      ? value.identityKeyFile
+      : isRecord(receizId.keyFile)
+        ? receizId.keyFile
+        : null;
+
+  return keyFile;
+}
+
 export function merchantLocalProofObjectFromState(value: unknown) {
   const state = isRecord(value) ? value : {};
   const auth = isRecord(state.auth) ? state.auth : {};
@@ -77,7 +89,14 @@ export function merchantLocalProofObjectFromState(value: unknown) {
     connected: receizId.connected === true,
     localProofVerified: receizId.localProofVerified === true,
     handle: normalizedHandle(typeof receizId.handle === "string" ? receizId.handle : ""),
-    displayName: normalizedHandle(typeof receizId.displayName === "string" ? receizId.displayName : "")
+    displayName: normalizedHandle(typeof receizId.displayName === "string" ? receizId.displayName : ""),
+    keyFile: proofKeyFileFrom(state, receizId),
+    passphrase:
+      typeof state.passphrase === "string"
+        ? state.passphrase
+        : typeof receizId.passphrase === "string"
+          ? receizId.passphrase
+          : undefined
   };
 }
 

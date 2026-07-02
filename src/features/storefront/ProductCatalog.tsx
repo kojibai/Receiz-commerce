@@ -7,14 +7,19 @@ import { Button, ProductVisual, SectionHeader, StatusPill } from "@/components/u
 import { productRoutePath } from "@/lib/storefront/product-purchase";
 import type { Product } from "@/types/domain";
 
-function openProductPath(path: string) {
+function openProductPath(path: string, openProduct?: () => void) {
+  if (openProduct) {
+    openProduct();
+    return;
+  }
+
   window.location.assign(path);
 }
 
-function openProductPathFromKeyboard(event: KeyboardEvent<HTMLElement>, path: string) {
+function openProductPathFromKeyboard(event: KeyboardEvent<HTMLElement>, path: string, openProduct?: () => void) {
   if (event.key === "Enter" || event.key === " ") {
     event.preventDefault();
-    openProductPath(path);
+    openProductPath(path, openProduct);
   }
 }
 
@@ -25,7 +30,8 @@ export function ProductCatalog({
   showAdminActions = true,
   showCartActions = true,
   products,
-  onAddToCart
+  onAddToCart,
+  onProductOpen
 }: {
   addedProductId?: string | null;
   brandImageUrl?: string | null;
@@ -34,6 +40,7 @@ export function ProductCatalog({
   showCartActions?: boolean;
   products: Product[];
   onAddToCart: (productId: string) => void;
+  onProductOpen?: (product: Product) => void;
 }) {
   const showProductActions = showAdminActions || showCartActions;
 
@@ -61,15 +68,22 @@ export function ProductCatalog({
           <span>Receiz</span>
           {showProductActions ? <span>Actions</span> : null}
         </div>
-        {products.slice(0, 4).map((product) => (
+        {products.slice(0, 4).map((product) => {
+          const openProduct = onProductOpen ? () => onProductOpen(product) : undefined;
+
+          return (
           <div className="table-row" key={product.id}>
-            <Link className="product-cell product-cell-link" href={productRoutePath(product)}>
+            <button
+              className="product-cell product-cell-link product-cell-button"
+              onClick={() => openProductPath(productRoutePath(product), openProduct)}
+              type="button"
+            >
               <ProductVisual brandImageUrl={brandImageUrl} brandLabel={brandLabel} product={product} />
               <div>
                 <strong>{product.name}</strong>
                 <p>{product.subtitle}</p>
               </div>
-            </Link>
+            </button>
             <span>{product.type.replace("_", " ")}</span>
             <span>{product.priceLabel}</span>
             <StatusPill tone="green">Active</StatusPill>
@@ -96,7 +110,8 @@ export function ProductCatalog({
               </div>
             ) : null}
           </div>
-        ))}
+          );
+        })}
         {products.length === 0 ? (
           <div className="panel-empty-state table-empty-state">
             <Icons.products size={22} />
@@ -110,21 +125,22 @@ export function ProductCatalog({
         {products.length ? (
           products.slice(0, 4).map((product) => {
             const productPath = productRoutePath(product);
+            const openProduct = onProductOpen ? () => onProductOpen(product) : undefined;
 
             return (
             <article
               className="mobile-product-card clickable-product-card"
               key={product.id}
-              onClick={() => openProductPath(productPath)}
-              onKeyDown={(event) => openProductPathFromKeyboard(event, productPath)}
-              role="link"
+              onClick={() => openProductPath(productPath, openProduct)}
+              onKeyDown={(event) => openProductPathFromKeyboard(event, productPath, openProduct)}
+              role="button"
               tabIndex={0}
             >
-              <Link className="mobile-product-link" href={productPath} onClick={(event) => event.stopPropagation()}>
+              <div className="mobile-product-link">
                 <ProductVisual brandImageUrl={brandImageUrl} brandLabel={brandLabel} product={product} />
                 <strong>{product.name}</strong>
                 <p>{product.subtitle}</p>
-              </Link>
+              </div>
               <div>
                 <span>{product.priceLabel}</span>
                 {showCartActions ? (

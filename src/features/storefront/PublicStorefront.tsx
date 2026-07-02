@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { InlineActionFeedback } from "@/components/ActionFeedback";
 import { Icons } from "@/components/icons";
@@ -21,6 +21,11 @@ import { buildCartSummary, type CartSummary } from "@/lib/storefront/cart-summar
 import { buildProductPurchaseModel, productRoutePath } from "@/lib/storefront/product-purchase";
 import { resolveProductBySlug } from "@/lib/storefront/content-routing";
 import { customerForAccountSurface, customerReceizHandle } from "@/lib/storefront/customer-session";
+import {
+  accountRouteActiveFromMobileView,
+  shouldAutoResolveAccountRouteSession,
+  shouldShowAccountIdentityEntry
+} from "@/lib/storefront/account-route-session";
 import type { ActionFeedbackState } from "@/types/action-feedback";
 import type { BlogPost, CommerceState, CustomerAccount, Product, ReceizedAsset, Reward } from "@/types/domain";
 import type { HostContext } from "@/lib/hosting/host-context";
@@ -72,6 +77,8 @@ export function PublicStorefront({
   const [identityUploadVisible, setIdentityUploadVisible] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
   const [cartPulseProductId, setCartPulseProductId] = useState<string | null>(null);
+  const [platformAccountResolving, setPlatformAccountResolving] = useState(false);
+  const platformAccountAutoResolvedRef = useRef(false);
   const tenantSurface = hostContext.surface === "tenant";
   const customer = customerForAccountSurface(state, tenantSurface);
   const receizHandle = customerReceizHandle(state, customer, tenantSurface);
@@ -82,7 +89,13 @@ export function PublicStorefront({
   const cartSummary = buildCartSummary(state);
   const selectedProduct = selectedProductSlug ? resolveProductBySlug(state, selectedProductSlug) : null;
   const identityActionsReady = hydrated && !receizSessionPending;
-  const showIdentityEntry = identityActionsReady && !state.auth.receizId.connected;
+  const accountRouteActive = !tenantSurface && accountRouteActiveFromMobileView(mobileView);
+  const showIdentityEntry = shouldShowAccountIdentityEntry({
+    accountRouteActive,
+    identityActionsReady,
+    receizConnected: state.auth.receizId.connected,
+    resolvingAccountSession: platformAccountResolving
+  });
   const showIdentityUploadFallback = showIdentityEntry && (identityUploadVisible || !state.auth.receizId.connected);
 
   useEffect(() => {
@@ -117,6 +130,55 @@ export function PublicStorefront({
     },
     [actions, identityActionsReady, state.auth.receizId.connected, tenantSurface]
   );
+  const resolvePlatformMerchantAccount = useCallback(async () => {
+    if (
+      platformAccountAutoResolvedRef.current ||
+      !shouldAutoResolveAccountRouteSession({
+        accountRouteActive,
+        identityActionsReady,
+        receizConnected: state.auth.receizId.connected,
+        resolvingAccountSession: platformAccountResolving
+      })
+    ) {
+      return;
+    }
+
+    platformAccountAutoResolvedRef.current = true;
+    setPlatformAccountResolving(true);
+    try {
+      const connected = await actions.connectExistingReceizId();
+      if (!connected) {
+        await actions.signInWithReceizId();
+      }
+      setIdentityUploadVisible(false);
+    } finally {
+      setPlatformAccountResolving(false);
+    }
+  }, [
+    accountRouteActive,
+    actions,
+    identityActionsReady,
+    platformAccountResolving,
+    state.auth.receizId.connected
+  ]);
+  const openProductOverlay = useCallback((product: Product) => {
+    const path = productRoutePath(product);
+    const hash = path.includes("#") ? path.slice(path.indexOf("#")) : `#product=${encodeURIComponent(product.id)}`;
+    const slug = productSlugFromHash(hash) ?? product.id;
+
+    setSelectedProductSlug(slug);
+    setMobileView("store");
+    setMobileMenuOpen(false);
+    if (typeof window !== "undefined" && window.location.hash !== hash) {
+      window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}${hash}`);
+    }
+  }, []);
+  const closeProductOverlay = useCallback(() => {
+    setSelectedProductSlug(null);
+    if (typeof window !== "undefined" && productSlugFromHash(window.location.hash)) {
+      window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}#store`);
+    }
+  }, []);
   const sealObject = () => actions.appendProofEvent("OBJECT_VERIFIED", "Coffee Pack · Serial #BC-88421");
   const issueReward = () => actions.appendProofEvent("REWARD_ISSUED", `${reward?.name ?? "Reward"} · ${state.brand.name}`);
   const triggerCartFeedback = (productId: string) => {
@@ -139,6 +201,9 @@ export function PublicStorefront({
     setSelectedProductSlug(null);
     setMobileView(view);
     setMobileMenuOpen(false);
+    if (!tenantSurface && view === "account") {
+      void resolvePlatformMerchantAccount();
+    }
     if (window.location.hash !== `#${view}`) {
       window.history.replaceState(null, "", `#${view}`);
     }
@@ -205,6 +270,18 @@ export function PublicStorefront({
   }, [ensureTenantCustomerSession, mobileView]);
 
   useEffect(() => {
+    if (!accountRouteActive) {
+      platformAccountAutoResolvedRef.current = false;
+    }
+  }, [accountRouteActive]);
+
+  useEffect(() => {
+    if (!tenantSurface && mobileView === "account") {
+      void resolvePlatformMerchantAccount();
+    }
+  }, [mobileView, resolvePlatformMerchantAccount, tenantSurface]);
+
+  useEffect(() => {
     if (!cartSummary.lines.length) {
       setCartOpen(false);
     }
@@ -228,18 +305,7 @@ export function PublicStorefront({
               <p>{state.storefront.subheadline}</p>
             </div>
 
-            {selectedProduct ? (
-              <StorefrontProductDetail
-                addedProductId={cartPulseProductId}
-                checkoutFeedback={actionFeedback.checkout}
-                onAddToCart={addToCart}
-                onBack={() => selectMobileView("store")}
-                onCheckout={checkoutProduct}
-                product={selectedProduct}
-                state={state}
-                tenantSurface={tenantSurface}
-              />
-            ) : homepageMode === "blog" ? (
+            {homepageMode === "blog" ? (
               <>
                 <BlogHomeSection
                   posts={state.blogPosts}
@@ -252,6 +318,7 @@ export function PublicStorefront({
                   brandLabel={state.brand.logoText}
                   products={state.products}
                   onAddToCart={addToCart}
+                  onProductOpen={openProductOverlay}
                   showAdminActions={!tenantSurface}
                   showCartActions={tenantSurface}
                 />
@@ -274,6 +341,7 @@ export function PublicStorefront({
                   brandLabel={state.brand.logoText}
                   products={state.products}
                   onAddToCart={addToCart}
+                  onProductOpen={openProductOverlay}
                   showAdminActions={!tenantSurface}
                   showCartActions={tenantSurface}
                 />
@@ -329,6 +397,7 @@ export function PublicStorefront({
                   brandLabel={state.brand.logoText}
                   products={state.products}
                   onAddToCart={addToCart}
+                  onProductOpen={openProductOverlay}
                   showAdminActions={!tenantSurface}
                   showCartActions={tenantSurface}
                 />
@@ -383,9 +452,8 @@ export function PublicStorefront({
           customer={customer}
           customerReceizHandle={receizHandle}
           onAddToCart={addToCart}
-          onBackToStore={() => selectMobileView("store")}
           onCheckout={oneClickCheckout}
-          onProductCheckout={checkoutProduct}
+          onProductOpen={openProductOverlay}
           checkoutFeedback={actionFeedback.checkout}
           onClaimReward={claimReward}
           onDownloadIdentitySeal={actions.downloadIdentitySealImage}
@@ -401,9 +469,20 @@ export function PublicStorefront({
           onPlayComplete={completeGame}
           campaignName={campaignName}
           reward={reward}
-          selectedProduct={selectedProduct}
           state={state}
         />
+        {selectedProduct ? (
+          <ProductPagePopover
+            addedProductId={cartPulseProductId}
+            checkoutFeedback={actionFeedback.checkout}
+            onAddToCart={addToCart}
+            onCheckout={checkoutProduct}
+            onClose={closeProductOverlay}
+            product={selectedProduct}
+            state={state}
+            tenantSurface={tenantSurface}
+          />
+        ) : null}
         <MobileCommandMenu
           activeView={mobileView}
           homepageMode={homepageMode}
@@ -743,6 +822,57 @@ function StorefrontProductDetail({
   );
 }
 
+function ProductPagePopover({
+  addedProductId,
+  checkoutFeedback,
+  onAddToCart,
+  onCheckout,
+  onClose,
+  product,
+  state,
+  tenantSurface
+}: {
+  addedProductId?: string | null;
+  checkoutFeedback?: ActionFeedbackState;
+  onAddToCart: (productId: string) => void;
+  onCheckout: (productId: string) => void | Promise<void>;
+  onClose: () => void;
+  product: Product;
+  state: CommerceState;
+  tenantSurface: boolean;
+}) {
+  return (
+    <div aria-modal="true" className="product-page-popover" role="dialog">
+      <div className="product-page-popover-shell">
+        <div className="product-page-popover-topbar">
+          <button aria-label="Back to store" className="icon-button" onClick={onClose} type="button">
+            <Icons.chevronLeft size={19} />
+          </button>
+          <div>
+            <span>{state.hosting.customDomain.domain || state.hosting.subdomain}</span>
+            <strong>{product.name}</strong>
+          </div>
+          <button aria-label="Close product" className="icon-button" onClick={onClose} type="button">
+            <Icons.close size={18} />
+          </button>
+        </div>
+        <div className="product-page-popover-body">
+          <StorefrontProductDetail
+            addedProductId={addedProductId}
+            checkoutFeedback={checkoutFeedback}
+            onAddToCart={onAddToCart}
+            onBack={onClose}
+            onCheckout={onCheckout}
+            product={product}
+            state={state}
+            tenantSurface={tenantSurface}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function MobileProductDetailPanel({
   active,
   addedProductId,
@@ -787,9 +917,8 @@ function MobileStage({
   customer,
   checkoutFeedback,
   onAddToCart,
-  onBackToStore,
   onCheckout,
-  onProductCheckout,
+  onProductOpen,
   onClaimReward,
   onDownloadIdentitySeal,
   onExistingReceizId,
@@ -800,7 +929,6 @@ function MobileStage({
   onRestoreArtifact,
   onSeal,
   reward,
-  selectedProduct,
   showIdentityEntry,
   showIdentityUpload,
   state,
@@ -814,9 +942,8 @@ function MobileStage({
   checkoutFeedback?: ActionFeedbackState;
   customerReceizHandle: string;
   onAddToCart: (productId: string) => void;
-  onBackToStore: () => void;
   onCheckout: () => void;
-  onProductCheckout: (productId: string) => void | Promise<void>;
+  onProductOpen: (product: Product) => void;
   onClaimReward: () => void;
   onDownloadIdentitySeal: () => void | Promise<void>;
   onExistingReceizId: () => void | Promise<void>;
@@ -827,7 +954,6 @@ function MobileStage({
   onRestoreArtifact: (file: File) => void | Promise<void>;
   onSeal: () => void;
   reward: Reward | null;
-  selectedProduct: Product | null;
   showIdentityEntry: boolean;
   showIdentityUpload: boolean;
   state: CommerceState;
@@ -835,32 +961,19 @@ function MobileStage({
 }) {
   return (
     <div className="mobile-stage" data-active-view={activeView}>
-      {selectedProduct ? (
-        <MobileProductDetailPanel
-          active={activeView === "store"}
-          addedProductId={addedProductId}
-          checkoutFeedback={checkoutFeedback}
-          onAddToCart={onAddToCart}
-          onBack={onBackToStore}
-          onCheckout={onProductCheckout}
-          product={selectedProduct}
-          state={state}
-          tenantSurface={tenantSurface}
-        />
-      ) : (
-        <MobileStorePanel
-          active={activeView === "store"}
-          addedProductId={addedProductId}
-          blogPosts={state.blogPosts}
-          collections={state.collections}
-          onAddToCart={onAddToCart}
-          onCheckout={onCheckout}
-          onSeal={onSeal}
-          products={state.products}
-          state={state}
-          tenantSurface={tenantSurface}
-        />
-      )}
+      <MobileStorePanel
+        active={activeView === "store"}
+        addedProductId={addedProductId}
+        blogPosts={state.blogPosts}
+        collections={state.collections}
+        onAddToCart={onAddToCart}
+        onCheckout={onCheckout}
+        onProductOpen={onProductOpen}
+        onSeal={onSeal}
+        products={state.products}
+        state={state}
+        tenantSurface={tenantSurface}
+      />
       <MobileRewardsPanel
         active={activeView === "rewards"}
         brandImageUrl={state.brand.logoImageUrl}
@@ -1026,6 +1139,7 @@ function MobileStorePanel({
   tenantSurface,
   onAddToCart,
   onCheckout,
+  onProductOpen,
   onSeal
 }: {
   active: boolean;
@@ -1037,6 +1151,7 @@ function MobileStorePanel({
   tenantSurface: boolean;
   onAddToCart: (productId: string) => void;
   onCheckout: () => void;
+  onProductOpen: (product: Product) => void;
   onSeal: () => void;
 }) {
   const firstProduct = products[0];
@@ -1072,11 +1187,11 @@ function MobileStorePanel({
           </div>
         </div>
         {firstProduct ? (
-          <Link className="mobile-featured-product" href={productRoutePath(firstProduct)}>
+          <button className="mobile-featured-product" onClick={() => onProductOpen(firstProduct)} type="button">
             <BrandMark imageUrl={state.brand.logoImageUrl} label={state.brand.logoText} />
             <strong>{firstProduct.name}</strong>
             <small>{firstProduct.priceLabel}</small>
-          </Link>
+          </button>
         ) : (
           <div className="mobile-featured-product">
             <BrandMark imageUrl={state.brand.logoImageUrl} label={state.brand.logoText} />
@@ -1096,31 +1211,28 @@ function MobileStorePanel({
 
       <div className="mobile-mini-products">
         {products.length ? (
-          products.slice(0, 2).map((product) => {
-            const productPath = productRoutePath(product);
-
-            return (
+          products.slice(0, 2).map((product) => (
             <article
               className="clickable-product-card"
               key={product.id}
-              onClick={() => window.location.assign(productPath)}
+              onClick={() => onProductOpen(product)}
               onKeyDown={(event) => {
                 if (event.key === "Enter" || event.key === " ") {
                   event.preventDefault();
-                  window.location.assign(productPath);
+                  onProductOpen(product);
                 }
               }}
-              role="link"
+              role="button"
               tabIndex={0}
             >
-              <Link className="mobile-mini-product-link" href={productPath} onClick={(event) => event.stopPropagation()}>
+              <div className="mobile-mini-product-link">
                 <ProductVisual brandImageUrl={state.brand.logoImageUrl} brandLabel={state.brand.logoText} product={product} />
                 <div className="mobile-mini-product-copy">
                   <strong>{product.name}</strong>
                   <span>{product.subtitle}</span>
                   <b>{product.priceLabel}</b>
                 </div>
-              </Link>
+              </div>
               {tenantSurface ? (
                 <button
                   aria-label={`Add ${product.name} to cart`}
@@ -1135,8 +1247,7 @@ function MobileStorePanel({
                 </button>
               ) : null}
             </article>
-            );
-          })
+          ))
         ) : (
           <div className="mobile-empty-state">
             <Icons.products size={24} />
