@@ -128,11 +128,13 @@ function recordId(prefix: string, tenantHost: string, recordedAt: string) {
   return `${prefix}:${tenantHost}:${stamp}`;
 }
 
+const MAX_COMPACT_INLINE_MEDIA_CHARS = 160_000;
+
 function shouldCompactInlineMedia(path: string[], value: string) {
   const key = path.at(-1) ?? "";
 
   if (key === "socialImageUrl") return true;
-  return value.startsWith("data:");
+  return value.startsWith("data:") && value.length > MAX_COMPACT_INLINE_MEDIA_CHARS;
 }
 
 function compactInlineMedia(value: unknown, path: string[] = []): unknown {

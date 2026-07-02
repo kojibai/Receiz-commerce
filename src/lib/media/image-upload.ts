@@ -1,5 +1,11 @@
+import {
+  compressInlineImageDataUrlForPublish,
+  PUBLISH_INLINE_MEDIA_ITEM_MAX_CHARS
+} from "../receiz/publish-payload-media";
+
 export const IMAGE_UPLOAD_ACCEPT = "image/*";
 export const DEFAULT_IMAGE_UPLOAD_MAX_BYTES = 5 * 1024 * 1024;
+export const DEFAULT_STORED_IMAGE_MAX_CHARS = PUBLISH_INLINE_MEDIA_ITEM_MAX_CHARS;
 
 export type ImageValidationOptions = {
   maxBytes?: number;
@@ -38,9 +44,18 @@ export function readImageFileAsDataUrl(
 
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.addEventListener("load", () => {
+    reader.addEventListener("load", async () => {
       if (typeof reader.result === "string") {
-        resolve(reader.result);
+        const dataUrl = reader.result;
+
+        try {
+          resolve(
+            (await compressInlineImageDataUrlForPublish(dataUrl, ["browser", "imageUpload"], DEFAULT_STORED_IMAGE_MAX_CHARS)) ??
+              dataUrl
+          );
+        } catch {
+          resolve(dataUrl);
+        }
       } else {
         reject(new Error("Could not read image file."));
       }

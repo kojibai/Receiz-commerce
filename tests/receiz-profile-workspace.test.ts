@@ -59,4 +59,34 @@ describe("Receiz profile workspace ownership", () => {
       false
     );
   });
+
+  it("does not let an opaque delegated profile reset a locally verified merchant workspace", () => {
+    const state = {
+      ...baseState(),
+      hosting: {
+        ...baseState().hosting,
+        tenantSlug: "bjklock",
+        subdomain: "bjklock.receiz.app",
+        merchantReceizId: "bjklock.receiz.id"
+      },
+      auth: {
+        ...baseState().auth,
+        workspaceOwnerId: "bjklock.receiz.id",
+        receizId: {
+          ...baseState().auth.receizId,
+          connected: true,
+          handle: "bjklock.receiz.id",
+          displayName: "BJ Klock",
+          localProofVerified: true
+        }
+      }
+    };
+
+    assert.equal(
+      receizProfileMatchesWorkspace(state, {
+        id: "receiz-session-row-without-handle"
+      }),
+      true
+    );
+  });
 });

@@ -103,7 +103,7 @@ describe("publish payload media preparation", () => {
     assert.equal(prepared.state.brand.logoImageUrl, null);
   });
 
-  it("strips unuploaded product images from the final publish request envelope", async () => {
+  it("keeps compressed product images in the final publish request envelope", async () => {
     const hugeImage = imageDataUrl(1_200_000);
     const compressedImage = imageDataUrl(64_000);
     const product = baseState().products[0]!;
@@ -149,7 +149,8 @@ describe("publish payload media preparation", () => {
 
     assert.doesNotThrow(() => assertPublishRequestBodySize(serialized));
     assert.ok(serialized.length <= 3_000_000);
-    assert.equal(body.state.products.some((item: Product) => item.imageUrl?.startsWith("data:")), false);
-    assert.equal(body.state.products.every((item: Product) => item.imageUrl === null), true);
+    assert.ok(body.state.products.some((item: Product) => item.imageUrl === compressedImage));
+    assert.ok(body.state.products.some((item: Product) => item.imageUrl === null));
+    assert.equal(body.state.products.some((item: Product) => item.imageUrl === hugeImage), false);
   });
 });

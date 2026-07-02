@@ -53,5 +53,15 @@ export function receizProfileMatchesWorkspace(
     if (workspaceAliases.has(alias)) return true;
   }
 
+  const profileHasPortableOwnerAlias = handleAliases(profile.handle).length > 0 || Boolean(cleanAlias(profile.email));
+  if (
+    !profileHasPortableOwnerAlias &&
+    state.auth.receizId.connected &&
+    state.auth.receizId.localProofVerified &&
+    Boolean(state.auth.workspaceOwnerId)
+  ) {
+    return true;
+  }
+
   return false;
 }

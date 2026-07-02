@@ -519,7 +519,7 @@ describe("Receiz proof commerce state", () => {
     assert.equal(projected.proofEvents.length, 0);
   });
 
-  it("omits inline image data from published proof records", () => {
+  it("keeps compact inline image data in published proof records", () => {
     const imageDataUrl = `data:image/png;base64,${Buffer.alloc(96_000, "a").toString("base64")}`;
     const record = buildStoreStateRecord(
       {
@@ -540,9 +540,8 @@ describe("Receiz proof commerce state", () => {
       }
     );
 
-    assert.equal(record.state.brand.logoImageUrl, null);
-    assert.equal(record.state.products[0]?.imageUrl, null);
-    assert.equal(JSON.stringify(record.state).includes("data:image"), false);
+    assert.equal(record.state.brand.logoImageUrl, imageDataUrl);
+    assert.equal(record.state.products[0]?.imageUrl, imageDataUrl);
   });
 
   it("keeps durable media URLs and strips duplicated inline social images for signed storefronts", () => {

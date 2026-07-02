@@ -31,7 +31,6 @@ export function safeSetLocalStorage(storage: Pick<BrowserStorage, "removeItem" |
     storage.setItem(key, value);
     return { ok: true };
   } catch (error) {
-    safeRemoveLocalStorage(storage, key);
     return { ok: false, reason: isQuotaExceeded(error) ? "quota_exceeded" : "unavailable" };
   }
 }

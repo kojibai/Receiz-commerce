@@ -21,7 +21,7 @@ describe("browser storage guards", () => {
     assert.equal(result.reason, "quota_exceeded");
   });
 
-  it("removes stale entries after a failed write when possible", () => {
+  it("preserves the last good entry after a failed write", () => {
     let removedKey = "";
     const storage = {
       setItem() {
@@ -36,7 +36,7 @@ describe("browser storage guards", () => {
 
     assert.equal(result.ok, false);
     assert.equal(result.reason, "unavailable");
-    assert.equal(removedKey, "receiz-state");
+    assert.equal(removedKey, "");
   });
 
   it("returns null when localStorage reads are blocked", () => {
