@@ -39,7 +39,10 @@ export type ProofEventType =
   | "RECEIZ_ID_CONNECTED"
   | "HOSTING_PLAN_UPDATED"
   | "BILLING_METHOD_ADDED"
-  | "THEME_UPDATED";
+  | "THEME_UPDATED"
+  | "EXCHANGE_ASSET_LISTED"
+  | "EXCHANGE_TRADE"
+  | "EXCHANGE_LIQUIDITY_ADDED";
 
 export type BrandConfig = {
   name: string;
@@ -155,7 +158,7 @@ export type SeoConfig = {
 
 export type PageSection = {
   id: string;
-  kind: "hero" | "products" | "rewards" | "assets" | "game" | "content";
+  kind: "hero" | "products" | "rewards" | "assets" | "exchange" | "game" | "content";
   title: string;
   body: string;
 };
@@ -330,6 +333,112 @@ export type AssetListing = {
   status: "listed" | "sold" | "traded";
 };
 
+export type ExchangePricePoint = {
+  id: string;
+  timestamp: string;
+  kaiPulse: string;
+  priceCents: number;
+  liquidityCents: number;
+  volumeCents: number;
+};
+
+export type ExchangeOrderBookLine = {
+  id: string;
+  side: "bid" | "ask";
+  priceCents: number;
+  shares: number;
+  ownerReceizId: string;
+  proofObjectId: string;
+};
+
+export type ExchangeAppendEvent = {
+  id: string;
+  type:
+    | "asset.listed"
+    | "market.trade"
+    | "liquidity.appended"
+    | "ownership.fraction.minted"
+    | "settlement.recorded";
+  actorReceizId: string;
+  detail: string;
+  createdAt: string;
+  kaiPulse: string;
+  appendAnchorId: string;
+  appendHash: string;
+  proofObjectId: string;
+  childProofObjectId?: string;
+  settlementLedgerEventId?: string;
+};
+
+export type ReceizAssetManifestProjection = {
+  schema: "receiz.asset_manifest.v1";
+  assetId: string;
+  assetType:
+    | "proof_object"
+    | "sports_card"
+    | "signal_card"
+    | "wallet_note"
+    | "market_certificate"
+    | "profile_original"
+    | "document";
+  proof: {
+    kind: "receiz.proof_bundle";
+    verifyUrl: string;
+    kaiPulseEternal: string;
+    kaiKlok: string;
+    receizClaimId: string;
+    artifactSha256Basis: string;
+  };
+  owner: {
+    receizSubject: string;
+    displayName: string;
+    custody: "current" | "transferred" | "fractionalized";
+  };
+  links: {
+    verify: string;
+    asset?: string;
+  };
+};
+
+export type ExchangeAsset = {
+  id: string;
+  sourceAssetId: string;
+  title: string;
+  symbol: string;
+  category: "physical" | "digital" | "access" | "benefit" | "collectible" | "document";
+  status: "draft" | "listed" | "trading" | "settled";
+  manifest: ReceizAssetManifestProjection;
+  ownerReceizId: string;
+  deterministicValueCents: number;
+  shareCount: number;
+  availableShares: number;
+  userShares: number;
+  lastPriceCents: number;
+  liquidityCents: number;
+  volume24hCents: number;
+  change24hBps: number;
+  settlementRail: "receiz_wallet_first";
+  twinMarketIntentId?: string;
+  chart: ExchangePricePoint[];
+  orderBook: ExchangeOrderBookLine[];
+  appendEvents: ExchangeAppendEvent[];
+};
+
+export type ExchangeConfig = {
+  enabled: boolean;
+  headline: string;
+  subheadline: string;
+  selectedAssetId: string;
+  walletBalanceCents: number;
+  settlementRail: "receiz_wallet_first";
+  proofMemoryHead: {
+    afterEntryId: string | null;
+    afterKaiUpulse: string | null;
+    afterCreatedAt: string | null;
+  };
+  assets: ExchangeAsset[];
+};
+
 export type QualifyingObjectType = {
   id: string;
   label: string;
@@ -407,7 +516,7 @@ export type PublishState = {
   }>;
 };
 
-export type StorefrontHomepageMode = "store" | "blog" | "game";
+export type StorefrontHomepageMode = "store" | "blog" | "exchange" | "game";
 
 export type StorefrontConfig = {
   homepageMode: StorefrontHomepageMode;
@@ -436,6 +545,7 @@ export type CommerceState = {
   listings: AssetListing[];
   qualifiers: QualifyingObjectType[];
   campaigns: Campaign[];
+  exchange: ExchangeConfig;
   game: GameConfig;
   receiz: ReceizConnectionState;
   checkout: CheckoutState;

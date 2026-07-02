@@ -28,6 +28,12 @@ import {
   stateWithoutCartProduct
 } from "@/lib/storefront/product-purchase";
 import {
+  stateWithListedExchangeAsset,
+  stateWithExchangeLiquidity,
+  stateWithExchangeTrade,
+  type ExchangeTradeSide
+} from "@/lib/storefront/proof-exchange";
+import {
   applyBrowserReceizIdSession,
   applyTenantCustomerSession,
   BROWSER_RECEIZ_ID_SESSION_KEY,
@@ -40,6 +46,7 @@ import {
 import type { ActionFeedbackMap, ActionFeedbackStatus } from "@/types/action-feedback";
 import type { BlogPost, CommerceState, CustomerAccount, Order, Product, ProofEvent, SitePage, StorefrontHomepageMode } from "@/types/domain";
 import { makeId } from "@/lib/utils";
+import { compactPublishedState } from "@/lib/receiz/proof-state";
 
 function readState(hostContext: HostContext, fallbackState: CommerceState = seedCommerceState): CommerceState {
   if (typeof window === "undefined") return fallbackState;
@@ -271,6 +278,7 @@ function twinBusinessProfile(brief: string) {
 function homepageModeFromTwinBrief(brief: string, current: StorefrontHomepageMode): StorefrontHomepageMode {
   const lower = brief.toLowerCase();
   if (/\b(blog|publication|journal|stories|content)\b/.test(lower)) return "blog";
+  if (/\b(exchange|market|trade|trading|fractional|shares|liquidity|asset market)\b/.test(lower)) return "exchange";
   if (/\b(game|play|quest|arcade|challenge)\b/.test(lower)) return "game";
   return current || "store";
 }
@@ -453,6 +461,34 @@ function buildTwinLaunchState(current: CommerceState, brief: string): CommerceSt
   const hasStarterCatalog = current.products.length === 0 || current.products.some((product) => DEFAULT_PRODUCT_IDS.has(product.id));
   const hasStarterPages = current.pages.length === 0 || current.pages.some((page) => DEFAULT_PAGE_IDS.has(page.id));
   const hasStarterPosts = current.blogPosts.length === 0 || current.blogPosts.some((post) => DEFAULT_BLOG_POST_IDS.has(post.id));
+  const merchantReceizId = current.auth.receizId.connected ? current.auth.receizId.handle : current.hosting.merchantReceizId;
+  const starterExchangeDraft: CommerceState = {
+    ...current,
+    exchange: {
+      ...current.exchange,
+      enabled: true,
+      headline: `${brandName} Exchange`,
+      subheadline: `List, fractionally own, trade, and settle ${brandName} proof objects peer to peer.`,
+      selectedAssetId: "",
+      proofMemoryHead: {
+        afterEntryId: null,
+        afterKaiUpulse: null,
+        afterCreatedAt: null
+      },
+      assets: []
+    },
+    proofEvents: []
+  };
+  const starterExchangeState = starterProducts.reduce<CommerceState>(
+    (draft, product, index) =>
+      stateWithListedExchangeAsset(draft, {
+        source: "product",
+        product,
+        actorReceizId: merchantReceizId,
+        recordedAt: new Date(Date.parse(now) + index * 1000).toISOString()
+      }),
+    starterExchangeDraft
+  );
 
   return {
     ...current,
@@ -477,11 +513,11 @@ function buildTwinLaunchState(current: CommerceState, brief: string): CommerceSt
     },
     hosting: {
       ...current.hosting,
-      merchantReceizId: current.auth.receizId.connected ? current.auth.receizId.handle : current.hosting.merchantReceizId,
+      merchantReceizId,
       settlementAccountLabel: `${brandName} Receiz account`
     },
     navigation: current.navigation.map((item) =>
-      item.id === "blog" || item.id === "account" || item.id === "rewards" ? { ...item, visible: true } : item
+      item.id === "blog" || item.id === "account" || item.id === "exchange" || item.id === "rewards" ? { ...item, visible: true } : item
     ),
     products: hasStarterCatalog
       ? starterProducts
@@ -548,6 +584,7 @@ function buildTwinLaunchState(current: CommerceState, brief: string): CommerceSt
       },
       ...current.campaigns.slice(1)
     ],
+    exchange: starterExchangeState.exchange,
     game: {
       ...current.game,
       enabled: true,
@@ -1190,7 +1227,7 @@ function appendUniqueById<T extends { id: string }>(current: T[], imported: T[])
 }
 
 function publishedStatePayload(state: CommerceState) {
-  return {
+  return compactPublishedState({
     brand: state.brand,
     storefront: state.storefront,
     hosting: state.hosting,
@@ -1204,9 +1241,10 @@ function publishedStatePayload(state: CommerceState) {
     assets: state.assets,
     qualifiers: state.qualifiers,
     campaigns: state.campaigns,
+    exchange: state.exchange,
     game: state.game,
     checkout: state.checkout
-  };
+  });
 }
 
 function merchantProofPayload(state: CommerceState, keyFile?: unknown | null) {
@@ -1263,6 +1301,7 @@ function mergePublishedPublicState(
     assets: published.assets ?? current.assets,
     qualifiers: published.qualifiers ?? current.qualifiers,
     campaigns: published.campaigns ?? current.campaigns,
+    exchange: published.exchange ?? current.exchange,
     game: published.game ?? current.game,
     checkout: published.checkout ?? current.checkout
   };
@@ -2478,6 +2517,64 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
             product.id === productId ? productWithDefaults({ ...product, ...input }) : product
           )
         }));
+      },
+      selectExchangeAsset(assetId: string) {
+        setState((current) => ({
+          ...current,
+          exchange: {
+            ...current.exchange,
+            selectedAssetId: current.exchange.assets.some((asset) => asset.id === assetId)
+              ? assetId
+              : current.exchange.selectedAssetId
+          }
+        }));
+      },
+      listExchangeAsset(sourceId?: string) {
+        setState((current) => {
+          const actorReceizId = current.auth.receizId.handle || current.hosting.merchantReceizId;
+          const alreadyListed = new Set(current.exchange.assets.map((asset) => asset.sourceAssetId));
+          const ownedAsset =
+            (sourceId ? current.assets.find((asset) => asset.id === sourceId) : undefined) ??
+            current.assets.find((asset) => !alreadyListed.has(asset.id));
+          if (ownedAsset) {
+            return stateWithListedExchangeAsset(current, {
+              source: "asset",
+              asset: ownedAsset,
+              actorReceizId
+            });
+          }
+
+          const product =
+            (sourceId ? current.products.find((item) => item.id === sourceId) : undefined) ??
+            current.products.find((item) => !alreadyListed.has(item.id));
+          if (!product) return current;
+
+          return stateWithListedExchangeAsset(current, {
+            source: "product",
+            product,
+            actorReceizId
+          });
+        });
+      },
+      tradeExchangeAsset(assetId: string, side: ExchangeTradeSide, shares: number) {
+        setState((current) =>
+          stateWithExchangeTrade(current, {
+            assetId,
+            side,
+            shares,
+            actorReceizId: current.auth.receizId.handle || current.hosting.merchantReceizId,
+            walletBalanceCents: current.exchange.walletBalanceCents
+          })
+        );
+      },
+      provideExchangeLiquidity(assetId: string, amountCents: number) {
+        setState((current) =>
+          stateWithExchangeLiquidity(current, {
+            assetId,
+            amountCents,
+            actorReceizId: current.auth.receizId.handle || current.hosting.merchantReceizId
+          })
+        );
       },
       addToCart(productId: string) {
         setState((current) => stateWithCartProduct(current, productId));

@@ -95,6 +95,7 @@ export const seedCommerceState: CommerceState = {
     { id: "products", label: "Products", href: "/#products", visible: true },
     { id: "rewards", label: "Rewards", href: "/#rewards", visible: true },
     { id: "assets", label: "Assets", href: "/#assets", visible: true },
+    { id: "exchange", label: "Exchange", href: "/#exchange", visible: true },
     { id: "blog", label: "Blog", href: "/blog", visible: true },
     { id: "play", label: "Play", href: "/#play", visible: true },
     { id: "account", label: "Account", href: "/#account", visible: true },
@@ -131,6 +132,21 @@ export const seedCommerceState: CommerceState = {
       visibleInNav: true,
       published: true,
       sections: []
+    },
+    {
+      id: "exchange",
+      title: "Exchange",
+      slug: "/exchange",
+      visibleInNav: true,
+      published: true,
+      sections: [
+        {
+          id: "exchange-market",
+          kind: "exchange",
+          title: "Proof Exchange",
+          body: "Peer-to-peer fractional markets for Receiz proof objects."
+        }
+      ]
     },
     {
       id: "game",
@@ -512,6 +528,165 @@ export const seedCommerceState: CommerceState = {
       rewardId: "reward-12"
     }
   ],
+  exchange: {
+    enabled: true,
+    headline: "Proof Exchange",
+    subheadline: "Peer-to-peer fractional markets for Receiz proof objects, wallet-first settlement, and append-only ownership.",
+    selectedAssetId: "exchange-limited-drop",
+    walletBalanceCents: 5200,
+    settlementRail: "receiz_wallet_first",
+    proofMemoryHead: {
+      afterEntryId: "exchange-limited-drop:append:trade:20260629175500000Z",
+      afterKaiUpulse: "1782746100000",
+      afterCreatedAt: "2026-06-29T17:55:00.000Z"
+    },
+    assets: [
+      {
+        id: "exchange-limited-drop",
+        sourceAssetId: "asset-limited-drop",
+        title: "Limited Drop Access Proof",
+        symbol: "DROP",
+        category: "access",
+        status: "trading",
+        manifest: {
+          schema: "receiz.asset_manifest.v1",
+          assetId: "asset:limited-drop:LD-1240",
+          assetType: "proof_object",
+          proof: {
+            kind: "receiz.proof_bundle",
+            verifyUrl: "https://receiz.com/v/boost/LD-1240/1782745800000",
+            kaiPulseEternal: "1782745800000",
+            kaiKlok: "kai:1782745800000",
+            receizClaimId: "ld1240limiteddropclaim",
+            artifactSha256Basis: "sha256:limited-drop-proof-object"
+          },
+          owner: {
+            receizSubject: "boost.receiz.id",
+            displayName: "Boost Coffee",
+            custody: "fractionalized"
+          },
+          links: {
+            verify: "https://receiz.com/v/boost/LD-1240/1782745800000",
+            asset: "https://receiz.com/assets/asset-limited-drop"
+          }
+        },
+        ownerReceizId: "boost.receiz.id",
+        deterministicValueCents: 240000,
+        shareCount: 240,
+        availableShares: 168,
+        userShares: 12,
+        lastPriceCents: 1180,
+        liquidityCents: 93500,
+        volume24hCents: 184600,
+        change24hBps: 1280,
+        settlementRail: "receiz_wallet_first",
+        twinMarketIntentId: "intent-limited-drop",
+        chart: [
+          { id: "drop-p1", timestamp: "2026-06-29T12:00:00.000Z", kaiPulse: "1782724800000", priceCents: 890, liquidityCents: 64000, volumeCents: 22400 },
+          { id: "drop-p2", timestamp: "2026-06-29T13:00:00.000Z", kaiPulse: "1782728400000", priceCents: 940, liquidityCents: 71200, volumeCents: 43800 },
+          { id: "drop-p3", timestamp: "2026-06-29T14:00:00.000Z", kaiPulse: "1782732000000", priceCents: 1015, liquidityCents: 78000, volumeCents: 79100 },
+          { id: "drop-p4", timestamp: "2026-06-29T15:00:00.000Z", kaiPulse: "1782735600000", priceCents: 1085, liquidityCents: 85800, volumeCents: 123400 },
+          { id: "drop-p5", timestamp: "2026-06-29T16:00:00.000Z", kaiPulse: "1782739200000", priceCents: 1120, liquidityCents: 91200, volumeCents: 153300 },
+          { id: "drop-p6", timestamp: "2026-06-29T17:55:00.000Z", kaiPulse: "1782746100000", priceCents: 1180, liquidityCents: 93500, volumeCents: 184600 }
+        ],
+        orderBook: [
+          { id: "drop-bid-1", side: "bid", priceCents: 1160, shares: 22, ownerReceizId: "lena.receiz.id", proofObjectId: "order:drop:bid:1" },
+          { id: "drop-bid-2", side: "bid", priceCents: 1138, shares: 34, ownerReceizId: "marco.receiz.id", proofObjectId: "order:drop:bid:2" },
+          { id: "drop-ask-1", side: "ask", priceCents: 1198, shares: 18, ownerReceizId: "boost.receiz.id", proofObjectId: "order:drop:ask:1" },
+          { id: "drop-ask-2", side: "ask", priceCents: 1225, shares: 25, ownerReceizId: "collector.receiz.id", proofObjectId: "order:drop:ask:2" }
+        ],
+        appendEvents: [
+          {
+            id: "exchange-limited-drop:append:trade:20260629175500000Z",
+            type: "market.trade",
+            actorReceizId: "lena.receiz.id",
+            detail: "buy 12 shares at $141.60",
+            createdAt: "2026-06-29T17:55:00.000Z",
+            kaiPulse: "1782746100000",
+            appendAnchorId: "anchor:exchange-limited-drop:1782746100000",
+            appendHash: "sha256:exchange-drop-trade",
+            proofObjectId: "asset:limited-drop:LD-1240",
+            childProofObjectId: "exchange-limited-drop:share:lena-receiz-id:20260629175500000Z",
+            settlementLedgerEventId: "ledger:drop:lena:20260629175500000Z"
+          },
+          {
+            id: "exchange-limited-drop:append:list:20260629173000000Z",
+            type: "asset.listed",
+            actorReceizId: "boost.receiz.id",
+            detail: "DROP listed with 240 fractional shares",
+            createdAt: "2026-06-29T17:30:00.000Z",
+            kaiPulse: "1782744600000",
+            appendAnchorId: "anchor:exchange-limited-drop:1782744600000",
+            appendHash: "sha256:exchange-drop-list",
+            proofObjectId: "asset:limited-drop:LD-1240"
+          }
+        ]
+      },
+      {
+        id: "exchange-brew-class",
+        sourceAssetId: "asset-brew-class",
+        title: "Brew Class Seat Certificate",
+        symbol: "BREW",
+        category: "benefit",
+        status: "listed",
+        manifest: {
+          schema: "receiz.asset_manifest.v1",
+          assetId: "asset:brew-class:BC-88421",
+          assetType: "market_certificate",
+          proof: {
+            kind: "receiz.proof_bundle",
+            verifyUrl: "https://receiz.com/v/boost/BC-88421/1782745200000",
+            kaiPulseEternal: "1782745200000",
+            kaiKlok: "kai:1782745200000",
+            receizClaimId: "bc88421brewclassclaim",
+            artifactSha256Basis: "sha256:brew-class-market-certificate"
+          },
+          owner: {
+            receizSubject: "boost.receiz.id",
+            displayName: "Boost Coffee",
+            custody: "fractionalized"
+          },
+          links: {
+            verify: "https://receiz.com/v/boost/BC-88421/1782745200000"
+          }
+        },
+        ownerReceizId: "boost.receiz.id",
+        deterministicValueCents: 450000,
+        shareCount: 450,
+        availableShares: 360,
+        userShares: 0,
+        lastPriceCents: 1000,
+        liquidityCents: 121000,
+        volume24hCents: 96600,
+        change24hBps: -210,
+        settlementRail: "receiz_wallet_first",
+        twinMarketIntentId: "intent-brew-class",
+        chart: [
+          { id: "brew-p1", timestamp: "2026-06-29T12:00:00.000Z", kaiPulse: "1782724800000", priceCents: 1045, liquidityCents: 96000, volumeCents: 18300 },
+          { id: "brew-p2", timestamp: "2026-06-29T13:00:00.000Z", kaiPulse: "1782728400000", priceCents: 1030, liquidityCents: 101000, volumeCents: 29100 },
+          { id: "brew-p3", timestamp: "2026-06-29T14:00:00.000Z", kaiPulse: "1782732000000", priceCents: 1018, liquidityCents: 110000, volumeCents: 52200 },
+          { id: "brew-p4", timestamp: "2026-06-29T15:30:00.000Z", kaiPulse: "1782737400000", priceCents: 1000, liquidityCents: 121000, volumeCents: 96600 }
+        ],
+        orderBook: [
+          { id: "brew-bid-1", side: "bid", priceCents: 988, shares: 40, ownerReceizId: "taylor.receiz.id", proofObjectId: "order:brew:bid:1" },
+          { id: "brew-ask-1", side: "ask", priceCents: 1016, shares: 32, ownerReceizId: "boost.receiz.id", proofObjectId: "order:brew:ask:1" }
+        ],
+        appendEvents: [
+          {
+            id: "exchange-brew-class:append:list:20260629153000000Z",
+            type: "asset.listed",
+            actorReceizId: "boost.receiz.id",
+            detail: "BREW listed with 450 fractional shares",
+            createdAt: "2026-06-29T15:30:00.000Z",
+            kaiPulse: "1782737400000",
+            appendAnchorId: "anchor:exchange-brew-class:1782737400000",
+            appendHash: "sha256:exchange-brew-list",
+            proofObjectId: "asset:brew-class:BC-88421"
+          }
+        ]
+      }
+    ]
+  },
   game: {
     enabled: true,
     campaignId: "boost-coffee-challenge",

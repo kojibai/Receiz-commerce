@@ -27,7 +27,7 @@ function safeTenantSlug(value: unknown, base: CommerceState) {
 }
 
 function isHomepageMode(value: unknown): value is StorefrontHomepageMode {
-  return value === "store" || value === "blog" || value === "game";
+  return value === "store" || value === "blog" || value === "exchange" || value === "game";
 }
 
 function migrateStoredState(value: unknown, base: CommerceState): CommerceState {
@@ -100,6 +100,14 @@ function migrateStoredState(value: unknown, base: CommerceState): CommerceState 
     listings: mergeArray(base.listings, stored.listings),
     qualifiers: mergeArray(base.qualifiers, stored.qualifiers),
     campaigns: mergeArray(base.campaigns, stored.campaigns),
+    exchange: {
+      ...mergeObject(base.exchange, stored.exchange),
+      assets: mergeArray(base.exchange.assets, isRecord(stored.exchange) ? stored.exchange.assets : undefined),
+      proofMemoryHead: mergeObject(
+        base.exchange.proofMemoryHead,
+        isRecord(stored.exchange) ? stored.exchange.proofMemoryHead : undefined
+      )
+    },
     game: mergeObject(base.game, stored.game),
     receiz: mergeObject(base.receiz, stored.receiz),
     checkout: mergeObject(base.checkout, stored.checkout),

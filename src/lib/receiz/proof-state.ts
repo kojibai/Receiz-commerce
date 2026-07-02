@@ -5,6 +5,7 @@ import type {
   CheckoutState,
   Collection,
   CommerceState,
+  ExchangeConfig,
   GameConfig,
   HostingConfig,
   NavigationItem,
@@ -37,6 +38,7 @@ export type PublishedStoreState = {
   assets: ReceizedAsset[];
   qualifiers: QualifyingObjectType[];
   campaigns: Campaign[];
+  exchange: ExchangeConfig;
   game: GameConfig;
   checkout: CheckoutState;
 };
@@ -123,7 +125,7 @@ function recordId(prefix: string, tenantHost: string, recordedAt: string) {
   return `${prefix}:${tenantHost}:${stamp}`;
 }
 
-const MAX_INLINE_DATA_URL_CHARS = 1_500_000;
+const MAX_INLINE_DATA_URL_CHARS = 150_000;
 
 function compactInlineMedia(value: unknown): unknown {
   if (typeof value === "string") {
@@ -141,7 +143,7 @@ function compactInlineMedia(value: unknown): unknown {
   );
 }
 
-function compactPublishedState<T>(value: T): T {
+export function compactPublishedState<T>(value: T): T {
   return compactInlineMedia(structuredClone(value)) as T;
 }
 
@@ -160,6 +162,7 @@ function clonePublishedState(state: CommerceState): PublishedStoreState {
     assets: compactPublishedState(state.assets),
     qualifiers: compactPublishedState(state.qualifiers),
     campaigns: compactPublishedState(state.campaigns),
+    exchange: compactPublishedState(state.exchange),
     game: compactPublishedState(state.game),
     checkout: compactPublishedState(state.checkout)
   };

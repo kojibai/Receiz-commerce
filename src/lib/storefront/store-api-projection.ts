@@ -21,7 +21,7 @@ const arrayFields = [
   "proofEvents"
 ] as const;
 
-const objectFields = ["brand", "storefront", "hosting", "game", "checkout", "receiz"] as const;
+const objectFields = ["brand", "storefront", "hosting", "exchange", "game", "checkout", "receiz"] as const;
 
 export function mergeStoreApiProjection(baseState: CommerceState, input: unknown): CommerceState | null {
   if (!isRecord(input) || input.ok !== true || input.publishedState !== true) return null;

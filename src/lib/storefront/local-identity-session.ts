@@ -142,6 +142,16 @@ function platformMerchantWorkspace(
     listings: [],
     qualifiers: [],
     campaigns: [],
+    exchange: {
+      ...current.exchange,
+      selectedAssetId: "",
+      proofMemoryHead: {
+        afterEntryId: null,
+        afterKaiUpulse: null,
+        afterCreatedAt: null
+      },
+      assets: []
+    },
     game: {
       ...current.game,
       enabled: false,

@@ -104,6 +104,20 @@ function baseState(): CommerceState {
     listings: [],
     qualifiers: [],
     campaigns: [],
+    exchange: {
+      enabled: false,
+      headline: "Proof Exchange",
+      subheadline: "Peer-to-peer proof markets",
+      selectedAssetId: "",
+      walletBalanceCents: 0,
+      settlementRail: "receiz_wallet_first",
+      proofMemoryHead: {
+        afterEntryId: null,
+        afterKaiUpulse: null,
+        afterCreatedAt: null
+      },
+      assets: []
+    },
     game: {
       enabled: false,
       campaignId: "",
@@ -529,6 +543,64 @@ describe("Receiz proof commerce state", () => {
 
     assert.equal(record.state.brand.logoImageUrl, imageDataUrl);
     assert.equal(record.state.products[0]?.imageUrl, imageDataUrl);
+  });
+
+  it("omits camera-roll inline media that would bloat the public-store publish payload", () => {
+    const cameraRollDataUrl = `data:image/jpeg;base64,${Buffer.alloc(256_000, "a").toString("base64")}`;
+    const record = buildStoreStateRecord(
+      {
+        ...baseState(),
+        brand: { ...baseState().brand, logoImageUrl: cameraRollDataUrl },
+        products: [
+          {
+            ...baseState().products[0],
+            imageUrl: cameraRollDataUrl,
+            seo: {
+              canonicalPath: "/products/coffee-pack",
+              description: "Whole bean",
+              keywords: [],
+              title: "Coffee Pack",
+              socialImageUrl: cameraRollDataUrl
+            }
+          }
+        ],
+        blogPosts: [
+          {
+            id: "origin",
+            title: "Origin story",
+            slug: "/blog/origin",
+            excerpt: "Proof sealed coffee.",
+            body: "Origin body",
+            status: "published",
+            publishedAt: "2026-06-30T00:00:00.000Z",
+            featured: true,
+            authorName: "Boost Coffee",
+            tags: ["coffee"],
+            coverImageUrl: cameraRollDataUrl,
+            seo: {
+              canonicalPath: "/blog/origin",
+              title: "Origin story",
+              description: "Proof sealed coffee.",
+              keywords: [],
+              socialImageUrl: cameraRollDataUrl
+            }
+          }
+        ]
+      },
+      {
+        actorReceizId: "boost.receiz.id",
+        tenantHost: "boost.receiz.app",
+        reason: "publish",
+        ...receizAppendFixture("2026-06-30T00:05:27.000Z")
+      }
+    );
+
+    assert.equal(record.state.brand.logoImageUrl, null);
+    assert.equal(record.state.products[0]?.imageUrl, null);
+    assert.equal(record.state.products[0]?.seo?.socialImageUrl, null);
+    assert.equal(record.state.blogPosts[0]?.coverImageUrl, null);
+    assert.equal(record.state.blogPosts[0]?.seo.socialImageUrl, null);
+    assert.ok(JSON.stringify(buildStoreStateConnectRecord(record)).length < cameraRollDataUrl.length);
   });
 
   it("omits oversized inline media from the published proof record", () => {

@@ -2,7 +2,7 @@ import type { CommerceState } from "../../types/domain";
 import type { HostContext } from "./host-context";
 import { subdomainForSlug } from "./domain-utils";
 
-function systemPage(brandName: string, slug: "/about" | "/rewards" | "/account") {
+function systemPage(brandName: string, slug: "/about" | "/rewards" | "/exchange" | "/account") {
   const labels = {
     "/about": {
       title: `About ${brandName}`,
@@ -11,6 +11,10 @@ function systemPage(brandName: string, slug: "/about" | "/rewards" | "/account")
     "/rewards": {
       title: `${brandName} Rewards`,
       body: `Customers can earn, redeem, and carry ${brandName} rewards through Receiz ID and proof-sealed commerce actions.`
+    },
+    "/exchange": {
+      title: `${brandName} Exchange`,
+      body: `${brandName} proof objects can be listed, fractionally owned, traded, and settled through Receiz append rails.`
     },
     "/account": {
       title: `${brandName} Account`,
@@ -43,7 +47,7 @@ function systemPage(brandName: string, slug: "/about" | "/rewards" | "/account")
 }
 
 function withRequiredTenantPages(state: CommerceState, brandName: string): CommerceState {
-  const required = ["/about", "/rewards", "/account"] as const;
+  const required = ["/about", "/rewards", "/exchange", "/account"] as const;
   const existingSlugs = new Set(state.pages.map((page) => page.slug.toLowerCase()));
   const missingPages = required
     .filter((slug) => !existingSlugs.has(slug))
@@ -182,6 +186,28 @@ function tenantSafeFallbackContent(state: CommerceState, brandName: string): Com
       ...campaign,
       name: tenantText(campaign.name, brandName)
     })),
+    exchange: {
+      ...state.exchange,
+      headline: tenantText(state.exchange.headline, brandName),
+      subheadline: tenantText(state.exchange.subheadline, brandName),
+      assets: state.exchange.assets.map((asset) => ({
+        ...asset,
+        title: tenantText(asset.title, brandName),
+        ownerReceizId: tenantText(asset.ownerReceizId, brandName),
+        manifest: {
+          ...asset.manifest,
+          owner: {
+            ...asset.manifest.owner,
+            displayName: tenantText(asset.manifest.owner.displayName, brandName)
+          }
+        },
+        appendEvents: asset.appendEvents.map((event) => ({
+          ...event,
+          actorReceizId: tenantText(event.actorReceizId, brandName),
+          detail: tenantText(event.detail, brandName)
+        }))
+      }))
+    },
     proofEvents: state.proofEvents.map((event) => ({
       ...event,
       detail: tenantText(event.detail, brandName)

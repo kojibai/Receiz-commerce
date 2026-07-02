@@ -40,7 +40,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function isHomepageMode(value: unknown): value is StorefrontHomepageMode {
-  return value === "store" || value === "blog" || value === "game";
+  return value === "store" || value === "blog" || value === "exchange" || value === "game";
 }
 
 function mergePublishedState(input: unknown): CommerceState {
@@ -66,6 +66,16 @@ function mergePublishedState(input: unknown): CommerceState {
     assets: Array.isArray(input.assets) ? (input.assets as CommerceState["assets"]) : base.assets,
     qualifiers: Array.isArray(input.qualifiers) ? (input.qualifiers as CommerceState["qualifiers"]) : base.qualifiers,
     campaigns: Array.isArray(input.campaigns) ? (input.campaigns as CommerceState["campaigns"]) : base.campaigns,
+    exchange: isRecord(input.exchange)
+      ? {
+          ...base.exchange,
+          ...input.exchange,
+          assets: Array.isArray(input.exchange.assets) ? (input.exchange.assets as CommerceState["exchange"]["assets"]) : base.exchange.assets,
+          proofMemoryHead: isRecord(input.exchange.proofMemoryHead)
+            ? { ...base.exchange.proofMemoryHead, ...input.exchange.proofMemoryHead }
+            : base.exchange.proofMemoryHead
+        }
+      : base.exchange,
     game: isRecord(input.game) ? { ...base.game, ...input.game } : base.game,
     checkout: isRecord(input.checkout) ? { ...base.checkout, ...input.checkout } : base.checkout
   };
@@ -183,6 +193,7 @@ export async function GET(request: NextRequest) {
       qualifiers: projectedState.qualifiers,
       campaigns: projectedState.campaigns,
       blogPosts: projectedState.blogPosts,
+      exchange: projectedState.exchange,
       game: projectedState.game,
       checkout: projectedState.checkout,
       receiz: projectedState.receiz,

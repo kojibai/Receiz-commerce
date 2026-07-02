@@ -18,6 +18,11 @@ import { platform } from "@/lib/platform";
 import { brandThemeStyle } from "@/lib/theme";
 import { useTemplateStore } from "@/lib/storage/use-template-store";
 import { buildCartSummary, type CartSummary } from "@/lib/storefront/cart-summary";
+import {
+  buildExchangeTradePreview,
+  projectExchangeDesk,
+  type ExchangeTradeSide
+} from "@/lib/storefront/proof-exchange";
 import { buildProductPurchaseModel, productRoutePath } from "@/lib/storefront/product-purchase";
 import { resolveProductBySlug } from "@/lib/storefront/content-routing";
 import { customerForAccountSurface, customerReceizHandle } from "@/lib/storefront/customer-session";
@@ -45,7 +50,7 @@ import {
   StoreTopbar
 } from "@/features/storefront/StoreShell";
 
-const mobileViews = new Set<MobileView>(["store", "rewards", "assets", "play", "account"]);
+const mobileViews = new Set<MobileView>(["store", "exchange", "rewards", "assets", "play", "account"]);
 
 function mobileViewFromHash(hash: string): MobileView | null {
   const value = hash.replace(/^#/, "");
@@ -207,7 +212,7 @@ export function PublicStorefront({
     if (window.location.hash !== `#${view}`) {
       window.history.replaceState(null, "", `#${view}`);
     }
-    if (view === "account" || view === "assets" || view === "rewards") {
+    if (view === "account" || view === "assets" || view === "exchange" || view === "rewards") {
       void ensureTenantCustomerSession(`${view} account`);
     }
   };
@@ -254,17 +259,42 @@ export function PublicStorefront({
       setMobileView("account");
     }
   };
+  const selectExchangeAsset = (assetId: string) => {
+    actions.selectExchangeAsset(assetId);
+    setMobileMenuOpen(false);
+  };
+  const listExchangeAsset = () => {
+    actions.listExchangeAsset();
+    setMobileView("exchange");
+    if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+      navigator.vibrate(10);
+    }
+  };
+  const tradeExchangeAsset = (assetId: string, side: ExchangeTradeSide, shares: number) => {
+    actions.tradeExchangeAsset(assetId, side, shares);
+    if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+      navigator.vibrate(side === "buy" ? 16 : 10);
+    }
+  };
+  const provideExchangeLiquidity = (assetId: string, amountCents: number) => {
+    actions.provideExchangeLiquidity(assetId, amountCents);
+    if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+      navigator.vibrate(12);
+    }
+  };
 
   useEffect(() => {
     if (homepageMode === "game") {
       setMobileView("play");
+    } else if (homepageMode === "exchange") {
+      setMobileView("exchange");
     } else if (homepageMode === "blog") {
       setMobileView("store");
     }
   }, [homepageMode]);
 
   useEffect(() => {
-    if (mobileView === "account" || mobileView === "assets" || mobileView === "rewards") {
+    if (mobileView === "account" || mobileView === "assets" || mobileView === "exchange" || mobileView === "rewards") {
       void ensureTenantCustomerSession(`${mobileView} account`);
     }
   }, [ensureTenantCustomerSession, mobileView]);
@@ -327,6 +357,28 @@ export function PublicStorefront({
                   enabled={gameEnabled}
                   onComplete={completeGame}
                 />
+              </>
+            ) : homepageMode === "exchange" ? (
+              <>
+                <ExchangeTradingDesk
+                  onListAsset={listExchangeAsset}
+                  onProvideLiquidity={provideExchangeLiquidity}
+                  onSelectAsset={selectExchangeAsset}
+                  onTrade={tradeExchangeAsset}
+                  state={state}
+                  tenantSurface={tenantSurface}
+                />
+                <ProductCatalog
+                  addedProductId={cartPulseProductId}
+                  brandImageUrl={state.brand.logoImageUrl}
+                  brandLabel={state.brand.logoText}
+                  products={state.products}
+                  onAddToCart={addToCart}
+                  onProductOpen={openProductOverlay}
+                  showAdminActions={!tenantSurface}
+                  showCartActions={tenantSurface}
+                />
+                <BlogHighlights posts={state.blogPosts} showAdminActions={!tenantSurface} />
               </>
             ) : homepageMode === "game" ? (
               <>
@@ -401,6 +453,15 @@ export function PublicStorefront({
                   showAdminActions={!tenantSurface}
                   showCartActions={tenantSurface}
                 />
+                <ExchangeTradingDesk
+                  compact
+                  onListAsset={listExchangeAsset}
+                  onProvideLiquidity={provideExchangeLiquidity}
+                  onSelectAsset={selectExchangeAsset}
+                  onTrade={tradeExchangeAsset}
+                  state={state}
+                  tenantSurface={tenantSurface}
+                />
 
                 <BlogHighlights posts={state.blogPosts} showAdminActions={!tenantSurface} />
               </>
@@ -454,6 +515,10 @@ export function PublicStorefront({
           onAddToCart={addToCart}
           onCheckout={oneClickCheckout}
           onProductOpen={openProductOverlay}
+          onExchangeListAsset={listExchangeAsset}
+          onExchangeLiquidity={provideExchangeLiquidity}
+          onExchangeSelectAsset={selectExchangeAsset}
+          onExchangeTrade={tradeExchangeAsset}
           checkoutFeedback={actionFeedback.checkout}
           onClaimReward={claimReward}
           onDownloadIdentitySeal={actions.downloadIdentitySealImage}
@@ -648,6 +713,7 @@ function MobileCommandMenu({
 }) {
   const navItems = [
     ["store", homepageMode === "blog" ? "Blog" : "Store", homepageMode === "blog" ? Icons.book : Icons.store],
+    ["exchange", "Exchange", Icons.analytics],
     ["rewards", "Rewards", Icons.gift],
     ["assets", "Assets", Icons.assets],
     ["play", "Play", Icons.game],
@@ -918,6 +984,10 @@ function MobileStage({
   checkoutFeedback,
   onAddToCart,
   onCheckout,
+  onExchangeListAsset,
+  onExchangeLiquidity,
+  onExchangeSelectAsset,
+  onExchangeTrade,
   onProductOpen,
   onClaimReward,
   onDownloadIdentitySeal,
@@ -943,6 +1013,10 @@ function MobileStage({
   customerReceizHandle: string;
   onAddToCart: (productId: string) => void;
   onCheckout: () => void;
+  onExchangeListAsset: () => void;
+  onExchangeLiquidity: (assetId: string, amountCents: number) => void;
+  onExchangeSelectAsset: (assetId: string) => void;
+  onExchangeTrade: (assetId: string, side: ExchangeTradeSide, shares: number) => void;
   onProductOpen: (product: Product) => void;
   onClaimReward: () => void;
   onDownloadIdentitySeal: () => void | Promise<void>;
@@ -982,6 +1056,15 @@ function MobileStage({
         onClaimReward={onClaimReward}
         onIssueReward={onIssueReward}
         reward={reward}
+        tenantSurface={tenantSurface}
+      />
+      <MobileExchangePanel
+        active={activeView === "exchange"}
+        onListAsset={onExchangeListAsset}
+        onProvideLiquidity={onExchangeLiquidity}
+        onSelectAsset={onExchangeSelectAsset}
+        onTrade={onExchangeTrade}
+        state={state}
         tenantSurface={tenantSurface}
       />
       <MobileAssetsPanel
@@ -1126,6 +1209,323 @@ function CartSummaryPanel({
       <InlineActionFeedback feedback={checkoutFeedback} />
       <span className="cart-summary-host">{summary.tenantHost}</span>
     </Panel>
+  );
+}
+
+function ExchangeTradingDesk({
+  compact = false,
+  onListAsset,
+  onProvideLiquidity,
+  onSelectAsset,
+  onTrade,
+  state,
+  tenantSurface: _tenantSurface
+}: {
+  compact?: boolean;
+  onListAsset: () => void;
+  onProvideLiquidity: (assetId: string, amountCents: number) => void;
+  onSelectAsset: (assetId: string) => void;
+  onTrade: (assetId: string, side: ExchangeTradeSide, shares: number) => void;
+  state: CommerceState;
+  tenantSurface: boolean;
+}) {
+  const desk = projectExchangeDesk(state);
+  const selected = desk.selected;
+  const selectedRaw = selected ? state.exchange.assets.find((asset) => asset.id === selected.id) ?? null : null;
+  const [side, setSide] = useState<ExchangeTradeSide>("buy");
+  const [shares, setShares] = useState(8);
+  const [liquidityCents, setLiquidityCents] = useState(5_000);
+  const [pulse, setPulse] = useState(false);
+  const preview = selectedRaw ? buildExchangeTradePreview(selectedRaw, side, shares, state.exchange.walletBalanceCents) : null;
+
+  const runTrade = () => {
+    if (!selectedRaw || !preview?.shares) return;
+    onTrade(selectedRaw.id, side, preview.shares);
+    setPulse(true);
+    window.setTimeout(() => setPulse(false), 700);
+  };
+
+  const runLiquidity = () => {
+    if (!selectedRaw) return;
+    onProvideLiquidity(selectedRaw.id, liquidityCents);
+    setPulse(true);
+    window.setTimeout(() => setPulse(false), 700);
+  };
+
+  return (
+    <section className={compact ? "exchange-desk compact" : "exchange-desk"} id="exchange">
+      <SectionHeader
+        title={desk.headline}
+        action={<StatusPill tone={desk.enabled ? "green" : "neutral"}>{desk.enabled ? "Live proof market" : "Off"}</StatusPill>}
+      />
+      <div className="exchange-terminal">
+        <aside className="exchange-market-list" aria-label="Exchange markets">
+          <div className="exchange-terminal-kicker">
+            <Icons.analytics size={17} />
+            <span>Proof markets</span>
+          </div>
+          {desk.assets.length ? (
+            desk.assets.map((asset) => (
+              <button
+                aria-pressed={selected?.id === asset.id}
+                className={selected?.id === asset.id ? "active" : undefined}
+                key={asset.id}
+                onClick={() => onSelectAsset(asset.id)}
+                type="button"
+              >
+                <span>
+                  <strong>{asset.symbol}</strong>
+                  <em>{asset.title}</em>
+                </span>
+                <b>{asset.latestPriceLabel}</b>
+                <small className={asset.change24hBps >= 0 ? "positive" : "negative"}>{asset.changeLabel}</small>
+              </button>
+            ))
+          ) : (
+            <div className="exchange-empty-list">
+              <Icons.assets size={20} />
+              <strong>No listed assets</strong>
+              <span>List a Receiz asset to open the market.</span>
+            </div>
+          )}
+          <button className="exchange-list-asset-button" onClick={onListAsset} type="button">
+            <Icons.seal size={18} />
+            <span>List Receiz asset</span>
+          </button>
+        </aside>
+
+        {selected && selectedRaw && preview ? (
+          <>
+            <div className="exchange-chart-column">
+              <div className="exchange-asset-header">
+                <div>
+                  <span>{selected.sourcePrimitive}</span>
+                  <h3>{selected.title}</h3>
+                  <p>{desk.subheadline}</p>
+                </div>
+                <div className="exchange-price-block">
+                  <strong>{selected.latestPriceLabel}</strong>
+                  <span className={selected.change24hBps >= 0 ? "positive" : "negative"}>{selected.changeLabel}</span>
+                </div>
+              </div>
+
+              <div className="exchange-metric-grid">
+                <div><span>Deterministic value</span><strong>{selected.deterministicValueLabel}</strong></div>
+                <div><span>Liquidity</span><strong>{selected.liquidityLabel}</strong></div>
+                <div><span>24h volume</span><strong>{selected.volumeLabel}</strong></div>
+                <div><span>Spread</span><strong>{selected.spreadLabel}</strong></div>
+              </div>
+
+              <div className={pulse ? "exchange-chart-wrap pulse" : "exchange-chart-wrap"}>
+                <ExchangeChart asset={selected} />
+              </div>
+
+              <div className="exchange-proof-strip">
+                <div>
+                  <span>Proof head</span>
+                  <strong>{desk.proofMemoryHead.afterKaiUpulse ?? selected.manifest.proof.kaiPulseEternal}</strong>
+                </div>
+                <div>
+                  <span>Anchor</span>
+                  <strong>{desk.proofMemoryHead.afterEntryId ?? selected.appendEvents[0]?.appendAnchorId ?? "local"}</strong>
+                </div>
+                <a href={selected.manifest.links.verify} rel="noreferrer" target="_blank">
+                  Verify object
+                </a>
+              </div>
+            </div>
+
+            <aside className="exchange-trade-column">
+              <div className="exchange-ticket">
+                <div className="exchange-ticket-toggle">
+                  <button className={side === "buy" ? "active" : undefined} onClick={() => setSide("buy")} type="button">Buy</button>
+                  <button className={side === "sell" ? "active" : undefined} onClick={() => setSide("sell")} type="button">Sell</button>
+                </div>
+                <label>
+                  <span>Shares</span>
+                  <input
+                    min={1}
+                    max={side === "buy" ? selected.availableShares : Math.max(1, selected.userShares)}
+                    onChange={(event) => setShares(Math.max(1, Number(event.target.value) || 1))}
+                    type="number"
+                    value={shares}
+                  />
+                </label>
+                <div className="exchange-ticket-preview">
+                  <div><span>Price</span><strong>{selected.latestPriceLabel}</strong></div>
+                  <div><span>Total</span><strong>{preview.totalLabel}</strong></div>
+                  <div><span>Wallet</span><strong>{preview.walletAppliedLabel}</strong></div>
+                  <div><span>Card delta</span><strong>{preview.cardDeltaLabel}</strong></div>
+                </div>
+                <Button className={pulse ? "exchange-trade-button pulse" : "exchange-trade-button"} onClick={runTrade} type="button" variant="primary">
+                  <Icons.receiz size={17} />
+                  {side === "buy" ? "Buy shares" : "Sell shares"}
+                </Button>
+                <span className="exchange-ticket-note">
+                  {preview.cardRequired ? "Receiz wallet funds first, card funds the delta." : desk.walletFirstLabel}
+                </span>
+              </div>
+
+              <div className="exchange-liquidity-box">
+                <div>
+                  <strong>Provide liquidity</strong>
+                  <span>Append deterministic liquidity for this asset market.</span>
+                </div>
+                <label>
+                  <span>Amount</span>
+                  <input
+                    min={100}
+                    onChange={(event) => setLiquidityCents(Math.max(100, Math.round((Number(event.target.value) || 0) * 100)))}
+                    type="number"
+                    value={Math.round(liquidityCents / 100)}
+                  />
+                </label>
+                <Button onClick={runLiquidity} type="button" variant="outline">
+                  <Icons.analytics size={17} />
+                  Add liquidity
+                </Button>
+              </div>
+            </aside>
+
+            <aside className="exchange-depth-column">
+              <ExchangeOrderBook asset={selected} />
+              <ExchangeProofTape asset={selected} />
+            </aside>
+          </>
+        ) : (
+          <div className="exchange-empty-state">
+            <Icons.assets size={24} />
+            <strong>Open the first market</strong>
+            <span>List a Receiz asset to create the first proof-object exchange book.</span>
+            <Button onClick={onListAsset} type="button" variant="primary">List asset</Button>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function ExchangeChart({ asset }: { asset: ReturnType<typeof projectExchangeDesk>["selected"] }) {
+  if (!asset) return null;
+  const points = asset.chart.length ? asset.chart : [];
+  const prices = points.map((point) => point.priceCents);
+  const min = Math.min(...prices);
+  const max = Math.max(...prices);
+  const spread = Math.max(1, max - min);
+  const polyline = points
+    .map((point, index) => {
+      const x = points.length === 1 ? 0 : (index / (points.length - 1)) * 100;
+      const y = 88 - ((point.priceCents - min) / spread) * 70;
+      return `${x.toFixed(2)},${y.toFixed(2)}`;
+    })
+    .join(" ");
+  const last = polyline.split(" ").at(-1) ?? "100,20";
+
+  return (
+    <div className="exchange-chart">
+      <svg aria-label={`${asset.symbol} live price chart`} preserveAspectRatio="none" role="img" viewBox="0 0 100 100">
+        <defs>
+          <linearGradient id={`exchange-chart-${asset.id}`} x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0%" stopColor="rgba(0,168,138,0.35)" />
+            <stop offset="100%" stopColor="rgba(0,168,138,0.02)" />
+          </linearGradient>
+        </defs>
+        <polygon className="exchange-chart-area" points={`0,100 ${polyline} 100,100`} fill={`url(#exchange-chart-${asset.id})`} />
+        <polyline className="exchange-chart-line" points={polyline} />
+        <circle className="exchange-chart-live-dot" cx={last.split(",")[0]} cy={last.split(",")[1]} r="2.2" />
+      </svg>
+      <div className="exchange-chart-axis">
+        <span>{asset.chart[0]?.kaiPulse ?? asset.manifest.proof.kaiPulseEternal}</span>
+        <strong>{asset.latestPriceLabel}</strong>
+        <span>{asset.chart.at(-1)?.kaiPulse ?? asset.manifest.proof.kaiPulseEternal}</span>
+      </div>
+    </div>
+  );
+}
+
+function ExchangeOrderBook({ asset }: { asset: NonNullable<ReturnType<typeof projectExchangeDesk>["selected"]> }) {
+  return (
+    <div className="exchange-order-book">
+      <div className="exchange-mini-head">
+        <strong>Order book</strong>
+        <span>{asset.spreadLabel} spread</span>
+      </div>
+      <div className="exchange-book-side asks">
+        {asset.orderBook.asks.slice(0, 4).map((line) => (
+          <div key={line.id}>
+            <span>{line.shares}</span>
+            <strong>{new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(line.priceCents / 100)}</strong>
+          </div>
+        ))}
+      </div>
+      <div className="exchange-mid-price">
+        <strong>{asset.latestPriceLabel}</strong>
+        <span>{asset.availableShares} shares available</span>
+      </div>
+      <div className="exchange-book-side bids">
+        {asset.orderBook.bids.slice(0, 4).map((line) => (
+          <div key={line.id}>
+            <span>{line.shares}</span>
+            <strong>{new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(line.priceCents / 100)}</strong>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ExchangeProofTape({ asset }: { asset: NonNullable<ReturnType<typeof projectExchangeDesk>["selected"]> }) {
+  return (
+    <div className="exchange-proof-tape">
+      <div className="exchange-mini-head">
+        <strong>Live append tape</strong>
+        <span><i /> Live</span>
+      </div>
+      {asset.appendEvents.slice(0, 5).map((event) => (
+        <div className="exchange-tape-row" key={event.id}>
+          <Icons.seal size={16} />
+          <div>
+            <strong>{event.type}</strong>
+            <span>{event.detail}</span>
+            <em>{event.kaiPulse} · {event.appendAnchorId}</em>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function MobileExchangePanel({
+  active,
+  onListAsset,
+  onProvideLiquidity,
+  onSelectAsset,
+  onTrade,
+  state,
+  tenantSurface
+}: {
+  active: boolean;
+  onListAsset: () => void;
+  onProvideLiquidity: (assetId: string, amountCents: number) => void;
+  onSelectAsset: (assetId: string) => void;
+  onTrade: (assetId: string, side: ExchangeTradeSide, shares: number) => void;
+  state: CommerceState;
+  tenantSurface: boolean;
+}) {
+  const selected = projectExchangeDesk(state).selected;
+
+  return (
+    <MobilePane active={active} action={<StatusPill tone="green">{selected?.symbol ?? "Live"}</StatusPill>} title="Exchange">
+      <ExchangeTradingDesk
+        compact
+        onListAsset={onListAsset}
+        onProvideLiquidity={onProvideLiquidity}
+        onSelectAsset={onSelectAsset}
+        onTrade={onTrade}
+        state={state}
+        tenantSurface={tenantSurface}
+      />
+    </MobilePane>
   );
 }
 

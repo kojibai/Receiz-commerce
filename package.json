@@ -22,7 +22,7 @@
     "dev": "node scripts/next-runtime-guard.mjs dev",
     "build": "node scripts/next-runtime-guard.mjs build",
     "start": "node scripts/next-runtime-guard.mjs start",
-    "test": "tsc -p tsconfig.test.json && node scripts/patch-test-imports.mjs && node --test .test-build/tests/*.test.js",
+    "test": "node scripts/clean-test-build.mjs && tsc -p tsconfig.test.json && node scripts/patch-test-imports.mjs && node --test .test-build/tests/*.test.js",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "receiz:doctor": "node scripts/receiz-doctor.mjs",

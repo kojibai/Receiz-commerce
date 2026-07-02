@@ -40,6 +40,7 @@
     "src/lib/platform.ts",
     "src/lib/storefront/content-routing.ts",
     "src/lib/storefront/customer-session.ts",
+    "src/lib/storefront/proof-exchange.ts",
     "src/data/seed.ts",
     "src/types/domain.ts"
   ]

@@ -253,6 +253,12 @@ const homepageModeOptions: Array<{
     Icon: Icons.book
   },
   {
+    mode: "exchange",
+    label: "Exchange homepage",
+    description: "Make proof-object markets the front door with charts, liquidity, ownership, and live append tape.",
+    Icon: Icons.analytics
+  },
+  {
     mode: "game",
     label: "Game homepage",
     description: "Make the reward game the front door for play-to-earn campaigns and benefits.",

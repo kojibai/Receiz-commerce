@@ -12,6 +12,7 @@ const primaryNav = [
   ["Products", Icons.products],
   ["Rewards", Icons.rewards],
   ["Assets", Icons.assets],
+  ["Exchange", Icons.analytics],
   ["Blog", Icons.book],
   ["Play", Icons.game],
   ["Account", Icons.user],
@@ -185,7 +186,7 @@ export function MobileHeader({
   );
 }
 
-export type MobileView = "store" | "rewards" | "assets" | "play" | "account";
+export type MobileView = "store" | "exchange" | "rewards" | "assets" | "play" | "account";
 
 export function BottomNav({
   activeView,
@@ -198,6 +199,7 @@ export function BottomNav({
 }) {
   const items = [
     ["store", storeLabel, storeLabel === "Blog" ? Icons.book : Icons.store],
+    ["exchange", "Exchange", Icons.analytics],
     ["rewards", "Rewards", Icons.gift],
     ["assets", "Assets", Icons.assets],
     ["play", "Play", Icons.game],

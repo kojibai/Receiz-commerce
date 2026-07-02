@@ -89,6 +89,84 @@ export function baseState(): CommerceState {
     listings: [],
     qualifiers: [],
     campaigns: [],
+    exchange: {
+      enabled: true,
+      headline: "Proof Exchange",
+      subheadline: "Peer-to-peer fractional markets for Receiz proof objects.",
+      selectedAssetId: "exchange-coffee-pack",
+      walletBalanceCents: 2500,
+      settlementRail: "receiz_wallet_first",
+      proofMemoryHead: {
+        afterEntryId: "exchange-coffee-pack:append:list:20260701110000000Z",
+        afterKaiUpulse: "1782932400000",
+        afterCreatedAt: "2026-07-01T11:00:00.000Z"
+      },
+      assets: [
+        {
+          id: "exchange-coffee-pack",
+          sourceAssetId: "coffee-pack",
+          title: "Coffee Pack Proof Object",
+          symbol: "COFFEE",
+          category: "physical",
+          status: "listed",
+          manifest: {
+            schema: "receiz.asset_manifest.v1",
+            assetId: "asset:coffee-pack:BC-88421",
+            assetType: "proof_object",
+            proof: {
+              kind: "receiz.proof_bundle",
+              verifyUrl: "https://receiz.com/v/boost/BC-88421/1782932400000",
+              kaiPulseEternal: "1782932400000",
+              kaiKlok: "kai:1782932400000",
+              receizClaimId: "bc88421coffeeclaim",
+              artifactSha256Basis: "sha256:coffee-pack-proof"
+            },
+            owner: {
+              receizSubject: "boost.receiz.id",
+              displayName: "Boost Coffee",
+              custody: "fractionalized"
+            },
+            links: {
+              verify: "https://receiz.com/v/boost/BC-88421/1782932400000"
+            }
+          },
+          ownerReceizId: "boost.receiz.id",
+          deterministicValueCents: 180000,
+          shareCount: 100,
+          availableShares: 100,
+          userShares: 0,
+          lastPriceCents: 1800,
+          liquidityCents: 30000,
+          volume24hCents: 86400,
+          change24hBps: 420,
+          settlementRail: "receiz_wallet_first",
+          twinMarketIntentId: "intent-coffee-pack",
+          chart: [
+            { id: "p1", timestamp: "2026-07-01T08:00:00.000Z", kaiPulse: "1782921600000", priceCents: 1600, liquidityCents: 25000, volumeCents: 24000 },
+            { id: "p2", timestamp: "2026-07-01T09:00:00.000Z", kaiPulse: "1782925200000", priceCents: 1710, liquidityCents: 28000, volumeCents: 42800 },
+            { id: "p3", timestamp: "2026-07-01T10:00:00.000Z", kaiPulse: "1782928800000", priceCents: 1760, liquidityCents: 30000, volumeCents: 65000 },
+            { id: "p4", timestamp: "2026-07-01T11:00:00.000Z", kaiPulse: "1782932400000", priceCents: 1800, liquidityCents: 30000, volumeCents: 86400 }
+          ],
+          orderBook: [
+            { id: "bid-1", side: "bid", priceCents: 1782, shares: 18, ownerReceizId: "collector.receiz.id", proofObjectId: "order:bid:coffee:1" },
+            { id: "ask-1", side: "ask", priceCents: 1818, shares: 16, ownerReceizId: "boost.receiz.id", proofObjectId: "order:ask:coffee:1" }
+          ],
+          appendEvents: [
+            {
+              id: "exchange-coffee-pack:append:list:20260701110000000Z",
+              type: "asset.listed",
+              actorReceizId: "boost.receiz.id",
+              detail: "COFFEE listed with 100 fractional shares",
+              createdAt: "2026-07-01T11:00:00.000Z",
+              kaiPulse: "1782932400000",
+              appendAnchorId: "anchor:exchange-coffee-pack:1782932400000",
+              appendHash: "sha256:exchange-list-coffee",
+              proofObjectId: "asset:coffee-pack:BC-88421"
+            }
+          ]
+        }
+      ]
+    },
     game: {
       enabled: false,
       campaignId: "",
