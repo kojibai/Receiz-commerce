@@ -27,6 +27,7 @@
     "src/lib/storage/browser-storage.ts",
     "src/lib/checkout/checkout-request.ts",
     "src/lib/checkout/customer-purchase.ts",
+    "src/lib/checkout/receiz-settlement.ts",
     "src/lib/checkout/wallet-authority.ts",
     "src/lib/storefront/cart-summary.ts",
     "src/lib/storefront/local-identity-session.ts",

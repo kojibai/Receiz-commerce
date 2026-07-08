@@ -47,7 +47,7 @@ Required checks:
 - `@receiz/sdk` stays the only SDK boundary.
 - OIDC scopes include public-store, app-state, wallet, payments, domains, media, Twin/World, record, seal, and verify rails.
 - New Receiz calls are added through the adapter, not scattered across components.
-- `pnpm release:check` reports no type, lint, build, test, or Receiz doctor failures for the target tenant.
+- `pnpm release:check` reports no secret scan, type, lint, build, or test failures, and prints Receiz doctor output for the target tenant.
 
 ### 2. No-Code Merchant Setup
 
@@ -189,7 +189,8 @@ Run this before shipping:
 pnpm release:check
 ```
 
-`pnpm release:check` runs tests, typecheck, lint, a guarded production build, and Receiz doctor in order.
+`pnpm release:check` runs the tracked-file secret scan, tests, typecheck, lint, a guarded production build, and Receiz doctor in order.
+Public forks can run doctor without static access tokens; in that mode the doctor should report missing delegated-token rails without printing secret values. A production release with configured delegated permission should show `ok: true`, `missing: []`, and no warnings.
 `pnpm dev`, `pnpm start`, and `pnpm build` use `scripts/next-runtime-guard.mjs` so a local Next runtime cannot share `.next` with a release build.
 
 For tenant-specific checks, pass the tenant host through the release gate or doctor:

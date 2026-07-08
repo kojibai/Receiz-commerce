@@ -112,6 +112,7 @@ export type HostingConfig = {
   customDomain: DomainStatus;
   liveUrl: string;
   merchantReceizId: string;
+  settlementUserId?: string;
   settlementAccountLabel: string;
   plan: "starter" | "pro" | "scale";
   published: boolean;
@@ -240,7 +241,7 @@ export type Order = {
   customerId: string;
   customerEmail?: string;
   totalLabel: string;
-  status: "mock_paid" | "pending" | "fulfilled" | "card_required" | "settled";
+  status: "mock_paid" | "pending" | "fulfilled" | "card_required" | "settled" | "refunded";
   itemCount: number;
   sealed: boolean;
   createdAt: string;
@@ -248,7 +249,7 @@ export type Order = {
   tenantHost?: string;
   checkoutSessionId?: string;
   paymentRail?: "receiz_wallet" | "card_fallback" | "receiz_checkout" | "sandbox" | "wallet_card_split";
-  settlementStatus?: "wallet_reserved" | "card_required" | "pending" | "settled" | "sandbox";
+  settlementStatus?: "wallet_reserved" | "card_required" | "pending" | "settled" | "refunded" | "sandbox";
   funding?: {
     strategy: "receiz_wallet_first";
     totalLabel: string;

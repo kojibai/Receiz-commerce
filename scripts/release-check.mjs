@@ -2,6 +2,7 @@
 import { spawnSync } from "node:child_process";
 
 const checks = [
+  ["pnpm", ["secret:scan"]],
   ["pnpm", ["test"]],
   ["pnpm", ["typecheck"]],
   ["pnpm", ["lint"]],

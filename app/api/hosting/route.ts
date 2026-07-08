@@ -24,7 +24,7 @@ import {
   hostingBillingFromPlatformPayment,
   hostingPlanUpdateFromPlatformPayment
 } from "@/lib/hosting/platform-billing";
-import { proofObjectCheckoutFunding } from "@/lib/checkout/wallet-authority";
+import { createWalletFirstReceizSettlement } from "@/lib/checkout/receiz-settlement";
 import { platform } from "@/lib/platform";
 import { createReceizCommerceAdapter } from "@/lib/receiz/adapter";
 import { loadReceizConnectProfile } from "@/lib/receiz/connect-profile";
@@ -37,7 +37,7 @@ import {
   summarizeReceizStoreStatePublicationResult,
   summarizeStoreStateRecord
 } from "@/lib/receiz/store-state-publication";
-import { receizAccessTokenFromRequest, receizAuthorityRequired } from "@/lib/receiz/session";
+import { receizAuthorityRequired, receizRequestSession } from "@/lib/receiz/session";
 import { prepareStoreStateMediaForPublish } from "@/lib/receiz/media-publication";
 import { mockStorage } from "@/lib/storage/mock-storage";
 import type { DomainStatus, HostingConfig } from "@/types/domain";
@@ -139,6 +139,14 @@ function returnToFromRequest(request: NextRequest) {
   }
 }
 
+function originFromRequest(request: NextRequest) {
+  const forwardedHost = request.headers.get("x-forwarded-host") ?? request.headers.get("host");
+  if (!forwardedHost) return request.nextUrl.origin;
+
+  const forwardedProto = request.headers.get("x-forwarded-proto") ?? (request.nextUrl.protocol || "https:").replace(":", "");
+  return `${forwardedProto}://${forwardedHost}`;
+}
+
 function domainErrorStatus(domain: string, error: unknown): DomainStatus {
   if (error instanceof VercelDomainError && error.status === 428) {
     return missingVercelEnvDomainStatus(domain);
@@ -195,11 +203,6 @@ function isPositiveAmount(amountUsd: string) {
   return Number(amountUsd) > 0;
 }
 
-function centsFromAmountUsd(amountUsd: string) {
-  const amount = Number(String(amountUsd).replace(/[^0-9.]/g, ""));
-  return Number.isFinite(amount) ? Math.max(0, Math.round(amount * 100)) : 0;
-}
-
 async function recordReceizHostingEvent(
   accessToken: string | undefined,
   event: string,
@@ -233,7 +236,9 @@ async function chargePlatformFee(
     amountUsd: string;
     note: string;
     idempotencyKey: string;
-    authorizedByProofObject?: boolean;
+    tenantHost: string;
+    successUrl?: string;
+    cancelUrl?: string;
   }
 ) {
   const liveBilling = process.env.RECEIZ_PLATFORM_BILLING_MODE === "live";
@@ -269,27 +274,11 @@ async function chargePlatformFee(
   }
 
   if (!accessToken) {
-    if (input.authorizedByProofObject) {
-      const funding = proofObjectCheckoutFunding(centsFromAmountUsd(input.amountUsd));
-      return {
-        ok: true,
-        mode: "proof_object_wallet_first",
-        amountUsd: input.amountUsd,
-        paid: !funding.cardRequired,
-        funding,
-        paymentRails: {
-          preferred: "receiz_wallet",
-          fallback: "credit_card",
-          settlement: "platform_receiz_reserve",
-          recipientUserId
-        },
-        message: funding.cardRequired
-          ? "Verified Receiz proof object authorized wallet-first platform billing; card funds the remaining delta."
-          : "Verified Receiz proof object authorized platform settlement."
-      };
-    }
-
-    return { ...receizAuthorityRequired("/admin"), status: 401 };
+    return {
+      ...receizAuthorityRequired("/admin"),
+      status: 401,
+      message: "Connect Receiz ID before billing so Receiz can move wallet funds and open card payment for any delta."
+    };
   }
 
   try {
@@ -297,23 +286,54 @@ async function chargePlatformFee(
       baseUrl: process.env.RECEIZ_BASE_URL,
       accessToken
     });
-    const transfer = await receiz.connectTransfer(
-      {
-        recipientUserId,
-        unit: "usd",
-        amountUsd: input.amountUsd,
-        note: input.note,
-        clientNonce: input.idempotencyKey
+    const settlement = await createWalletFirstReceizSettlement({
+      receiz,
+      amountUsd: input.amountUsd,
+      tenantHost: input.tenantHost,
+      recipientUserId,
+      idempotencyKey: input.idempotencyKey,
+      note: input.note,
+      description: input.note,
+      successUrl: input.successUrl,
+      cancelUrl: input.cancelUrl,
+      metadata: {
+        platform: platform.productName,
+        billingKind: "platform_fee"
       },
-      input.idempotencyKey
-    );
+      cart: {
+        items: [
+          {
+            id: input.idempotencyKey,
+            title: input.note,
+            quantity: 1,
+            amountUsd: input.amountUsd
+          }
+        ]
+      }
+    });
 
     return {
       ok: true,
       mode: "live",
       amountUsd: input.amountUsd,
-      paid: true,
-      transfer
+      paid: settlement.paid,
+      funding: settlement.funding,
+      wallet: settlement.wallet,
+      transfer: settlement.walletTransfer,
+      checkoutSession: settlement.checkoutSession,
+      receiptId: settlement.receiptId,
+      proofBundle: settlement.proofBundle,
+      paymentRail: settlement.paymentRail,
+      settlementStatus: settlement.settlementStatus,
+      paymentRails: {
+        preferred: "receiz_wallet",
+        fallback: "credit_card",
+        settlement: "platform_receiz_reserve",
+        recipientUserId
+      },
+      message: settlement.paid
+        ? "Receiz wallet settlement completed."
+        : "Card payment is required for the remaining Receiz billing delta."
     };
   } catch (error) {
     return {
@@ -449,8 +469,11 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => ({}));
   const action = String(body.action ?? "subdomain");
-  const accessToken = receizAccessTokenFromRequest(request);
+  const requestSession = receizRequestSession(request);
+  const accessToken = requestSession.accessToken;
+  const payerAccessToken = requestSession.cookieAccessToken;
   const returnTo = returnToFromRequest(request);
+  const origin = originFromRequest(request);
 
   if (action === "plan") {
     const plan = String(body.plan ?? "pro") as HostingConfig["plan"];
@@ -458,18 +481,20 @@ export async function POST(request: NextRequest) {
       return badRequest(new Error("Unknown hosting plan."));
     }
     const merchantAuthority = await requireMerchantAuthority(
-      accessToken,
+      payerAccessToken,
       "billing",
       returnTo,
       isRecord(body) ? body.merchantProof ?? body.merchantSession ?? body.state : null
     );
     if (!merchantAuthority.ok) return merchantAuthority.response;
 
-    const platformBilling = await chargePlatformFee(merchantAuthority.source === "delegated_permission" ? accessToken : undefined, {
+    const platformBilling = await chargePlatformFee(merchantAuthority.source === "delegated_permission" ? payerAccessToken : undefined, {
       amountUsd: amountForPlan(plan),
       note: `${platform.productName} ${plan} hosting plan`,
       idempotencyKey: `receiz-app:hosting-plan:${plan}`,
-      authorizedByProofObject: merchantAuthority.source === "proof_object"
+      tenantHost: platform.domain,
+      successUrl: `${origin}/admin?billing=success&plan=${encodeURIComponent(plan)}`,
+      cancelUrl: `${origin}/admin?billing=cancel&plan=${encodeURIComponent(plan)}`
     });
 
     if (!platformBilling.ok) {
@@ -508,7 +533,7 @@ export async function POST(request: NextRequest) {
 
   if (action === "payment") {
     const merchantAuthority = await requireMerchantAuthority(
-      accessToken,
+      payerAccessToken,
       "billing",
       returnTo,
       isRecord(body) ? body.merchantProof ?? body.merchantSession ?? body.state : null
@@ -533,18 +558,20 @@ export async function POST(request: NextRequest) {
     }
 
     const merchantAuthority = await requireMerchantAuthority(
-      accessToken,
+      payerAccessToken,
       "custom_domain",
       returnTo,
       isRecord(body) ? body.merchantProof ?? body.merchantSession ?? body.state : null
     );
     if (!merchantAuthority.ok) return merchantAuthority.response;
 
-    const platformBilling = await chargePlatformFee(merchantAuthority.source === "delegated_permission" ? accessToken : undefined, {
+    const platformBilling = await chargePlatformFee(merchantAuthority.source === "delegated_permission" ? payerAccessToken : undefined, {
       amountUsd: process.env.RECEIZ_CUSTOM_DOMAIN_SETUP_USD ?? "0.00",
       note: `${platform.productName} custom domain setup for ${domain}`,
       idempotencyKey: `receiz-app:custom-domain:${domain}`,
-      authorizedByProofObject: merchantAuthority.source === "proof_object"
+      tenantHost: domain,
+      successUrl: `${origin}/admin?domain=${encodeURIComponent(domain)}&billing=success`,
+      cancelUrl: `${origin}/admin?domain=${encodeURIComponent(domain)}&billing=cancel`
     });
 
     if (!platformBilling.ok) {

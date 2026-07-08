@@ -75,5 +75,5 @@ export async function loadReceizConnectProfile(accessToken: string | undefined) 
     accessToken
   });
 
-  return profileFromReceizUserinfo(await receiz.client.identity.userinfo());
+  return profileFromReceizUserinfo(await receiz.userinfo());
 }

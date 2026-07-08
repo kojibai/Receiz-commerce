@@ -1,6 +1,36 @@
 # Receiz SDK Rail Map
 
-This template is intended to show how to build a commerce SaaS on top of `@receiz/sdk` without reaching into internal Receiz code.
+This template shows how to build a commerce SaaS on top of `@receiz/sdk` without reaching into internal Receiz code.
+
+The rail map is a public contract for clone builders. If a developer wants to add a new feature, this file should tell them which SDK rail owns it, which local file wraps it, and which proof object or append remains authoritative.
+
+## What One SDK Boundary Replaces
+
+Receiz Commerce Kit intentionally gathers product concerns that are often scattered across many vendors and internal services:
+
+- Account creation, continuation, identity artifact restore, and tenant session scope.
+- Object verification, sealing, public proof lookup, proof memory, and Kai-ordered append recovery.
+- Wallet-first checkout, embedded payments, merchant settlement metadata, customer orders, rewards, and assets.
+- Public-store publish, app-state projection, durable media URLs, and tenant cold-start recovery.
+- Subdomain reservation, custom-domain verification, DNS instructions, and host-to-tenant resolution.
+- Webhooks, audit, jobs, permissions, risk checks, compliance export, portability, notifications, release checks, and release pinning.
+
+The app still has UI state, browser storage, route handlers, and optional hosting automation. Those are product projections and transport helpers. They are not proof authority.
+
+## MCP Relationship
+
+Receiz MCP is the agent-facing tool layer over the SDK/API surface. Use it for diagnostics, setup inspection, rail invocation, and release assistance from tools such as Codex.
+
+MCP does not replace:
+
+- SDK verification.
+- Signed public-store publish.
+- Identity proof objects.
+- Proof memory admission.
+- Kai pulse ordering.
+- Verified ownership or settlement appends.
+
+If an agent calls an MCP tool, the result still needs to respect the same proof model described here.
 
 ## Authority Model
 
@@ -43,8 +73,9 @@ Files:
 SDK rails:
 
 - `connect.wallet`
-- `payments.embeddedCheckout`
+- `connect.checkout`
 - `connect.checkoutSession`
+- `connect.transfer`
 - `commerce.oneClickCheckout`
 
 Tenant checkout is host-scoped. A customer can proceed from a verified identity proof object, continued Receiz ID proof, or delegated tenant permission. Wallet-first checkout applies Receiz wallet balance first and uses card fallback only for the delta.
@@ -69,7 +100,7 @@ SDK rails:
 - `merchants.profile`
 - `merchants.capabilities`
 
-These rails are exposed in `@receiz/sdk@97.6.0`. The app treats customer accounts as tenant-scoped storefront projections over Receiz proof. The same proof-bearing Receiz identity can be used across multiple stores, but orders, rewards, assets, and permissions are projected for the active subdomain or custom domain. SDK `doctor()` reports delegated-token, tenant, customer, merchant, commerce, media, domain, and public-store requirements directly.
+These rails are exposed in `@receiz/sdk@98.0.0`. The app treats customer accounts as tenant-scoped storefront projections over Receiz proof. The same proof-bearing Receiz identity can be used across multiple stores, but orders, rewards, assets, and permissions are projected for the active subdomain or custom domain. SDK `doctor()` reports delegated-token, tenant, customer, merchant, commerce, media, domain, and public-store requirements directly.
 
 ## Merchant Settlement
 
@@ -211,4 +242,4 @@ Receiz Twin/World buttons are hidden unless both are true:
 - The relevant `NEXT_PUBLIC_RECEIZ_*_ENABLED` flag is set.
 - The installed `@receiz/sdk` client exposes the matching namespace.
 
-With `@receiz/sdk@97.6.0`, typed app-state, signed public-store publish, Twin, World, commerce runtime, domain, customer, merchant, media, portability, and release namespaces are exposed. The publish path uploads inline merchant media with `media.upload()` when delegated media permission is available, then writes state through the signed public-store rail when the local Identity Seal key file is present, so published subdomains and custom domains render durable Receiz media URLs and the current proof object. The frontend still hides optional Twin/World buttons when the matching env flag is disabled.
+With `@receiz/sdk@98.0.0`, typed app-state, signed public-store publish, Twin, World, commerce runtime, domain, customer, merchant, media, portability, and release namespaces are exposed. The publish path uploads inline merchant media with `media.upload()` when delegated media permission is available, then writes state through the signed public-store rail when the local Identity Seal key file is present, so published subdomains and custom domains render durable Receiz media URLs and the current proof object. The frontend still hides optional Twin/World buttons when the matching env flag is disabled.

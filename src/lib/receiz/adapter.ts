@@ -1,6 +1,7 @@
 import {
   RECEIZ_DEFAULT_BASE_URL,
   RECEIZ_SDK_VERSION,
+  appendReceizIdentityArtifactTrailerToPng,
   createReceizClient,
   type ActionLedgerFeed,
   type CheckoutRequest,
@@ -11,7 +12,11 @@ import {
   type DocumentSealResponseMetadata,
   type DocumentVerifyResponse,
   type JsonObject,
+  type OidcTokenRequest,
+  type OidcTokenResponse,
   type PublicProofRecord,
+  type ReceizAppStateFeedResponse,
+  type ReceizAppStateRecordResponse,
   type ReceizAssetManifest,
   type ReceizAssetManifestProjection,
   type ReceizAuditAppendRequest,
@@ -40,6 +45,12 @@ import {
   type ReceizOneClickCheckoutResponse,
   type ReceizPermissionCheckRequest,
   type ReceizPermissionGrantRequest,
+  type ReceizPublicStoreAppendResult,
+  type ReceizPublicStorePublishInput,
+  type ReceizPublicStoreResolveInput,
+  type ReceizPublicStoreResolveResult,
+  type ReceizPublicStoreRestoreLatestInput,
+  type ReceizPublicStoreSignedPublishInput,
   type ReceizReleasePinRequest,
   type ReceizSearchRequest,
   type ReceizKeyFile,
@@ -84,6 +95,11 @@ export type ReceizCommerceAdapter = {
     state?: string;
     usernameHint?: string;
   }): string;
+  exchangeReceizIdToken(
+    body: OidcTokenRequest,
+    options?: { authorization?: string }
+  ): Promise<OidcTokenResponse>;
+  userinfo(): Promise<JsonObject>;
   createReceizId(input: {
     username: string;
     displayName: string;
@@ -98,6 +114,7 @@ export type ReceizCommerceAdapter = {
     keyFile: ReceizKeyFile;
     projection: ReceizIdentityAccountProjection;
   }>;
+  appendIdentityArtifactTrailerToPng(pngBytes: Uint8Array, keyFile: ReceizKeyFile): Uint8Array;
   signIdentityLoginProof(input: {
     keyFile: ReceizKeyFile;
     challengeText?: string;
@@ -161,6 +178,21 @@ export type ReceizCommerceAdapter = {
     host: string,
     options?: { schema?: string; state?: string; requiredDataKey?: string }
   ): Promise<import("@receiz/sdk").ReceizAppStateRestoreResult<TData>>;
+  publishPublicStore<TState extends JsonObject = JsonObject>(
+    input: ReceizPublicStorePublishInput<TState>,
+    options?: ReceizIdempotencyOptions
+  ): Promise<ReceizAppStateFeedResponse>;
+  publishPublicStoreWithIdentityProof<TState extends JsonObject = JsonObject>(
+    input: ReceizPublicStoreSignedPublishInput<TState>,
+    options?: ReceizIdempotencyOptions
+  ): Promise<ReceizPublicStoreAppendResult>;
+  restoreLatestPublicStore<TState extends JsonObject = JsonObject>(
+    input: ReceizPublicStoreRestoreLatestInput
+  ): Promise<ReceizPublicStoreResolveResult<TState>>;
+  resolvePublicStore<TState extends JsonObject = JsonObject>(
+    input: ReceizPublicStoreResolveInput
+  ): Promise<ReceizPublicStoreResolveResult<TState>>;
+  readAppStateByUrl(url: string): Promise<ReceizAppStateRecordResponse>;
   createRefund(body: ReceizCommerceRuntimeRequest, options?: ReceizIdempotencyOptions): Promise<JsonObject>;
   createSubscription(body: ReceizCommerceRuntimeRequest, options?: ReceizIdempotencyOptions): Promise<JsonObject>;
   cancelSubscription(
@@ -408,6 +440,12 @@ export function createReceizCommerceAdapter(
         usernameHint: input.usernameHint
       });
     },
+    exchangeReceizIdToken(body, options) {
+      return client.identity.token(body, options);
+    },
+    userinfo() {
+      return client.identity.userinfo();
+    },
     async createReceizId(input) {
       const identity = await client.identity.createReceizId({
         username: input.username,
@@ -430,6 +468,9 @@ export function createReceizCommerceAdapter(
       const projection = await client.identity.projectAccount(keyFile);
 
       return { keyFile, projection };
+    },
+    appendIdentityArtifactTrailerToPng(pngBytes, keyFile) {
+      return appendReceizIdentityArtifactTrailerToPng(pngBytes, keyFile);
     },
     signIdentityLoginProof(input) {
       return client.identity.signLoginProof(input);
@@ -537,7 +578,7 @@ export function createReceizCommerceAdapter(
       return client.merchants.capabilities(query);
     },
     checkout(body) {
-      return client.payments.embeddedCheckout(body);
+      return client.connect.checkout(body);
     },
     checkoutSession(query) {
       return client.connect.checkoutSession(query);
@@ -568,6 +609,21 @@ export function createReceizCommerceAdapter(
     },
     resolveTenant(host, options) {
       return client.domains.resolveTenant(host, options);
+    },
+    publishPublicStore(input, options) {
+      return client.publicStore.publish(input, options);
+    },
+    publishPublicStoreWithIdentityProof(input, options) {
+      return client.publicStore.publishWithIdentityProof(input, options);
+    },
+    restoreLatestPublicStore(input) {
+      return client.publicStore.restoreLatest(input);
+    },
+    resolvePublicStore(input) {
+      return client.publicStore.resolve(input);
+    },
+    readAppStateByUrl(url) {
+      return client.appState.byUrl(url);
     },
     createRefund(body, options) {
       return client.commerce.refunds.create(body, options);

@@ -156,7 +156,14 @@ export async function GET(request: NextRequest) {
   let recovery = { admitted: 0, recovered: 0 };
 
   if (projectionHostContext.surface === "tenant") {
-    recovery = await hydrateProofStoreFromReceizStoreState(proofStore, tenantHost);
+    try {
+      recovery = await hydrateProofStoreFromReceizStoreState(proofStore, tenantHost);
+    } catch (error) {
+      console.warn("[store] tenant proof recovery skipped", {
+        tenantHost,
+        message: errorMessage(error)
+      });
+    }
   }
 
   const projectionSource = projectionHostContext.surface === "tenant" ? storeStateProjectionSource(proofStore.records(), tenantHost) : "platform";

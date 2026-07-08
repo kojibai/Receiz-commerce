@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@receiz/sdk':
-        specifier: ^97.6.0
-        version: 97.6.0(react@19.2.7)
+        specifier: ^98.0.0
+        version: 98.0.0(react@19.2.7)
       lucide-react:
         specifier: ^0.468.0
         version: 0.468.0(react@19.2.7)
@@ -351,8 +351,8 @@ packages:
     resolution: {integrity: sha512-nn5ozdjYQpUCZlWGuxcJY/KpxkWQs4DcbMCmKojjyrYDEAGy4Ce19NN4v5MduafTwJlbKc99UA8YhSVqq9yPZA==}
     engines: {node: '>=12.4.0'}
 
-  '@receiz/sdk@97.6.0':
-    resolution: {integrity: sha512-qIX+KsTovYyeRzI1KnLz1eysXb5scUkseDUaPyE/GXXqbbFA7ya82+s3eB1aTiXvxTXuMb9XEdEBO/WWfq5/nA==}
+  '@receiz/sdk@98.0.0':
+    resolution: {integrity: sha512-09La2x0OW33T2iNQ99YUPXThSP6j/PsDfI7PcTvgrfoKn9lLupe6XaxYrCUIrrOzr75AqGR39nxd8veeH5M5NQ==}
     hasBin: true
     peerDependencies:
       react: '>=18.0.0 <20.0.0'
@@ -1885,7 +1885,7 @@ snapshots:
 
   '@nolyfill/is-core-module@1.0.39': {}
 
-  '@receiz/sdk@97.6.0(react@19.2.7)':
+  '@receiz/sdk@98.0.0(react@19.2.7)':
     optionalDependencies:
       react: 19.2.7
 

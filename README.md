@@ -1,8 +1,39 @@
-# Receiz.app Commerce Cloud
+# Receiz Commerce Kit
 
-Receiz.app Commerce Cloud is both a SaaS product and a forkable ecommerce template. Non-coders can launch a mobile-friendly ecommerce site on a free `*.receiz.app` subdomain, customize the brand in a no-code studio, connect Receiz primitives, and upgrade to paid custom-domain hosting. Developers can fork the same codebase and build custom Receiz-powered commerce experiences.
+[![CI](https://github.com/kojibai/Receiz-commerce/actions/workflows/ci.yml/badge.svg)](https://github.com/kojibai/Receiz-commerce/actions/workflows/ci.yml)
 
-The core verb is **seal**. Products, orders, rewards, assets, and game actions can be sealed with Receiz.
+Receiz Commerce Kit is a full working commerce product and a forkable SDK kernel for building proof-sealed applications with `@receiz/sdk` and Receiz MCP.
+
+It ships as a Next.js App Router application with a public storefront, customer account area, no-code merchant admin, Receiz ID, checkout, wallet projection, rewards, Receized assets, domain hosting, media upload, proof memory, publish recovery, webhook verification, release diagnostics, and an MCP-ready agent workflow. You can run it as the Receiz.app Commerce Cloud product, or clone it and build your own commerce, rewards, marketplace, game, content, or agent-operated SaaS on top of the same primitives.
+
+The core verb is **seal**. Products, orders, rewards, assets, storefront state, and customer actions can carry Receiz proof instead of depending on a private app database as the final authority.
+
+## What This Repo Is
+
+This repository is intentionally two things at once:
+
+- **A working product:** a mobile-first commerce cloud where a merchant can create or restore Receiz ID, customize a storefront, add products and content, activate rewards, publish to a free `*.receiz.app` subdomain, connect a custom domain, and run Receiz checkout.
+- **A developer kernel:** a production-shaped reference for using one typed SDK boundary to build identity, proof, payments, wallet, rewards, domains, media, public app state, webhooks, release checks, and agent tooling without scattering SDK calls through the UI.
+
+The release unit is the repository, not an npm package. `package.json` remains `private: true` to prevent accidental application publishing to npm.
+
+## Why It Matters
+
+Most commerce apps become a pile of separate systems: auth provider, payments processor, wallet layer, CMS, media store, rewards service, domain automation, database, webhook verifier, audit log, customer portal, compliance exporter, release checker, and a separate set of agent tools.
+
+This codebase demonstrates how much of that collapses into one Receiz SDK boundary:
+
+- **Identity:** Receiz ID, Receiz Key, Identity Record, Identity Seal, OIDC, account continuation, and tenant-scoped customer sessions.
+- **Proof:** object verification, artifact sealing, public proof lookup, proof memory, append recovery, Kai pulse ordering, and public-store coordinates.
+- **Commerce:** embedded checkout, one-click checkout, wallet-first payments, card fallback metadata, order projection, settlement metadata, refunds, subscriptions, inventory, discounts, gift cards, access passes, fulfillment, tax, and payouts.
+- **Rewards and assets:** proof-sealed benefits, Receized assets, ownership state, reward rules, claims, asset projections, and customer wallet/account surfaces.
+- **Public state:** signed public-store publish, app-state records, tenant cold-start recovery, known-head sync, and no-store storefront reads.
+- **Hosting:** free subdomain reservation, custom-domain verification, tenant resolution, DNS instructions, and optional Vercel domain automation.
+- **Media:** durable Receiz media upload/transform paths so logos, product images, and blog covers survive cold starts.
+- **Operations:** webhook signature verification, audit append, jobs, permissions, risk, compliance export, portability, notifications, release checks, and release pinning.
+- **Agents:** Receiz MCP lets tools like Codex inspect diagnostics, call SDK/API rails, and operate release workflows while proof objects remain the source of truth.
+
+The result is not a toy demo. It is a reference architecture for building a complete Receiz-native product surface from primitives that stay portable and inspectable.
 
 ## Quick Start
 
@@ -17,171 +48,169 @@ Open:
 - Admin studio: `http://localhost:3000/admin`
 - Customer account: `http://localhost:3000/account`
 
-## Receiz Rails
+Run the release gate:
 
-Receiz.app Commerce Cloud uses Receiz as the account, payment, proof, reward, ledger, and asset rail. The app can still run locally with demo UI state, but production truth comes from Receiz proof objects, identity artifacts, verified appends, ownership appends, and settlement ledger rows.
+```bash
+pnpm release:check
+```
 
-### Authority Model
+`pnpm release:check` runs the tracked-file secret scan, tests, typecheck, lint, a guarded production build, and Receiz doctor. Public forks can run doctor without static access tokens; production releases should run with configured delegated permission and show `ok: true`, `missing: []`, and no warnings.
+
+## Product Tour
+
+The included app gives operators a complete launch path:
+
+- Brand, logo, colors, theme, typography, radius, button style, and storefront copy.
+- Pages, navigation, blog posts, products, collections, SEO, and product media.
+- Rewards, reward rules, Receized assets, proof events, and optional play loops.
+- Receiz ID login, account creation, identity artifact restore, and customer account recovery.
+- Wallet-first checkout with card fallback metadata and merchant settlement projection.
+- Orders, buyer email, fulfillment state, settlement state, customer profiles, and host-specific merchant context.
+- Free hosted subdomain, paid custom domain, hosting plan, billing method, DNS guidance, and publish checklist.
+- Launch-readiness scoring for non-coders and developers cloning the SDK base.
+
+The public storefront is mobile-first: a single `100dvh` app viewport with Store, Rewards, Assets, Play, and Account tabs. The admin studio is also touch-friendly so a merchant can launch without editing code.
+
+## Developer Kernel
+
+Developers should start with three files:
+
+- `src/lib/receiz/adapter.ts` is the application SDK boundary.
+- `src/lib/receiz/oauth-scopes.ts` defines the app's Receiz rail scopes.
+- `docs/SDK_RAILS.md` maps each route and feature to the SDK rail it uses.
+
+The application follows the Receiz order:
+
+1. Verify or validate carried proof truth.
+2. Project it immediately for first paint.
+3. Admit it once into durable proof memory.
+4. Resume from the known Kai/proof head.
+5. Append later verified additions without rediscovering known truth.
+
+Keep new Receiz calls behind the adapter. Page components should render projected proof truth and call local actions, not import internal SDK details directly.
+
+Read the deeper developer guide:
+
+- `docs/DEVELOPER_KERNEL.md`
+- `docs/SDK_RAILS.md`
+- `docs/PRODUCTION_READINESS.md`
+
+## What You Can Build
+
+This repo is a launchpad for:
+
+- A branded commerce cloud for many merchants.
+- A proof-sealed storefront for a single brand.
+- A rewards and loyalty OS where purchases, perks, coupons, and access passes carry proof.
+- A marketplace for Receized assets with ownership, transfer, and customer account projections.
+- A content commerce product with pages, posts, products, SEO, proof, checkout, and public-state recovery.
+- A game or engagement loop where scores, rewards, assets, and purchases become sealed business events.
+- A domain-hosted SaaS where every tenant has a free subdomain, optional custom domain, and proof-backed app state.
+- A customer portal with wallet, orders, rewards, assets, account restore, and tenant-specific sessions.
+- An agent-operated back office where MCP tools inspect SDK readiness, diagnose scopes, replay events, check releases, and assist operators.
+- A portable commerce kernel that avoids making Supabase, Stripe, Shopify, Redis, or Vercel memory the authority for product truth.
+
+You can replace the UI, add modules, or deploy on a different host while keeping the same proof-first SDK boundary.
+
+## Authority Model
 
 The object carries the proof. A Receiz Key, Identity Record image, Identity Seal image, sealed product/order/reward object, verified append, ownership append, or settlement ledger row is the authority for the fact it carries.
 
-`@receiz/sdk` is the typed way to verify, project, admit, publish, and sync that proof truth. Receiz MCP is agent tooling over the SDK/API surface. Connect/OIDC tokens are scoped permission artifacts for remote reads and writes after proof has been established; they are not the identity proof root and do not outrank a verified proof object.
+`@receiz/sdk` is the typed way to verify, project, admit, publish, append, recover, and sync that truth. Receiz MCP is agent tooling over the SDK/API surface. Connect/OIDC tokens are scoped permission artifacts for remote reads and writes after proof has been established; they are not the identity proof root and do not outrank a verified proof object.
 
 Kai-Klok is the deterministic proof-state machine. Each proof object is uniquely stamped with its Kai pulse and anchor, and that stamp is recomputable from the open-source Kai-Klok canon: https://github.com/kojibai/klok. This app must never invent a replacement ordering rule. Chronos timestamps, server response order, CDN state, browser storage, Vercel function memory, and framework cache state are not authority.
 
-The SDK integration follows the Receiz order:
-
-- Verify or validate carried proof truth.
-- Project it immediately for first paint.
-- Admit it once into durable proof memory.
-- Resume from the known Kai/proof head.
-- Append later verified additions without rediscovering known truth.
-
-Storefront publish follows the same law. The app admits the merchant's verified store-state proof object locally first, signs the canonical public-store feed with the merchant Identity Seal/Receiz Key through `publicStore.signPublish()`, and appends it through `publicStore.publishSigned()`. The returned Kai pulse, append anchor, and proof bundle are the public append coordinate. Connect/OIDC tokens may support delegated agent or server operations, but they are not merchant login authority and they are not required for merchant-owned storefront sync.
-
-No Supabase, Stripe, or app database is required for product truth. Local browser state in this template is demo composition only; proof memory is admitted proof truth, not a cache.
-
-The main Receiz adapter is:
-
-- `src/lib/receiz/adapter.ts`
-
-See `docs/SDK_RAILS.md` for the route-by-route SDK rail map.
-
-## No-Code Admin
-
-The admin studio lets an operator customize:
-
-- Brand name, logo, colors, and tagline
-- Font, radius, button style, and theme save flow
-- Pages and navigation
-- Robust pages, blog posts, products, collections, and SEO
-- Rewards and reward rules
-- Receized assets
-- Receiz ID login, account creation, and identity artifact restore
-- Game enabled/off
-- Checkout mode
-- Free hosted subdomain, paid custom domain, hosting plan, and billing method
-- Publish checklist
-
-The page, blog, and product buttons open real builders. They persist local template projections immediately and are structured so production deployments can admit the resulting content events through Receiz proof rails.
-
-## Content Builders
-
-The admin includes mobile-friendly builders for:
-
-- Pages: URL path, hero content, body copy, navigation visibility, publish state, SEO title, description, canonical path, and keywords
-- Blog posts: title, slug, excerpt, body, author, cover image, tags, featured state, publish state, and SEO
-- Products: type, price, inventory, status, visual treatment, product description, SEO, reward eligibility, and seal readiness
-
-Published blog posts render on the storefront, including tenant/custom-domain storefronts.
-
-## Sales And Customers
-
-The admin console includes a sales/customer panel that displays:
-
-- Orders
-- Buyer email
-- Payment rail
-- Settlement status
-- Merchant Receiz ID
-- Tenant host/custom domain
-- Customer profile rows
-- Shipping details for fulfillment
-
-Checkout projections are local UI projections until the Receiz checkout/session/settlement proof bundles are returned and admitted.
-
-## Product Model
-
-- Free launch: create, continue, or restore Receiz ID, publish a hosted `*.receiz.app` storefront, customize branding, add products, and use Receiz proof rails.
-- Paid upgrade: connect a custom domain, enable production hosting, configure Receiz checkout, and scale rewards/assets/game modules.
-- Adoption loop: every merchant store uses Receiz ID, Receiz checkout rails, proof objects, rewards, Receized assets, and sealed business events.
-
-## Mobile Storefront
-
-The public home page behaves like a modern shopping app on mobile:
-
-- Single `100dvh` viewport with no body scrolling
-- Bottom toolbar switches Store, Rewards, Assets, Play, and Account
-- Store tab shows a commerce-first home: hero offer, categories, products, cart, and seal actions
-- Rewards/assets/account tabs expose Receiz ID ownership and proof-sealed benefits
-- Play tab is optional and can be disabled without breaking the storefront
+No Supabase, Stripe, Shopify, Redis, or app database is required for product truth. Local browser state in this template is demo composition only; admitted proof memory is proof truth, not a cache.
 
 ## Receiz ID
 
-The template uses Receiz ID as the account layer. Existing Receiz IDs can continue in one click, new brands or customers can create a Receiz ID from the same flow, and users can restore the same account from a Receiz Key, Identity Record image, or Identity Seal image. The adapter and admin UI use SDK identity helpers including `createReceizIdIdentity`, `readReceizIdentityArtifact`, `projectReceizIdentityAccount`, `signReceizIdentityLoginProof`, `verifyReceizIdentityLoginProof`, and `buildReceizIdContinueRequest` through `@receiz/sdk`.
+Receiz ID is the account layer. Existing Receiz IDs can continue in one click, new brands or customers can create a Receiz ID from the same flow, and users can restore the same account from a Receiz Key, Identity Record image, or Identity Seal image.
 
-## Vercel Launch
+The adapter and admin UI use SDK identity helpers including:
 
-This app is ready for Vercel as a standard Next.js App Router project.
+- `identity.createReceizId`
+- `identity.readArtifact`
+- `identity.projectAccount`
+- `identity.signLoginProof`
+- `identity.verifyLoginProof`
+- `identity.buildReceizIdContinueRequest`
+- `identity.ensureTenantSession`
 
-Recommended project settings:
+Do not send normal users out to Receiz.com as the primary login product surface. The app creates or restores a local Receiz proof object, projects it into the workspace, and uses delegated remote permission only when a remote SDK/API rail needs it.
 
-- Framework preset: `Next.js`
-- Install command: `pnpm install --frozen-lockfile`
-- Build command: `pnpm build`
-- Output directory: leave empty/default
-- Node.js: `20.x` or newer
+## Publish And Recovery
 
-OIDC registration:
+Storefront publish follows the proof-first law:
 
-- Redirect URI: `https://receiz.app/api/auth/receiz/callback`
-- Public client: leave unchecked for this Vercel/Next.js app.
-- Client secret: keep server-only in `RECEIZ_CLIENT_SECRET`.
-- PKCE: still used through `/api/auth/receiz/start`.
-- Scopes: use the full Receiz Commerce Cloud scope set:
+1. Build the public store-state proof object from the merchant workspace.
+2. Admit that object locally so the user and edge have the newest proof immediately.
+3. Sign the canonical public-store feed with the merchant Identity Seal/Receiz Key when present.
+4. Append through the SDK public-store rail.
+5. Keep the returned Kai pulse, append anchor, known head, and proof bundle as the public append coordinate.
+6. Recover tenant cold starts through public-store/app-state projections and admit only complete proof records.
 
-```txt
-email
-offline_access
-openid
-profile
-receiz:app_state.read
-receiz:app_state.write
-receiz:domains.read
-receiz:domains.write
-receiz:media.read
-receiz:media.write
-receiz:notes.claim
-receiz:notes.mint
-receiz:notes.read
-receiz:payments.create
-receiz:payments.read
-receiz:public_store.read
-receiz:public_store.write
-receiz:record
-receiz:seal
-receiz:twin.read
-receiz:twin.write
-receiz:verify
-receiz:wallet.read
-receiz:wallet.transfer
-receiz:world.read
-receiz:world.write
+After publishing, verify the public tenant projection:
+
+```bash
+curl -sS https://your-subdomain.receiz.app/api/store
 ```
-- Browser-only, mobile, or static forks should register a separate public client.
 
-Set these required environment variables in Vercel:
+The response should show saved brand/content, `source: "published"`, `publishedState: true`, and `proofMemory.entries` greater than `0`.
+
+## SDK Doctor And MCP
+
+Run the local SDK doctor before shipping or debugging auth, domain, checkout, or publish issues:
+
+```bash
+pnpm receiz:doctor
+```
+
+The script prints SDK version, requested scopes, callback URL, tenant host, missing rails, warnings, fixes, capabilities, and whether a delegated token is present. It never prints token values.
+
+For MCP-capable agents such as Codex, add Receiz as an MCP server in the agent config:
+
+```toml
+[mcp_servers.receiz]
+command = "npx"
+args = ["-y", "@receiz/mcp-server@98.0.0"]
+startup_timeout_sec = 120
+
+[mcp_servers.receiz.env]
+RECEIZ_BASE_URL = "https://receiz.com"
+```
+
+Use `@receiz/mcp-server@98.0.0` for agent-side diagnostics and SDK/API rail calls. MCP never becomes the authority; it only helps inspect or invoke rails beneath proof objects.
+
+## Environment
+
+Copy `.env.example` and fill the values for your deployment.
+
+Required Receiz rails:
 
 ```bash
 NEXT_PUBLIC_RECEIZ_MODE=live
 RECEIZ_BASE_URL=https://receiz.com
 RECEIZ_CLIENT_ID=
 RECEIZ_CLIENT_SECRET=
+```
 
+Required Receiz ID/OIDC callback:
+
+```bash
 NEXT_PUBLIC_AUTH_MODE=receiz_id
 RECEIZ_AUTH_MODE=receiz_id
 RECEIZ_ID_CALLBACK_URL=https://receiz.app/api/auth/receiz/callback
 NEXT_PUBLIC_SITE_URL=https://receiz.app
 ```
 
-Enable live Receiz checkout with:
+Enable live checkout:
 
 ```bash
 NEXT_PUBLIC_CHECKOUT_MODE=receiz
 RECEIZ_CHECKOUT_MODE=receiz
 ```
 
-Hosted-commerce settings:
+Hosted commerce settings:
 
 ```bash
 NEXT_PUBLIC_HOSTING_MODE=receiz_hosted
@@ -189,7 +218,7 @@ NEXT_PUBLIC_DEFAULT_SUBDOMAIN=boost.receiz.app
 RECEIZ_ACCOUNT_STATE_MODE=receiz
 ```
 
-Optional webhook secrets, if enabled in Receiz:
+Optional webhook secrets:
 
 ```bash
 RECEIZ_WEBHOOK_SECRET=
@@ -210,34 +239,7 @@ VERCEL_CNAME_TARGET=cname.vercel-dns-0.com
 VERCEL_APEX_A_RECORD=76.76.21.21
 ```
 
-For free subdomains to work, the Vercel project must receive the traffic:
-
-```txt
-1. Add receiz.app to the Vercel project.
-2. Add *.receiz.app to the Vercel project.
-3. Point wildcard DNS *.receiz.app to cname.vercel-dns-0.com.
-4. Set VERCEL_API_TOKEN and VERCEL_PROJECT_ID so /api/hosting can add and verify custom domains.
-```
-
-If `.vercel/project.json` is present from a linked Vercel project, the app can read the project/team IDs from that file. A server-side `VERCEL_API_TOKEN` or `VERCEL_TOKEN` is still required for runtime custom-domain add/verify calls. Without it, `/api/hosting` returns `needs_vercel_env` plus DNS/env instructions instead of marking the domain connected.
-
-The app routes tenant hosts through `middleware.ts`. A request to `boost.receiz.app` is served by the same deployment with `tenant=boost`; a verified custom domain is served by the same deployment with `domain=thebrand.com`.
-
-### Global Publish Sync
-
-The admin editor can stage changes locally, but a hosted subdomain/custom domain is only globally durable after the same Receiz store-state proof object is synced to the public proof rail. Production publish is authorized by the merchant's verified Receiz proof object. User-facing Receiz ID login happens in app: create a Receiz proof object or restore a Receiz Key, Identity Record image, or Identity Seal image. Connect/OIDC may carry delegated write permission beneath that proof, but it is not the identity authority and it is not the normal login screen. Vercel function memory is not durable and is never treated as the global source of truth.
-
-Publish admits the verified store-state proof object locally first so the edge/user sees the newest append immediately, then it syncs that same append to the SDK public-store rail. Local admission and public sync are both required parts of the product loop, but sync never outranks or blocks the already-admitted proof object. If sync cannot complete, the app must keep rendering the newest local proof state and surface sync status as a sync problem, not as an identity failure or an env-token requirement for the merchant.
-
-After publishing, verify the public tenant projection:
-
-```bash
-curl -sS https://your-subdomain.receiz.app/api/store
-```
-
-The response should show saved brand/content, `source: "published"`, `publishedState: true`, and `proofMemory.entries` greater than `0`. If publish returns `receiz_authority_required`, create or restore a verified Receiz proof object in app, then publish again. If `storeStateSync.ok` is false, local proof admission succeeded and the remaining issue is public proof-rail sync for redeploy/cold-start recovery.
-
-Receiz settlement for platform fees we collect:
+Platform fee settlement:
 
 ```bash
 RECEIZ_PLATFORM_BILLING_MODE=sandbox
@@ -247,36 +249,11 @@ RECEIZ_SCALE_PLAN_USD=199.00
 RECEIZ_CUSTOM_DOMAIN_SETUP_USD=0.00
 ```
 
-Set `RECEIZ_PLATFORM_BILLING_MODE=live` only when `RECEIZ_PLATFORM_ACCOUNT_ID` is your Receiz account/user id. Paid plan selection and custom-domain setup can then use Receiz Connect transfer to settle the platform fee to your Receiz account.
-
 Optional merchant settlement fallback for demo checkout:
 
 ```bash
 RECEIZ_DEFAULT_MERCHANT_RECEIZ_ID=
 RECEIZ_DEFAULT_SETTLEMENT_USER_ID=
-```
-
-Production merchant checkout should use the merchant's verified Receiz proof object or delegated Connect permission derived beneath that proof. The checkout API sends tenant host, merchant Receiz ID, and settlement recipient metadata into Receiz checkout so customer payments settle to the merchant's Receiz rails, not a Stripe account.
-
-Customer checkout on a tenant host requires customer proof for that store: a verified identity object or scoped delegated permission derived beneath that proof. A `receiz.app` platform login is not reused as buyer authority on `brand.receiz.app` or a custom domain.
-
-The checkout request is wallet-first:
-
-```txt
-Receiz ID login
--> read customer Receiz wallet projection
--> create Receiz embedded checkout session
--> prefer Receiz wallet balance
--> allow credit-card fallback when wallet funds are unavailable
--> route settlement metadata to the merchant Receiz ID/reserve wallet
--> project order/customer/fulfillment state into the merchant admin
-```
-
-Optional Receiz plan IDs for hosted-commerce upgrades:
-
-```bash
-RECEIZ_CUSTOM_DOMAIN_PLAN_ID=
-RECEIZ_HOSTING_PRO_PLAN_ID=
 ```
 
 Receiz Twin/World content assistance:
@@ -288,70 +265,59 @@ RECEIZ_ENABLE_TWIN_SCOPES=true
 RECEIZ_ENABLE_WORLD_SCOPES=true
 ```
 
-`@receiz/sdk@97.6.0` exposes typed Twin, World, signed public-store publish, customer, merchant, commerce, media, and domain namespaces. The frontend hides Receiz Twin buttons unless the capability flag is enabled and the SDK namespace is present. If you are testing against an older Receiz OIDC client, set `RECEIZ_ENABLE_TWIN_SCOPES=false` or `RECEIZ_ENABLE_WORLD_SCOPES=false` before login so Receiz does not reject the authorization request with `invalid_scope`.
+If you are testing against an older Receiz OIDC client, set `RECEIZ_ENABLE_TWIN_SCOPES=false` or `RECEIZ_ENABLE_WORLD_SCOPES=false` before login so Receiz does not reject the authorization request with `invalid_scope`.
 
-Do not send normal users out to Receiz.com for login. The setup is:
+Never expose access tokens, webhook secrets, client secrets, or `VERCEL_API_TOKEN` with a `NEXT_PUBLIC_` prefix.
 
-```txt
-User clicks Sign in with Receiz
--> app creates or restores a local Receiz proof object with the SDK
--> app projects that proof into the merchant/customer workspace
--> app defaults merchant hosting to username.receiz.app on the free Starter plan
--> paid plans and custom-domain upgrades stay locked until Receiz wallet/card settlement is confirmed
-```
+## Vercel Launch
 
-### SDK Doctor And MCP
+Recommended Vercel settings:
 
-Run the local SDK doctor before shipping or debugging auth/domain/publish issues:
+- Framework preset: `Next.js`
+- Install command: `pnpm install --frozen-lockfile`
+- Build command: `pnpm build`
+- Output directory: default
+- Node.js: `20.x` or newer
+
+For free subdomains:
+
+1. Add `receiz.app` to the Vercel project.
+2. Add `*.receiz.app` to the Vercel project.
+3. Point wildcard DNS `*.receiz.app` to `cname.vercel-dns-0.com`.
+4. Set `VERCEL_API_TOKEN` and `VERCEL_PROJECT_ID` so `/api/hosting` can add and verify custom domains.
+
+The app routes tenant hosts through `middleware.ts`. A request to `boost.receiz.app` is served by the same deployment with `tenant=boost`; a verified custom domain is served by the same deployment with `domain=thebrand.com`.
+
+## Release Standard
+
+Before tagging or announcing the repo:
 
 ```bash
-pnpm receiz:doctor
+pnpm release:check
+pnpm secret:scan
 ```
 
-The script prints SDK version, requested scopes, callback URL, tenant host, missing rails, warnings, and whether a delegated token is present. It never prints token values.
+Then complete the manual release gates in `docs/OPEN_SOURCE_RELEASE.md`:
 
-For MCP-capable agents such as Codex, add Receiz as an MCP server in the agent config:
+- Mobile admin visual QA at 390px and 430px.
+- Tenant storefront QA on a subdomain host.
+- Platform admin QA on `receiz.app`.
+- Checkout QA for customer proof, wallet-first funding, card fallback metadata, merchant settlement, and admin projections.
+- Domain QA for free subdomain, custom domain, missing DNS instructions, and published `/api/store` recovery.
+- Docs QA for `.env.example`, README, SDK rails, MCP setup, and no static token requirement.
 
-```toml
-[mcp_servers.receiz]
-command = "npx"
-args = ["-y", "@receiz/mcp-server@97.6.0"]
-startup_timeout_sec = 120
+## Repository Map
 
-[mcp_servers.receiz.env]
-RECEIZ_BASE_URL = "https://receiz.com"
-```
-
-Use `@receiz/mcp-server@97.6.0` for agent-side diagnostics and SDK/API rail calls. MCP never becomes the authority; it only helps inspect or invoke the SDK/API rails beneath the proof object. Merchant-owned public-store sync uses the signed proof object path, not an app-level login token.
-
-`VERCEL_*` values are only for deployment/custom-domain automation if Vercel is hosting the SaaS. They are not commerce, payment, identity, or proof rails. After changing the production domain, update `NEXT_PUBLIC_SITE_URL` and `RECEIZ_ID_CALLBACK_URL` so Receiz ID redirect URLs use the correct origin. Never expose access tokens, webhook secrets, client secrets, or `VERCEL_API_TOKEN` with a `NEXT_PUBLIC_` prefix.
-
-### Production Readiness
-
-Use `docs/PRODUCTION_READINESS.md` as the release gate for both audiences this app serves: developers cloning a Receiz SDK commerce base and no-code merchants launching a real hosted business.
-
-The admin launch-readiness panel is powered by `src/lib/launch/readiness.ts` and checks SDK clone rails, no-code setup, Receiz ID/proof, catalog, checkout, domains, and production operations from the current store state.
-
-## Developer Fork Path
-
-Developers can fork this repo and build custom commerce modules on the same Receiz SDK boundary. The app is structured so page components render projected proof truth and product controls without inventing a second source of truth.
-
-When a merchant publishes a store, local camera-roll/logo/product/blog image data is uploaded through `receiz.media.upload()` first. The published public-store state then stores durable Receiz media URLs instead of oversized inline data URLs, so subdomains and custom domains can cold-start with the exact saved images.
-
-## Open-Source Release
-
-Release checklist:
-
-- `pnpm typecheck`
-- `pnpm lint`
-- `pnpm build`
-- Mobile admin QA
-- Tenant storefront QA
-- Checkout QA
-- Domain QA
-- Secret scan before publishing
-
-See `docs/OPEN_SOURCE_RELEASE.md` for the full public-release checklist.
+- `app/` - Next.js App Router pages and route handlers.
+- `src/features/admin/` - no-code merchant admin studio.
+- `src/features/storefront/` - public storefront, cart, account, rewards, assets, and play views.
+- `src/lib/receiz/` - SDK adapter, scopes, sessions, proof state, publish, media, and Receiz rails.
+- `src/lib/checkout/` - checkout request, wallet authority, customer purchase, and commerce events.
+- `src/lib/hosting/` - subdomain, custom-domain, tenant state, DNS, Vercel, and billing helpers.
+- `src/lib/launch/` - launch-readiness scoring for operators and clone builders.
+- `tests/` - Node test runner coverage for rails, checkout, publish, tenancy, PWA, domains, and release guard.
+- `scripts/` - release check, SDK doctor, secret scan, PWA icon generation, and Next runtime guard.
+- `docs/` - SDK rail map, developer kernel guide, production readiness, and open-source release checklist.
 
 ## Design References
 
@@ -362,3 +328,15 @@ Implementation targets are stored in `docs/design-references/`:
 - `proof-commerce-admin-studio.png`
 
 The generated admin reference contains a typo in its event rail. The implementation intentionally renders the corrected text: `Seal events`.
+
+## Contributing
+
+Read `CONTRIBUTING.md` before opening a pull request. Public contributions should explain which Receiz rails changed, how proof authority is preserved, and what verification ran.
+
+## Security
+
+Read `SECURITY.md` for vulnerability reporting, secret handling, and tenant-isolation requirements.
+
+## License
+
+MIT. See `LICENSE`.

@@ -136,23 +136,17 @@ describe("Receiz store-state ledger recovery", () => {
     });
     const calls: string[] = [];
     const records = await recoverReceizPublicProofStoreStateRecords("cold-start.receiz.app", {
-      client: {
-        publicStore: {
-          restoreLatest: async (input: { host?: string; requiredSchema?: string }) => {
-            calls.push(`restoreLatest:${input.host}:${input.requiredSchema}`);
-            return { ok: true, storeStateRecord: record };
-          },
-          resolve: async () => {
-            calls.push("resolve");
-            return { ok: false };
-          }
-        },
-        appState: {
-          byUrl: async () => {
-            calls.push("byUrl");
-            return { ok: false };
-          }
-        }
+      restoreLatestPublicStore: async (input: { host?: string; requiredSchema?: string }) => {
+        calls.push(`restoreLatest:${input.host}:${input.requiredSchema}`);
+        return { ok: true, storeStateRecord: record };
+      },
+      resolvePublicStore: async () => {
+        calls.push("resolve");
+        return { ok: false };
+      },
+      readAppStateByUrl: async () => {
+        calls.push("byUrl");
+        return { ok: false };
       },
       resolveTenant: async () => {
         calls.push("resolveTenant");
@@ -163,6 +157,50 @@ describe("Receiz store-state ledger recovery", () => {
     assert.equal(records.length, 1);
     assert.equal(records[0]?.state.brand.name, "Cold Start Store");
     assert.equal(calls[0], "restoreLatest:cold-start.receiz.app:receiz.app.store_state.v1");
+  });
+
+  it("bounds public proof recovery when a Receiz rail hangs", async () => {
+    const previousTimeout = process.env.RECEIZ_STORE_STATE_RECOVERY_TIMEOUT_MS;
+    const previousWarn = console.warn;
+    process.env.RECEIZ_STORE_STATE_RECOVERY_TIMEOUT_MS = "20";
+    console.warn = () => {};
+    const calls: string[] = [];
+
+    try {
+      const recovery = recoverReceizPublicProofStoreStateRecords("hung.receiz.app", {
+        restoreLatestPublicStore: async () => {
+          calls.push("restoreLatest");
+          return await new Promise<never>(() => {});
+        },
+        resolvePublicStore: async () => {
+          calls.push("resolve");
+          return { ok: false };
+        },
+        readAppStateByUrl: async (url: string) => {
+          calls.push(`byUrl:${url}`);
+          return { ok: false };
+        },
+        resolveTenant: async () => {
+          calls.push("resolveTenant");
+          return { ok: false };
+        }
+      });
+      const result = await Promise.race([
+        recovery,
+        new Promise<"hung">((resolve) => setTimeout(() => resolve("hung"), 100))
+      ]);
+
+      assert.notEqual(result, "hung");
+      assert.deepEqual(result, []);
+      assert.equal(calls.includes("resolve"), true);
+    } finally {
+      if (previousTimeout === undefined) {
+        delete process.env.RECEIZ_STORE_STATE_RECOVERY_TIMEOUT_MS;
+      } else {
+        process.env.RECEIZ_STORE_STATE_RECOVERY_TIMEOUT_MS = previousTimeout;
+      }
+      console.warn = previousWarn;
+    }
   });
 
   it("admits newer recovered records when an older tenant record is already warm", async () => {

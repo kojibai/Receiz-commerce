@@ -186,16 +186,16 @@ export async function publishReceizStoreState(
         const idempotencyKey = `store-state:${record.id}:${host}`;
 
         if (keyFile) {
-          return receiz.client.publicStore.publishWithIdentityProof(
+          return receiz.publishPublicStoreWithIdentityProof(
             publicStoreSignedPublishInput(host, record, {
-            keyFile,
-            passphrase: proof.passphrase
+              keyFile,
+              passphrase: proof.passphrase
             }),
             { idempotencyKey }
           );
         }
 
-        return receiz.client.publicStore.publish(publicStorePublishInput(host, record), { idempotencyKey });
+        return receiz.publishPublicStore(publicStorePublishInput(host, record), { idempotencyKey });
       })
     );
 

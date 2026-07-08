@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  release-check:
+    name: Release Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NEXT_PUBLIC_RECEIZ_MODE: live
+      RECEIZ_BASE_URL: https://receiz.com
+      NEXT_PUBLIC_AUTH_MODE: receiz_id
+      RECEIZ_AUTH_MODE: receiz_id
+      NEXT_PUBLIC_SITE_URL: https://receiz.app
+      RECEIZ_ID_CALLBACK_URL: https://receiz.app/api/auth/receiz/callback
+      NEXT_PUBLIC_CHECKOUT_MODE: receiz
+      RECEIZ_CHECKOUT_MODE: receiz
+      NEXT_PUBLIC_HOSTING_MODE: receiz_hosted
+      NEXT_PUBLIC_DEFAULT_SUBDOMAIN: boost.receiz.app
+      RECEIZ_ACCOUNT_STATE_MODE: receiz
+      RECEIZ_PLATFORM_BILLING_MODE: sandbox
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.18.0"
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Release check
+        run: pnpm release:check

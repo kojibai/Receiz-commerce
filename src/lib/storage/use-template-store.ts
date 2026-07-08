@@ -2,12 +2,11 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  appendReceizIdentityArtifactTrailerToPng,
-  createReceizClient,
-  projectReceizAssetManifest,
   type DocumentVerifyResponse,
+  type ReceizAssetManifest,
   type ReceizAssetManifestProjection as SdkReceizAssetManifestProjection,
   type ReceizIdentityAccountProjection,
+  type ReceizKeyFile,
   type ReceizMediaUploadOptions
 } from "@receiz/sdk";
 import { seedCommerceState } from "@/data/seed";
@@ -51,6 +50,7 @@ import {
   compressInlineImageDataUrlForPublish,
   preparePublishRequestBody
 } from "@/lib/receiz/publish-payload-media";
+import { createReceizCommerceAdapter } from "@/lib/receiz/adapter";
 import { canonicalReceizVerifyUrl, receizVerifyUrl } from "@/lib/receiz/verify-url";
 import {
   applyBrowserReceizIdSession,
@@ -711,7 +711,7 @@ async function createIdentitySealImageBytes(keyFile: unknown, receizId: Commerce
   });
 
   const pngBytes = new Uint8Array(await blob.arrayBuffer());
-  return appendReceizIdentityArtifactTrailerToPng(pngBytes, keyFile as never);
+  return createReceizCommerceAdapter().appendIdentityArtifactTrailerToPng(pngBytes, keyFile as ReceizKeyFile);
 }
 
 function downloadIdentitySealBytes(bytes: Uint8Array, filename: string) {
@@ -933,8 +933,8 @@ function domainManifestFromVerifiedArtifact(
 }
 
 async function receizedAssetFromProofObject(file: File, actorReceizId: string): Promise<ReceizedAsset> {
-  const client = createReceizClient();
-  const verified = await client.verification.verifyArtifact(file);
+  const receiz = createReceizCommerceAdapter();
+  const verified = await receiz.verifyArtifact(file);
 
   if (!verified.ok) {
     throw new Error(verified.errors.filter(Boolean).join(", ") || "Receiz proof object verification failed");
@@ -946,7 +946,7 @@ async function receizedAssetFromProofObject(file: File, actorReceizId: string): 
 
   if (manifestCandidate) {
     try {
-      projection = projectReceizAssetManifest(manifestCandidate);
+      projection = receiz.projectAssetManifest(manifestCandidate as ReceizAssetManifest);
     } catch {
       projection = null;
     }
@@ -1065,6 +1065,7 @@ function createFreshMerchantWorkspace(current: CommerceState, profile: ReceizPro
       subdomain,
       liveUrl: `https://${subdomain}`,
       merchantReceizId: handle,
+      settlementUserId: profile.id,
       settlementAccountLabel: `${displayName} Receiz account`,
       plan: "starter",
       published: false,
@@ -1206,6 +1207,7 @@ function applyReceizProfile(
       subdomain,
       liveUrl: customDomain || base.hosting.liveUrl === base.hosting.customDomain.liveUrl ? `https://${customDomain || subdomain}` : base.hosting.liveUrl,
       merchantReceizId: handle,
+      settlementUserId: profile.id ?? base.hosting.settlementUserId,
       settlementAccountLabel: `${displayName} Receiz account`,
       subdomainStatus: {
         ...base.hosting.subdomainStatus,
@@ -1323,6 +1325,49 @@ class ReceizAuthorityRequiredError extends Error {
   }
 }
 
+type ReceizCheckoutSessionPayload = {
+  checkoutUrl?: string;
+  checkoutSessionId?: string;
+  clientSecret?: string;
+  status?: string;
+};
+
+class ReceizPaymentRequiredError extends Error {
+  payload: Record<string, unknown>;
+
+  constructor(payload: Record<string, unknown>, message = "Payment is required") {
+    super(message);
+    this.name = "ReceizPaymentRequiredError";
+    this.payload = payload;
+  }
+}
+
+function checkoutSessionFromPayload(payload: unknown): ReceizCheckoutSessionPayload | undefined {
+  if (!isRecord(payload)) return undefined;
+  const session = isRecord(payload.session)
+    ? payload.session
+    : isRecord(payload.checkoutSession)
+      ? payload.checkoutSession
+      : isRecord(payload.platformBilling) && isRecord(payload.platformBilling.checkoutSession)
+        ? payload.platformBilling.checkoutSession
+        : undefined;
+
+  if (!session) return undefined;
+
+  return {
+    checkoutUrl: typeof session.checkoutUrl === "string" ? session.checkoutUrl : undefined,
+    checkoutSessionId: typeof session.checkoutSessionId === "string" ? session.checkoutSessionId : undefined,
+    clientSecret: typeof session.clientSecret === "string" ? session.clientSecret : undefined,
+    status: typeof session.status === "string" ? session.status : undefined
+  };
+}
+
+function openCheckoutSession(session: ReceizCheckoutSessionPayload | undefined) {
+  if (!session?.checkoutUrl || typeof window === "undefined") return false;
+  window.location.assign(session.checkoutUrl);
+  return true;
+}
+
 function markPendingPublish(storageKey: string) {
   if (typeof window === "undefined") return;
   safeSetLocalStorage(window.localStorage, pendingPublishStorageKey(storageKey), JSON.stringify({ createdAt: Date.now() }));
@@ -1358,6 +1403,10 @@ async function postJson<T>(
       window.location.assign(payload.connectUrl);
     }
     throw new ReceizAuthorityRequiredError(payload.connectUrl, String(payload.message ?? "Receiz authority required"));
+  }
+
+  if (response.status === 402 && isRecord(payload)) {
+    throw new ReceizPaymentRequiredError(payload, String(payload.message ?? payload.error ?? "Payment is required"));
   }
 
   if (!response.ok || payload.ok === false) {
@@ -1514,6 +1563,7 @@ function stateWithCurrentMerchantReceizAccount(state: CommerceState): CommerceSt
     hosting: {
       ...state.hosting,
       merchantReceizId,
+      settlementUserId: state.hosting.settlementUserId ?? state.auth.receizId.keyId,
       settlementAccountLabel: `${state.auth.receizId.displayName || state.brand.name || merchantReceizId} Receiz account`
     }
   };
@@ -1666,7 +1716,7 @@ function mergePublishedPublicState(
 }
 
 async function createLocalReceizIdentitySessionInput(snapshot: CommerceState, fallbackDisplayName: string) {
-  const client = createReceizClient();
+  const receiz = createReceizCommerceAdapter();
   let projection: ReceizIdentityAccountProjection | null = null;
   let keyFile: unknown | null = null;
   let handle = `${slugify(snapshot.brand.logoText || snapshot.brand.name, "customer")}-${makeId("id").slice(-6)}`;
@@ -1674,13 +1724,13 @@ async function createLocalReceizIdentitySessionInput(snapshot: CommerceState, fa
   let createdProof = false;
 
   try {
-    const identity = await client.identity.createReceizId({
+    const identityResult = await receiz.createReceizId({
       username: handle,
       displayName,
       deviceName: snapshot.brand.name
     });
-    keyFile = identity.keyFile;
-    projection = await client.identity.projectAccount(identity.keyFile);
+    keyFile = identityResult.identity.keyFile;
+    projection = identityResult.projection;
     handle = accountHandle(projection, `${handle}.receiz.id`);
     displayName = projection?.owner.displayName ?? displayName;
     createdProof = true;
@@ -2170,6 +2220,37 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
             ]
           }));
         } catch (error) {
+          if (error instanceof ReceizPaymentRequiredError) {
+            const session = checkoutSessionFromPayload(error.payload);
+            const opened = openCheckoutSession(session);
+            setActionFeedback(
+              "domains.customDomain",
+              opened || session?.clientSecret ? "pending" : "error",
+              opened
+                ? "Opening card payment"
+                : session?.clientSecret
+                  ? "Card payment session ready. Complete the card delta before the domain connects."
+                  : error.message
+            );
+            setState((current) => ({
+              ...current,
+              hosting: {
+                ...current.hosting,
+                customDomain: {
+                  ...current.hosting.customDomain,
+                  status: "payment_required",
+                  sslStatus: "pending",
+                  message: "Card payment required before connecting this domain."
+                }
+              },
+              proofEvents: [
+                makeEvent("DOMAIN_CONNECTED", `Card payment required before ${normalizedDomain} can connect`),
+                ...current.proofEvents
+              ]
+            }));
+            return;
+          }
+
           setActionFeedback("domains.customDomain", "error", error instanceof Error ? error.message : "Custom domain failed");
           setState((current) => ({
             ...current,
@@ -2319,6 +2400,28 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
             };
           });
         } catch (error) {
+          if (error instanceof ReceizPaymentRequiredError) {
+            const session = checkoutSessionFromPayload(error.payload);
+            const opened = openCheckoutSession(session);
+            setActionFeedback(
+              "billing.plan",
+              opened || session?.clientSecret ? "pending" : "error",
+              opened
+                ? "Opening card payment"
+                : session?.clientSecret
+                  ? "Card payment session ready. Complete the card delta before the plan changes."
+                  : error.message
+            );
+            setState((current) => ({
+              ...current,
+              proofEvents: [
+                makeEvent("HOSTING_PLAN_UPDATED", `Card payment required before ${plan} hosting can activate`),
+                ...current.proofEvents
+              ]
+            }));
+            return;
+          }
+
           setActionFeedback("billing.plan", "error", error instanceof Error ? error.message : "Hosting plan sync failed");
           setState((current) => ({
             ...current,
@@ -2551,15 +2654,15 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
         return true;
       },
       async restoreReceizIdentityArtifact(file: File) {
-        const client = createReceizClient();
+        const receiz = createReceizCommerceAdapter();
         let projection: ReceizIdentityAccountProjection | null = null;
         let keyFileForBrowserMemory: unknown | null = null;
         let failed = false;
 
         try {
-          const keyFile = await client.identity.readArtifact(file);
-          projection = await client.identity.projectAccount(keyFile);
-          keyFileForBrowserMemory = keyFile;
+          const identityResult = await receiz.restoreIdentityArtifact(file);
+          projection = identityResult.projection;
+          keyFileForBrowserMemory = identityResult.keyFile;
         } catch {
           failed = true;
         }
@@ -3139,6 +3242,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
             tenantSlug: checkoutSnapshot.hosting.tenantSlug,
             tenantHost: checkoutTenantHost(checkoutSnapshot),
             merchantReceizId: checkoutSnapshot.hosting.merchantReceizId,
+            merchantSettlementUserId: checkoutSnapshot.hosting.settlementUserId,
             customerReceizId: checkoutSnapshot.auth.receizId.handle,
             fulfillment: {
               kind: checkoutFulfillmentKindValue,
@@ -3152,7 +3256,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
             merchantProof: merchantProof(checkoutSnapshot),
             successUrl: `${window.location.origin}/?checkout=success`,
             cancelUrl: `${window.location.origin}/?checkout=cancel`
-          }, { deferAuthorityRedirect: true });
+          });
 
           const funding = fundingFromPayload(result.funding, totalLabel);
           if (funding.cardRequired) {

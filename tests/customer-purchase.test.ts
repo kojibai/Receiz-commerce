@@ -64,6 +64,7 @@ describe("customer purchase completion", () => {
     assert.equal(state.canRecordPaidOrder, true);
     assert.equal(state.sealed, false);
     assert.equal(state.orderStatus, "pending");
+    assert.equal(state.settlementStatus, "settled");
     assert.equal(state.fulfillmentStatus, "shipping_required");
   });
 
@@ -78,6 +79,7 @@ describe("customer purchase completion", () => {
     assert.equal(state.canRecordPaidOrder, true);
     assert.equal(state.sealed, true);
     assert.equal(state.orderStatus, "settled");
+    assert.equal(state.settlementStatus, "settled");
     assert.equal(state.fulfillmentStatus, "ready_to_ship");
   });
 
@@ -91,6 +93,7 @@ describe("customer purchase completion", () => {
     assert.equal(state.canRecordPaidOrder, true);
     assert.equal(state.sealed, true);
     assert.equal(state.orderStatus, "settled");
+    assert.equal(state.settlementStatus, "settled");
     assert.deepEqual(state.deliveryRails, ["receiz_communications", "email"]);
   });
 

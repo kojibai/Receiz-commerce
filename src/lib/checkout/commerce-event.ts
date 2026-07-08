@@ -30,6 +30,7 @@ function fallbackMerchantReceizId(tenantHost: string) {
 function eventTypeForSettlement(status: Order["settlementStatus"] | undefined): CommerceEventType {
   if (status === "card_required") return "checkout.requires_card";
   if (status === "pending") return "checkout.created";
+  if (status === "refunded") return "payment.refunded";
   return "checkout.settled";
 }
 

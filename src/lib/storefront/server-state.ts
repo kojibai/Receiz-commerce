@@ -8,6 +8,9 @@ import { tenantFallbackState } from "@/lib/hosting/tenant-state";
 import { hydrateProofStoreFromReceizStoreState } from "@/lib/receiz/store-state-ledger";
 import { mergeStoreApiProjection } from "./store-api-projection";
 
+const DEFAULT_STORE_API_FETCH_TIMEOUT_MS = 1500;
+const MAX_STORE_API_FETCH_TIMEOUT_MS = 5000;
+
 export type StorefrontSearchParams =
   | Record<string, string | string[] | undefined>
   | URLSearchParams
@@ -44,14 +47,31 @@ function middlewareHostFromSearchParams(searchParams: StorefrontSearchParams) {
   return null;
 }
 
+function storeApiFetchTimeoutMs() {
+  const parsed = Number.parseInt(process.env.RECEIZ_STORE_API_FETCH_TIMEOUT_MS ?? "", 10);
+  if (!Number.isFinite(parsed) || parsed <= 0) return DEFAULT_STORE_API_FETCH_TIMEOUT_MS;
+  return Math.min(parsed, MAX_STORE_API_FETCH_TIMEOUT_MS);
+}
+
+function unrefTimer(timer: ReturnType<typeof setTimeout>) {
+  if (typeof timer === "object" && "unref" in timer && typeof timer.unref === "function") {
+    timer.unref();
+  }
+}
+
 async function loadCanonicalTenantProjection(host: string, protocol: string) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), storeApiFetchTimeoutMs());
+  unrefTimer(timeout);
+
   try {
     const response = await fetch(`${protocol}://${host}/api/store`, {
       cache: "no-store",
       headers: {
         accept: "application/json",
         "x-receiz-storefront-fetch": "1"
-      }
+      },
+      signal: controller.signal
     });
 
     if (!response.ok) return null;
@@ -59,6 +79,8 @@ async function loadCanonicalTenantProjection(host: string, protocol: string) {
     return mergeStoreApiProjection(mockStorage.getState(), await response.json());
   } catch {
     return null;
+  } finally {
+    clearTimeout(timeout);
   }
 }
 
@@ -87,7 +109,11 @@ export async function loadStorefrontState(searchParams?: StorefrontSearchParams)
   const proofStore = await getServerProofStateStore();
 
   if (hostContext.surface === "tenant") {
-    await hydrateProofStoreFromReceizStoreState(proofStore, tenantHost);
+    try {
+      await hydrateProofStoreFromReceizStoreState(proofStore, tenantHost);
+    } catch {
+      // Tenant storefronts must render from fallback state if public proof recovery is unavailable.
+    }
   }
 
   const projectionSource = hostContext.surface === "tenant" ? storeStateProjectionSource(proofStore.records(), tenantHost) : "platform";

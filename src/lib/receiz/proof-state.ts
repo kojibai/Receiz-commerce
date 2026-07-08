@@ -79,7 +79,8 @@ export type CommerceEventType =
   | "checkout.requires_card"
   | "checkout.settled"
   | "checkout.failed"
-  | "order.fulfilled";
+  | "order.fulfilled"
+  | "payment.refunded";
 
 export type CommerceEventData = {
   orderId?: string;
@@ -234,12 +235,23 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
 
+function isCommerceEventType(value: unknown): value is CommerceEventType {
+  return (
+    value === "checkout.created" ||
+    value === "checkout.requires_card" ||
+    value === "checkout.settled" ||
+    value === "checkout.failed" ||
+    value === "order.fulfilled" ||
+    value === "payment.refunded"
+  );
+}
+
 export function isStoreStateRecord(value: unknown): value is StoreStateRecord {
   return isRecord(value) && value.schema === STORE_STATE_SCHEMA && isRecord(value.state);
 }
 
 export function isCommerceEventRecord(value: unknown): value is CommerceEventRecord {
-  return isRecord(value) && value.schema === COMMERCE_EVENT_SCHEMA && isRecord(value.data);
+  return isRecord(value) && value.schema === COMMERCE_EVENT_SCHEMA && isCommerceEventType(value.type) && isRecord(value.data);
 }
 
 export function storeStateRecordMatchesTenantHost(record: StoreStateRecord, tenantHost: string) {
@@ -329,6 +341,7 @@ function settlementStatusFromEvent(event: CommerceEventRecord): Order["settlemen
   if (event.data.settlementStatus) return event.data.settlementStatus;
   if (event.type === "checkout.requires_card") return "card_required";
   if (event.type === "checkout.settled" || event.type === "order.fulfilled") return "settled";
+  if (event.type === "payment.refunded") return "refunded";
   return "pending";
 }
 
@@ -336,6 +349,7 @@ function orderStatusFromEvent(event: CommerceEventRecord): Order["status"] {
   if (event.type === "checkout.requires_card") return "card_required";
   if (event.type === "checkout.settled") return "settled";
   if (event.type === "order.fulfilled") return "fulfilled";
+  if (event.type === "payment.refunded") return "refunded";
   return "pending";
 }
 
@@ -408,11 +422,12 @@ function upsertCustomer(state: CommerceState, order: Order, event: CommerceEvent
 
 function proofEventForCommerceEvent(event: CommerceEventRecord, order: Order): ProofEvent {
   const settled = order.settlementStatus === "settled";
+  const refunded = order.settlementStatus === "refunded";
 
   return {
     id: event.id,
     type: settled ? "ORDER_VERIFIED" : "OBJECT_VERIFIED",
-    title: settled ? "ORDER_VERIFIED" : "CHECKOUT_RECORDED",
+    title: settled ? "ORDER_VERIFIED" : refunded ? "PAYMENT_REFUNDED" : "CHECKOUT_RECORDED",
     detail: `${order.id} · ${order.paymentRail ?? "receiz_checkout"} · ${event.merchantReceizId}`,
     status: settled ? "verified" : "linked",
     timestampLabel: "now",
@@ -443,40 +458,199 @@ export function admitCommerceEvent(
   };
 }
 
+function stringFromRecord(record: Record<string, unknown>, keys: string[]) {
+  for (const key of keys) {
+    const value = record[key];
+    if (typeof value === "string" && value.trim()) return value.trim();
+  }
+  return undefined;
+}
+
+function stringFromRecords(records: Record<string, unknown>[], keys: string[]) {
+  for (const record of records) {
+    const value = stringFromRecord(record, keys);
+    if (value) return value;
+  }
+  return undefined;
+}
+
+function numberFromRecord(record: Record<string, unknown>, keys: string[]) {
+  for (const key of keys) {
+    const value = record[key];
+    if (typeof value === "number" && Number.isFinite(value)) return value;
+    if (typeof value === "string" && value.trim()) {
+      const parsed = Number(value);
+      if (Number.isFinite(parsed)) return parsed;
+    }
+  }
+  return undefined;
+}
+
+function numberFromRecords(records: Record<string, unknown>[], keys: string[]) {
+  for (const record of records) {
+    const value = numberFromRecord(record, keys);
+    if (typeof value === "number") return value;
+  }
+  return undefined;
+}
+
+function moneyLabelFromRecords(records: Record<string, unknown>[]) {
+  const explicit = stringFromRecords(records, ["totalLabel", "total_label", "amountLabel", "amount_label"]);
+  if (explicit) return explicit;
+
+  const amountUsd = numberFromRecords(records, ["amountUsd", "amount_usd", "totalUsd", "total_usd", "amount"]);
+  if (typeof amountUsd === "number") return `$${amountUsd.toFixed(2)}`;
+
+  const amountCents = numberFromRecords(records, ["amountUsdCents", "amount_usd_cents", "amountCents", "amount_cents"]);
+  if (typeof amountCents === "number") return `$${(amountCents / 100).toFixed(2)}`;
+
+  return undefined;
+}
+
+function itemCountFromRecords(records: Record<string, unknown>[]) {
+  const itemCount = numberFromRecords(records, ["itemCount", "item_count"]);
+  return typeof itemCount === "number" ? Math.max(1, Math.trunc(itemCount)) : undefined;
+}
+
+function normalizeCommerceEventType(type?: string): CommerceEventType | null {
+  if (!type) return "checkout.settled";
+  if (isCommerceEventType(type)) return type;
+
+  switch (type.trim().toLowerCase()) {
+    case "checkout.session.created":
+    case "order.created":
+      return "checkout.created";
+    case "checkout.session.requires_card":
+    case "payment.requires_card":
+    case "payment.requires_action":
+      return "checkout.requires_card";
+    case "checkout.session.completed":
+    case "payment.completed":
+    case "payment.succeeded":
+    case "payment.settled":
+    case "wallet.transfer.completed":
+    case "wallet.transfer.settled":
+      return "checkout.settled";
+    case "payment.created":
+      return "checkout.created";
+    case "payment.refunded":
+      return "payment.refunded";
+    case "checkout.session.failed":
+    case "payment.failed":
+    case "wallet.transfer.failed":
+      return "checkout.failed";
+    default:
+      return null;
+  }
+}
+
+function paymentRailFromWebhook(records: Record<string, unknown>[], eventType: CommerceEventType, rawType?: string) {
+  const explicit = stringFromRecords(records, ["paymentRail", "payment_rail"]);
+  if (explicit) return explicit as Order["paymentRail"];
+
+  const walletApplied = numberFromRecords(records, [
+    "walletAppliedUsdCents",
+    "wallet_applied_usd_cents",
+    "walletAppliedCents",
+    "wallet_applied_cents"
+  ]);
+  const cardDelta = numberFromRecords(records, [
+    "cardDeltaUsdCents",
+    "card_delta_usd_cents",
+    "cardDeltaCents",
+    "card_delta_cents"
+  ]);
+  if (typeof walletApplied === "number" && walletApplied > 0 && typeof cardDelta === "number" && cardDelta > 0) {
+    return "wallet_card_split";
+  }
+  if (typeof walletApplied === "number" && walletApplied > 0) return "receiz_wallet";
+  if (typeof cardDelta === "number" && cardDelta > 0) return "card_fallback";
+
+  const normalizedRawType = rawType?.trim().toLowerCase();
+  if (normalizedRawType?.startsWith("wallet.transfer.")) return "receiz_wallet";
+  if (eventType === "checkout.requires_card") return "card_fallback";
+  return undefined;
+}
+
+function settlementStatusFromWebhook(records: Record<string, unknown>[], eventType: CommerceEventType) {
+  const explicit = stringFromRecords(records, ["settlementStatus", "settlement_status"]);
+  if (explicit) return explicit as Order["settlementStatus"];
+  if (eventType === "checkout.requires_card") return "card_required";
+  if (eventType === "checkout.settled" || eventType === "order.fulfilled") return "settled";
+  if (eventType === "payment.refunded") return "refunded";
+  return "pending";
+}
+
+function proofBundleFromRecords(records: Record<string, unknown>[]) {
+  for (const record of records) {
+    if (isRecord(record.proofBundle)) return record.proofBundle;
+    if (isRecord(record.proof_bundle)) return record.proof_bundle;
+  }
+  return null;
+}
+
 export function commerceEventFromUnknown(value: unknown, fallbackHost: string): CommerceEventRecord | null {
   if (isCommerceEventRecord(value)) return value;
   if (!isRecord(value)) return null;
 
   const data = isRecord(value.data) ? value.data : value;
-  const type = String(value.type ?? data.type ?? "checkout.settled");
-  const eventType: CommerceEventType =
-    type === "checkout.requires_card" || type === "checkout.failed" || type === "order.fulfilled" || type === "checkout.created"
-      ? type
-      : "checkout.settled";
+  const records = [data, value];
+  const rawType = stringFromRecords(records, ["type", "event", "eventType", "event_type"]);
+  const eventType = normalizeCommerceEventType(rawType);
+  if (!eventType) return null;
+  const id =
+    stringFromRecords(records, [
+      "id",
+      "eventId",
+      "event_id",
+      "paymentId",
+      "payment_id",
+      "transferId",
+      "transfer_id",
+      "checkoutSessionId",
+      "checkout_session_id",
+      "orderId",
+      "order_id",
+      "receiptId",
+      "receipt_id"
+    ]) ?? crypto.randomUUID();
+  const createdAt = stringFromRecords(records, ["createdAt", "created_at", "timestamp", "occurredAt", "occurred_at"]);
+  const tenantHost =
+    stringFromRecords(records, ["tenantHost", "tenant_host", "storeHost", "store_host", "host", "domain"]) ??
+    fallbackHost;
 
   return {
     schema: COMMERCE_EVENT_SCHEMA,
-    id: String(value.id ?? data.id ?? data.eventId ?? data.checkoutSessionId ?? data.orderId ?? crypto.randomUUID()),
+    id,
     type: eventType,
-    createdAt: String(value.createdAt ?? data.createdAt ?? new Date().toISOString()),
-    tenantHost: String(data.tenantHost ?? value.tenantHost ?? fallbackHost),
-    merchantReceizId: String(data.merchantReceizId ?? value.merchantReceizId ?? ""),
+    createdAt: createdAt ?? new Date().toISOString(),
+    tenantHost,
+    merchantReceizId:
+      stringFromRecords(records, [
+        "merchantReceizId",
+        "merchant_receiz_id",
+        "merchantId",
+        "merchant_id",
+        "destinationReceizId",
+        "destination_receiz_id",
+        "toReceizId",
+        "to_receiz_id"
+      ]) ?? "",
     data: {
-      orderId: typeof data.orderId === "string" ? data.orderId : undefined,
-      checkoutSessionId: typeof data.checkoutSessionId === "string" ? data.checkoutSessionId : undefined,
-      customerId: typeof data.customerId === "string" ? data.customerId : undefined,
-      customerEmail: typeof data.customerEmail === "string" ? data.customerEmail : undefined,
-      customerName: typeof data.customerName === "string" ? data.customerName : undefined,
-      totalLabel: typeof data.totalLabel === "string" ? data.totalLabel : undefined,
-      itemCount: typeof data.itemCount === "number" ? data.itemCount : undefined,
-      paymentRail: typeof data.paymentRail === "string" ? (data.paymentRail as Order["paymentRail"]) : undefined,
-      settlementStatus:
-        typeof data.settlementStatus === "string" ? (data.settlementStatus as Order["settlementStatus"]) : undefined,
+      orderId: stringFromRecords(records, ["orderId", "order_id"]),
+      checkoutSessionId: stringFromRecords(records, ["checkoutSessionId", "checkout_session_id", "sessionId", "session_id"]),
+      customerId: stringFromRecords(records, ["customerId", "customer_id", "buyerId", "buyer_id"]),
+      customerEmail: stringFromRecords(records, ["customerEmail", "customer_email", "buyerEmail", "buyer_email"]),
+      customerName: stringFromRecords(records, ["customerName", "customer_name", "buyerName", "buyer_name"]),
+      totalLabel: moneyLabelFromRecords(records),
+      itemCount: itemCountFromRecords(records),
+      paymentRail: paymentRailFromWebhook(records, eventType, rawType),
+      settlementStatus: settlementStatusFromWebhook(records, eventType),
       funding: isRecord(data.funding) ? (data.funding as Order["funding"]) : undefined,
       fulfillment: isRecord(data.fulfillment) ? (data.fulfillment as Order["fulfillment"]) : undefined,
       shipping: isRecord(data.shipping) ? (data.shipping as Order["shipping"]) : undefined,
-      receiptId: typeof data.receiptId === "string" ? data.receiptId : undefined,
-      proofBundle: isRecord(data.proofBundle) ? data.proofBundle : null
+      receiptId: stringFromRecords(records, ["receiptId", "receipt_id", "paymentId", "payment_id", "transferId", "transfer_id"]),
+      proofBundle: proofBundleFromRecords(records)
     }
   };
 }

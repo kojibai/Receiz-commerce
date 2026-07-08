@@ -2,14 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { checkoutCommerceEvent, type CheckoutCommerceEventInput } from "@/lib/checkout/commerce-event";
 import { validShippingAddress } from "@/lib/checkout/customer-purchase";
 import { mockCheckout } from "@/lib/checkout/mock-checkout";
-import {
-  checkoutModeForAuthority,
-  checkoutWalletAuthority,
-  proofObjectCheckoutFunding
-} from "@/lib/checkout/wallet-authority";
+import { checkoutModeForAuthority, checkoutWalletAuthority } from "@/lib/checkout/wallet-authority";
+import { createWalletFirstReceizSettlement } from "@/lib/checkout/receiz-settlement";
 import { hostContextFromHost } from "@/lib/hosting/host-context";
 import { createReceizCommerceAdapter } from "@/lib/receiz/adapter";
 import { getServerProofStateStore } from "@/lib/receiz/proof-state-store";
+import { receizAuthorityRequired, receizRequestSession } from "@/lib/receiz/session";
 import { platform } from "@/lib/platform";
 import { mockStorage } from "@/lib/storage/mock-storage";
 import type { Order } from "@/types/domain";
@@ -23,55 +21,8 @@ function amountFromBody(body: Record<string, unknown>) {
   return normalized || "18.00";
 }
 
-function usdCentsFromAmount(value: string) {
-  const normalized = value.replace(/[^0-9.]/g, "");
-  const amount = Number(normalized || "0");
-  return Number.isFinite(amount) ? Math.max(0, Math.round(amount * 100)) : 0;
-}
-
-function usdLabelFromCents(cents: number) {
-  return `$${(Math.max(0, cents) / 100).toFixed(2)}`;
-}
-
-function centsFromValue(value: unknown) {
-  if (typeof value !== "string" && typeof value !== "number") return 0;
-  const cents = Number.parseInt(String(value), 10);
-  return Number.isFinite(cents) ? Math.max(0, cents) : 0;
-}
-
-function centsFromUsdValue(value: unknown) {
-  if (typeof value !== "string" && typeof value !== "number") return null;
-  const amount = Number(String(value).replace(/[^0-9.]/g, ""));
-  if (!Number.isFinite(amount)) return null;
-  return Math.max(0, Math.round(amount * 100));
-}
-
-function walletBalanceCentsFromBody(body: Record<string, unknown>, totalUsdCents: number) {
-  if ("walletBalanceUsdCents" in body) return centsFromValue(body.walletBalanceUsdCents);
-  if ("walletBalanceCents" in body) return centsFromValue(body.walletBalanceCents);
-  return centsFromUsdValue(body.walletBalanceUsd ?? body.walletBalance ?? body.walletBalanceLabel) ?? totalUsdCents;
-}
-
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
-}
-
-function checkoutFunding(totalUsdCents: number, walletBalanceUsdCents: number) {
-  const walletAppliedUsdCents = Math.min(totalUsdCents, walletBalanceUsdCents);
-  const cardDeltaUsdCents = Math.max(0, totalUsdCents - walletAppliedUsdCents);
-
-  return {
-    strategy: "receiz_wallet_first" as const,
-    totalUsdCents,
-    walletBalanceUsdCents,
-    walletAppliedUsdCents,
-    cardDeltaUsdCents,
-    totalLabel: usdLabelFromCents(totalUsdCents),
-    walletBalanceLabel: usdLabelFromCents(walletBalanceUsdCents),
-    walletAppliedLabel: usdLabelFromCents(walletAppliedUsdCents),
-    cardDeltaLabel: usdLabelFromCents(cardDeltaUsdCents),
-    cardRequired: cardDeltaUsdCents > 0
-  };
 }
 
 function paymentRails(merchantReceizId: string) {
@@ -86,6 +37,28 @@ function paymentRails(merchantReceizId: string) {
 function stringFromBody(body: Record<string, unknown>, key: string) {
   const value = body[key];
   return typeof value === "string" && value.trim() ? value.trim() : undefined;
+}
+
+function returnToFromRequest(request: NextRequest) {
+  const referer = request.headers.get("referer");
+  if (!referer) return "/";
+
+  try {
+    const url = new URL(referer);
+    return `${url.pathname}${url.search}`;
+  } catch {
+    return "/";
+  }
+}
+
+function settlementRecipientFromBody(body: Record<string, unknown>, merchantReceizId: string) {
+  return (
+    stringFromBody(body, "merchantSettlementUserId") ??
+    stringFromBody(body, "settlementUserId") ??
+    stringFromBody(body, "merchantUserId") ??
+    process.env.RECEIZ_DEFAULT_SETTLEMENT_USER_ID ??
+    merchantReceizId
+  );
 }
 
 function shippingFromBody(value: unknown): Order["shipping"] | undefined {
@@ -178,8 +151,9 @@ async function recordCheckoutCommerceEvent(input: CheckoutCommerceEventInput) {
 
 export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => ({}));
-  const accessToken = request.cookies.get("receiz_access_token")?.value;
-  const sessionScope = request.cookies.get("receiz_session_scope")?.value;
+  const requestSession = receizRequestSession(request);
+  const accessToken = requestSession.cookieAccessToken;
+  const sessionScope = requestSession.sessionScope;
   const host = request.headers.get("x-forwarded-host") ?? request.headers.get("host") ?? platform.domain;
   const hostContext = hostContextFromHost(host);
   const hasScopedReceizAccess = Boolean(accessToken && sessionScope === hostContext.storageKey);
@@ -206,153 +180,58 @@ export async function POST(request: NextRequest) {
         : hostContext.tenantSlug
           ? `${hostContext.tenantSlug}.receiz.id`
           : process.env.RECEIZ_DEFAULT_MERCHANT_RECEIZ_ID ?? "";
-    const totalUsdCents = usdCentsFromAmount(amountFromBody(body));
+
     if (!hasScopedReceizAccess || !accessToken) {
-      if (walletAuthority.ok && walletAuthority.source === "proof_object") {
-        const funding = proofObjectCheckoutFunding(totalUsdCents, walletBalanceCentsFromBody(body, totalUsdCents));
-        const shipping = shippingFromBody(body.shipping);
-        const fulfillment = checkoutFulfillmentForFunding({
-          funding,
-          submitted: fulfillmentFromBody(body.fulfillment),
-          shipping
-        });
-        const session = {
-          ok: true,
-          checkoutSessionId: `proof_object_${Date.now()}`,
-          status: funding.cardRequired ? "card_required" : "wallet_reserved"
-        };
-        const commerceProjection = await recordCheckoutCommerceEvent({
-          checkoutSessionId: session.checkoutSessionId,
-          customerEmail: stringFromBody(body, "customerEmail"),
-          customerId: stringFromBody(body, "customerId"),
-          customerName: stringFromBody(body, "customerName"),
-          funding,
-          itemCount: Number(body.itemCount ?? 1),
-          merchantReceizId,
-          orderId: stringFromBody(body, "referenceId") ?? stringFromBody(body, "orderId") ?? session.checkoutSessionId,
-          paymentRail: funding.cardRequired ? "wallet_card_split" : "receiz_wallet",
-          settlementStatus: funding.cardRequired ? "card_required" : "wallet_reserved",
-          fulfillment,
-          shipping,
-          tenantHost: String(body.tenantHost ?? hostContext.tenantHost ?? host),
-          totalLabel: funding.totalLabel
-        });
-
-        return NextResponse.json({
-          ok: true,
-          mode: "receiz",
-          wallet: {
-            ok: true,
-            source: "proof_object",
-            handle: walletAuthority.handle,
-            balanceUsdCents: funding.walletBalanceUsdCents,
-            balanceLabel: funding.walletBalanceLabel,
-            message: funding.cardRequired
-              ? "Verified Receiz proof object authorized wallet-first checkout; card funds the remaining delta."
-              : "Verified Receiz proof object authorized Receiz wallet access."
-          },
-          paymentRails: paymentRails(merchantReceizId),
-          funding,
-          session,
-          commerceEvent: commerceProjection?.event,
-          proofMemory: commerceProjection?.proofMemory
-        });
-      }
-
-      const funding = checkoutFunding(totalUsdCents, 0);
-      const shipping = shippingFromBody(body.shipping);
-      const fulfillment = checkoutFulfillmentForFunding({
-        funding,
-        submitted: fulfillmentFromBody(body.fulfillment),
-        shipping
-      });
-      const session = {
-        ok: true,
-        checkoutSessionId: `in_app_${Date.now()}`,
-        status: funding.cardRequired ? "card_required" : "wallet_reserved"
-      };
-      const commerceProjection = await recordCheckoutCommerceEvent({
-        checkoutSessionId: session.checkoutSessionId,
-        customerEmail: stringFromBody(body, "customerEmail"),
-        customerId: stringFromBody(body, "customerId"),
-        customerName: stringFromBody(body, "customerName"),
-        funding,
-        itemCount: Number(body.itemCount ?? 1),
-        merchantReceizId,
-        orderId: stringFromBody(body, "referenceId") ?? stringFromBody(body, "orderId") ?? session.checkoutSessionId,
-        paymentRail: "card_fallback",
-        settlementStatus: funding.cardRequired ? "card_required" : "wallet_reserved",
-        fulfillment,
-        shipping,
-        tenantHost: String(body.tenantHost ?? hostContext.tenantHost ?? host),
-        totalLabel: funding.totalLabel
-      });
-
-      return NextResponse.json({
-        ok: true,
-        mode: "receiz_wallet_first",
-        wallet: {
-          ok: false,
-          error: "receiz_wallet_not_scoped",
-          message: "No scoped Receiz wallet session is available; card handles the remaining checkout delta."
+      return NextResponse.json(
+        {
+          ...receizAuthorityRequired(returnToFromRequest(request)),
+          message: "Connect Receiz ID before checkout so Receiz can move wallet funds and open card payment for any delta."
         },
-        paymentRails: paymentRails(merchantReceizId),
-        funding,
-        session,
-        commerceEvent: commerceProjection?.event,
-        proofMemory: commerceProjection?.proofMemory
-      });
+        { status: 401 }
+      );
     }
 
     const receiz = createReceizCommerceAdapter({
       baseUrl: process.env.RECEIZ_BASE_URL,
       accessToken
     });
-    const checkout = await receiz.oneClickCheckout({
-      tenantHost: String(body.tenantHost ?? hostContext.tenantHost ?? host),
-      orderId: String(body.referenceId ?? body.orderId ?? `order_${Date.now()}`),
-      amountUsd: amountFromBody(body),
-      currency: "usd",
-      walletFirst: true,
-      cardFallback: true,
+    const tenantHost = String(body.tenantHost ?? hostContext.tenantHost ?? host);
+    const orderId = String(body.referenceId ?? body.orderId ?? `order_${Date.now()}`);
+    const amountUsd = amountFromBody(body);
+    const settlement = await createWalletFirstReceizSettlement({
+      receiz,
+      tenantHost,
+      orderId,
+      amountUsd,
+      recipientUserId: settlementRecipientFromBody(body, merchantReceizId),
+      note: String(body.description ?? "Receiz.app proof-sealed order"),
+      description: String(body.description ?? "Receiz.app proof-sealed order"),
       customerEmail: typeof body.customerEmail === "string" ? body.customerEmail : undefined,
       successUrl: typeof body.successUrl === "string" ? body.successUrl : undefined,
       cancelUrl: typeof body.cancelUrl === "string" ? body.cancelUrl : undefined,
-      idempotencyKey: String(body.referenceId ?? body.orderId ?? `checkout:${hostContext.storageKey}:${amountFromBody(body)}`),
+      idempotencyKey: String(body.referenceId ?? body.orderId ?? `checkout:${hostContext.storageKey}:${amountUsd}`),
       cart: {
         items: [
           {
             id: "receiz-commerce-cart",
             title: String(body.description ?? "Receiz.app proof-sealed order"),
             quantity: Number(body.itemCount ?? 1),
-            amountUsd: amountFromBody(body)
+            amountUsd
           }
         ]
       }
     });
-    const walletBalanceUsdCents = checkout.wallet && "balanceUsdCents" in checkout.wallet
-      ? centsFromValue(checkout.wallet.balanceUsdCents)
-      : 0;
-    const walletAppliedUsdCents = centsFromValue(checkout.funding.walletAppliedUsdCents);
-    const cardDeltaUsdCents = centsFromValue(checkout.funding.cardDeltaUsdCents);
-    const funding = {
-      ...checkoutFunding(totalUsdCents, walletBalanceUsdCents),
-      walletAppliedUsdCents,
-      cardDeltaUsdCents,
-      walletAppliedLabel: usdLabelFromCents(walletAppliedUsdCents),
-      cardDeltaLabel: usdLabelFromCents(cardDeltaUsdCents),
-      cardRequired: cardDeltaUsdCents > 0
-    };
+    const funding = settlement.funding;
     const shipping = shippingFromBody(body.shipping);
     const fulfillment = checkoutFulfillmentForFunding({
       funding,
       submitted: fulfillmentFromBody(body.fulfillment),
       shipping
     });
-    const session = checkout.checkoutSession ?? {
-      ok: checkout.ok,
-      checkoutSessionId: checkout.orderId ?? `receiz_${Date.now()}`,
-      status: funding.cardRequired ? "card_required" : "wallet_reserved"
+    const session = settlement.checkoutSession ?? {
+      ok: settlement.ok,
+      checkoutSessionId: settlement.walletTransfer?.ledgerEventId ?? settlement.walletTransfer?.transferId ?? `receiz_${Date.now()}`,
+      status: settlement.settlementStatus
     };
     const commerceProjection = await recordCheckoutCommerceEvent({
       checkoutSessionId: session.checkoutSessionId,
@@ -363,25 +242,24 @@ export async function POST(request: NextRequest) {
       itemCount: Number(body.itemCount ?? 1),
       merchantReceizId,
       orderId: stringFromBody(body, "referenceId") ?? stringFromBody(body, "orderId") ?? session.checkoutSessionId,
-      paymentRail: funding.cardRequired ? "wallet_card_split" : "receiz_wallet",
-      proofBundle: checkout.proofObject && typeof checkout.proofObject === "object" && !Array.isArray(checkout.proofObject)
-        ? (checkout.proofObject as Record<string, unknown>)
-        : null,
-      settlementStatus: funding.cardRequired ? "card_required" : "wallet_reserved",
+      paymentRail: settlement.paymentRail,
+      proofBundle: settlement.proofBundle,
+      receiptId: settlement.receiptId,
+      settlementStatus: settlement.settlementStatus,
       fulfillment,
       shipping,
-      tenantHost: String(body.tenantHost ?? hostContext.tenantHost ?? host),
+      tenantHost,
       totalLabel: funding.totalLabel
     });
 
     return NextResponse.json({
       ok: true,
       mode: "receiz",
-      wallet: checkout.wallet,
+      paid: settlement.paid,
+      wallet: settlement.wallet,
+      walletTransfer: settlement.walletTransfer,
       paymentRails: paymentRails(merchantReceizId),
       funding,
-      proofObject: checkout.proofObject,
-      events: checkout.events,
       session,
       commerceEvent: commerceProjection?.event,
       proofMemory: commerceProjection?.proofMemory

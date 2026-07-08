@@ -178,7 +178,7 @@ export async function POST(request: NextRequest) {
       baseUrl: process.env.RECEIZ_BASE_URL,
       accessToken
     });
-    const userinfo = await receiz.client.identity.userinfo().catch(() => ({}));
+    const userinfo = await receiz.userinfo().catch(() => ({}));
     const username = usernameFromReceizProfile(userinfo, body);
     const mandateResponse = await receiz.twinMarketMandate().catch(() => null);
     const mandate = mandateResponse?.ok && mandateResponse.mandate ? (mandateResponse.mandate as JsonObject) : null;

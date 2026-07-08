@@ -8,10 +8,68 @@ import type { ProofStateStore } from "./proof-state-store";
 import { RECEIZ_PUBLIC_STORE_STATE_PROJECTION_SCHEMA } from "@receiz/sdk";
 
 const DEFAULT_LEDGER_LIMIT = 500;
+const DEFAULT_RECOVERY_TIMEOUT_MS = 1500;
+const MAX_RECOVERY_TIMEOUT_MS = 5000;
+const MIN_RECOVERY_TIMEOUT_MS = 25;
+const RECOVERY_TIMED_OUT = Symbol("receiz_store_state_recovery_timed_out");
+
+export type StoreStateRecoveryOptions = {
+  timeoutMs?: number;
+};
 
 function ledgerLimit() {
   const parsed = Number.parseInt(process.env.RECEIZ_STORE_STATE_LEDGER_LIMIT ?? "", 10);
   return Number.isFinite(parsed) && parsed > 0 ? Math.min(parsed, 500) : DEFAULT_LEDGER_LIMIT;
+}
+
+function boundedTimeoutMs(value: unknown, fallback: number) {
+  const parsed = typeof value === "number" ? value : Number.parseInt(String(value ?? ""), 10);
+  if (!Number.isFinite(parsed) || parsed <= 0) return fallback;
+  return Math.min(Math.max(parsed, MIN_RECOVERY_TIMEOUT_MS), MAX_RECOVERY_TIMEOUT_MS);
+}
+
+function recoveryTimeoutMs(options?: StoreStateRecoveryOptions) {
+  return boundedTimeoutMs(
+    options?.timeoutMs ?? process.env.RECEIZ_STORE_STATE_RECOVERY_TIMEOUT_MS,
+    DEFAULT_RECOVERY_TIMEOUT_MS
+  );
+}
+
+function unrefTimer(timer: ReturnType<typeof setTimeout>) {
+  if (typeof timer === "object" && "unref" in timer && typeof timer.unref === "function") {
+    timer.unref();
+  }
+}
+
+async function withRecoveryTimeout<T>(
+  label: string,
+  timeoutMs: number,
+  operation: (signal: AbortSignal) => Promise<T>
+): Promise<T | null> {
+  const controller = new AbortController();
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+  const timeoutPromise = new Promise<typeof RECOVERY_TIMED_OUT>((resolve) => {
+    timeout = setTimeout(() => {
+      controller.abort();
+      resolve(RECOVERY_TIMED_OUT);
+    }, timeoutMs);
+    unrefTimer(timeout);
+  });
+
+  try {
+    const result = await Promise.race([Promise.resolve().then(() => operation(controller.signal)), timeoutPromise]);
+
+    if (result === RECOVERY_TIMED_OUT) {
+      console.warn("[store] Receiz store-state recovery timed out", { rail: label, timeoutMs });
+      return null;
+    }
+
+    return result as T;
+  } catch {
+    return null;
+  } finally {
+    if (timeout) clearTimeout(timeout);
+  }
 }
 
 function uniqueRecords(records: StoreStateRecord[]) {
@@ -45,15 +103,9 @@ export function extractStoreStateRecords(value: unknown): StoreStateRecord[] {
 }
 
 export type ReceizPublicStoreStateRecoveryAdapter = {
-  client: {
-    publicStore: {
-      restoreLatest(input: { host: string; requiredSchema?: string }): Promise<unknown>;
-      resolve(input: { host: string }): Promise<unknown>;
-    };
-    appState: {
-      byUrl(url: string): Promise<unknown>;
-    };
-  };
+  restoreLatestPublicStore(input: { host: string; requiredSchema?: string }): Promise<unknown>;
+  resolvePublicStore(input: { host: string }): Promise<unknown>;
+  readAppStateByUrl(url: string): Promise<unknown>;
   resolveTenant(
     host: string,
     options?: { schema?: string; state?: string; requiredDataKey?: string }
@@ -70,79 +122,53 @@ async function createRecoveryAdapter(): Promise<ReceizPublicStoreStateRecoveryAd
 
 export async function recoverReceizPublicProofStoreStateRecords(
   tenantHost: string,
-  receiz?: ReceizPublicStoreStateRecoveryAdapter
+  receiz?: ReceizPublicStoreStateRecoveryAdapter,
+  options?: StoreStateRecoveryOptions
 ) {
   const recoveryAdapter = receiz ?? await createRecoveryAdapter();
   const normalizedHost = tenantHost.trim().toLowerCase();
   const urls = [`https://${normalizedHost}`, `https://${normalizedHost}/`];
-  const records: StoreStateRecord[] = [];
+  const timeoutMs = recoveryTimeoutMs(options);
+  const recover = async (label: string, operation: (signal: AbortSignal) => Promise<unknown>) => {
+    const restored = await withRecoveryTimeout(label, timeoutMs, operation);
+    return extractStoreStateRecords(restored);
+  };
 
-  try {
-    const restored = await recoveryAdapter.client.publicStore.restoreLatest({
+  const recovered = await Promise.all([
+    recover("publicStore.restoreLatest", () => recoveryAdapter.restoreLatestPublicStore({
       host: normalizedHost,
       requiredSchema: STORE_STATE_SCHEMA
-    });
-    records.push(...extractStoreStateRecords(restored));
-  } catch {
-    // SDK 97.6 public-store latest recovery is the canonical cold-start path.
-  }
-
-  try {
-    const restored = await recoveryAdapter.client.publicStore.resolve({
+    })),
+    recover("publicStore.resolve", () => recoveryAdapter.resolvePublicStore({
       host: normalizedHost
-    });
-    records.push(...extractStoreStateRecords(restored));
-  } catch {
-    // Public-store projection is the preferred 97.3 path; older records may only exist in app-state feeds.
-  }
-
-  try {
-    const restored = await recoveryAdapter.resolveTenant(normalizedHost, {
+    })),
+    recover("resolveTenant", () => recoveryAdapter.resolveTenant(normalizedHost, {
       schema: RECEIZ_PUBLIC_STORE_STATE_PROJECTION_SCHEMA,
       state: "published",
       requiredDataKey: "storeStateRecord"
-    });
-    records.push(...extractStoreStateRecords(restored));
-  } catch {
-    // Fall through to raw public-proof reads for older registry records.
-  }
+    })),
+    ...urls.map((url) => recover(`appState.byUrl:${url}`, () => recoveryAdapter.readAppStateByUrl(url)))
+  ]);
 
-  for (const url of urls) {
-    try {
-      const appState = await recoveryAdapter.client.appState.byUrl(url);
-      records.push(...extractStoreStateRecords(appState));
-    } catch {
-      // Missing public projections are expected for unpublished or legacy stores.
-    }
-  }
-
-  return records.filter((record) => storeStateRecordMatchesTenantHost(record, tenantHost));
+  return uniqueRecords(recovered.flat()).filter((record) => storeStateRecordMatchesTenantHost(record, tenantHost));
 }
 
-export async function recoverReceizStoreStateRecords(tenantHost: string) {
-  const records: StoreStateRecord[] = [];
-
-  try {
+export async function recoverReceizStoreStateRecords(tenantHost: string, options?: StoreStateRecoveryOptions) {
+  const timeoutMs = recoveryTimeoutMs(options);
+  const ledgerRecords = withRecoveryTimeout("actionLedger", timeoutMs, async () => {
     const { createReceizCommerceAdapter } = await import("./adapter");
     const receiz = createReceizCommerceAdapter({
       baseUrl: process.env.RECEIZ_BASE_URL
     });
     const ledger = await receiz.actionLedger({ limit: ledgerLimit() });
 
-    records.push(
-      ...extractStoreStateRecords(ledger).filter((record) =>
-        storeStateRecordMatchesTenantHost(record, tenantHost)
-      )
+    return extractStoreStateRecords(ledger).filter((record) =>
+      storeStateRecordMatchesTenantHost(record, tenantHost)
     );
-  } catch {
-    // The public action ledger is additive only. Public-proof recovery below is the durable storefront path.
-  }
-
-  try {
-    records.push(...(await recoverReceizPublicProofStoreStateRecords(tenantHost)));
-  } catch {
-    // Keep tenant rendering resilient if Receiz public proof is temporarily unavailable.
-  }
+  });
+  const publicProofRecords = recoverReceizPublicProofStoreStateRecords(tenantHost, undefined, options).catch(() => []);
+  const recovered = await Promise.all([ledgerRecords, publicProofRecords]);
+  const records = recovered.flatMap((records) => records ?? []);
 
   return uniqueRecords(records);
 }
@@ -169,8 +195,12 @@ export async function admitRecoveredStoreStateRecords(
   return { admitted, recovered: matchingRecords.length };
 }
 
-export async function hydrateProofStoreFromReceizStoreState(proofStore: ProofStateStore, tenantHost: string) {
-  const recovered = await recoverReceizStoreStateRecords(tenantHost);
+export async function hydrateProofStoreFromReceizStoreState(
+  proofStore: ProofStateStore,
+  tenantHost: string,
+  options?: StoreStateRecoveryOptions
+) {
+  const recovered = await recoverReceizStoreStateRecords(tenantHost, options);
 
   return admitRecoveredStoreStateRecords(proofStore, tenantHost, recovered);
 }

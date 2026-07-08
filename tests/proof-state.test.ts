@@ -7,6 +7,7 @@ import {
   admitCommerceEvent,
   buildStoreStateConnectRecord,
   buildStoreStateRecord,
+  commerceEventFromUnknown,
   isStoreStateRecord,
   storeStateProjectionSource,
   storeStateRecordMatchesTenantHost,
@@ -692,5 +693,108 @@ describe("Receiz proof commerce state", () => {
     assert.equal(second.state.orders[0]?.merchantReceizId, "boost.receiz.id");
     assert.equal(second.state.customers[0]?.email, "lena@example.com");
     assert.equal(second.state.proofEvents.length, 1);
+  });
+
+  it("normalizes Receiz payment webhooks into settled commerce events", () => {
+    const event = commerceEventFromUnknown(
+      {
+        type: "payment.settled",
+        data: {
+          payment_id: "pay_1001",
+          order_id: "ord_1001",
+          tenant_host: "boost.receiz.app",
+          merchant_receiz_id: "boost.receiz.id",
+          customer_email: "buyer@example.com",
+          customer_name: "Buyer Example",
+          amount_cents: 1800,
+          payment_rail: "card_fallback"
+        }
+      },
+      "fallback.receiz.app"
+    );
+
+    assert.ok(event);
+    assert.equal(event.type, "checkout.settled");
+    assert.equal(event.id, "pay_1001");
+    assert.equal(event.tenantHost, "boost.receiz.app");
+    assert.equal(event.merchantReceizId, "boost.receiz.id");
+    assert.equal(event.data.orderId, "ord_1001");
+    assert.equal(event.data.totalLabel, "$18.00");
+    assert.equal(event.data.paymentRail, "card_fallback");
+    assert.equal(event.data.settlementStatus, "settled");
+  });
+
+  it("normalizes Receiz payment creation webhooks into pending commerce events", () => {
+    const event = commerceEventFromUnknown(
+      {
+        type: "payment.created",
+        data: {
+          payment_id: "pay_pending_1001",
+          tenant_host: "boost.receiz.app",
+          merchant_receiz_id: "boost.receiz.id",
+          amount_cents: 1800
+        }
+      },
+      "fallback.receiz.app"
+    );
+
+    assert.ok(event);
+    assert.equal(event.type, "checkout.created");
+    assert.equal(event.id, "pay_pending_1001");
+    assert.equal(event.data.totalLabel, "$18.00");
+    assert.equal(event.data.settlementStatus, "pending");
+  });
+
+  it("normalizes Receiz refund webhooks into refunded commerce events", () => {
+    const event = commerceEventFromUnknown(
+      {
+        type: "payment.refunded",
+        data: {
+          payment_id: "pay_refund_1001",
+          order_id: "ord_1001",
+          tenant_host: "boost.receiz.app",
+          merchant_receiz_id: "boost.receiz.id",
+          amount_cents: 1800
+        }
+      },
+      "fallback.receiz.app"
+    );
+
+    assert.ok(event);
+    assert.equal(event.type, "payment.refunded");
+    assert.equal(event.id, "pay_refund_1001");
+    assert.equal(event.data.orderId, "ord_1001");
+    assert.equal(event.data.totalLabel, "$18.00");
+    assert.equal(event.data.settlementStatus, "refunded");
+
+    const admitted = admitCommerceEvent(baseState(), event);
+    assert.equal(admitted.state.orders[0]?.status, "refunded");
+    assert.equal(admitted.state.proofEvents[0]?.title, "PAYMENT_REFUNDED");
+  });
+
+  it("normalizes Receiz wallet transfer webhooks into wallet-settled commerce events", () => {
+    const event = commerceEventFromUnknown(
+      {
+        event_type: "wallet.transfer.completed",
+        transfer_id: "tr_1001",
+        tenantHost: "boost.receiz.app",
+        destinationReceizId: "boost.receiz.id",
+        customerEmail: "wallet-buyer@example.com",
+        amountUsd: "18.5"
+      },
+      "fallback.receiz.app"
+    );
+
+    assert.ok(event);
+    assert.equal(event.type, "checkout.settled");
+    assert.equal(event.id, "tr_1001");
+    assert.equal(event.data.receiptId, "tr_1001");
+    assert.equal(event.data.totalLabel, "$18.50");
+    assert.equal(event.data.paymentRail, "receiz_wallet");
+    assert.equal(event.data.settlementStatus, "settled");
+  });
+
+  it("rejects unsupported webhook event names", () => {
+    assert.equal(commerceEventFromUnknown({ type: "profile.updated", data: {} }, "boost.receiz.app"), null);
   });
 });

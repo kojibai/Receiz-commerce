@@ -53,7 +53,13 @@ export async function POST(request: NextRequest) {
   const event = commerceEventFromUnknown(payload, hostContext.tenantHost ?? hostContext.host);
 
   if (!event) {
-    return NextResponse.json({ ok: false, error: "unsupported_webhook_payload" }, { status: 400 });
+    return NextResponse.json({
+      ok: true,
+      signature,
+      admitted: false,
+      ignored: true,
+      reason: "unsupported_webhook_payload"
+    });
   }
 
   try {

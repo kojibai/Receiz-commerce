@@ -5,6 +5,14 @@
   "license": "MIT",
   "private": true,
   "type": "module",
+  "homepage": "https://github.com/kojibai/Receiz-commerce#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kojibai/Receiz-commerce.git"
+  },
+  "bugs": {
+    "url": "https://github.com/kojibai/Receiz-commerce/issues"
+  },
   "keywords": [
     "receiz",
     "commerce",
@@ -12,7 +20,11 @@
     "nextjs",
     "proof-objects",
     "receiz-sdk",
-    "rewards"
+    "rewards",
+    "mcp",
+    "model-context-protocol",
+    "proof-commerce",
+    "commerce-saas-template"
   ],
   "packageManager": "pnpm@10.29.1",
   "engines": {
@@ -26,10 +38,12 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "receiz:doctor": "node scripts/receiz-doctor.mjs",
+    "receiz:webhooks:create": "node scripts/receiz-create-webhooks.mjs",
+    "secret:scan": "node scripts/release-secret-scan.mjs",
     "release:check": "node scripts/release-check.mjs"
   },
   "dependencies": {
-    "@receiz/sdk": "^97.6.0",
+    "@receiz/sdk": "^98.0.0",
     "lucide-react": "^0.468.0",
     "next": "^15.0.0",
     "react": "^19.0.0",

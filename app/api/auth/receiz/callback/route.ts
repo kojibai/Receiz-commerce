@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
   }
 
   const redirectUri = process.env.RECEIZ_ID_CALLBACK_URL ?? getReceizRedirectUri(origin);
-  const token = await receizCommerceAdapter.client.identity.token({
+  const token = await receizCommerceAdapter.exchangeReceizIdToken({
     grant_type: "authorization_code",
     code,
     code_verifier: oauthState.verifier,
