@@ -1,0 +1,1484 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover" />
+  <title>offline-settlement.html</title>
+  <meta name="color-scheme" content="light" />
+  <style>
+    :root {
+      --bg: #eef4ff;
+      --bg2: #e2ecff;
+      --card: rgba(255, 255, 255, 0.92);
+      --ink: #102145;
+      --muted: #4f628b;
+      --line: #cddaf2;
+      --ok: #0f7a45;
+      --bad: #b42318;
+      --warn: #8a5a00;
+      --radius: 16px;
+      --ring: 0 0 0 3px rgba(16, 33, 69, 0.16);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      font: 15px/1.5 "Avenir Next", "Segoe UI", "Trebuchet MS", sans-serif;
+      background:
+        radial-gradient(circle at 80% 8%, rgba(56, 99, 235, 0.2), rgba(56, 99, 235, 0) 40%),
+        radial-gradient(circle at 14% 76%, rgba(14, 165, 233, 0.14), rgba(14, 165, 233, 0) 44%),
+        radial-gradient(circle at 86% 78%, rgba(251, 146, 60, 0.11), rgba(251, 146, 60, 0) 42%),
+        linear-gradient(180deg, var(--bg), var(--bg2));
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+
+    .shell {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 20px 14px 34px;
+      animation: fade-in 0.3s ease;
+    }
+
+    @keyframes fade-in {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .hero {
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(246,250,255,0.9));
+      box-shadow: 0 24px 50px -42px rgba(12,22,44,0.45), inset 0 1px 0 rgba(255,255,255,0.9);
+      padding: 18px;
+    }
+
+    .brand-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .mark {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      border: 1px solid #163066;
+      display: grid;
+      place-items: center;
+      font: 700 13px/1 "Iowan Old Style", "Palatino Linotype", "Times New Roman", serif;
+      letter-spacing: 0.05em;
+      background: linear-gradient(145deg, #ffffff, #e9f2ff);
+      color: #102145;
+    }
+
+    .wordmark {
+      font-family: "Iowan Old Style", "Palatino Linotype", "Times New Roman", serif;
+      letter-spacing: 0.26em;
+      font-size: 16px;
+      text-transform: uppercase;
+      color: #102145;
+    }
+
+    .tag {
+      margin-left: auto;
+      font-size: 11px;
+      color: var(--muted);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 3px 10px;
+      white-space: nowrap;
+      background: rgba(255, 255, 255, 0.9);
+    }
+
+    h1 {
+      margin: 10px 0 6px;
+      font: 700 34px/1.04 "Iowan Old Style", "Palatino Linotype", "Times New Roman", serif;
+      letter-spacing: 0.01em;
+      color: #102145;
+    }
+
+    .sub {
+      margin: 0;
+      color: var(--muted);
+      max-width: 68ch;
+    }
+
+    .policy-note {
+      margin: 8px 0 0;
+      border-left: 2px solid #b7cae9;
+      padding-left: 10px;
+      font-size: 12px;
+      line-height: 1.4;
+      color: #405c88;
+      max-width: 74ch;
+    }
+
+    .policy-note strong {
+      color: #203f6d;
+      letter-spacing: 0.01em;
+    }
+
+    .row {
+      margin-top: 12px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      height: 30px;
+      border-radius: 999px;
+      border: 1px solid #c4d6f2;
+      padding: 0 12px;
+      background: rgba(255, 255, 255, 0.86);
+      color: #2a4d78;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+    }
+
+    .card {
+      margin-top: 12px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--card);
+      box-shadow: 0 18px 42px -40px rgba(12,22,44,0.48), inset 0 1px 0 rgba(255,255,255,0.84);
+      padding: 14px;
+    }
+
+    .card h2 {
+      margin: 0 0 8px;
+      font: 700 18px/1.15 "Iowan Old Style", "Palatino Linotype", "Times New Roman", serif;
+      letter-spacing: 0.02em;
+    }
+
+    .hint {
+      margin: 0;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .drop {
+      margin-top: 8px;
+      border: 1px solid #afc5e9;
+      border-radius: 20px;
+      min-height: 0;
+      display: block;
+      text-align: left;
+      padding: 10px 12px;
+      color: #27416d;
+      background:
+        radial-gradient(90% 100% at 50% 0%, rgba(118,152,228,0.2), rgba(118,152,228,0) 60%),
+        linear-gradient(180deg, #ffffff 0%, #eef4ff 100%);
+      transition: border-color 0.16s ease, background 0.16s ease, box-shadow 0.16s ease;
+      box-shadow: 0 16px 36px -30px rgba(10,36,86,0.4);
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+    }
+
+    .drop.is-over {
+      border-color: #204a8b;
+      background:
+        radial-gradient(90% 100% at 50% 0%, rgba(71,122,230,0.28), rgba(71,122,230,0) 60%),
+        linear-gradient(180deg, #f8fbff 0%, #e9f2ff 100%);
+      box-shadow: 0 20px 40px -28px rgba(10,36,86,0.48);
+    }
+
+    .drop-file {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      z-index: 2;
+    }
+
+    .drop-content {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .drop-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      border: 1px solid #9bb8e7;
+      background: linear-gradient(180deg, #ffffff 0%, #edf4ff 100%);
+      color: #16376e;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      line-height: 1;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.88), 0 12px 20px -18px rgba(12,34,76,0.52);
+      flex: 0 0 auto;
+    }
+
+    .drop-copy {
+      min-width: 0;
+      flex: 1;
+    }
+
+    .drop-kicker {
+      display: block;
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      color: #4d6794;
+      margin-bottom: 2px;
+    }
+
+    .drop strong {
+      display: block;
+      font: 700 18px/1.08 "Iowan Old Style", "Palatino Linotype", "Times New Roman", serif;
+      letter-spacing: 0.01em;
+      margin-bottom: 1px;
+      color: #102145;
+    }
+
+    .drop-sub {
+      display: block;
+      font-size: 11px;
+      line-height: 1.35;
+      color: #2f4c79;
+    }
+
+    .drop-badge {
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
+      border: 1px solid #9bb8e7;
+      background: linear-gradient(180deg, #ffffff 0%, #edf4ff 100%);
+      color: #16376e;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font: 700 14px/1 "Iowan Old Style", "Palatino Linotype", "Times New Roman", serif;
+      letter-spacing: 0.1em;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.88), 0 10px 18px -16px rgba(12,34,76,0.52);
+      flex: 0 0 auto;
+      opacity: 0.9;
+    }
+
+    .actions {
+      margin-top: 10px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    button,
+    input[type="file"] {
+      font: inherit;
+      color: inherit;
+    }
+
+    button {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: rgba(255,255,255,0.96);
+      height: 40px;
+      padding: 0 14px;
+      cursor: pointer;
+      transition: transform 0.06s ease, box-shadow 0.16s ease;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.82);
+    }
+
+    button:active { transform: translateY(1px); }
+    button:disabled {
+      color: #2f466f;
+      border-color: #b8c9e9;
+      background: linear-gradient(180deg, #d7e2f4, #c8d7ee);
+      cursor: not-allowed;
+      opacity: 1;
+    }
+
+    .btn-primary {
+      border-color: #102145;
+      background: linear-gradient(180deg, #17366f, #112952);
+      color: #ffffff;
+    }
+
+    .btn-soft {
+      border-color: #a5c0e8;
+      background: linear-gradient(180deg, #f8fbff, #e8f1ff);
+      color: #1c477a;
+      font-weight: 600;
+    }
+
+    .status {
+      margin-top: 8px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      padding: 12px;
+      background: rgba(248, 251, 255, 0.9);
+      display: grid;
+      gap: 6px;
+    }
+
+    .status-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: #7e95be;
+      flex: 0 0 auto;
+    }
+
+    .status.ok .dot { background: var(--ok); }
+    .status.bad .dot { background: var(--bad); }
+    .status.warn .dot { background: var(--warn); }
+
+    .status-note {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .table-wrap {
+      margin-top: 8px;
+      border: 1px solid #d8e4f7;
+      border-radius: 14px;
+      overflow: auto;
+      background: rgba(255, 255, 255, 0.86);
+      max-height: min(46vh, 420px);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 760px;
+    }
+
+    thead th {
+      text-align: left;
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #5a6f97;
+      padding: 10px 10px;
+      border-bottom: 1px solid #d8e4f7;
+      background: rgba(245, 250, 255, 0.98);
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+
+    tbody td {
+      padding: 9px 10px;
+      border-bottom: 1px solid #e4ecfb;
+      font-size: 12px;
+      color: #1f3f6b;
+      vertical-align: top;
+    }
+
+    tbody tr:last-child td { border-bottom: none; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; }
+
+    .empty {
+      padding: 14px;
+      color: #4f628b;
+      font-size: 13px;
+    }
+
+    .danger-btn {
+      height: 28px;
+      border-radius: 8px;
+      padding: 0 10px;
+      font-size: 12px;
+      border: 1px solid #e1bbbf;
+      color: #7f1f2b;
+      background: #fff6f7;
+      box-shadow: none;
+    }
+
+    .footer-note {
+      margin: 0;
+      color: #4f628b;
+      font-size: 12px;
+    }
+
+    .release-meta {
+      margin: 14px 0 0;
+      text-align: center;
+      color: #4f628b;
+      font-size: 12px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    a.inline-link {
+      color: #1e4d82;
+      text-decoration: none;
+      border-bottom: 1px solid rgba(30, 77, 130, 0.34);
+      font-weight: 600;
+    }
+
+    a.inline-link:hover {
+      color: #12365e;
+      border-bottom-color: rgba(18, 54, 94, 0.52);
+    }
+
+    @media (max-width: 720px) {
+      h1 { font-size: 30px; }
+      .shell { padding-bottom: 22px; }
+      .card { padding: 12px; }
+      .actions > button { flex: 1 1 auto; min-width: 130px; }
+      .row { gap: 6px; }
+      .pill { height: 28px; padding: 0 10px; font-size: 11px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <div class="brand-row">
+        <div class="mark">R</div>
+        <div class="wordmark">Receiz</div>
+        <div class="tag">Offline Settlement</div>
+      </div>
+      <h1>Offline settlement bundle builder</h1>
+      <p class="sub">
+        Add offline settlement note artifacts, derive deterministic pulse ordering, then export a single offline-settlement claim bundle (PNG or JSON).
+        Upload that bundle on <a class="inline-link" href="/ledger" target="_blank" rel="noreferrer noopener">/ledger</a> and import it to execute claims globally.
+      </p>
+      <p class="policy-note">
+        <strong>Settlement policy:</strong> Claim offline only notes bound to your @username. Bound notes preserve claimant authority while you are offline, and binding is enforced when the settlement claim is processed on the ledger. Unbound notes are first-claim instruments and may be claimed by another account before your settlement claim is processed on the ledger.
+      </p>
+
+      <div class="row" id="summaryPills">
+        <span class="pill" id="pillCount">Claims 0</span>
+        <span class="pill" id="pillFirst">First Pulse N/A</span>
+        <span class="pill" id="pillLast">Last Pulse N/A</span>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>1. Add Offline Settlement Notes</h2>
+      <p class="hint">Accepts sealed settlement note artifacts. Pulse metadata is read when available and used for deterministic ordering.</p>
+      <label class="drop" id="dropZone">
+        <input class="drop-file" id="noteFiles" type="file" multiple accept=".png,.pdf,.json,.svg,.jpg,.jpeg,.gif,.webp,.receizbundle,image/png,application/pdf,application/json,image/svg+xml,image/jpeg,image/gif,image/webp,application/octet-stream" />
+        <div class="drop-content">
+          <span class="drop-icon">↧</span>
+          <div class="drop-copy">
+            <span class="drop-kicker">Offline Intake</span>
+            <strong>Add settlement note artifacts</strong>
+            <span class="drop-sub">Tap or drop files. You can add as many as needed before export.</span>
+          </div>
+          <span class="drop-badge">Φ</span>
+        </div>
+      </label>
+      <div class="actions">
+        <input id="importBundleInput" type="file" accept=".png,.json,image/png,application/json" style="display:none" />
+        <button class="btn-soft" id="importBundleBtn" type="button">Import Existing Bundle</button>
+        <button id="clearBtn" type="button">Clear List</button>
+        <button id="downloadPageBtn" type="button">Download This Tool</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>File</th>
+              <th>Pulse</th>
+              <th>Code</th>
+              <th>Timestamp</th>
+              <th>Artifact SHA-256</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="claimsBody"></tbody>
+        </table>
+        <div id="claimsEmpty" class="empty">No claims loaded yet.</div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>2. Export Claim Ledger Bundle</h2>
+      <p class="hint">Exports deterministic claim bundle format `receiz.ledger_claim_batch` for `/ledger` import.</p>
+      <div class="actions">
+        <button class="btn-primary" id="exportPngBtn" type="button">Export PNG Ledger Bundle</button>
+        <button id="exportJsonBtn" type="button">Export JSON Ledger Bundle</button>
+        <a class="inline-link" href="/ledger" target="_blank" rel="noreferrer noopener">Open /ledger import</a>
+      </div>
+      <p class="footer-note">
+        This page is fully local and does not require network calls. Settlement claim processing occurs when you upload the exported bundle on `/ledger`.
+      </p>
+    </section>
+
+    <section class="status" id="statusBox">
+      <div class="status-title"><span class="dot"></span><span id="statusTitle">Ready</span></div>
+      <p class="status-note" id="statusNote">Add offline settlement note artifacts to assemble an offline-settlement claim bundle.</p>
+    </section>
+
+    <p class="release-meta">Receiz Offline Settlement · v98.0.0</p>
+  </main>
+
+  <script>
+    (function () {
+      "use strict";
+
+      const CLAIM_KIND = "receiz.ledger_claim_batch";
+      const CLAIM_VERSION = "v1";
+      const CLAIM_CHUNK_KEY = "receiz.ledger_claim_batch";
+      const RECEIZ_PROOF_BUNDLE_CHUNK_KEY = "receiz.proof_bundle";
+      const MAX_ARTIFACT_BYTES = 25 * 1024 * 1024;
+      const MAX_BUNDLE_DECODE_BYTES = 64 * 1024;
+      const PNG_SIGNATURE = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]);
+      const PDF_SIGNATURE = new Uint8Array([37, 80, 68, 70, 45]);
+      const JPEG_SIGNATURE = new Uint8Array([255, 216, 255]);
+      const GIF87A_SIGNATURE = new Uint8Array([71, 73, 70, 56, 55, 97]);
+      const GIF89A_SIGNATURE = new Uint8Array([71, 73, 70, 56, 57, 97]);
+      const ZIP_SIGNATURE = new Uint8Array([80, 75, 3, 4]);
+
+      const textEncoder = new TextEncoder();
+      const textDecoder = new TextDecoder();
+
+      const noteFiles = document.getElementById("noteFiles");
+      const dropZone = document.getElementById("dropZone");
+      const claimsBody = document.getElementById("claimsBody");
+      const claimsEmpty = document.getElementById("claimsEmpty");
+      const exportPngBtn = document.getElementById("exportPngBtn");
+      const exportJsonBtn = document.getElementById("exportJsonBtn");
+      const clearBtn = document.getElementById("clearBtn");
+      const importBundleBtn = document.getElementById("importBundleBtn");
+      const importBundleInput = document.getElementById("importBundleInput");
+      const downloadPageBtn = document.getElementById("downloadPageBtn");
+
+      const pillCount = document.getElementById("pillCount");
+      const pillFirst = document.getElementById("pillFirst");
+      const pillLast = document.getElementById("pillLast");
+
+      const statusBox = document.getElementById("statusBox");
+      const statusTitle = document.getElementById("statusTitle");
+      const statusNote = document.getElementById("statusNote");
+
+      const state = {
+        claims: [],
+        busy: false,
+      };
+
+      function setStatus(tone, title, note) {
+        statusBox.classList.remove("ok", "bad", "warn");
+        if (tone === "ok") statusBox.classList.add("ok");
+        else if (tone === "bad") statusBox.classList.add("bad");
+        else if (tone === "warn") statusBox.classList.add("warn");
+        statusTitle.textContent = title;
+        statusNote.textContent = note;
+      }
+
+      function safeFileStamp(iso) {
+        const normalized = String(iso || "").replace(/[^0-9]/g, "").slice(0, 14);
+        return normalized || String(Date.now());
+      }
+
+      function isRecord(value) {
+        return typeof value === "object" && value !== null && !Array.isArray(value);
+      }
+
+      function asText(value) {
+        if (typeof value !== "string") return null;
+        const text = value.trim();
+        return text ? text : null;
+      }
+
+      function asDigits(value) {
+        const text = asText(value);
+        return text && /^\d+$/.test(text) ? text : null;
+      }
+
+      function asCode(value) {
+        const text = asText(value);
+        if (!text) return null;
+        const normalized = text.toUpperCase();
+        return /^[A-Z0-9]{8,32}$/.test(normalized) ? normalized : null;
+      }
+
+      function bytesToBase64(bytes) {
+        let binary = "";
+        const chunkSize = 0x8000;
+        for (let i = 0; i < bytes.length; i += chunkSize) {
+          const chunk = bytes.subarray(i, i + chunkSize);
+          let segment = "";
+          for (let j = 0; j < chunk.length; j += 1) {
+            segment += String.fromCharCode(chunk[j] || 0);
+          }
+          binary += segment;
+        }
+        return btoa(binary);
+      }
+
+      function base64UrlDecode(input) {
+        const base64 = String(input || "").replace(/-/g, "+").replace(/_/g, "/");
+        const pad = base64.length % 4 === 0 ? "" : "=".repeat(4 - (base64.length % 4));
+        const binary = atob(base64 + pad);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+        return bytes;
+      }
+
+      async function sha256Hex(bytes) {
+        const digest = await crypto.subtle.digest("SHA-256", bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength));
+        return Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, "0")).join("");
+      }
+
+      function startsWithBytes(bytes, signature) {
+        if (bytes.length < signature.length) return false;
+        for (let i = 0; i < signature.length; i += 1) {
+          if (bytes[i] !== signature[i]) return false;
+        }
+        return true;
+      }
+
+      function isWebp(bytes) {
+        if (bytes.length < 12) return false;
+        return bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46 &&
+               bytes[8] === 0x57 && bytes[9] === 0x45 && bytes[10] === 0x42 && bytes[11] === 0x50;
+      }
+
+      function extensionFromName(filename) {
+        const text = String(filename || "").trim();
+        if (!text) return null;
+        const slash = Math.max(text.lastIndexOf("/"), text.lastIndexOf("\\"));
+        const leaf = slash >= 0 ? text.slice(slash + 1) : text;
+        const dot = leaf.lastIndexOf(".");
+        if (dot <= 0 || dot === leaf.length - 1) return null;
+        return leaf.slice(dot + 1).toLowerCase();
+      }
+
+      function detectFromHints(hints) {
+        const mime = String((hints && hints.mime) || "").trim().toLowerCase();
+        if (mime === "image/svg+xml") return "svg";
+        if (mime === "application/json" || mime.endsWith("+json")) return "json";
+        const ext = extensionFromName((hints && hints.filename) || "");
+        if (ext === "svg") return "svg";
+        if (ext === "json") return "json";
+        return null;
+      }
+
+      function detectFromTextPrefix(bytes) {
+        const sample = bytes.slice(0, Math.min(bytes.length, 4096));
+        const raw = textDecoder.decode(sample);
+        const trimmed = raw.replace(/^\uFEFF/, "").trimStart();
+        const lower = trimmed.toLowerCase();
+        if (lower.startsWith("<svg") || (lower.startsWith("<?xml") && lower.indexOf("<svg") >= 0)) return "svg";
+        if (trimmed.length > 0) {
+          const first = trimmed[0];
+          if (first === "{" || first === "[") return "json";
+        }
+        return null;
+      }
+
+      function detectDocumentFormat(bytes, hints) {
+        if (startsWithBytes(bytes, PNG_SIGNATURE)) return "png";
+        if (startsWithBytes(bytes, PDF_SIGNATURE)) return "pdf";
+        if (startsWithBytes(bytes, JPEG_SIGNATURE)) return "jpeg";
+        if (startsWithBytes(bytes, GIF87A_SIGNATURE) || startsWithBytes(bytes, GIF89A_SIGNATURE)) return "gif";
+        if (isWebp(bytes)) return "webp";
+        if (startsWithBytes(bytes, ZIP_SIGNATURE)) return "zip";
+        const hinted = detectFromHints(hints);
+        if (hinted) return hinted;
+        const textHint = detectFromTextPrefix(bytes);
+        if (textHint) return textHint;
+        return "unknown";
+      }
+
+      function readUint32BE(bytes, offset) {
+        return (((bytes[offset] || 0) << 24) | ((bytes[offset + 1] || 0) << 16) | ((bytes[offset + 2] || 0) << 8) | (bytes[offset + 3] || 0)) >>> 0;
+      }
+
+      function writeUint32BE(target, offset, value) {
+        target[offset] = (value >>> 24) & 0xff;
+        target[offset + 1] = (value >>> 16) & 0xff;
+        target[offset + 2] = (value >>> 8) & 0xff;
+        target[offset + 3] = value & 0xff;
+      }
+
+      function chunkType(bytes, offset) {
+        return String.fromCharCode(bytes[offset] || 0, bytes[offset + 1] || 0, bytes[offset + 2] || 0, bytes[offset + 3] || 0);
+      }
+
+      function indexOfNull(bytes, start) {
+        for (let i = start; i < bytes.length; i += 1) {
+          if (bytes[i] === 0) return i;
+        }
+        return -1;
+      }
+
+      async function inflateDeflate(bytes) {
+        if (typeof DecompressionStream === "function") {
+          async function tryStream(format) {
+            const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream(format));
+            const out = await new Response(stream).arrayBuffer();
+            return new Uint8Array(out);
+          }
+          try {
+            return await tryStream("deflate-raw");
+          } catch {
+            return await tryStream("deflate");
+          }
+        }
+        throw new Error("This browser cannot decode compressed proof bundles offline.");
+      }
+
+      async function decodeReceizProofBundle(encoded) {
+        const parts = String(encoded || "").split(":", 2);
+        const codec = parts[0] || "";
+        const payload = parts[1] || "";
+        if (codec === "c1" && payload) {
+          const compressed = base64UrlDecode(payload);
+          const inflated = await inflateDeflate(compressed);
+          if (inflated.byteLength > MAX_BUNDLE_DECODE_BYTES) {
+            throw new Error("proof_bundle_too_large");
+          }
+          return JSON.parse(textDecoder.decode(inflated));
+        }
+        const legacy = base64UrlDecode(String(encoded || ""));
+        return JSON.parse(textDecoder.decode(legacy));
+      }
+
+      function parseTextData(data) {
+        const keywordEnd = indexOfNull(data, 0);
+        if (keywordEnd <= 0) return null;
+        const keyword = textDecoder.decode(data.slice(0, keywordEnd));
+        const text = textDecoder.decode(data.slice(keywordEnd + 1));
+        return { keyword, text };
+      }
+
+      async function parseITXtData(data) {
+        const keywordEnd = indexOfNull(data, 0);
+        if (keywordEnd <= 0) return null;
+        const keyword = textDecoder.decode(data.slice(0, keywordEnd));
+        let cursor = keywordEnd + 1;
+        if (cursor + 2 > data.length) return null;
+        const compressionFlag = data[cursor] || 0;
+        const compressionMethod = data[cursor + 1] || 0;
+        cursor += 2;
+        if (compressionMethod !== 0) return null;
+        const langEnd = indexOfNull(data, cursor);
+        if (langEnd < 0) return null;
+        cursor = langEnd + 1;
+        const translatedEnd = indexOfNull(data, cursor);
+        if (translatedEnd < 0) return null;
+        cursor = translatedEnd + 1;
+        if (cursor > data.length) return null;
+        const payload = data.slice(cursor);
+        let bytes = payload;
+        if (compressionFlag === 1) {
+          try {
+            bytes = await inflateDeflate(payload);
+          } catch {
+            return null;
+          }
+        } else if (compressionFlag !== 0) {
+          return null;
+        }
+        return { keyword, text: textDecoder.decode(bytes) };
+      }
+
+      function getCrcTable() {
+        if (getCrcTable.table) return getCrcTable.table;
+        const table = new Uint32Array(256);
+        for (let n = 0; n < 256; n += 1) {
+          let c = n;
+          for (let k = 0; k < 8; k += 1) {
+            c = (c & 1) ? (0xedb88320 ^ (c >>> 1)) : (c >>> 1);
+          }
+          table[n] = c >>> 0;
+        }
+        getCrcTable.table = table;
+        return table;
+      }
+
+      function crc32(bytes) {
+        const table = getCrcTable();
+        let crc = 0xffffffff;
+        for (let i = 0; i < bytes.length; i += 1) {
+          const b = bytes[i] || 0;
+          crc = table[(crc ^ b) & 0xff] ^ (crc >>> 8);
+        }
+        return (crc ^ 0xffffffff) >>> 0;
+      }
+
+      async function readPngTextChunk(pngBytes, keyword) {
+        if (!startsWithBytes(pngBytes, PNG_SIGNATURE)) return null;
+        let offset = 8;
+        while (offset + 8 <= pngBytes.length) {
+          const length = readUint32BE(pngBytes, offset);
+          const type = chunkType(pngBytes, offset + 4);
+          const dataStart = offset + 8;
+          const dataEnd = dataStart + length;
+          if (dataEnd + 4 > pngBytes.length) break;
+          if (type === "iTXt" || type === "tEXt") {
+            const data = pngBytes.slice(dataStart, dataEnd);
+            const parsed = type === "iTXt" ? await parseITXtData(data) : parseTextData(data);
+            if (parsed && parsed.keyword === keyword) return parsed.text;
+          }
+          offset = dataEnd + 4;
+          if (type === "IEND") break;
+        }
+        return null;
+      }
+
+      function buildITXtChunk(keyword, text) {
+        const keywordBytes = textEncoder.encode(keyword);
+        if (!keywordBytes.length || keywordBytes.length > 79) throw new Error("invalid_itxt_keyword");
+        const textBytes = textEncoder.encode(text);
+        const data = new Uint8Array(keywordBytes.length + 5 + textBytes.length);
+        data.set(keywordBytes, 0);
+        let cursor = keywordBytes.length;
+        data[cursor] = 0;
+        data[cursor + 1] = 0;
+        data[cursor + 2] = 0;
+        data[cursor + 3] = 0;
+        data[cursor + 4] = 0;
+        cursor += 5;
+        data.set(textBytes, cursor);
+
+        const typeBytes = new Uint8Array([105, 84, 88, 116]);
+        const chunk = new Uint8Array(12 + data.length);
+        writeUint32BE(chunk, 0, data.length);
+        chunk.set(typeBytes, 4);
+        chunk.set(data, 8);
+        const crcInput = new Uint8Array(typeBytes.length + data.length);
+        crcInput.set(typeBytes, 0);
+        crcInput.set(data, typeBytes.length);
+        writeUint32BE(chunk, 8 + data.length, crc32(crcInput));
+        return chunk;
+      }
+
+      function insertPngTextChunk(pngBytes, keyword, text) {
+        if (!startsWithBytes(pngBytes, PNG_SIGNATURE)) throw new Error("invalid_png_signature");
+        let offset = 8;
+        let iendOffset = -1;
+        while (offset + 8 <= pngBytes.length) {
+          const length = readUint32BE(pngBytes, offset);
+          const type = chunkType(pngBytes, offset + 4);
+          const dataStart = offset + 8;
+          const dataEnd = dataStart + length;
+          if (dataEnd + 4 > pngBytes.length) break;
+          if (type === "IEND") {
+            iendOffset = offset;
+            break;
+          }
+          offset = dataEnd + 4;
+        }
+        if (iendOffset < 0) throw new Error("missing_png_iend");
+
+        const prefix = pngBytes.slice(0, iendOffset);
+        const suffix = pngBytes.slice(iendOffset);
+        const chunk = buildITXtChunk(keyword, text);
+
+        const out = new Uint8Array(prefix.length + chunk.length + suffix.length);
+        let cursor = 0;
+        out.set(prefix, cursor);
+        cursor += prefix.length;
+        out.set(chunk, cursor);
+        cursor += chunk.length;
+        out.set(suffix, cursor);
+        return out;
+      }
+
+      function extractEncodedBundleCandidateFromText(text) {
+        if (!text) return null;
+        const direct = text.match(/\bc1:[A-Za-z0-9_-]+\b/);
+        if (direct && direct[0]) return direct[0];
+        const quoted = text.match(/"proofbundle"\s*:\s*"([^"]+)"/i) || text.match(/"proofBundle"\s*:\s*"([^"]+)"/i);
+        if (quoted && quoted[1] && /\bc1:[A-Za-z0-9_-]+\b/.test(quoted[1])) return quoted[1].match(/\bc1:[A-Za-z0-9_-]+\b/)[0];
+        return null;
+      }
+
+      async function extractProofMeta(bytes, filename, mime) {
+        let bundle = null;
+        const format = detectDocumentFormat(bytes, { filename, mime });
+
+        if (format === "png") {
+          const encoded = await readPngTextChunk(bytes, RECEIZ_PROOF_BUNDLE_CHUNK_KEY);
+          if (encoded) {
+            try {
+              bundle = await decodeReceizProofBundle(encoded);
+            } catch {
+              bundle = null;
+            }
+          }
+        }
+
+        if (!bundle && format === "json") {
+          try {
+            const parsed = JSON.parse(textDecoder.decode(bytes));
+            if (isRecord(parsed)) {
+              if (parsed.kind === "receiz.proof_bundle") bundle = parsed;
+              else if (isRecord(parsed.proofbundle) && parsed.proofbundle.kind === "receiz.proof_bundle") bundle = parsed.proofbundle;
+              else if (isRecord(parsed.proofBundle) && parsed.proofBundle.kind === "receiz.proof_bundle") bundle = parsed.proofBundle;
+              else if (typeof parsed.proofbundle === "string" || typeof parsed.proofBundle === "string") {
+                const encoded = typeof parsed.proofbundle === "string" ? parsed.proofbundle : parsed.proofBundle;
+                try { bundle = await decodeReceizProofBundle(encoded); } catch {}
+              }
+            }
+          } catch {}
+        }
+
+        if (!bundle) {
+          const utf8 = textDecoder.decode(bytes);
+          let encoded = extractEncodedBundleCandidateFromText(utf8);
+          if (!encoded) {
+            const latin1 = new TextDecoder("latin1").decode(bytes);
+            encoded = extractEncodedBundleCandidateFromText(latin1);
+          }
+          if (encoded) {
+            try {
+              bundle = await decodeReceizProofBundle(encoded);
+            } catch {
+              bundle = null;
+            }
+          }
+        }
+
+        const pulse = bundle && isRecord(bundle) ? asDigits(bundle.kaiPulseEternal) : null;
+        const code = bundle && isRecord(bundle) ? asCode(bundle.code) : null;
+        const ts = bundle && isRecord(bundle) ? asText(bundle.ts) : null;
+        return { pulse, code, ts };
+      }
+
+      function compareClaims(a, b) {
+        const pulseA = a.pulse ? parseInt(a.pulse, 10) : Number.MAX_SAFE_INTEGER;
+        const pulseB = b.pulse ? parseInt(b.pulse, 10) : Number.MAX_SAFE_INTEGER;
+        if (pulseA !== pulseB) return pulseA - pulseB;
+        const tsA = a.ts || "9999-99-99 99:99";
+        const tsB = b.ts || "9999-99-99 99:99";
+        if (tsA !== tsB) return tsA < tsB ? -1 : 1;
+        const codeA = a.code || "ZZZZZZZZ";
+        const codeB = b.code || "ZZZZZZZZ";
+        if (codeA !== codeB) return codeA < codeB ? -1 : 1;
+        if (a.artifactSha256 !== b.artifactSha256) return a.artifactSha256 < b.artifactSha256 ? -1 : 1;
+        return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
+      }
+
+      function normalizeClaim(value, index) {
+        if (!isRecord(value)) return null;
+        const filename = asText(value.filename);
+        const mime = asText(value.mime) || "application/octet-stream";
+        const artifactSha256 = asText(value.artifactSha256);
+        const artifactBase64 = typeof value.artifactBase64 === "string" ? value.artifactBase64.replace(/\s+/g, "") : "";
+        if (!filename || !artifactSha256 || !artifactBase64) return null;
+        if (!/^[0-9a-f]{64}$/i.test(artifactSha256)) return null;
+        const normalizedSha = artifactSha256.toLowerCase();
+        const pulse = asDigits(value.pulse);
+        const code = asCode(value.code);
+        const ts = asText(value.ts);
+        const id = asText(value.id) || `claim_${String(index + 1).padStart(4, "0")}_${normalizedSha.slice(0, 16)}`;
+        return {
+          id,
+          filename,
+          mime,
+          pulse,
+          code,
+          ts,
+          artifactSha256: normalizedSha,
+          artifactBase64,
+        };
+      }
+
+      function normalizeClaimBundle(value) {
+        if (!isRecord(value)) return null;
+        if (value.kind !== CLAIM_KIND) return null;
+        if (value.version !== CLAIM_VERSION) return null;
+        const exportedAt = asText(value.exportedAt);
+        const claimsRaw = Array.isArray(value.claims) ? value.claims : null;
+        if (!exportedAt || !claimsRaw || claimsRaw.length === 0) return null;
+        const claims = [];
+        for (let i = 0; i < claimsRaw.length; i += 1) {
+          const normalized = normalizeClaim(claimsRaw[i], i);
+          if (!normalized) return null;
+          claims.push(normalized);
+        }
+        claims.sort(compareClaims);
+        return {
+          kind: CLAIM_KIND,
+          version: CLAIM_VERSION,
+          exportedAt,
+          claimCount: claims.length,
+          claims,
+        };
+      }
+
+      function buildBundlePayload() {
+        const claims = [...state.claims].sort(compareClaims);
+        return {
+          kind: CLAIM_KIND,
+          version: CLAIM_VERSION,
+          exportedAt: new Date().toISOString(),
+          claimCount: claims.length,
+          claims,
+        };
+      }
+
+      function triggerDownload(blob, filename) {
+        const href = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = href;
+        a.download = filename;
+        a.rel = "noopener noreferrer";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(href), 1000);
+      }
+
+      function setBusy(nextBusy) {
+        state.busy = !!nextBusy;
+        const disabled = state.busy;
+        exportPngBtn.disabled = disabled || state.claims.length === 0;
+        exportJsonBtn.disabled = disabled || state.claims.length === 0;
+        clearBtn.disabled = disabled || state.claims.length === 0;
+        importBundleBtn.disabled = disabled;
+        downloadPageBtn.disabled = disabled;
+        noteFiles.disabled = disabled;
+      }
+
+      function renderSummary() {
+        const claims = [...state.claims].sort(compareClaims);
+        pillCount.textContent = `Claims ${claims.length.toLocaleString("en-US")}`;
+        if (!claims.length) {
+          pillFirst.textContent = "First Pulse N/A";
+          pillLast.textContent = "Last Pulse N/A";
+          return;
+        }
+        const pulses = claims
+          .map((row) => row.pulse ? parseInt(row.pulse, 10) : null)
+          .filter((value) => Number.isFinite(value));
+        if (!pulses.length) {
+          pillFirst.textContent = "First Pulse N/A";
+          pillLast.textContent = "Last Pulse N/A";
+          return;
+        }
+        const first = Math.min.apply(null, pulses);
+        const last = Math.max.apply(null, pulses);
+        pillFirst.textContent = `First Pulse ${first.toLocaleString("en-US")}`;
+        pillLast.textContent = `Last Pulse ${last.toLocaleString("en-US")}`;
+      }
+
+      function renderClaimsTable() {
+        const claims = [...state.claims].sort(compareClaims);
+        claimsBody.innerHTML = "";
+        if (!claims.length) {
+          claimsEmpty.style.display = "block";
+          return;
+        }
+        claimsEmpty.style.display = "none";
+
+        claims.forEach((claim, index) => {
+          const tr = document.createElement("tr");
+          const pulseLabel = claim.pulse ? parseInt(claim.pulse, 10).toLocaleString("en-US") : "N/A";
+          const appendCell = function(text, options) {
+            const td = document.createElement("td");
+            if (options && options.className) td.className = options.className;
+            if (options && options.title) td.title = options.title;
+            td.textContent = text;
+            tr.appendChild(td);
+            return td;
+          };
+
+          appendCell(String(index + 1));
+          appendCell(claim.filename, { title: claim.filename });
+          appendCell(pulseLabel, { className: "mono" });
+          appendCell(claim.code || "N/A", { className: "mono" });
+          appendCell(claim.ts || "N/A");
+          appendCell(claim.artifactSha256.slice(0, 18) + "…" + claim.artifactSha256.slice(-12), { className: "mono" });
+
+          const actionCell = document.createElement("td");
+          const removeBtn = document.createElement("button");
+          removeBtn.type = "button";
+          removeBtn.className = "danger-btn";
+          removeBtn.setAttribute("data-remove-id", claim.id);
+          removeBtn.textContent = "Remove";
+          actionCell.appendChild(removeBtn);
+          tr.appendChild(actionCell);
+          claimsBody.appendChild(tr);
+        });
+      }
+
+      function syncUi() {
+        renderSummary();
+        renderClaimsTable();
+        setBusy(state.busy);
+      }
+
+      async function buildClaimFromFile(file, index) {
+        const bytes = new Uint8Array(await file.arrayBuffer());
+        if (!bytes.byteLength) throw new Error(`empty_file:${file.name || `note_${index + 1}`}`);
+        if (bytes.byteLength > MAX_ARTIFACT_BYTES) throw new Error(`file_too_large:${file.name || `note_${index + 1}`}`);
+
+        const artifactSha256 = (await sha256Hex(bytes)).toLowerCase();
+        const meta = await extractProofMeta(bytes, file.name || `note_${index + 1}`, file.type || "");
+        const mime = asText(file.type) || "application/octet-stream";
+        const filename = asText(file.name) || `note_${index + 1}`;
+
+        return {
+          id: `claim_${String(index + 1).padStart(4, "0")}_${artifactSha256.slice(0, 16)}`,
+          filename,
+          mime,
+          pulse: meta.pulse,
+          code: meta.code,
+          ts: meta.ts,
+          artifactSha256,
+          artifactBase64: bytesToBase64(bytes),
+        };
+      }
+
+      function mergeClaims(claims) {
+        const bySha = new Map();
+        for (const current of state.claims) {
+          bySha.set(current.artifactSha256, current);
+        }
+        for (const entry of claims) {
+          if (!bySha.has(entry.artifactSha256)) {
+            bySha.set(entry.artifactSha256, entry);
+          }
+        }
+        state.claims = Array.from(bySha.values()).sort(compareClaims);
+      }
+
+      async function addFiles(files) {
+        if (!files.length) return;
+        setBusy(true);
+        setStatus("warn", "Processing offline settlement notes…", `Reading ${files.length.toLocaleString("en-US")} file(s).`);
+        try {
+          const added = [];
+          let skipped = 0;
+          let failed = 0;
+
+          for (let i = 0; i < files.length; i += 1) {
+            const file = files[i];
+            setStatus("warn", "Processing offline settlement notes…", `File ${i + 1}/${files.length}: ${file.name}`);
+            try {
+              const claim = await buildClaimFromFile(file, i);
+              if (state.claims.some((row) => row.artifactSha256 === claim.artifactSha256) || added.some((row) => row.artifactSha256 === claim.artifactSha256)) {
+                skipped += 1;
+                continue;
+              }
+              added.push(claim);
+            } catch {
+              failed += 1;
+            }
+          }
+
+          mergeClaims(added);
+          syncUi();
+
+          if (added.length > 0) {
+            setStatus(
+              "ok",
+              "Offline settlement note intake complete",
+              `Added ${added.length.toLocaleString("en-US")}, skipped ${skipped.toLocaleString("en-US")}, failed ${failed.toLocaleString("en-US")}.`,
+            );
+          } else if (failed > 0) {
+            setStatus("bad", "No settlement notes added", `Failed ${failed.toLocaleString("en-US")} file(s).`);
+          } else {
+            setStatus("warn", "No new settlement notes", `Skipped ${skipped.toLocaleString("en-US")} duplicate file(s).`);
+          }
+        } finally {
+          setBusy(false);
+          syncUi();
+        }
+      }
+
+      function parseImportPayloadFromBytes(bytes, fileName) {
+        const lowerName = String(fileName || "").toLowerCase();
+        const isPng = startsWithBytes(bytes, PNG_SIGNATURE) || lowerName.endsWith(".png");
+        if (isPng) {
+          return readPngTextChunk(bytes, CLAIM_CHUNK_KEY).then((encoded) => {
+            if (!encoded) throw new Error("missing_claim_chunk");
+            return JSON.parse(encoded);
+          });
+        }
+        const raw = textDecoder.decode(bytes);
+        return Promise.resolve(JSON.parse(raw));
+      }
+
+      async function importExistingBundle(file) {
+        setBusy(true);
+        setStatus("warn", "Importing bundle…", file.name || "Parsing bundle");
+        try {
+          const bytes = new Uint8Array(await file.arrayBuffer());
+          const parsed = await parseImportPayloadFromBytes(bytes, file.name || "");
+          const bundle = normalizeClaimBundle(parsed);
+          if (!bundle) throw new Error("invalid_bundle_shape");
+          mergeClaims(bundle.claims);
+          syncUi();
+          setStatus("ok", "Bundle imported", `Loaded ${bundle.claims.length.toLocaleString("en-US")} claim artifact(s).`);
+        } catch (err) {
+          const message = err instanceof Error ? err.message : "bundle_import_failed";
+          const detail =
+            message === "missing_claim_chunk"
+              ? "PNG does not contain receiz.ledger_claim_batch."
+              : message === "invalid_bundle_shape"
+                ? "Bundle JSON does not match receiz.ledger_claim_batch v1."
+                : "Bundle import failed.";
+          setStatus("bad", "Import failed", detail);
+        } finally {
+          setBusy(false);
+          syncUi();
+        }
+      }
+
+      function drawRoundedRect(ctx, x, y, width, height, radius) {
+        const r = Math.max(0, Math.min(radius, Math.min(width, height) / 2));
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.lineTo(x + width - r, y);
+        ctx.quadraticCurveTo(x + width, y, x + width, y + r);
+        ctx.lineTo(x + width, y + height - r);
+        ctx.quadraticCurveTo(x + width, y + height, x + width - r, y + height);
+        ctx.lineTo(x + r, y + height);
+        ctx.quadraticCurveTo(x, y + height, x, y + height - r);
+        ctx.lineTo(x, y + r);
+        ctx.quadraticCurveTo(x, y, x + r, y);
+        ctx.closePath();
+      }
+
+      function renderPoster(bundle) {
+        const width = 1600;
+        const height = 980;
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) throw new Error("canvas_unavailable");
+
+        const bg = ctx.createLinearGradient(0, 0, width, height);
+        bg.addColorStop(0, "#eef8ff");
+        bg.addColorStop(0.44, "#dff0ff");
+        bg.addColorStop(1, "#cee5fb");
+        ctx.fillStyle = bg;
+        ctx.fillRect(0, 0, width, height);
+
+        const haloA = ctx.createRadialGradient(width * 0.9, height * 0.1, 8, width * 0.9, height * 0.1, width * 0.4);
+        haloA.addColorStop(0, "rgba(64,120,186,0.28)");
+        haloA.addColorStop(1, "rgba(64,120,186,0)");
+        ctx.fillStyle = haloA;
+        ctx.fillRect(0, 0, width, height);
+
+        const haloB = ctx.createRadialGradient(width * 0.12, height * 0.9, 10, width * 0.12, height * 0.9, width * 0.32);
+        haloB.addColorStop(0, "rgba(34,90,156,0.2)");
+        haloB.addColorStop(1, "rgba(34,90,156,0)");
+        ctx.fillStyle = haloB;
+        ctx.fillRect(0, 0, width, height);
+
+        drawRoundedRect(ctx, 72, 70, width - 144, height - 140, 44);
+        ctx.fillStyle = "rgba(255,255,255,0.9)";
+        ctx.fill();
+        ctx.strokeStyle = "rgba(107,152,204,0.75)";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        const pulses = bundle.claims
+          .map((claim) => claim.pulse ? parseInt(claim.pulse, 10) : null)
+          .filter((pulse) => Number.isFinite(pulse));
+        const firstPulse = pulses.length ? Math.min.apply(null, pulses).toLocaleString("en-US") : "N/A";
+        const lastPulse = pulses.length ? Math.max.apply(null, pulses).toLocaleString("en-US") : "N/A";
+        const headSha = bundle.claims[0] ? bundle.claims[0].artifactSha256 : "";
+        const tailSha = bundle.claims[bundle.claims.length - 1] ? bundle.claims[bundle.claims.length - 1].artifactSha256 : "";
+        const digestLabel = headSha && tailSha
+          ? `${headSha.slice(0, 12)}...${headSha.slice(-8)} / ${tailSha.slice(0, 12)}...${tailSha.slice(-8)}`
+          : "N/A";
+
+        ctx.fillStyle = "#456b98";
+        ctx.font = '600 26px "Georgia", "Times New Roman", serif';
+        ctx.fillText("RECEIZ", 126, 160);
+        ctx.font = '600 18px "Georgia", "Times New Roman", serif';
+        ctx.fillText("OFFLINE SETTLEMENT CLAIM BUNDLE", 126, 196);
+
+        ctx.fillStyle = "#12345b";
+        ctx.font = '700 72px "Source Serif 4", "Georgia", "Times New Roman", serif';
+        ctx.fillText("Offline Settlement Claim Bundle", 126, 296);
+
+        ctx.fillStyle = "#274d7a";
+        ctx.font = '500 28px "Avenir Next", "Segoe UI", sans-serif';
+        ctx.fillText("Deterministic pulse ordering for ledger import and global claim posting.", 126, 354);
+
+        drawRoundedRect(ctx, 122, 404, width - 244, 360, 26);
+        const panel = ctx.createLinearGradient(0, 404, 0, 764);
+        panel.addColorStop(0, "rgba(245,250,255,0.98)");
+        panel.addColorStop(1, "rgba(235,244,255,0.96)");
+        ctx.fillStyle = panel;
+        ctx.fill();
+        ctx.strokeStyle = "rgba(140,176,222,0.86)";
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        ctx.fillStyle = "#416995";
+        ctx.font = '600 16px "Avenir Next", "Segoe UI", sans-serif';
+        ctx.fillText("BUNDLE TYPE", 162, 462);
+        ctx.fillText("EXPORTED", 162, 526);
+        ctx.fillText("CLAIMS", 162, 590);
+        ctx.fillText("FIRST PULSE", 162, 654);
+        ctx.fillText("LAST PULSE", 162, 718);
+        ctx.fillText("ARTIFACT DIGESTS", 162, 782);
+
+        ctx.fillStyle = "#113860";
+        ctx.font = '700 34px "Avenir Next", "Segoe UI", sans-serif';
+        ctx.fillText("Receiz Ledger / Claim Batch", 360, 466);
+        ctx.fillText(new Date(bundle.exportedAt).toLocaleString(), 360, 530);
+        ctx.fillText(bundle.claims.length.toLocaleString("en-US"), 360, 594);
+        ctx.fillText(firstPulse, 360, 658);
+        ctx.fillText(lastPulse, 360, 722);
+        ctx.font = '700 21px "Menlo", "SFMono-Regular", monospace';
+        ctx.fillText(digestLabel, 360, 786);
+
+        ctx.fillStyle = "#345d8b";
+        ctx.font = '600 16px "Avenir Next", "Segoe UI", sans-serif';
+        ctx.fillText("Payload chunk: receiz.ledger_claim_batch", 126, 850);
+        ctx.fillText("Upload this PNG on /ledger Import Bundle to execute all bundled claims.", 126, 884);
+        return canvas;
+      }
+
+      async function canvasToPngBytes(canvas) {
+        const blob = await new Promise((resolve, reject) => {
+          canvas.toBlob((value) => {
+            if (value) resolve(value);
+            else reject(new Error("png_render_failed"));
+          }, "image/png");
+        });
+        return new Uint8Array(await blob.arrayBuffer());
+      }
+
+      async function exportJson() {
+        if (!state.claims.length) return;
+        setBusy(true);
+        setStatus("warn", "Exporting JSON bundle…", "Preparing offline-settlement claim bundle JSON.");
+        try {
+          const payload = buildBundlePayload();
+          const stamp = safeFileStamp(payload.exportedAt);
+          const json = JSON.stringify(payload, null, 2);
+          triggerDownload(new Blob([json], { type: "application/json" }), `receiz_offline_settlement_bundle_${stamp}.json`);
+          setStatus("ok", "JSON exported", `Exported ${payload.claims.length.toLocaleString("en-US")} claims.`);
+        } catch {
+          setStatus("bad", "Export failed", "Could not export JSON bundle.");
+        } finally {
+          setBusy(false);
+          syncUi();
+        }
+      }
+
+      async function exportPng() {
+        if (!state.claims.length) return;
+        setBusy(true);
+        setStatus("warn", "Exporting PNG bundle…", "Rendering offline-settlement claim bundle poster.");
+        try {
+          const payload = buildBundlePayload();
+          const poster = renderPoster(payload);
+          const basePng = await canvasToPngBytes(poster);
+          const enriched = insertPngTextChunk(basePng, CLAIM_CHUNK_KEY, JSON.stringify(payload));
+          const stamp = safeFileStamp(payload.exportedAt);
+          triggerDownload(new Blob([enriched], { type: "image/png" }), `receiz_offline_settlement_bundle_${stamp}.png`);
+          setStatus("ok", "PNG exported", `Exported ${payload.claims.length.toLocaleString("en-US")} claims in deterministic order.`);
+        } catch {
+          setStatus("bad", "Export failed", "Could not export PNG bundle.");
+        } finally {
+          setBusy(false);
+          syncUi();
+        }
+      }
+
+      function clearClaims() {
+        state.claims = [];
+        syncUi();
+        setStatus("warn", "List cleared", "No claim artifacts are loaded.");
+      }
+
+      async function downloadThisPage() {
+        setBusy(true);
+        try {
+          const html = "<!doctype html>\n" + document.documentElement.outerHTML;
+          triggerDownload(new Blob([html], { type: "text/html;charset=utf-8" }), "offline-settlement.html");
+          setStatus("ok", "Tool downloaded", "Saved this offline-settlement page as a local HTML file.");
+        } catch {
+          setStatus("bad", "Download failed", "Could not download this HTML tool.");
+        } finally {
+          setBusy(false);
+          syncUi();
+        }
+      }
+
+      noteFiles.addEventListener("change", async (event) => {
+        const files = Array.from(event.target.files || []);
+        event.target.value = "";
+        await addFiles(files);
+      });
+
+      dropZone.addEventListener("dragover", (event) => {
+        event.preventDefault();
+        dropZone.classList.add("is-over");
+      });
+
+      dropZone.addEventListener("dragleave", () => {
+        dropZone.classList.remove("is-over");
+      });
+
+      dropZone.addEventListener("drop", async (event) => {
+        event.preventDefault();
+        dropZone.classList.remove("is-over");
+        const files = Array.from(event.dataTransfer && event.dataTransfer.files ? event.dataTransfer.files : []);
+        await addFiles(files);
+      });
+
+      claimsBody.addEventListener("click", (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLElement)) return;
+        const id = target.getAttribute("data-remove-id");
+        if (!id) return;
+        state.claims = state.claims.filter((row) => row.id !== id);
+        syncUi();
+        setStatus("warn", "Claim removed", "Updated claim ledger list.");
+      });
+
+      exportJsonBtn.addEventListener("click", () => {
+        void exportJson();
+      });
+
+      exportPngBtn.addEventListener("click", () => {
+        void exportPng();
+      });
+
+      clearBtn.addEventListener("click", clearClaims);
+
+      importBundleBtn.addEventListener("click", () => {
+        if (state.busy) return;
+        importBundleInput.click();
+      });
+
+      importBundleInput.addEventListener("change", async (event) => {
+        const file = event.target.files && event.target.files[0] ? event.target.files[0] : null;
+        event.target.value = "";
+        if (!file) return;
+        await importExistingBundle(file);
+      });
+
+      downloadPageBtn.addEventListener("click", () => {
+        void downloadThisPage();
+      });
+
+      syncUi();
+      setStatus("ok", "Ready", "Add offline settlement note artifacts to assemble an offline-settlement claim bundle.");
+    })();
+  </script>
+</body>
+</html>
