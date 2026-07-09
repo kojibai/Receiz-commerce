@@ -1,0 +1,290 @@
+"use client";
+
+import { Suspense, useMemo, useRef } from "react";
+import { Canvas, useFrame } from "@react-three/fiber";
+import { ContactShadows, Float, Html, Sparkles } from "@react-three/drei";
+import * as THREE from "three";
+import {
+  creatureCards,
+  habitatNodes,
+  nearestCreature,
+  type CreatureCard,
+  type HabitatNode,
+  type PlayState,
+  type WildsInput
+} from "@/features/play/game-state";
+
+export function WildsWorldCanvas({
+  state,
+  onInput
+}: {
+  state: PlayState;
+  onInput: (input: WildsInput) => void;
+}) {
+  return (
+    <div className="wilds-canvas-wrap">
+      <Canvas
+        camera={{ fov: 42, near: 0.1, far: 80, position: [4.6, 5.8, 7.2] }}
+        dpr={[1, 1.75]}
+        gl={{ antialias: true, powerPreference: "high-performance", preserveDrawingBuffer: true }}
+        shadows
+      >
+        <Suspense fallback={null}>
+          <WildsScene state={state} onInput={onInput} />
+        </Suspense>
+      </Canvas>
+    </div>
+  );
+}
+
+function WildsScene({
+  state,
+  onInput
+}: {
+  state: PlayState;
+  onInput: (input: WildsInput) => void;
+}) {
+  const nearest = nearestCreature(state);
+
+  return (
+    <>
+      <color attach="background" args={["#8fd7ff"]} />
+      <fog attach="fog" args={["#91dca7", 10, 24]} />
+      <ambientLight intensity={0.78} />
+      <directionalLight
+        castShadow
+        intensity={1.45}
+        position={[4, 8, 5]}
+        shadow-camera-bottom={-8}
+        shadow-camera-left={-8}
+        shadow-camera-right={8}
+        shadow-camera-top={8}
+        shadow-mapSize-height={1024}
+        shadow-mapSize-width={1024}
+      />
+      <CameraRig player={state.player} />
+      <Terrain />
+      {habitatNodes.map((node) => (
+        <Habitat key={node.id} node={node} />
+      ))}
+      {creatureCards.map((card) => (
+        <Creature
+          active={state.selectedCardId === card.id}
+          card={card}
+          discovered={state.discoveredCardIds.includes(card.id)}
+          inRange={nearest.card.id === card.id && nearest.distance <= 1.25}
+          key={card.id}
+          onInput={onInput}
+        />
+      ))}
+      <PlayerMarker position={[state.player.x, 0, state.player.z]} />
+      <Sparkles count={54} scale={[8, 2.4, 8]} size={2.1} speed={0.22} color="#fff5b6" />
+      <ContactShadows opacity={0.36} scale={11} blur={2.4} far={8} position={[0, -0.02, 0]} />
+    </>
+  );
+}
+
+function CameraRig({ player }: { player: PlayState["player"] }) {
+  const target = useMemo(() => new THREE.Vector3(), []);
+  const lookAt = useMemo(() => new THREE.Vector3(), []);
+
+  useFrame(({ camera }) => {
+    target.set(player.x + 4.6, 5.4, player.z + 6.6);
+    lookAt.set(player.x, 0.35, player.z);
+    camera.position.lerp(target, 0.08);
+    camera.lookAt(lookAt);
+  });
+
+  return null;
+}
+
+function Terrain() {
+  const trees = useMemo(
+    () => [
+      [-4.2, -2.9, 0.75],
+      [-3.7, 2.6, 1.1],
+      [-2.2, 3.4, 0.85],
+      [-0.4, -3.4, 0.9],
+      [1.2, 3.5, 1],
+      [2.7, -3.1, 0.8],
+      [3.7, 2.8, 1.15],
+      [4.3, -0.6, 0.9]
+    ] as const,
+    []
+  );
+
+  return (
+    <group>
+      <mesh receiveShadow rotation={[-Math.PI / 2, 0, 0]}>
+        <circleGeometry args={[6.15, 96]} />
+        <meshStandardMaterial color="#69ad5b" roughness={0.95} />
+      </mesh>
+      <mesh receiveShadow rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.012, 0]}>
+        <ringGeometry args={[1.1, 5.6, 96]} />
+        <meshStandardMaterial color="#7dbf65" roughness={0.92} />
+      </mesh>
+      <mesh receiveShadow rotation={[-Math.PI / 2, 0, -0.28]} position={[0.2, 0.028, 0]}>
+        <planeGeometry args={[1.05, 9.6]} />
+        <meshStandardMaterial color="#f1d889" roughness={0.8} />
+      </mesh>
+      <mesh receiveShadow rotation={[-Math.PI / 2, 0, 0.88]} position={[0, 0.032, -0.35]}>
+        <planeGeometry args={[0.72, 8.1]} />
+        <meshStandardMaterial color="#d9c16d" roughness={0.85} />
+      </mesh>
+      <mesh position={[0, -0.12, 0]}>
+        <cylinderGeometry args={[6.2, 6.65, 0.24, 96]} />
+        <meshStandardMaterial color="#456d3d" roughness={1} />
+      </mesh>
+      {trees.map(([x, z, scale], index) => (
+        <Tree key={`${x}-${z}-${index}`} position={[x, 0, z]} scale={scale} />
+      ))}
+    </group>
+  );
+}
+
+function Tree({
+  position,
+  scale
+}: {
+  position: readonly [number, number, number];
+  scale: number;
+}) {
+  return (
+    <group position={position} scale={scale}>
+      <mesh castShadow position={[0, 0.32, 0]}>
+        <cylinderGeometry args={[0.09, 0.13, 0.68, 8]} />
+        <meshStandardMaterial color="#7a5637" roughness={0.9} />
+      </mesh>
+      <mesh castShadow position={[0, 0.84, 0]}>
+        <coneGeometry args={[0.48, 0.94, 10]} />
+        <meshStandardMaterial color="#2e7b48" roughness={0.78} />
+      </mesh>
+      <mesh castShadow position={[0.18, 0.64, -0.06]}>
+        <sphereGeometry args={[0.28, 12, 10]} />
+        <meshStandardMaterial color="#55a857" roughness={0.82} />
+      </mesh>
+    </group>
+  );
+}
+
+function Habitat({ node }: { node: HabitatNode }) {
+  const tone = habitatTone(node.tone);
+
+  return (
+    <group position={node.position}>
+      <mesh receiveShadow position={[0, 0.035, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <circleGeometry args={[0.64, 32]} />
+        <meshStandardMaterial color={tone.base} roughness={0.72} emissive={tone.glow} emissiveIntensity={0.08} />
+      </mesh>
+      <mesh position={[0, 0.09, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <torusGeometry args={[0.58, 0.035, 10, 40]} />
+        <meshStandardMaterial color={tone.ring} roughness={0.48} emissive={tone.ring} emissiveIntensity={0.24} />
+      </mesh>
+    </group>
+  );
+}
+
+function Creature({
+  active,
+  card,
+  discovered,
+  inRange,
+  onInput
+}: {
+  active: boolean;
+  card: CreatureCard;
+  discovered: boolean;
+  inRange: boolean;
+  onInput: (input: WildsInput) => void;
+}) {
+  const groupRef = useRef<THREE.Group>(null);
+
+  useFrame(({ clock }) => {
+    if (!groupRef.current) return;
+    groupRef.current.position.y = Math.sin(clock.elapsedTime * 1.8 + card.position[0]) * 0.08;
+    groupRef.current.rotation.y = Math.sin(clock.elapsedTime * 0.85 + card.position[2]) * 0.18;
+  });
+
+  return (
+    <Float floatIntensity={0.13} rotationIntensity={0.08} speed={1.2}>
+      <group
+        ref={groupRef}
+        position={[card.position[0], 0.42, card.position[2]]}
+        onClick={(event) => {
+          event.stopPropagation();
+          onInput(discovered ? { type: "select-card", cardId: card.id } : { type: "discover" });
+        }}
+      >
+        <mesh castShadow>
+          <sphereGeometry args={[0.36, 24, 18]} />
+          <meshStandardMaterial color={card.color} roughness={0.58} emissive={card.color} emissiveIntensity={0.08} />
+        </mesh>
+        <mesh castShadow position={[-0.22, 0.24, -0.02]}>
+          <sphereGeometry args={[0.14, 16, 12]} />
+          <meshStandardMaterial color={card.accent} roughness={0.58} />
+        </mesh>
+        <mesh castShadow position={[0.22, 0.24, -0.02]}>
+          <sphereGeometry args={[0.14, 16, 12]} />
+          <meshStandardMaterial color={card.accent} roughness={0.58} />
+        </mesh>
+        <mesh position={[-0.12, 0.08, 0.31]}>
+          <sphereGeometry args={[0.04, 8, 8]} />
+          <meshStandardMaterial color="#142115" roughness={0.35} />
+        </mesh>
+        <mesh position={[0.12, 0.08, 0.31]}>
+          <sphereGeometry args={[0.04, 8, 8]} />
+          <meshStandardMaterial color="#142115" roughness={0.35} />
+        </mesh>
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.34, 0]}>
+          <torusGeometry args={[0.46, active || inRange ? 0.035 : 0.02, 8, 36]} />
+          <meshStandardMaterial
+            color={active ? "#fff2a8" : inRange ? "#ffffff" : "#2b6c47"}
+            emissive={active || inRange ? "#f7c948" : "#000000"}
+            emissiveIntensity={active || inRange ? 0.44 : 0}
+            transparent
+            opacity={discovered ? 0.95 : 0.68}
+          />
+        </mesh>
+        {discovered ? (
+          <Html center distanceFactor={8} position={[0, 0.82, 0]} className="wilds-world-label">
+            <span>{card.name}</span>
+          </Html>
+        ) : null}
+      </group>
+    </Float>
+  );
+}
+
+function PlayerMarker({ position }: { position: readonly [number, number, number] }) {
+  const groupRef = useRef<THREE.Group>(null);
+
+  useFrame(({ clock }) => {
+    if (!groupRef.current) return;
+    groupRef.current.rotation.y = Math.sin(clock.elapsedTime * 1.25) * 0.16;
+  });
+
+  return (
+    <group ref={groupRef} position={[position[0], 0.42, position[2]]}>
+      <mesh castShadow>
+        <capsuleGeometry args={[0.2, 0.48, 8, 18]} />
+        <meshStandardMaterial color="#ffffff" roughness={0.5} emissive="#37d688" emissiveIntensity={0.12} />
+      </mesh>
+      <mesh castShadow position={[0, 0.46, 0.02]}>
+        <sphereGeometry args={[0.22, 18, 14]} />
+        <meshStandardMaterial color="#f7c948" roughness={0.52} />
+      </mesh>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.38, 0]}>
+        <torusGeometry args={[0.48, 0.025, 8, 36]} />
+        <meshStandardMaterial color="#ffffff" emissive="#37d688" emissiveIntensity={0.46} />
+      </mesh>
+    </group>
+  );
+}
+
+function habitatTone(tone: HabitatNode["tone"]) {
+  if (tone === "spark") return { base: "#ff9f6b", ring: "#ffd15c", glow: "#ff7466" };
+  if (tone === "trade") return { base: "#62c8ff", ring: "#a7efff", glow: "#62c8ff" };
+  if (tone === "reward") return { base: "#f7c948", ring: "#fff2a8", glow: "#f7c948" };
+  if (tone === "gate") return { base: "#6c8142", ring: "#c7ec5a", glow: "#c7ec5a" };
+  return { base: "#37d688", ring: "#b8ffd9", glow: "#37d688" };
+}

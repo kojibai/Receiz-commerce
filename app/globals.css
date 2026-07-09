@@ -1432,6 +1432,8 @@ a {
   align-items: center;
   gap: 6px;
   min-width: 0;
+  width: fit-content;
+  margin-left: auto;
   padding: 8px;
   border-radius: 999px;
 }
@@ -1699,6 +1701,7 @@ a {
 
 .wilds-command-panel {
   display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   align-content: start;
   gap: 10px;
   min-width: 0;
@@ -1859,10 +1862,253 @@ a {
 }
 
 .wilds-reset {
+  grid-column: 1 / -1;
   width: 100%;
   border-color: rgba(255, 255, 255, 0.24);
   color: #ffffff;
   background: rgba(255, 255, 255, 0.08);
+}
+
+.wilds-playable-shell {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.wilds-economy-grid {
+  grid-column: 1 / -1;
+}
+
+.wilds-stage {
+  position: relative;
+  min-height: 486px;
+  overflow: hidden;
+  border: 1px solid rgba(23, 19, 17, 0.22);
+  border-radius: 8px;
+  background: #8fd7ff;
+  color: #ffffff;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08), 0 24px 52px rgba(23, 19, 17, 0.16);
+  isolation: isolate;
+}
+
+.wilds-canvas-wrap,
+.wilds-canvas-wrap canvas,
+.wilds-canvas-fallback {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.wilds-canvas-fallback {
+  background:
+    radial-gradient(circle at 22% 20%, rgba(55, 214, 136, 0.24), transparent 28%),
+    linear-gradient(180deg, #8fd7ff, #7fba65);
+}
+
+.wilds-world-label {
+  pointer-events: none;
+  transform: translateY(-4px);
+}
+
+.wilds-world-label span {
+  display: block;
+  max-width: 94px;
+  padding: 4px 7px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 999px;
+  color: #ffffff;
+  background: rgba(23, 19, 17, 0.62);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 10px 20px rgba(23, 19, 17, 0.16);
+  font-size: 10px;
+  font-weight: 900;
+  line-height: 1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wilds-mission-meter {
+  position: absolute;
+  right: 18px;
+  bottom: 98px;
+  z-index: 4;
+  display: grid;
+  place-items: center;
+  width: 94px;
+  height: 94px;
+  border: 1px solid var(--game-line);
+  border-radius: 50%;
+  background: rgba(23, 19, 17, 0.68);
+  box-shadow: 0 0 0 7px rgba(247, 201, 72, 0.12), 0 20px 40px rgba(0, 0, 0, 0.24);
+  backdrop-filter: blur(18px);
+}
+
+.wilds-mission-meter strong {
+  color: var(--game-gold);
+  font-size: 25px;
+  line-height: 0.9;
+}
+
+.wilds-mission-meter span {
+  margin-top: -11px;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.wilds-event-toast {
+  position: absolute;
+  right: 16px;
+  bottom: 18px;
+  z-index: 4;
+  max-width: min(420px, calc(100% - 236px));
+  padding: 10px 12px;
+  border: 1px solid var(--game-line);
+  border-radius: 8px;
+  color: #ffffff;
+  background: rgba(23, 19, 17, 0.72);
+  box-shadow: 0 18px 38px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(18px);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.wilds-control-deck {
+  display: grid;
+  grid-template-columns: 108px minmax(0, 1fr);
+  gap: 10px;
+  align-items: stretch;
+}
+
+.wilds-dpad {
+  display: grid;
+  grid-template-areas:
+    ". north ."
+    "west center east"
+    ". south .";
+  grid-template-columns: repeat(3, 34px);
+  grid-template-rows: repeat(3, 34px);
+  gap: 3px;
+  place-content: center;
+  min-height: 112px;
+  padding: 5px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: var(--shadow-soft);
+}
+
+.wilds-dpad::before {
+  content: "";
+  grid-area: center;
+  align-self: center;
+  justify-self: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--receiz-soft);
+}
+
+.wilds-dpad button {
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  border: 1px solid rgba(0, 138, 106, 0.2);
+  border-radius: 9px;
+  color: var(--receiz);
+  background: rgba(0, 138, 106, 0.08);
+}
+
+.wilds-dpad button:active,
+.wilds-action:active,
+.wilds-squad-card:active {
+  transform: translateY(1px);
+}
+
+.wilds-move-north {
+  grid-area: north;
+}
+
+.wilds-move-south {
+  grid-area: south;
+}
+
+.wilds-move-west {
+  grid-area: west;
+}
+
+.wilds-move-east {
+  grid-area: east;
+}
+
+.wilds-action.ready {
+  border-color: rgba(55, 214, 136, 0.55);
+  box-shadow: 0 12px 26px rgba(55, 214, 136, 0.15);
+}
+
+.wilds-mission-card b {
+  color: var(--game-gold);
+  font-size: 12px;
+}
+
+.wilds-squad-card {
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.wilds-squad-card[aria-pressed="true"] {
+  border-color: rgba(247, 201, 72, 0.62);
+  background: rgba(247, 201, 72, 0.13);
+}
+
+.wilds-reward-card {
+  display: grid;
+  gap: 7px;
+  padding: 12px;
+  border: 1px solid var(--game-line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.wilds-reward-card > span {
+  color: rgba(255, 255, 255, 0.66);
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.wilds-reward-card div {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.wilds-reward-card strong,
+.wilds-reward-card p,
+.wilds-reward-card b {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.wilds-reward-card strong {
+  color: #ffffff;
+  font-size: 15px;
+  line-height: 1.05;
+}
+
+.wilds-reward-card p {
+  color: rgba(255, 255, 255, 0.66);
+  font-size: 11px;
+  line-height: 1.28;
+}
+
+.wilds-reward-card b {
+  color: var(--game-gold);
+  font-size: 12px;
 }
 
 .play-disabled {
@@ -6198,6 +6444,7 @@ a {
   .mobile-play-wrap {
     min-height: 0;
     overflow: visible;
+    padding-bottom: 86px;
   }
 
   .mobile-play-wrap .wilds-play-panel {
@@ -6219,6 +6466,39 @@ a {
 
   .mobile-play-wrap .wilds-world {
     gap: 8px;
+  }
+
+  .mobile-play-wrap .wilds-stage {
+    min-height: clamp(334px, 50dvh, 430px);
+    border-radius: 16px;
+  }
+
+  .mobile-play-wrap .wilds-control-deck {
+    grid-template-columns: 82px minmax(0, 1fr);
+    gap: 7px;
+  }
+
+  .mobile-play-wrap .wilds-dpad {
+    grid-template-columns: repeat(3, 24px);
+    grid-template-rows: repeat(3, 24px);
+    gap: 2px;
+    min-height: 76px;
+    padding: 4px;
+    border-radius: 14px;
+  }
+
+  .mobile-play-wrap .wilds-dpad::before {
+    width: 13px;
+    height: 13px;
+  }
+
+  .mobile-play-wrap .wilds-dpad button {
+    border-radius: 8px;
+  }
+
+  .mobile-play-wrap .wilds-dpad svg {
+    width: 16px;
+    height: 16px;
   }
 
   .mobile-play-wrap .wilds-screen {
@@ -6257,7 +6537,7 @@ a {
   .mobile-play-wrap .wilds-resource-strip {
     justify-content: end;
     flex-wrap: wrap;
-    max-width: 52%;
+    max-width: 168px;
     padding: 5px;
     border-radius: 14px;
   }
@@ -6283,6 +6563,22 @@ a {
     font-size: 9px;
   }
 
+  .mobile-play-wrap .wilds-mission-meter {
+    right: 10px;
+    bottom: 86px;
+    width: 72px;
+    height: 72px;
+  }
+
+  .mobile-play-wrap .wilds-mission-meter strong {
+    font-size: 18px;
+  }
+
+  .mobile-play-wrap .wilds-mission-meter span {
+    margin-top: -8px;
+    font-size: 8px;
+  }
+
   .mobile-play-wrap .arena-node {
     width: clamp(56px, 16vw, 66px);
     min-height: clamp(58px, 17vw, 68px);
@@ -6303,11 +6599,7 @@ a {
   }
 
   .mobile-play-wrap .runner-primary {
-    right: 92px;
-    bottom: 12px;
-    left: 10px;
-    max-width: none;
-    padding: 8px;
+    display: none;
   }
 
   .mobile-play-wrap .runner-core {
@@ -6328,6 +6620,16 @@ a {
     display: none;
   }
 
+  .mobile-play-wrap .wilds-event-toast {
+    right: 10px;
+    left: 10px;
+    bottom: 10px;
+    max-width: none;
+    padding: 8px 9px;
+    border-radius: 12px;
+    font-size: 10.5px;
+  }
+
   .mobile-play-wrap .wilds-action-dock {
     gap: 6px;
   }
@@ -6335,7 +6637,7 @@ a {
   .mobile-play-wrap .wilds-action {
     grid-template-columns: 30px minmax(0, 1fr);
     gap: 6px;
-    min-height: 52px;
+    min-height: 76px;
     padding: 6px;
     border-radius: 14px;
   }
@@ -6356,6 +6658,7 @@ a {
   }
 
   .mobile-play-wrap .wilds-command-panel {
+    grid-template-columns: minmax(0, 1fr);
     gap: 7px;
     padding: 8px;
     border-radius: 16px;
@@ -6409,6 +6712,21 @@ a {
 
   .mobile-play-wrap .wilds-squad-card small {
     font-size: 9.5px;
+  }
+
+  .mobile-play-wrap .wilds-reward-card {
+    gap: 5px;
+    padding: 8px;
+    border-radius: 13px;
+  }
+
+  .mobile-play-wrap .wilds-reward-card strong {
+    font-size: 12px;
+  }
+
+  .mobile-play-wrap .wilds-reward-card p,
+  .mobile-play-wrap .wilds-reward-card b {
+    font-size: 10px;
   }
 
   .mobile-play-wrap .wilds-economy-grid {
@@ -6892,6 +7210,20 @@ a {
     padding: 6px;
   }
 
+  .mobile-play-wrap .wilds-stage {
+    min-height: 318px;
+  }
+
+  .mobile-play-wrap .wilds-control-deck {
+    grid-template-columns: 72px minmax(0, 1fr);
+    gap: 6px;
+  }
+
+  .mobile-play-wrap .wilds-dpad {
+    grid-template-columns: repeat(3, 21px);
+    grid-template-rows: repeat(3, 21px);
+  }
+
   .mobile-play-wrap .wilds-screen {
     min-height: 316px;
   }
@@ -6901,7 +7233,7 @@ a {
   }
 
   .mobile-play-wrap .wilds-resource-strip {
-    max-width: 50%;
+    max-width: 150px;
   }
 
   .mobile-play-wrap .arena-node {
@@ -6914,10 +7246,6 @@ a {
     height: 25px;
   }
 
-  .mobile-play-wrap .runner-primary {
-    right: 84px;
-  }
-
   .mobile-play-wrap .runner-primary small {
     display: none;
   }
@@ -6925,6 +7253,15 @@ a {
   .mobile-play-wrap .wilds-combo-meter {
     width: 62px;
     height: 62px;
+  }
+
+  .mobile-play-wrap .wilds-mission-meter {
+    width: 60px;
+    height: 60px;
+  }
+
+  .mobile-play-wrap .wilds-event-toast {
+    font-size: 9.5px;
   }
 
   .mobile-play-wrap .wilds-action {
