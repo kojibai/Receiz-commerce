@@ -21,6 +21,8 @@ The app still has UI state, browser storage, route handlers, and optional hostin
 
 Receiz MCP is the agent-facing tool layer over the SDK/API surface. Use it for diagnostics, setup inspection, rail invocation, and release assistance from tools such as Codex.
 
+The AI operator rule is explicit: AI is the operator; proof is the authority. MCP, Twin, World, SDK doctor, and capability checks may draft, inspect, diagnose, and invoke allowed rails, but they do not create or outrank proof truth.
+
 MCP does not replace:
 
 - SDK verification.
@@ -30,7 +32,7 @@ MCP does not replace:
 - Kai pulse ordering.
 - Verified ownership or settlement appends.
 
-If an agent calls an MCP tool, the result still needs to respect the same proof model described here.
+If an agent calls an MCP tool or a Twin/World assist rail, the result still needs to respect the same proof model described here.
 
 ## Authority Model
 

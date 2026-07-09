@@ -9,7 +9,7 @@ SDK target: `@receiz/sdk@98.0.0`
 
 Today we are releasing Receiz Commerce Kit v1.0.0, the first official release of a complete Receiz-native commerce application and a forkable SDK kernel for building proof-sealed products.
 
-This release is not a starter screen, a static demo, or a collection of disconnected examples. It is a working product surface with a public storefront, customer account, no-code merchant admin, checkout, wallet projection, rewards, assets, exchange, content, game, hosting, domains, publish, media, recovery, diagnostics, and release gates. Under that product is the deeper release: one typed Receiz SDK boundary that demonstrates how identity, proof, commerce, public state, operations, and agent tooling can be built around proof objects instead of private application tables as the final authority.
+This release is not a starter screen, a static demo, or a collection of disconnected examples. It is a working product surface with a public storefront, customer account, no-code merchant admin, checkout, wallet projection, rewards, assets, exchange, content, game, hosting, domains, publish, media, recovery, diagnostics, release gates, and an AI operator layer. Under that product is the deeper release: one typed Receiz SDK boundary that demonstrates how identity, proof, commerce, public state, operations, and AI-assisted operator workflows can be built around proof objects instead of private application tables as the final authority.
 
 v1.0.0 establishes the standard for Receiz-native application development: proof first, SDK bounded, tenant scoped, recovery aware, and operationally shippable.
 
@@ -19,7 +19,7 @@ Receiz Commerce Kit v1.0.0 ships as two things at once.
 
 First, it is a working Receiz Commerce Cloud product path. A merchant can create or restore Receiz ID, shape a storefront, add products and content, configure rewards, publish to a hosted subdomain, connect a custom domain, run checkout, project orders and customers, and keep proof events visible through the operator surface.
 
-Second, it is a developer kernel. A builder can fork the repository and see where every Receiz rail belongs, how proof state is admitted and recovered, how checkout and settlement are represented, how tenant storefronts cold-start, and how SDK/MCP-ready diagnostics should be packaged for production work.
+Second, it is a developer kernel. A builder can fork the repository and see where every Receiz rail belongs, how proof state is admitted and recovered, how checkout and settlement are represented, how tenant storefronts cold-start, and how SDK/MCP-ready diagnostics and AI operator workflows should be packaged for production work.
 
 The result is a release that can be used by merchants at the edge and studied by developers at the core.
 
@@ -28,6 +28,8 @@ The result is a release that can be used by merchants at the edge and studied by
 Modern commerce products usually become a stack of unrelated authority systems: identity provider, payment processor, wallet service, product database, CMS, reward engine, media store, domain automation, webhook verifier, audit log, customer portal, and agent tooling.
 
 Receiz Commerce Kit v1.0.0 shows the alternative. The object carries proof. The SDK verifies, projects, admits, appends, publishes, recovers, and diagnoses that proof. The UI renders projections, but it does not become the source of truth. Connect and OIDC tokens authorize scoped remote work, but they do not outrank the proof object. Kai coordinates order proof truth; timestamps, caches, local browser state, and third-party tables do not.
+
+The AI position is just as explicit. AI is the operator; proof is the authority. Receiz MCP, Twin, World, SDK doctor, capability checks, and release diagnostics can help a merchant or developer inspect, draft, diagnose, and operate the commerce surface. They cannot replace signed publish records, verified identity artifacts, settlement rows, ownership appends, proof memory, or Kai-ordered proof truth.
 
 That is the institutional core of this release: a complete commerce application whose product surface is practical, but whose authority model is portable.
 
@@ -44,6 +46,7 @@ v1.0.0 includes a production-shaped Next.js App Router application with:
 - Proof Exchange surface for listing assets, fractional share modeling, wallet-first trade previews, liquidity appends, order books, charts, and Kai-stamped append events.
 - Receiz Wilds play module with a 3D creature-card reward loop, missions, training, merchant reward cards, and proof-event completion.
 - Blog, page, and SEO content paths for commerce and content commerce use cases.
+- AI operator layer with Receiz MCP diagnostics, Twin/World gated assist surfaces, capability-aware drafting, import normalization, and release workflow support.
 - Offline page and PWA policy that keeps auth, checkout, hosting, proof writes, Twin routes, and webhook paths network-only.
 
 ## Merchant Launch Path
@@ -58,7 +61,7 @@ v1.0.0 supports:
 - Platform profile hydration from Receiz Connect.
 - Fresh merchant workspace creation when a connected Receiz profile does not match the current template workspace.
 - Brand, color, typography, logo, storefront copy, pages, posts, products, collections, rewards, and homepage mode setup.
-- Twin-assisted business launch drafting from a merchant brief.
+- Twin-assisted business launch, storefront content, SEO, and product drafting from merchant context, with local fallback when delegated rails are unavailable.
 - Import from Shopify, WordPress, WooCommerce, Wix/generic HTML, CSV, and JSON sources.
 - Launch readiness scoring for both no-code merchants and developer clones.
 - Free hosted subdomain claim.
@@ -80,9 +83,34 @@ The adapter exposes the release's SDK surface:
 - Customers and merchants: tenant customer sessions, portal, orders, rewards, assets, merchant onboarding, profile, capabilities.
 - Hosting and media: media upload/transform, subdomain reservation, custom-domain verification, domain status.
 - Operations: events, jobs, permissions, audit, risk, compliance export, portability, search, notifications, release check, release pin.
-- Agent and content surfaces: Twin, World, webhooks, manifests, public ledger, SDK doctor, capabilities.
+- AI operator and content surfaces: Receiz MCP, Twin, World, webhooks, manifests, public ledger, SDK doctor, capabilities, and release workflows.
 
 This is the rail map for builders who want to fork the repo into commerce clouds, single-brand storefronts, marketplaces, rewards systems, content commerce products, games, or agent-operated SaaS.
+
+## AI Operator Layer
+
+v1.0.0 treats AI as a first-class operator layer, not as a replacement authority system.
+
+Receiz Commerce Kit exposes agent-operated commerce through Receiz MCP, Twin, World, SDK doctor, capability checks, content assistance, import normalization, release diagnostics, and rail-aware workflows. The governing rule is simple: AI is the operator; proof is the authority.
+
+AI-assisted surfaces can:
+
+- Draft a business launch plan from merchant context.
+- Fill storefront pages, blog posts, products, SEO metadata, and proof-aware product positioning.
+- Normalize imported catalog and content data from Shopify, WordPress, WooCommerce, Wix/generic HTML, CSV, and JSON sources.
+- Inspect SDK readiness, configured scopes, callbacks, tenant host, capabilities, and delegated-token presence without printing secrets.
+- Diagnose publish, checkout, domain, media, and release-gate failures through Receiz MCP and SDK doctor outputs.
+- Help an operator move from setup to launch while keeping each action tied to an explicit Receiz rail.
+
+AI-assisted surfaces cannot:
+
+- Replace Receiz ID, Receiz Key, Identity Record, or Identity Seal authority.
+- Invent proof truth outside a verified proof object, append, ownership append, settlement ledger row, or signed public-store publish.
+- Override proof memory admission, public-store recovery, app-state recovery, or Kai pulse ordering.
+- Treat local browser state, cache state, function memory, model output, or third-party API state as commerce authority.
+- Perform remote work without the required scoped Receiz permission and capability gate.
+
+That boundary is the product. Receiz makes AI useful inside commerce without making AI the source of commercial truth. Agents can operate the surface, but they cannot become the ledger.
 
 ## Proof Authority Model
 
@@ -159,7 +187,7 @@ The content system includes:
 - Blog builder.
 - Product and collection builder.
 - SEO metadata.
-- Twin-assisted page, blog, and product drafts.
+- Twin-assisted page, blog, product, SEO, and launch drafts behind explicit capability gates.
 - Local preview fallback when Twin/World delegated rails are not available.
 - Importers for Shopify, WordPress, WooCommerce, Wix/generic HTML, CSV, and JSON.
 - Receiz Connect recording of content import summaries when permission is available.
@@ -193,6 +221,7 @@ v1.0.0 includes the release hygiene expected of a serious public repository:
 - Tracked-file secret scan.
 - Guarded Next runtime for build/release checks.
 - SDK doctor and capability report.
+- AI operator boundaries for MCP, Twin, World, diagnostics, and proof authority.
 - Webhook signature verification.
 - Host-scoped tenant sessions.
 - Network-only sensitive PWA paths.
@@ -277,6 +306,7 @@ The package remains `private: true`; this is a repository release, not an npm pu
 - Public forks can run without delegated tokens, but live checkout, media upload, public-store sync, domain operations, Twin/World, and release rails require proper Receiz permission.
 - Vercel domain automation is optional and returns actionable setup instructions when env is missing.
 - Twin/World buttons are capability and env gated.
+- AI operator surfaces are assistive. They can draft, inspect, diagnose, and invoke allowed rails, but they do not become proof authority.
 - Local browser storage is demo composition and session projection. It is not product authority.
 - Full production confidence requires both automated release gates and manual tenant/domain/checkout/media QA.
 
@@ -286,7 +316,9 @@ Receiz Commerce Kit v1.0.0 is now generally available.
 
 This is the first official release of the Receiz proof-sealed commerce application and forkable SDK kernel. It ships a full commerce cloud product surface with storefront, admin, account, checkout, wallet-first settlement, rewards, assets, exchange, play, domains, media, publish, recovery, diagnostics, and release gates.
 
-The important part is the architecture. Products, orders, rewards, assets, customer actions, and storefront state are modeled around Receiz proof objects. `@receiz/sdk` is the typed boundary for identity, proof, checkout, wallet, public store, app state, domains, media, operations, and release rails. Receiz MCP is the agent layer over those rails. Tokens authorize scoped work, but proof remains the root.
+The important part is the architecture. Products, orders, rewards, assets, customer actions, and storefront state are modeled around Receiz proof objects. `@receiz/sdk` is the typed boundary for identity, proof, checkout, wallet, public store, app state, domains, media, operations, and release rails. Receiz MCP is the agent layer over those rails. Twin and World assist launch, content, and operator workflows. Tokens authorize scoped work, but proof remains the root.
+
+The AI model is direct: AI is the operator; proof is the authority. Agents can draft, inspect, diagnose, and operate supported rails. They cannot replace verified identity artifacts, signed publish records, ownership receipts, settlement records, or Kai-ordered appends.
 
 v1.0.0 is for operators who need a real hosted storefront and for developers who want a production-shaped Receiz-native base for commerce, rewards, marketplaces, content, games, and agent-operated SaaS.
 
@@ -303,7 +335,8 @@ Highlights:
 - Wallet-first checkout, card fallback metadata, merchant settlement routing, shipping, fulfillment, commerce events, and webhook admission.
 - Durable Receiz media upload paths and media proof references for published storefront assets.
 - Free hosted subdomains, custom-domain verification, DNS guidance, Vercel automation, and platform billing rails.
-- Twin-assisted launch/content drafting, importers, blog/page/product builders, and 3D Receiz Wilds reward loop.
+- AI operator layer: Receiz MCP diagnostics, Twin/World-assisted launch/content drafting, capability gates, import normalization, SDK doctor workflows, and proof-authority boundaries.
+- Importers, blog/page/product builders, and 3D Receiz Wilds reward loop.
 - Release hygiene: CI, secret scan, guarded Next runtime, tests, typecheck, lint, build, SDK doctor, release playbook, security, support, and contribution docs.
 
 Run:

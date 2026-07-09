@@ -105,13 +105,16 @@ Use the Play tab as the starting point:
 
 ### Agent-Operated SaaS
 
-Receiz MCP is the agent surface:
+Receiz MCP is the agent surface, and Twin/World are capability-gated assist rails:
 
 - Inspect SDK doctor output.
 - Confirm scopes, callbacks, tenant host, and capabilities.
 - Diagnose publish/domain/checkout issues.
 - Trigger rail calls through explicit tools.
+- Draft launch, content, product, SEO, and operator guidance when the matching Receiz rail is available.
 - Keep proof objects and SDK/API rails as authority while agents assist operators.
+
+The product rule is simple: AI is the operator; proof is the authority. Agents can draft, inspect, diagnose, and invoke allowed rails. They cannot replace identity artifacts, signed public-store publish, proof memory, ownership appends, settlement records, or Kai-ordered proof truth.
 
 ## Files To Study First
 
@@ -149,6 +152,8 @@ If a feature needs a Receiz rail that is not configured, return a clear `needs_e
 ### Use MCP As Tooling, Not Authority
 
 MCP can help agents inspect, diagnose, and invoke SDK/API rails. It cannot create proof truth by itself and should not be presented as a replacement for SDK verification, signed publish, or admitted proof memory.
+
+The same rule applies to Twin and World. AI output can become useful merchant input only after it moves through the app's normal proof, publish, capability, and permission path.
 
 ## Suggested Build Paths
 

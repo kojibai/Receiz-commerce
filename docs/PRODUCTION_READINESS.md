@@ -7,7 +7,9 @@ This app has two production goals:
 
 ## Authority Rule
 
-Receiz MCP is agent tooling. It helps agents inspect setup, runtime expectations, and conformance, but it is not the source of truth.
+Receiz MCP, Twin, World, SDK doctor, and capability checks form the AI operator layer. They help agents inspect setup, draft launch/content inputs, diagnose runtime expectations, and check conformance, but they are not the source of truth.
+
+The production rule is direct: AI is the operator; proof is the authority.
 
 Production truth comes from:
 

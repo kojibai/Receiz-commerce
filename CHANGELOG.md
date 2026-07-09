@@ -12,6 +12,7 @@ Receiz Commerce Kit is now the first official, production-shaped release of the 
 - Added a merchant launch path that supports Receiz ID create/continue/restore, local Identity Seal export, platform profile hydration, store-scoped customer sessions, free `*.receiz.app` hosting, custom-domain verification, wallet-first billing, and proof-authorized publish.
 - Added wallet-first checkout with card fallback metadata, merchant settlement routing, order/customer/fulfillment projection, shipping completion, commerce webhook admission, and proof-memory projection back into admin and account surfaces.
 - Added durable media handling for publish payloads, including inline image compression, Receiz media upload, media proof references, request-size protection, and cold-start-safe published image URLs.
+- Introduced the AI operator layer: Receiz MCP diagnostics, Twin/World-assisted launch and content workflows, SDK doctor/capability checks, import normalization, proof-aware operator guidance, and the rule that AI may operate supported rails but never becomes proof authority.
 - Added content and growth rails: Twin-assisted launch and content drafting, import paths for Shopify, WordPress, WooCommerce, Wix/generic HTML, CSV, and JSON, blog/page/product builders, and a playable 3D Receiz Wilds reward module.
 - Added release operations: SDK doctor, capability checks, guarded Next runtime, tracked-file secret scan, release gate orchestration, CI, issue templates, security/support/contribution docs, and a public release playbook.
 

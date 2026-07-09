@@ -4,7 +4,7 @@
 
 Receiz Commerce Kit is a full working commerce product and a forkable SDK kernel for building proof-sealed applications with `@receiz/sdk` and Receiz MCP.
 
-It ships as a Next.js App Router application with a public storefront, customer account area, no-code merchant admin, Receiz ID, checkout, wallet projection, rewards, Receized assets, domain hosting, media upload, proof memory, publish recovery, webhook verification, release diagnostics, and an MCP-ready agent workflow. You can run it as the Receiz.app Commerce Cloud product, or clone it and build your own commerce, rewards, marketplace, game, content, or agent-operated SaaS on top of the same primitives.
+It ships as a Next.js App Router application with a public storefront, customer account area, no-code merchant admin, Receiz ID, checkout, wallet projection, rewards, Receized assets, domain hosting, media upload, proof memory, publish recovery, webhook verification, release diagnostics, and an AI operator layer built around Receiz MCP, Twin, World, and SDK doctor workflows. You can run it as the Receiz.app Commerce Cloud product, or clone it and build your own commerce, rewards, marketplace, game, content, or agent-operated SaaS on top of the same primitives.
 
 The core verb is **seal**. Products, orders, rewards, assets, storefront state, and customer actions can carry Receiz proof instead of depending on a private app database as the final authority.
 
@@ -31,7 +31,7 @@ This codebase demonstrates how much of that collapses into one Receiz SDK bounda
 - **Hosting:** free subdomain reservation, custom-domain verification, tenant resolution, DNS instructions, and optional Vercel domain automation.
 - **Media:** durable Receiz media upload/transform paths so logos, product images, and blog covers survive cold starts.
 - **Operations:** webhook signature verification, audit append, jobs, permissions, risk, compliance export, portability, notifications, release checks, and release pinning.
-- **Agents:** Receiz MCP lets tools like Codex inspect diagnostics, call SDK/API rails, and operate release workflows while proof objects remain the source of truth.
+- **AI operator layer:** Receiz MCP, Twin, World, SDK doctor, and capability checks let tools like Codex inspect diagnostics, draft content, call allowed SDK/API rails, and operate release workflows while proof objects remain the source of truth.
 
 The result is not a toy demo. It is a reference architecture for building a complete Receiz-native product surface from primitives that stay portable and inspectable.
 
@@ -108,6 +108,7 @@ This repo is a launchpad for:
 - A domain-hosted SaaS where every tenant has a free subdomain, optional custom domain, and proof-backed app state.
 - A customer portal with wallet, orders, rewards, assets, account restore, and tenant-specific sessions.
 - An agent-operated back office where MCP tools inspect SDK readiness, diagnose scopes, replay events, check releases, and assist operators.
+- An AI-operated commerce surface where agents can draft, inspect, diagnose, and invoke allowed rails while proof remains authority.
 - A portable commerce kernel that avoids making Supabase, Stripe, Shopify, Redis, or Vercel memory the authority for product truth.
 
 You can replace the UI, add modules, or deploy on a different host while keeping the same proof-first SDK boundary.
@@ -180,6 +181,22 @@ RECEIZ_BASE_URL = "https://receiz.com"
 ```
 
 Use `@receiz/mcp-server@98.0.0` for agent-side diagnostics and SDK/API rail calls. MCP never becomes the authority; it only helps inspect or invoke rails beneath proof objects.
+
+## AI Operator Layer
+
+Receiz Commerce Kit is built for agent-operated commerce from day one.
+
+The AI model is direct: AI is the operator; proof is the authority. Receiz MCP, Twin, World, SDK doctor, capability checks, content assistance, import normalization, and release diagnostics can help a merchant or developer draft, inspect, diagnose, and operate the commerce surface. They do not become the source of commercial truth.
+
+AI-assisted workflows can:
+
+- Draft launch plans, storefront pages, blog posts, products, SEO, and proof-aware product positioning.
+- Normalize imported content and catalog data from supported commerce and publishing systems.
+- Inspect SDK readiness, scopes, callbacks, tenant host, capabilities, and delegated-token presence.
+- Diagnose publish, checkout, domain, media, and release failures through MCP and SDK doctor output.
+- Invoke supported rails only when the required Receiz permission and capability gate are present.
+
+They cannot replace Receiz ID, identity artifacts, signed public-store publish, proof memory admission, ownership receipts, settlement records, or Kai-ordered appends. Local browser state, model output, cache state, function memory, and third-party API state are projections. They are not authority.
 
 ## Environment
 
