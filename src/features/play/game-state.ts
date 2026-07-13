@@ -2,6 +2,7 @@ export type GameAction = "explore" | "train" | "mission";
 export type MoveDirection = "north" | "south" | "west" | "east";
 export type WildsInput =
   | { type: "move"; direction: MoveDirection }
+  | { type: "move-vector"; x: number; z: number }
   | { type: "discover" }
   | { type: "train"; cardId?: string }
   | { type: "mission" }
@@ -71,8 +72,9 @@ export type PlayState = {
 };
 
 export const worldBounds = {
-  min: -4.2,
-  max: 4.2,
+  min: -500_000_000,
+  max: 500_000_000,
+  analogStep: 0.42,
   step: 1.05
 } as const;
 
@@ -248,8 +250,10 @@ export function applyWildsInput(state: PlayState, input: WildsInput): PlayState 
     };
   }
 
-  if (input.type === "move") {
-    const nextPlayer = movePlayer(state.player, input.direction);
+  if (input.type === "move" || input.type === "move-vector") {
+    const nextPlayer = input.type === "move"
+      ? movePlayer(state.player, input.direction)
+      : movePlayerVector(state.player, input.x, input.z);
     const nearest = nearestCreature({ player: nextPlayer });
     const nearbyText =
       nearest.distance <= 1.25
@@ -407,6 +411,18 @@ function movePlayer(player: PlayState["player"], direction: MoveDirection) {
   return {
     x: clamp(next.x, worldBounds.min, worldBounds.max),
     z: clamp(next.z, worldBounds.min, worldBounds.max)
+  };
+}
+
+function movePlayerVector(player: PlayState["player"], x: number, z: number) {
+  const safeX = Number.isFinite(x) ? x : 0;
+  const safeZ = Number.isFinite(z) ? z : 0;
+  const magnitude = Math.hypot(safeX, safeZ);
+  if (magnitude < 0.08) return player;
+  const scale = worldBounds.analogStep / Math.max(1, magnitude);
+  return {
+    x: clamp(player.x + safeX * scale, worldBounds.min, worldBounds.max),
+    z: clamp(player.z + safeZ * scale, worldBounds.min, worldBounds.max)
   };
 }
 

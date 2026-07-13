@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useRef } from "react";
+import { Suspense, useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Html, Sparkles } from "@react-three/drei";
 import * as THREE from "three";
@@ -69,35 +69,37 @@ function WildsScene({
         shadow-mapSize-height={1024}
         shadow-mapSize-width={1024}
       />
-      <CameraRig player={state.player} />
+      <CameraRig />
       <WildsDiagnostics state={state} />
-      <Terrain />
-      {habitatNodes.map((node) => (
-        <Habitat key={node.id} node={node} />
-      ))}
-      {creatureCards.map((card) => (
-        <Creature
-          active={state.selectedCardId === card.id}
-          card={card}
-          discovered={state.discoveredCardIds.includes(card.id)}
-          inRange={nearest.card.id === card.id && nearest.distance <= 1.25}
-          key={card.id}
-          onInput={onInput}
-        />
-      ))}
-      <PlayerMarker position={[state.player.x, 0, state.player.z]} />
+      <StreamedTerrain player={state.player} />
+      <group position={[-state.player.x, 0, -state.player.z]}>
+        {habitatNodes.map((node) => (
+          <Habitat key={node.id} node={node} />
+        ))}
+        {creatureCards.map((card) => (
+          <Creature
+            active={state.selectedCardId === card.id}
+            card={card}
+            discovered={state.discoveredCardIds.includes(card.id)}
+            inRange={nearest.card.id === card.id && nearest.distance <= 1.25}
+            key={card.id}
+            onInput={onInput}
+          />
+        ))}
+      </group>
+      <PlayerMarker position={[0, 0, 0]} />
       <Sparkles count={54} scale={[8, 2.4, 8]} size={2.1} speed={0.22} color="#fff5b6" />
     </>
   );
 }
 
-function CameraRig({ player }: { player: PlayState["player"] }) {
+function CameraRig() {
   const target = useMemo(() => new THREE.Vector3(), []);
   const lookAt = useMemo(() => new THREE.Vector3(), []);
 
   useFrame(({ camera }) => {
-    target.set(player.x + 4.6, 5.4, player.z + 6.6);
-    lookAt.set(player.x, 0.35, player.z);
+    target.set(4.6, 5.4, 6.6);
+    lookAt.set(0, 0.35, 0);
     camera.position.lerp(target, 0.08);
     camera.lookAt(lookAt);
   });
@@ -105,114 +107,116 @@ function CameraRig({ player }: { player: PlayState["player"] }) {
   return null;
 }
 
-function Terrain() {
-  const trees = useMemo(
-    () => [
-      [-4.2, -2.9, 0.75],
-      [-3.7, 2.6, 1.1],
-      [-2.2, 3.4, 0.85],
-      [-0.4, -3.4, 0.9],
-      [1.2, 3.5, 1],
-      [2.7, -3.1, 0.8],
-      [3.7, 2.8, 1.15],
-      [4.3, -0.6, 0.9]
-    ] as const,
-    []
-  );
-  const mainTrail = useMemo(
-    () => trailRibbonGeometry([
-      new THREE.Vector3(-4.5, 0.08, -2.7),
-      new THREE.Vector3(-2.4, 0.08, -1.3),
-      new THREE.Vector3(-0.5, 0.08, 0.1),
-      new THREE.Vector3(1.7, 0.08, 1.25),
-      new THREE.Vector3(4.35, 0.08, 2.4)
-    ], 0.82, 0.035),
-    []
-  );
-  const crossingTrail = useMemo(
-    () => trailRibbonGeometry([
-      new THREE.Vector3(-3.7, 0.115, 2.8),
-      new THREE.Vector3(-1.9, 0.115, 1.65),
-      new THREE.Vector3(0.15, 0.115, 0.15),
-      new THREE.Vector3(1.75, 0.115, -1.7),
-      new THREE.Vector3(3.45, 0.115, -3.15)
-    ], 0.58, 0.045),
-    []
-  );
+const WORLD_TILE_SIZE = 12;
+const STREAM_RADIUS = 2;
+
+function StreamedTerrain({ player }: { player: PlayState["player"] }) {
+  const centerX = Math.floor(player.x / WORLD_TILE_SIZE);
+  const centerZ = Math.floor(player.z / WORLD_TILE_SIZE);
+  const tiles = useMemo(() => {
+    const result: Array<{ key: string; tileX: number; tileZ: number; tone: string }> = [];
+    for (let dz = -STREAM_RADIUS; dz <= STREAM_RADIUS; dz += 1) {
+      for (let dx = -STREAM_RADIUS; dx <= STREAM_RADIUS; dx += 1) {
+        const tileX = centerX + dx;
+        const tileZ = centerZ + dz;
+        result.push({
+          key: `${tileX}:${tileZ}`,
+          tileX,
+          tileZ,
+          tone: seededUnit(tileX, tileZ, 5) > 0.5 ? "#69ad5b" : "#63a957"
+        });
+      }
+    }
+    return result;
+  }, [centerX, centerZ]);
 
   return (
     <group>
-      <mesh receiveShadow rotation={[-Math.PI / 2, 0, 0]}>
-        <circleGeometry args={[6.15, 96]} />
-        <meshStandardMaterial color="#69ad5b" roughness={0.95} />
-      </mesh>
-      <mesh renderOrder={1}>
-        <primitive attach="geometry" object={mainTrail} />
-        <meshStandardMaterial color="#f1d889" roughness={0.86} polygonOffset polygonOffsetFactor={-2} />
-      </mesh>
-      <mesh renderOrder={2}>
-        <primitive attach="geometry" object={crossingTrail} />
-        <meshStandardMaterial color="#d9c16d" roughness={0.9} polygonOffset polygonOffsetFactor={-3} />
-      </mesh>
-      <mesh position={[0, -0.17, 0]}>
-        <cylinderGeometry args={[6.2, 6.65, 0.24, 96]} />
-        <meshStandardMaterial color="#456d3d" roughness={1} />
-      </mesh>
-      {trees.map(([x, z, scale], index) => (
-        <Tree key={`${x}-${z}-${index}`} position={[x, 0, z]} scale={scale} />
+      {tiles.map((tile) => (
+        <mesh
+          key={tile.key}
+          receiveShadow
+          position={[
+            tile.tileX * WORLD_TILE_SIZE + WORLD_TILE_SIZE / 2 - player.x,
+            -0.03,
+            tile.tileZ * WORLD_TILE_SIZE + WORLD_TILE_SIZE / 2 - player.z
+          ]}
+          rotation={[-Math.PI / 2, 0, 0]}
+        >
+          <planeGeometry args={[WORLD_TILE_SIZE + 0.05, WORLD_TILE_SIZE + 0.05]} />
+          <meshStandardMaterial color={tile.tone} roughness={0.96} />
+        </mesh>
       ))}
+      <WorldTrails player={player} />
+      <InstancedForest player={player} tiles={tiles} />
     </group>
   );
 }
 
-function trailRibbonGeometry(controlPoints: THREE.Vector3[], width: number, y: number) {
-  const points = new THREE.CatmullRomCurve3(controlPoints).getPoints(64);
-  const positions: number[] = [];
-  const indices: number[] = [];
-
-  points.forEach((point, index) => {
-    const previous = points[Math.max(0, index - 1)];
-    const next = points[Math.min(points.length - 1, index + 1)];
-    const tangent = next.clone().sub(previous).normalize();
-    const normal = new THREE.Vector3(-tangent.z, 0, tangent.x).multiplyScalar(width / 2);
-    positions.push(point.x + normal.x, y, point.z + normal.z);
-    positions.push(point.x - normal.x, y, point.z - normal.z);
-    if (index < points.length - 1) {
-      const start = index * 2;
-      indices.push(start, start + 2, start + 1, start + 2, start + 3, start + 1);
-    }
-  });
-
-  const geometry = new THREE.BufferGeometry();
-  geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
-  geometry.setIndex(indices);
-  geometry.computeVertexNormals();
-  return geometry;
-}
-
-function Tree({
-  position,
-  scale
-}: {
-  position: readonly [number, number, number];
-  scale: number;
-}) {
+function WorldTrails({ player }: { player: PlayState["player"] }) {
+  const offsetX = -(((player.x % WORLD_TILE_SIZE) + WORLD_TILE_SIZE) % WORLD_TILE_SIZE);
+  const offsetZ = -(((player.z % WORLD_TILE_SIZE) + WORLD_TILE_SIZE) % WORLD_TILE_SIZE);
   return (
-    <group position={position} scale={scale}>
-      <mesh castShadow position={[0, 0.32, 0]}>
-        <cylinderGeometry args={[0.09, 0.13, 0.68, 8]} />
-        <meshStandardMaterial color="#7a5637" roughness={0.9} />
+    <group position={[offsetX, 0.035, offsetZ]}>
+      <mesh rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[WORLD_TILE_SIZE * 5, 0.72]} />
+        <meshStandardMaterial color="#ead285" roughness={0.9} />
       </mesh>
-      <mesh castShadow position={[0, 0.84, 0]}>
-        <coneGeometry args={[0.48, 0.94, 10]} />
-        <meshStandardMaterial color="#2e7b48" roughness={0.78} />
-      </mesh>
-      <mesh castShadow position={[0.18, 0.64, -0.06]}>
-        <sphereGeometry args={[0.28, 12, 10]} />
-        <meshStandardMaterial color="#55a857" roughness={0.82} />
+      <mesh rotation={[-Math.PI / 2, 0, Math.PI / 2]}>
+        <planeGeometry args={[WORLD_TILE_SIZE * 5, 0.56]} />
+        <meshStandardMaterial color="#d9c16d" roughness={0.92} />
       </mesh>
     </group>
   );
+}
+
+function InstancedForest({
+  player,
+  tiles
+}: {
+  player: PlayState["player"];
+  tiles: Array<{ key: string; tileX: number; tileZ: number }>;
+}) {
+  const trunks = useRef<THREE.InstancedMesh>(null);
+  const crowns = useRef<THREE.InstancedMesh>(null);
+  const treeData = useMemo(() => tiles.flatMap((tile) => [0, 1].map((slot) => ({
+    x: tile.tileX * WORLD_TILE_SIZE + 1.7 + seededUnit(tile.tileX, tile.tileZ, slot) * 8.6,
+    z: tile.tileZ * WORLD_TILE_SIZE + 1.4 + seededUnit(tile.tileZ, tile.tileX, slot + 11) * 9,
+    scale: 0.68 + seededUnit(tile.tileX, tile.tileZ, slot + 23) * 0.58
+  }))), [tiles]);
+
+  useLayoutEffect(() => {
+    const matrix = new THREE.Matrix4();
+    const quaternion = new THREE.Quaternion();
+    const scale = new THREE.Vector3();
+    treeData.forEach((tree, index) => {
+      scale.set(tree.scale, tree.scale, tree.scale);
+      matrix.compose(new THREE.Vector3(tree.x - player.x, 0.34, tree.z - player.z), quaternion, scale);
+      trunks.current?.setMatrixAt(index, matrix);
+      matrix.compose(new THREE.Vector3(tree.x - player.x, 1.02 * tree.scale, tree.z - player.z), quaternion, scale);
+      crowns.current?.setMatrixAt(index, matrix);
+    });
+    if (trunks.current) trunks.current.instanceMatrix.needsUpdate = true;
+    if (crowns.current) crowns.current.instanceMatrix.needsUpdate = true;
+  }, [player.x, player.z, treeData]);
+
+  return (
+    <group>
+      <instancedMesh castShadow args={[undefined, undefined, treeData.length]} ref={trunks}>
+        <cylinderGeometry args={[0.09, 0.14, 0.68, 7]} />
+        <meshStandardMaterial color="#765135" roughness={0.92} />
+      </instancedMesh>
+      <instancedMesh castShadow args={[undefined, undefined, treeData.length]} ref={crowns}>
+        <coneGeometry args={[0.48, 1.05, 9]} />
+        <meshStandardMaterial color="#2e7b48" roughness={0.8} />
+      </instancedMesh>
+    </group>
+  );
+}
+
+function seededUnit(x: number, z: number, salt: number) {
+  const value = Math.sin(x * 127.1 + z * 311.7 + salt * 74.7) * 43758.5453123;
+  return value - Math.floor(value);
 }
 
 function Habitat({ node }: { node: HabitatNode }) {

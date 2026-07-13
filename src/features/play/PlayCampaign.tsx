@@ -14,11 +14,10 @@ import {
   restorePlayState,
   serializePlayState,
   selectedCard,
-  type MoveDirection,
   type PlayState,
   type WildsInput
 } from "@/features/play/game-state";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 
 const WILDS_SAVE_KEY = "receiz:wilds:save:v2";
 
@@ -30,16 +29,80 @@ const WildsWorldCanvas = dynamic(
   }
 );
 
-const moveButtons: Array<{
-  direction: MoveDirection;
-  label: string;
-  Icon: typeof Icons.chevronUp;
-}> = [
-  { direction: "north", label: "Move north", Icon: Icons.chevronUp },
-  { direction: "west", label: "Move west", Icon: Icons.chevronLeft },
-  { direction: "east", label: "Move east", Icon: Icons.chevronRight },
-  { direction: "south", label: "Move south", Icon: Icons.chevronDown }
-];
+function WildsTrackpad({ onInput }: { onInput: (input: WildsInput) => void }) {
+  const vectorRef = useRef({ x: 0, z: 0 });
+  const [active, setActive] = useState(false);
+  const [knob, setKnob] = useState({ x: 0, y: 0 });
+
+  useEffect(() => {
+    if (!active) return;
+    const timer = window.setInterval(() => {
+      const vector = vectorRef.current;
+      if (Math.hypot(vector.x, vector.z) >= 0.08) {
+        onInput({ type: "move-vector", x: vector.x, z: vector.z });
+      }
+    }, 45);
+    return () => window.clearInterval(timer);
+  }, [active, onInput]);
+
+  const updateVector = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const radius = Math.max(1, Math.min(rect.width, rect.height) * 0.42);
+    const rawX = event.clientX - (rect.left + rect.width / 2);
+    const rawY = event.clientY - (rect.top + rect.height / 2);
+    const magnitude = Math.hypot(rawX, rawY);
+    const clampScale = magnitude > radius ? radius / magnitude : 1;
+    const x = rawX * clampScale;
+    const y = rawY * clampScale;
+    vectorRef.current = { x: x / radius, z: y / radius };
+    setKnob({ x, y });
+  };
+
+  const release = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    try {
+      if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+        event.currentTarget.releasePointerCapture(event.pointerId);
+      }
+    } catch {
+      // Pointer capture is an enhancement; releasing still stops movement.
+    }
+    vectorRef.current = { x: 0, z: 0 };
+    setKnob({ x: 0, y: 0 });
+    setActive(false);
+  };
+
+  return (
+    <button
+      aria-label="Movement trackpad. Hold and drag in any direction to travel."
+      className={cx("wilds-trackpad", active && "active")}
+      onPointerCancel={release}
+      onPointerDown={(event) => {
+        updateVector(event);
+        setActive(true);
+        try {
+          event.currentTarget.setPointerCapture(event.pointerId);
+        } catch {
+          // Some embedded browsers do not expose pointer capture.
+        }
+      }}
+      onPointerMove={(event) => {
+        let captured = false;
+        try {
+          captured = event.currentTarget.hasPointerCapture(event.pointerId);
+        } catch {
+          captured = false;
+        }
+        if (active || captured) updateVector(event);
+      }}
+      onPointerUp={release}
+      title="Hold and drag to move"
+      type="button"
+    >
+      <span className="wilds-trackpad-ring" />
+      <span className="wilds-trackpad-knob" style={{ transform: `translate(${knob.x}px, ${knob.y}px)` }} />
+    </button>
+  );
+}
 
 export function PlayCampaign({
   campaignName = "Reward Challenge",
@@ -141,7 +204,7 @@ export function PlayCampaign({
                 <span className="wilds-avatar">RZ</span>
                 <div>
                   <strong>Wilds scout</strong>
-                  <small>{state.worldRank} · {activeCard.name} L{activeProgress.level}</small>
+                  <small>{state.worldRank} · {activeCard.name} L{activeProgress.level} · X{Math.round(state.player.x)} Z{Math.round(state.player.z)}</small>
                 </div>
               </div>
               <div className="wilds-resource-strip">
@@ -192,19 +255,7 @@ export function PlayCampaign({
               </button>
             </div>
 
-            <div className="wilds-dpad">
-              {moveButtons.map(({ direction, label, Icon }) => (
-                <button
-                  aria-label={label}
-                  className={`wilds-move-${direction}`}
-                  key={direction}
-                  onClick={() => dispatch({ type: "move", direction })}
-                  type="button"
-                >
-                  <Icon size={18} />
-                </button>
-              ))}
-            </div>
+            <WildsTrackpad onInput={dispatch} />
 
             <div className="wilds-screen-actions" aria-label="Progression actions">
               <button

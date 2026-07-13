@@ -96,4 +96,18 @@ describe("Receiz Wilds game state", () => {
     assert.deepEqual(restorePlayState(serializePlayState(trained)), trained);
     assert.deepEqual(restorePlayState("not-json"), initialPlayState);
   });
+
+  it("supports continuous analog travel across a billion-unit world", () => {
+    const moved = applyWildsInput(initialPlayState, { type: "move-vector", x: 0.8, z: -0.6 });
+    const edgeState: PlayState = {
+      ...initialPlayState,
+      player: { x: 499_999_999.9, z: -499_999_999.9 }
+    };
+    const clamped = applyWildsInput(edgeState, { type: "move-vector", x: 1, z: -1 });
+
+    assert.ok(moved.player.x > initialPlayState.player.x);
+    assert.ok(moved.player.z < initialPlayState.player.z);
+    assert.equal(clamped.player.x, 500_000_000);
+    assert.equal(clamped.player.z, -500_000_000);
+  });
 });

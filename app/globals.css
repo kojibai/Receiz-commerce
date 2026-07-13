@@ -2080,6 +2080,48 @@ a {
   gap: 6px;
 }
 
+.wilds-trackpad {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 108px;
+  height: 108px;
+  padding: 0;
+  overflow: hidden;
+  touch-action: none;
+  user-select: none;
+  border: 1px solid var(--game-line);
+  border-radius: 22px;
+  background:
+    radial-gradient(circle, rgba(46, 232, 182, 0.18), transparent 52%),
+    rgba(23, 19, 17, 0.78);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(16px);
+}
+
+.wilds-trackpad-ring {
+  position: absolute;
+  width: 58px;
+  height: 58px;
+  border: 1px solid rgba(46, 232, 182, 0.28);
+  border-radius: 50%;
+}
+
+.wilds-trackpad-knob {
+  position: relative;
+  width: 30px;
+  height: 30px;
+  border: 2px solid rgba(255, 255, 255, 0.82);
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--game-mint), var(--game-gold));
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.26);
+  transition: transform 90ms ease-out;
+}
+
+.wilds-trackpad.active .wilds-trackpad-knob {
+  transition: none;
+}
+
 .wilds-screen-controls .wilds-action {
   display: grid;
   place-items: center;
@@ -6645,6 +6687,22 @@ a {
     grid-template-rows: repeat(3, 24px);
     min-height: 76px;
     padding: 2px;
+  }
+
+  .mobile-play-wrap .wilds-trackpad {
+    width: 82px;
+    height: 82px;
+    border-radius: 18px;
+  }
+
+  .mobile-play-wrap .wilds-trackpad-ring {
+    width: 46px;
+    height: 46px;
+  }
+
+  .mobile-play-wrap .wilds-trackpad-knob {
+    width: 26px;
+    height: 26px;
   }
 
   .mobile-play-wrap .wilds-dpad {
