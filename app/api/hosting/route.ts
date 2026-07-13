@@ -25,6 +25,7 @@ import {
   hostingPlanUpdateFromPlatformPayment,
   platformPaymentConfirmed
 } from "@/lib/hosting/platform-billing";
+import { platformOperationMetadata, type PlatformOperationIntent } from "@/lib/hosting/platform-operation";
 import { createWalletFirstReceizSettlement } from "@/lib/checkout/receiz-settlement";
 import { platform } from "@/lib/platform";
 import { createReceizCommerceAdapter } from "@/lib/receiz/adapter";
@@ -240,6 +241,7 @@ async function chargePlatformFee(
     tenantHost: string;
     successUrl?: string;
     cancelUrl?: string;
+    operation: Omit<PlatformOperationIntent, "amountUsd" | "recipientUserId">;
   }
 ) {
   const liveBilling = process.env.RECEIZ_PLATFORM_BILLING_MODE === "live";
@@ -287,6 +289,20 @@ async function chargePlatformFee(
       baseUrl: process.env.RECEIZ_BASE_URL,
       accessToken
     });
+    const operation = {
+      ...input.operation,
+      amountUsd: input.amountUsd,
+      recipientUserId
+    } satisfies PlatformOperationIntent;
+    const intentRecord = await receiz.connectRecord({
+      schema: "receiz.app.platform_operation.v1",
+      event: "platform.operation.intent.created",
+      recordedAt: new Date().toISOString(),
+      data: platformOperationMetadata(operation)
+    });
+    if (isRecord(intentRecord) && intentRecord.ok === false) {
+      throw new Error(String(intentRecord.error ?? "Receiz platform operation intent could not be recorded."));
+    }
     const settlement = await createWalletFirstReceizSettlement({
       receiz,
       amountUsd: input.amountUsd,
@@ -299,7 +315,8 @@ async function chargePlatformFee(
       cancelUrl: input.cancelUrl,
       metadata: {
         platform: platform.productName,
-        billingKind: "platform_fee"
+        billingKind: "platform_fee",
+        ...platformOperationMetadata(operation)
       },
       cart: {
         items: [
@@ -489,13 +506,23 @@ export async function POST(request: NextRequest) {
     );
     if (!merchantAuthority.ok) return merchantAuthority.response;
 
+    const currentHosting = hostingFromRequest(isRecord(body) ? body.hosting ?? (isRecord(body.state) ? body.state.hosting : null) : null);
+    const tenantHost = currentHosting.customDomain.domain || currentHosting.subdomain;
+    const operationId = `receiz-app:hosting-plan:${merchantAuthority.handle}:${plan}`;
     const platformBilling = await chargePlatformFee(merchantAuthority.source === "delegated_permission" ? payerAccessToken : undefined, {
       amountUsd: amountForPlan(plan),
       note: `${platform.productName} ${plan} hosting plan`,
-      idempotencyKey: `receiz-app:hosting-plan:${merchantAuthority.handle}:${plan}`,
-      tenantHost: platform.domain,
+      idempotencyKey: operationId,
+      tenantHost,
       successUrl: `${origin}/admin?billing=success&plan=${encodeURIComponent(plan)}`,
-      cancelUrl: `${origin}/admin?billing=cancel&plan=${encodeURIComponent(plan)}`
+      cancelUrl: `${origin}/admin?billing=cancel&plan=${encodeURIComponent(plan)}`,
+      operation: {
+        id: operationId,
+        kind: "hosting_plan",
+        merchantReceizId: merchantAuthority.handle,
+        tenantHost,
+        plan
+      }
     });
 
     if (!platformBilling.ok) {
@@ -503,7 +530,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(platformBilling, { status });
     }
 
-    const currentHosting = hostingFromRequest(isRecord(body) ? body.hosting ?? (isRecord(body.state) ? body.state.hosting : null) : null);
     const planUpdate = hostingPlanUpdateFromPlatformPayment(currentHosting, plan, platformBilling);
     if (!planUpdate.ok) {
       return NextResponse.json(
@@ -566,13 +592,23 @@ export async function POST(request: NextRequest) {
     );
     if (!merchantAuthority.ok) return merchantAuthority.response;
 
+    const currentHosting = hostingFromRequest(isRecord(body) ? body.hosting ?? (isRecord(body.state) ? body.state.hosting : null) : null);
+    const tenantHost = currentHosting.customDomain.domain || currentHosting.subdomain;
+    const operationId = `receiz-app:custom-domain:${domain}`;
     const platformBilling = await chargePlatformFee(merchantAuthority.source === "delegated_permission" ? payerAccessToken : undefined, {
       amountUsd: process.env.RECEIZ_CUSTOM_DOMAIN_SETUP_USD ?? "0.00",
       note: `${platform.productName} custom domain setup for ${domain}`,
-      idempotencyKey: `receiz-app:custom-domain:${domain}`,
+      idempotencyKey: operationId,
       tenantHost: domain,
       successUrl: `${origin}/admin?domain=${encodeURIComponent(domain)}&billing=success`,
-      cancelUrl: `${origin}/admin?domain=${encodeURIComponent(domain)}&billing=cancel`
+      cancelUrl: `${origin}/admin?domain=${encodeURIComponent(domain)}&billing=cancel`,
+      operation: {
+        id: operationId,
+        kind: "custom_domain",
+        merchantReceizId: merchantAuthority.handle,
+        tenantHost,
+        domain
+      }
     });
 
     if (!platformBilling.ok) {
