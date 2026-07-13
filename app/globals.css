@@ -25,6 +25,48 @@
   color-scheme: light;
 }
 
+.verify-surface-shell {
+  align-items: center;
+  display: flex;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 32px 20px;
+}
+
+.verify-surface-panel {
+  display: grid;
+  gap: 20px;
+  max-width: 680px;
+  width: 100%;
+}
+
+.verify-surface-panel .definition-list,
+.proof-verification-result {
+  background: var(--surface-soft);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 16px;
+}
+
+.verify-surface-panel .definition-list > div {
+  display: grid;
+  gap: 4px;
+}
+
+.verify-surface-panel dt,
+.proof-verification-result span {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.verify-surface-panel dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
 @media (max-width: 760px) {
   .admin-app,
   .admin-body {

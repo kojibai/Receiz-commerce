@@ -11,4 +11,7 @@ export type EmbeddedPaymentSession = {
   resumePlan?: "starter" | "pro" | "scale";
   resumeProductId?: string;
   resumeReferenceId?: string;
+  resumeExchangeAssetId?: string;
+  resumeExchangeSide?: "buy" | "sell";
+  resumeExchangeShares?: number;
 };

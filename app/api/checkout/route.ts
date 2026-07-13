@@ -10,7 +10,16 @@ import { getServerProofStateStore } from "@/lib/receiz/proof-state-store";
 import { receizAuthorityRequired, receizRequestSession } from "@/lib/receiz/session";
 import { platform } from "@/lib/platform";
 import { mockStorage } from "@/lib/storage/mock-storage";
-import type { Order } from "@/types/domain";
+import { hydrateProofStoreFromReceizStoreState } from "@/lib/receiz/store-state-ledger";
+import { buildExchangeTradePreview, stateWithExchangeTrade } from "@/lib/storefront/proof-exchange";
+import { buildStoreStateRecord, storeStateProjectionSource } from "@/lib/receiz/proof-state";
+import {
+  publishAndAdmitReceizStoreState,
+  receizStoreStateSyncCompleted,
+  receizStoreStateWriteSucceeded,
+  summarizeReceizStoreStatePublicationResult
+} from "@/lib/receiz/store-state-publication";
+import type { CommerceState, Order } from "@/types/domain";
 
 function amountFromBody(body: Record<string, unknown>) {
   const explicit = body.amountUsd ?? body.amount;
@@ -149,6 +158,72 @@ async function recordCheckoutCommerceEvent(input: CheckoutCommerceEventInput) {
   }
 }
 
+async function canonicalExchangeTrade(input: {
+  actorReceizId: string;
+  assetId: string;
+  merchantReceizId: string;
+  shares: number;
+  side: "buy" | "sell";
+  tenantHost: string;
+}) {
+  const proofStore = await getServerProofStateStore(input.merchantReceizId);
+  await hydrateProofStoreFromReceizStoreState(proofStore, input.tenantHost).catch(() => undefined);
+  if (storeStateProjectionSource(proofStore.records(), input.tenantHost) !== "published") {
+    throw new Error("exchange_market_not_published");
+  }
+  const state = proofStore.projectHost(mockStorage.getState(), input.tenantHost);
+  const asset = state.exchange.assets.find((candidate) => candidate.id === input.assetId);
+  if (!asset) throw new Error("exchange_asset_not_found");
+
+  const preview = buildExchangeTradePreview(asset, input.side, input.shares, state.exchange.walletBalanceCents);
+  if (!preview.shares || !preview.counterpartyReceizId || !preview.matchedOrderId) {
+    throw new Error(input.side === "buy" ? "exchange_ask_unavailable" : "exchange_bid_unavailable");
+  }
+
+  return { preview, proofStore, state };
+}
+
+async function publishSettledExchangeTrade(input: {
+  accessToken: string;
+  actorReceizId: string;
+  assetId: string;
+  merchantReceizId: string;
+  proofStore: Awaited<ReturnType<typeof getServerProofStateStore>>;
+  settlementLedgerEventId: string;
+  shares: number;
+  side: "buy" | "sell";
+  state: CommerceState;
+  tenantHost: string;
+}) {
+  const state = stateWithExchangeTrade(input.state, {
+    actorReceizId: input.actorReceizId,
+    assetId: input.assetId,
+    recordedAt: new Date().toISOString(),
+    settlementLedgerEventId: input.settlementLedgerEventId,
+    shares: input.shares,
+    side: input.side
+  });
+  const record = buildStoreStateRecord(state, {
+    actorReceizId: input.actorReceizId,
+    reason: "sync",
+    tenantHost: input.tenantHost
+  });
+  const publication = await publishAndAdmitReceizStoreState({
+    accessToken: input.accessToken,
+    proofStore: input.proofStore,
+    record
+  });
+
+  return {
+    state,
+    storeStateSync: {
+      ok: receizStoreStateWriteSucceeded(publication),
+      synced: receizStoreStateSyncCompleted(publication),
+      result: summarizeReceizStoreStatePublicationResult(publication)
+    }
+  };
+}
+
 export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => ({}));
   const requestSession = receizRequestSession(request);
@@ -197,13 +272,38 @@ export async function POST(request: NextRequest) {
     });
     const tenantHost = String(body.tenantHost ?? hostContext.tenantHost ?? host);
     const orderId = String(body.referenceId ?? body.orderId ?? `order_${Date.now()}`);
-    const amountUsd = amountFromBody(body);
+    const commerceAction = stringFromBody(body, "commerceAction");
+    const exchangeSide = body.side === "sell" ? "sell" : "buy";
+    let exchangeTrade: Awaited<ReturnType<typeof canonicalExchangeTrade>> | null = null;
+    if (commerceAction === "exchange_trade") {
+      try {
+        exchangeTrade = await canonicalExchangeTrade({
+          actorReceizId: stringFromBody(body, "customerReceizId") ?? "customer.receiz.id",
+          assetId: String(body.assetId ?? ""),
+          merchantReceizId,
+          shares: Number(body.shares ?? 0),
+          side: exchangeSide,
+          tenantHost
+        });
+      } catch (error) {
+        return NextResponse.json(
+          {
+            ok: false,
+            error: error instanceof Error ? error.message : "exchange_trade_unavailable"
+          },
+          { status: 409 }
+        );
+      }
+    }
+    const amountUsd = exchangeTrade
+      ? (exchangeTrade.preview.totalCents / 100).toFixed(2)
+      : amountFromBody(body);
     const settlement = await createWalletFirstReceizSettlement({
       receiz,
       tenantHost,
       orderId,
       amountUsd,
-      recipientUserId: settlementRecipientFromBody(body, merchantReceizId),
+      recipientUserId: exchangeTrade?.preview.counterpartyReceizId ?? settlementRecipientFromBody(body, merchantReceizId),
       note: String(body.description ?? "Receiz.app proof-sealed order"),
       description: String(body.description ?? "Receiz.app proof-sealed order"),
       customerEmail: typeof body.customerEmail === "string" ? body.customerEmail : undefined,
@@ -251,6 +351,26 @@ export async function POST(request: NextRequest) {
       tenantHost,
       totalLabel: funding.totalLabel
     });
+    const settlementLedgerEventId =
+      settlement.receiptId ??
+      settlement.walletTransfer?.ledgerEventId ??
+      settlement.walletTransfer?.transferId ??
+      session.checkoutSessionId ??
+      orderId;
+    const exchange = exchangeTrade && settlement.paid
+      ? await publishSettledExchangeTrade({
+          accessToken,
+          actorReceizId: stringFromBody(body, "customerReceizId") ?? "customer.receiz.id",
+          assetId: String(body.assetId ?? ""),
+          merchantReceizId,
+          proofStore: exchangeTrade.proofStore,
+          settlementLedgerEventId,
+          shares: exchangeTrade.preview.shares,
+          side: exchangeSide,
+          state: exchangeTrade.state,
+          tenantHost
+        })
+      : null;
 
     return NextResponse.json({
       ok: true,
@@ -262,6 +382,7 @@ export async function POST(request: NextRequest) {
       funding,
       session,
       commerceEvent: commerceProjection?.event,
+      exchange,
       proofMemory: commerceProjection?.proofMemory
     });
   }

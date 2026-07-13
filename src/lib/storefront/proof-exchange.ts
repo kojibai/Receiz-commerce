@@ -19,6 +19,7 @@ export type ExchangeTradeInput = {
   shares: number;
   actorReceizId: string;
   walletBalanceCents?: number;
+  settlementLedgerEventId?: string;
   recordedAt?: string;
 };
 
@@ -55,6 +56,8 @@ export type ExchangeTradePreview = {
   cardDeltaLabel: string;
   cardRequired: boolean;
   resultingShares: number;
+  counterpartyReceizId: string | null;
+  matchedOrderId: string | null;
 };
 
 export type ExchangeAssetView = Omit<ExchangeAsset, "orderBook"> & {
@@ -82,8 +85,6 @@ export type ExchangeDeskProjection = {
   assets: ExchangeAssetView[];
   proofMemoryHead: ExchangeConfig["proofMemoryHead"];
 };
-
-const MARKET_MAKER = "receiz.exchange.amm";
 
 function formatUsd(cents: number) {
   return new Intl.NumberFormat("en-US", {
@@ -188,29 +189,18 @@ function proofEvent(type: ProofEvent["type"], detail: string, createdAt: string)
   };
 }
 
-function updateOrderBook(asset: ExchangeAsset, side: ExchangeTradeSide, shares: number): ExchangeOrderBookLine[] {
-  const next = asset.orderBook.map((line) => {
-    if (side === "buy" && line.side === "ask") {
-      return { ...line, shares: Math.max(0, line.shares - shares) };
-    }
-    if (side === "sell" && line.side === "bid") {
-      return { ...line, shares: Math.max(0, line.shares - shares) };
-    }
-    return line;
-  });
+function matchedOrder(asset: ExchangeAsset, side: ExchangeTradeSide) {
+  const restingSide: ExchangeOrderBookLine["side"] = side === "buy" ? "ask" : "bid";
+  const candidates = asset.orderBook.filter((line) => line.side === restingSide && line.shares > 0);
+  return candidates.sort((left, right) =>
+    side === "buy" ? left.priceCents - right.priceCents : right.priceCents - left.priceCents
+  )[0] ?? null;
+}
 
-  const replenishmentSide: ExchangeOrderBookLine["side"] = side === "buy" ? "bid" : "ask";
-  return [
-    {
-      id: `${asset.id}:${replenishmentSide}:${asset.appendEvents.length + 1}`,
-      side: replenishmentSide,
-      priceCents: side === "buy" ? Math.max(1, asset.lastPriceCents - 18) : asset.lastPriceCents + 18,
-      shares,
-      ownerReceizId: MARKET_MAKER,
-      proofObjectId: `${asset.id}:book:${replenishmentSide}`
-    },
-    ...next.filter((line) => line.shares > 0)
-  ];
+function updateOrderBook(asset: ExchangeAsset, matchedOrderId: string, shares: number): ExchangeOrderBookLine[] {
+  return asset.orderBook
+    .map((line) => line.id === matchedOrderId ? { ...line, shares: Math.max(0, line.shares - shares) } : line)
+    .filter((line) => line.shares > 0);
 }
 
 export function buildExchangeTradePreview(
@@ -219,15 +209,17 @@ export function buildExchangeTradePreview(
   shares: number,
   walletBalanceCents = 0
 ): ExchangeTradePreview {
-  const safeShares = clampShares(asset, side, shares);
-  const totalCents = safeShares * asset.lastPriceCents;
+  const order = matchedOrder(asset, side);
+  const safeShares = Math.min(clampShares(asset, side, shares), order?.shares ?? 0);
+  const priceCents = order?.priceCents ?? asset.lastPriceCents;
+  const totalCents = safeShares * priceCents;
   const walletAppliedCents = side === "buy" ? Math.min(Math.max(0, walletBalanceCents), totalCents) : 0;
   const cardDeltaCents = side === "buy" ? Math.max(0, totalCents - walletAppliedCents) : 0;
 
   return {
     side,
     shares: safeShares,
-    priceCents: asset.lastPriceCents,
+    priceCents,
     totalCents,
     totalLabel: formatUsdExact(totalCents),
     walletAppliedCents,
@@ -235,7 +227,9 @@ export function buildExchangeTradePreview(
     cardDeltaCents,
     cardDeltaLabel: formatUsdExact(cardDeltaCents),
     cardRequired: cardDeltaCents > 0,
-    resultingShares: side === "buy" ? asset.userShares + safeShares : Math.max(0, asset.userShares - safeShares)
+    resultingShares: side === "buy" ? asset.userShares + safeShares : Math.max(0, asset.userShares - safeShares),
+    counterpartyReceizId: order?.ownerReceizId ?? null,
+    matchedOrderId: order?.id ?? null
   };
 }
 
@@ -379,7 +373,7 @@ export function stateWithListedExchangeAsset(state: CommerceState, input: Exchan
     availableShares: shareCount,
     userShares: 0,
     lastPriceCents,
-    liquidityCents: Math.round(deterministicValueCents * 0.18),
+    liquidityCents: 0,
     volume24hCents: 0,
     change24hBps: 0,
     settlementRail: "receiz_wallet_first",
@@ -389,24 +383,16 @@ export function stateWithListedExchangeAsset(state: CommerceState, input: Exchan
         timestamp: recordedAt,
         kaiPulse,
         priceCents: lastPriceCents,
-        liquidityCents: Math.round(deterministicValueCents * 0.18),
+        liquidityCents: 0,
         volumeCents: 0
       }
     ],
     orderBook: [
       {
-        id: `${assetId}:bid:genesis`,
-        side: "bid",
-        priceCents: Math.max(1, lastPriceCents - Math.max(1, Math.round(lastPriceCents * 0.015))),
-        shares: Math.max(1, Math.round(shareCount * 0.12)),
-        ownerReceizId: MARKET_MAKER,
-        proofObjectId: `${assetId}:book:bid`
-      },
-      {
         id: `${assetId}:ask:genesis`,
         side: "ask",
-        priceCents: lastPriceCents + Math.max(1, Math.round(lastPriceCents * 0.015)),
-        shares: Math.max(1, Math.round(shareCount * 0.12)),
+        priceCents: lastPriceCents,
+        shares: shareCount,
         ownerReceizId: input.actorReceizId,
         proofObjectId: `${assetId}:book:ask`
       }
@@ -441,10 +427,15 @@ export function stateWithExchangeTrade(state: CommerceState, input: ExchangeTrad
 
   const assets = state.exchange.assets.map((asset) => {
     if (asset.id !== input.assetId) return asset;
+    if (
+      input.settlementLedgerEventId &&
+      asset.appendEvents.some((event) => event.settlementLedgerEventId === input.settlementLedgerEventId)
+    ) return asset;
 
     const preview = buildExchangeTradePreview(asset, input.side, input.shares, input.walletBalanceCents ?? state.exchange.walletBalanceCents);
-    const priceMove = input.side === "buy" ? Math.ceil(preview.shares * 3) : -Math.ceil(preview.shares * 2);
-    const nextPrice = Math.max(1, asset.lastPriceCents + priceMove);
+    const order = matchedOrder(asset, input.side);
+    if (!order || preview.shares <= 0) return asset;
+    const nextPrice = preview.priceCents;
     const kaiPulse = kaiPulseFor(recordedAt, asset, asset.appendEvents.length + 1);
     const childProofObjectId = `${asset.id}:share:${sanitizeCoordinatePart(input.actorReceizId)}:${stampPart(recordedAt)}`;
 
@@ -459,10 +450,12 @@ export function stateWithExchangeTrade(state: CommerceState, input: ExchangeTrad
       appendHash: appendHashFor([asset.id, input.side, String(preview.shares), recordedAt]),
       proofObjectId: asset.manifest.assetId,
       childProofObjectId,
-      settlementLedgerEventId: `ledger:${childProofObjectId}`
+      settlementLedgerEventId: input.settlementLedgerEventId ?? `ledger:${childProofObjectId}`
     };
     detail = `${input.actorReceizId} ${input.side === "buy" ? "bought" : "sold"} ${preview.shares} shares of ${asset.symbol}`;
 
+    const initialPrice = asset.chart[0]?.priceCents ?? nextPrice;
+    const change24hBps = initialPrice > 0 ? Math.round(((nextPrice - initialPrice) / initialPrice) * 10_000) : 0;
     const point: ExchangePricePoint = {
       id: `${asset.id}:price:${stampPart(recordedAt)}`,
       timestamp: recordedAt,
@@ -482,9 +475,9 @@ export function stateWithExchangeTrade(state: CommerceState, input: ExchangeTrad
           : Math.min(asset.shareCount, asset.availableShares + preview.shares),
       lastPriceCents: nextPrice,
       volume24hCents: asset.volume24hCents + preview.totalCents,
-      change24hBps: asset.change24hBps + (input.side === "buy" ? preview.shares * 8 : -preview.shares * 6),
+      change24hBps,
       chart: [...asset.chart.slice(-35), point],
-      orderBook: updateOrderBook(asset, input.side, preview.shares),
+      orderBook: updateOrderBook(asset, order.id, preview.shares),
       appendEvents: [appended, ...asset.appendEvents]
     };
   });

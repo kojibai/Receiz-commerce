@@ -265,7 +265,7 @@ export function PublicStorefront({
     }
   };
   const tradeExchangeAsset = (assetId: string, side: ExchangeTradeSide, shares: number) => {
-    actions.tradeExchangeAsset(assetId, side, shares);
+    void actions.tradeExchangeAsset(assetId, side, shares);
     if (typeof navigator !== "undefined" && "vibrate" in navigator) {
       navigator.vibrate(side === "buy" ? 16 : 10);
     }
@@ -568,6 +568,18 @@ export function PublicStorefront({
         actions.dismissEmbeddedPayment();
         if (payment?.purpose === "storefront_checkout") {
           void actions.startCheckout(payment.resumeProductId, payment.resumeReferenceId);
+        } else if (
+          payment?.purpose === "exchange_trade" &&
+          payment.resumeExchangeAssetId &&
+          payment.resumeExchangeSide &&
+          payment.resumeExchangeShares
+        ) {
+          void actions.tradeExchangeAsset(
+            payment.resumeExchangeAssetId,
+            payment.resumeExchangeSide,
+            payment.resumeExchangeShares,
+            payment.resumeReferenceId
+          );
         }
       }}
       session={embeddedPayment}
@@ -1267,7 +1279,7 @@ function ExchangeTradingDesk({
                   <span>Anchor</span>
                   <strong>{desk.proofMemoryHead.afterEntryId ?? selected.appendEvents[0]?.appendAnchorId ?? "local"}</strong>
                 </div>
-                <a href={selected.manifest.links.verify} rel="noreferrer" target="_blank">
+                <a href={`/verify?claim=${encodeURIComponent(selected.manifest.proof.receizClaimId)}&pulse=${encodeURIComponent(selected.manifest.proof.kaiPulseEternal)}`}>
                   Verify object
                 </a>
               </div>

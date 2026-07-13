@@ -41,9 +41,9 @@ import {
   stateWithoutCartProduct
 } from "@/lib/storefront/product-purchase";
 import {
+  buildExchangeTradePreview,
   stateWithListedExchangeAsset,
   stateWithExchangeLiquidity,
-  stateWithExchangeTrade,
   type ExchangeTradeSide
 } from "@/lib/storefront/proof-exchange";
 import {
@@ -972,7 +972,8 @@ async function receizedAssetFromProofObject(file: File, actorReceizId: string): 
       filename: file.name || "Receiz proof object",
       kind: verified.kind || manifest.proof.kind,
       verifiedAt: new Date().toISOString(),
-      warnings: verified.warnings
+      warnings: verified.warnings,
+      sha256Basis: artifactSha256Basis
     }
   };
 }
@@ -1396,7 +1397,7 @@ async function postJson<T>(
 
   if (response.status === 401 && typeof payload.connectUrl === "string") {
     if (!options.deferAuthorityRedirect && typeof window !== "undefined") {
-      window.location.assign(payload.connectUrl);
+      window.open(payload.connectUrl, "receiz-connect", "popup=yes,width=560,height=760,resizable=yes,scrollbars=yes");
     }
     throw new ReceizAuthorityRequiredError(payload.connectUrl, String(payload.message ?? "Receiz authority required"));
   }
@@ -1832,7 +1833,13 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
     title: string,
     resume: Pick<
       EmbeddedPaymentSession,
-      "resumeDomain" | "resumePlan" | "resumeProductId" | "resumeReferenceId"
+      | "resumeDomain"
+      | "resumePlan"
+      | "resumeProductId"
+      | "resumeReferenceId"
+      | "resumeExchangeAssetId"
+      | "resumeExchangeSide"
+      | "resumeExchangeShares"
     > = {}
   ) => {
     if (!session?.checkoutUrl && !session?.clientSecret) return false;
@@ -3073,22 +3080,38 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
 
           try {
             const asset = await receizedAssetFromProofObject(source, actorReceizId);
-            setState((current) => {
-              const currentWithAsset = {
-                ...current,
-                assets: current.assets.some((item) => item.id === asset.id)
-                  ? current.assets.map((item) => (item.id === asset.id ? { ...item, ...asset, status: "owned" as const } : item))
-                  : [asset, ...current.assets],
-                proofEvents: [makeEvent("OBJECT_VERIFIED", `${asset.name} proof object verified`), ...current.proofEvents]
-              };
+            const snapshot = stateRef.current;
+            const form = new FormData();
+            form.set("proofObject", source);
+            form.set("asset", JSON.stringify(asset));
+            form.set("state", JSON.stringify(snapshot));
+            form.set("merchantProof", JSON.stringify(merchantProof(snapshot)));
+            form.set("actorReceizId", actorReceizId);
+            form.set("tenantHost", checkoutTenantHost(snapshot));
+            const response = await fetch("/api/exchange", { method: "POST", body: form });
+            const result = await response.json().catch(() => ({})) as {
+              message?: string;
+              error?: string;
+              state?: CommerceState;
+              storeStateSync?: StoreStateSyncResponse;
+            };
+            if (!response.ok || !result.state) {
+              throw new Error(result.message || result.error || "Exchange listing failed");
+            }
 
-              return stateWithListedExchangeAsset(currentWithAsset, {
-                source: "asset",
-                asset,
-                actorReceizId
-              });
-            });
-            setActionFeedback("exchange.listAsset", "success", `${asset.name} listed`);
+            setState((current) => ({
+              ...current,
+              exchange: result.state!.exchange,
+              assets: result.state!.assets,
+              proofEvents: result.state!.proofEvents
+            }));
+            const syncError = storeStateSyncError(result.storeStateSync);
+            const syncPending = storeStateSyncPending(result.storeStateSync);
+            setActionFeedback(
+              "exchange.listAsset",
+              syncError || syncPending ? "error" : "success",
+              syncError || (syncPending ? `${asset.name} verified; durable Exchange sync is pending` : `${asset.name} listed and saved`)
+            );
           } catch (error) {
             setActionFeedback(
               "exchange.listAsset",
@@ -3125,16 +3148,86 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
           });
         });
       },
-      tradeExchangeAsset(assetId: string, side: ExchangeTradeSide, shares: number) {
-        setState((current) =>
-          stateWithExchangeTrade(current, {
+      async tradeExchangeAsset(assetId: string, side: ExchangeTradeSide, shares: number, resumeReferenceId?: string) {
+        const snapshot = stateRef.current;
+        const asset = snapshot.exchange.assets.find((candidate) => candidate.id === assetId);
+        if (!asset) {
+          setActionFeedback("exchange.trade", "error", "Exchange asset not found");
+          return;
+        }
+
+        const actorReceizId = snapshot.auth.receizId.handle || snapshot.hosting.merchantReceizId;
+        const preview = buildExchangeTradePreview(asset, side, shares, snapshot.exchange.walletBalanceCents);
+        if (!preview.shares || !preview.counterpartyReceizId) {
+          setActionFeedback("exchange.trade", "error", side === "buy" ? "No seller ask is available" : "No buyer bid is available");
+          return;
+        }
+
+        const referenceId = resumeReferenceId ?? makeId(`exchange-${assetId}-${side}`);
+        setActionFeedback("exchange.trade", "pending", `Settling ${preview.shares} ${asset.symbol} shares`);
+
+        try {
+          const result = await postJson<{
+            paid?: boolean;
+            funding?: CheckoutFundingPayload;
+            session?: ReceizCheckoutSessionPayload;
+            exchange?: {
+              state?: CommerceState;
+              storeStateSync?: StoreStateSyncResponse;
+            } | null;
+          }>("/api/checkout", {
+            commerceAction: "exchange_trade",
             assetId,
             side,
-            shares,
-            actorReceizId: current.auth.receizId.handle || current.hosting.merchantReceizId,
-            walletBalanceCents: current.exchange.walletBalanceCents
-          })
-        );
+            shares: preview.shares,
+            amountUsd: (preview.totalCents / 100).toFixed(2),
+            totalLabel: preview.totalLabel,
+            itemCount: preview.shares,
+            referenceId,
+            description: `${side === "buy" ? "Buy" : "Sell"} ${preview.shares} ${asset.symbol} shares`,
+            tenantHost: checkoutTenantHost(snapshot),
+            merchantReceizId: snapshot.hosting.merchantReceizId,
+            merchantSettlementUserId: preview.counterpartyReceizId,
+            customerReceizId: actorReceizId,
+            merchantProof: merchantProof(snapshot),
+            successUrl: `${window.location.origin}/?exchange=success`,
+            cancelUrl: `${window.location.origin}/?exchange=cancel`
+          });
+          const funding = fundingFromPayload(result.funding, preview.totalLabel);
+
+          if (!result.paid && funding.cardRequired) {
+            const opened = beginEmbeddedPayment(result.session, "exchange_trade", `Fund ${preview.shares} ${asset.symbol} shares`, {
+              resumeExchangeAssetId: assetId,
+              resumeExchangeShares: preview.shares,
+              resumeExchangeSide: side,
+              resumeReferenceId: referenceId
+            });
+            setActionFeedback("exchange.trade", opened ? "pending" : "error", opened ? "Opening card payment" : "Card payment could not open");
+            return;
+          }
+
+          const published = result.exchange?.state;
+          if (!result.paid || !published) {
+            setActionFeedback("exchange.trade", "error", "Live Receiz settlement is required before ownership changes");
+            return;
+          }
+
+          setState((current) => ({
+            ...current,
+            exchange: published.exchange,
+            assets: published.assets,
+            proofEvents: published.proofEvents
+          }));
+          const syncError = storeStateSyncError(result.exchange?.storeStateSync);
+          const syncPending = storeStateSyncPending(result.exchange?.storeStateSync);
+          setActionFeedback(
+            "exchange.trade",
+            syncError || syncPending ? "error" : "success",
+            syncError || (syncPending ? "Trade settled; durable Exchange sync is still pending" : `${preview.shares} ${asset.symbol} shares settled and saved`)
+          );
+        } catch (error) {
+          setActionFeedback("exchange.trade", "error", error instanceof Error ? error.message : "Exchange settlement failed");
+        }
       },
       provideExchangeLiquidity(assetId: string, amountCents: number) {
         setState((current) =>

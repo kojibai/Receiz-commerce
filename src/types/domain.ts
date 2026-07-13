@@ -352,6 +352,7 @@ export type ReceizedAsset = {
     kind: string;
     verifiedAt: string;
     warnings: string[];
+    sha256Basis?: string;
   };
 };
 
