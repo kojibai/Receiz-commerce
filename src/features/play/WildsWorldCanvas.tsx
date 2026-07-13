@@ -5,14 +5,15 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Html, Sparkles } from "@react-three/drei";
 import * as THREE from "three";
 import {
-  creatureCards,
   habitatNodes,
+  nearbyCreatureCards,
   nearestCreature,
   type CreatureCard,
   type HabitatNode,
   type PlayState,
   type WildsInput
 } from "@/features/play/game-state";
+import { creatureForm } from "@/features/play/creature-catalog";
 
 export function WildsWorldCanvas({
   state,
@@ -52,6 +53,7 @@ function WildsScene({
   onInput: (input: WildsInput) => void;
 }) {
   const nearest = nearestCreature(state);
+  const nearby = nearbyCreatureCards(state.player);
 
   return (
     <>
@@ -76,7 +78,7 @@ function WildsScene({
         {habitatNodes.map((node) => (
           <Habitat key={node.id} node={node} />
         ))}
-        {creatureCards.map((card) => (
+        {nearby.map((card) => (
           <Creature
             active={state.selectedCardId === card.id}
             card={card}
@@ -392,8 +394,22 @@ function CreatureDetails({ cardId, color, accent }: { cardId: string; color: str
       </group>
     );
   }
-
-  return null;
+  const form = creatureForm(`${cardId}-1`);
+  if (!form) return null;
+  const detail = form.anatomy.detail;
+  return (
+    <group>
+      {(detail === "ears" || detail === "horns" || detail === "wings") ? [-1, 1].map((side) => (
+        <mesh key={side} castShadow position={[side * 0.29, detail === "wings" ? 0.08 : 0.34, detail === "wings" ? -0.14 : -0.02]} rotation={[0, 0, side * (detail === "wings" ? -0.7 : -0.24)]} scale={detail === "wings" ? [0.45, 1.3, 0.18] : [0.65, 1.1, 0.5]}>
+          <coneGeometry args={[detail === "wings" ? 0.24 : 0.14, detail === "wings" ? 0.7 : 0.4, detail === "horns" ? 7 : 4]} />
+          <meshStandardMaterial color={accent} emissive={detail === "wings" ? accent : "#000000"} emissiveIntensity={0.12} roughness={0.55} />
+        </mesh>
+      )) : null}
+      {detail === "crest" ? <mesh castShadow position={[0, 0.46, -0.03]}><octahedronGeometry args={[0.2, 0]} /><meshStandardMaterial color={accent} emissive={color} emissiveIntensity={0.14} /></mesh> : null}
+      {detail === "shell" ? <mesh castShadow position={[0, 0, -0.24]} scale={[1.1, 0.85, 0.4]}><sphereGeometry args={[0.38, 14, 10]} /><meshStandardMaterial color={accent} roughness={0.75} /></mesh> : null}
+      {detail === "tail" ? <mesh castShadow position={[0.37, -0.08, -0.25]} rotation={[0.1, 0.1, -0.7]}><capsuleGeometry args={[0.075, 0.48, 5, 8]} /><meshStandardMaterial color={color} roughness={0.65} /></mesh> : null}
+    </group>
+  );
 }
 
 function WildsDiagnostics({ state }: { state: PlayState }) {

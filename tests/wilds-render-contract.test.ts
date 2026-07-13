@@ -52,4 +52,35 @@ describe("Receiz Wilds rendering contract", () => {
     assert.match(world, /function StreamedTerrain/);
     assert.match(world, /WORLD_TILE_SIZE/);
   });
+
+  it("renders an accessible Receiz Capsule reward and bounded card inventory", async () => {
+    const campaign = await readFile("src/features/play/PlayCampaign.tsx", "utf8");
+    const reward = await readFile("src/features/play/WildsCaptureReward.tsx", "utf8");
+    const inventory = await readFile("src/features/play/WildsInventory.tsx", "utf8");
+    const card = await readFile("src/features/play/WildsCard.tsx", "utf8");
+    const css = await readFile("app/globals.css", "utf8");
+
+    assert.match(campaign, /type: "capture"/);
+    assert.match(campaign, /WildsCaptureReward/);
+    assert.match(campaign, /WildsInventory/);
+    assert.match(reward, /role="dialog"/);
+    assert.match(reward, /aria-live="assertive"/);
+    assert.match(reward, /wilds-capture-capsule/);
+    assert.match(inventory, /type="search"/);
+    assert.match(inventory, /INVENTORY_PAGE_SIZE = 36/);
+    assert.match(inventory, /downloadPortableCard/);
+    assert.match(inventory, /type: "evolve"/);
+    assert.match(card, /wilds-card-foil/);
+    assert.match(css, /@media \(prefers-reduced-motion: reduce\)[\s\S]*\.wilds-capture-capsule/);
+  });
+
+  it("bounds region encounters instead of rendering the full catalog", async () => {
+    const state = await readFile("src/features/play/game-state.ts", "utf8");
+    const world = await readFile("src/features/play/WildsWorldCanvas.tsx", "utf8");
+
+    assert.match(state, /function nearbyCreatureCards/);
+    assert.match(state, /MAX_NEARBY_CREATURES/);
+    assert.match(world, /nearbyCreatureCards\(state\.player\)/);
+    assert.doesNotMatch(world, /\{creatureCards\.map/);
+  });
 });

@@ -18,6 +18,9 @@ import {
   type WildsInput
 } from "@/features/play/game-state";
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
+import type { PortableCardAsset } from "@/features/play/portable-card";
+import { WildsCaptureReward } from "@/features/play/WildsCaptureReward";
+import { WildsInventory } from "@/features/play/WildsInventory";
 
 const WILDS_SAVE_KEY = "receiz:wilds:save:v2";
 
@@ -114,6 +117,7 @@ export function PlayCampaign({
   onComplete?: (beans: number) => void;
 }) {
   const [state, setState] = useState(() => typeof window === "undefined" ? initialPlayState : restorePlayState(window.localStorage.getItem(WILDS_SAVE_KEY)));
+  const [rewardAsset, setRewardAsset] = useState<PortableCardAsset | null>(null);
   const activeMission = missionCards[state.completedMissionIds.length % missionCards.length];
   const activeCard = selectedCard(state);
   const deckCards = discoveredCards(state);
@@ -147,7 +151,16 @@ export function PlayCampaign({
       if (!input) return;
       event.preventDefault();
       setState((current) => {
-        const next = applyWildsInput(current, input);
+        const effectiveInput: WildsInput = input.type === "discover"
+          ? {
+              type: "capture",
+              encounterId: `${nearestCreature(current).card.id}:${Math.round(current.player.x * 100)}:${Math.round(current.player.z * 100)}:${Date.now()}`,
+              capturedAt: new Date().toISOString(),
+              ownerReceizId: current.inventory[0]?.manifest.ownerReceizId ?? "wilds.player.receiz.id"
+            }
+          : input;
+        const next = applyWildsInput(current, effectiveInput);
+        if (next.inventory.length > current.inventory.length) setRewardAsset(next.inventory.at(-1) ?? null);
         if (!current.completed && next.completed) onComplete?.(next.beans);
         return next;
       });
@@ -170,7 +183,16 @@ export function PlayCampaign({
 
   const dispatch = (input: WildsInput) => {
     setState((current) => {
-      const next = applyWildsInput(current, input);
+      const effectiveInput: WildsInput = input.type === "discover"
+        ? {
+            type: "capture",
+            encounterId: `${nearestCreature(current).card.id}:${Math.round(current.player.x * 100)}:${Math.round(current.player.z * 100)}:${Date.now()}`,
+            capturedAt: new Date().toISOString(),
+            ownerReceizId: current.inventory[0]?.manifest.ownerReceizId ?? "wilds.player.receiz.id"
+          }
+        : input;
+      const next = applyWildsInput(current, effectiveInput);
+      if (next.inventory.length > current.inventory.length) setRewardAsset(next.inventory.at(-1) ?? null);
       if (!current.completed && next.completed) {
         onComplete?.(next.beans);
       }
@@ -360,6 +382,8 @@ export function PlayCampaign({
           </Button>
         </aside>
       </div>
+      <WildsInventory state={state} onInput={dispatch} />
+      <WildsCaptureReward asset={rewardAsset} onClose={() => setRewardAsset(null)} />
     </section>
   );
 }

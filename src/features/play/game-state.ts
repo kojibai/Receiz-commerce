@@ -1,4 +1,4 @@
-import { creatureForm } from "./creature-catalog";
+import { creatureFamilies, creatureForm, creatureForms, type CreatureRarity } from "./creature-catalog";
 import {
   evolvePortableCard,
   sealCollectedCard,
@@ -29,7 +29,7 @@ export type CreatureCard = {
   species: string;
   role: string;
   power: number;
-  rarity: "starter" | "rare" | "epic";
+  rarity: CreatureRarity;
   color: string;
   accent: string;
   position: Vec3;
@@ -91,56 +91,58 @@ export const worldBounds = {
   step: 1.05
 } as const;
 
-export const creatureCards: CreatureCard[] = [
-  {
-    id: "mintcub",
-    name: "Mintcub",
-    species: "Grove companion",
-    role: "Heals mission fatigue and protects streaks.",
-    power: 92,
-    rarity: "starter",
-    color: "#38d989",
-    accent: "#f5d36c",
-    position: [-2.8, 0, -1.4],
-    businessLogic: "Free add-on, streak saver, welcome perk"
-  },
-  {
-    id: "voltray",
-    name: "Voltray",
-    species: "Spark courier",
-    role: "Adds speed bursts and higher rare-card odds.",
-    power: 88,
-    rarity: "rare",
-    color: "#ff7667",
-    accent: "#ffd15c",
-    position: [1.6, 0, -2.1],
-    businessLogic: "Flash sale, timed coupon, event multiplier"
-  },
-  {
-    id: "ledgerfox",
-    name: "Ledgerfox",
-    species: "Market scout",
-    role: "Finds hidden coupons and tradeable reward cards.",
-    power: 76,
-    rarity: "rare",
-    color: "#62c8ff",
-    accent: "#37d688",
-    position: [-0.4, 0, 1.5],
-    businessLogic: "Coupon finder, loyalty upgrade, proof trade"
-  },
-  {
-    id: "titanseal",
-    name: "Titanseal",
-    species: "Vault guardian",
-    role: "Unlocks boss missions and premium brand rewards.",
-    power: 97,
-    rarity: "epic",
-    color: "#c7ec5a",
-    accent: "#ff8a48",
-    position: [3.1, 0, 1.2],
-    businessLogic: "VIP coupon, limited drop, high-value access"
+const flagshipPositions: Record<string, Vec3> = {
+  mintcub: [-2.8, 0, -1.4],
+  voltray: [1.6, 0, -2.1],
+  ledgerfox: [-0.4, 0, 1.5],
+  titanseal: [3.1, 0, 1.2]
+};
+
+export const creatureCards: CreatureCard[] = creatureFamilies.map((family, index) => {
+  const form = creatureForm(family.formIds[0])!;
+  return {
+    id: family.id,
+    name: form.name,
+    species: form.species,
+    role: form.role,
+    power: form.stats.power,
+    rarity: form.rarity,
+    color: form.palette.primary,
+    accent: form.palette.accent,
+    position: flagshipPositions[family.id] ?? [index * 120_000 - 15_000_000, 0, ((index * 7919) % 30_000_000) - 15_000_000],
+    businessLogic: `${form.habitat} · ${form.abilities[0].name}`
+  };
+});
+
+const MAX_NEARBY_CREATURES = 12;
+const ENCOUNTER_REGION_SIZE = 24;
+
+function encounterUnit(x: number, z: number, salt: number) {
+  const value = Math.sin(x * 127.1 + z * 311.7 + salt * 74.7) * 43758.5453123;
+  return value - Math.floor(value);
+}
+
+export function nearbyCreatureCards(player: Pick<PlayState, "player">["player"]): CreatureCard[] {
+  const regionX = Math.floor(player.x / ENCOUNTER_REGION_SIZE);
+  const regionZ = Math.floor(player.z / ENCOUNTER_REGION_SIZE);
+  const regionSeed = Math.abs((regionX * 73856093) ^ (regionZ * 19349663));
+  const cards: CreatureCard[] = [];
+  if (Math.abs(regionX) <= 1 && Math.abs(regionZ) <= 1) cards.push(...creatureCards.slice(0, 4));
+  for (let slot = 0; cards.length < MAX_NEARBY_CREATURES && slot < 20; slot += 1) {
+    const index = 4 + ((regionSeed + slot * 47) % (creatureCards.length - 4));
+    const source = creatureCards[index]!;
+    if (cards.some((card) => card.id === source.id)) continue;
+    cards.push({
+      ...source,
+      position: [
+        regionX * ENCOUNTER_REGION_SIZE + 2 + encounterUnit(regionX, regionZ, slot) * 20,
+        0,
+        regionZ * ENCOUNTER_REGION_SIZE + 2 + encounterUnit(regionZ, regionX, slot + 31) * 20
+      ]
+    });
   }
-];
+  return cards.slice(0, MAX_NEARBY_CREATURES);
+}
 
 export const habitatNodes: HabitatNode[] = [
   { id: "grove", label: "Mint Grove", position: [-3.2, 0, -1.7], tone: "grove" },
@@ -270,7 +272,7 @@ export function discoveredCards(state: PlayState) {
 }
 
 export function nearestCreature(state: Pick<PlayState, "player">) {
-  return creatureCards
+  return nearbyCreatureCards(state.player)
     .map((card) => ({
       card,
       distance: distance2d(state.player, { x: card.position[0], z: card.position[2] })
