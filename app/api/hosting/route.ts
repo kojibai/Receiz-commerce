@@ -22,7 +22,8 @@ import { buildPublishedStateForHostingSync } from "@/lib/hosting/published-domai
 import { buildPublishedCommerceState } from "@/lib/hosting/published-state";
 import {
   hostingBillingFromPlatformPayment,
-  hostingPlanUpdateFromPlatformPayment
+  hostingPlanUpdateFromPlatformPayment,
+  platformPaymentConfirmed
 } from "@/lib/hosting/platform-billing";
 import { createWalletFirstReceizSettlement } from "@/lib/checkout/receiz-settlement";
 import { platform } from "@/lib/platform";
@@ -491,7 +492,7 @@ export async function POST(request: NextRequest) {
     const platformBilling = await chargePlatformFee(merchantAuthority.source === "delegated_permission" ? payerAccessToken : undefined, {
       amountUsd: amountForPlan(plan),
       note: `${platform.productName} ${plan} hosting plan`,
-      idempotencyKey: `receiz-app:hosting-plan:${plan}`,
+      idempotencyKey: `receiz-app:hosting-plan:${merchantAuthority.handle}:${plan}`,
       tenantHost: platform.domain,
       successUrl: `${origin}/admin?billing=success&plan=${encodeURIComponent(plan)}`,
       cancelUrl: `${origin}/admin?billing=cancel&plan=${encodeURIComponent(plan)}`
@@ -577,6 +578,18 @@ export async function POST(request: NextRequest) {
     if (!platformBilling.ok) {
       const status = Number(platformBilling.status ?? 402);
       return NextResponse.json(platformBilling, { status });
+    }
+
+    if (!platformPaymentConfirmed(platformBilling)) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error: "custom_domain_payment_required",
+          message: "Custom domain setup waits for confirmed wallet and card settlement.",
+          platformBilling
+        },
+        { status: 402 }
+      );
     }
 
     let customDomain: DomainStatus;

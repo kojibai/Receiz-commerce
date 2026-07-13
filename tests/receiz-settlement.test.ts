@@ -6,6 +6,7 @@ import type { ReceizCommerceAdapter } from "../src/lib/receiz/adapter.js";
 function fakeReceiz(input: {
   walletBalanceUsdCents: string;
   checkoutUrl?: string;
+  checkoutStatus?: string;
 }) {
   const calls: Array<{ name: string; body?: Record<string, unknown>; idempotencyKey?: string }> = [];
   const adapter = {
@@ -28,7 +29,7 @@ function fakeReceiz(input: {
         ok: true,
         checkoutSessionId: query.checkoutSessionId,
         checkoutUrl: input.checkoutUrl ?? "https://receiz.test/pay/refreshed",
-        status: "open"
+        status: input.checkoutStatus ?? "open"
       };
     },
     async checkout(body: Record<string, unknown>) {
@@ -37,7 +38,7 @@ function fakeReceiz(input: {
         ok: true,
         checkoutSessionId: "checkout_card_delta",
         checkoutUrl: input.checkoutUrl,
-        status: "open"
+        status: input.checkoutStatus ?? "open"
       };
     }
   } as unknown as ReceizCommerceAdapter;
@@ -69,7 +70,7 @@ describe("Receiz wallet-first settlement", () => {
     assert.equal(calls[1]?.body?.amountUsd, "49.00");
   });
 
-  it("moves wallet funds and creates a hosted card checkout for the delta", async () => {
+  it("moves wallet funds and creates an embedded card checkout for the delta", async () => {
     const { adapter, calls } = fakeReceiz({
       walletBalanceUsdCents: "900",
       checkoutUrl: "https://receiz.test/pay/card-delta"
@@ -93,10 +94,32 @@ describe("Receiz wallet-first settlement", () => {
     assert.equal(settlement.funding.walletAppliedLabel, "$9.00");
     assert.equal(settlement.funding.cardDeltaLabel, "$9.00");
     assert.equal(settlement.checkoutSession?.checkoutUrl, "https://receiz.test/pay/card-delta");
-    assert.deepEqual(calls.map((call) => call.name), ["connectWallet", "checkout", "connectTransfer"]);
+    assert.deepEqual(calls.map((call) => call.name), ["connectWallet", "checkout"]);
     assert.equal(calls[1]?.body?.amountUsd, "9.00");
-    assert.equal(calls[1]?.body?.uiMode, "hosted");
+    assert.equal(calls[1]?.body?.uiMode, "embedded");
     assert.equal(calls[1]?.body?.recipientUserId, "merchant_user");
+    assert.equal(settlement.walletTransfer, null);
+  });
+
+  it("transfers wallet funds only after the embedded card delta is confirmed", async () => {
+    const { adapter, calls } = fakeReceiz({
+      walletBalanceUsdCents: "900",
+      checkoutStatus: "paid",
+      checkoutUrl: "https://receiz.test/pay/card-delta"
+    });
+
+    const settlement = await createWalletFirstReceizSettlement({
+      receiz: adapter,
+      amountUsd: "18.00",
+      tenantHost: "merchant.receiz.app",
+      recipientUserId: "merchant_user",
+      idempotencyKey: "order_456",
+      note: "Merchant order"
+    });
+
+    assert.equal(settlement.paid, true);
+    assert.equal(settlement.settlementStatus, "settled");
+    assert.deepEqual(calls.map((call) => call.name), ["connectWallet", "checkout", "connectTransfer"]);
     assert.equal(calls[2]?.body?.amountUsd, "9.00");
   });
 });

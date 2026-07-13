@@ -68,6 +68,7 @@ import {
   receizProfileOwnerKey
 } from "@/lib/storage/receiz-profile-workspace";
 import type { ActionFeedbackMap, ActionFeedbackStatus } from "@/types/action-feedback";
+import type { EmbeddedPaymentPurpose, EmbeddedPaymentSession } from "@/types/embedded-payment";
 import type {
   BlogPost,
   CommerceState,
@@ -1363,12 +1364,6 @@ function checkoutSessionFromPayload(payload: unknown): ReceizCheckoutSessionPayl
   };
 }
 
-function openCheckoutSession(session: ReceizCheckoutSessionPayload | undefined) {
-  if (!session?.checkoutUrl || typeof window === "undefined") return false;
-  window.location.assign(session.checkoutUrl);
-  return true;
-}
-
 function markPendingPublish(storageKey: string) {
   if (typeof window === "undefined") return;
   safeSetLocalStorage(window.localStorage, pendingPublishStorageKey(storageKey), JSON.stringify({ createdAt: Date.now() }));
@@ -1799,6 +1794,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
   const [hydrated, setHydrated] = useState(false);
   const [receizSessionPending, setReceizSessionPending] = useState(false);
   const [actionFeedback, setActionFeedbackState] = useState<ActionFeedbackMap>({});
+  const [embeddedPayment, setEmbeddedPayment] = useState<EmbeddedPaymentSession | null>(null);
   const [hostContext, setHostContext] = useState<HostContext>(() => initialHostContext ?? hostContextFromHost(null));
   const stateRef = useRef(initialState);
   const pendingBrowserIdentityKeyFileRef = useRef<unknown | null>(null);
@@ -1828,6 +1824,29 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
         updatedAt: Date.now()
       }
     }));
+  }, []);
+
+  const beginEmbeddedPayment = useCallback((
+    session: ReceizCheckoutSessionPayload | undefined,
+    purpose: EmbeddedPaymentPurpose,
+    title: string,
+    resume: Pick<
+      EmbeddedPaymentSession,
+      "resumeDomain" | "resumePlan" | "resumeProductId" | "resumeReferenceId"
+    > = {}
+  ) => {
+    if (!session?.checkoutUrl && !session?.clientSecret) return false;
+
+    setEmbeddedPayment({
+      purpose,
+      title,
+      checkoutSessionId: session.checkoutSessionId,
+      checkoutUrl: session.checkoutUrl,
+      clientSecret: session.clientSecret,
+      status: session.status,
+      ...resume
+    });
+    return true;
   }, []);
 
   useEffect(() => {
@@ -2120,6 +2139,9 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
           safeRemoveLocalStorage(window.localStorage, BASE_STORAGE_KEY);
         }
       },
+      dismissEmbeddedPayment() {
+        setEmbeddedPayment(null);
+      },
       updateBrand(input: Partial<CommerceState["brand"]>) {
         setState((current) => ({
           ...current,
@@ -2330,7 +2352,9 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
         } catch (error) {
           if (error instanceof ReceizPaymentRequiredError) {
             const session = checkoutSessionFromPayload(error.payload);
-            const opened = openCheckoutSession(session);
+            const opened = beginEmbeddedPayment(session, "custom_domain", `Fund ${normalizedDomain}`, {
+              resumeDomain: normalizedDomain
+            });
             setActionFeedback(
               "domains.customDomain",
               opened || session?.clientSecret ? "pending" : "error",
@@ -2510,7 +2534,9 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
         } catch (error) {
           if (error instanceof ReceizPaymentRequiredError) {
             const session = checkoutSessionFromPayload(error.payload);
-            const opened = openCheckoutSession(session);
+            const opened = beginEmbeddedPayment(session, "hosting_plan", `Fund ${plan} hosting`, {
+              resumePlan: plan
+            });
             setActionFeedback(
               "billing.plan",
               opened || session?.clientSecret ? "pending" : "error",
@@ -3175,7 +3201,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
           };
         });
       },
-      async startCheckout(productId?: string) {
+      async startCheckout(productId?: string, referenceId?: string) {
         setActionFeedback("checkout", "pending", "Starting checkout");
         const checkoutBase = productId ? stateWithCartProduct(stateRef.current, productId) : stateRef.current;
 
@@ -3252,7 +3278,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
         }
 
         try {
-          const checkoutReferenceId = `order-${Date.now()}`;
+          const checkoutReferenceId = referenceId ?? `order-${Date.now()}`;
           const result = await postJson<{
             session?: {
               checkoutUrl?: string;
@@ -3312,9 +3338,12 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
               };
             });
 
-            if (checkoutUrl && typeof window !== "undefined") {
-              setActionFeedback("checkout", "pending", "Opening card payment");
-              window.location.assign(checkoutUrl);
+            if (checkoutUrl || result.session?.clientSecret) {
+              setActionFeedback("checkout", "pending", "Card payment ready");
+              beginEmbeddedPayment(result.session, "storefront_checkout", "Complete card funding", {
+                resumeProductId: productId,
+                resumeReferenceId: checkoutReferenceId
+              });
               return;
             }
 
@@ -3487,7 +3516,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
         }));
       }
     }),
-    [ensureMerchantProofAuthority, merchantProof, publishWorkspace, setActionFeedback]
+    [beginEmbeddedPayment, ensureMerchantProofAuthority, merchantProof, publishWorkspace, setActionFeedback]
   );
 
   useEffect(() => {
@@ -3507,5 +3536,5 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
     actions.publish();
   }, [actions, hostContext.storageKey, hostContext.surface, hydrated]);
 
-  return { state, actions, actionFeedback, hydrated, hostContext, receizSessionPending };
+  return { state, actions, actionFeedback, embeddedPayment, hydrated, hostContext, receizSessionPending };
 }

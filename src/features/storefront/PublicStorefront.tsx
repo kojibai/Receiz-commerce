@@ -35,6 +35,7 @@ import type { ActionFeedbackState } from "@/types/action-feedback";
 import type { BlogPost, CommerceState, CustomerAccount, Order, Product, ReceizedAsset, Reward } from "@/types/domain";
 import type { HostContext } from "@/lib/hosting/host-context";
 import { FloatingCart } from "@/features/storefront/FloatingCart";
+import { EmbeddedReceizPayment } from "@/features/payments/EmbeddedReceizPayment";
 import { PlayCampaign } from "@/features/play/PlayCampaign";
 import { ProductCatalog } from "@/features/storefront/ProductCatalog";
 import { ReceizIdAccess } from "@/features/storefront/ReceizIdAccess";
@@ -76,7 +77,7 @@ export function PublicStorefront({
   initialHostContext?: HostContext;
   initialState?: CommerceState;
 }) {
-  const { state, actions, actionFeedback, hostContext, hydrated, receizSessionPending } = useTemplateStore(initialState, initialHostContext);
+  const { state, actions, actionFeedback, embeddedPayment, hostContext, hydrated, receizSessionPending } = useTemplateStore(initialState, initialHostContext);
   const [mobileView, setMobileView] = useState<MobileView>("store");
   const [selectedProductSlug, setSelectedProductSlug] = useState<string | null>(null);
   const [identityUploadVisible, setIdentityUploadVisible] = useState(false);
@@ -311,6 +312,7 @@ export function PublicStorefront({
   }, [cartSummary.lines.length]);
 
   return (
+    <>
     <main className={tenantSurface ? "commerce-app tenant-store" : "commerce-app"} style={brandThemeStyle(state.brand)}>
       <StoreSidebar state={state} tenantSurface={tenantSurface} />
       <div className="app-body">
@@ -559,6 +561,18 @@ export function PublicStorefront({
         <BottomNav activeView={mobileView} onChange={selectMobileView} storeLabel={homepageMode === "blog" ? "Blog" : "Store"} />
       </div>
     </main>
+    <EmbeddedReceizPayment
+      onClose={actions.dismissEmbeddedPayment}
+      onComplete={() => {
+        const payment = embeddedPayment;
+        actions.dismissEmbeddedPayment();
+        if (payment?.purpose === "storefront_checkout") {
+          void actions.startCheckout(payment.resumeProductId, payment.resumeReferenceId);
+        }
+      }}
+      session={embeddedPayment}
+    />
+    </>
   );
 }
 

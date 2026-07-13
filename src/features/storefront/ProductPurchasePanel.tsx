@@ -6,6 +6,7 @@ import { InlineActionFeedback } from "@/components/ActionFeedback";
 import { Icons } from "@/components/icons";
 import { Button, StatusPill } from "@/components/ui";
 import { FloatingCart } from "@/features/storefront/FloatingCart";
+import { EmbeddedReceizPayment } from "@/features/payments/EmbeddedReceizPayment";
 import { buildCartSummary } from "@/lib/storefront/cart-summary";
 import { buildProductPurchaseModel } from "@/lib/storefront/product-purchase";
 import { useTemplateStore } from "@/lib/storage/use-template-store";
@@ -21,7 +22,7 @@ export function ProductPurchasePanel({
   initialState: CommerceState;
   product: Product;
 }) {
-  const { actions, actionFeedback, hostContext, hydrated, receizSessionPending, state } = useTemplateStore(initialState, initialHostContext);
+  const { actions, actionFeedback, embeddedPayment, hostContext, hydrated, receizSessionPending, state } = useTemplateStore(initialState, initialHostContext);
   const liveProduct = state.products.find((item) => item.id === product.id) ?? product;
   const model = buildProductPurchaseModel(state, liveProduct);
   const cartSummary = buildCartSummary(state);
@@ -77,6 +78,7 @@ export function ProductPurchasePanel({
   }, [cartSummary.lines.length]);
 
   return (
+    <>
     <div className="product-purchase-panel">
       <div className="product-purchase-card">
         <div>
@@ -144,5 +146,17 @@ export function ProductPurchasePanel({
         />
       ) : null}
     </div>
+    <EmbeddedReceizPayment
+      onClose={actions.dismissEmbeddedPayment}
+      onComplete={() => {
+        const payment = embeddedPayment;
+        actions.dismissEmbeddedPayment();
+        if (payment?.purpose === "storefront_checkout") {
+          void actions.startCheckout(payment.resumeProductId, payment.resumeReferenceId);
+        }
+      }}
+      session={embeddedPayment}
+    />
+    </>
   );
 }

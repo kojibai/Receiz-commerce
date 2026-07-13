@@ -100,6 +100,11 @@ function proofBundleFrom(value: unknown) {
     : null;
 }
 
+function checkoutSessionIsPaid(session: CheckoutSessionResponse | null) {
+  const status = session?.status?.trim().toLowerCase();
+  return status === "paid" || status === "complete" || status === "completed" || status === "succeeded" || status === "settled";
+}
+
 async function refreshCheckoutSessionIfNeeded(
   receiz: ReceizCommerceAdapter,
   session: CheckoutSessionResponse | null
@@ -130,7 +135,7 @@ export async function createWalletFirstReceizSettlement(
     checkoutSession = await input.receiz.checkout({
       amountUsd: usdAmountFromCents(funding.cardDeltaUsdCents),
       currency: "usd",
-      uiMode: "hosted",
+      uiMode: "embedded",
       referenceId: orderId,
       description: input.description ?? input.note,
       customerEmail: input.customerEmail,
@@ -147,7 +152,9 @@ export async function createWalletFirstReceizSettlement(
     checkoutSession = await refreshCheckoutSessionIfNeeded(input.receiz, checkoutSession);
   }
 
-  if (funding.walletAppliedUsdCents > 0) {
+  const cardSettled = !funding.cardRequired || checkoutSessionIsPaid(checkoutSession);
+
+  if (funding.walletAppliedUsdCents > 0 && cardSettled) {
     const walletIdempotencyKey = `${input.idempotencyKey}:wallet`;
     walletTransfer = await input.receiz.connectTransfer(
       {
@@ -166,13 +173,13 @@ export async function createWalletFirstReceizSettlement(
 
   return {
     ok: true,
-    paid: !funding.cardRequired,
+    paid: cardSettled,
     funding,
     wallet,
     walletTransfer,
     checkoutSession,
     paymentRail,
-    settlementStatus: funding.cardRequired ? "card_required" : "settled",
+    settlementStatus: cardSettled ? "settled" : "card_required",
     receiptId: checkoutSession?.receiptId ?? walletTransfer?.ledgerEventId ?? walletTransfer?.transferId,
     proofBundle
   };

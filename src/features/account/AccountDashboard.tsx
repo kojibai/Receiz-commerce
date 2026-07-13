@@ -25,6 +25,7 @@ import type { CommerceState } from "@/types/domain";
 import type { HostContext } from "@/lib/hosting/host-context";
 import { ReceizAccountManagementPills, ReceizRecoveryPills } from "@/features/storefront/ReceizRecoveryPills";
 import { ShippingDetailsForm } from "@/features/storefront/ShippingDetailsForm";
+import { EmbeddedReceizPayment } from "@/features/payments/EmbeddedReceizPayment";
 
 export function AccountDashboard({
   initialHostContext,
@@ -33,7 +34,7 @@ export function AccountDashboard({
   initialHostContext?: HostContext;
   initialState?: CommerceState;
 }) {
-  const { state, actions, actionFeedback, hostContext, hydrated, receizSessionPending } = useTemplateStore(initialState, initialHostContext);
+  const { state, actions, actionFeedback, embeddedPayment, hostContext, hydrated, receizSessionPending } = useTemplateStore(initialState, initialHostContext);
   const tenantSurface = hostContext.surface === "tenant";
   const customer = customerForAccountSurface(state, tenantSurface);
   const receizHandle = customerReceizHandle(state, customer, tenantSurface);
@@ -71,6 +72,7 @@ export function AccountDashboard({
   }, [actions, hydrated, receizSessionPending, state.auth.receizId.connected, state.brand.name, tenantSurface]);
 
   return (
+    <>
     <main className="account-page" style={brandThemeStyle(state.brand)}>
       <header className="account-header">
         <Link className="kit-logo" href="/">
@@ -369,5 +371,17 @@ export function AccountDashboard({
         <PoweredByReceizBadge />
       </div>
     </main>
+    <EmbeddedReceizPayment
+      onClose={actions.dismissEmbeddedPayment}
+      onComplete={() => {
+        const payment = embeddedPayment;
+        actions.dismissEmbeddedPayment();
+        if (payment?.purpose === "storefront_checkout") {
+          void actions.startCheckout(payment.resumeProductId, payment.resumeReferenceId);
+        }
+      }}
+      session={embeddedPayment}
+    />
+    </>
   );
 }

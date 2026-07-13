@@ -17,6 +17,7 @@ import { PageBuilderPanel } from "@/features/admin/PageBuilderPanel";
 import { ProductEditorPanel } from "@/features/admin/ProductEditorPanel";
 import { PublishChecklist } from "@/features/admin/PublishChecklist";
 import { ReceizIdentityPanel } from "@/features/admin/ReceizIdentityPanel";
+import { EmbeddedReceizPayment } from "@/features/payments/EmbeddedReceizPayment";
 import { RewardsRulesPanel } from "@/features/admin/RewardsRulesPanel";
 import type { ActionFeedbackMap } from "@/types/action-feedback";
 import type { StorefrontHomepageMode } from "@/types/domain";
@@ -34,11 +35,12 @@ const adminMobileTabs = [
 ] as const;
 
 export function AdminStudio() {
-  const { state, actions, actionFeedback } = useTemplateStore();
+  const { state, actions, actionFeedback, embeddedPayment } = useTemplateStore();
   const campaignName = state.campaigns[0]?.name ?? "Reward Challenge";
   const merchantReceizAccount = currentMerchantReceizAccount(state);
 
   return (
+    <>
     <AdminShell onPublish={actions.publish} publishFeedback={actionFeedback.publish} state={state}>
       <MobileAdminConsole actionFeedback={actionFeedback} actions={actions} campaignName={campaignName} state={state} />
       <div className="admin-content">
@@ -233,6 +235,17 @@ export function AdminStudio() {
         </div>
       </div>
     </AdminShell>
+    <EmbeddedReceizPayment
+      onClose={actions.dismissEmbeddedPayment}
+      onComplete={() => {
+        const payment = embeddedPayment;
+        actions.dismissEmbeddedPayment();
+        if (payment?.resumePlan) void actions.selectHostingPlan(payment.resumePlan);
+        if (payment?.resumeDomain) void actions.connectCustomDomain(payment.resumeDomain);
+      }}
+      session={embeddedPayment}
+    />
+    </>
   );
 }
 

@@ -8,6 +8,10 @@ export type PlatformBillingReceipt = {
   message?: string;
 };
 
+export function platformPaymentConfirmed(receipt: PlatformBillingReceipt) {
+  return receipt.ok && receipt.paid === true;
+}
+
 function amountLabel(amountUsd: string | undefined) {
   const amount = Number(String(amountUsd ?? "0").replace(/[^0-9.]/g, ""));
   return `$${(Number.isFinite(amount) ? amount : 0).toFixed(2)}`;
@@ -26,7 +30,7 @@ export function hostingBillingFromPlatformPayment(
   plan: HostingConfig["plan"],
   receipt: PlatformBillingReceipt
 ): BillingConfig {
-  const paid = receipt.ok && receipt.paid === true;
+  const paid = platformPaymentConfirmed(receipt);
   const invoiceAmount = amountLabel(receipt.amountUsd);
   const invoiceStatus = paid ? "paid" as const : "open" as const;
 
@@ -52,7 +56,7 @@ export function hostingPlanUpdateFromPlatformPayment(
   plan: HostingConfig["plan"],
   receipt: PlatformBillingReceipt
 ): { ok: true; hosting: HostingConfig; message: string } | { ok: false; hosting: HostingConfig; message: string } {
-  if (plan !== "starter" && !(receipt.ok && receipt.paid === true)) {
+  if (plan !== "starter" && !platformPaymentConfirmed(receipt)) {
     return {
       ok: false,
       hosting: current,

@@ -161,6 +161,8 @@ The order book is projected from open durable orders. The trade tape is projecte
 
 #### Wallet-first settlement with card delta
 
+All identity, wallet, card, domain-upgrade, Exchange, receipt, and recovery interactions remain inside `receiz.app`, the tenant subdomain, or the merchant custom domain. Receiz backend rails remain the authority, but a user is never redirected to `receiz.com`. Card deltas use an embedded payment session with in-place success, cancellation, retry, and focus restoration.
+
 For a buy:
 
 1. Revalidate the asset, order, seller ownership, market status, and buyer permission.
@@ -173,6 +175,8 @@ For a buy:
 8. Mark the fill settled only after all required rails return durable receipts.
 9. Mint or append buyer ownership proof, release the seller quantity, update the order book, and publish the settlement event.
 10. Reconcile interrupted states with a durable job. Compensation releases reservations and never fabricates a completed trade.
+
+The same invariant applies to merchant-to-platform hosting and custom-domain fees: wallet funds the available amount, an embedded card session funds only the delta, and the plan or domain operation activates only after the durable combined receipt is confirmed. If wallet reservations are unavailable, wallet transfer waits for verified card completion.
 
 For a sell, ownership and available quantity are verified and reserved before the order opens. Proceeds settle to the seller's Receiz wallet/payout path after the fill becomes final.
 
@@ -313,4 +317,3 @@ Version 2 is successful when:
 - a growing team can operate orders, inventory, customers, fulfillment, returns, rewards, finance, and locations without leaving the product;
 - AI completes common workflows safely through the same authorized services as the UI;
 - the repository passes the complete release gates and remains straightforward to fork and extend.
-

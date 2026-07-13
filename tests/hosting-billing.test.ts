@@ -2,11 +2,17 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   hostingBillingFromPlatformPayment,
-  hostingPlanUpdateFromPlatformPayment
+  hostingPlanUpdateFromPlatformPayment,
+  platformPaymentConfirmed
 } from "../src/lib/hosting/platform-billing.js";
 import { baseState } from "./support/commerce-state.js";
 
 describe("hosting billing settlement", () => {
+  it("requires a confirmed receipt before any paid platform operation activates", () => {
+    assert.equal(platformPaymentConfirmed({ ok: true, paid: false, mode: "live" }), false);
+    assert.equal(platformPaymentConfirmed({ ok: false, paid: true, mode: "live" }), false);
+    assert.equal(platformPaymentConfirmed({ ok: true, paid: true, mode: "live" }), true);
+  });
   it("does not mark sandbox platform billing as a paid hosting subscription", () => {
     const billing = hostingBillingFromPlatformPayment(baseState().billing, "pro", {
       ok: true,
