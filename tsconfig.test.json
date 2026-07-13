@@ -46,6 +46,7 @@
     "src/features/play/creature-catalog.ts",
     "src/features/play/portable-card.ts",
     "src/features/play/card-export.ts",
+    "src/lib/exchange/asset-admission.ts",
     "src/data/seed.ts",
     "src/types/domain.ts"
   ]
