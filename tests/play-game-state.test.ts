@@ -8,6 +8,7 @@ import {
   serializePlayState,
   type PlayState
 } from "../src/features/play/game-state";
+import { verifyPortableCard } from "../src/features/play/portable-card.js";
 
 describe("Receiz Wilds game state", () => {
   it("moves the player into range and collects a new companion card", () => {
@@ -26,6 +27,68 @@ describe("Receiz Wilds game state", () => {
     assert.equal(next.selectedCardId, "voltray");
     assert.equal(next.beans > state.beans, true);
     assert.match(next.lastEvent, /Voltray card collected/);
+    assert.equal(next.inventory.length, state.inventory.length + 1);
+    assert.equal(next.inventory.at(-1)?.manifest.formId, "voltray-1");
+    assert.equal(verifyPortableCard(next.inventory.at(-1)!).ok, true);
+    assert.equal(next.pendingSyncAssetIds.includes(next.inventory.at(-1)!.id), true);
+  });
+
+  it("captures and seals one portable card atomically for an encounter", () => {
+    const nearby: PlayState = { ...initialPlayState, player: { x: 1.6, z: -2.1 } };
+    const input = {
+      type: "capture" as const,
+      encounterId: "encounter-voltray-test",
+      capturedAt: "2026-07-13T15:00:00.000Z",
+      ownerReceizId: "player.receiz.id"
+    };
+    const once = applyWildsInput(nearby, input);
+    const twice = applyWildsInput(once, input);
+
+    assert.equal(once.inventory.length, initialPlayState.inventory.length + 1);
+    assert.equal(twice.inventory.length, once.inventory.length);
+    assert.equal(twice.inventory.at(-1)?.id, once.inventory.at(-1)?.id);
+    assert.match(once.lastEvent, /sealed for offline use/i);
+  });
+
+  it("synchronizes a local card without minting another asset", () => {
+    const nearby: PlayState = { ...initialPlayState, player: { x: 1.6, z: -2.1 } };
+    const captured = applyWildsInput(nearby, {
+      type: "capture",
+      encounterId: "encounter-sync-test",
+      capturedAt: "2026-07-13T15:00:00.000Z",
+      ownerReceizId: "player.receiz.id"
+    });
+    const asset = captured.inventory.at(-1)!;
+    const synced = applyWildsInput(captured, {
+      type: "mark-synced",
+      assetId: asset.id,
+      synchronizedAt: "2026-07-13T15:01:00.000Z"
+    });
+
+    assert.equal(synced.inventory.length, captured.inventory.length);
+    assert.equal(synced.inventory.at(-1)?.status, "verified");
+    assert.equal(synced.pendingSyncAssetIds.includes(asset.id), false);
+  });
+
+  it("evolves an eligible card and retains its earlier portable form", () => {
+    const base = initialPlayState.inventory[0]!;
+    const ready: PlayState = {
+      ...initialPlayState,
+      companionProgress: {
+        ...initialPlayState.companionProgress,
+        mintcub: { level: 10, xp: 0, bond: 100 }
+      }
+    };
+    const evolved = applyWildsInput(ready, {
+      type: "evolve",
+      assetId: base.id,
+      evolvedAt: "2026-07-14T15:00:00.000Z"
+    });
+
+    assert.equal(evolved.inventory.length, ready.inventory.length + 1);
+    assert.equal(evolved.inventory.some((asset) => asset.id === base.id), true);
+    assert.equal(evolved.inventory.at(-1)?.manifest.formId, "mintcub-2");
+    assert.equal(evolved.inventory.at(-1)?.manifest.lineage.previousAssetId, base.id);
   });
 
   it("does not select cards the player has not collected", () => {
@@ -95,6 +158,18 @@ describe("Receiz Wilds game state", () => {
     const trained = applyWildsInput(initialPlayState, { type: "train" });
     assert.deepEqual(restorePlayState(serializePlayState(trained)), trained);
     assert.deepEqual(restorePlayState("not-json"), initialPlayState);
+  });
+
+  it("migrates a v2 discovery save into sealed portable inventory", () => {
+    const legacy = JSON.stringify({
+      schema: "receiz.wilds.save.v2",
+      state: { ...initialPlayState, inventory: undefined, pendingSyncAssetIds: undefined, discoveredCardIds: ["mintcub", "voltray"] }
+    });
+    const restored = restorePlayState(legacy);
+
+    assert.equal(restored.inventory.some((asset) => asset.manifest.formId === "mintcub-1"), true);
+    assert.equal(restored.inventory.some((asset) => asset.manifest.formId === "voltray-1"), true);
+    assert.equal(restored.inventory.every((asset) => verifyPortableCard(asset).ok), true);
   });
 
   it("supports continuous analog travel across a billion-unit world", () => {

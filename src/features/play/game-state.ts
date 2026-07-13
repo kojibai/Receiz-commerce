@@ -1,9 +1,20 @@
+import { creatureForm } from "./creature-catalog";
+import {
+  evolvePortableCard,
+  sealCollectedCard,
+  verifyPortableCard,
+  type PortableCardAsset
+} from "./portable-card";
+
 export type GameAction = "explore" | "train" | "mission";
 export type MoveDirection = "north" | "south" | "west" | "east";
 export type WildsInput =
   | { type: "move"; direction: MoveDirection }
   | { type: "move-vector"; x: number; z: number }
   | { type: "discover" }
+  | { type: "capture"; encounterId: string; capturedAt: string; ownerReceizId: string }
+  | { type: "mark-synced"; assetId: string; synchronizedAt: string }
+  | { type: "evolve"; assetId: string; evolvedAt: string }
   | { type: "train"; cardId?: string }
   | { type: "mission" }
   | { type: "rest" }
@@ -57,6 +68,7 @@ export type PlayState = {
   completedMissionIds: string[];
   discoveredCardIds: string[];
   energy: number;
+  inventory: PortableCardAsset[];
   lastEvent: string;
   level: number;
   missionProgress: number;
@@ -64,6 +76,7 @@ export type PlayState = {
     x: number;
     z: number;
   };
+  pendingSyncAssetIds: string[];
   rewardCards: RewardCard[];
   selectedCardId: string;
   streak: number;
@@ -169,6 +182,18 @@ export const initialPlayState: PlayState = {
   completedMissionIds: [],
   discoveredCardIds: ["mintcub"],
   energy: 84,
+  inventory: [
+    {
+      ...sealCollectedCard({
+        formId: "mintcub-1",
+        ownerReceizId: "wilds.player.receiz.id",
+        encounterId: "starter-mintcub",
+        capturedAt: "2026-06-29T12:00:00.000Z"
+      }),
+      status: "verified",
+      synchronizedAt: "2026-06-29T12:00:00.000Z"
+    }
+  ],
   lastEvent: "Mintcub joined your deck. Walk near another wild companion.",
   level: 7,
   missionProgress: 38,
@@ -176,6 +201,7 @@ export const initialPlayState: PlayState = {
     x: -2.15,
     z: -0.85
   },
+  pendingSyncAssetIds: [],
   rewardCards: [],
   selectedCardId: "mintcub",
   streak: 9,
@@ -183,7 +209,8 @@ export const initialPlayState: PlayState = {
   worldRank: "Grove scout"
 };
 
-const PLAY_SAVE_SCHEMA = "receiz.wilds.save.v2";
+const PLAY_SAVE_SCHEMA = "receiz.wilds.save.v3";
+const LEGACY_PLAY_SAVE_SCHEMA = "receiz.wilds.save.v2";
 
 export function serializePlayState(state: PlayState) {
   return JSON.stringify({ schema: PLAY_SAVE_SCHEMA, state });
@@ -193,9 +220,25 @@ export function restorePlayState(value: string | null | undefined): PlayState {
   if (!value) return initialPlayState;
   try {
     const parsed = JSON.parse(value) as { schema?: unknown; state?: unknown };
-    if (parsed.schema !== PLAY_SAVE_SCHEMA || !parsed.state || typeof parsed.state !== "object") return initialPlayState;
+    if ((parsed.schema !== PLAY_SAVE_SCHEMA && parsed.schema !== LEGACY_PLAY_SAVE_SCHEMA) || !parsed.state || typeof parsed.state !== "object") return initialPlayState;
     const saved = parsed.state as Partial<PlayState>;
     if (!saved.player || typeof saved.player.x !== "number" || typeof saved.player.z !== "number") return initialPlayState;
+    const discoveredCardIds = Array.isArray(saved.discoveredCardIds)
+      ? saved.discoveredCardIds.filter((id): id is string => typeof id === "string" && creatureCards.some((card) => card.id === id))
+      : initialPlayState.discoveredCardIds;
+    const restoredInventory = Array.isArray(saved.inventory)
+      ? saved.inventory.filter((asset): asset is PortableCardAsset => Boolean(asset) && verifyPortableCard(asset as PortableCardAsset).ok)
+      : [];
+    const migratedInventory = discoveredCardIds.reduce<PortableCardAsset[]>((assets, cardId, index) => {
+      if (assets.some((asset) => asset.manifest.familyId === cardId)) return assets;
+      const sealed = sealCollectedCard({
+        formId: `${cardId}-1`,
+        ownerReceizId: "wilds.player.receiz.id",
+        encounterId: `legacy-${cardId}`,
+        capturedAt: new Date(Date.UTC(2026, 5, 29, 12, index)).toISOString()
+      });
+      return [...assets, sealed];
+    }, restoredInventory);
     return withWorldProgress({
       ...initialPlayState,
       ...saved,
@@ -203,9 +246,11 @@ export function restorePlayState(value: string | null | undefined): PlayState {
         x: clamp(saved.player.x, worldBounds.min, worldBounds.max),
         z: clamp(saved.player.z, worldBounds.min, worldBounds.max)
       },
-      discoveredCardIds: Array.isArray(saved.discoveredCardIds)
-        ? saved.discoveredCardIds.filter((id): id is string => typeof id === "string" && creatureCards.some((card) => card.id === id))
-        : initialPlayState.discoveredCardIds,
+      discoveredCardIds,
+      inventory: migratedInventory,
+      pendingSyncAssetIds: Array.isArray(saved.pendingSyncAssetIds)
+        ? saved.pendingSyncAssetIds.filter((id): id is string => typeof id === "string" && migratedInventory.some((asset) => asset.id === id))
+        : migratedInventory.filter((asset) => asset.status === "sealed_local").map((asset) => asset.id),
       companionProgress: {
         ...initialPlayState.companionProgress,
         ...(saved.companionProgress ?? {})
@@ -240,6 +285,39 @@ export function canDiscover(state: PlayState) {
 
 export function applyWildsInput(state: PlayState, input: WildsInput): PlayState {
   if (input.type === "reset") return initialPlayState;
+
+  if (input.type === "mark-synced") {
+    if (!Number.isFinite(Date.parse(input.synchronizedAt))) return state;
+    const target = state.inventory.find((asset) => asset.id === input.assetId);
+    if (!target || target.status !== "sealed_local") return state;
+    return {
+      ...state,
+      inventory: state.inventory.map((asset) => asset.id === input.assetId
+        ? { ...asset, status: "verified", synchronizedAt: input.synchronizedAt }
+        : asset),
+      pendingSyncAssetIds: state.pendingSyncAssetIds.filter((id) => id !== input.assetId),
+      lastEvent: `${target.manifest.name} synchronized and is Exchange eligible.`
+    };
+  }
+
+  if (input.type === "evolve") {
+    const previous = state.inventory.find((asset) => asset.id === input.assetId);
+    if (!previous || previous.manifest.stage >= 3) return state;
+    const next = creatureForm(`${previous.manifest.familyId}-${previous.manifest.stage + 1}`);
+    const progress = state.companionProgress[previous.manifest.familyId] ?? { level: 1, xp: 0, bond: 0 };
+    if (!next || progress.level < next.evolution.level || progress.bond < next.evolution.bond) {
+      return { ...state, lastEvent: `${previous.manifest.name} needs more levels and bond before evolving.` };
+    }
+    const evolved = evolvePortableCard({ previous, nextFormId: next.id, evolvedAt: input.evolvedAt });
+    if (state.inventory.some((asset) => asset.id === evolved.id)) return state;
+    return {
+      ...state,
+      inventory: [...state.inventory, evolved],
+      pendingSyncAssetIds: [...state.pendingSyncAssetIds, evolved.id],
+      cardXp: state.cardXp + 25,
+      lastEvent: `${previous.manifest.name} evolved into ${next.name}. The new form is sealed for offline use.`
+    };
+  }
 
   if (input.type === "select-card") {
     if (!state.discoveredCardIds.includes(input.cardId)) return state;
@@ -279,7 +357,7 @@ export function applyWildsInput(state: PlayState, input: WildsInput): PlayState 
     };
   }
 
-  if (input.type === "discover") {
+  if (input.type === "discover" || input.type === "capture") {
     const nearest = nearestCreature(state);
     if (!nearest || nearest.distance > 1.25) {
       return {
@@ -298,6 +376,32 @@ export function applyWildsInput(state: PlayState, input: WildsInput): PlayState 
       };
     }
 
+    const encounterId = input.type === "capture" ? input.encounterId : `legacy-encounter-${nearest.card.id}`;
+    const capturedAt = input.type === "capture" ? input.capturedAt : "2026-07-13T12:00:00.000Z";
+    const ownerReceizId = input.type === "capture" ? input.ownerReceizId : "wilds.player.receiz.id";
+    const existingEncounter = state.inventory.find((asset) => asset.manifest.encounterId === encounterId);
+    if (existingEncounter) {
+      return {
+        ...state,
+        selectedCardId: existingEncounter.manifest.familyId,
+        lastEvent: `${existingEncounter.manifest.name} is already sealed in your inventory.`
+      };
+    }
+    let sealed: PortableCardAsset;
+    try {
+      sealed = sealCollectedCard({
+        formId: `${nearest.card.id}-1`,
+        ownerReceizId,
+        encounterId,
+        capturedAt
+      });
+    } catch {
+      return { ...state, lastEvent: "The Receiz Capsule reopened because the local seal could not be verified. Try again." };
+    }
+    if (!verifyPortableCard(sealed).ok) {
+      return { ...state, lastEvent: "The Receiz Capsule reopened because the local seal could not be verified. Try again." };
+    }
+
     const nextDiscovered = [...state.discoveredCardIds, nearest.card.id];
     return withWorldProgress({
       ...state,
@@ -305,10 +409,12 @@ export function applyWildsInput(state: PlayState, input: WildsInput): PlayState 
       beans: state.beans + 6,
       cardXp: state.cardXp + 12,
       discoveredCardIds: nextDiscovered,
-      lastEvent: `${nearest.card.name} card collected. ${nearest.card.businessLogic}.`,
+      inventory: [...state.inventory, sealed],
+      lastEvent: `${nearest.card.name} card collected and sealed for offline use. ${nearest.card.businessLogic}.`,
       combo: state.combo + 1,
       level: nextDiscovered.length >= 3 ? Math.max(state.level, 8) : state.level,
       missionProgress: Math.min(100, state.missionProgress + 12),
+      pendingSyncAssetIds: [...state.pendingSyncAssetIds, sealed.id],
       selectedCardId: nearest.card.id,
       streak: state.streak + 1
     });
