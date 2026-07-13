@@ -14,4 +14,14 @@ describe("Receiz v2 dependency contract", () => {
     assert.equal(pkg.dependencies["@receiz/sdk"], "^99.0.0");
     assert.equal(pkg.pnpm?.overrides?.postcss, ">=8.5.10");
   });
+
+  it("documents the supported MCP pair and authoritative theme publication", () => {
+    const readme = readFileSync("README.md", "utf8");
+    const rails = readFileSync("docs/SDK_RAILS.md", "utf8");
+
+    assert.match(readme, /@receiz\/mcp-server@99\.0\.0/);
+    assert.match(readme, /Publish theme/);
+    assert.match(rails, /@receiz\/sdk@99\.0\.0/);
+    assert.match(rails, /authoritative public-store revision/);
+  });
 });

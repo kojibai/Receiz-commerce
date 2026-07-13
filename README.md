@@ -187,14 +187,16 @@ For MCP-capable agents such as Codex, add Receiz as an MCP server in the agent c
 ```toml
 [mcp_servers.receiz]
 command = "npx"
-args = ["-y", "@receiz/mcp-server@98.0.0"]
+args = ["-y", "@receiz/mcp-server@99.0.0"]
 startup_timeout_sec = 120
 
 [mcp_servers.receiz.env]
 RECEIZ_BASE_URL = "https://receiz.com"
 ```
 
-Use `@receiz/mcp-server@98.0.0` for agent-side diagnostics and SDK/API rail calls. MCP never becomes the authority; it only helps inspect or invoke rails beneath proof objects.
+Use `@receiz/mcp-server@99.0.0` for agent-side diagnostics and SDK/API rail calls. MCP never becomes the authority; it only helps inspect or invoke rails beneath proof objects.
+
+Brand edits preview immediately in the merchant workspace. `Publish theme` uses the same signed publication transaction as `Publish changes`: success means the authoritative public-store revision was accepted and adopted by the workspace. A pending or failed publication remains visibly unresolved and is never presented as globally saved. Other open merchant tabs adopt the updated workspace through scoped storage synchronization, while storefront subdomains and custom domains continue to resolve from the published Receiz projection.
 
 ## AI Operator Layer
 

@@ -102,7 +102,7 @@ SDK rails:
 - `merchants.profile`
 - `merchants.capabilities`
 
-These rails are exposed in `@receiz/sdk@98.0.0`. The app treats customer accounts as tenant-scoped storefront projections over Receiz proof. The same proof-bearing Receiz identity can be used across multiple stores, but orders, rewards, assets, and permissions are projected for the active subdomain or custom domain. SDK `doctor()` reports delegated-token, tenant, customer, merchant, commerce, media, domain, and public-store requirements directly.
+These rails are exposed in `@receiz/sdk@99.0.0`. The app treats customer accounts as tenant-scoped storefront projections over Receiz proof. The same proof-bearing Receiz identity can be used across multiple stores, but orders, rewards, assets, and permissions are projected for the active subdomain or custom domain. SDK `doctor()` reports delegated-token, tenant, customer, merchant, commerce, media, domain, and public-store requirements directly.
 
 ## Merchant Settlement
 
@@ -244,4 +244,4 @@ Receiz Twin/World buttons are hidden unless both are true:
 - The relevant `NEXT_PUBLIC_RECEIZ_*_ENABLED` flag is set.
 - The installed `@receiz/sdk` client exposes the matching namespace.
 
-With `@receiz/sdk@98.0.0`, typed app-state, signed public-store publish, Twin, World, commerce runtime, domain, customer, merchant, media, portability, and release namespaces are exposed. The publish path uploads inline merchant media with `media.upload()` when delegated media permission is available, then writes state through the signed public-store rail when the local Identity Seal key file is present, so published subdomains and custom domains render durable Receiz media URLs and the current proof object. The frontend still hides optional Twin/World buttons when the matching env flag is disabled.
+With `@receiz/sdk@99.0.0`, typed app-state, signed public-store publish, Twin, World, commerce runtime, domain, customer, merchant, media, portability, and release namespaces are exposed. The publish path uploads inline merchant media with `media.upload()` when delegated media permission is available, then writes state through the signed public-store rail when the local Identity Seal key file is present, so published subdomains and custom domains render durable Receiz media URLs and the current proof object. `Publish theme` writes and adopts this same authoritative public-store revision; browser storage is only an offline workspace projection and cross-tab synchronization mechanism. The frontend still hides optional Twin/World buttons when the matching env flag is disabled.
