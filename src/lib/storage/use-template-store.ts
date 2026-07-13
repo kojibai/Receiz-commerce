@@ -26,6 +26,7 @@ import {
 } from "@/lib/checkout/customer-purchase";
 import type { CommerceImportInput, CommerceImportResult } from "@/lib/import/commerce-importer";
 import { selectClientInitialState } from "@/lib/storage/client-state";
+import { externalWorkspaceState } from "@/lib/storage/workspace-sync";
 import { safeGetLocalStorage, safeRemoveLocalStorage, safeSetLocalStorage } from "@/lib/storage/browser-storage";
 import { mergeCustomDomainHostingResponse } from "@/lib/storage/hosting-response";
 import { pendingPublishStorageKey, shouldResumePendingPublish } from "@/lib/storage/pending-publish";
@@ -1887,6 +1888,17 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
   }, [hostContext.storageKey, hostContext.surface, hydrated, state]);
 
   useEffect(() => {
+    if (!hydrated || hostContext.surface !== "platform") return;
+
+    const handleStorage = (event: StorageEvent) => {
+      setState((current) => externalWorkspaceState(event, hostContext, current) ?? current);
+    };
+
+    window.addEventListener("storage", handleStorage);
+    return () => window.removeEventListener("storage", handleStorage);
+  }, [hostContext, hydrated]);
+
+  useEffect(() => {
     if (!hydrated || hostContext.surface !== "tenant") return;
 
     safeSetLocalStorage(window.localStorage, hostContext.storageKey, JSON.stringify({ cart: state.cart }));
@@ -2007,6 +2019,98 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
     return false;
   }, []);
 
+  const publishWorkspace = useCallback(async (options: {
+    feedbackId: "publish" | "brand.saveTheme";
+    pendingMessage: string;
+    successMessage: string;
+    pendingEventDetail: string;
+    successEventDetail: string;
+    eventType: ProofEvent["type"];
+    prepareState?: (current: CommerceState) => CommerceState;
+  }): Promise<boolean> => {
+    if (!(await ensureMerchantProofAuthority("publish"))) {
+      setActionFeedback(options.feedbackId, "error", "Create or restore a verified Receiz proof object in app");
+      return false;
+    }
+
+    setActionFeedback(options.feedbackId, "pending", options.pendingMessage);
+    const publishHostContext = currentHostContext();
+    const preparedState = options.prepareState?.(stateRef.current) ?? stateRef.current;
+    const publishRequestState = stateWithCurrentMerchantReceizAccount({
+      ...preparedState,
+      hosting: { ...preparedState.hosting, published: true, lastPublishedAt: "now" }
+    });
+
+    markPendingPublish(publishHostContext.storageKey);
+    setState((current) => {
+      const next = options.prepareState?.(current) ?? current;
+      return {
+        ...next,
+        proofEvents: [makeEvent(options.eventType, options.pendingEventDetail), ...next.proofEvents]
+      };
+    });
+
+    try {
+      const result = await postJson<{
+        hosting: CommerceState["hosting"];
+        state?: Partial<CommerceState>;
+        storeStateSync?: StoreStateSyncResponse;
+      }>(
+        "/api/hosting",
+        await prepareHostingStoreStateRequestBody("publish", publishRequestState, merchantProof(publishRequestState)),
+        {
+          deferAuthorityRedirect: true,
+          maxBodyChars: HOSTING_PUBLISH_REQUEST_BODY_MAX_CHARS
+        }
+      );
+
+      const syncError = storeStateSyncError(result.storeStateSync);
+      const syncPending = storeStateSyncPending(result.storeStateSync);
+
+      clearPendingPublish(publishHostContext.storageKey);
+
+      if (syncError || syncPending) {
+        const message =
+          syncError ||
+          result.storeStateSync?.warning ||
+          "Receiz public-store sync is pending; publish is not durable yet.";
+        setActionFeedback(options.feedbackId, "error", message);
+        setState((latest) => ({
+          ...latest,
+          proofEvents: [makeEvent(options.eventType, message), ...latest.proofEvents]
+        }));
+        return false;
+      }
+
+      setActionFeedback(options.feedbackId, "success", options.successMessage);
+      setState((latest) => ({
+        ...mergePublishedPublicState(latest, result.state, result.hosting),
+        proofEvents: [makeEvent(options.eventType, options.successEventDetail), ...latest.proofEvents]
+      }));
+      return true;
+    } catch (error) {
+      clearPendingPublish(publishHostContext.storageKey);
+
+      const message =
+        error instanceof ReceizAuthorityRequiredError
+          ? "Receiz proof object required to publish"
+          : error instanceof Error
+            ? error.message
+            : "Publish sync failed";
+      const eventMessage =
+        error instanceof ReceizAuthorityRequiredError
+          ? "Receiz proof object required to publish. Create or restore a verified proof object in app, then publish again."
+          : message;
+
+      setActionFeedback(options.feedbackId, "error", message);
+      setState((latest) => ({
+        ...latest,
+        proofEvents: [makeEvent(options.eventType, eventMessage), ...latest.proofEvents]
+      }));
+      return false;
+    }
+  }, [ensureMerchantProofAuthority, merchantProof, setActionFeedback]);
+
   const actions = useMemo(
     () => ({
       reset() {
@@ -2023,11 +2127,15 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
         }));
       },
       saveTheme() {
-        setActionFeedback("brand.saveTheme", "success", "Theme saved");
-        setState((current) => ({
-          ...completePublishChecklistItem(current, "brand"),
-          proofEvents: [makeEvent("THEME_UPDATED", `${current.brand.name} theme saved`), ...current.proofEvents]
-        }));
+        void publishWorkspace({
+          feedbackId: "brand.saveTheme",
+          pendingMessage: "Publishing theme",
+          successMessage: "Theme published",
+          pendingEventDetail: "Publishing theme to Receiz proof rails",
+          successEventDetail: "Theme published to Receiz proof rails",
+          eventType: "THEME_UPDATED",
+          prepareState: (current) => completePublishChecklistItem(current, "brand")
+        });
       },
       updateStorefront(input: Partial<CommerceState["storefront"]>) {
         setState((current) => ({
@@ -2849,84 +2957,14 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
         }
       },
       publish() {
-        void (async () => {
-          if (!(await ensureMerchantProofAuthority("publish"))) {
-            setActionFeedback("publish", "error", "Create or restore a verified Receiz proof object in app");
-            return;
-          }
-
-          setActionFeedback("publish", "pending", "Publishing store");
-          const publishHostContext = currentHostContext();
-          const publishRequestState = stateWithCurrentMerchantReceizAccount({
-            ...stateRef.current,
-            hosting: { ...stateRef.current.hosting, published: true, lastPublishedAt: "now" }
-          });
-
-          markPendingPublish(publishHostContext.storageKey);
-          setState((current) => ({
-            ...current,
-            proofEvents: [makeEvent("SITE_PUBLISHED", "Publishing store to Receiz proof rails"), ...current.proofEvents]
-          }));
-
-          try {
-            const result = await postJson<{
-              hosting: CommerceState["hosting"];
-              state?: Partial<CommerceState>;
-              storeStateSync?: StoreStateSyncResponse;
-            }>(
-              "/api/hosting",
-              await prepareHostingStoreStateRequestBody("publish", publishRequestState, merchantProof(publishRequestState)),
-              {
-                deferAuthorityRedirect: true,
-                maxBodyChars: HOSTING_PUBLISH_REQUEST_BODY_MAX_CHARS
-              }
-            );
-
-            const syncError = storeStateSyncError(result.storeStateSync);
-            const syncPending = storeStateSyncPending(result.storeStateSync);
-
-            clearPendingPublish(publishHostContext.storageKey);
-
-            if (syncError || syncPending) {
-              const message = syncError || result.storeStateSync?.warning || "Receiz public-store sync is pending; publish is not durable yet.";
-              setActionFeedback("publish", "error", message);
-              setState((latest) => ({
-                ...latest,
-                proofEvents: [makeEvent("SITE_PUBLISHED", message), ...latest.proofEvents]
-              }));
-              return;
-            }
-
-            setActionFeedback("publish", "success", "Store published");
-            setState((latest) => ({
-              ...mergePublishedPublicState(latest, result.state, result.hosting),
-              proofEvents: [makeEvent("SITE_PUBLISHED", "Store published to Receiz proof rails"), ...latest.proofEvents]
-            }));
-          } catch (error) {
-            if (error instanceof ReceizAuthorityRequiredError) {
-              clearPendingPublish(publishHostContext.storageKey);
-              setActionFeedback("publish", "error", "Receiz proof object required to publish");
-              setState((latest) => ({
-                ...latest,
-                proofEvents: [
-                  makeEvent("SITE_PUBLISHED", "Receiz proof object required to publish. Create or restore a verified proof object in app, then publish again."),
-                  ...latest.proofEvents
-                ]
-              }));
-              return;
-            }
-
-            clearPendingPublish(publishHostContext.storageKey);
-            setActionFeedback("publish", "error", error instanceof Error ? error.message : "Publish sync failed");
-            setState((latest) => ({
-              ...latest,
-              proofEvents: [
-                makeEvent("SITE_PUBLISHED", error instanceof Error ? error.message : "Publish sync failed"),
-                ...latest.proofEvents
-              ]
-            }));
-          }
-        })();
+        void publishWorkspace({
+          feedbackId: "publish",
+          pendingMessage: "Publishing store",
+          successMessage: "Store published",
+          pendingEventDetail: "Publishing store to Receiz proof rails",
+          successEventDetail: "Store published to Receiz proof rails",
+          eventType: "SITE_PUBLISHED"
+        });
       },
       addPage(page: SitePage) {
         const nextPage = pageWithDefaults(page);
@@ -3449,7 +3487,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
         }));
       }
     }),
-    [ensureMerchantProofAuthority, merchantProof, setActionFeedback]
+    [ensureMerchantProofAuthority, merchantProof, publishWorkspace, setActionFeedback]
   );
 
   useEffect(() => {

@@ -25,10 +25,15 @@ export function BrandPanel({
           <div className="action-feedback-stack compact">
             <Button
               className={saveFeedback ? `action-button-${saveFeedback.status}` : undefined}
+              disabled={saveFeedback?.status === "pending"}
               onClick={onSaveTheme}
               variant="outline"
             >
-              {saveFeedback?.status === "success" ? "Saved" : "Save theme"}
+              {saveFeedback?.status === "pending"
+                ? "Publishing theme"
+                : saveFeedback?.status === "success"
+                  ? "Theme published"
+                  : "Publish theme"}
             </Button>
             <InlineActionFeedback feedback={saveFeedback} />
           </div>
