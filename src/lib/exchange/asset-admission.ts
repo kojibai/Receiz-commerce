@@ -1,7 +1,7 @@
 import type { DocumentVerifyResponse } from "@receiz/sdk";
-import { portableCardExchangeAsset, verifyPortableCard, type PortableCardAsset } from "../../features/play/portable-card.js";
-import type { ReceizAssetManifestProjection, ReceizedAsset } from "../../types/domain.js";
-import { verifiedExchangeAsset } from "./listing-authority.js";
+import { portableCardExchangeAsset, verifyPortableCard, type PortableCardAsset } from "../../features/play/portable-card";
+import type { ReceizAssetManifestProjection, ReceizedAsset } from "@/types/domain";
+import { verifiedExchangeAsset } from "./listing-authority";
 
 export function localAssetVerifyPath(manifest: ReceizAssetManifestProjection) {
   return `/verify?claim=${encodeURIComponent(manifest.proof.receizClaimId)}&pulse=${encodeURIComponent(manifest.proof.kaiPulseEternal)}`;

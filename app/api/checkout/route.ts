@@ -26,6 +26,7 @@ import {
   summarizeReceizStoreStatePublicationResult
 } from "@/lib/receiz/store-state-publication";
 import type { CommerceState, Order } from "@/types/domain";
+import { settleSandboxExchangeTrade } from "@/lib/exchange/sandbox-settlement";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
@@ -423,6 +424,42 @@ export async function POST(request: NextRequest) {
       : hostContext.tenantSlug
         ? `${hostContext.tenantSlug}.receiz.id`
         : process.env.RECEIZ_DEFAULT_MERCHANT_RECEIZ_ID ?? "merchant.receiz.id";
+  if (stringFromBody(body, "commerceAction") === "exchange_trade") {
+    try {
+      const actorReceizId = stringFromBody(body, "customerReceizId") ?? "sandbox-buyer.receiz.id";
+      const referenceId = stringFromBody(body, "referenceId") ?? order.id;
+      const settled = settleSandboxExchangeTrade(mockStorage.getState(), {
+        actorReceizId,
+        assetId: String(body.assetId ?? ""),
+        settlementLedgerEventId: `sandbox:${referenceId}`,
+        shares: Number(body.shares ?? 0),
+        side: body.side === "sell" ? "sell" : "buy"
+      });
+      mockStorage.replaceState(settled.state);
+      return NextResponse.json({
+        ok: true,
+        mode: "sandbox",
+        paid: true,
+        order,
+        funding: {
+          strategy: "receiz_wallet_first",
+          totalLabel: settled.preview.totalLabel,
+          walletAppliedLabel: settled.preview.walletAppliedLabel,
+          cardDeltaLabel: settled.preview.cardDeltaLabel,
+          cardRequired: false
+        },
+        exchange: {
+          state: settled.state,
+          storeStateSync: { ok: true, synced: true, result: "sandbox_settled" }
+        }
+      });
+    } catch (error) {
+      return NextResponse.json(
+        { ok: false, error: error instanceof Error ? error.message : "exchange_trade_unavailable" },
+        { status: 409 }
+      );
+    }
+  }
   const commerceProjection = await recordCheckoutCommerceEvent({
     checkoutSessionId: order.checkoutSessionId,
     customerEmail: stringFromBody(body, "customerEmail"),

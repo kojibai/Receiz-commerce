@@ -7956,6 +7956,19 @@ a {
   margin-top: 14px;
 }
 
+/* Compact desks live beside the storefront rail, so reserve a readable chart column
+   and move the ticket/depth tools onto full-width rows at desktop widths. */
+.exchange-desk.compact .exchange-terminal {
+  grid-template-columns: minmax(150px, 0.62fr) minmax(340px, 1.38fr);
+}
+
+.exchange-desk.compact .exchange-trade-column,
+.exchange-desk.compact .exchange-depth-column {
+  grid-column: 1 / -1;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-content: stretch;
+}
+
 .exchange-terminal {
   display: grid;
   grid-template-columns: minmax(174px, 0.78fr) minmax(0, 1.55fr) minmax(238px, 0.92fr);

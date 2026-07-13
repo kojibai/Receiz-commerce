@@ -16,6 +16,7 @@ import type {
 
 export type StorageAdapter = {
   getState(): CommerceState;
+  replaceState(input: CommerceState): CommerceState;
   getStorefrontConfig(): StorefrontConfig;
   updateStorefrontConfig(input: Partial<StorefrontConfig>): StorefrontConfig;
   listPages(): SitePage[];
@@ -55,6 +56,10 @@ let state = cloneState();
 
 export const mockStorage: StorageAdapter = {
   getState() {
+    return state;
+  },
+  replaceState(input) {
+    state = structuredClone(input);
     return state;
   },
   getStorefrontConfig() {

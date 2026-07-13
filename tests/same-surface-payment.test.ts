@@ -45,6 +45,7 @@ describe("same-surface payment contract", () => {
     assert.match(checkout, /commerceAction === "exchange_trade"/);
     assert.match(checkout, /exchangeTrade && settlement\.paid/);
     assert.match(checkout, /publishSettledExchangeTrade/);
+    assert.match(checkout, /settleSandboxExchangeTrade/);
     assert.match(exchange, /verifyArtifact\(file\)/);
     assert.match(exchange, /publishAndAdmitReceizStoreState/);
   });

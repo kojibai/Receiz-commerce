@@ -120,7 +120,8 @@ export function PlayCampaign({
   ownerReceizId?: string;
   onListAsset?: (asset: PortableCardAsset, priceCents: number) => Promise<PortableCardAsset | null>;
 }) {
-  const [state, setState] = useState(() => typeof window === "undefined" ? initialPlayState : restorePlayState(window.localStorage.getItem(WILDS_SAVE_KEY)));
+  const [state, setState] = useState(initialPlayState);
+  const [saveRestored, setSaveRestored] = useState(false);
   const [rewardAsset, setRewardAsset] = useState<PortableCardAsset | null>(null);
   const activeMission = missionCards[state.completedMissionIds.length % missionCards.length];
   const activeCard = selectedCard(state);
@@ -130,12 +131,18 @@ export function PlayCampaign({
   const activeProgress = state.companionProgress[activeCard.id] ?? { level: 1, xp: 0, bond: 0 };
 
   useEffect(() => {
+    setState(restorePlayState(window.localStorage.getItem(WILDS_SAVE_KEY)));
+    setSaveRestored(true);
+  }, []);
+
+  useEffect(() => {
+    if (!saveRestored) return;
     try {
       window.localStorage.setItem(WILDS_SAVE_KEY, serializePlayState(state));
     } catch {
       // The game remains playable when browser persistence is unavailable.
     }
-  }, [state]);
+  }, [saveRestored, state]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {

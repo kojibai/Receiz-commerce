@@ -63,6 +63,8 @@ describe("Receiz Wilds rendering contract", () => {
     assert.match(campaign, /type: "capture"/);
     assert.match(campaign, /WildsCaptureReward/);
     assert.match(campaign, /WildsInventory/);
+    assert.match(campaign, /useState\(initialPlayState\)/);
+    assert.match(campaign, /setState\(restorePlayState\(window\.localStorage\.getItem\(WILDS_SAVE_KEY\)\)\)/);
     assert.match(reward, /role="dialog"/);
     assert.match(reward, /aria-live="assertive"/);
     assert.match(reward, /wilds-capture-capsule/);
