@@ -1,13 +1,19 @@
 import { creatureForm } from "./creature-catalog";
-import { canonicalPortableCardJson, type PortableCardAsset } from "./portable-card";
+import {
+  canonicalPortableCardJson,
+  sha256PortableBasis,
+  verifyPortableCard,
+  type PortableCardAsset
+} from "./portable-card";
 
-export type PortableCardPackage = {
-  schema: "receiz.wilds_portable_package.v1";
+export type PortableCardPngProof = {
+  schema: "receiz.wilds_png_proof.v1";
+  imageDigest: string;
   asset: PortableCardAsset;
-  lineage: PortableCardAsset["manifest"]["lineage"];
-  cardSvg: string;
-  offlineVerification: string;
 };
+
+const PNG_SIGNATURE = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]);
+const PROOF_CHUNK_TYPE = "rzCd";
 
 function xml(value: string | number) {
   return String(value)
@@ -86,14 +92,112 @@ export function renderWildsCardSvg(asset: PortableCardAsset) {
 </svg>`;
 }
 
-export function portableCardPackage(asset: PortableCardAsset): PortableCardPackage {
-  return {
-    schema: "receiz.wilds_portable_package.v1",
-    asset,
-    lineage: asset.manifest.lineage,
-    cardSvg: renderWildsCardSvg(asset),
-    offlineVerification: "Recompute SHA-256 over the sorted-key canonical manifest JSON and compare it with asset.proof.digest. Then validate catalog version, form identity, stats, owner, and lineage."
+type PngChunk = { type: string; data: Uint8Array };
+
+function uint32(bytes: Uint8Array, offset: number) {
+  return (((bytes[offset]! << 24) | (bytes[offset + 1]! << 16) | (bytes[offset + 2]! << 8) | bytes[offset + 3]!) >>> 0);
+}
+
+function uint32Bytes(value: number) {
+  return new Uint8Array([(value >>> 24) & 0xff, (value >>> 16) & 0xff, (value >>> 8) & 0xff, value & 0xff]);
+}
+
+function concatBytes(parts: readonly Uint8Array[]) {
+  const result = new Uint8Array(parts.reduce((total, part) => total + part.length, 0));
+  let offset = 0;
+  for (const part of parts) {
+    result.set(part, offset);
+    offset += part.length;
+  }
+  return result;
+}
+
+function crc32(bytes: Uint8Array) {
+  let crc = 0xffffffff;
+  for (const byte of bytes) {
+    crc ^= byte;
+    for (let bit = 0; bit < 8; bit += 1) crc = (crc >>> 1) ^ (crc & 1 ? 0xedb88320 : 0);
+  }
+  return (crc ^ 0xffffffff) >>> 0;
+}
+
+function parsePng(bytes: Uint8Array): PngChunk[] {
+  if (bytes.length < PNG_SIGNATURE.length || PNG_SIGNATURE.some((byte, index) => bytes[index] !== byte)) throw new Error("png_signature_invalid");
+  const chunks: PngChunk[] = [];
+  let offset = PNG_SIGNATURE.length;
+  let ended = false;
+  while (offset < bytes.length) {
+    if (offset + 12 > bytes.length) throw new Error("png_chunk_truncated");
+    const length = uint32(bytes, offset);
+    const end = offset + 12 + length;
+    if (end > bytes.length) throw new Error("png_chunk_truncated");
+    const typeBytes = bytes.slice(offset + 4, offset + 8);
+    const type = new TextDecoder().decode(typeBytes);
+    if (!/^[A-Za-z]{4}$/.test(type)) throw new Error("png_chunk_type_invalid");
+    const data = bytes.slice(offset + 8, offset + 8 + length);
+    const expectedCrc = uint32(bytes, offset + 8 + length);
+    if (crc32(concatBytes([typeBytes, data])) !== expectedCrc) throw new Error(`png_crc_invalid:${type}`);
+    chunks.push({ type, data });
+    offset = end;
+    if (type === "IEND") {
+      ended = true;
+      break;
+    }
+  }
+  if (!ended || offset !== bytes.length) throw new Error("png_end_invalid");
+  if (!chunks.some((chunk) => chunk.type === "IHDR") || !chunks.some((chunk) => chunk.type === "IDAT")) throw new Error("png_critical_chunks_missing");
+  return chunks;
+}
+
+function makeChunk(type: string, data: Uint8Array) {
+  const typeBytes = new TextEncoder().encode(type);
+  return concatBytes([uint32Bytes(data.length), typeBytes, data, uint32Bytes(crc32(concatBytes([typeBytes, data])))]);
+}
+
+function imageDigest(chunks: readonly PngChunk[]) {
+  const basis = chunks
+    .filter((chunk) => chunk.type === "IHDR" || chunk.type === "PLTE" || chunk.type === "IDAT")
+    .map((chunk) => `${chunk.type}:${Array.from(chunk.data, (byte) => byte.toString(16).padStart(2, "0")).join("")}`)
+    .join("|");
+  return sha256PortableBasis(basis);
+}
+
+export function embedPortableCardInPng(source: Uint8Array, asset: PortableCardAsset) {
+  if (!verifyPortableCard(asset).ok) throw new Error("wilds_card_proof_invalid");
+  const sourceChunks = parsePng(source).filter((chunk) => chunk.type !== PROOF_CHUNK_TYPE);
+  const proof: PortableCardPngProof = {
+    schema: "receiz.wilds_png_proof.v1",
+    imageDigest: imageDigest(sourceChunks),
+    asset
   };
+  const proofData = new TextEncoder().encode(canonicalPortableCardJson(proof));
+  const output = [PNG_SIGNATURE];
+  for (const chunk of sourceChunks) {
+    if (chunk.type === "IEND") output.push(makeChunk(PROOF_CHUNK_TYPE, proofData));
+    output.push(makeChunk(chunk.type, chunk.data));
+  }
+  return concatBytes(output);
+}
+
+export function readPortableCardFromPng(source: Uint8Array): PortableCardPngProof {
+  const chunks = parsePng(source);
+  const proofs = chunks.filter((chunk) => chunk.type === PROOF_CHUNK_TYPE);
+  if (proofs.length !== 1) throw new Error(proofs.length ? "wilds_png_proof_duplicate" : "wilds_png_proof_missing");
+  const decoded = JSON.parse(new TextDecoder().decode(proofs[0]!.data)) as Partial<PortableCardPngProof>;
+  if (decoded.schema !== "receiz.wilds_png_proof.v1" || typeof decoded.imageDigest !== "string" || !decoded.asset || typeof decoded.asset !== "object") throw new Error("wilds_png_proof_invalid");
+  return decoded as PortableCardPngProof;
+}
+
+export function verifyPortableCardPng(source: Uint8Array): { ok: boolean; errors: string[]; asset: PortableCardAsset | null } {
+  try {
+    const chunks = parsePng(source);
+    const proof = readPortableCardFromPng(source);
+    const errors = verifyPortableCard(proof.asset).errors;
+    if (proof.imageDigest !== imageDigest(chunks)) errors.push("png_image_digest_mismatch");
+    return { ok: errors.length === 0, errors, asset: errors.length ? null : proof.asset };
+  } catch (error) {
+    return { ok: false, errors: [error instanceof Error ? error.message : "wilds_png_proof_invalid"], asset: null };
+  }
 }
 
 function downloadBlob(blob: Blob, filename: string) {
@@ -126,12 +230,8 @@ async function svgPngBlob(svg: string) {
 
 export async function downloadPortableCard(asset: PortableCardAsset) {
   if (typeof document === "undefined") throw new Error("wilds_card_download_browser_required");
-  const pkg = portableCardPackage(asset);
   const filename = asset.manifest.formId;
-  const png = await svgPngBlob(pkg.cardSvg);
-  downloadBlob(png, `${filename}.png`);
-  downloadBlob(
-    new Blob([canonicalPortableCardJson(pkg)], { type: "application/json" }),
-    `${filename}.receiz-card.json`
-  );
+  const rendered = await svgPngBlob(renderWildsCardSvg(asset));
+  const portable = embedPortableCardInPng(new Uint8Array(await rendered.arrayBuffer()), asset);
+  downloadBlob(new Blob([portable.slice().buffer], { type: "image/png" }), `${filename}.png`);
 }

@@ -1,6 +1,11 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { portableCardPackage, renderWildsCardSvg } from "../src/features/play/card-export.js";
+import {
+  embedPortableCardInPng,
+  readPortableCardFromPng,
+  renderWildsCardSvg,
+  verifyPortableCardPng
+} from "../src/features/play/card-export.js";
 import { sealCollectedCard } from "../src/features/play/portable-card.js";
 
 describe("Wilds card export", () => {
@@ -35,14 +40,26 @@ describe("Wilds card export", () => {
     assert.match(svg, /&lt;script&gt;/);
   });
 
-  it("packages artwork, manifest, proof, lineage, and offline instructions", () => {
-    const pkg = portableCardPackage(card);
+  it("embeds the complete proof into one offline-verifiable PNG", () => {
+    const sourcePng = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=", "base64");
+    const portablePng = embedPortableCardInPng(sourcePng, card);
+    const decoded = readPortableCardFromPng(portablePng);
+    const verified = verifyPortableCardPng(portablePng);
 
-    assert.equal(pkg.schema, "receiz.wilds_portable_package.v1");
-    assert.equal(pkg.asset.manifest.assetId, card.id);
-    assert.equal(pkg.asset.proof.digest, card.proof.digest);
-    assert.equal(pkg.lineage.rootAssetId, card.manifest.lineage.rootAssetId);
-    assert.match(pkg.cardSvg, /Voltray/);
-    assert.match(pkg.offlineVerification, /recompute/i);
+    assert.equal(decoded.schema, "receiz.wilds_png_proof.v1");
+    assert.equal(decoded.asset.id, card.id);
+    assert.equal(decoded.asset.proof.digest, card.proof.digest);
+    assert.equal(decoded.asset.manifest.lineage.rootAssetId, card.manifest.lineage.rootAssetId);
+    assert.equal(verified.ok, true);
+    assert.equal(verified.asset?.id, card.id);
+  });
+
+  it("rejects a PNG when its image or embedded proof bytes are changed", () => {
+    const sourcePng = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=", "base64");
+    const portablePng = embedPortableCardInPng(sourcePng, card);
+    const tampered = portablePng.slice();
+    tampered[tampered.length - 18] ^= 0x01;
+
+    assert.equal(verifyPortableCardPng(tampered).ok, false);
   });
 });
