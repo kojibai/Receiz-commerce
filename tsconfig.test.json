@@ -48,6 +48,7 @@
     "src/features/play/portable-card.ts",
     "src/features/play/card-export.ts",
     "src/lib/exchange/asset-admission.ts",
+    "src/lib/exchange/card-ledger.ts",
     "src/lib/exchange/sandbox-settlement.ts",
     "src/data/seed.ts",
     "src/types/domain.ts"
