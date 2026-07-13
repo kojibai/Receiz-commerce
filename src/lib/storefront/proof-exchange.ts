@@ -74,6 +74,16 @@ export type ExchangeAssetView = Omit<ExchangeAsset, "orderBook"> & {
   ownedPercentLabel: string;
   availablePercentLabel: string;
   spreadLabel: string;
+  marketTruth: ExchangeMarketTruth;
+};
+
+export type ExchangeMarketTruth = {
+  status: "demo" | "fresh" | "stale";
+  statusLabel: "Demo market" | "Verified market" | "Stale market";
+  priceSource: "seller_ask" | "settled_trade";
+  priceLabel: "Seller reference" | "Seller ask" | "Last settled price";
+  sourceLabel: string;
+  observedAt: string | null;
 };
 
 export type ExchangeDeskProjection = {
@@ -153,8 +163,37 @@ function spreadFor(asset: ExchangeAsset) {
   return Math.max(0, Math.min(...asks) - Math.max(...bids));
 }
 
-function withView(asset: ExchangeAsset): ExchangeAssetView {
+const VERIFIED_MARKET_FRESHNESS_MS = 15 * 60 * 1_000;
+
+export function exchangeMarketTruth(asset: ExchangeAsset, now = new Date().toISOString()): ExchangeMarketTruth {
+  const marketData = asset.marketData;
+  if (!marketData || marketData.mode === "demo") {
+    return {
+      status: "demo",
+      statusLabel: "Demo market",
+      priceSource: marketData?.priceSource ?? "seller_ask",
+      priceLabel: "Seller reference",
+      sourceLabel: marketData?.sourceRecordId ?? "Sample market data",
+      observedAt: marketData?.observedAt ?? null
+    };
+  }
+
+  const observedAtMs = Date.parse(marketData.observedAt);
+  const nowMs = Date.parse(now);
+  const fresh = Number.isFinite(observedAtMs) && Number.isFinite(nowMs) && nowMs - observedAtMs <= VERIFIED_MARKET_FRESHNESS_MS;
+  return {
+    status: fresh ? "fresh" : "stale",
+    statusLabel: fresh ? "Verified market" : "Stale market",
+    priceSource: marketData.priceSource,
+    priceLabel: marketData.priceSource === "settled_trade" ? "Last settled price" : "Seller ask",
+    sourceLabel: `${marketData.priceSource === "settled_trade" ? "settlement.recorded" : "asset.listed"} · ${marketData.sourceRecordId}`,
+    observedAt: marketData.observedAt
+  };
+}
+
+function withView(asset: ExchangeAsset, now?: string): ExchangeAssetView {
   const changePrefix = asset.change24hBps >= 0 ? "+" : "";
+  const marketTruth = exchangeMarketTruth(asset, now);
   const bids = asset.orderBook
     .filter((line) => line.side === "bid")
     .sort((left, right) => right.priceCents - left.priceCents);
@@ -168,12 +207,13 @@ function withView(asset: ExchangeAsset): ExchangeAssetView {
     orderBook: { bids, asks },
     deterministicValueLabel: formatUsdExact(asset.deterministicValueCents),
     latestPriceLabel: formatUsdExact(asset.lastPriceCents),
-    liquidityLabel: formatUsd(asset.liquidityCents),
-    volumeLabel: formatUsd(asset.volume24hCents),
-    changeLabel: `${changePrefix}${(asset.change24hBps / 100).toFixed(2)}%`,
+    liquidityLabel: marketTruth.status === "demo" ? "Demo" : asset.liquidityCents > 0 ? formatUsd(asset.liquidityCents) : "—",
+    volumeLabel: marketTruth.status === "demo" ? "Demo" : asset.volume24hCents > 0 ? formatUsd(asset.volume24hCents) : "—",
+    changeLabel: marketTruth.status === "demo" ? "Demo" : `${changePrefix}${(asset.change24hBps / 100).toFixed(2)}%`,
     ownedPercentLabel: `${((asset.userShares / asset.shareCount) * 100).toFixed(2)}%`,
     availablePercentLabel: `${((asset.availableShares / asset.shareCount) * 100).toFixed(2)}%`,
-    spreadLabel: formatUsdExact(spreadFor(asset))
+    spreadLabel: marketTruth.status === "demo" ? "Demo" : formatUsdExact(spreadFor(asset)),
+    marketTruth
   };
 }
 
@@ -246,8 +286,8 @@ export function exchangeAssetSnapshot(asset: ExchangeAsset) {
   };
 }
 
-export function projectExchangeDesk(state: CommerceState): ExchangeDeskProjection {
-  const assets = state.exchange.assets.map(withView);
+export function projectExchangeDesk(state: CommerceState, now?: string): ExchangeDeskProjection {
+  const assets = state.exchange.assets.map((asset) => withView(asset, now));
   const selected =
     assets.find((asset) => asset.id === state.exchange.selectedAssetId) ??
     assets[0] ??
@@ -377,6 +417,12 @@ export function stateWithListedExchangeAsset(state: CommerceState, input: Exchan
     volume24hCents: 0,
     change24hBps: 0,
     settlementRail: "receiz_wallet_first",
+    marketData: {
+      mode: input.source === "asset" && Boolean(input.asset.verifiedArtifact) ? "verified" : "demo",
+      priceSource: "seller_ask",
+      observedAt: recordedAt,
+      sourceRecordId: append.id
+    },
     chart: [
       {
         id: `${assetId}:price:${stampPart(recordedAt)}`,
@@ -476,6 +522,14 @@ export function stateWithExchangeTrade(state: CommerceState, input: ExchangeTrad
       lastPriceCents: nextPrice,
       volume24hCents: asset.volume24hCents + preview.totalCents,
       change24hBps,
+      marketData: input.settlementLedgerEventId
+        ? {
+            mode: "verified" as const,
+            priceSource: "settled_trade" as const,
+            observedAt: recordedAt,
+            sourceRecordId: input.settlementLedgerEventId
+          }
+        : asset.marketData,
       chart: [...asset.chart.slice(-35), point],
       orderBook: updateOrderBook(asset, order.id, preview.shares),
       appendEvents: [appended, ...asset.appendEvents]

@@ -400,6 +400,13 @@ export type ExchangeAppendEvent = {
   settlementLedgerEventId?: string;
 };
 
+export type ExchangeMarketData = {
+  mode: "demo" | "verified";
+  priceSource: "seller_ask" | "settled_trade";
+  observedAt: string;
+  sourceRecordId: string;
+};
+
 export type ReceizAssetManifestProjection = {
   schema: "receiz.asset_manifest.v1";
   assetId: string;
@@ -448,6 +455,7 @@ export type ExchangeAsset = {
   volume24hCents: number;
   change24hBps: number;
   settlementRail: "receiz_wallet_first";
+  marketData?: ExchangeMarketData;
   twinMarketIntentId?: string;
   chart: ExchangePricePoint[];
   orderBook: ExchangeOrderBookLine[];

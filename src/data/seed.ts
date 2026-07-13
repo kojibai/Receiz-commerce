@@ -580,6 +580,12 @@ export const seedCommerceState: CommerceState = {
         volume24hCents: 184600,
         change24hBps: 1280,
         settlementRail: "receiz_wallet_first",
+        marketData: {
+          mode: "demo",
+          priceSource: "settled_trade",
+          observedAt: "2026-06-29T17:55:00.000Z",
+          sourceRecordId: "exchange-limited-drop:append:trade:20260629175500000Z"
+        },
         twinMarketIntentId: "intent-limited-drop",
         chart: [
           { id: "drop-p1", timestamp: "2026-06-29T12:00:00.000Z", kaiPulse: "1782724800000", priceCents: 890, liquidityCents: 64000, volumeCents: 22400 },
@@ -660,6 +666,12 @@ export const seedCommerceState: CommerceState = {
         volume24hCents: 96600,
         change24hBps: -210,
         settlementRail: "receiz_wallet_first",
+        marketData: {
+          mode: "demo",
+          priceSource: "seller_ask",
+          observedAt: "2026-06-29T15:30:00.000Z",
+          sourceRecordId: "exchange-brew-class:append:list:20260629153000000Z"
+        },
         twinMarketIntentId: "intent-brew-class",
         chart: [
           { id: "brew-p1", timestamp: "2026-06-29T12:00:00.000Z", kaiPulse: "1782724800000", priceCents: 1045, liquidityCents: 96000, volumeCents: 18300 },

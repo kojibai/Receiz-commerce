@@ -1190,7 +1190,11 @@ function ExchangeTradingDesk({
     <section className={compact ? "exchange-desk compact" : "exchange-desk"} id="exchange">
       <SectionHeader
         title={desk.headline}
-        action={<StatusPill tone={desk.enabled ? "green" : "neutral"}>{desk.enabled ? "Live proof market" : "Off"}</StatusPill>}
+        action={
+          <StatusPill tone={!desk.enabled ? "neutral" : selected?.marketTruth.status === "fresh" ? "green" : selected?.marketTruth.status === "stale" ? "gold" : "neutral"}>
+            {desk.enabled ? selected?.marketTruth.statusLabel ?? "No market" : "Off"}
+          </StatusPill>
+        }
       />
       <div className="exchange-terminal">
         <aside className="exchange-market-list" aria-label="Exchange markets">
@@ -1232,7 +1236,7 @@ function ExchangeTradingDesk({
                   <em>{asset.title}</em>
                 </span>
                 <b>{asset.latestPriceLabel}</b>
-                <small className={asset.change24hBps >= 0 ? "positive" : "negative"}>{asset.changeLabel}</small>
+                <small className={asset.marketTruth.status === "demo" ? undefined : asset.change24hBps >= 0 ? "positive" : "negative"}>{asset.changeLabel}</small>
               </button>
             ))
           ) : (
@@ -1255,12 +1259,12 @@ function ExchangeTradingDesk({
                 </div>
                 <div className="exchange-price-block">
                   <strong>{selected.latestPriceLabel}</strong>
-                  <span className={selected.change24hBps >= 0 ? "positive" : "negative"}>{selected.changeLabel}</span>
+                  <span>{selected.marketTruth.priceLabel}</span>
                 </div>
               </div>
 
               <div className="exchange-metric-grid">
-                <div><span>Deterministic value</span><strong>{selected.deterministicValueLabel}</strong></div>
+                <div><span>Seller reference value</span><strong>{selected.deterministicValueLabel}</strong></div>
                 <div><span>Liquidity</span><strong>{selected.liquidityLabel}</strong></div>
                 <div><span>24h volume</span><strong>{selected.volumeLabel}</strong></div>
                 <div><span>Spread</span><strong>{selected.spreadLabel}</strong></div>
@@ -1276,8 +1280,8 @@ function ExchangeTradingDesk({
                   <strong>{desk.proofMemoryHead.afterKaiUpulse ?? selected.manifest.proof.kaiPulseEternal}</strong>
                 </div>
                 <div>
-                  <span>Anchor</span>
-                  <strong>{desk.proofMemoryHead.afterEntryId ?? selected.appendEvents[0]?.appendAnchorId ?? "local"}</strong>
+                  <span>Market source</span>
+                  <strong title={selected.marketTruth.observedAt ?? undefined}>{selected.marketTruth.sourceLabel}</strong>
                 </div>
                 <a href={`/verify?claim=${encodeURIComponent(selected.manifest.proof.receizClaimId)}&pulse=${encodeURIComponent(selected.manifest.proof.kaiPulseEternal)}`}>
                   Verify object
@@ -1319,7 +1323,7 @@ function ExchangeTradingDesk({
               <div className="exchange-liquidity-box">
                 <div>
                   <strong>Provide liquidity</strong>
-                  <span>Append deterministic liquidity for this asset market.</span>
+                  <span>Append proof-linked liquidity for this asset market.</span>
                 </div>
                 <label>
                   <span>Amount</span>
@@ -1373,7 +1377,7 @@ function ExchangeChart({ asset }: { asset: ReturnType<typeof projectExchangeDesk
 
   return (
     <div className="exchange-chart">
-      <svg aria-label={`${asset.symbol} live price chart`} preserveAspectRatio="none" role="img" viewBox="0 0 100 100">
+      <svg aria-label={`${asset.symbol} ${asset.marketTruth.status === "demo" ? "demo" : "verified"} price chart`} preserveAspectRatio="none" role="img" viewBox="0 0 100 100">
         <defs>
           <linearGradient id={`exchange-chart-${asset.id}`} x1="0" x2="0" y1="0" y2="1">
             <stop offset="0%" stopColor="rgba(0,168,138,0.35)" />
@@ -1428,8 +1432,8 @@ function ExchangeProofTape({ asset }: { asset: NonNullable<ReturnType<typeof pro
   return (
     <div className="exchange-proof-tape">
       <div className="exchange-mini-head">
-        <strong>Live append tape</strong>
-        <span><i /> Live</span>
+        <strong>{asset.marketTruth.status === "demo" ? "Demo append tape" : "Verified append tape"}</strong>
+        <span><i /> {asset.marketTruth.status === "fresh" ? "Current" : asset.marketTruth.status === "stale" ? "Stale" : "Demo"}</span>
       </div>
       {asset.appendEvents.slice(0, 5).map((event) => (
         <div className="exchange-tape-row" key={event.id}>
@@ -1467,7 +1471,11 @@ function MobileExchangePanel({
   const selected = projectExchangeDesk(state).selected;
 
   return (
-    <MobilePane active={active} action={<StatusPill tone="green">{selected?.symbol ?? "Live"}</StatusPill>} title="Exchange">
+    <MobilePane
+      active={active}
+      action={<StatusPill tone={selected?.marketTruth.status === "fresh" ? "green" : selected?.marketTruth.status === "stale" ? "gold" : "neutral"}>{selected?.marketTruth.statusLabel ?? "No market"}</StatusPill>}
+      title="Exchange"
+    >
       <ExchangeTradingDesk
         compact
         listAssetFeedback={listAssetFeedback}
