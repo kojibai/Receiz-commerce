@@ -9,6 +9,7 @@ import {
   type PlayState
 } from "../src/features/play/game-state";
 import { verifyPortableCard } from "../src/features/play/portable-card.js";
+import { nearbyHiddenHotspots } from "../src/features/play/hidden-hotspots.js";
 
 describe("Receiz Wilds game state", () => {
   it("moves the player into range and collects a new companion card", () => {
@@ -48,6 +49,45 @@ describe("Receiz Wilds game state", () => {
     assert.equal(twice.inventory.length, once.inventory.length);
     assert.equal(twice.inventory.at(-1)?.id, once.inventory.at(-1)?.id);
     assert.match(once.lastEvent, /sealed for offline use/i);
+  });
+
+  it("searches, emerges, seals, and reveals a hidden hotspot atomically", () => {
+    const hotspot = nearbyHiddenHotspots(initialPlayState.player)[0]!;
+    const searched = applyWildsInput(initialPlayState, {
+      type: "search-point",
+      x: hotspot.position.x,
+      z: hotspot.position.z,
+      searchedAt: "2026-07-13T15:00:00.000Z",
+      ownerReceizId: "player.receiz.id"
+    });
+
+    assert.equal(searched.encounter.phase, "emerging");
+    assert.equal(searched.inventory.length, initialPlayState.inventory.length);
+
+    const capsule = applyWildsInput(searched, { type: "advance-encounter", at: "2026-07-13T15:00:01.000Z" });
+    assert.equal(capsule.encounter.phase, "capsule");
+    assert.equal(capsule.inventory.length, initialPlayState.inventory.length);
+
+    const sealed = applyWildsInput(capsule, { type: "advance-encounter", at: "2026-07-13T15:00:02.000Z" });
+    assert.equal(sealed.encounter.phase, "sealed");
+    assert.equal(sealed.inventory.length, initialPlayState.inventory.length + 1);
+    assert.equal(sealed.capturedHotspotIds.includes(hotspot.id), true);
+    assert.equal(verifyPortableCard(sealed.inventory.at(-1)!).ok, true);
+
+    const revealed = applyWildsInput(sealed, { type: "advance-encounter", at: "2026-07-13T15:00:03.000Z" });
+    assert.equal(revealed.encounter.phase, "revealed");
+    assert.equal(revealed.encounter.assetId, sealed.inventory.at(-1)!.id);
+
+    const dismissed = applyWildsInput(revealed, { type: "dismiss-reveal" });
+    const searchedAgain = applyWildsInput(dismissed, {
+      type: "search-point",
+      x: hotspot.position.x,
+      z: hotspot.position.z,
+      searchedAt: "2026-07-13T15:01:00.000Z",
+      ownerReceizId: "player.receiz.id"
+    });
+    assert.equal(searchedAgain.encounter.phase, "hint");
+    assert.equal(searchedAgain.inventory.length, sealed.inventory.length);
   });
 
   it("synchronizes a local card without minting another asset", () => {

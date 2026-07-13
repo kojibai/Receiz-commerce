@@ -5,6 +5,8 @@ import {
   verifyPortableCard,
   type PortableCardAsset
 } from "./portable-card";
+import { encounterFromSearch, idleEncounterState, isCapturableEncounter, type EncounterState } from "./encounter-state";
+import { nearbyHiddenHotspots, searchHiddenHotspots } from "./hidden-hotspots";
 
 export type GameAction = "explore" | "train" | "mission";
 export type MoveDirection = "north" | "south" | "west" | "east";
@@ -13,6 +15,9 @@ export type WildsInput =
   | { type: "move-vector"; x: number; z: number }
   | { type: "discover" }
   | { type: "capture"; encounterId: string; capturedAt: string; ownerReceizId: string }
+  | { type: "search-point"; x: number; z: number; searchedAt: string; ownerReceizId: string }
+  | { type: "advance-encounter"; at: string }
+  | { type: "dismiss-reveal" }
   | { type: "mark-synced"; assetId: string; synchronizedAt: string }
   | { type: "mark-listed"; assetId: string; synchronizedAt: string }
   | { type: "evolve"; assetId: string; evolvedAt: string }
@@ -67,12 +72,15 @@ export type PlayState = {
   companionProgress: Record<string, { level: number; xp: number; bond: number }>;
   completed: boolean;
   completedMissionIds: string[];
+  capturedHotspotIds: string[];
   discoveredCardIds: string[];
   energy: number;
+  encounter: EncounterState;
   inventory: PortableCardAsset[];
   lastEvent: string;
   level: number;
   missionProgress: number;
+  lastSearchPoint: { x: number; z: number } | null;
   player: {
     x: number;
     z: number;
@@ -183,8 +191,10 @@ export const initialPlayState: PlayState = {
   companionProgress: Object.fromEntries(creatureCards.map((card) => [card.id, { level: 1, xp: 0, bond: 0 }])),
   completed: false,
   completedMissionIds: [],
+  capturedHotspotIds: [],
   discoveredCardIds: ["mintcub"],
   energy: 84,
+  encounter: idleEncounterState,
   inventory: [
     {
       ...sealCollectedCard({
@@ -200,6 +210,7 @@ export const initialPlayState: PlayState = {
   lastEvent: "Mintcub joined your deck. Walk near another wild companion.",
   level: 7,
   missionProgress: 38,
+  lastSearchPoint: null,
   player: {
     x: -2.15,
     z: -0.85
@@ -212,8 +223,8 @@ export const initialPlayState: PlayState = {
   worldRank: "Grove scout"
 };
 
-const PLAY_SAVE_SCHEMA = "receiz.wilds.save.v3";
-const LEGACY_PLAY_SAVE_SCHEMA = "receiz.wilds.save.v2";
+const PLAY_SAVE_SCHEMA = "receiz.wilds.save.v4";
+const LEGACY_PLAY_SAVE_SCHEMAS = new Set(["receiz.wilds.save.v2", "receiz.wilds.save.v3"]);
 
 export function serializePlayState(state: PlayState) {
   return JSON.stringify({ schema: PLAY_SAVE_SCHEMA, state });
@@ -223,7 +234,7 @@ export function restorePlayState(value: string | null | undefined): PlayState {
   if (!value) return initialPlayState;
   try {
     const parsed = JSON.parse(value) as { schema?: unknown; state?: unknown };
-    if ((parsed.schema !== PLAY_SAVE_SCHEMA && parsed.schema !== LEGACY_PLAY_SAVE_SCHEMA) || !parsed.state || typeof parsed.state !== "object") return initialPlayState;
+    if ((parsed.schema !== PLAY_SAVE_SCHEMA && !LEGACY_PLAY_SAVE_SCHEMAS.has(String(parsed.schema))) || !parsed.state || typeof parsed.state !== "object") return initialPlayState;
     const saved = parsed.state as Partial<PlayState>;
     if (!saved.player || typeof saved.player.x !== "number" || typeof saved.player.z !== "number") return initialPlayState;
     const discoveredCardIds = Array.isArray(saved.discoveredCardIds)
@@ -242,6 +253,7 @@ export function restorePlayState(value: string | null | undefined): PlayState {
       });
       return [...assets, sealed];
     }, restoredInventory);
+    const restoredEncounter = restoreEncounter(saved.encounter);
     return withWorldProgress({
       ...initialPlayState,
       ...saved,
@@ -251,6 +263,13 @@ export function restorePlayState(value: string | null | undefined): PlayState {
       },
       discoveredCardIds,
       inventory: migratedInventory,
+      capturedHotspotIds: Array.isArray(saved.capturedHotspotIds)
+        ? saved.capturedHotspotIds.filter((id): id is string => typeof id === "string")
+        : [],
+      encounter: restoredEncounter.phase === "sealed" ? { ...restoredEncounter, phase: "revealed" } : restoredEncounter,
+      lastSearchPoint: saved.lastSearchPoint && typeof saved.lastSearchPoint.x === "number" && typeof saved.lastSearchPoint.z === "number"
+        ? { x: saved.lastSearchPoint.x, z: saved.lastSearchPoint.z }
+        : null,
       pendingSyncAssetIds: Array.isArray(saved.pendingSyncAssetIds)
         ? saved.pendingSyncAssetIds.filter((id): id is string => typeof id === "string" && migratedInventory.some((asset) => asset.id === id))
         : migratedInventory.filter((asset) => asset.status === "sealed_local").map((asset) => asset.id),
@@ -262,6 +281,17 @@ export function restorePlayState(value: string | null | undefined): PlayState {
   } catch {
     return initialPlayState;
   }
+}
+
+function restoreEncounter(value: unknown): EncounterState {
+  if (!value || typeof value !== "object") return idleEncounterState;
+  const candidate = value as Record<string, unknown>;
+  if (candidate.phase === "idle") return idleEncounterState;
+  const phases = new Set(["searching", "hint", "emerging", "capsule", "sealed", "revealed"]);
+  if (!phases.has(String(candidate.phase)) || typeof candidate.searchedAt !== "string" || typeof candidate.ownerReceizId !== "string") return idleEncounterState;
+  const point = candidate.searchPoint as Record<string, unknown> | undefined;
+  if (!point || typeof point.x !== "number" || typeof point.z !== "number") return idleEncounterState;
+  return candidate as EncounterState;
 }
 
 export function selectedCard(state: PlayState) {
@@ -288,6 +318,76 @@ export function canDiscover(state: PlayState) {
 
 export function applyWildsInput(state: PlayState, input: WildsInput): PlayState {
   if (input.type === "reset") return initialPlayState;
+
+  if (input.type === "dismiss-reveal") {
+    if (state.encounter.phase === "idle") return state;
+    return { ...state, encounter: idleEncounterState };
+  }
+
+  if (input.type === "search-point") {
+    if (!Number.isFinite(input.x) || !Number.isFinite(input.z) || !Number.isFinite(Date.parse(input.searchedAt)) || !input.ownerReceizId.trim()) return state;
+    const point = {
+      x: clamp(input.x, worldBounds.min, worldBounds.max),
+      z: clamp(input.z, worldBounds.min, worldBounds.max)
+    };
+    const result = searchHiddenHotspots(nearbyHiddenHotspots(point), point, state.capturedHotspotIds);
+    const encounter = encounterFromSearch(result, point, input.searchedAt, input.ownerReceizId.trim());
+    const lastEvent = result.kind === "hit"
+      ? `Something is moving beneath the ${result.hotspot.cover}. Keep watching.`
+      : result.kind === "near_miss"
+        ? "A wild signal flickers nearby. Follow the search clue."
+        : result.kind === "captured"
+          ? "This hotspot is quiet now. Its sealed card is already in your inventory."
+          : "The search pulse found no creature at that exact spot.";
+    return { ...state, activeAction: "explore", encounter, lastEvent, lastSearchPoint: point };
+  }
+
+  if (input.type === "advance-encounter") {
+    if (!Number.isFinite(Date.parse(input.at)) || !isCapturableEncounter(state.encounter)) return state;
+    const encounter = state.encounter;
+    if (encounter.phase === "emerging") return { ...state, encounter: { ...encounter, phase: "capsule" }, lastEvent: "Capsule locked. Sealing the portable card now." };
+    if (encounter.phase === "sealed") return { ...state, encounter: { ...encounter, phase: "revealed" }, lastEvent: "Capture complete. Your verified portable card is ready." };
+    if (encounter.phase !== "capsule") return state;
+
+    const existing = state.inventory.find((asset) => asset.manifest.encounterId === encounter.hotspotId);
+    if (existing) {
+      return {
+        ...state,
+        capturedHotspotIds: Array.from(new Set([...state.capturedHotspotIds, encounter.hotspotId])),
+        encounter: { ...encounter, phase: "sealed", assetId: existing.id },
+        lastEvent: `${existing.manifest.name} is already sealed in your inventory.`
+      };
+    }
+    let sealed: PortableCardAsset;
+    try {
+      sealed = sealCollectedCard({
+        formId: encounter.formId,
+        ownerReceizId: encounter.ownerReceizId,
+        encounterId: encounter.hotspotId,
+        capturedAt: input.at
+      });
+    } catch {
+      return { ...state, encounter: { ...encounter, phase: "emerging" }, lastEvent: "The capsule reopened because its offline seal could not be verified." };
+    }
+    if (!verifyPortableCard(sealed).ok) return { ...state, encounter: { ...encounter, phase: "emerging" }, lastEvent: "The capsule reopened because its offline seal could not be verified." };
+    const nextDiscovered = Array.from(new Set([...state.discoveredCardIds, sealed.manifest.familyId]));
+    return withWorldProgress({
+      ...state,
+      beans: state.beans + 6,
+      cardXp: state.cardXp + 12,
+      capturedHotspotIds: [...state.capturedHotspotIds, encounter.hotspotId],
+      combo: state.combo + 1,
+      discoveredCardIds: nextDiscovered,
+      encounter: { ...encounter, phase: "sealed", assetId: sealed.id },
+      inventory: [...state.inventory, sealed],
+      lastEvent: `${sealed.manifest.name} was captured and sealed as one portable card.`,
+      level: nextDiscovered.length >= 3 ? Math.max(state.level, 8) : state.level,
+      missionProgress: Math.min(100, state.missionProgress + 12),
+      pendingSyncAssetIds: [...state.pendingSyncAssetIds, sealed.id],
+      selectedCardId: sealed.manifest.familyId,
+      streak: state.streak + 1
+    });
+  }
 
   if (input.type === "mark-synced" || input.type === "mark-listed") {
     if (!Number.isFinite(Date.parse(input.synchronizedAt))) return state;
