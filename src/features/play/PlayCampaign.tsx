@@ -11,12 +11,16 @@ import {
   initialPlayState,
   missionCards,
   nearestCreature,
+  restorePlayState,
+  serializePlayState,
   selectedCard,
   type MoveDirection,
   type PlayState,
   type WildsInput
 } from "@/features/play/game-state";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
+const WILDS_SAVE_KEY = "receiz:wilds:save:v2";
 
 const WildsWorldCanvas = dynamic(
   () => import("@/features/play/WildsWorldCanvas").then((mod) => mod.WildsWorldCanvas),
@@ -46,12 +50,48 @@ export function PlayCampaign({
   enabled: boolean;
   onComplete?: (beans: number) => void;
 }) {
-  const [state, setState] = useState(initialPlayState);
-  const activeMission = missionCards[state.streak % missionCards.length];
+  const [state, setState] = useState(() => typeof window === "undefined" ? initialPlayState : restorePlayState(window.localStorage.getItem(WILDS_SAVE_KEY)));
+  const activeMission = missionCards[state.completedMissionIds.length % missionCards.length];
   const activeCard = selectedCard(state);
   const deckCards = discoveredCards(state);
   const nearest = nearestCreature(state);
   const discoveryReady = canDiscover(state);
+  const activeProgress = state.companionProgress[activeCard.id] ?? { level: 1, xp: 0, bond: 0 };
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(WILDS_SAVE_KEY, serializePlayState(state));
+    } catch {
+      // The game remains playable when browser persistence is unavailable.
+    }
+  }, [state]);
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (target?.matches("input, textarea, select, button, [contenteditable='true']")) return;
+      const key = event.key.toLowerCase();
+      const input: WildsInput | null =
+        key === "arrowup" || key === "w" ? { type: "move", direction: "north" }
+          : key === "arrowdown" || key === "s" ? { type: "move", direction: "south" }
+            : key === "arrowleft" || key === "a" ? { type: "move", direction: "west" }
+              : key === "arrowright" || key === "d" ? { type: "move", direction: "east" }
+                : key === " " ? { type: "discover" }
+                  : key === "t" ? { type: "train" }
+                    : key === "m" ? { type: "mission" }
+                      : key === "r" ? { type: "rest" }
+                        : null;
+      if (!input) return;
+      event.preventDefault();
+      setState((current) => {
+        const next = applyWildsInput(current, input);
+        if (!current.completed && next.completed) onComplete?.(next.beans);
+        return next;
+      });
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [onComplete]);
 
   if (!enabled) {
     return (
@@ -101,13 +141,14 @@ export function PlayCampaign({
                 <span className="wilds-avatar">RZ</span>
                 <div>
                   <strong>Wilds scout</strong>
-                  <small>{activeCard.name} leading</small>
+                  <small>{state.worldRank} · {activeCard.name} L{activeProgress.level}</small>
                 </div>
               </div>
               <div className="wilds-resource-strip">
                 <span>{state.cardXp} card XP</span>
                 <span>{state.energy}% energy</span>
                 <span>{state.challenge}% challenge</span>
+                <span>{state.combo}x combo</span>
               </div>
             </div>
 
@@ -129,7 +170,28 @@ export function PlayCampaign({
             </div>
           </div>
 
-          <div className="wilds-control-deck" aria-label="World controls">
+          <div className="wilds-screen-controls" aria-label="World controls">
+            <div className="wilds-screen-actions" aria-label="Explore actions">
+              <button
+                className={cx("wilds-action", state.activeAction === "explore" && "active", discoveryReady && "ready")}
+                onClick={() => dispatch({ type: "discover" })}
+                aria-label={discoveryReady ? `Discover ${nearest.card.name}` : "Discover companion"}
+                title={discoveryReady ? `Discover ${nearest.card.name}` : "Discover companion"}
+                type="button"
+              >
+                <Icons.game size={20} />
+              </button>
+              <button
+                className="wilds-action"
+                onClick={() => dispatch({ type: "rest" })}
+                aria-label="Make camp and recover energy"
+                title="Camp: recover energy"
+                type="button"
+              >
+                <Icons.home size={20} />
+              </button>
+            </div>
+
             <div className="wilds-dpad">
               {moveButtons.map(({ direction, label, Icon }) => (
                 <button
@@ -139,59 +201,52 @@ export function PlayCampaign({
                   onClick={() => dispatch({ type: "move", direction })}
                   type="button"
                 >
-                  <Icon size={20} />
+                  <Icon size={18} />
                 </button>
               ))}
             </div>
 
-            <div className="wilds-action-dock" aria-label="Game actions">
-              <button
-                className={cx("wilds-action", state.activeAction === "explore" && "active", discoveryReady && "ready")}
-                onClick={() => dispatch({ type: "discover" })}
-                type="button"
-              >
-                <Icons.game size={20} />
-                <span>
-                  <strong>Discover</strong>
-                  <small>{discoveryReady ? nearest.card.name : "Move closer"}</small>
-                </span>
-              </button>
+            <div className="wilds-screen-actions" aria-label="Progression actions">
               <button
                 className={cx("wilds-action", state.activeAction === "train" && "active")}
                 onClick={() => dispatch({ type: "train" })}
+                aria-label={`Train ${activeCard.name}`}
+                title={`Train ${activeCard.name}`}
                 type="button"
               >
                 <Icons.sparkle size={20} />
-                <span>
-                  <strong>Train</strong>
-                  <small>{activeCard.name}</small>
-                </span>
               </button>
               <button
                 className={cx("wilds-action", state.activeAction === "mission" && "active")}
                 onClick={() => dispatch({ type: "mission" })}
+                aria-label="Run world mission"
+                title="Run world mission"
                 type="button"
               >
                 <Icons.trophy size={20} />
-                <span>
-                  <strong>Mission</strong>
-                  <small>Play deck</small>
-                </span>
               </button>
             </div>
           </div>
         </div>
 
         <aside className="wilds-command-panel" aria-label="Deck and mission strategy">
-          <div className="wilds-mission-card">
-            <span>World mission</span>
-            <strong>{activeMission.title}</strong>
-            <p>{activeMission.requirement}</p>
-            <div className="wilds-progress" aria-label={`${state.missionProgress}% mission progress`}>
-              <span style={{ width: `${state.missionProgress}%` }} />
+          <details className="wilds-mission-card">
+            <summary>
+              <span>
+                <small>World mission</small>
+                <strong>{activeMission.title}</strong>
+              </span>
+              <b>{state.missionProgress}%</b>
+              <Icons.chevronDown aria-hidden="true" size={18} />
+            </summary>
+            <div className="wilds-mission-details">
+              <p>{activeMission.requirement}</p>
+              <div className="wilds-progress" aria-label={`${state.missionProgress}% mission progress`}>
+                <span style={{ width: `${state.missionProgress}%` }} />
+              </div>
+              <b>{activeMission.reward}</b>
             </div>
-            <b>{activeMission.reward}</b>
-          </div>
+          </details>
 
           <div className="wilds-reward-card">
             <span>Portable reward</span>
@@ -224,7 +279,7 @@ export function PlayCampaign({
                 <span style={{ background: card.color }}>{card.name.slice(0, 2).toUpperCase()}</span>
                 <div>
                   <strong>{card.name}</strong>
-                  <small>{card.businessLogic}</small>
+                  <small>Level {state.companionProgress[card.id]?.level ?? 1} · Bond {state.companionProgress[card.id]?.bond ?? 0}</small>
                 </div>
                 <b>{card.power}</b>
                 <div className="wilds-mini-charge" aria-label={`${card.power}% power`}>
@@ -244,8 +299,8 @@ export function PlayCampaign({
               <strong>{nearest.card.name}</strong>
             </div>
             <div>
-              <span>Reward</span>
-              <strong>{state.rewardCards.length ? "Owned" : "Locked"}</strong>
+              <span>Titan Gate</span>
+              <strong>{state.bossUnlocked ? "Open" : "Locked"}</strong>
             </div>
           </div>
 

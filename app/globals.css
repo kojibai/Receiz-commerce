@@ -1677,7 +1677,7 @@ a {
 
 .wilds-action-dock {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 8px;
 }
 
@@ -1756,22 +1756,54 @@ a {
 }
 
 .wilds-mission-card {
-  display: grid;
-  gap: 7px;
   padding: 12px;
   border: 1px solid var(--game-line);
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.07);
 }
 
-.wilds-mission-card span,
+.wilds-mission-card summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.wilds-mission-card summary::-webkit-details-marker {
+  display: none;
+}
+
+.wilds-mission-card summary > span {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.wilds-mission-card summary svg {
+  transition: transform 160ms ease;
+}
+
+.wilds-mission-card[open] summary svg {
+  transform: rotate(180deg);
+}
+
+.wilds-mission-details {
+  display: grid;
+  gap: 7px;
+  padding-top: 8px;
+}
+
+.wilds-mission-card small,
 .wilds-mission-card p,
 .wilds-squad-card small,
 .wilds-economy-grid span {
   color: rgba(255, 255, 255, 0.66);
 }
 
-.wilds-mission-card span {
+.wilds-mission-card small {
   font-size: 11px;
   font-weight: 900;
   text-transform: uppercase;
@@ -1951,6 +1983,14 @@ a {
   transform: translateY(-4px);
 }
 
+.wilds-diagnostics-anchor {
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
 .wilds-world-label span {
   display: block;
   max-width: 94px;
@@ -2022,6 +2062,65 @@ a {
   grid-template-columns: 108px minmax(0, 1fr);
   gap: 10px;
   align-items: stretch;
+}
+
+.wilds-screen-controls {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 10px;
+  width: min(420px, calc(100% - 24px));
+  margin-inline: auto;
+}
+
+.wilds-screen-actions {
+  display: grid;
+  grid-template-columns: repeat(2, 44px);
+  justify-content: center;
+  gap: 6px;
+}
+
+.wilds-screen-controls .wilds-action {
+  display: grid;
+  place-items: center;
+  min-height: 44px;
+  padding: 4px;
+  border: 1px solid var(--game-line);
+  border-radius: 12px;
+  color: #ffffff;
+  background: rgba(23, 19, 17, 0.76);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(16px);
+}
+
+.wilds-screen-controls .wilds-action svg {
+  width: 30px;
+  height: 30px;
+  padding: 6px;
+}
+
+.wilds-screen-controls .wilds-dpad {
+  grid-template-columns: repeat(3, 34px);
+  grid-template-rows: repeat(3, 34px);
+  min-height: 108px;
+  padding: 2px;
+  border-color: var(--game-line);
+  border-radius: 16px;
+  background: rgba(23, 19, 17, 0.76);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(16px);
+}
+
+.wilds-screen-controls .wilds-dpad::before {
+  width: 14px;
+  height: 14px;
+  background: rgba(46, 232, 182, 0.22);
+}
+
+.wilds-screen-controls .wilds-dpad button {
+  border-color: rgba(46, 232, 182, 0.3);
+  color: var(--game-mint);
+  background: rgba(46, 232, 182, 0.12);
 }
 
 .wilds-dpad {
@@ -6507,26 +6606,55 @@ a {
   }
 
   .mobile-play-wrap .wilds-world {
-    gap: 8px;
+    gap: 4px;
   }
 
   .mobile-play-wrap .wilds-stage {
-    min-height: clamp(334px, 50dvh, 430px);
+    min-height: clamp(292px, 44dvh, 360px);
     border-radius: 16px;
   }
 
   .mobile-play-wrap .wilds-control-deck {
-    grid-template-columns: 82px minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr);
     gap: 7px;
   }
 
-  .mobile-play-wrap .wilds-dpad {
+  .mobile-play-wrap .wilds-screen-controls {
+    gap: 5px;
+    width: calc(100% - 16px);
+  }
+
+  .mobile-play-wrap .wilds-screen-actions {
+    grid-template-columns: repeat(2, 36px);
+    gap: 4px;
+  }
+
+  .mobile-play-wrap .wilds-screen-controls .wilds-action {
+    min-height: 36px;
+    padding: 3px;
+    border-radius: 11px;
+  }
+
+  .mobile-play-wrap .wilds-screen-controls .wilds-action svg {
+    width: 26px;
+    height: 26px;
+  }
+
+  .mobile-play-wrap .wilds-screen-controls .wilds-dpad {
     grid-template-columns: repeat(3, 24px);
     grid-template-rows: repeat(3, 24px);
-    gap: 2px;
     min-height: 76px;
+    padding: 2px;
+  }
+
+  .mobile-play-wrap .wilds-dpad {
+    grid-template-columns: repeat(3, 44px);
+    grid-template-rows: repeat(3, 44px);
+    gap: 2px;
+    min-height: 140px;
     padding: 4px;
     border-radius: 14px;
+    justify-self: center;
   }
 
   .mobile-play-wrap .wilds-dpad::before {
@@ -6539,8 +6667,8 @@ a {
   }
 
   .mobile-play-wrap .wilds-dpad svg {
-    width: 16px;
-    height: 16px;
+    width: 18px;
+    height: 18px;
   }
 
   .mobile-play-wrap .wilds-screen {
@@ -6673,15 +6801,18 @@ a {
   }
 
   .mobile-play-wrap .wilds-action-dock {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 6px;
   }
 
   .mobile-play-wrap .wilds-action {
-    grid-template-columns: 30px minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
     gap: 6px;
-    min-height: 76px;
+    min-height: 72px;
     padding: 6px;
     border-radius: 14px;
+    text-align: center;
   }
 
   .mobile-play-wrap .wilds-action svg {
@@ -6707,9 +6838,12 @@ a {
   }
 
   .mobile-play-wrap .wilds-mission-card {
-    gap: 4px;
     padding: 8px;
     border-radius: 13px;
+  }
+
+  .mobile-play-wrap .wilds-mission-card summary {
+    min-height: 36px;
   }
 
   .mobile-play-wrap .wilds-mission-card strong {
@@ -7253,17 +7387,18 @@ a {
   }
 
   .mobile-play-wrap .wilds-stage {
-    min-height: 318px;
+    min-height: 286px;
   }
 
   .mobile-play-wrap .wilds-control-deck {
-    grid-template-columns: 72px minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr);
     gap: 6px;
   }
 
   .mobile-play-wrap .wilds-dpad {
-    grid-template-columns: repeat(3, 21px);
-    grid-template-rows: repeat(3, 21px);
+    grid-template-columns: repeat(3, 44px);
+    grid-template-rows: repeat(3, 44px);
+    min-height: 144px;
   }
 
   .mobile-play-wrap .wilds-screen {

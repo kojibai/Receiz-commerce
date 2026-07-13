@@ -5,6 +5,7 @@ export type WildsInput =
   | { type: "discover" }
   | { type: "train"; cardId?: string }
   | { type: "mission" }
+  | { type: "rest" }
   | { type: "select-card"; cardId: string }
   | { type: "reset" };
 
@@ -49,7 +50,10 @@ export type PlayState = {
   beans: number;
   cardXp: number;
   challenge: number;
+  combo: number;
+  companionProgress: Record<string, { level: number; xp: number; bond: number }>;
   completed: boolean;
+  completedMissionIds: string[];
   discoveredCardIds: string[];
   energy: number;
   lastEvent: string;
@@ -62,6 +66,8 @@ export type PlayState = {
   rewardCards: RewardCard[];
   selectedCardId: string;
   streak: number;
+  bossUnlocked: boolean;
+  worldRank: "Grove scout" | "Trail keeper" | "Wilds ranger" | "Titan challenger";
 };
 
 export const worldBounds = {
@@ -155,7 +161,10 @@ export const initialPlayState: PlayState = {
   beans: 28,
   cardXp: 136,
   challenge: 42,
+  combo: 0,
+  companionProgress: Object.fromEntries(creatureCards.map((card) => [card.id, { level: 1, xp: 0, bond: 0 }])),
   completed: false,
+  completedMissionIds: [],
   discoveredCardIds: ["mintcub"],
   energy: 84,
   lastEvent: "Mintcub joined your deck. Walk near another wild companion.",
@@ -167,8 +176,43 @@ export const initialPlayState: PlayState = {
   },
   rewardCards: [],
   selectedCardId: "mintcub",
-  streak: 9
+  streak: 9,
+  bossUnlocked: false,
+  worldRank: "Grove scout"
 };
+
+const PLAY_SAVE_SCHEMA = "receiz.wilds.save.v2";
+
+export function serializePlayState(state: PlayState) {
+  return JSON.stringify({ schema: PLAY_SAVE_SCHEMA, state });
+}
+
+export function restorePlayState(value: string | null | undefined): PlayState {
+  if (!value) return initialPlayState;
+  try {
+    const parsed = JSON.parse(value) as { schema?: unknown; state?: unknown };
+    if (parsed.schema !== PLAY_SAVE_SCHEMA || !parsed.state || typeof parsed.state !== "object") return initialPlayState;
+    const saved = parsed.state as Partial<PlayState>;
+    if (!saved.player || typeof saved.player.x !== "number" || typeof saved.player.z !== "number") return initialPlayState;
+    return withWorldProgress({
+      ...initialPlayState,
+      ...saved,
+      player: {
+        x: clamp(saved.player.x, worldBounds.min, worldBounds.max),
+        z: clamp(saved.player.z, worldBounds.min, worldBounds.max)
+      },
+      discoveredCardIds: Array.isArray(saved.discoveredCardIds)
+        ? saved.discoveredCardIds.filter((id): id is string => typeof id === "string" && creatureCards.some((card) => card.id === id))
+        : initialPlayState.discoveredCardIds,
+      companionProgress: {
+        ...initialPlayState.companionProgress,
+        ...(saved.companionProgress ?? {})
+      }
+    });
+  } catch {
+    return initialPlayState;
+  }
+}
 
 export function selectedCard(state: PlayState) {
   return creatureCards.find((card) => card.id === state.selectedCardId) ?? creatureCards[0];
@@ -221,6 +265,16 @@ export function applyWildsInput(state: PlayState, input: WildsInput): PlayState 
     };
   }
 
+  if (input.type === "rest") {
+    return {
+      ...state,
+      activeAction: "explore",
+      combo: 0,
+      energy: Math.min(100, state.energy + 35),
+      lastEvent: "Camp restored 35 energy. Your expedition combo reset."
+    };
+  }
+
   if (input.type === "discover") {
     const nearest = nearestCreature(state);
     if (!nearest || nearest.distance > 1.25) {
@@ -241,48 +295,69 @@ export function applyWildsInput(state: PlayState, input: WildsInput): PlayState 
     }
 
     const nextDiscovered = [...state.discoveredCardIds, nearest.card.id];
-    return {
+    return withWorldProgress({
       ...state,
       activeAction: "explore",
       beans: state.beans + 6,
       cardXp: state.cardXp + 12,
       discoveredCardIds: nextDiscovered,
       lastEvent: `${nearest.card.name} card collected. ${nearest.card.businessLogic}.`,
+      combo: state.combo + 1,
       level: nextDiscovered.length >= 3 ? Math.max(state.level, 8) : state.level,
       missionProgress: Math.min(100, state.missionProgress + 12),
       selectedCardId: nearest.card.id,
       streak: state.streak + 1
-    };
+    });
   }
 
   if (input.type === "train") {
     const targetCardId = input.cardId ?? state.selectedCardId;
     if (!state.discoveredCardIds.includes(targetCardId)) return state;
+    if (state.energy < 6) {
+      return { ...state, lastEvent: "Not enough energy to train. Make camp before the next session." };
+    }
+    const currentProgress = state.companionProgress[targetCardId] ?? { level: 1, xp: 0, bond: 0 };
+    const totalXp = currentProgress.xp + 40;
+    const leveledUp = totalXp >= 100;
+    const nextProgress = {
+      level: Math.min(10, currentProgress.level + (leveledUp ? 1 : 0)),
+      xp: leveledUp ? totalXp - 100 : totalXp,
+      bond: Math.min(100, currentProgress.bond + 1)
+    };
 
-    return {
+    return withWorldProgress({
       ...state,
       activeAction: "train",
       beans: state.beans + 4,
       cardXp: state.cardXp + 10,
       challenge: Math.min(100, state.challenge + 4),
+      combo: state.combo + 1,
+      companionProgress: { ...state.companionProgress, [targetCardId]: nextProgress },
       energy: Math.max(0, state.energy - 6),
-      lastEvent: `${cardName(targetCardId)} powered up. Mission cards hit harder now.`,
+      lastEvent: leveledUp
+        ? `${cardName(targetCardId)} reached Level ${nextProgress.level}. A new mastery tier is active.`
+        : `${cardName(targetCardId)} gained 40 XP and strengthened your bond.`,
       missionProgress: Math.min(100, state.missionProgress + 9),
       selectedCardId: targetCardId,
       streak: state.streak + 1
-    };
+    });
+  }
+
+  if (state.energy < 10) {
+    return { ...state, lastEvent: "Not enough energy for a mission. Make camp to recover." };
   }
 
   const progressGain = 16 + discoveredCards(state).length * 4 + Math.floor(selectedCard(state).power / 24);
   const nextProgress = Math.min(100, state.missionProgress + progressGain);
   const earnedReward = nextProgress >= 100 && !state.rewardCards.some((reward) => reward.id === "merchant-perk");
 
-  return {
+  return withWorldProgress({
     ...state,
     activeAction: "mission",
     beans: state.beans + 10,
     cardXp: state.cardXp + 18,
     challenge: Math.min(100, state.challenge + 7),
+    combo: state.combo + 1,
     completed: state.completed || earnedReward,
     energy: Math.max(0, state.energy - 10),
     lastEvent: earnedReward
@@ -301,8 +376,24 @@ export function applyWildsInput(state: PlayState, input: WildsInput): PlayState 
           }
         ]
       : state.rewardCards,
+    completedMissionIds: earnedReward
+      ? Array.from(new Set([...state.completedMissionIds, "daily-expedition"]))
+      : state.completedMissionIds,
     streak: state.streak + 1
-  };
+  });
+}
+
+function withWorldProgress(state: PlayState): PlayState {
+  const highestLevel = Math.max(1, ...Object.values(state.companionProgress).map((progress) => progress.level));
+  const bossUnlocked = state.discoveredCardIds.length >= 3 && highestLevel >= 3;
+  const worldRank: PlayState["worldRank"] = bossUnlocked
+    ? "Titan challenger"
+    : state.discoveredCardIds.length >= 3
+      ? "Wilds ranger"
+      : state.discoveredCardIds.length >= 2
+        ? "Trail keeper"
+        : "Grove scout";
+  return { ...state, bossUnlocked, worldRank };
 }
 
 function movePlayer(player: PlayState["player"], direction: MoveDirection) {
