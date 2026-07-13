@@ -44,6 +44,7 @@
     "src/lib/storefront/customer-session.ts",
     "src/lib/storefront/proof-exchange.ts",
     "src/features/play/creature-catalog.ts",
+    "src/features/play/hidden-hotspots.ts",
     "src/features/play/portable-card.ts",
     "src/features/play/card-export.ts",
     "src/lib/exchange/asset-admission.ts",
