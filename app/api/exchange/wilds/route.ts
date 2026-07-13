@@ -16,21 +16,18 @@ import { stateWithListedExchangeAsset } from "@/lib/storefront/proof-exchange";
 import { mockStorage } from "@/lib/storage/mock-storage";
 import { platform } from "@/lib/platform";
 import type { PortableCardAsset } from "@/features/play/portable-card";
+import { verifyPortableCardPng } from "@/features/play/card-export";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-function isPortableCard(value: unknown): value is PortableCardAsset {
-  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
-  const card = value as Partial<PortableCardAsset>;
-  return Boolean(card.id && card.manifest?.schema === "receiz.wilds_card_manifest.v1" && card.proof?.kind === "receiz.wilds_local_seal.v1");
-}
-
 export async function POST(request: NextRequest) {
-  const body = await request.json().catch(() => null) as { card?: unknown; priceCents?: unknown } | null;
-  if (!body || !isPortableCard(body.card)) {
-    return NextResponse.json({ ok: false, error: "wilds_card_required" }, { status: 400 });
-  }
+  const form = await request.formData().catch(() => null);
+  const file = form?.get("card");
+  if (!(file instanceof File) || file.type !== "image/png" || file.size < 32 || file.size > 12 * 1024 * 1024) return NextResponse.json({ ok: false, error: "wilds_card_png_required" }, { status: 400 });
+  const pngVerification = verifyPortableCardPng(new Uint8Array(await file.arrayBuffer()));
+  if (!pngVerification.ok || !pngVerification.asset) return NextResponse.json({ ok: false, error: "wilds_card_png_verification_failed", details: pngVerification.errors }, { status: 422 });
+  const card: PortableCardAsset = pngVerification.asset;
 
   const session = receizRequestSession(request);
   const requestHost = request.headers.get("x-forwarded-host") ?? request.headers.get("host") ?? platform.domain;
@@ -55,11 +52,11 @@ export async function POST(request: NextRequest) {
   let synchronizedCard: PortableCardAsset;
   let verifiedAsset;
   try {
-    synchronizedCard = synchronizeWildsCard({ actorReceizId: profile.handle, card: body.card });
+    synchronizedCard = synchronizeWildsCard({ actorReceizId: profile.handle, card });
     verifiedAsset = admitWildsCard({
       actorReceizId: profile.handle,
       card: synchronizedCard,
-      priceCents: Number(body.priceCents ?? 2500),
+      priceCents: Number(form?.get("priceCents") ?? 2500),
       existingAssetIds: [
         ...baseState.assets.map((asset) => asset.id),
         ...baseState.exchange.assets.map((asset) => asset.sourceAssetId)

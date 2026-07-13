@@ -59,5 +59,8 @@ describe("same-surface payment contract", () => {
     assert.match(uploadRoute, /admitUploadedAsset/);
     assert.match(wildsRoute, /synchronizeWildsCard/);
     assert.match(wildsRoute, /admitWildsCard/);
+    assert.match(wildsRoute, /verifyPortableCardPng/);
+    assert.match(wildsRoute, /request\.formData/);
+    assert.match(store, /portableCardPngBlob/);
   });
 });

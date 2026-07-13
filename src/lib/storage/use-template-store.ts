@@ -84,6 +84,7 @@ import type {
 import { makeId } from "@/lib/utils";
 import { compactPublishedState } from "@/lib/receiz/proof-state";
 import type { PortableCardAsset } from "@/features/play/portable-card";
+import { portableCardPngBlob } from "@/features/play/card-export";
 
 function readState(hostContext: HostContext, fallbackState: CommerceState = seedCommerceState): CommerceState {
   if (typeof window === "undefined") return fallbackState;
@@ -3127,11 +3128,18 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
       async listWildsCard(card: PortableCardAsset, priceCents = 2500) {
         setActionFeedback("exchange.listAsset", "pending", `Offline-verifying ${card.manifest.name}`);
         try {
-          const result = await postJson<{
+          const form = new FormData();
+          form.set("card", await portableCardPngBlob(card), `${card.manifest.formId}.png`);
+          form.set("priceCents", String(priceCents));
+          const response = await fetch("/api/exchange/wilds", { method: "POST", body: form });
+          const result = await response.json().catch(() => ({})) as {
+            ok?: boolean;
+            error?: string;
             card?: PortableCardAsset;
             state?: CommerceState;
             storeStateSync?: StoreStateSyncResponse;
-          }>("/api/exchange/wilds", { card, priceCents });
+          };
+          if (!response.ok || result.ok === false) throw new Error(result.error ?? "Wilds PNG verification failed");
           if (!result.card || !result.state) throw new Error("Wilds card listing failed");
 
           setState((current) => ({

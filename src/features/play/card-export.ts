@@ -231,7 +231,12 @@ async function svgPngBlob(svg: string) {
 export async function downloadPortableCard(asset: PortableCardAsset) {
   if (typeof document === "undefined") throw new Error("wilds_card_download_browser_required");
   const filename = asset.manifest.formId;
+  downloadBlob(await portableCardPngBlob(asset), `${filename}.png`);
+}
+
+export async function portableCardPngBlob(asset: PortableCardAsset) {
+  if (typeof document === "undefined") throw new Error("wilds_card_png_browser_required");
   const rendered = await svgPngBlob(renderWildsCardSvg(asset));
   const portable = embedPortableCardInPng(new Uint8Array(await rendered.arrayBuffer()), asset);
-  downloadBlob(new Blob([portable.slice().buffer], { type: "image/png" }), `${filename}.png`);
+  return new Blob([portable.slice().buffer], { type: "image/png" });
 }
