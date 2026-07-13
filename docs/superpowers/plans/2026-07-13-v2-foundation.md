@@ -42,7 +42,7 @@
 
 **Interfaces:**
 - Consumes: `RECEIZ_SDK_VERSION` exported by `@receiz/sdk`.
-- Produces: a repository contract that the installed SDK is `99.0.0` and docs use MCP `99.0.0`.
+- Produces: a repository contract that the installed SDK is `99.0.0` and the production dependency graph is patched.
 
 - [ ] **Step 1: Write the failing version test**
 
@@ -53,17 +53,14 @@ import { describe, it } from "node:test";
 import { RECEIZ_SDK_VERSION } from "@receiz/sdk";
 
 describe("Receiz v2 dependency contract", () => {
-  it("pins the supported SDK and MCP pair to 99.0.0", () => {
+  it("pins the supported SDK and patched production dependency graph", () => {
     const pkg = JSON.parse(readFileSync("package.json", "utf8")) as {
       dependencies: Record<string, string>;
       pnpm?: { overrides?: Record<string, string> };
     };
-    const readme = readFileSync("README.md", "utf8");
-
     assert.equal(RECEIZ_SDK_VERSION, "99.0.0");
     assert.equal(pkg.dependencies["@receiz/sdk"], "^99.0.0");
     assert.equal(pkg.pnpm?.overrides?.postcss, ">=8.5.10");
-    assert.match(readme, /@receiz\/mcp-server@99\.0\.0/);
   });
 });
 ```

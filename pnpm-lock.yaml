@@ -4,6 +4,9 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+overrides:
+  postcss: '>=8.5.10'
+
 importers:
 
   .:
@@ -15,8 +18,8 @@ importers:
         specifier: ^9.6.1
         version: 9.6.1(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.1)
       '@receiz/sdk':
-        specifier: ^98.0.0
-        version: 98.0.0(react@19.2.7)
+        specifier: ^99.0.0
+        version: 99.0.0(react@19.2.7)
       lucide-react:
         specifier: ^0.468.0
         version: 0.468.0(react@19.2.7)
@@ -414,8 +417,8 @@ packages:
       react-native:
         optional: true
 
-  '@receiz/sdk@98.0.0':
-    resolution: {integrity: sha512-09La2x0OW33T2iNQ99YUPXThSP6j/PsDfI7PcTvgrfoKn9lLupe6XaxYrCUIrrOzr75AqGR39nxd8veeH5M5NQ==}
+  '@receiz/sdk@99.0.0':
+    resolution: {integrity: sha512-9HtOU0XpiLnbOzJ6E457xOlrDfXHWWtvfpJcKH6qDQZT8bxrqF+9CKX8ptvhG0CaB4t+zJGpmljDSaLogDa3XA==}
     hasBin: true
     peerDependencies:
       react: '>=18.0.0 <20.0.0'
@@ -1544,8 +1547,8 @@ packages:
     resolution: {integrity: sha512-/+5VFTchJDoVj3bhoqi6UeymcD00DAwb1nJwamzPvHEszJ4FpF6SNNbUbOS8yI56qHzdV8eK0qEfOSiodkTdxg==}
     engines: {node: '>= 0.4'}
 
-  postcss@8.4.31:
-    resolution: {integrity: sha512-PS08Iboia9mts/2ygV3eLpY5ghnUcfLV/EXTOW1E2qYxJKGGBUtNjN76FYHnMs36RmARn41bC0AZmn+rR0OVpQ==}
+  postcss@8.5.19:
+    resolution: {integrity: sha512-Mz8SaolMd8nB+G13WkORcxQKHZ/NE4xXevtkJHVuG+guo9/wYKlIMTKAqGdEmYOXR2ijPjTYNHssizdaVSUNdQ==}
     engines: {node: ^10 || ^12 || >=14}
 
   potpack@1.0.2:
@@ -2222,7 +2225,7 @@ snapshots:
       - '@types/react'
       - immer
 
-  '@receiz/sdk@98.0.0(react@19.2.7)':
+  '@receiz/sdk@99.0.0(react@19.2.7)':
     optionalDependencies:
       react: 19.2.7
 
@@ -3397,7 +3400,7 @@ snapshots:
       '@next/env': 15.5.19
       '@swc/helpers': 0.5.15
       caniuse-lite: 1.0.30001799
-      postcss: 8.4.31
+      postcss: 8.5.19
       react: 19.2.7
       react-dom: 19.2.7(react@19.2.7)
       styled-jsx: 5.1.6(react@19.2.7)
@@ -3505,7 +3508,7 @@ snapshots:
 
   possible-typed-array-names@1.1.0: {}
 
-  postcss@8.4.31:
+  postcss@8.5.19:
     dependencies:
       nanoid: 3.3.15
       picocolors: 1.1.1
