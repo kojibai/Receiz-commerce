@@ -20,7 +20,7 @@ Production truth comes from:
 - Receiz public-store and app-state projections that carry complete proof objects.
 - Receiz SDK/API rails that verify, project, publish, or append that truth.
 
-Connect/OIDC tokens are delegated permission artifacts for remote SDK/API reads and writes after proof has been established. They are not the proof root. A verified proof object is enough authority for the account, wallet, checkout, publish, billing, and domain actions this app can perform locally or route into the correct remote rail.
+Connect/OIDC tokens are delegated permission artifacts for remote SDK/API reads and writes after proof has been established. They are not the proof root. A verified proof object establishes proof authority, while remote financial and domain mutations also require a scoped browser session or delegated permission bound to the same identity and tenant. The server independently resolves economic values, ownership, recipients, and operation intents before calling the remote rail.
 
 Kai-Klok is the deterministic state machine for proof coordinates. Every published storefront state must be stamped by a Receiz append/proof response with Kai pulse and anchor. The app must not derive store authority from Chronos timestamps, caches, response order, local browser storage, Vercel memory, Supabase, Stripe, Shopify, or any outside system.
 

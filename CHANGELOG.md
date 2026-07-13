@@ -2,6 +2,17 @@
 
 All notable changes to Receiz Commerce Kit will be documented here.
 
+## 2.0.0 - Commerce OS
+
+- Upgraded the supported Receiz boundary to `@receiz/sdk@99.0.0` and kept SDK access centralized through the adapter.
+- Made checkout, Exchange trades, and merchant platform upgrades authoritative on the server: catalog price, owner, merchant, tenant, recipient, and settlement state are no longer accepted from client input.
+- Added wallet-first settlement with embedded card funding for the exact remaining delta, durable operation recovery, verified receipts, and idempotent activation.
+- Added proof-artifact Exchange listing, ownership validation, asset persistence, settled trade projection, and live/demo/stale market provenance.
+- Made theme and storefront publication one durable proof transaction with cross-tab and cold-start recovery for `receiz.app`, subdomains, and custom domains.
+- Hardened OAuth, webhooks, imports, media, tenant boundaries, upload limits, origin handling, and secret configuration.
+- Expanded Receiz Wilds with deterministic progression, drag-and-hold trackpad controls, compact mobile HUD, stable rendering, and a streamed one-billion-unit logical world.
+- Added the v2 migration guide, security contracts, release evidence, and a 228-test release suite.
+
 ## 1.0.0 - General Availability
 
 Receiz Commerce Kit is now the first official, production-shaped release of the proof-sealed commerce application and forkable `@receiz/sdk` kernel.

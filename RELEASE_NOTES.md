@@ -1,3 +1,27 @@
+# Receiz Commerce Kit v2.0.0
+
+Release date: July 13, 2026
+
+Status: Repository release
+
+Release unit: Repository release, not an npm package
+
+SDK target: `@receiz/sdk@99.0.0`
+
+## v2 Release Statement
+
+Receiz Commerce Kit 2.0.0 is the Commerce OS release. It turns the strongest v1 product paths into authoritative end-to-end systems: global theme publication, tenant-scoped checkout, wallet-plus-card settlement, merchant-to-platform upgrades, verified Exchange assets and trades, proof-backed state recovery, and a larger, persistent Receiz Wilds experience.
+
+Economic inputs are now derived on the server from published proof state. Checkout clients submit product identities and quantities, Exchange sellers submit a verifiable artifact, and platform upgrades submit an operation intent; the server resolves price, ownership, merchant, recipient, tenant, and settlement. Wallet funds are applied first and an embedded card flow funds only the remainder. Paid state activates only after a matching receipt and successful wallet transfer.
+
+The complete experience remains on `receiz.app`, a merchant subdomain, or a custom domain. Payment, proof verification, account continuation, Exchange listing, and domain upgrade flows do not require redirecting users to `receiz.com`.
+
+Receiz Wilds now uses drag-and-hold trackpad controls, deterministic encounters and progression, persisted game state, a compact mobile HUD, stable rendering, streamed terrain, floating-origin coordinates, and a one-billion-unit logical world.
+
+Security work in this release hardens OAuth state binding, webhook replay and intent validation, SSRF-resistant imports, verified media and proof uploads, tenant resolution, idempotency, and remote mutation authorization. See `docs/MIGRATING_TO_V2.md` for required configuration and behavior changes and `docs/audits/2026-07-13-v2-release-evidence.md` for verified gates and remaining production operator checks.
+
+---
+
 # Receiz Commerce Kit v1.0.0
 
 Release date: July 9, 2026  
