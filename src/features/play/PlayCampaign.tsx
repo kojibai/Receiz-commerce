@@ -110,11 +110,15 @@ function WildsTrackpad({ onInput }: { onInput: (input: WildsInput) => void }) {
 export function PlayCampaign({
   campaignName = "Reward Challenge",
   enabled,
-  onComplete
+  onComplete,
+  ownerReceizId = "wilds.player.receiz.id",
+  onListAsset
 }: {
   campaignName?: string;
   enabled: boolean;
   onComplete?: (beans: number) => void;
+  ownerReceizId?: string;
+  onListAsset?: (asset: PortableCardAsset, priceCents: number) => Promise<PortableCardAsset | null>;
 }) {
   const [state, setState] = useState(() => typeof window === "undefined" ? initialPlayState : restorePlayState(window.localStorage.getItem(WILDS_SAVE_KEY)));
   const [rewardAsset, setRewardAsset] = useState<PortableCardAsset | null>(null);
@@ -156,7 +160,7 @@ export function PlayCampaign({
               type: "capture",
               encounterId: `${nearestCreature(current).card.id}:${Math.round(current.player.x * 100)}:${Math.round(current.player.z * 100)}:${Date.now()}`,
               capturedAt: new Date().toISOString(),
-              ownerReceizId: current.inventory[0]?.manifest.ownerReceizId ?? "wilds.player.receiz.id"
+              ownerReceizId
             }
           : input;
         const next = applyWildsInput(current, effectiveInput);
@@ -167,7 +171,7 @@ export function PlayCampaign({
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [onComplete]);
+  }, [onComplete, ownerReceizId]);
 
   if (!enabled) {
     return (
@@ -188,7 +192,7 @@ export function PlayCampaign({
             type: "capture",
             encounterId: `${nearestCreature(current).card.id}:${Math.round(current.player.x * 100)}:${Math.round(current.player.z * 100)}:${Date.now()}`,
             capturedAt: new Date().toISOString(),
-            ownerReceizId: current.inventory[0]?.manifest.ownerReceizId ?? "wilds.player.receiz.id"
+            ownerReceizId
           }
         : input;
       const next = applyWildsInput(current, effectiveInput);
@@ -382,7 +386,7 @@ export function PlayCampaign({
           </Button>
         </aside>
       </div>
-      <WildsInventory state={state} onInput={dispatch} />
+      <WildsInventory state={state} onInput={dispatch} onListAsset={onListAsset} />
       <WildsCaptureReward asset={rewardAsset} onClose={() => setRewardAsset(null)} />
     </section>
   );

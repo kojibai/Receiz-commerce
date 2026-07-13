@@ -1129,6 +1129,16 @@ a {
   width: fit-content;
   min-width: 0;
   max-width: 100%;
+  gap: 7px;
+  min-height: 26px;
+  padding: 3px 9px;
+  border: 1px solid color-mix(in srgb, var(--receiz) 25%, transparent);
+  border-radius: 999px;
+  color: var(--receiz-strong);
+  background: color-mix(in srgb, var(--receiz) 7%, white);
+  font-size: 11px;
+  font-weight: 850;
+  text-decoration: none;
 }
 
 .powered-by-receiz-badge img {
@@ -2580,11 +2590,21 @@ a {
   justify-content: center;
   min-width: 0;
   min-height: 44px;
-  padding: 0;
-  border: 0;
+  gap: 10px;
+  padding: 0 18px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: var(--radius);
-  background: transparent;
+  color: #fff;
+  background: #071d21;
   cursor: pointer;
+  font-size: 14px;
+  font-weight: 850;
+}
+
+.official-receiz-login-button-light {
+  border-color: color-mix(in srgb, var(--receiz) 22%, transparent);
+  color: var(--receiz-strong);
+  background: #fff;
 }
 
 .official-receiz-login-button img {
@@ -9966,6 +9986,28 @@ button.product-purchase-secondary-link {
 .wilds-inventory-actions {
   display: grid;
   gap: 8px;
+}
+
+.wilds-listing-control {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+}
+
+.wilds-listing-control label {
+  align-items: center;
+  display: grid;
+  gap: 6px;
+  grid-template-columns: 1fr auto minmax(88px, 0.45fr);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.wilds-listing-control input {
+  border: 1px solid color-mix(in srgb, var(--border) 78%, transparent);
+  border-radius: 10px;
+  min-width: 0;
+  padding: 9px 10px;
 }
 
 .wilds-inventory > footer {

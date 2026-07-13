@@ -68,6 +68,13 @@ describe("Receiz Wilds game state", () => {
     assert.equal(synced.inventory.length, captured.inventory.length);
     assert.equal(synced.inventory.at(-1)?.status, "verified");
     assert.equal(synced.pendingSyncAssetIds.includes(asset.id), false);
+
+    const listed = applyWildsInput(synced, {
+      type: "mark-listed",
+      assetId: asset.id,
+      synchronizedAt: "2026-07-13T15:02:00.000Z"
+    });
+    assert.equal(listed.inventory.at(-1)?.status, "listed");
   });
 
   it("evolves an eligible card and retains its earlier portable form", () => {

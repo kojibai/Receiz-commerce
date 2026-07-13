@@ -14,6 +14,7 @@ export type WildsInput =
   | { type: "discover" }
   | { type: "capture"; encounterId: string; capturedAt: string; ownerReceizId: string }
   | { type: "mark-synced"; assetId: string; synchronizedAt: string }
+  | { type: "mark-listed"; assetId: string; synchronizedAt: string }
   | { type: "evolve"; assetId: string; evolvedAt: string }
   | { type: "train"; cardId?: string }
   | { type: "mission" }
@@ -288,17 +289,20 @@ export function canDiscover(state: PlayState) {
 export function applyWildsInput(state: PlayState, input: WildsInput): PlayState {
   if (input.type === "reset") return initialPlayState;
 
-  if (input.type === "mark-synced") {
+  if (input.type === "mark-synced" || input.type === "mark-listed") {
     if (!Number.isFinite(Date.parse(input.synchronizedAt))) return state;
     const target = state.inventory.find((asset) => asset.id === input.assetId);
-    if (!target || target.status !== "sealed_local") return state;
+    if (!target || target.status === "suspended" || target.status === "revoked") return state;
+    const nextStatus = input.type === "mark-listed" ? "listed" : "verified";
     return {
       ...state,
       inventory: state.inventory.map((asset) => asset.id === input.assetId
-        ? { ...asset, status: "verified", synchronizedAt: input.synchronizedAt }
+        ? { ...asset, status: nextStatus, synchronizedAt: input.synchronizedAt }
         : asset),
       pendingSyncAssetIds: state.pendingSyncAssetIds.filter((id) => id !== input.assetId),
-      lastEvent: `${target.manifest.name} synchronized and is Exchange eligible.`
+      lastEvent: input.type === "mark-listed"
+        ? `${target.manifest.name} passed offline verification and is listed on the Exchange.`
+        : `${target.manifest.name} synchronized and is Exchange eligible.`
     };
   }
 

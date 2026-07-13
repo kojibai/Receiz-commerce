@@ -554,7 +554,7 @@ export const seedCommerceState: CommerceState = {
           assetType: "proof_object",
           proof: {
             kind: "receiz.proof_bundle",
-            verifyUrl: "https://receiz.com/v/boost/LD-1240/1782745800000",
+            verifyUrl: "/verify?claim=ld1240limiteddropclaim&pulse=1782745800000",
             kaiPulseEternal: "1782745800000",
             kaiKlok: "kai:1782745800000",
             receizClaimId: "ld1240limiteddropclaim",
@@ -566,8 +566,8 @@ export const seedCommerceState: CommerceState = {
             custody: "fractionalized"
           },
           links: {
-            verify: "https://receiz.com/v/boost/LD-1240/1782745800000",
-            asset: "https://receiz.com/assets/asset-limited-drop"
+            verify: "/verify?claim=ld1240limiteddropclaim&pulse=1782745800000",
+            asset: "/assets/asset-limited-drop"
           }
         },
         ownerReceizId: "boost.receiz.id",
@@ -641,7 +641,7 @@ export const seedCommerceState: CommerceState = {
           assetType: "market_certificate",
           proof: {
             kind: "receiz.proof_bundle",
-            verifyUrl: "https://receiz.com/v/boost/BC-88421/1782745200000",
+            verifyUrl: "/verify?claim=bc88421brewclassclaim&pulse=1782745200000",
             kaiPulseEternal: "1782745200000",
             kaiKlok: "kai:1782745200000",
             receizClaimId: "bc88421brewclassclaim",
@@ -653,7 +653,7 @@ export const seedCommerceState: CommerceState = {
             custody: "fractionalized"
           },
           links: {
-            verify: "https://receiz.com/v/boost/BC-88421/1782745200000"
+            verify: "/verify?claim=bc88421brewclassclaim&pulse=1782745200000"
           }
         },
         ownerReceizId: "boost.receiz.id",

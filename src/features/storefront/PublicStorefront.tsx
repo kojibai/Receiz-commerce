@@ -37,6 +37,7 @@ import type { HostContext } from "@/lib/hosting/host-context";
 import { FloatingCart } from "@/features/storefront/FloatingCart";
 import { EmbeddedReceizPayment } from "@/features/payments/EmbeddedReceizPayment";
 import { PlayCampaign } from "@/features/play/PlayCampaign";
+import type { PortableCardAsset } from "@/features/play/portable-card";
 import { ProductCatalog } from "@/features/storefront/ProductCatalog";
 import { ReceizIdAccess } from "@/features/storefront/ReceizIdAccess";
 import { ReceizAccountManagementPills, ReceizRecoveryPills } from "@/features/storefront/ReceizRecoveryPills";
@@ -264,6 +265,11 @@ export function PublicStorefront({
       navigator.vibrate(10);
     }
   };
+  const listWildsCard = async (card: PortableCardAsset, priceCents: number) => {
+    const listed = await actions.listWildsCard(card, priceCents);
+    if (listed) setMobileView("exchange");
+    return listed;
+  };
   const tradeExchangeAsset = (assetId: string, side: ExchangeTradeSide, shares: number) => {
     void actions.tradeExchangeAsset(assetId, side, shares);
     if (typeof navigator !== "undefined" && "vibrate" in navigator) {
@@ -349,6 +355,8 @@ export function PublicStorefront({
                   campaignName={campaignName}
                   enabled={gameEnabled}
                   onComplete={completeGame}
+                  onListAsset={listWildsCard}
+                  ownerReceizId={receizHandle}
                 />
               </>
             ) : homepageMode === "exchange" ? (
@@ -380,6 +388,8 @@ export function PublicStorefront({
                   campaignName={campaignName}
                   enabled={gameEnabled}
                   onComplete={completeGame}
+                  onListAsset={listWildsCard}
+                  ownerReceizId={receizHandle}
                 />
                 <ProductCatalog
                   addedProductId={cartPulseProductId}
@@ -435,6 +445,8 @@ export function PublicStorefront({
                   campaignName={campaignName}
                   enabled={gameEnabled}
                   onComplete={completeGame}
+                  onListAsset={listWildsCard}
+                  ownerReceizId={receizHandle}
                 />
 
                 <ProductCatalog
@@ -513,6 +525,7 @@ export function PublicStorefront({
           exchangeListAssetFeedback={actionFeedback["exchange.listAsset"]}
           shippingFeedback={actionFeedback.shipping}
           onExchangeListAsset={listExchangeAsset}
+          onWildsListAsset={listWildsCard}
           onExchangeLiquidity={provideExchangeLiquidity}
           onExchangeSelectAsset={selectExchangeAsset}
           onExchangeTrade={tradeExchangeAsset}
@@ -898,6 +911,7 @@ function MobileStage({
   onAddToCart,
   onCheckout,
   onExchangeListAsset,
+  onWildsListAsset,
   onExchangeLiquidity,
   onExchangeSelectAsset,
   onExchangeTrade,
@@ -930,6 +944,7 @@ function MobileStage({
   onAddToCart: (productId: string) => void;
   onCheckout: () => void;
   onExchangeListAsset: (file?: File) => void | Promise<void>;
+  onWildsListAsset: (card: PortableCardAsset, priceCents: number) => Promise<PortableCardAsset | null>;
   onExchangeLiquidity: (assetId: string, amountCents: number) => void;
   onExchangeSelectAsset: (assetId: string) => void;
   onExchangeTrade: (assetId: string, side: ExchangeTradeSide, shares: number) => void;
@@ -1002,6 +1017,8 @@ function MobileStage({
         campaignName={campaignName}
         enabled={state.game.enabled || state.storefront.homepageMode === "game"}
         onComplete={onPlayComplete}
+        onListAsset={onWildsListAsset}
+        ownerReceizId={customerReceizHandle}
       />
       <MobileAccountPanel
         active={activeView === "account"}
@@ -1939,17 +1956,21 @@ function MobilePlayPanel({
   active,
   campaignName,
   enabled,
-  onComplete
+  onComplete,
+  onListAsset,
+  ownerReceizId
 }: {
   active: boolean;
   campaignName: string;
   enabled: boolean;
   onComplete: (beans: number) => void;
+  onListAsset: (card: PortableCardAsset, priceCents: number) => Promise<PortableCardAsset | null>;
+  ownerReceizId: string;
 }) {
   return (
     <MobilePane active={active} action={<StatusPill tone="pink">Game on</StatusPill>} title="Play">
       <div className="mobile-play-wrap">
-        <PlayCampaign campaignName={campaignName} enabled={enabled} onComplete={onComplete} />
+        <PlayCampaign campaignName={campaignName} enabled={enabled} onComplete={onComplete} onListAsset={onListAsset} ownerReceizId={ownerReceizId} />
       </div>
     </MobilePane>
   );

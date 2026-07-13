@@ -1,10 +1,29 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { admitUploadedAsset, admitWildsCard, localAssetVerifyPath } from "../src/lib/exchange/asset-admission.js";
+import { admitUploadedAsset, admitWildsCard, localAssetVerifyPath, synchronizeWildsCard } from "../src/lib/exchange/asset-admission.js";
 import { sealCollectedCard } from "../src/features/play/portable-card.js";
 import { baseState } from "./support/commerce-state.js";
 
 describe("Exchange asset admission", () => {
+  it("offline-verifies and synchronizes a locally sealed card for its owner", () => {
+    const local = sealCollectedCard({
+      formId: "mintcub-1",
+      ownerReceizId: "player.receiz.id",
+      encounterId: "sync-mint",
+      capturedAt: "2026-07-13T14:59:00.000Z"
+    });
+    const synchronized = synchronizeWildsCard({
+      actorReceizId: "player.receiz.id",
+      card: local,
+      synchronizedAt: "2026-07-13T15:00:00.000Z"
+    });
+
+    assert.equal(synchronized.status, "verified");
+    assert.equal(synchronized.synchronizedAt, "2026-07-13T15:00:00.000Z");
+    assert.throws(() => synchronizeWildsCard({ actorReceizId: "other.receiz.id", card: local }), /owner_authority/);
+    assert.throws(() => synchronizeWildsCard({ actorReceizId: "player.receiz.id", card: { ...local, proof: { ...local.proof, digest: "sha256:bad" } } }), /verification_failed/);
+  });
+
   it("admits a synchronized owned Wilds card with local verification", () => {
     const local = sealCollectedCard({
       formId: "mintcub-1",

@@ -24,6 +24,20 @@ function assertUnique(assetId: string, existingAssetIds: readonly string[]) {
   if (existingAssetIds.includes(assetId)) throw new Error("exchange_asset_duplicate");
 }
 
+export function synchronizeWildsCard(input: {
+  actorReceizId: string;
+  card: PortableCardAsset;
+  synchronizedAt?: string;
+}): PortableCardAsset {
+  const verification = verifyPortableCard(input.card);
+  if (!verification.ok) throw new Error("wilds_card_verification_failed");
+  if (input.card.manifest.ownerReceizId !== input.actorReceizId) throw new Error("exchange_owner_authority_required");
+  if (input.card.status === "suspended" || input.card.status === "revoked") throw new Error("wilds_card_not_admissible");
+  const synchronizedAt = input.synchronizedAt ?? new Date().toISOString();
+  if (!Number.isFinite(Date.parse(synchronizedAt))) throw new Error("wilds_card_sync_time_invalid");
+  return { ...input.card, status: "verified", synchronizedAt };
+}
+
 export function admitWildsCard(input: {
   actorReceizId: string;
   card: PortableCardAsset;

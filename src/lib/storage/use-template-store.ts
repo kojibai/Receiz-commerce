@@ -83,6 +83,7 @@ import type {
 } from "@/types/domain";
 import { makeId } from "@/lib/utils";
 import { compactPublishedState } from "@/lib/receiz/proof-state";
+import type { PortableCardAsset } from "@/features/play/portable-card";
 
 function readState(hostContext: HostContext, fallbackState: CommerceState = seedCommerceState): CommerceState {
   if (typeof window === "undefined") return fallbackState;
@@ -3121,32 +3122,42 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
           }
           return;
         }
+        setActionFeedback("exchange.listAsset", "error", "Choose a Receiz proof object to run the offline verifier before listing");
+      },
+      async listWildsCard(card: PortableCardAsset, priceCents = 2500) {
+        setActionFeedback("exchange.listAsset", "pending", `Offline-verifying ${card.manifest.name}`);
+        try {
+          const result = await postJson<{
+            card?: PortableCardAsset;
+            state?: CommerceState;
+            storeStateSync?: StoreStateSyncResponse;
+          }>("/api/exchange/wilds", { card, priceCents });
+          if (!result.card || !result.state) throw new Error("Wilds card listing failed");
 
-        setState((current) => {
-          const actorReceizId = current.auth.receizId.handle || current.hosting.merchantReceizId;
-          const alreadyListed = new Set(current.exchange.assets.map((asset) => asset.sourceAssetId));
-          const ownedAsset =
-            (source ? current.assets.find((asset) => asset.id === source) : undefined) ??
-            current.assets.find((asset) => !alreadyListed.has(asset.id));
-          if (ownedAsset) {
-            return stateWithListedExchangeAsset(current, {
-              source: "asset",
-              asset: ownedAsset,
-              actorReceizId
-            });
-          }
-
-          const product =
-            (source ? current.products.find((item) => item.id === source) : undefined) ??
-            current.products.find((item) => !alreadyListed.has(item.id));
-          if (!product) return current;
-
-          return stateWithListedExchangeAsset(current, {
-            source: "product",
-            product,
-            actorReceizId
-          });
-        });
+          setState((current) => ({
+            ...current,
+            exchange: result.state!.exchange,
+            assets: result.state!.assets,
+            proofEvents: result.state!.proofEvents
+          }));
+          const syncError = storeStateSyncError(result.storeStateSync);
+          const syncPending = storeStateSyncPending(result.storeStateSync);
+          setActionFeedback(
+            "exchange.listAsset",
+            syncError || syncPending ? "error" : "success",
+            syncError || (syncPending
+              ? `${card.manifest.name} verified; durable Exchange sync is pending`
+              : `${card.manifest.name} verified and listed`)
+          );
+          return result.card;
+        } catch (error) {
+          setActionFeedback(
+            "exchange.listAsset",
+            "error",
+            error instanceof Error ? error.message : "Wilds card verification failed"
+          );
+          return null;
+        }
       },
       async tradeExchangeAsset(assetId: string, side: ExchangeTradeSide, shares: number, resumeReferenceId?: string) {
         const snapshot = stateRef.current;

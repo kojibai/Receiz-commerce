@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
-import { verifiedExchangeAsset } from "@/lib/exchange/listing-authority";
+import { admitUploadedAsset } from "@/lib/exchange/asset-admission";
 import { hostContextFromHost } from "@/lib/hosting/host-context";
 import { createReceizCommerceAdapter } from "@/lib/receiz/adapter";
 import { loadReceizConnectProfile } from "@/lib/receiz/connect-profile";
@@ -86,22 +86,6 @@ export async function POST(request: NextRequest) {
   }
 
   const digest = await sha256Basis(file);
-  let verifiedAsset: ReceizedAsset;
-  try {
-    verifiedAsset = verifiedExchangeAsset({
-      actorReceizId,
-      artifactDigest: digest,
-      filename: file.name,
-      submittedAsset,
-      verification
-    });
-  } catch (error) {
-    return NextResponse.json(
-      { ok: false, error: error instanceof Error ? error.message : "exchange_asset_manifest_invalid" },
-      { status: 422 }
-    );
-  }
-
   const proofStore = await getServerProofStateStore();
   await hydrateProofStoreFromReceizStoreState(proofStore, tenantHost).catch(() => undefined);
   const recovered = proofStore.projectHost(mockStorage.getState(), tenantHost);
@@ -110,6 +94,25 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, error: "exchange_market_not_published" }, { status: 409 });
   }
   const baseState = recovered;
+  let verifiedAsset: ReceizedAsset;
+  try {
+    verifiedAsset = admitUploadedAsset({
+      actorReceizId,
+      artifactDigest: digest,
+      filename: file.name,
+      submittedAsset,
+      verification,
+      existingAssetIds: [
+        ...baseState.assets.map((asset) => asset.id),
+        ...baseState.exchange.assets.map((asset) => asset.sourceAssetId)
+      ]
+    });
+  } catch (error) {
+    return NextResponse.json(
+      { ok: false, error: error instanceof Error ? error.message : "exchange_asset_manifest_invalid" },
+      { status: 422 }
+    );
+  }
   const state = stateWithListedExchangeAsset(
     {
       ...baseState,
