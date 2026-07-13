@@ -32,14 +32,21 @@ describe("Receiz Wilds rendering contract", () => {
 
   it("keeps compact controls below the world and collapses mission detail", async () => {
     const source = await readFile("src/features/play/PlayCampaign.tsx", "utf8");
+    const css = await readFile("app/globals.css", "utf8");
     const stageEnd = source.indexOf('<div className="wilds-screen-controls"');
     const eventToast = source.indexOf('<div className="wilds-event-toast"');
 
     assert.ok(stageEnd > eventToast);
     assert.match(source, /<details className="wilds-mission-card">/);
+    assert.match(source, /<details className="wilds-command-tray wilds-reward-tray">/);
+    assert.match(source, /<details className="wilds-command-tray wilds-deck-tray">/);
+    assert.match(source, /<details className="wilds-inventory-tray">/);
+    assert.match(source, /Portable card vault/);
     assert.match(source, /<summary>/);
     assert.match(source, /aria-label="Make camp and recover energy"/);
     assert.match(source, /aria-label="Run world mission"/);
+    assert.match(css, /\.mobile-play-wrap \.wilds-stage\s*\{[^}]*min-height: clamp\(430px, 64dvh, 620px\)/);
+    assert.doesNotMatch(css, /\.mobile-play-wrap \.wilds-stage\s*\{[^}]*min-height: 286px/);
   });
 
   it("uses a drag trackpad and streams terrain around the player", async () => {

@@ -341,46 +341,64 @@ export function PlayCampaign({
             </div>
           </details>
 
-          <div className="wilds-reward-card">
-            <span>Portable reward</span>
-            {state.rewardCards.length ? (
-              state.rewardCards.map((reward) => (
-                <div key={reward.id}>
-                  <strong>{reward.title}</strong>
-                  <p>{reward.businessUse}</p>
-                  <b>{reward.value}</b>
-                </div>
-              ))
-            ) : (
-              <div>
-                <strong>Locked merchant card</strong>
-                <p>Clear the mission to mint a card businesses can map to coupons, access, perks, or custom proof logic.</p>
-                <b>{Math.max(0, 100 - state.missionProgress)}% left</b>
-              </div>
-            )}
-          </div>
-
-          <div className="wilds-squad-list" aria-label="Collected companion cards">
-            {deckCards.map((card) => (
-              <button
-                aria-pressed={state.selectedCardId === card.id}
-                className="wilds-squad-card"
-                key={card.id}
-                onClick={() => dispatch({ type: "select-card", cardId: card.id })}
-                type="button"
-              >
-                <span style={{ background: card.color }}>{card.name.slice(0, 2).toUpperCase()}</span>
+          <details className="wilds-command-tray wilds-reward-tray">
+            <summary>
+              <span>
+                <small>Portable reward</small>
+                <strong>{state.rewardCards.length ? `${state.rewardCards.length} reward ready` : "Locked merchant card"}</strong>
+              </span>
+              <b>{state.rewardCards.length ? "Ready" : `${Math.max(0, 100 - state.missionProgress)}% left`}</b>
+              <Icons.chevronDown aria-hidden="true" size={18} />
+            </summary>
+            <div className="wilds-reward-card">
+              {state.rewardCards.length ? (
+                state.rewardCards.map((reward) => (
+                  <div key={reward.id}>
+                    <strong>{reward.title}</strong>
+                    <p>{reward.businessUse}</p>
+                    <b>{reward.value}</b>
+                  </div>
+                ))
+              ) : (
                 <div>
-                  <strong>{card.name}</strong>
-                  <small>Level {state.companionProgress[card.id]?.level ?? 1} · Bond {state.companionProgress[card.id]?.bond ?? 0}</small>
+                  <strong>Clear the world mission</strong>
+                  <p>Mint a portable card businesses can map to coupons, access, perks, or custom proof logic.</p>
                 </div>
-                <b>{card.power}</b>
-                <div className="wilds-mini-charge" aria-label={`${card.power}% power`}>
-                  <i style={{ width: `${card.power}%` }} />
-                </div>
-              </button>
-            ))}
-          </div>
+              )}
+            </div>
+          </details>
+
+          <details className="wilds-command-tray wilds-deck-tray">
+            <summary>
+              <span>
+                <small>Active deck</small>
+                <strong>{activeCard.name} leads</strong>
+              </span>
+              <b>{deckCards.length}/4</b>
+              <Icons.chevronDown aria-hidden="true" size={18} />
+            </summary>
+            <div className="wilds-squad-list" aria-label="Collected companion cards">
+              {deckCards.map((card) => (
+                <button
+                  aria-pressed={state.selectedCardId === card.id}
+                  className="wilds-squad-card"
+                  key={card.id}
+                  onClick={() => dispatch({ type: "select-card", cardId: card.id })}
+                  type="button"
+                >
+                  <span style={{ background: card.color }}>{card.name.slice(0, 2).toUpperCase()}</span>
+                  <div>
+                    <strong>{card.name}</strong>
+                    <small>Level {state.companionProgress[card.id]?.level ?? 1} · Bond {state.companionProgress[card.id]?.bond ?? 0}</small>
+                  </div>
+                  <b>{card.power}</b>
+                  <div className="wilds-mini-charge" aria-label={`${card.power}% power`}>
+                    <i style={{ width: `${card.power}%` }} />
+                  </div>
+                </button>
+              ))}
+            </div>
+          </details>
 
           <div className="wilds-economy-grid">
             <div>
@@ -402,7 +420,17 @@ export function PlayCampaign({
           </Button>
         </aside>
       </div>
-      <WildsInventory state={state} onInput={dispatch} onListAsset={onListAsset} />
+      <details className="wilds-inventory-tray">
+        <summary>
+          <span>
+            <small>Portable card vault</small>
+            <strong>{state.inventory.length} sealed {state.inventory.length === 1 ? "card" : "cards"}</strong>
+          </span>
+          <span>Open inventory</span>
+          <Icons.chevronDown aria-hidden="true" size={20} />
+        </summary>
+        <WildsInventory state={state} onInput={dispatch} onListAsset={onListAsset} />
+      </details>
       <WildsCaptureReward asset={rewardAsset} onClose={() => {
         setRewardAsset(null);
         dispatch({ type: "dismiss-reveal" });
