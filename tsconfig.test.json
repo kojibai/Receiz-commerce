@@ -44,6 +44,7 @@
     "src/lib/storefront/customer-session.ts",
     "src/lib/storefront/proof-exchange.ts",
     "src/features/play/creature-catalog.ts",
+    "src/features/play/portable-card.ts",
     "src/data/seed.ts",
     "src/types/domain.ts"
   ]
