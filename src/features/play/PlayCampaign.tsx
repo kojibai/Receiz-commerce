@@ -6,11 +6,9 @@ import { Button, StatusPill } from "@/components/ui";
 import { cx } from "@/lib/utils";
 import {
   applyWildsInput,
-  canDiscover,
   discoveredCards,
   initialPlayState,
   missionCards,
-  nearestCreature,
   restorePlayState,
   serializePlayState,
   selectedCard,
@@ -123,11 +121,10 @@ export function PlayCampaign({
   const [state, setState] = useState(initialPlayState);
   const [saveRestored, setSaveRestored] = useState(false);
   const [rewardAsset, setRewardAsset] = useState<PortableCardAsset | null>(null);
+  const [searchArmed, setSearchArmed] = useState(false);
   const activeMission = missionCards[state.completedMissionIds.length % missionCards.length];
   const activeCard = selectedCard(state);
   const deckCards = discoveredCards(state);
-  const nearest = nearestCreature(state);
-  const discoveryReady = canDiscover(state);
   const activeProgress = state.companionProgress[activeCard.id] ?? { level: 1, xp: 0, bond: 0 };
 
   useEffect(() => {
@@ -145,33 +142,44 @@ export function PlayCampaign({
   }, [saveRestored, state]);
 
   useEffect(() => {
+    const delay = state.encounter.phase === "emerging" ? 1_050 : state.encounter.phase === "capsule" ? 1_250 : state.encounter.phase === "sealed" ? 700 : null;
+    if (delay === null) return;
+    const timer = window.setTimeout(() => {
+      setState((current) => applyWildsInput(current, { type: "advance-encounter", at: new Date().toISOString() }));
+    }, delay);
+    return () => window.clearTimeout(timer);
+  }, [state.encounter.phase]);
+
+  useEffect(() => {
+    if (state.encounter.phase !== "revealed" || !state.encounter.assetId) return;
+    const assetId = state.encounter.assetId;
+    const asset = state.inventory.find((candidate) => candidate.id === assetId) ?? null;
+    setRewardAsset(asset);
+  }, [state.encounter, state.inventory]);
+
+  useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
       if (target?.matches("input, textarea, select, button, [contenteditable='true']")) return;
       const key = event.key.toLowerCase();
+      if (key === " ") {
+        event.preventDefault();
+        setSearchArmed((current) => !current);
+        return;
+      }
       const input: WildsInput | null =
         key === "arrowup" || key === "w" ? { type: "move", direction: "north" }
           : key === "arrowdown" || key === "s" ? { type: "move", direction: "south" }
             : key === "arrowleft" || key === "a" ? { type: "move", direction: "west" }
               : key === "arrowright" || key === "d" ? { type: "move", direction: "east" }
-                : key === " " ? { type: "discover" }
-                  : key === "t" ? { type: "train" }
+                : key === "t" ? { type: "train" }
                     : key === "m" ? { type: "mission" }
                       : key === "r" ? { type: "rest" }
                         : null;
       if (!input) return;
       event.preventDefault();
       setState((current) => {
-        const effectiveInput: WildsInput = input.type === "discover"
-          ? {
-              type: "capture",
-              encounterId: `${nearestCreature(current).card.id}:${Math.round(current.player.x * 100)}:${Math.round(current.player.z * 100)}:${Date.now()}`,
-              capturedAt: new Date().toISOString(),
-              ownerReceizId
-            }
-          : input;
-        const next = applyWildsInput(current, effectiveInput);
-        if (next.inventory.length > current.inventory.length) setRewardAsset(next.inventory.at(-1) ?? null);
+        const next = applyWildsInput(current, input);
         if (!current.completed && next.completed) onComplete?.(next.beans);
         return next;
       });
@@ -194,16 +202,7 @@ export function PlayCampaign({
 
   const dispatch = (input: WildsInput) => {
     setState((current) => {
-      const effectiveInput: WildsInput = input.type === "discover"
-        ? {
-            type: "capture",
-            encounterId: `${nearestCreature(current).card.id}:${Math.round(current.player.x * 100)}:${Math.round(current.player.z * 100)}:${Date.now()}`,
-            capturedAt: new Date().toISOString(),
-            ownerReceizId
-          }
-        : input;
-      const next = applyWildsInput(current, effectiveInput);
-      if (next.inventory.length > current.inventory.length) setRewardAsset(next.inventory.at(-1) ?? null);
+      const next = applyWildsInput(current, input);
       if (!current.completed && next.completed) {
         onComplete?.(next.beans);
       }
@@ -230,7 +229,14 @@ export function PlayCampaign({
       <div className="wilds-shell wilds-playable-shell">
         <div className="wilds-world">
           <div className="wilds-stage" aria-label="Receiz Wilds playable 3D world">
-            <WildsWorldCanvas state={state} onInput={dispatch} />
+            <WildsWorldCanvas
+              state={state}
+              searchEnabled={searchArmed}
+              onSearchPoint={(point) => {
+                dispatch({ type: "search-point", ...point, searchedAt: new Date().toISOString(), ownerReceizId });
+                setSearchArmed(false);
+              }}
+            />
 
             <div className="wilds-hud-top">
               <div className="wilds-player-chip">
@@ -256,10 +262,12 @@ export function PlayCampaign({
             <div className="runner-card runner-primary">
               <span className="runner-core" />
               <div>
-                <strong>{discoveryReady ? "Wild companion nearby" : "Active companion card"}</strong>
-                <small>{discoveryReady ? `${nearest.card.name} can join your deck.` : activeCard.role}</small>
+                <strong>{searchArmed ? "Choose a hiding place" : state.encounter.phase === "hint" ? "A signal is close" : "Search the Wilds"}</strong>
+                <small>{searchArmed ? "Tap the terrain to send a search pulse." : state.encounter.phase === "hint" ? "Search around the glowing clue." : activeCard.role}</small>
               </div>
             </div>
+
+            {searchArmed ? <div className="wilds-search-reticle" aria-live="polite">Tap anywhere in the world to search that exact spot</div> : null}
 
             <div className="wilds-event-toast" aria-live="polite">
               {state.lastEvent}
@@ -269,10 +277,11 @@ export function PlayCampaign({
           <div className="wilds-screen-controls" aria-label="World controls">
             <div className="wilds-screen-actions" aria-label="Explore actions">
               <button
-                className={cx("wilds-action", state.activeAction === "explore" && "active", discoveryReady && "ready")}
-                onClick={() => dispatch({ type: "discover" })}
-                aria-label={discoveryReady ? `Discover ${nearest.card.name}` : "Discover companion"}
-                title={discoveryReady ? `Discover ${nearest.card.name}` : "Discover companion"}
+                aria-pressed={searchArmed}
+                className={cx("wilds-action", searchArmed && "active ready")}
+                onClick={() => setSearchArmed((current) => !current)}
+                aria-label={searchArmed ? "Cancel terrain search" : "Search for a hidden creature"}
+                title={searchArmed ? "Cancel search" : "Search terrain"}
                 type="button"
               >
                 <Icons.game size={20} />
@@ -380,7 +389,7 @@ export function PlayCampaign({
             </div>
             <div>
               <span>Near</span>
-              <strong>{nearest.card.name}</strong>
+              <strong>{state.encounter.phase === "idle" ? "Hidden" : state.encounter.phase}</strong>
             </div>
             <div>
               <span>Titan Gate</span>
@@ -394,7 +403,10 @@ export function PlayCampaign({
         </aside>
       </div>
       <WildsInventory state={state} onInput={dispatch} onListAsset={onListAsset} />
-      <WildsCaptureReward asset={rewardAsset} onClose={() => setRewardAsset(null)} />
+      <WildsCaptureReward asset={rewardAsset} onClose={() => {
+        setRewardAsset(null);
+        dispatch({ type: "dismiss-reveal" });
+      }} />
     </section>
   );
 }

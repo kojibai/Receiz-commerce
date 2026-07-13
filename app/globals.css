@@ -1982,6 +1982,30 @@ a {
   height: 100%;
 }
 
+.wilds-canvas-wrap.search-armed canvas {
+  cursor: crosshair;
+}
+
+.wilds-search-reticle {
+  position: absolute;
+  top: 86px;
+  left: 50%;
+  z-index: 5;
+  max-width: calc(100% - 32px);
+  padding: 8px 13px;
+  border: 1px solid rgba(247, 201, 72, 0.56);
+  border-radius: 999px;
+  color: #171311;
+  background: rgba(255, 244, 179, 0.92);
+  box-shadow: 0 12px 30px rgba(23, 19, 17, 0.22);
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 1.15;
+  text-align: center;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
 .wilds-canvas-fallback {
   background:
     radial-gradient(circle at 22% 20%, rgba(55, 214, 136, 0.24), transparent 28%),
@@ -6672,8 +6696,15 @@ a {
   }
 
   .mobile-play-wrap .wilds-stage {
-    min-height: clamp(292px, 44dvh, 360px);
+    min-height: clamp(430px, 64dvh, 620px);
     border-radius: 16px;
+  }
+
+  .mobile-play-wrap .wilds-search-reticle {
+    top: 64px;
+    width: max-content;
+    padding: 7px 10px;
+    font-size: 9.5px;
   }
 
   .mobile-play-wrap .wilds-control-deck {

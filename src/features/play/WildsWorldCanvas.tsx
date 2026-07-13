@@ -5,25 +5,26 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Html, Sparkles } from "@react-three/drei";
 import * as THREE from "three";
 import {
+  creatureCards,
   habitatNodes,
-  nearbyCreatureCards,
-  nearestCreature,
   type CreatureCard,
   type HabitatNode,
-  type PlayState,
-  type WildsInput
+  type PlayState
 } from "@/features/play/game-state";
 import { creatureForm } from "@/features/play/creature-catalog";
+import type { HotspotCover } from "@/features/play/hidden-hotspots";
 
 export function WildsWorldCanvas({
   state,
-  onInput
+  searchEnabled,
+  onSearchPoint
 }: {
   state: PlayState;
-  onInput: (input: WildsInput) => void;
+  searchEnabled: boolean;
+  onSearchPoint: (point: { x: number; z: number }) => void;
 }) {
   return (
-    <div className="wilds-canvas-wrap">
+    <div className={`wilds-canvas-wrap${searchEnabled ? " search-armed" : ""}`}>
       <Canvas
         camera={{ fov: 42, near: 0.1, far: 80, position: [4.6, 5.8, 7.2] }}
         dpr={[1, 1.5]}
@@ -38,7 +39,7 @@ export function WildsWorldCanvas({
         shadows
       >
         <Suspense fallback={null}>
-          <WildsScene state={state} onInput={onInput} />
+          <WildsScene state={state} searchEnabled={searchEnabled} onSearchPoint={onSearchPoint} />
         </Suspense>
       </Canvas>
     </div>
@@ -47,14 +48,13 @@ export function WildsWorldCanvas({
 
 function WildsScene({
   state,
-  onInput
+  searchEnabled,
+  onSearchPoint
 }: {
   state: PlayState;
-  onInput: (input: WildsInput) => void;
+  searchEnabled: boolean;
+  onSearchPoint: (point: { x: number; z: number }) => void;
 }) {
-  const nearest = nearestCreature(state);
-  const nearby = nearbyCreatureCards(state.player);
-
   return (
     <>
       <color attach="background" args={["#8fd7ff"]} />
@@ -73,22 +73,13 @@ function WildsScene({
       />
       <CameraRig />
       <WildsDiagnostics state={state} />
-      <StreamedTerrain player={state.player} />
+      <SearchableTerrain player={state.player} enabled={searchEnabled} onSearchPoint={onSearchPoint} />
       <group position={[-state.player.x, 0, -state.player.z]}>
         {habitatNodes.map((node) => (
           <Habitat key={node.id} node={node} />
         ))}
-        {nearby.map((card) => (
-          <Creature
-            active={state.selectedCardId === card.id}
-            card={card}
-            discovered={state.discoveredCardIds.includes(card.id)}
-            inRange={nearest.card.id === card.id && nearest.distance <= 1.25}
-            key={card.id}
-            onInput={onInput}
-          />
-        ))}
       </group>
+      <EncounterSequence state={state} />
       <PlayerMarker position={[0, 0, 0]} />
       <Sparkles count={54} scale={[8, 2.4, 8]} size={2.1} speed={0.22} color="#fff5b6" />
     </>
@@ -111,6 +102,28 @@ function CameraRig() {
 
 const WORLD_TILE_SIZE = 12;
 const STREAM_RADIUS = 2;
+
+function SearchableTerrain({
+  player,
+  enabled,
+  onSearchPoint
+}: {
+  player: PlayState["player"];
+  enabled: boolean;
+  onSearchPoint: (point: { x: number; z: number }) => void;
+}) {
+  return (
+    <group
+      onClick={(event) => {
+        if (!enabled) return;
+        event.stopPropagation();
+        onSearchPoint({ x: player.x + event.point.x, z: player.z + event.point.z });
+      }}
+    >
+      <StreamedTerrain player={player} />
+    </group>
+  );
+}
 
 function StreamedTerrain({ player }: { player: PlayState["player"] }) {
   const centerX = Math.floor(player.x / WORLD_TILE_SIZE);
@@ -238,19 +251,7 @@ function Habitat({ node }: { node: HabitatNode }) {
   );
 }
 
-function Creature({
-  active,
-  card,
-  discovered,
-  inRange,
-  onInput
-}: {
-  active: boolean;
-  card: CreatureCard;
-  discovered: boolean;
-  inRange: boolean;
-  onInput: (input: WildsInput) => void;
-}) {
+function Creature({ card }: { card: CreatureCard }) {
   const groupRef = useRef<THREE.Group>(null);
 
   useFrame(({ clock }) => {
@@ -260,14 +261,7 @@ function Creature({
   });
 
   return (
-      <group
-        ref={groupRef}
-        position={[card.position[0], 0.42, card.position[2]]}
-        onClick={(event) => {
-          event.stopPropagation();
-          onInput(discovered ? { type: "select-card", cardId: card.id } : { type: "discover" });
-        }}
-      >
+      <group ref={groupRef} position={[card.position[0], 0.42, card.position[2]]}>
         <mesh castShadow>
           <sphereGeometry args={[0.36, 24, 18]} />
           <meshStandardMaterial color={card.color} roughness={0.58} emissive={card.color} emissiveIntensity={0.08} />
@@ -290,21 +284,107 @@ function Creature({
         </mesh>
         <CreatureDetails cardId={card.id} color={card.color} accent={card.accent} />
         <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.34, 0]}>
-          <torusGeometry args={[0.46, active || inRange ? 0.035 : 0.02, 8, 36]} />
+          <torusGeometry args={[0.46, 0.035, 8, 36]} />
           <meshStandardMaterial
-            color={active ? "#fff2a8" : inRange ? "#ffffff" : "#2b6c47"}
-            emissive={active || inRange ? "#f7c948" : "#000000"}
-            emissiveIntensity={active || inRange ? 0.44 : 0}
+            color="#fff2a8"
+            emissive="#f7c948"
+            emissiveIntensity={0.44}
             transparent
-            opacity={discovered ? 0.95 : 0.68}
+            opacity={0.95}
           />
         </mesh>
-        {discovered ? (
-          <Html center distanceFactor={8} position={[0, 0.82, 0]} className="wilds-world-label">
-            <span>{card.name}</span>
-          </Html>
-        ) : null}
+        <Html center distanceFactor={8} position={[0, 0.82, 0]} className="wilds-world-label">
+          <span>{card.name}</span>
+        </Html>
       </group>
+  );
+}
+
+function EncounterSequence({ state }: { state: PlayState }) {
+  const encounter = state.encounter;
+  if (encounter.phase === "idle") return null;
+  const position: [number, number, number] = [
+    encounter.searchPoint.x - state.player.x,
+    0.04,
+    encounter.searchPoint.z - state.player.z
+  ];
+  if (encounter.phase === "searching" || encounter.phase === "hint") {
+    return <SearchPulse hint={encounter.phase === "hint"} position={position} />;
+  }
+  const card = creatureCards.find((candidate) => candidate.id === encounter.familyId);
+  if (!card || !encounter.cover) return null;
+  const localCard: CreatureCard = { ...card, position: [0, 0, 0] };
+  return (
+    <group position={position}>
+      <SearchPulse hint position={[0, 0, 0]} />
+      <HabitatCover cover={encounter.cover} open={encounter.phase !== "emerging"} />
+      <group scale={encounter.phase === "capsule" ? 0.68 : encounter.phase === "sealed" || encounter.phase === "revealed" ? 0.01 : 1}>
+        <Creature card={localCard} />
+      </group>
+      {encounter.phase === "capsule" || encounter.phase === "sealed" || encounter.phase === "revealed" ? (
+        <CaptureCapsule sealed={encounter.phase !== "capsule"} />
+      ) : null}
+    </group>
+  );
+}
+
+function SearchPulse({ hint, position }: { hint: boolean; position: [number, number, number] }) {
+  const ref = useRef<THREE.Group>(null);
+  useFrame(({ clock }) => {
+    if (!ref.current) return;
+    const wave = 0.8 + (clock.elapsedTime % 1) * 0.65;
+    ref.current.scale.setScalar(wave);
+    ref.current.rotation.y = clock.elapsedTime * 0.7;
+  });
+  return (
+    <group ref={ref} position={position}>
+      <mesh rotation={[-Math.PI / 2, 0, 0]}>
+        <torusGeometry args={[0.56, hint ? 0.045 : 0.028, 8, 48]} />
+        <meshStandardMaterial color={hint ? "#fff2a8" : "#d8fff2"} emissive={hint ? "#f7c948" : "#37d688"} emissiveIntensity={0.75} transparent opacity={0.8} />
+      </mesh>
+    </group>
+  );
+}
+
+function HabitatCover({ cover, open }: { cover: HotspotCover; open: boolean }) {
+  const colors: Record<string, string> = {
+    grass: "#2f8d51", flowers: "#ff8dad", tree: "#236b43", rock: "#7f827d",
+    cave: "#3b3446", water: "#45aee7", ruin: "#b49b75", energy: "#f7c948"
+  };
+  return (
+    <group rotation={[0, open ? 0.62 : 0, open ? -0.24 : 0]}>
+      {[-1, -0.5, 0, 0.5, 1].map((offset, index) => (
+        <mesh key={offset} castShadow position={[offset * 0.25, 0.2 + Math.abs(offset) * 0.08, index % 2 ? -0.1 : 0.08]} rotation={[0.12, offset * 0.4, offset * -0.32]}>
+          {cover === "rock" || cover === "cave" || cover === "ruin" ? <dodecahedronGeometry args={[0.24, 0]} /> : <coneGeometry args={[0.15, 0.52, cover === "water" ? 8 : 5]} />}
+          <meshStandardMaterial color={colors[String(cover)] ?? colors.grass} roughness={0.78} metalness={cover === "energy" ? 0.24 : 0} emissive={cover === "energy" ? "#f7c948" : "#000000"} emissiveIntensity={0.28} />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
+function CaptureCapsule({ sealed }: { sealed: boolean }) {
+  const ref = useRef<THREE.Group>(null);
+  useFrame(({ clock }) => {
+    if (!ref.current) return;
+    ref.current.rotation.y = clock.elapsedTime * (sealed ? 0.7 : 2.4);
+    ref.current.position.y = 0.7 + Math.sin(clock.elapsedTime * 3) * (sealed ? 0.04 : 0.1);
+  });
+  return (
+    <group ref={ref} scale={sealed ? 0.9 : 1.08}>
+      <mesh castShadow>
+        <sphereGeometry args={[0.62, 28, 20]} />
+        <meshPhysicalMaterial color="#f7fff9" roughness={0.18} metalness={0.18} transmission={sealed ? 0.05 : 0.42} transparent opacity={sealed ? 0.94 : 0.7} clearcoat={1} />
+      </mesh>
+      <mesh rotation={[Math.PI / 2, 0, 0]}>
+        <torusGeometry args={[0.61, 0.075, 12, 48]} />
+        <meshStandardMaterial color="#171311" metalness={0.55} roughness={0.28} />
+      </mesh>
+      <mesh position={[0, 0, 0.62]}>
+        <cylinderGeometry args={[0.12, 0.12, 0.08, 24]} />
+        <meshStandardMaterial color={sealed ? "#37d688" : "#f7c948"} emissive={sealed ? "#37d688" : "#f7c948"} emissiveIntensity={0.72} />
+      </mesh>
+    </group>
   );
 }
 

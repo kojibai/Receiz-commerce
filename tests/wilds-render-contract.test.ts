@@ -60,7 +60,8 @@ describe("Receiz Wilds rendering contract", () => {
     const card = await readFile("src/features/play/WildsCard.tsx", "utf8");
     const css = await readFile("app/globals.css", "utf8");
 
-    assert.match(campaign, /type: "capture"/);
+    assert.match(campaign, /type: "search-point"/);
+    assert.match(campaign, /type: "advance-encounter"/);
     assert.match(campaign, /WildsCaptureReward/);
     assert.match(campaign, /WildsInventory/);
     assert.match(campaign, /useState\(initialPlayState\)/);
@@ -76,13 +77,15 @@ describe("Receiz Wilds rendering contract", () => {
     assert.match(css, /@media \(prefers-reduced-motion: reduce\)[\s\S]*\.wilds-capture-capsule/);
   });
 
-  it("bounds region encounters instead of rendering the full catalog", async () => {
+  it("keeps creatures hidden until an exact terrain search reveals one", async () => {
     const state = await readFile("src/features/play/game-state.ts", "utf8");
     const world = await readFile("src/features/play/WildsWorldCanvas.tsx", "utf8");
 
-    assert.match(state, /function nearbyCreatureCards/);
-    assert.match(state, /MAX_NEARBY_CREATURES/);
-    assert.match(world, /nearbyCreatureCards\(state\.player\)/);
+    assert.match(state, /searchHiddenHotspots/);
+    assert.match(world, /function SearchableTerrain/);
+    assert.match(world, /function EncounterSequence/);
+    assert.match(world, /const encounter = state\.encounter/);
+    assert.doesNotMatch(world, /nearbyCreatureCards\(state\.player\)/);
     assert.doesNotMatch(world, /\{creatureCards\.map/);
   });
 });
