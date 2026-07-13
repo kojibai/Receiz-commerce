@@ -36,6 +36,22 @@ A successful search creates one active encounter and temporarily locks further s
 
 If an animation is interrupted after sealing, reopening the game restores the sealed inventory card rather than repeating or losing the encounter. Reduced-motion mode preserves the stages with fades and short scale changes.
 
+## Mobile Game Layout
+
+On mobile, the playable world is the dominant surface. The game viewport uses the available height between the compact store header and persistent bottom navigation, with a target equivalent to `clamp(480px, 68dvh, 680px)`. Controls remain overlaid or immediately attached to the world so searching never requires scrolling.
+
+Content below the world is reorganized into tasteful compact trays:
+
+- mission, reward, squad, progression, and inventory sections are collapsed by default;
+- each tray exposes one concise summary row and expands independently;
+- opening one tray closes the previously open tray on narrow screens to prevent an excessively long page;
+- inventory initially shows collection count, selected card thumbnail, and primary action, with filters and the full card detail inside the expanded state;
+- touch targets remain at least 44 CSS pixels even when surrounding copy and padding are reduced;
+- expanded content scrolls within a panel capped at `55dvh` instead of lengthening the entire page;
+- collapse state is accessible through native disclosure semantics and preserved for the current session.
+
+Desktop keeps the larger strategic layout while allowing the same secondary panels to collapse. Typography, spacing, borders, and motion are refined to keep the interface restrained, legible, and visually subordinate to the game world.
+
 ## PNG Proof Object
 
 The downloadable PNG is the sole portable card artifact. There is no JSON sidecar.
@@ -115,7 +131,7 @@ Unknown recipients, self-sends, duplicate cards, tampered cards, foreign-owned c
 - `card-ledger`: durable card ownership, listing, offer, trade, and send commands.
 - `card-share`: public verified card projection.
 - Game UI: terrain input, habitat reactions, creature emergence, capsule animation, and reveal dialog.
-- Inventory UI: download, listing, trade, share, send, and evolution controls.
+- Inventory UI: compact/expanded collection views plus download, listing, trade, share, send, and evolution controls.
 
 Server commands remain authoritative for Exchange admission and ownership changes. Client state may optimistically show progress but never finalizes a sale, trade, or send without the server result.
 
@@ -145,5 +161,6 @@ Automated coverage will verify:
 - atomic sends by username and email;
 - ownership and inventory updates after every operation;
 - reduced-motion and keyboard-accessible equivalents.
+- mobile viewport sizing, collapsed-by-default detail trays, disclosure accessibility, bounded expanded panels, and minimum touch targets.
 
-Real-browser verification will cover desktop and mobile terrain searching, reveal animation, capsule capture, PNG download and re-upload, listing, share-page purchase, multi-card trade proposal/acceptance, and direct sending.
+Real-browser verification will cover desktop and mobile terrain searching, the taller mobile world viewport, compact and expanded detail trays, reveal animation, capsule capture, PNG download and re-upload, listing, share-page purchase, multi-card trade proposal/acceptance, and direct sending.
