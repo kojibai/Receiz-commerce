@@ -3387,9 +3387,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
               merchantReceizId: string;
             };
           }>("/api/checkout", {
-            amountUsd: cartAmountUsd(checkoutSnapshot),
-            totalLabel,
-            itemCount,
+            cartLines: checkoutSnapshot.cart.lines,
             customerId: checkoutSnapshot.auth.customer.id,
             customerEmail: checkoutSnapshot.auth.customer.email,
             customerName: checkoutSnapshot.auth.customer.name,
@@ -3398,9 +3396,6 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
             shipping: checkoutCustomerShipping(checkoutSnapshot, checkoutSnapshot.auth.customer),
             tenantSlug: checkoutSnapshot.hosting.tenantSlug,
             tenantHost: checkoutTenantHost(checkoutSnapshot),
-            merchantReceizId: checkoutSnapshot.hosting.merchantReceizId,
-            merchantSettlementUserId: checkoutSnapshot.hosting.settlementUserId,
-            customerReceizId: checkoutSnapshot.auth.receizId.handle,
             fulfillment: {
               kind: checkoutFulfillmentKindValue,
               status: "payment_required",

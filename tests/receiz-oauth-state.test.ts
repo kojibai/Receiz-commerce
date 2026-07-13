@@ -13,6 +13,7 @@ describe("Receiz OAuth state bridge", () => {
   it("round-trips host-scoped oauth state with pkce verifier and return path", () => {
     const packed = packReceizOAuthState(
       {
+        flowNonce: "flow-nonce",
         verifier: "pkce-verifier",
         returnTo: "/account?tab=rewards",
         sessionScope: "receiz-app-commerce-state-v1:tenant:bjklock.receiz.app",
@@ -36,7 +37,9 @@ describe("Receiz OAuth state bridge", () => {
         refreshToken: "refresh-token",
         expiresIn: 3600,
         returnTo: "/",
-        sessionScope: "receiz-app-commerce-state-v1:tenant:shop.example.com"
+        sessionScope: "receiz-app-commerce-state-v1:tenant:shop.example.com",
+        flowNonce: "flow-nonce",
+        startOrigin: "https://shop.example.com"
       },
       secret
     );
@@ -51,6 +54,7 @@ describe("Receiz OAuth state bridge", () => {
   it("rejects tampered state", () => {
     const packed = packReceizOAuthState(
       {
+        flowNonce: "flow-nonce",
         verifier: "pkce-verifier",
         returnTo: "/",
         sessionScope: "scope",

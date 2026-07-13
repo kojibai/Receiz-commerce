@@ -11,7 +11,7 @@ import { addProjectDomain, customDomainStatusFromVercel } from "@/lib/hosting/ve
 import { checkVercelDomainDns } from "@/lib/hosting/dns-check";
 import { platform } from "@/lib/platform";
 import { createReceizCommerceAdapter } from "@/lib/receiz/adapter";
-import { buildStoreStateRecord, commerceEventFromUnknown } from "@/lib/receiz/proof-state";
+import { buildStoreStateRecord, commerceEventFromUnknown, storeStateProjectionSource } from "@/lib/receiz/proof-state";
 import { getServerProofStateStore } from "@/lib/receiz/proof-state-store";
 import { hydrateProofStoreFromReceizStoreState } from "@/lib/receiz/store-state-ledger";
 import {
@@ -20,6 +20,11 @@ import {
   summarizeReceizStoreStatePublicationResult
 } from "@/lib/receiz/store-state-publication";
 import { mockStorage } from "@/lib/storage/mock-storage";
+import {
+  commerceWebhookAuthorityIsComplete,
+  explicitWebhookEventId,
+  webhookTimestampIsFresh
+} from "@/lib/receiz/webhook-security";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -30,11 +35,12 @@ function errorMessage(error: unknown) {
 
 async function verifyWebhookBody(bodyText: string, request: NextRequest) {
   const secret = process.env.RECEIZ_WEBHOOK_SECRET;
-  if (!secret) return { ok: true, mode: "unsigned_dev" };
+  if (!secret) return { ok: false, error: "webhook_secret_not_configured" };
 
   const signature = request.headers.get("x-receiz-signature") ?? "";
   const timestamp = request.headers.get("x-receiz-timestamp") ?? "";
   if (!signature || !timestamp) return { ok: false, error: "missing_signature" };
+  if (!webhookTimestampIsFresh(timestamp)) return { ok: false, error: "stale_signature" };
 
   const receiz = createReceizCommerceAdapter({
     baseUrl: process.env.RECEIZ_BASE_URL
@@ -52,30 +58,22 @@ async function verifyWebhookBody(bodyText: string, request: NextRequest) {
 async function resumePlatformOperation(payload: unknown) {
   const recipientUserId = process.env.RECEIZ_PLATFORM_ACCOUNT_ID ?? process.env.RECEIZ_PLATFORM_USER_ID;
   if (!recipientUserId) return null;
-  let operation = settledPlatformOperationFromWebhook(payload, { recipientUserId });
-  if (!operation) {
-    const operationId = platformOperationIdFromWebhook(payload);
-    const accessToken = process.env.RECEIZ_ACCESS_TOKEN ?? process.env.RECEIZ_CONNECT_ACCESS_TOKEN;
-    if (operationId && accessToken) {
-      const receiz = createReceizCommerceAdapter({ baseUrl: process.env.RECEIZ_BASE_URL, accessToken });
-      const ledger = await receiz.actionLedger({ limit: 500 });
-      const intent = findPlatformOperationIntent(ledger, operationId);
-      if (intent) {
-        const record = payload && typeof payload === "object" && !Array.isArray(payload) ? payload as Record<string, unknown> : {};
-        const data = record.data && typeof record.data === "object" && !Array.isArray(record.data)
-          ? record.data as Record<string, unknown>
-          : {};
-        operation = settledPlatformOperationFromWebhook(
-          { ...record, data: { ...data, metadata: platformOperationMetadata(intent) } },
-          { recipientUserId }
-        );
-      }
-    }
-  }
-  if (!operation) return null;
-
+  const operationId = platformOperationIdFromWebhook(payload);
   const accessToken = process.env.RECEIZ_ACCESS_TOKEN ?? process.env.RECEIZ_CONNECT_ACCESS_TOKEN;
-  if (!accessToken) throw new Error("Receiz delegated access token is required to publish recovered platform operations.");
+  if (!operationId || !accessToken) return null;
+  const receiz = createReceizCommerceAdapter({ baseUrl: process.env.RECEIZ_BASE_URL, accessToken });
+  const ledger = await receiz.actionLedger({ limit: 500 });
+  const intent = findPlatformOperationIntent(ledger, operationId);
+  if (!intent) return null;
+  const webhookRecord = payload && typeof payload === "object" && !Array.isArray(payload) ? payload as Record<string, unknown> : {};
+  const data = webhookRecord.data && typeof webhookRecord.data === "object" && !Array.isArray(webhookRecord.data)
+    ? webhookRecord.data as Record<string, unknown>
+    : {};
+  const operation = settledPlatformOperationFromWebhook(
+    { ...webhookRecord, data: { ...data, metadata: platformOperationMetadata(intent) } },
+    { recipientUserId }
+  );
+  if (!operation) return null;
 
   const proofStore = await getServerProofStateStore(operation.merchantReceizId);
   await hydrateProofStoreFromReceizStoreState(proofStore, operation.tenantHost);
@@ -100,13 +98,13 @@ async function resumePlatformOperation(payload: unknown) {
     };
   }
 
-  const record = buildStoreStateRecord(state, {
+  const storeRecord = buildStoreStateRecord(state, {
     actorReceizId: operation.merchantReceizId,
     tenantHost: operation.tenantHost,
     reason: "sync",
     recordedAt: operation.settledAt
   });
-  const publication = await publishAndAdmitReceizStoreState({ accessToken, proofStore, record });
+  const publication = await publishAndAdmitReceizStoreState({ accessToken, proofStore, record: storeRecord });
   if (!receizStoreStateSyncCompleted(publication)) {
     throw new Error("Recovered platform operation could not be published to Receiz public store state.");
   }
@@ -162,9 +160,23 @@ export async function POST(request: NextRequest) {
       reason: "unsupported_webhook_payload"
     });
   }
+  if (!commerceWebhookAuthorityIsComplete(event, explicitWebhookEventId(payload))) {
+    return NextResponse.json(
+      { ok: false, error: "webhook_event_authority_incomplete" },
+      { status: 422 }
+    );
+  }
 
   try {
-    const proofStore = await getServerProofStateStore(event.merchantReceizId || "receiz-app-commerce");
+    const proofStore = await getServerProofStateStore();
+    await hydrateProofStoreFromReceizStoreState(proofStore, event.tenantHost);
+    if (storeStateProjectionSource(proofStore.records(), event.tenantHost) !== "published") {
+      return NextResponse.json({ ok: false, error: "webhook_tenant_not_published" }, { status: 409 });
+    }
+    const state = proofStore.projectHost(mockStorage.getState(), event.tenantHost);
+    if (state.hosting.merchantReceizId !== event.merchantReceizId) {
+      return NextResponse.json({ ok: false, error: "webhook_merchant_mismatch" }, { status: 403 });
+    }
     const result = await proofStore.admitCommerceEvent(mockStorage.getState(), event);
 
     return NextResponse.json({

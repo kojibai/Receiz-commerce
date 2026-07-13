@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getRequestOrigin } from "@/lib/url";
-import { unpackReceizSessionTicket } from "@/lib/receiz/oauth-state";
+import { oauthFlowNonceMatches, unpackReceizSessionTicket } from "@/lib/receiz/oauth-state";
 
 export const runtime = "nodejs";
 
@@ -14,10 +14,14 @@ export async function GET(request: NextRequest) {
 
   try {
     const session = unpackReceizSessionTicket(ticket);
+    if (session.startOrigin !== origin || !oauthFlowNonceMatches(request.cookies.get("receiz_oauth_flow")?.value, session.flowNonce)) {
+      throw new Error("invalid_ticket_binding");
+    }
     const target = new URL(session.returnTo.startsWith("/") ? session.returnTo : "/", origin);
     target.searchParams.set("receiz", "connected");
 
     const response = NextResponse.redirect(target);
+    response.cookies.delete("receiz_oauth_flow");
     const secure = origin.startsWith("https://");
     const accessMaxAge = Math.max(60, session.expiresIn || 3600);
 

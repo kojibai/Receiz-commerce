@@ -1,6 +1,7 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 
 export type ReceizOAuthStatePayload = {
+  flowNonce: string;
   verifier: string;
   returnTo: string;
   sessionScope: string;
@@ -14,6 +15,8 @@ export type ReceizSessionTicketPayload = {
   expiresIn: number;
   returnTo: string;
   sessionScope: string;
+  flowNonce: string;
+  startOrigin: string;
   issuedAt?: number;
 };
 
@@ -44,7 +47,7 @@ function unpack<T>(token: string, secret: string, errorMessage: string, maxAgeMs
   }
 
   const payload = JSON.parse(Buffer.from(body, "base64url").toString("utf8")) as T & { issuedAt?: number };
-  if (!payload.issuedAt || Date.now() - payload.issuedAt > maxAgeMs) {
+  if (!payload.issuedAt || payload.issuedAt > Date.now() + 30_000 || Date.now() - payload.issuedAt > maxAgeMs) {
     throw new Error(errorMessage);
   }
 
@@ -52,7 +55,18 @@ function unpack<T>(token: string, secret: string, errorMessage: string, maxAgeMs
 }
 
 export function receizOAuthSecret() {
-  return process.env.RECEIZ_OAUTH_STATE_SECRET ?? process.env.RECEIZ_CLIENT_SECRET ?? process.env.RECEIZ_WEBHOOK_SECRET ?? "receiz-commerce-dev-secret";
+  const secret = process.env.RECEIZ_OAUTH_STATE_SECRET ?? process.env.RECEIZ_CLIENT_SECRET;
+  if (!secret || Buffer.byteLength(secret, "utf8") < 32) {
+    throw new Error("RECEIZ_OAUTH_STATE_SECRET must be configured with at least 32 bytes");
+  }
+  return secret;
+}
+
+export function oauthFlowNonceMatches(expected: string | undefined, actual: string) {
+  if (!expected || !actual) return false;
+  const left = Buffer.from(expected);
+  const right = Buffer.from(actual);
+  return left.length === right.length && timingSafeEqual(left, right);
 }
 
 export function packReceizOAuthState(payload: ReceizOAuthStatePayload, secret = receizOAuthSecret()) {

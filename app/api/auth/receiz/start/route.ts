@@ -27,9 +27,11 @@ export async function GET(request: NextRequest) {
   }
 
   const verifier = base64Url(randomBytes(48));
+  const flowNonce = base64Url(randomBytes(32));
   const returnTo = request.nextUrl.searchParams.get("returnTo") ?? "/admin";
   const redirectUri = process.env.RECEIZ_ID_CALLBACK_URL ?? getReceizRedirectUri(origin);
   const state = packReceizOAuthState({
+    flowNonce,
     verifier,
     returnTo,
     sessionScope: hostContext.storageKey,
@@ -43,5 +45,13 @@ export async function GET(request: NextRequest) {
     state
   });
 
-  return NextResponse.redirect(buildReceizConnectEntryUrl(authorizeUrl));
+  const response = NextResponse.redirect(buildReceizConnectEntryUrl(authorizeUrl));
+  response.cookies.set("receiz_oauth_flow", flowNonce, {
+    httpOnly: true,
+    maxAge: 10 * 60,
+    path: "/api/auth/receiz",
+    sameSite: "lax",
+    secure: origin.startsWith("https://")
+  });
+  return response;
 }

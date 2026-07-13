@@ -7,6 +7,7 @@ function fakeReceiz(input: {
   walletBalanceUsdCents: string;
   checkoutUrl?: string;
   checkoutStatus?: string;
+  transferOk?: boolean;
 }) {
   const calls: Array<{ name: string; body?: Record<string, unknown>; idempotencyKey?: string }> = [];
   const adapter = {
@@ -17,7 +18,7 @@ function fakeReceiz(input: {
     async connectTransfer(body: Record<string, unknown>, idempotencyKey?: string) {
       calls.push({ name: "connectTransfer", body, idempotencyKey });
       return {
-        ok: true,
+        ok: input.transferOk ?? true,
         transferId: "transfer_wallet",
         ledgerEventId: "ledger_wallet",
         proofBundle: { schema: "proof.wallet.transfer" }
@@ -121,5 +122,25 @@ describe("Receiz wallet-first settlement", () => {
     assert.equal(settlement.settlementStatus, "settled");
     assert.deepEqual(calls.map((call) => call.name), ["connectWallet", "checkout", "connectTransfer"]);
     assert.equal(calls[2]?.body?.amountUsd, "9.00");
+  });
+
+  it("does not mark the settlement paid when the wallet transfer is rejected", async () => {
+    const { adapter, calls } = fakeReceiz({
+      walletBalanceUsdCents: "5000",
+      transferOk: false
+    });
+
+    const settlement = await createWalletFirstReceizSettlement({
+      receiz: adapter,
+      amountUsd: "49.00",
+      tenantHost: "merchant.receiz.app",
+      recipientUserId: "merchant_user",
+      idempotencyKey: "order_rejected_wallet",
+      note: "Merchant order"
+    });
+
+    assert.equal(settlement.paid, false);
+    assert.equal(settlement.settlementStatus, "pending");
+    assert.deepEqual(calls.map((call) => call.name), ["connectWallet", "connectTransfer"]);
   });
 });

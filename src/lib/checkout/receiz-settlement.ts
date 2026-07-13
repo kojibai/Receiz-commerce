@@ -168,18 +168,20 @@ export async function createWalletFirstReceizSettlement(
     );
   }
 
+  const walletSettled = funding.walletAppliedUsdCents === 0 || walletTransfer?.ok === true;
+  const paid = totalUsdCents > 0 && cardSettled && walletSettled;
   const paymentRail = paymentRailFromFunding(funding);
   const proofBundle = proofBundleFrom(checkoutSession?.proofBundle) ?? proofBundleFrom(walletTransfer?.proofBundle);
 
   return {
     ok: true,
-    paid: cardSettled,
+    paid,
     funding,
     wallet,
     walletTransfer,
     checkoutSession,
     paymentRail,
-    settlementStatus: cardSettled ? "settled" : "card_required",
+    settlementStatus: !cardSettled ? "card_required" : paid ? "settled" : "pending",
     receiptId: checkoutSession?.receiptId ?? walletTransfer?.ledgerEventId ?? walletTransfer?.transferId,
     proofBundle
   };

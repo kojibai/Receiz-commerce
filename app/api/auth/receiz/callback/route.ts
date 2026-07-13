@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { receizCommerceAdapter } from "@/lib/receiz/adapter";
 import { getReceizRedirectUri, getRequestOrigin } from "@/lib/url";
-import { packReceizSessionTicket, unpackReceizOAuthState } from "@/lib/receiz/oauth-state";
+import { oauthFlowNonceMatches, packReceizSessionTicket, unpackReceizOAuthState } from "@/lib/receiz/oauth-state";
 
 export const runtime = "nodejs";
 
@@ -27,6 +27,9 @@ export async function GET(request: NextRequest) {
   } catch {
     return redirectWithError(origin, "invalid_state");
   }
+  if (oauthState.startOrigin === origin && !oauthFlowNonceMatches(request.cookies.get("receiz_oauth_flow")?.value, oauthState.flowNonce)) {
+    return redirectWithError(origin, "invalid_state");
+  }
 
   const redirectUri = process.env.RECEIZ_ID_CALLBACK_URL ?? getReceizRedirectUri(origin);
   const token = await receizCommerceAdapter.exchangeReceizIdToken({
@@ -44,7 +47,9 @@ export async function GET(request: NextRequest) {
       refreshToken: token.refresh_token,
       expiresIn: token.expires_in,
       returnTo: oauthState.returnTo,
-      sessionScope: oauthState.sessionScope
+      sessionScope: oauthState.sessionScope,
+      flowNonce: oauthState.flowNonce,
+      startOrigin: oauthState.startOrigin
     });
     const tenantTarget = new URL("/api/auth/receiz/complete", oauthState.startOrigin);
     tenantTarget.searchParams.set("ticket", ticket);
@@ -55,6 +60,7 @@ export async function GET(request: NextRequest) {
   target.searchParams.set("receiz", "connected");
 
   const response = NextResponse.redirect(target);
+  response.cookies.delete("receiz_oauth_flow");
   const secure = origin.startsWith("https://");
   const accessMaxAge = Math.max(60, token.expires_in || 3600);
 

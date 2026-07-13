@@ -1,11 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { checkoutCommerceEvent, type CheckoutCommerceEventInput } from "@/lib/checkout/commerce-event";
 import { validShippingAddress } from "@/lib/checkout/customer-purchase";
+import {
+  authoritativeCheckoutQuote,
+  canonicalOrderId,
+  settlementIdempotencyKey
+} from "@/lib/checkout/checkout-authority";
 import { mockCheckout } from "@/lib/checkout/mock-checkout";
 import { checkoutModeForAuthority, checkoutWalletAuthority } from "@/lib/checkout/wallet-authority";
 import { createWalletFirstReceizSettlement } from "@/lib/checkout/receiz-settlement";
 import { hostContextFromHost } from "@/lib/hosting/host-context";
 import { createReceizCommerceAdapter } from "@/lib/receiz/adapter";
+import { loadReceizConnectProfile } from "@/lib/receiz/connect-profile";
 import { getServerProofStateStore } from "@/lib/receiz/proof-state-store";
 import { receizAuthorityRequired, receizRequestSession } from "@/lib/receiz/session";
 import { platform } from "@/lib/platform";
@@ -20,15 +26,6 @@ import {
   summarizeReceizStoreStatePublicationResult
 } from "@/lib/receiz/store-state-publication";
 import type { CommerceState, Order } from "@/types/domain";
-
-function amountFromBody(body: Record<string, unknown>) {
-  const explicit = body.amountUsd ?? body.amount;
-  if (explicit) return String(explicit);
-
-  const totalLabel = String(body.totalLabel ?? "18.00");
-  const normalized = totalLabel.replace(/[^0-9.]/g, "");
-  return normalized || "18.00";
-}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
@@ -58,16 +55,6 @@ function returnToFromRequest(request: NextRequest) {
   } catch {
     return "/";
   }
-}
-
-function settlementRecipientFromBody(body: Record<string, unknown>, merchantReceizId: string) {
-  return (
-    stringFromBody(body, "merchantSettlementUserId") ??
-    stringFromBody(body, "settlementUserId") ??
-    stringFromBody(body, "merchantUserId") ??
-    process.env.RECEIZ_DEFAULT_SETTLEMENT_USER_ID ??
-    merchantReceizId
-  );
 }
 
 function shippingFromBody(value: unknown): Order["shipping"] | undefined {
@@ -161,26 +148,37 @@ async function recordCheckoutCommerceEvent(input: CheckoutCommerceEventInput) {
 async function canonicalExchangeTrade(input: {
   actorReceizId: string;
   assetId: string;
-  merchantReceizId: string;
+  proofStore: Awaited<ReturnType<typeof getServerProofStateStore>>;
   shares: number;
   side: "buy" | "sell";
+  state: CommerceState;
   tenantHost: string;
 }) {
-  const proofStore = await getServerProofStateStore(input.merchantReceizId);
-  await hydrateProofStoreFromReceizStoreState(proofStore, input.tenantHost).catch(() => undefined);
-  if (storeStateProjectionSource(proofStore.records(), input.tenantHost) !== "published") {
-    throw new Error("exchange_market_not_published");
-  }
-  const state = proofStore.projectHost(mockStorage.getState(), input.tenantHost);
-  const asset = state.exchange.assets.find((candidate) => candidate.id === input.assetId);
+  const asset = input.state.exchange.assets.find((candidate) => candidate.id === input.assetId);
   if (!asset) throw new Error("exchange_asset_not_found");
+  if (input.side === "sell" && asset.ownerReceizId !== input.actorReceizId) {
+    throw new Error("exchange_sell_authority_required");
+  }
 
-  const preview = buildExchangeTradePreview(asset, input.side, input.shares, state.exchange.walletBalanceCents);
+  const preview = buildExchangeTradePreview(asset, input.side, input.shares, input.state.exchange.walletBalanceCents);
   if (!preview.shares || !preview.counterpartyReceizId || !preview.matchedOrderId) {
     throw new Error(input.side === "buy" ? "exchange_ask_unavailable" : "exchange_bid_unavailable");
   }
 
-  return { preview, proofStore, state };
+  return { preview, proofStore: input.proofStore, state: input.state };
+}
+
+async function publishedCheckoutState(tenantHost: string) {
+  const proofStore = await getServerProofStateStore();
+  await hydrateProofStoreFromReceizStoreState(proofStore, tenantHost);
+  if (storeStateProjectionSource(proofStore.records(), tenantHost) !== "published") {
+    throw new Error("store_not_published");
+  }
+
+  return {
+    proofStore,
+    state: proofStore.projectHost(mockStorage.getState(), tenantHost)
+  };
 }
 
 async function publishSettledExchangeTrade(input: {
@@ -249,13 +247,6 @@ export async function POST(request: NextRequest) {
     proofObjectAuthorized: walletAuthority.ok && walletAuthority.source === "proof_object"
   });
   if (checkoutMode === "receiz" || checkoutMode === "live") {
-    const merchantReceizId =
-      typeof body.merchantReceizId === "string" && body.merchantReceizId.trim()
-        ? body.merchantReceizId.trim()
-        : hostContext.tenantSlug
-          ? `${hostContext.tenantSlug}.receiz.id`
-          : process.env.RECEIZ_DEFAULT_MERCHANT_RECEIZ_ID ?? "";
-
     if (!hasScopedReceizAccess || !accessToken) {
       return NextResponse.json(
         {
@@ -270,19 +261,37 @@ export async function POST(request: NextRequest) {
       baseUrl: process.env.RECEIZ_BASE_URL,
       accessToken
     });
-    const tenantHost = String(body.tenantHost ?? hostContext.tenantHost ?? host);
-    const orderId = String(body.referenceId ?? body.orderId ?? `order_${Date.now()}`);
+    const tenantHost = hostContext.tenantHost ?? hostContext.host;
+    let published: Awaited<ReturnType<typeof publishedCheckoutState>>;
+    let actorReceizId: string;
+    try {
+      const [publishedState, profile] = await Promise.all([
+        publishedCheckoutState(tenantHost),
+        loadReceizConnectProfile(accessToken)
+      ]);
+      if (!profile?.handle) throw new Error("checkout_identity_unavailable");
+      published = publishedState;
+      actorReceizId = profile.handle;
+    } catch (error) {
+      return NextResponse.json(
+        { ok: false, error: error instanceof Error ? error.message : "checkout_authority_unavailable" },
+        { status: 409 }
+      );
+    }
+    const merchantReceizId = published.state.hosting.merchantReceizId.trim();
+    const orderId = canonicalOrderId(body.referenceId ?? body.orderId);
     const commerceAction = stringFromBody(body, "commerceAction");
     const exchangeSide = body.side === "sell" ? "sell" : "buy";
     let exchangeTrade: Awaited<ReturnType<typeof canonicalExchangeTrade>> | null = null;
     if (commerceAction === "exchange_trade") {
       try {
         exchangeTrade = await canonicalExchangeTrade({
-          actorReceizId: stringFromBody(body, "customerReceizId") ?? "customer.receiz.id",
+          actorReceizId,
           assetId: String(body.assetId ?? ""),
-          merchantReceizId,
+          proofStore: published.proofStore,
           shares: Number(body.shares ?? 0),
           side: exchangeSide,
+          state: published.state,
           tenantHost
         });
       } catch (error) {
@@ -295,30 +304,45 @@ export async function POST(request: NextRequest) {
         );
       }
     }
-    const amountUsd = exchangeTrade
-      ? (exchangeTrade.preview.totalCents / 100).toFixed(2)
-      : amountFromBody(body);
+    let quote: ReturnType<typeof authoritativeCheckoutQuote> | null = null;
+    try {
+      quote = exchangeTrade ? null : authoritativeCheckoutQuote(published.state, body.cartLines);
+    } catch (error) {
+      return NextResponse.json(
+        { ok: false, error: error instanceof Error ? error.message : "checkout_quote_invalid" },
+        { status: 409 }
+      );
+    }
+    const amountUsd = exchangeTrade ? (exchangeTrade.preview.totalCents / 100).toFixed(2) : quote!.amountUsd;
+    const recipientUserId = exchangeTrade?.preview.counterpartyReceizId ?? quote!.recipientUserId;
+    const idempotencyKey = settlementIdempotencyKey({
+      actorReceizId,
+      amountUsd,
+      merchantReceizId,
+      operation: exchangeTrade ? (exchangeSide === "sell" ? "exchange_sell" : "exchange_buy") : "checkout",
+      orderId,
+      recipientUserId,
+      tenantHost
+    });
     const settlement = await createWalletFirstReceizSettlement({
       receiz,
       tenantHost,
       orderId,
       amountUsd,
-      recipientUserId: exchangeTrade?.preview.counterpartyReceizId ?? settlementRecipientFromBody(body, merchantReceizId),
+      recipientUserId,
       note: String(body.description ?? "Receiz.app proof-sealed order"),
       description: String(body.description ?? "Receiz.app proof-sealed order"),
       customerEmail: typeof body.customerEmail === "string" ? body.customerEmail : undefined,
       successUrl: typeof body.successUrl === "string" ? body.successUrl : undefined,
       cancelUrl: typeof body.cancelUrl === "string" ? body.cancelUrl : undefined,
-      idempotencyKey: String(body.referenceId ?? body.orderId ?? `checkout:${hostContext.storageKey}:${amountUsd}`),
+      idempotencyKey,
       cart: {
-        items: [
-          {
-            id: "receiz-commerce-cart",
-            title: String(body.description ?? "Receiz.app proof-sealed order"),
-            quantity: Number(body.itemCount ?? 1),
-            amountUsd
-          }
-        ]
+        items: quote?.items ?? [{
+          id: exchangeTrade ? String(body.assetId ?? "") : "receiz-commerce-cart",
+          title: exchangeTrade ? "Receiz Exchange trade" : "Receiz.app proof-sealed order",
+          quantity: exchangeTrade?.preview.shares ?? 1,
+          amountUsd
+        }]
       }
     });
     const funding = settlement.funding;
@@ -339,7 +363,7 @@ export async function POST(request: NextRequest) {
       customerId: stringFromBody(body, "customerId"),
       customerName: stringFromBody(body, "customerName"),
       funding,
-      itemCount: Number(body.itemCount ?? 1),
+      itemCount: quote?.itemCount ?? exchangeTrade?.preview.shares ?? 1,
       merchantReceizId,
       orderId: stringFromBody(body, "referenceId") ?? stringFromBody(body, "orderId") ?? session.checkoutSessionId,
       paymentRail: settlement.paymentRail,
@@ -360,7 +384,7 @@ export async function POST(request: NextRequest) {
     const exchange = exchangeTrade && settlement.paid
       ? await publishSettledExchangeTrade({
           accessToken,
-          actorReceizId: stringFromBody(body, "customerReceizId") ?? "customer.receiz.id",
+          actorReceizId,
           assetId: String(body.assetId ?? ""),
           merchantReceizId,
           proofStore: exchangeTrade.proofStore,

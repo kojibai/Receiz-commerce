@@ -19,11 +19,12 @@ export function getConfiguredSiteOrigin() {
 }
 
 export function getRequestOrigin(request: Request) {
-  const forwardedHost = request.headers.get("x-forwarded-host");
-  const forwardedProto = request.headers.get("x-forwarded-proto") ?? "https";
-
-  if (forwardedHost) {
-    return `${forwardedProto}://${forwardedHost}`;
+  if (process.env.RECEIZ_TRUST_FORWARDED_ORIGIN === "true") {
+    const forwardedHost = request.headers.get("x-forwarded-host");
+    const forwardedProto = request.headers.get("x-forwarded-proto") ?? "https";
+    if (forwardedHost && /^(?:[a-z0-9-]+\.)*[a-z0-9-]+(?::\d+)?$/i.test(forwardedHost)) {
+      return `${forwardedProto === "http" ? "http" : "https"}://${forwardedHost}`;
+    }
   }
 
   return normalizeOrigin(new URL(request.url).origin) ?? getConfiguredSiteOrigin();

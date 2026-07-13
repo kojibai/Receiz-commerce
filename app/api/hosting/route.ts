@@ -1,11 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { mockHosting } from "@/lib/hosting/mock-hosting";
 import { normalizeCustomDomain, normalizeTenantSlug, subdomainForSlug } from "@/lib/hosting/domain-utils";
-import {
-  merchantLocalProofObjectFromState,
-  merchantProofAuthorityRequirement,
-  type MerchantAuthorityAction
-} from "@/lib/hosting/merchant-proof-authority";
+import { hostContextFromHost } from "@/lib/hosting/host-context";
+import type { MerchantAuthorityAction } from "@/lib/hosting/merchant-proof-authority";
 import {
   VercelDomainError,
   addProjectDomain,
@@ -28,6 +25,7 @@ import {
 import { platformOperationMetadata, type PlatformOperationIntent } from "@/lib/hosting/platform-operation";
 import { createWalletFirstReceizSettlement } from "@/lib/checkout/receiz-settlement";
 import { platform } from "@/lib/platform";
+import { getRequestOrigin } from "@/lib/url";
 import { createReceizCommerceAdapter } from "@/lib/receiz/adapter";
 import { loadReceizConnectProfile } from "@/lib/receiz/connect-profile";
 import { buildStoreStateRecord } from "@/lib/receiz/proof-state";
@@ -92,28 +90,16 @@ async function loadPublishOwner(accessToken: string | undefined) {
 
 async function requireMerchantAuthority(
   accessToken: string | undefined,
-  action: MerchantAuthorityAction,
-  returnTo: string,
-  localIdentityState?: unknown
+  _action: MerchantAuthorityAction,
+  returnTo: string
 ) {
   const profile = await loadPublishOwner(accessToken);
-  const localIdentity = merchantLocalProofObjectFromState(localIdentityState);
-  const delegatedPermission = Boolean(profile) || (Boolean(accessToken) && !localIdentity.localProofVerified);
-  const gate = merchantProofAuthorityRequirement({
-    action,
-    delegatedPermission,
-    handle: profile?.handle ?? localIdentity.handle,
-    localReceizIdConnected: localIdentity.connected,
-    localProofVerified: localIdentity.localProofVerified
-  });
-
-  if (gate.ok) {
+  if (profile?.handle) {
     return {
       ok: true as const,
       profile,
-      handle: gate.handle,
-      source: gate.source,
-      localIdentity
+      handle: profile.handle,
+      source: "delegated_permission" as const
     };
   }
 
@@ -122,7 +108,7 @@ async function requireMerchantAuthority(
     response: NextResponse.json(
       {
         ...receizAuthorityRequired(returnTo),
-        message: gate.message
+        message: "Connect the merchant Receiz ID on this domain before changing billing, domains, or published state."
       },
       { status: 401 }
     )
@@ -139,14 +125,6 @@ function returnToFromRequest(request: NextRequest) {
   } catch {
     return "/admin";
   }
-}
-
-function originFromRequest(request: NextRequest) {
-  const forwardedHost = request.headers.get("x-forwarded-host") ?? request.headers.get("host");
-  if (!forwardedHost) return request.nextUrl.origin;
-
-  const forwardedProto = request.headers.get("x-forwarded-proto") ?? (request.nextUrl.protocol || "https:").replace(":", "");
-  return `${forwardedProto}://${forwardedHost}`;
 }
 
 function domainErrorStatus(domain: string, error: unknown): DomainStatus {
@@ -370,14 +348,13 @@ async function syncPublishedStoreStateForHosting(input: {
   merchantAuthority: {
     profile: Awaited<ReturnType<typeof loadPublishOwner>>;
     handle: string;
-    source: "delegated_permission" | "proof_object";
-    localIdentity: ReturnType<typeof merchantLocalProofObjectFromState>;
+    source: "delegated_permission";
   };
 }) {
   const state = buildPublishedStateForHostingSync(mockStorage.getState(), input.submittedState, input.hosting, {
     customDomain: input.merchantAuthority.profile?.customDomain,
-    displayName: input.merchantAuthority.profile?.name ?? input.merchantAuthority.localIdentity.displayName,
-    merchantReceizId: input.merchantAuthority.profile?.handle ?? input.merchantAuthority.handle,
+    displayName: input.merchantAuthority.profile?.name,
+    merchantReceizId: input.merchantAuthority.handle,
     tenantSlug: input.merchantAuthority.profile?.subdomain
   });
 
@@ -423,11 +400,7 @@ async function syncPublishedStoreStateForHosting(input: {
   const storeStateReceizRecord = await publishAndAdmitReceizStoreState({
     accessToken: input.accessToken,
     record: storeStateRecord,
-    proofStore,
-    proof: {
-      keyFile: input.merchantAuthority.localIdentity.keyFile,
-      passphrase: input.merchantAuthority.localIdentity.passphrase
-    }
+    proofStore
   });
   const storeStateSyncOk = receizStoreStateWriteSucceeded(storeStateReceizRecord);
   const storeStateSynced = receizStoreStateSyncCompleted(storeStateReceizRecord);
@@ -488,10 +461,21 @@ export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => ({}));
   const action = String(body.action ?? "subdomain");
   const requestSession = receizRequestSession(request);
-  const accessToken = requestSession.accessToken;
   const payerAccessToken = requestSession.cookieAccessToken;
   const returnTo = returnToFromRequest(request);
-  const origin = originFromRequest(request);
+  const origin = getRequestOrigin(request);
+  const requestHost = request.headers.get("x-forwarded-host") ?? request.headers.get("host") ?? platform.domain;
+  const hostContext = hostContextFromHost(requestHost);
+  if (!payerAccessToken || requestSession.sessionScope !== hostContext.storageKey) {
+    return NextResponse.json(
+      {
+        ...receizAuthorityRequired(returnTo),
+        message: "Connect the merchant Receiz ID on this domain before changing hosting."
+      },
+      { status: 401 }
+    );
+  }
+  const accessToken = payerAccessToken;
 
   if (action === "plan") {
     const plan = String(body.plan ?? "pro") as HostingConfig["plan"];
@@ -501,15 +485,14 @@ export async function POST(request: NextRequest) {
     const merchantAuthority = await requireMerchantAuthority(
       payerAccessToken,
       "billing",
-      returnTo,
-      isRecord(body) ? body.merchantProof ?? body.merchantSession ?? body.state : null
+      returnTo
     );
     if (!merchantAuthority.ok) return merchantAuthority.response;
 
     const currentHosting = hostingFromRequest(isRecord(body) ? body.hosting ?? (isRecord(body.state) ? body.state.hosting : null) : null);
     const tenantHost = currentHosting.customDomain.domain || currentHosting.subdomain;
     const operationId = `receiz-app:hosting-plan:${merchantAuthority.handle}:${plan}`;
-    const platformBilling = await chargePlatformFee(merchantAuthority.source === "delegated_permission" ? payerAccessToken : undefined, {
+    const platformBilling = await chargePlatformFee(payerAccessToken, {
       amountUsd: amountForPlan(plan),
       note: `${platform.productName} ${plan} hosting plan`,
       idempotencyKey: operationId,
@@ -562,8 +545,7 @@ export async function POST(request: NextRequest) {
     const merchantAuthority = await requireMerchantAuthority(
       payerAccessToken,
       "billing",
-      returnTo,
-      isRecord(body) ? body.merchantProof ?? body.merchantSession ?? body.state : null
+      returnTo
     );
     if (!merchantAuthority.ok) return merchantAuthority.response;
 
@@ -587,15 +569,14 @@ export async function POST(request: NextRequest) {
     const merchantAuthority = await requireMerchantAuthority(
       payerAccessToken,
       "custom_domain",
-      returnTo,
-      isRecord(body) ? body.merchantProof ?? body.merchantSession ?? body.state : null
+      returnTo
     );
     if (!merchantAuthority.ok) return merchantAuthority.response;
 
     const currentHosting = hostingFromRequest(isRecord(body) ? body.hosting ?? (isRecord(body.state) ? body.state.hosting : null) : null);
     const tenantHost = currentHosting.customDomain.domain || currentHosting.subdomain;
-    const operationId = `receiz-app:custom-domain:${domain}`;
-    const platformBilling = await chargePlatformFee(merchantAuthority.source === "delegated_permission" ? payerAccessToken : undefined, {
+    const operationId = `receiz-app:custom-domain:${merchantAuthority.handle}:${domain}`;
+    const platformBilling = await chargePlatformFee(payerAccessToken, {
       amountUsd: process.env.RECEIZ_CUSTOM_DOMAIN_SETUP_USD ?? "0.00",
       note: `${platform.productName} custom domain setup for ${domain}`,
       idempotencyKey: operationId,
@@ -674,8 +655,7 @@ export async function POST(request: NextRequest) {
     const merchantAuthority = await requireMerchantAuthority(
       accessToken,
       "verify_domain",
-      returnTo,
-      isRecord(body) ? body.merchantProof ?? body.merchantSession ?? body.state : null
+      returnTo
     );
     if (!merchantAuthority.ok) return merchantAuthority.response;
 
@@ -718,8 +698,7 @@ export async function POST(request: NextRequest) {
     const merchantAuthority = await requireMerchantAuthority(
       accessToken,
       "publish",
-      returnTo,
-      isRecord(body) ? body.merchantProof ?? body.merchantSession ?? body.state : null
+      returnTo
     );
     if (!merchantAuthority.ok) return merchantAuthority.response;
     const publishOwner = merchantAuthority.profile;
@@ -733,8 +712,8 @@ export async function POST(request: NextRequest) {
       hosting: submittedHosting
     }, {
       customDomain: publishOwner?.customDomain,
-      displayName: publishOwner?.name ?? merchantAuthority.localIdentity.displayName,
-      merchantReceizId: publishOwner?.handle ?? merchantAuthority.handle,
+      displayName: publishOwner?.name,
+      merchantReceizId: merchantAuthority.handle,
       tenantSlug: publishOwner?.subdomain
     });
     const actorReceizId = state.hosting.merchantReceizId || state.auth.receizId.handle;
@@ -774,11 +753,7 @@ export async function POST(request: NextRequest) {
     const storeStateReceizRecord = await publishAndAdmitReceizStoreState({
       accessToken,
       record: storeStateRecord,
-      proofStore,
-      proof: {
-        keyFile: merchantAuthority.localIdentity.keyFile,
-        passphrase: merchantAuthority.localIdentity.passphrase
-      }
+      proofStore
     });
     const storeStateSyncOk = receizStoreStateWriteSucceeded(storeStateReceizRecord);
     const storeStateSynced = receizStoreStateSyncCompleted(storeStateReceizRecord);
@@ -842,6 +817,19 @@ export async function POST(request: NextRequest) {
   let subdomainStatus: DomainStatus;
 
   try {
+    const merchantAuthority = await requireMerchantAuthority(accessToken, "custom_domain", returnTo);
+    if (!merchantAuthority.ok) return merchantAuthority.response;
+    const receiz = createReceizCommerceAdapter({
+      baseUrl: process.env.RECEIZ_BASE_URL,
+      accessToken
+    });
+    const reservation = await receiz.reserveSubdomain(
+      { tenantSlug, subdomain, merchantReceizId: merchantAuthority.handle },
+      `receiz-app:subdomain:${merchantAuthority.handle}:${tenantSlug}`
+    );
+    if (isRecord(reservation) && reservation.ok === false) {
+      throw new Error(String(reservation.error ?? "subdomain_reservation_failed"));
+    }
     const wildcard = await addProjectDomain(`*.${platform.domain}`);
     subdomainStatus = wildcardDomainStatusFromVercel(subdomain, wildcard);
     const dns = await checkPublicDns(subdomain);
