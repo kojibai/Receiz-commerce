@@ -13,6 +13,7 @@ import { creatureForm } from "@/features/play/creature-catalog";
 import type { HotspotCover } from "@/features/play/hidden-hotspots";
 import type { WildsPresence } from "@/features/play/multiplayer-core";
 import { WildsEnvironment } from "@/features/play/WildsEnvironment";
+import { WildsExplorer } from "@/features/play/WildsExplorer";
 import {
   rendererBudgetStatus,
   type WildsQualityProfile
@@ -101,7 +102,7 @@ function WildsScene({
       />
       <EncounterSequence state={state} />
       {remotePlayers.map((player) => <RemoteExplorer key={player.playerId} player={player} localPlayer={state.player} onSelect={onSelectPlayer} />)}
-      <ExplorerAvatar style={avatarStyle} worldPosition={state.player} />
+      <WildsExplorer style={avatarStyle} worldPosition={state.player} />
       <Sparkles count={Math.round(54 * qualityProfile.particles)} scale={[8, 2.4, 8]} size={2.1} speed={0.22} color="#fff5b6" />
     </>
   );
@@ -133,7 +134,7 @@ function RemoteExplorer({
       position={[player.x - localPlayer.x, 0, player.z - localPlayer.z]}
       ref={group}
     >
-      <ExplorerAvatar style={player.style} worldPosition={{ x: player.x, z: player.z }} />
+      <WildsExplorer remote style={player.style} worldPosition={{ x: player.x, z: player.z }} />
       <mesh position={[0, 0.035, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <torusGeometry args={[0.48, 0.04, 8, 32]} />
         <meshStandardMaterial color={player.practice ? "#f7c948" : "#6ef0c9"} emissive={player.practice ? "#f7c948" : "#37d688"} emissiveIntensity={0.62} />
@@ -595,85 +596,4 @@ function publishWildsDiagnostics(
     warningFreeCompatibility: diagnostics.warningFreeCompatibility,
     ...extra
   });
-}
-
-function ExplorerAvatar({
-  style,
-  worldPosition
-}: {
-  style: "female" | "male";
-  worldPosition: PlayState["player"];
-}) {
-  const groupRef = useRef<THREE.Group>(null);
-  const leftArm = useRef<THREE.Group>(null);
-  const rightArm = useRef<THREE.Group>(null);
-  const leftLeg = useRef<THREE.Group>(null);
-  const rightLeg = useRef<THREE.Group>(null);
-  const previousPosition = useRef(worldPosition);
-  const movingUntil = useRef(0);
-  const facing = useRef(0);
-
-  useEffect(() => {
-    const dx = worldPosition.x - previousPosition.current.x;
-    const dz = worldPosition.z - previousPosition.current.z;
-    if (Math.hypot(dx, dz) > 0.001) {
-      movingUntil.current = Date.now() + 260;
-      facing.current = Math.atan2(-dx, -dz);
-    }
-    previousPosition.current = worldPosition;
-  }, [worldPosition]);
-
-  useFrame(() => {
-    if (!groupRef.current) return;
-    const elapsed = frameSeconds();
-    const moving = Date.now() < movingUntil.current;
-    const stride = moving ? Math.sin(elapsed * 12) * 0.62 : 0;
-    groupRef.current.rotation.y = THREE.MathUtils.lerp(groupRef.current.rotation.y, facing.current, 0.18);
-    groupRef.current.position.y = moving ? Math.abs(Math.sin(elapsed * 12)) * 0.035 : 0;
-    if (leftArm.current) leftArm.current.rotation.x = stride * 0.72;
-    if (rightArm.current) rightArm.current.rotation.x = -stride * 0.72;
-    if (leftLeg.current) leftLeg.current.rotation.x = -stride;
-    if (rightLeg.current) rightLeg.current.rotation.x = stride;
-  });
-
-  return (
-    <group ref={groupRef} position={[0, 0, 0]} scale={0.68}>
-      <mesh castShadow position={[0, 0.94, 0]}>
-        <capsuleGeometry args={[style === "female" ? 0.2 : 0.23, 0.42, 8, 16]} />
-        <meshStandardMaterial color={style === "female" ? "#f05f8f" : "#2f6f9f"} roughness={0.62} />
-      </mesh>
-      <mesh castShadow position={[0, 1.43, -0.01]}>
-        <sphereGeometry args={[0.22, 20, 16]} />
-        <meshStandardMaterial color="#b87552" roughness={0.7} />
-      </mesh>
-      <mesh castShadow position={[0, 1.56, -0.02]} scale={style === "female" ? [1.06, 0.78, 1.06] : [1.08, 0.52, 1.08]}>
-        <sphereGeometry args={[0.22, 18, 14]} />
-        <meshStandardMaterial color="#2b201b" roughness={0.88} />
-      </mesh>
-      {style === "female" ? (
-        <mesh castShadow position={[0, 1.37, -0.2]} rotation={[0.28, 0, 0]}>
-          <capsuleGeometry args={[0.075, 0.28, 6, 10]} />
-          <meshStandardMaterial color="#2b201b" roughness={0.9} />
-        </mesh>
-      ) : null}
-      <mesh castShadow position={[0, 1.02, 0.19]}>
-        <boxGeometry args={[0.35, 0.48, 0.16]} />
-        <meshStandardMaterial color="#e9b949" roughness={0.72} />
-      </mesh>
-      <group ref={leftArm} position={[-0.27, 1.12, 0]}>
-        <mesh castShadow position={[0, -0.24, 0]}><capsuleGeometry args={[0.065, 0.36, 6, 10]} /><meshStandardMaterial color="#b87552" roughness={0.72} /></mesh>
-      </group>
-      <group ref={rightArm} position={[0.27, 1.12, 0]}>
-        <mesh castShadow position={[0, -0.24, 0]}><capsuleGeometry args={[0.065, 0.36, 6, 10]} /><meshStandardMaterial color="#b87552" roughness={0.72} /></mesh>
-      </group>
-      <group ref={leftLeg} position={[-0.11, 0.7, 0]}>
-        <mesh castShadow position={[0, -0.34, 0]}><capsuleGeometry args={[0.075, 0.5, 6, 10]} /><meshStandardMaterial color="#263747" roughness={0.78} /></mesh>
-        <mesh castShadow position={[0, -0.65, -0.055]}><boxGeometry args={[0.16, 0.12, 0.3]} /><meshStandardMaterial color="#6d4b36" roughness={0.9} /></mesh>
-      </group>
-      <group ref={rightLeg} position={[0.11, 0.7, 0]}>
-        <mesh castShadow position={[0, -0.34, 0]}><capsuleGeometry args={[0.075, 0.5, 6, 10]} /><meshStandardMaterial color="#263747" roughness={0.78} /></mesh>
-        <mesh castShadow position={[0, -0.65, -0.055]}><boxGeometry args={[0.16, 0.12, 0.3]} /><meshStandardMaterial color="#6d4b36" roughness={0.9} /></mesh>
-      </group>
-    </group>
-  );
 }

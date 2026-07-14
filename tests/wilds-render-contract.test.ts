@@ -17,6 +17,19 @@ describe("Receiz Wilds rendering contract", () => {
     assert.match(world, /<WildsEnvironment/);
   });
 
+  it("builds the explorer from articulated anatomy and secondary motion", async () => {
+    const explorer = await readFile("src/features/play/WildsExplorer.tsx", "utf8");
+    const world = await readFile("src/features/play/WildsWorldCanvas.tsx", "utf8");
+
+    for (const joint of ["hips", "spine", "leftElbow", "rightElbow", "leftKnee", "rightKnee", "satchel", "scarf"]) {
+      assert.match(explorer, new RegExp(joint));
+    }
+    assert.match(explorer, /movingUntil/);
+    assert.match(explorer, /breath/);
+    assert.match(explorer, /footPlant/);
+    assert.match(world, /<WildsExplorer/);
+  });
+
   it("avoids competing float transforms and unstable contact shadows", async () => {
     const source = await readFile("src/features/play/WildsWorldCanvas.tsx", "utf8");
 
@@ -206,8 +219,8 @@ describe("Receiz Wilds rendering contract", () => {
     assert.match(world, /function SearchableTerrain/);
     assert.match(environment, /function EcologyInstances/);
     assert.match(environment, /<EcologyInstances/);
-    assert.match(world, /function ExplorerAvatar/);
-    assert.match(world, /movingUntil/);
+    assert.match(world, /<WildsExplorer/);
+    assert.match(environment, /projectWildsBiome/);
     assert.match(campaign, /Choose your explorer/);
     assert.match(campaign, /Female explorer/);
     assert.match(campaign, /Male explorer/);
