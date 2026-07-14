@@ -12,6 +12,7 @@ describe("Receiz Wilds rendering contract", () => {
     assert.match(environment, /name="world-layer-far"/);
     assert.match(environment, /function HearttreeSanctum/);
     assert.match(environment, /function RootArch/);
+    assert.match(environment, /<mesh castShadow position=\{\[0, 1\.14, 0\]\}>/);
     assert.match(environment, /function SpringLandmark/);
     assert.match(environment, /instancedMesh/);
     assert.match(world, /<WildsEnvironment/);

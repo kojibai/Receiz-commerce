@@ -240,7 +240,7 @@ function HearttreeSanctum() {
 function RootArch() {
   return (
     <group name="root-arch">
-      <mesh castShadow position={[0, 1.14, 0]} rotation={[Math.PI / 2, 0, 0]}>
+      <mesh castShadow position={[0, 1.14, 0]}>
         <torusGeometry args={[1.18, 0.22, 10, 32, Math.PI]} />
         <meshStandardMaterial color="#62432d" roughness={0.94} />
       </mesh>
