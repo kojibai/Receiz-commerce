@@ -110,6 +110,21 @@ describe("Receiz Wilds rendering contract", () => {
     assert.match(css, /@media \(prefers-reduced-motion: reduce\)[\s\S]*\.wilds-capture-capsule/);
   });
 
+  it("renders a complete living character back with exact proof controls", async () => {
+    const cardBack = await readFile("src/features/play/WildsCardBack.tsx", "utf8");
+
+    assert.match(cardBack, /aria-label="Living card back"/);
+    assert.match(cardBack, /Character story/);
+    assert.match(cardBack, /Personality/);
+    assert.match(cardBack, /Gameplay intelligence/);
+    assert.match(cardBack, /Full visual DNA/);
+    assert.match(cardBack, /Complete offline proof/);
+    assert.match(cardBack, /Copy canonical proof/);
+    assert.match(cardBack, /Download canonical proof/);
+    assert.match(cardBack, /Generate exact PNG proof metadata/);
+    assert.match(cardBack, /aria-live="polite"/);
+  });
+
   it("keeps creatures hidden until an exact terrain search reveals one", async () => {
     const state = await readFile("src/features/play/game-state.ts", "utf8");
     const world = await readFile("src/features/play/WildsWorldCanvas.tsx", "utf8");
