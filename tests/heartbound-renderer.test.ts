@@ -12,6 +12,10 @@ import { sha256PortableBasis } from "../src/features/play/portable-card.js";
 const seed = sha256PortableBasis("heartbound-renderer-test");
 const genome = deriveBirthGenome({ formId: "mintcub-1", proofDigest: seed, variant: deriveCardVariant(seed, 1) });
 
+function slotMarkup(svg: string, slot: string) {
+  return svg.match(new RegExp(`<g data-slot="${slot}">([\\s\\S]*?)</g>`))?.[1] ?? "";
+}
+
 describe("Heartbound full-body renderer", () => {
   it("places articulated anatomy behind the expressive foreground face", () => {
     const layers = heartboundLayers(genome, "idle");
@@ -42,5 +46,32 @@ describe("Heartbound full-body renderer", () => {
 
     assert.match(framed, /data-framing="full-body"/);
     assert.match(framed, /scale\(0\.[0-9]+\)/);
+  });
+
+  it("renders structurally different faces, bodies, markings, and behavior", () => {
+    const otherSeed = sha256PortableBasis("heartbound-renderer-other");
+    const other = deriveBirthGenome({ formId: "mintcub-1", proofDigest: otherSeed, variant: deriveCardVariant(otherSeed, 1) });
+    const first = renderHeartboundSvg(genome, "card", { width: 640, height: 405, title: "SealCub A" });
+    const second = renderHeartboundSvg(other, "card", { width: 640, height: 405, title: "SealCub B" });
+
+    assert.notEqual(slotMarkup(first, "head"), slotMarkup(second, "head"));
+    assert.notEqual(slotMarkup(first, "eyes"), slotMarkup(second, "eyes"));
+    assert.notEqual(slotMarkup(first, "torso"), slotMarkup(second, "torso"));
+    assert.notEqual(slotMarkup(first, "face_markings"), slotMarkup(second, "face_markings"));
+    assert.notEqual(genome.identity?.behavior.signature, other.identity?.behavior.signature);
+    assert.match(first, /data-identity-signature="sha256:[a-f0-9]{64}"/);
+    assert.match(first, /--heartbound-blink:[0-9]+ms/);
+    assert.match(first, /--heartbound-idle:[0-9]+ms/);
+    assert.match(first, /--heartbound-gesture:[0-9]+ms/);
+  });
+
+  it("uses different anatomy for each locomotion class", () => {
+    const forms = ["mintcub-1", "ledgerfox-1", "voltray-1", "titanseal-1"];
+    const torsos = new Set(forms.map((formId, index) => {
+      const proof = sha256PortableBasis(`locomotion:${formId}:${index}`);
+      const individual = deriveBirthGenome({ formId, proofDigest: proof, variant: deriveCardVariant(proof, 1) });
+      return slotMarkup(renderHeartboundSvg(individual, "walk", { width: 640, height: 405, title: formId }), "torso");
+    }));
+    assert.ok(torsos.size >= 3);
   });
 });

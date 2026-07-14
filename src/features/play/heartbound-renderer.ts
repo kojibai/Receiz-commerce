@@ -1,5 +1,6 @@
 import { canonicalPortableCardJson, sha256PortableBasis } from "./portable-card";
 import type { LivingCardGenome } from "./living-card-types";
+import { renderAppendages, renderEyes, renderHeadShape, renderLimbs, renderMarkings, renderMouth, renderTorso } from "./heartbound-shapes";
 
 export type HeartboundPose = "idle" | "card" | "walk" | "run" | "battle" | "damage" | "celebrate" | "bond" | "transform";
 export type HeartboundSlot =
@@ -17,7 +18,7 @@ function layer(slot: HeartboundSlot, markup: string): HeartboundLayer {
   return { slot, markup: `<g data-slot="${slot}">${markup}</g>` };
 }
 
-export function heartboundLayers(genome: LivingCardGenome, pose: HeartboundPose): HeartboundLayer[] {
+function legacyHeartboundLayers(genome: LivingCardGenome, pose: HeartboundPose): HeartboundLayer[] {
   const p = genome.palette;
   const stride = pose === "run" ? 18 : pose === "walk" ? 9 : 0;
   const lift = pose === "celebrate" ? -12 : pose === "damage" ? 8 : 0;
@@ -43,11 +44,39 @@ export function heartboundLayers(genome: LivingCardGenome, pose: HeartboundPose)
   ];
 }
 
+export function heartboundLayers(genome: LivingCardGenome, pose: HeartboundPose): HeartboundLayer[] {
+  if (genome.generatorVersion !== 2 || !genome.identity) return legacyHeartboundLayers(genome, pose);
+  const identity = genome.identity;
+  const p = genome.palette;
+  const appendages = renderAppendages(identity, p);
+  const limbs = renderLimbs(identity, p, pose);
+  const auraOpacity = Math.min(.34, genome.auraProfile.intensity / 3.6);
+  return [
+    layer("aura_back", `<ellipse cx="280" cy="223" rx="${194 + identity.body.shoulder * 12}" ry="${164 + identity.body.torso * 8}" fill="${p.glow}" opacity="${auraOpacity}"/><path d="M102 255Q280 58 458 255" fill="none" stroke="${p.glow}" stroke-width="3" stroke-dasharray="4 18" opacity=".5"/>`),
+    layer("tail", `${appendages.tail}${appendages.wings}`),
+    layer("left_hindlimb", limbs.leftHind),
+    layer("right_hindlimb", limbs.rightHind),
+    layer("torso", renderTorso(identity, p, pose)),
+    layer("left_forelimb", limbs.leftFore),
+    layer("right_forelimb", limbs.rightFore),
+    layer("neck_ruff", `<path d="M196 198Q280 ${145 + identity.body.neck * 10} 364 198L338 235Q280 209 222 235Z" fill="${p.accent}" opacity=".9"/>`),
+    layer("ears_back", appendages.ears),
+    layer("head", renderHeadShape(identity, p)),
+    layer("face_markings", renderMarkings(identity, p)),
+    layer("eyes", renderEyes(identity, p)),
+    layer("mouth", renderMouth(identity, p)),
+    layer("crest_front", appendages.crest),
+    layer("aura_front", `<g data-gesture="${identity.behavior.gesture}"><circle cx="442" cy="94" r="8" fill="${p.glow}"/><path d="M111 177l7-11 7 11-7 11Z" fill="${p.glow}"/></g>`)
+  ];
+}
+
 export function renderHeartboundSvg(genome: LivingCardGenome, pose: HeartboundPose, options: { width: number; height: number; title: string; fit?: "native" | "full-body" }) {
   const body = heartboundLayers(genome, pose).map((item) => item.markup).join("");
   const framing = options.fit ?? "native";
   const scale = framing === "full-body" ? Number((genome.variant.bodyScale * 0.82).toFixed(3)) : genome.variant.bodyScale;
-  return `<svg xmlns="http://www.w3.org/2000/svg" data-heartbound="heroic-companion" width="${options.width}" height="${options.height}" viewBox="0 0 560 440" role="img" aria-label="${xml(options.title)} full-body companion"><g data-framing="${framing}" transform="translate(0 8) scale(${scale})" transform-origin="280px 220px">${body}</g></svg>`;
+  const identity = genome.identity;
+  const identityAttributes = identity ? ` data-identity-signature="${identity.signature}" data-body-build="${identity.body.build}" data-locomotion="${identity.family.locomotion}" style="--heartbound-blink:${identity.behavior.blinkMs}ms;--heartbound-idle:${genome.behavior.idleCadenceMs}ms;--heartbound-gesture:${Math.round((identity.behavior.blinkMs + genome.behavior.idleCadenceMs) / 2)}ms"` : "";
+  return `<svg xmlns="http://www.w3.org/2000/svg" data-heartbound="heroic-companion"${identityAttributes} width="${options.width}" height="${options.height}" viewBox="0 0 560 440" role="img" aria-label="${xml(options.title)} full-body companion"><g data-framing="${framing}" transform="translate(0 8) scale(${scale})" transform-origin="280px 220px">${body}</g></svg>`;
 }
 
 export function renderedHeartboundDigest(genome: LivingCardGenome, pose: HeartboundPose, title: string) {
