@@ -102,11 +102,12 @@ export function WildsInventory({
       <header>
         <div><span>Portable collection</span><h3>Wilds Inventory</h3><p>{state.inventory.length} sealed forms · unlimited unique variants</p></div>
         <div className="wilds-vault-actions">
-          <button className="wilds-import-card" onClick={() => importInput.current?.click()} title="Import verified card or vault PNG" type="button">
+          <button aria-label="Import card or vault" className="wilds-import-card" onClick={() => importInput.current?.click()} title="Import card or vault" type="button">
             <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 3v11m0-11L8 7m4-4 4 4M5 13v6h14v-6" /></svg>
             <span>Import card or vault</span>
           </button>
           <button
+            aria-label="Save vault image"
             className="wilds-import-card vault"
             disabled={!state.inventory.length}
             onClick={async () => {
@@ -118,13 +119,13 @@ export function WildsInventory({
                 setVaultMessage(error instanceof Error ? `Vault save failed: ${error.message}` : "Vault save failed. Try again from this browser.");
               }
             }}
-            title="Save portable vault image"
+            title="Save vault image"
             type="button"
           >
             <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 6h16v13H4zM8 6V4h8v2m-4 3v6m0 0-3-3m3 3 3-3" /></svg>
             <span>Save vault image</span>
           </button>
-          <button className="wilds-import-card fusion" disabled={state.inventory.length < 2} onClick={() => setFusionOpen((value) => !value)} title="Fuse two reusable parent cards" type="button">
+          <button aria-label="Fuse cards" className="wilds-import-card fusion" disabled={state.inventory.length < 2} onClick={() => setFusionOpen((value) => !value)} title="Fuse cards" type="button">
             <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 7h5l2 3 2-3h5M5 17h5l2-3 2 3h5" /></svg>
             <span>Fuse cards</span>
           </button>

@@ -13,7 +13,7 @@
 - Reuse `WildsCardScene` and `WildsCardBack`; do not create a vault-only back or duplicate flip behavior.
 - Preserve upload verification, portable PNG proof formats, game progression, fusion, evolution, listing, and public-card routing.
 - Use the labels `Import card or vault`, `Save vault image`, and `Save card image`.
-- All mobile labels remain visible and may wrap; no icon-only replacement, clipping, or ellipsis.
+- The three top vault controls are icon-only with explicit accessible names and tooltips; all remaining mobile labels stay visible without clipping or ellipsis.
 - Preserve sheet dismissal, focus restoration, drag-to-close, inventory paging/swiping, and safe-area behavior.
 
 ---
@@ -45,7 +45,7 @@ assert.doesNotMatch(css, /\.wilds-command-sheet-content \.wilds-inventory > head
 assert.match(css, /\.wilds-command-sheet\s*\{[^}]*grid-template-rows:\s*auto auto minmax\(0, 1fr\)/s);
 assert.match(css, /\.wilds-command-sheet-content\s*\{[^}]*overflow-y:\s*auto/s);
 assert.match(css, /\.wilds-command-sheet-content \.wilds-vault-actions\s*\{[^}]*grid-template-columns/s);
-assert.match(css, /\.wilds-command-sheet-content \.wilds-import-card span\s*\{[^}]*white-space:\s*normal/s);
+assert.match(css, /\.wilds-command-sheet-content \.wilds-import-card span\s*\{[^}]*display:\s*none/s);
 ```
 
 - [ ] **Step 2: Run the contract test and verify RED**

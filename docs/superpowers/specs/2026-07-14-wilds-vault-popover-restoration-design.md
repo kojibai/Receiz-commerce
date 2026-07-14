@@ -55,7 +55,7 @@ On narrow screens, content follows this order:
 5. Selected flippable card scene.
 6. Selected-card actions, listing, evolution, and growth controls.
 
-The primary action group becomes a polished wrapping grid with large touch targets. Labels remain visible and may wrap onto two lines; they are never replaced by icon-only controls or clipped with ellipses. Inputs and buttons use the full available width when needed. The sheet accounts for the command dock, storefront toolbar, device safe areas, and small landscape viewports.
+The primary action group becomes a polished three-icon grid with large touch targets. Import, vault save, and fusion use icon-only controls with explicit accessible names and tooltips. Inputs and the remaining action buttons use the full available width when needed. The sheet accounts for the command dock, storefront toolbar, device safe areas, and small landscape viewports.
 
 The selected card scene scales to the available width while preserving its physical card aspect ratio and enough height for both faces. The card back's internal scroll remains discoverable and usable by touch.
 

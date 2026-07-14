@@ -287,6 +287,9 @@ describe("Receiz Wilds rendering contract", () => {
     assert.match(inventory, />Import card or vault</);
     assert.match(inventory, />Save vault image</);
     assert.match(inventory, />Save card image</);
+    assert.match(inventory, /aria-label="Import card or vault"/);
+    assert.match(inventory, /aria-label="Save vault image"/);
+    assert.match(inventory, /aria-label="Fuse cards"/);
     assert.match(inventory, /setVaultMessage/);
     assert.match(inventory, /type: "fuse-cards"/);
     assert.match(inventory, /WildsGrowthPanel/);
@@ -297,7 +300,7 @@ describe("Receiz Wilds rendering contract", () => {
     assert.match(css, /\.wilds-command-sheet\s*\{[^}]*grid-template-rows:\s*auto auto minmax\(0, 1fr\)/s);
     assert.match(css, /\.wilds-command-sheet-content\s*\{[^}]*overflow-y:\s*auto/s);
     assert.match(css, /\.wilds-command-sheet-content \.wilds-vault-actions\s*\{[^}]*grid-template-columns/s);
-    assert.match(css, /\.wilds-command-sheet-content \.wilds-import-card span\s*\{[^}]*white-space:\s*normal/s);
+    assert.match(css, /\.wilds-command-sheet-content \.wilds-import-card span\s*\{[^}]*display:\s*none/s);
     assert.match(css, /\.wilds-inventory-detail \.wilds-card-scene\s*\{[^}]*aspect-ratio:\s*5\s*\/\s*7/s);
   });
 

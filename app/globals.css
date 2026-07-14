@@ -11168,7 +11168,7 @@ button.product-purchase-secondary-link {
 .wilds-command-sheet-content .wilds-inventory > header p { font-size: 11px; line-height: 1.4; }
 .wilds-command-sheet-content .wilds-vault-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 .wilds-command-sheet-content .wilds-import-card { min-width: 0; min-height: 50px; justify-content: center; padding: 9px 10px; text-align: center; }
-.wilds-command-sheet-content .wilds-import-card span { display: inline; overflow: visible; text-overflow: clip; white-space: normal; line-height: 1.25; }
+.wilds-command-sheet-content .wilds-import-card span { display: none; }
 .wilds-command-sheet-content .wilds-import-message { padding: 9px 10px; color: #bcebdd; border: 1px solid rgb(113 232 195 / 14%); border-radius: 11px; background: rgb(4 18 25 / 48%); }
 .wilds-command-sheet-content .wilds-inventory-toolbar { grid-template-columns: minmax(0, 1fr) 150px; }
 .wilds-command-sheet-content .wilds-inventory-layout { grid-template-columns: minmax(0, 1fr); }
@@ -11200,10 +11200,9 @@ button.product-purchase-secondary-link {
   .mobile-play-wrap .wilds-command-sheet-content {
     padding: 0 12px max(18px, env(safe-area-inset-bottom));
   }
-  .wilds-command-sheet-content .wilds-vault-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .wilds-command-sheet-content .wilds-vault-actions > :last-child:nth-child(odd) { grid-column: 1 / -1; }
+  .wilds-command-sheet-content .wilds-vault-actions { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .wilds-command-sheet-content .wilds-inventory > header .wilds-import-card { width: 100%; min-height: 52px; }
-  .wilds-command-sheet-content .wilds-inventory > header .wilds-import-card span { display: inline; overflow: visible; text-overflow: clip; white-space: normal; }
+  .wilds-command-sheet-content .wilds-inventory > header .wilds-import-card span { display: none; }
   .wilds-command-sheet-content .wilds-inventory-toolbar { grid-template-columns: 1fr; }
   .wilds-command-sheet-content .wilds-inventory-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .wilds-command-sheet-content .wilds-inventory-grid > button { min-height: 100px; }
