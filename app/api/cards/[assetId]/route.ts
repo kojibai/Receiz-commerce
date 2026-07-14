@@ -46,9 +46,10 @@ export async function POST(request: NextRequest, context: { params: Promise<{ as
   }
 
   const session = receizRequestSession(request);
+  const hasPublicationAuthority = Boolean(session.accessToken || isReceizKeyFile(body.identityProof?.keyFile));
   let published = false;
   let publicationError: string | null = null;
-  if (session.accessToken || isReceizKeyFile(body.identityProof?.keyFile)) {
+  if (hasPublicationAuthority) {
     try {
       const host = new URL(record.sourceUrl).host;
       const adapter = createReceizCommerceAdapter({ accessToken: session.accessToken });
@@ -77,7 +78,10 @@ export async function POST(request: NextRequest, context: { params: Promise<{ as
       publicationError = error instanceof Error ? error.message : "wilds_public_card_publication_failed";
     }
   }
-  if (!published) return NextResponse.json({ ok: false, published: false, error: publicationError ?? "wilds_public_card_authority_required", record }, { status: 503 });
+  if (!published) return NextResponse.json(
+    { ok: false, published: false, error: publicationError ?? "wilds_public_card_authority_required", record },
+    { status: hasPublicationAuthority ? 503 : 200 }
+  );
   return NextResponse.json({ ok: true, published: true, record });
 }
 

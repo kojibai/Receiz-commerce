@@ -204,7 +204,8 @@ describe("Receiz Wilds rendering contract", () => {
     assert.match(cardExport, /BROWSER_RECEIZ_ID_SESSION_KEY/);
     assert.match(cardRoute, /publishPublicStoreWithIdentityProof/);
     assert.match(cardRoute, /compactCardPath\(assetId\)/);
-    assert.match(cardRoute, /status:\s*503/);
+    assert.match(cardRoute, /const hasPublicationAuthority/);
+    assert.match(cardRoute, /status:\s*hasPublicationAuthority \? 503 : 200/);
     assert.match(inventory, /Publishing verified card link/);
     assert.match(inventory, /Portable PNG downloaded/);
     assert.match(inventory, /Portable PNG downloaded and verifies offline/);
