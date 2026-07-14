@@ -134,10 +134,14 @@ export function WildsInventory({
                 onClick={async () => {
                   setDownloadMessage("Publishing verified card link…");
                   try {
-                    await downloadPortableCard(selected);
-                    setDownloadMessage("Portable PNG downloaded. Its QR opens this verified card from another device.");
-                  } catch {
-                    setDownloadMessage("This card’s public QR could not be published. Restore or connect the owner’s Receiz ID, then try again.");
+                    const result = await downloadPortableCard(selected);
+                    setDownloadMessage(result.published
+                      ? "Portable PNG downloaded. Its QR opens this verified card from another device."
+                      : "Portable PNG downloaded and verifies offline. Connect Receiz ID to publish its short QR link across devices.");
+                  } catch (error) {
+                    setDownloadMessage(error instanceof Error
+                      ? `Card download failed: ${error.message}`
+                      : "Card download failed. Try again from this browser.");
                   }
                 }}
                 type="button"

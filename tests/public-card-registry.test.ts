@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { admitLegacyCard } from "../src/features/play/living-card-proof.js";
-import { admitPublicWildsCard, parsePublicWildsCardRecord, registerPublicWildsCard, resolveLocalPublicWildsCard } from "../src/features/play/public-card-registry.js";
+import { admitPublicWildsCard, attemptPublicWildsCardRegistration, parsePublicWildsCardRecord, registerPublicWildsCard, resolveLocalPublicWildsCard } from "../src/features/play/public-card-registry.js";
 import { sealCollectedCard } from "../src/features/play/portable-card.js";
 
 const bornAt = "2026-07-13T20:00:00.000Z";
@@ -46,6 +46,25 @@ describe("verified public Wilds card registry", () => {
 
     try {
       await assert.rejects(() => registerPublicWildsCard(asset), /publication/);
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
+  it("reports unavailable publication without blocking offline export", async () => {
+    const asset = card();
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = async () => new Response(JSON.stringify({
+      ok: false,
+      published: false,
+      error: "wilds_public_card_authority_required"
+    }), { status: 503, headers: { "content-type": "application/json" } });
+
+    try {
+      assert.deepEqual(await attemptPublicWildsCardRegistration(asset), {
+        published: false,
+        error: "wilds_public_card_authority_required"
+      });
     } finally {
       globalThis.fetch = originalFetch;
     }

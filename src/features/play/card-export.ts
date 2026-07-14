@@ -4,7 +4,7 @@ import { deriveBirthGenome } from "./heartbound-genome";
 import { renderHeartboundSvg } from "./heartbound-renderer";
 import { currentLivingGenome } from "./living-card-proof";
 import { isLivingCardAsset } from "./living-card-types";
-import { registerPublicWildsCard } from "./public-card-registry";
+import { attemptPublicWildsCardRegistration } from "./public-card-registry";
 import { safeGetLocalStorage } from "../../lib/storage/browser-storage";
 import { BROWSER_RECEIZ_ID_SESSION_KEY, parseBrowserReceizIdSession } from "../../lib/storefront/tenant-customer-session";
 import {
@@ -313,13 +313,23 @@ async function svgPngBlob(svg: string, width = 750, height = 1050) {
 export async function downloadPortableCard(asset: PortableCardAsset) {
   if (typeof document === "undefined") throw new Error("wilds_card_download_browser_required");
   const filename = asset.manifest.formId;
-  downloadBlob(await portableCardPngBlob(asset), `${filename}.png`);
+  const publication = await attemptCardPublication(asset);
+  downloadBlob(await renderPortableCardPngBlob(asset), `${filename}.png`);
+  return { published: publication.published };
 }
 
 export async function portableCardPngBlob(asset: PortableCardAsset) {
   if (typeof document === "undefined") throw new Error("wilds_card_png_browser_required");
+  await attemptCardPublication(asset);
+  return renderPortableCardPngBlob(asset);
+}
+
+function attemptCardPublication(asset: PortableCardAsset) {
   const browserIdentity = parseBrowserReceizIdSession(safeGetLocalStorage(window.localStorage, BROWSER_RECEIZ_ID_SESSION_KEY));
-  await registerPublicWildsCard(asset, browserIdentity?.keyFile ? { identityProof: { keyFile: browserIdentity.keyFile } } : {});
+  return attemptPublicWildsCardRegistration(asset, browserIdentity?.keyFile ? { identityProof: { keyFile: browserIdentity.keyFile } } : {});
+}
+
+async function renderPortableCardPngBlob(asset: PortableCardAsset) {
   const rendered = await svgPngBlob(renderWildsCardSvg(asset, { origin: window.location.origin }));
   const portable = embedPortableCardInPng(new Uint8Array(await rendered.arrayBuffer()), asset);
   return new Blob([portable.slice().buffer], { type: "image/png" });

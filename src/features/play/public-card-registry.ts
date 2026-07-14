@@ -69,8 +69,20 @@ export async function registerPublicWildsCard(asset: PortableCardAsset, options:
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ asset, ...(options.identityProof ? { identityProof: options.identityProof } : {}) })
   });
-  if (!response.ok) throw new Error("wilds_public_card_registration_failed");
-  const result = await response.json() as { ok?: boolean; published?: boolean; record?: PublicWildsCardRecord };
-  if (result.ok !== true || result.published !== true || !result.record) throw new Error("wilds_public_card_publication_failed");
+  const result = await response.json().catch(() => null) as { ok?: boolean; published?: boolean; record?: PublicWildsCardRecord; error?: string } | null;
+  if (!response.ok) throw new Error(result?.error ?? "wilds_public_card_registration_failed");
+  if (!result || result.ok !== true || result.published !== true || !result.record) throw new Error("wilds_public_card_publication_failed");
   return result as { ok: true; published: true; record: PublicWildsCardRecord };
+}
+
+export async function attemptPublicWildsCardRegistration(
+  asset: PortableCardAsset,
+  options: { identityProof?: PublicWildsCardIdentityProof } = {}
+): Promise<{ published: true; record: PublicWildsCardRecord } | { published: false; error: string }> {
+  try {
+    const result = await registerPublicWildsCard(asset, options);
+    return { published: true, record: result.record };
+  } catch (error) {
+    return { published: false, error: error instanceof Error ? error.message : "wilds_public_card_registration_failed" };
+  }
 }
