@@ -393,7 +393,6 @@ assert.match(css, /backface-visibility:\s*hidden/);
 assert.match(css, /prefers-reduced-motion:\s*reduce/);
 assert.match(css, /\.wilds-capture-dialog[^}]*max-height:\s*calc\(100dvh - 20px\)/s);
 assert.match(css, /\.wilds-capture-stage[^}]*min-height:\s*clamp\(150px,/s);
-assert.ok(playCampaignSource.indexOf("wilds-inventory-tray") < playCampaignSource.indexOf("<aside className=\"wilds-command-panel\""));
 assert.doesNotMatch(playCampaignSource, /\{deckCards\.length\}\/4/);
 assert.match(playCampaignSource, /\{deckCards\.length\}\/∞/);
 ```
@@ -424,7 +423,7 @@ Track pointer-down/up horizontal distance for swipe without interfering with int
 
 Keep the capture ceremony's existing capsule, rays, proof ring, copy, and reveal sequence unchanged while reducing padding, gaps, capsule/ring footprint, and text margins. Bound `.wilds-capture-dialog` to `calc(100dvh - 20px)` and set `.wilds-capture-stage` to `min-height: clamp(150px, 25dvh, 190px)` on mobile so the complete ceremony and Continue action fit without page scrolling.
 
-Move the collapsed `.wilds-inventory-tray` into `.wilds-shell` between the world and command panel in DOM order. Define desktop grid areas so the closed vault sits above the World Mission column while the playable world retains its height; when opened, let the full inventory span both columns below the game. On mobile, preserve the order world → card vault → World Mission. Replace both deck counters with `{deckCards.length}/∞`; do not impose an inventory cap.
+Keep `.wilds-inventory-tray` in its current position below the World Mission, reward, deck, economy, and reset panels. Replace both deck counters with `{deckCards.length}/∞`; do not impose an inventory cap.
 
 - [ ] **Step 4: Run full tests and typecheck**
 
