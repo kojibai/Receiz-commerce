@@ -6,6 +6,72 @@ export type TraitSource = "birth" | "parent_a" | "parent_b" | "blended" | "mutat
 export type GenomeTraitKey = "skeleton" | "face" | "appendages" | "surface" | "palette" | "behavior" | "aura" | "stance";
 export type LivingCardStatus = "sealed_local" | "verified" | "listed" | "suspended" | "revoked";
 
+export type HeartboundHeadShape = "round" | "tapered" | "broad" | "heart" | "long" | "crested";
+export type HeartboundPupilShape = "round" | "oval" | "star" | "crescent" | "slit";
+export type HeartboundHighlightShape = "single" | "double" | "diamond" | "comet";
+export type HeartboundBodyBuild = "compact" | "plush" | "athletic" | "long" | "guardian" | "armored" | "winged" | "serpentine";
+export type HeartboundMarkingTopology = "bloom" | "mask" | "comet" | "crown" | "tide" | "constellation" | "ribbon" | "ember";
+export type HeartboundMarkingPlacement = "forehead" | "cheek" | "eye" | "chest" | "limb" | "tail";
+
+export type HeartboundIdentityV2 = {
+  version: 2;
+  family: {
+    familyId: string;
+    locomotion: LivingCardGenome["skeleton"]["locomotion"];
+    signatureDetail: string;
+  };
+  faceGeometry: {
+    head: HeartboundHeadShape;
+    cheek: number;
+    forehead: number;
+    muzzle: number;
+    jaw: number;
+    eyeSize: number;
+    eyeSpacing: number;
+    eyeTilt: number;
+    eyeHeight: number;
+    pupil: HeartboundPupilShape;
+    highlight: HeartboundHighlightShape;
+    brow: "soft" | "heroic" | "curious" | "mischievous";
+    signature: string;
+  };
+  body: {
+    build: HeartboundBodyBuild;
+    neck: number;
+    shoulder: number;
+    torso: number;
+    hip: number;
+    limb: number;
+    paw: number;
+    centerOfGravity: number;
+    signature: string;
+  };
+  appendageMorphs: {
+    ears: string;
+    horns: string;
+    wings: string;
+    tail: string;
+    crest: string;
+  };
+  markings: {
+    topology: HeartboundMarkingTopology;
+    placements: HeartboundMarkingPlacement[];
+    asymmetry: number;
+    density: number;
+    signature: string;
+  };
+  behavior: {
+    posture: "gentle" | "alert" | "heroic" | "playful" | "watchful";
+    blinkMs: number;
+    gaze: "steady" | "curious" | "shy" | "bright";
+    gesture: "paw-wave" | "ear-flick" | "tail-heart" | "wing-bow" | "tiny-hop" | "proud-nod";
+    celebration: "spin" | "leap" | "glow" | "bow" | "flutter";
+    signature: string;
+  };
+  individualToken: string;
+  signature: string;
+};
+
 export type LivingGrowthSnapshot = {
   bond: number;
   paths: Record<GrowthPath, number>;
@@ -17,7 +83,8 @@ export type LivingGrowthSnapshot = {
 };
 
 export type LivingCardGenome = {
-  generatorVersion: 1;
+  generatorVersion: 1 | 2;
+  identity?: HeartboundIdentityV2;
   identityAnchor: string;
   skeleton: {
     locomotion: "biped" | "quadruped" | "serpentine" | "flying";
