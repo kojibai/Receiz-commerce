@@ -8,6 +8,7 @@ Keep the playable world, movement control, and every supporting game command ins
 
 - The dock contains four familiar icon buttons: Mission, Rewards, Deck, and Vault.
 - Buttons retain accessible names and tooltips, but visible labels are omitted on compact mobile layouts.
+- Mission and Rewards display their current percentage as a compact numeric badge or progress ring integrated into the icon; Vault displays the live number of owned cards as a small superscript-style badge at the icon's upper-right corner. These values never widen the dock or become separate body text.
 - Tapping an inactive command opens its sheet. Tapping the active command, the backdrop, the close button, or dragging the sheet down closes it.
 - Opening one command closes the previous command; only one sheet exists at a time.
 - The sheet enters from the bottom with restrained spring motion and respects reduced-motion preferences.
@@ -41,7 +42,7 @@ Preserves import, export, fusion, filtering, card selection, standalone view, po
 
 ## Visual Direction
 
-Use the existing Wilds dark glass, mint, gold, and coral system. The dock is a compact floating glass capsule with four equal 44-pixel-or-larger touch targets, crisp existing icon-library glyphs, active glow, pressed depth, focus ring, and notification/progress badges where meaningful. The sheet is visually subordinate to the world and avoids dashboard-like nested cards.
+Use the existing Wilds dark glass, mint, gold, and coral system. The dock is a compact floating glass capsule with four equal 44-pixel-or-larger touch targets, crisp existing icon-library glyphs, active glow, pressed depth, focus ring, and tasteful fixed-width percentage badges where meaningful. The sheet is visually subordinate to the world and avoids dashboard-like nested cards.
 
 ## Responsive Behavior
 
