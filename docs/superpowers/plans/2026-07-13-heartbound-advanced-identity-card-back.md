@@ -32,9 +32,11 @@
 - `src/features/play/heartbound-renderer.ts`: layer composition, locomotion poses, and renderer-version dispatch.
 - `src/features/play/living-card-proof.ts`: version-preserving rendered-art commitments.
 - `src/features/play/living-card-dossier.ts`: safe deterministic story, personality, game intelligence, DNA, lineage, and proof projection.
+- `src/features/play/public-card-registry.ts`: verified public card record, server-memory fallback, and Receiz public-proof publication/resolution helpers.
 - `src/features/play/WildsCardBack.tsx`: physical card-back UI and complete canonical proof disclosure.
 - `src/features/play/WildsCardScene.tsx`: accessible 3D flip, drag/swipe, keyboard, and focus state.
 - `src/features/play/WildsCardPage.tsx`: standalone page integration, proof QR, and dock controls.
+- `app/api/cards/[assetId]/route.ts`: public verified card GET/POST resolution for scan links on fresh devices.
 - `app/globals.css`: front/back 3D materials, dossier layout, mobile behavior, and reduced motion.
 - `tests/heartbound-identity.test.ts`: determinism, 10,000-signature diversity, family resemblance, and bounds.
 - `tests/heartbound-renderer.test.ts`: shape use, layer ordering, framing, and cross-surface determinism.
@@ -374,6 +376,9 @@ git commit -m "feat: add complete living card back"
 **Files:**
 - Modify: `src/features/play/WildsCardScene.tsx`
 - Modify: `src/features/play/WildsCardPage.tsx`
+- Create: `src/features/play/public-card-registry.ts`
+- Create: `app/api/cards/[assetId]/route.ts`
+- Modify: `src/features/play/card-export.ts`
 - Modify: `app/globals.css`
 - Modify: `tests/wilds-render-contract.test.ts`
 
@@ -393,8 +398,12 @@ assert.match(css, /backface-visibility:\s*hidden/);
 assert.match(css, /prefers-reduced-motion:\s*reduce/);
 assert.match(css, /\.wilds-capture-dialog[^}]*max-height:\s*calc\(100dvh - 20px\)/s);
 assert.match(css, /\.wilds-capture-stage[^}]*min-height:\s*clamp\(150px,/s);
+assert.match(css, /\.wilds-card-foil[^}]*border-radius:\s*inherit/s);
+assert.match(css, /\.wilds-card-foil[^}]*clip-path:\s*inset\(0 round/s);
 assert.doesNotMatch(playCampaignSource, /\{deckCards\.length\}\/4/);
 assert.match(playCampaignSource, /\{deckCards\.length\}\/∞/);
+assert.match(cardPageSource, /fetch\(`\/api\/cards\/\$\{encodeURIComponent\(assetId\)\}`\)/);
+assert.doesNotMatch(cardPageSource, /Card proof not found locally/);
 ```
 
 - [ ] **Step 2: Run tests and verify flip contracts fail**
@@ -424,6 +433,10 @@ Track pointer-down/up horizontal distance for swipe without interfering with int
 Keep the capture ceremony's existing capsule, rays, proof ring, copy, and reveal sequence unchanged while reducing padding, gaps, capsule/ring footprint, and text margins. Bound `.wilds-capture-dialog` to `calc(100dvh - 20px)` and set `.wilds-capture-stage` to `min-height: clamp(150px, 25dvh, 190px)` on mobile so the complete ceremony and Continue action fit without page scrolling.
 
 Keep `.wilds-inventory-tray` in its current position below the World Mission, reward, deck, economy, and reset panels. Replace both deck counters with `{deckCards.length}/∞`; do not impose an inventory cap.
+
+Keep every foil effect inside the physical rounded card mask. Set the foil layer to `inset: 0`, `border-radius: inherit`, and `clip-path: inset(0 round 17px)` (with the compact-card radius override), then animate background position and light intensity instead of rotating an oversized square layer. Verify shimmer, prism, and eternal treatments at all four corners.
+
+Add a public-card record whose ID and source URL are the standalone route. `POST /api/cards/[assetId]` accepts a full card asset, verifies it with `verifyAnyWildsCard`, requires the path ID to match, admits the newest valid revision into a process-local fallback registry, and attempts Receiz public-proof publication under a card-specific namespace when a request session is available. `GET` resolves the process-local record first, then the Receiz public app-state URL, verifies the returned asset again, and returns only valid proof data. `portableCardPngBlob` registers the verified card before rendering its QR-bearing PNG. `WildsCardPage` checks local inventory first, then fetches the public record so scanning on a fresh phone renders the card; only a verified 404 shows an unavailable state.
 
 - [ ] **Step 4: Run full tests and typecheck**
 
