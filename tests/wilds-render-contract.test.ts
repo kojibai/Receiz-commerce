@@ -192,6 +192,7 @@ describe("Receiz Wilds rendering contract", () => {
     const world = await readFile("src/features/play/WildsWorldCanvas.tsx", "utf8");
     const multiplayer = await readFile("src/features/play/WildsMultiplayer.tsx", "utf8");
     const hook = await readFile("src/features/play/use-wilds-multiplayer.ts", "utf8");
+    const styles = await readFile("app/globals.css", "utf8");
 
     assert.match(campaign, /useWildsMultiplayer/);
     assert.match(campaign, /remotePlayers=\{multiplayer\.remotePlayers\}/);
@@ -200,6 +201,13 @@ describe("Receiz Wilds rendering contract", () => {
     assert.match(world, /onSelectPlayer/);
     assert.match(world, /zIndexRange=\{\[12, 0\]\}/);
     assert.match(multiplayer, /Copy invite link/);
+    assert.doesNotMatch(multiplayer, />PRACTICE</);
+    assert.match(multiplayer, /viewBox="0 0 24 24"/);
+    assert.doesNotMatch(multiplayer, /className="sr-only">Copy invite link/);
+    assert.match(multiplayer, /window\.setTimeout\(\(\) => setNotice\(""\), 2_800\)/);
+    assert.doesNotMatch(styles, /content: "↗"/);
+    assert.match(styles, /\.wilds-live-badge, \.wilds-live-share \{ min-height: 30px/);
+    assert.match(styles, /\.wilds-live-share \{[\s\S]*?width: 30px/);
     assert.match(multiplayer, /Friendly battle/);
     assert.match(multiplayer, /Return to world/);
     assert.match(hook, /dismissBattle/);
@@ -208,6 +216,16 @@ describe("Receiz Wilds rendering contract", () => {
     assert.match(hook, /\/api\/wilds\/multiplayer\/session/);
     assert.match(hook, /\/api\/wilds\/multiplayer\/snapshot/);
     assert.match(hook, /wildsJoin/);
+  });
+
+  it("keeps animated card foil inside rounded inventory corners", async () => {
+    const styles = await readFile("app/globals.css", "utf8");
+
+    assert.match(styles, /--card-border: 8px/);
+    assert.match(styles, /\.wilds-card-foil \{[\s\S]*?z-index: 0;/);
+    assert.match(styles, /background-clip: padding-box/);
+    assert.match(styles, /backface-visibility: hidden/);
+    assert.match(styles, /\.wilds-collectible-card > :not\(\.wilds-card-foil\)/);
   });
 
   it("uses Next navigation for every internal standalone-card action", async () => {

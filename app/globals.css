@@ -10272,14 +10272,14 @@ button.product-purchase-secondary-link {
 
 /* Receiz Wilds shared-world multiplayer */
 .wilds-live-cluster { position: absolute; z-index: 24; top: 76px; right: 12px; display: flex; align-items: center; gap: 7px; }
-.wilds-live-badge, .wilds-live-share { min-height: 36px; color: #effffa; border: 1px solid rgb(126 235 205 / 38%); background: rgb(3 20 27 / 84%); box-shadow: 0 10px 28px rgb(0 0 0 / 20%); backdrop-filter: blur(16px); }
-.wilds-live-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 999px; }
-.wilds-live-badge i { width: 7px; height: 7px; border-radius: 50%; background: #f7c948; box-shadow: 0 0 0 4px rgb(247 201 72 / 14%); }
+.wilds-live-badge, .wilds-live-share { min-height: 30px; color: #effffa; border: 1px solid rgb(126 235 205 / 38%); background: rgb(3 20 27 / 84%); box-shadow: 0 8px 22px rgb(0 0 0 / 18%); backdrop-filter: blur(16px); }
+.wilds-live-badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 6px; border-radius: 999px; }
+.wilds-live-badge i { width: 6px; height: 6px; border-radius: 50%; background: #f7c948; box-shadow: 0 0 0 3px rgb(247 201 72 / 14%); }
 .wilds-live-badge.receiz_live i { background: #54e8b8; box-shadow: 0 0 0 4px rgb(84 232 184 / 14%), 0 0 14px #54e8b8; }
 .wilds-live-badge.reconnecting i { background: #ff9368; animation: wilds-live-pulse 1s ease-in-out infinite; }
-.wilds-live-badge strong { font-size: 10px; letter-spacing: .13em; }
-.wilds-live-badge span { display: grid; min-width: 20px; height: 20px; place-items: center; color: #07191f; font-size: 10px; font-weight: 900; background: #dffff5; border-radius: 999px; }
-.wilds-live-share { position: relative; padding: 6px 11px; font-size: 11px; font-weight: 800; border-radius: 999px; }
+.wilds-live-badge span { display: grid; min-width: 17px; height: 17px; place-items: center; color: #07191f; font-size: 8px; font-weight: 900; background: #dffff5; border-radius: 999px; }
+.wilds-live-share { display: grid; width: 30px; padding: 0; place-items: center; border-radius: 50%; }
+.wilds-live-share svg { width: 14px; height: 14px; overflow: visible; fill: none; stroke: currentcolor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.9; }
 @keyframes wilds-live-pulse { 50% { opacity: .38; transform: scale(.78); } }
 
 .wilds-live-sheet { position: absolute; z-index: 44; color: #eafff9; border: 1px solid rgb(126 235 205 / 36%); background: linear-gradient(160deg, rgb(8 37 45 / 97%), rgb(3 17 24 / 98%)); box-shadow: 0 24px 70px rgb(0 0 0 / 42%); backdrop-filter: blur(20px); }
@@ -10356,8 +10356,6 @@ button.product-purchase-secondary-link {
 
 @media (max-width: 640px) {
   .wilds-live-cluster { top: 65px; right: 8px; }
-  .wilds-live-share { width: 38px; overflow: hidden; padding: 0; color: transparent; }
-  .wilds-live-share::after { content: "↗"; display: grid; position: absolute; inset: 0; place-items: center; color: #effffa; font-size: 17px; }
   .wilds-live-roster { top: 108px; right: 8px; width: calc(100% - 16px); max-height: calc(100% - 116px); }
   .wilds-player-sheet { right: 8px; bottom: 8px; width: calc(100% - 16px); }
   .wilds-pvp-battle { inset: 5px; gap: 8px; padding: 11px; border-radius: 18px; }
@@ -10879,6 +10877,8 @@ button.product-purchase-secondary-link {
   --card-primary: #38d989;
   --card-accent: #f5d36c;
   --card-glow: #62c8ff;
+  --card-border: 8px;
+  --card-radius: 25px;
   position: relative;
   isolation: isolate;
   display: grid;
@@ -10888,33 +10888,42 @@ button.product-purchase-secondary-link {
   min-height: 0;
   padding: 17px;
   overflow: hidden;
+  contain: paint;
   color: #f7fcff;
   background: radial-gradient(circle at 50% 30%, color-mix(in srgb, var(--card-glow) 24%, transparent), transparent 36%), linear-gradient(145deg, #0f3443, #06131b 55%, #102b38);
-  border: 8px solid var(--card-accent);
-  border-radius: 25px;
+  border: var(--card-border) solid var(--card-accent);
+  border-radius: var(--card-radius);
+  clip-path: inset(0 round var(--card-radius));
+  backface-visibility: hidden;
   box-shadow: inset 0 0 0 2px rgb(255 255 255 / 23%), 0 22px 60px rgb(0 0 0 / 38%);
 }
 
 .wilds-collectible-card.compact {
+  --card-border: 6px;
+  --card-radius: 19px;
   width: min(250px, 64vw);
   padding: 11px;
   gap: 7px;
-  border-width: 6px;
-  border-radius: 19px;
 }
 
 .wilds-card-foil {
   position: absolute;
-  z-index: -1;
+  z-index: 0;
   inset: 0;
-  border-radius: inherit;
-  clip-path: inset(0 round 17px);
+  overflow: hidden;
+  contain: paint;
+  border-radius: calc(var(--card-radius) - var(--card-border));
   opacity: 0.1;
   background: conic-gradient(from 10deg, #ff72bf, #ffe66f, #77ffd0, #72a7ff, #d27bff, #ff72bf);
+  background-clip: padding-box;
   mix-blend-mode: screen;
   background-size: 220% 220%;
+  backface-visibility: hidden;
+  transform: translateZ(0);
   animation: wilds-foil-drift 7s ease-in-out infinite alternate;
 }
+
+.wilds-collectible-card > :not(.wilds-card-foil) { position: relative; z-index: 1; }
 
 .wilds-collectible-card.foil-shimmer .wilds-card-foil { opacity: 0.24; }
 .wilds-collectible-card.foil-prism .wilds-card-foil { opacity: 0.38; }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { WILDS_INTERACTION_DISTANCE, presenceDistance } from "./multiplayer-core";
 import type { WildsMultiplayerController } from "./use-wilds-multiplayer";
 
@@ -19,22 +19,27 @@ export function WildsMultiplayer({ multiplayer, position }: { multiplayer: Wilds
   const battle = multiplayer.activeBattle;
   const battlePlayers = useMemo(() => battle ? battle.playerOrder.map((id) => battle.players[id]!) : [], [battle]);
   const myIntentPending = Boolean(battle?.pendingIntents[multiplayer.selfId]);
+  useEffect(() => {
+    if (!notice) return;
+    const timer = window.setTimeout(() => setNotice(""), 2_800);
+    return () => window.clearTimeout(timer);
+  }, [notice]);
 
   return (
     <>
       <div className="wilds-live-cluster" aria-label="Live multiplayer">
-        <button className={`wilds-live-badge ${multiplayer.mode}`} onClick={() => setRosterOpen((value) => !value)} type="button">
-          <i /> <strong>{multiplayer.mode === "receiz_live" ? "LIVE" : multiplayer.mode === "local_practice" ? "PRACTICE" : "SYNC"}</strong>
+        <button aria-label={`Open nearby explorers · ${multiplayer.mode === "receiz_live" ? "live room" : multiplayer.mode === "local_practice" ? "practice room" : "syncing"}`} className={`wilds-live-badge ${multiplayer.mode}`} onClick={() => setRosterOpen((value) => !value)} type="button">
+          <i />
           <span>{multiplayer.remotePlayers.length}</span>
         </button>
-        <button className="wilds-live-share" onClick={async () => {
+        <button aria-label="Copy invite link" className="wilds-live-share" onClick={async () => {
           try {
             await multiplayer.createInviteLink();
             setNotice("Invite link copied — anyone opening it joins this live room.");
           } catch {
             setNotice("Copy was blocked. Use your browser share control for this page.");
           }
-        }} type="button">Copy invite link</button>
+        }} type="button"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="18" cy="5" r="2.5" /><circle cx="6" cy="12" r="2.5" /><circle cx="18" cy="19" r="2.5" /><path d="m8.2 10.8 7.6-4.5M8.2 13.2l7.6 4.5" /></svg></button>
       </div>
 
       {rosterOpen ? (
@@ -99,7 +104,7 @@ export function WildsMultiplayer({ multiplayer, position }: { multiplayer: Wilds
         </section>
       ) : null}
 
-      {notice || multiplayer.error ? <div className="wilds-live-notice" aria-live="polite" onAnimationEnd={() => setNotice("")}>{notice || multiplayer.error}</div> : null}
+      {notice || multiplayer.error ? <div className="wilds-live-notice" aria-live="polite">{notice || multiplayer.error}</div> : null}
     </>
   );
 }
