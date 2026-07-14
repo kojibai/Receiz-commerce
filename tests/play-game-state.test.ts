@@ -165,7 +165,7 @@ describe("Receiz Wilds game state", () => {
     assert.equal(listed.inventory.at(-1)?.status, "listed");
   });
 
-  it("evolves an eligible card and retains its earlier portable form", () => {
+  it("evolves an eligible living card in place while retaining append-only history", () => {
     const base = initialPlayState.inventory[0]!;
     const ready: PlayState = {
       ...initialPlayState,
@@ -180,10 +180,14 @@ describe("Receiz Wilds game state", () => {
       evolvedAt: "2026-07-14T15:00:00.000Z"
     });
 
-    assert.equal(evolved.inventory.length, ready.inventory.length + 1);
-    assert.equal(evolved.inventory.some((asset) => asset.id === base.id), true);
-    assert.equal(evolved.inventory.at(-1)?.manifest.formId, "mintcub-2");
-    assert.equal(evolved.inventory.at(-1)?.manifest.lineage.previousAssetId, base.id);
+    assert.equal(evolved.inventory.length, ready.inventory.length);
+    assert.equal(evolved.inventory[0]?.id, base.id);
+    assert.equal(evolved.inventory[0]?.manifest.formId, "mintcub-2");
+    assert.equal(evolved.inventory[0]?.manifest.schema, "receiz.wilds_living_card_manifest.v2");
+    if (evolved.inventory[0]?.manifest.schema === "receiz.wilds_living_card_manifest.v2") {
+      assert.equal(evolved.inventory[0].manifest.currentRevision, 1);
+      assert.equal(evolved.inventory[0].manifest.revisions.length, 2);
+    }
   });
 
   it("does not select cards the player has not collected", () => {

@@ -1,9 +1,11 @@
 import { deriveCardVariant, displayCreatureName, variantSeedFor } from "./card-variant";
 import { creatureForm } from "./creature-catalog";
+import { isLivingCardAsset } from "./living-card-types";
 import {
   canonicalPortableCardJson,
   sha256PortableBasis,
   verifyPortableCard,
+  type LegacyPortableCardAsset,
   type PortableCardAsset,
   type PortableCardManifest
 } from "./portable-card";
@@ -39,11 +41,14 @@ export function fusionChild(input: {
   fusedAt: string;
   sparkId: string;
 }): PortableCardAsset {
+  if (isLivingCardAsset(input.parentA) || isLivingCardAsset(input.parentB)) throw new Error("wilds_living_fusion_not_supported_yet");
   if (!verifyPortableCard(input.parentA).ok || !verifyPortableCard(input.parentB).ok) throw new Error("wilds_fusion_parent_invalid");
   if (input.parentA.id === input.parentB.id || input.parentA.manifest.ownerReceizId !== input.parentB.manifest.ownerReceizId) throw new Error("wilds_fusion_parent_ineligible");
   if (!Number.isFinite(Date.parse(input.fusedAt)) || !input.sparkId.trim()) throw new Error("wilds_fusion_basis_invalid");
-  const ordered = [input.parentA, input.parentB].sort((a, b) => a.proof.digest.localeCompare(b.proof.digest));
-  const inherited = input.inheritance === "parent_b" ? input.parentB : input.inheritance === "parent_a" ? input.parentA : ordered[0]!;
+  const parentA: LegacyPortableCardAsset = input.parentA;
+  const parentB: LegacyPortableCardAsset = input.parentB;
+  const ordered = [parentA, parentB].sort((a, b) => a.proof.digest.localeCompare(b.proof.digest));
+  const inherited = input.inheritance === "parent_b" ? parentB : input.inheritance === "parent_a" ? parentA : ordered[0]!;
   const form = creatureForm(inherited.manifest.formId);
   if (!form) throw new Error("wilds_fusion_form_unknown");
   const parentDigests = [ordered[0]!.proof.digest, ordered[1]!.proof.digest] as [string, string];
@@ -90,7 +95,7 @@ export function fusionChild(input: {
       previousAssetId: null,
       previousDigest: null,
       evolvedAt: null,
-      parentAssetIds: [input.parentA.id, input.parentB.id].sort() as [string, string],
+      parentAssetIds: [parentA.id, parentB.id].sort() as [string, string],
       parentDigests,
       fusionSparkId: input.sparkId
     }

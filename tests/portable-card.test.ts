@@ -5,6 +5,7 @@ import {
   portableCardExchangeAsset,
   sealCollectedCard,
   sha256PortableBasis,
+  verifyAnyWildsCard,
   verifyPortableCard
 } from "../src/features/play/portable-card.js";
 
@@ -79,12 +80,12 @@ describe("Wilds portable cards", () => {
       evolvedAt: "2026-07-14T15:00:00.000Z"
     });
 
-    assert.equal(verifyPortableCard(evolved).ok, true);
+    assert.equal(verifyAnyWildsCard(evolved).ok, true);
     assert.equal(evolved.manifest.formId, "ledgerfox-2");
-    assert.equal(evolved.manifest.lineage.rootAssetId, base.id);
-    assert.equal(evolved.manifest.lineage.previousAssetId, base.id);
-    assert.equal(evolved.manifest.lineage.rootDigest, base.proof.digest);
-    assert.notEqual(evolved.id, base.id);
+    assert.equal(evolved.id, base.id);
+    assert.equal(evolved.manifest.currentRevision, 1);
+    assert.equal(evolved.manifest.revisions.length, 2);
+    assert.equal(evolved.manifest.birth.legacyDigest, base.proof.digest);
   });
 
   it("projects only synchronized cards into verified Exchange assets", () => {

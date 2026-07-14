@@ -8,6 +8,8 @@ import {
   type CreatureStats
 } from "./creature-catalog";
 import { deriveCardVariant, displayCreatureName, variantSeedFor, type CardVariantTraits } from "./card-variant";
+import { admitLegacyCard, appendLivingCardRevision, currentRevision, verifyLivingCard } from "./living-card-proof";
+import { isLivingCardAsset, type LivingCardAsset } from "./living-card-types";
 
 export type PortableCardStatus = "sealed_local" | "verified" | "listed" | "suspended" | "revoked";
 
@@ -48,7 +50,7 @@ export type PortableCardManifest = {
   };
 };
 
-export type PortableCardAsset = {
+export type LegacyPortableCardAsset = {
   id: string;
   status: PortableCardStatus;
   synchronizedAt: string | null;
@@ -60,6 +62,8 @@ export type PortableCardAsset = {
     sealedAt: string;
   };
 };
+
+export type PortableCardAsset = LegacyPortableCardAsset | LivingCardAsset;
 
 export type PortableCardVerification = {
   ok: boolean;
@@ -139,7 +143,7 @@ function assetIdFor(input: { ownerReceizId: string; formId: string; encounterId:
   return `wilds:${sha256PortableBasis(canonicalPortableCardJson(input)).slice(7, 31)}`;
 }
 
-function manifestDigest(manifest: PortableCardManifest) {
+function manifestDigest(manifest: unknown) {
   return sha256PortableBasis(canonicalPortableCardJson(manifest));
 }
 
@@ -150,7 +154,7 @@ export function sealCollectedCard(input: {
   capturedAt: string;
   kaiPulse?: string;
   battleTranscriptDigest?: string;
-}): PortableCardAsset {
+}): LegacyPortableCardAsset {
   const form = creatureForm(input.formId);
   if (!form || form.stage !== 1) throw new Error("wilds_capture_base_form_required");
   const ownerReceizId = input.ownerReceizId.trim();
@@ -255,75 +259,41 @@ export function verifyPortableCard(asset: PortableCardAsset): PortableCardVerifi
   return { ok: errors.length === 0, errors };
 }
 
+export function verifyAnyWildsCard(asset: PortableCardAsset): PortableCardVerification {
+  return isLivingCardAsset(asset) ? verifyLivingCard(asset) : verifyPortableCard(asset);
+}
+
 export function evolvePortableCard(input: {
   previous: PortableCardAsset;
   nextFormId: string;
   evolvedAt: string;
-}): PortableCardAsset {
-  const verified = verifyPortableCard(input.previous);
+}): LivingCardAsset {
+  const verified = verifyAnyWildsCard(input.previous);
   if (!verified.ok) throw new Error("wilds_previous_card_invalid");
+  const living = isLivingCardAsset(input.previous) ? input.previous : admitLegacyCard(input.previous, input.evolvedAt);
   const next = creatureForm(input.nextFormId);
-  if (!next || next.evolvesFromId !== input.previous.manifest.formId) throw new Error("wilds_evolution_lineage_invalid");
+  if (!next || next.evolvesFromId !== living.manifest.formId) throw new Error("wilds_evolution_lineage_invalid");
   if (!Number.isFinite(Date.parse(input.evolvedAt))) throw new Error("wilds_evolution_time_invalid");
-  const rootAssetId = input.previous.manifest.lineage.rootAssetId;
-  const rootDigest = input.previous.manifest.lineage.previousAssetId
-    ? input.previous.manifest.lineage.rootDigest
-    : input.previous.proof.digest;
-  const id = `wilds:${sha256PortableBasis(canonicalPortableCardJson({ previous: input.previous.id, next: next.id, evolvedAt: input.evolvedAt })).slice(7, 31)}`;
-  const evolvedPulse = String(Date.parse(input.evolvedAt));
-  const evolvedBattleDigest = input.previous.proof.digest;
-  const evolvedSeed = variantSeedFor({
-    formId: next.id,
-    encounterId: `evolution:${input.previous.id}`,
-    ownerReceizId: input.previous.manifest.ownerReceizId,
-    capturedAt: input.evolvedAt,
-    kaiPulse: evolvedPulse,
-    battleTranscriptDigest: evolvedBattleDigest
+  const prior = currentRevision(living);
+  return appendLivingCardRevision({
+    asset: living,
+    revision: {
+      sealedAt: input.evolvedAt,
+      kaiPulse: String(Date.parse(input.evolvedAt)),
+      reason: { kind: "stage", label: `Earned evolution into ${next.name}` },
+      stage: next.stage,
+      ascensionRank: prior.ascensionRank,
+      formId: next.id,
+      growth: prior.growth,
+      qualifyingAchievementIds: [],
+      consumedCatalystId: `catalog-stage:${next.id}`,
+      genomeDelta: { anatomy: { ...next.anatomy }, provenance: { ...living.manifest.birthGenome.provenance, anatomy: "ascension" } },
+      stats: { ...next.stats },
+      abilityNames: [next.abilities[0].name, next.abilities[1].name],
+      title: displayCreatureName(next.id, next.name),
+      childEventIds: []
+    }
   });
-  const evolvedTraits = deriveCardVariant(evolvedSeed, 1);
-  const manifest: PortableCardManifest = {
-    ...input.previous.manifest,
-    assetId: id,
-    formId: next.id,
-    familyId: next.familyId,
-    stage: next.stage,
-    cardNumber: next.cardNumber,
-    name: displayCreatureName(next.id, next.name),
-    species: next.species,
-    rarity: next.rarity,
-    foil: next.foil,
-    stats: { ...next.stats },
-    abilityNames: [next.abilities[0].name, next.abilities[1].name],
-    capturedAt: input.evolvedAt,
-    encounterId: `evolution:${input.previous.id}`,
-    variant: {
-      generatorVersion: 1,
-      seed: evolvedSeed,
-      traitsDigest: sha256PortableBasis(canonicalPortableCardJson(evolvedTraits)),
-      kaiPulse: evolvedPulse,
-      battleTranscriptDigest: evolvedBattleDigest,
-      traits: evolvedTraits
-    },
-    lineage: {
-      rootAssetId,
-      rootDigest,
-      previousAssetId: input.previous.id,
-      previousDigest: input.previous.proof.digest,
-      evolvedAt: input.evolvedAt
-    }
-  };
-  return {
-    id,
-    status: "sealed_local",
-    synchronizedAt: null,
-    manifest,
-    proof: {
-      kind: "receiz.wilds_local_seal.v1",
-      digest: manifestDigest(manifest),
-      canonicalization: "receiz.sorted-json.v1",
-      sealedAt: input.evolvedAt
-    }
-  };
 }
 
 export function portableCardExchangeAsset(asset: PortableCardAsset, priceCents: number): ReceizedAsset {

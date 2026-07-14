@@ -512,13 +512,12 @@ export function applyWildsInput(state: PlayState, input: WildsInput): PlayState 
       return { ...state, lastEvent: `${previous.manifest.name} needs more levels and bond before evolving.` };
     }
     const evolved = evolvePortableCard({ previous, nextFormId: next.id, evolvedAt: input.evolvedAt });
-    if (state.inventory.some((asset) => asset.id === evolved.id)) return state;
     return {
       ...state,
-      inventory: [...state.inventory, evolved],
-      pendingSyncAssetIds: [...state.pendingSyncAssetIds, evolved.id],
+      inventory: state.inventory.map((asset) => asset.id === evolved.id ? evolved : asset),
+      pendingSyncAssetIds: Array.from(new Set([...state.pendingSyncAssetIds, evolved.id])),
       cardXp: state.cardXp + 25,
-      lastEvent: `${previous.manifest.name} evolved into ${next.name}. The new form is sealed for offline use.`
+      lastEvent: `${previous.manifest.name} evolved into ${next.name}. Its living history was sealed in place.`
     };
   }
 
