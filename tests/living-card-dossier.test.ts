@@ -48,6 +48,6 @@ describe("Living card character and proof dossier", () => {
     assert.match(dossier.canonicalProofJson, new RegExp(child.manifest.birthGenome.identity!.signature));
     assert.match(dossier.canonicalProofJson, /receiz\.sorted-json\.v1/);
     assert.match(dossier.canonicalProofJson, /collector\.receiz\.id/);
-    assert.equal(dossier.verification.route, `https://cards.example/cards/${encodeURIComponent(child.id)}`);
+    assert.equal(dossier.verification.route, `https://cards.example/c/${child.id.slice("wilds:".length)}`);
   });
 });

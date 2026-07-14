@@ -42,24 +42,26 @@ function statRow(label: string, value: number, x: number, color: string) {
   return `<g transform="translate(${x} 0)"><rect width="116" height="70" rx="18" fill="#071c26" fill-opacity=".88" stroke="${xml(color)}" stroke-opacity=".55"/><text x="58" y="26" text-anchor="middle" fill="#8da9b3" font-family="system-ui,sans-serif" font-size="15" font-weight="700" letter-spacing="1.5">${label}</text><text x="58" y="55" text-anchor="middle" fill="#ffffff" font-family="system-ui,sans-serif" font-size="27" font-weight="850">${value}</text></g>`;
 }
 
-function qrSvg(value: string, x: number, y: number, size: number) {
-  const qr = QRCode.create(value, { errorCorrectionLevel: "M" });
+function premiumQrSvg(value: string, x: number, y: number, accent: string) {
+  const size = 66;
+  const qr = QRCode.create(value, { errorCorrectionLevel: "L" });
   const modules = qr.modules.size;
   const quiet = 4;
   const cell = size / (modules + quiet * 2);
-  const squares: string[] = [`<rect x="${x}" y="${y}" width="${size}" height="${size}" rx="5" fill="#fff"/>`];
+  const path: string[] = [];
   for (let row = 0; row < modules; row += 1) {
     for (let col = 0; col < modules; col += 1) {
-      if (qr.modules.get(row, col)) squares.push(`<rect x="${(x + (col + quiet) * cell).toFixed(2)}" y="${(y + (row + quiet) * cell).toFixed(2)}" width="${(cell + 0.08).toFixed(2)}" height="${(cell + 0.08).toFixed(2)}" fill="#07141c"/>`);
+      if (qr.modules.get(row, col)) path.push(`M${(x + (col + quiet) * cell).toFixed(3)} ${(y + (row + quiet) * cell).toFixed(3)}h${cell.toFixed(3)}v${cell.toFixed(3)}h-${cell.toFixed(3)}z`);
     }
   }
-  return `<g id="card-qr" aria-label="QR link to standalone card page">${squares.join("")}</g>`;
+  return `<g id="card-qr" aria-label="QR link to standalone card page" data-premium-qr="true" data-module-grid="crisp-vector" data-qr-size="${size}"><rect x="${x - 3}" y="${y - 3}" width="${size + 6}" height="${size + 6}" rx="9" fill="#031018" stroke="${xml(accent)}" stroke-opacity=".58"/><rect x="${x}" y="${y}" width="${size}" height="${size}" rx="5" fill="#fff"/><path d="${path.join("")}" fill="#07141c" shape-rendering="crispEdges"/><circle cx="${x + size - 3}" cy="${y + 3}" r="2" fill="${xml(accent)}"/></g>`;
 }
 
 export function standaloneCardUrl(assetId: string, origin: string) {
   const base = new URL(origin);
   if (base.protocol !== "https:" && base.protocol !== "http:") throw new Error("wilds_card_origin_invalid");
-  return new URL(`/cards/${encodeURIComponent(assetId)}`, base.origin).toString();
+  if (!/^wilds:[a-f0-9]{24}$/.test(assetId)) throw new Error("wilds_card_id_invalid");
+  return new URL(`/c/${assetId.slice("wilds:".length)}`, base.origin).toString();
 }
 
 export function renderWildsCardSvg(asset: PortableCardAsset, options: { origin?: string } = {}) {
@@ -103,7 +105,7 @@ export function renderWildsCardSvg(asset: PortableCardAsset, options: { origin?:
   <g transform="translate(65 630)">${statRows}</g>
   <g transform="translate(65 727)"><rect width="620" height="88" rx="22" fill="#0a202b" stroke="${xml(palette.primary)}" stroke-opacity=".52"/><text x="24" y="32" fill="#fff" font-family="system-ui,sans-serif" font-size="23" font-weight="850">${xml(abilityOne.name)}</text><text x="590" y="32" text-anchor="end" fill="${xml(palette.accent)}" font-family="system-ui,sans-serif" font-size="23" font-weight="900">${abilityOne.power}</text><text x="24" y="63" fill="#a9c2cb" font-family="system-ui,sans-serif" font-size="16">${xml(abilityOne.text)}</text></g>
   <g transform="translate(65 829)"><rect width="620" height="88" rx="22" fill="#0a202b" stroke="${xml(palette.accent)}" stroke-opacity=".52"/><text x="24" y="32" fill="#fff" font-family="system-ui,sans-serif" font-size="23" font-weight="850">${xml(abilityTwo.name)}</text><text x="590" y="32" text-anchor="end" fill="${xml(palette.primary)}" font-family="system-ui,sans-serif" font-size="23" font-weight="900">${abilityTwo.power}</text><text x="24" y="63" fill="#a9c2cb" font-family="system-ui,sans-serif" font-size="16">${xml(abilityTwo.text)}</text></g>
-  <text x="65" y="960" fill="#7896a1" font-family="ui-monospace,monospace" font-size="12">${xml(asset.proof.digest)}</text>${qrSvg(cardPath, 578, 895, 112)}
+  <text x="65" y="960" fill="#7896a1" font-family="ui-monospace,monospace" font-size="12">${xml(asset.proof.digest)}</text>${premiumQrSvg(cardPath, 621, 927, palette.accent)}
   <text x="65" y="990" fill="#fff" font-family="system-ui,sans-serif" font-size="15" font-weight="750">RECEIZ WILDS · PORTABLE PROOF CARD</text><text x="600" y="990" text-anchor="end" fill="${xml(palette.accent)}" font-family="system-ui,sans-serif" font-size="15" font-weight="850">${xml(asset.status.replace("_", " ").toUpperCase())}</text>
 </svg>`;
 }

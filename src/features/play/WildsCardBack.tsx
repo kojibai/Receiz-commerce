@@ -127,7 +127,7 @@ export function WildsCardBack({ asset, origin, qr }: { asset: PortableCardAsset;
 
         <footer>
           <div><span>Proof-sealed living character</span><code>{asset.proof.digest}</code></div>
-          {qr ? <Link aria-label="Open this exact standalone card page" href={dossier.verification.route}><Image alt="QR code for this exact standalone card page" height={88} src={qr} unoptimized width={88} /></Link> : null}
+          {qr ? <Link aria-label="Open this exact standalone card page" className="wilds-card-back-qr" href={dossier.verification.route}><Image alt="QR code for this exact standalone card page" height={60} src={qr} unoptimized width={60} /></Link> : null}
         </footer>
       </div>
     </article>

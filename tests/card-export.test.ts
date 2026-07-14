@@ -34,8 +34,12 @@ describe("Wilds card export", () => {
     assert.match(svg, /sha256:[a-f0-9]{64}/);
     assert.match(svg, /id="card-qr"/);
     assert.match(svg, /QR link to standalone card page/);
+    const premiumQr = svg.match(/data-premium-qr="true" data-module-grid="crisp-vector" data-qr-size="(\d+)"/);
+    assert.ok(premiumQr);
+    assert.equal(Number(premiumQr[1]), 66);
+    assert.match(svg, /shape-rendering="crispEdges"/);
     assert.match(svg, /RARE|UNCOMMON|TRAIL|MYTHIC|ETERNAL/);
-    assert.equal(standaloneCardUrl(card.id, "https://cards.kaiturah.example/store"), `https://cards.kaiturah.example/cards/${encodeURIComponent(card.id)}`);
+    assert.equal(standaloneCardUrl(card.id, "https://cards.kaiturah.example/store"), `https://cards.kaiturah.example/c/${card.id.slice("wilds:".length)}`);
   });
 
   it("escapes manifest text before placing it in SVG", () => {

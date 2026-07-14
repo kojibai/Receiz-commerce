@@ -45,7 +45,7 @@ export function WildsCardPage({ assetId }: { assetId: string }) {
       <section className="wilds-card-dock" aria-label="Card details and transactions">
         <div className="wilds-card-dock-tabs">{(["Overview", "Proof", "Lineage", "Offers"] as const).map((item) => <button aria-pressed={tab === item} key={item} onClick={() => setTab(item)} type="button">{item}</button>)}</div>
         <p>{detail}</p>
-        <div className="wilds-card-dock-actions"><Link href={`/?card=${encodeURIComponent(assetId)}&action=buy#exchange`}>Buy card</Link><Link href={`/?card=${encodeURIComponent(assetId)}&action=offer#exchange`}>Make offer</Link><Link href={`/?card=${encodeURIComponent(assetId)}&action=trade#exchange`}>Propose trade</Link>{qr ? <Link aria-label="Open this standalone card page" className="wilds-card-qr-link" href={`/cards/${encodeURIComponent(assetId)}`}><Image alt="QR code for this standalone card page" height={42} src={qr} unoptimized width={42} /></Link> : null}</div>
+        <div className="wilds-card-dock-actions"><Link href={`/?card=${encodeURIComponent(assetId)}&action=buy#exchange`}>Buy card</Link><Link href={`/?card=${encodeURIComponent(assetId)}&action=offer#exchange`}>Make offer</Link><Link href={`/?card=${encodeURIComponent(assetId)}&action=trade#exchange`}>Propose trade</Link>{qr ? <Link aria-label="Open this standalone card page" className="wilds-card-qr-link" href={standaloneCardUrl(assetId, origin)}><Image alt="QR code for this standalone card page" height={36} src={qr} unoptimized width={36} /></Link> : null}</div>
       </section>
     </main>
   );
