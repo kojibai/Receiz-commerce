@@ -45,12 +45,16 @@ describe("mobile storefront layout CSS", () => {
     assert.match(css, /\.bottom-nav\s*\{[^}]*bottom:\s*var\(--mobile-app-nav-bottom\);[^}]*min-height:\s*var\(--mobile-app-nav-height\);/s);
   });
 
-  it("shares compact mobile chrome geometry with the fixed Wilds dock", () => {
+  it("gives every compact Wilds control its own bounded layout row", () => {
     assert.match(css, /\.commerce-app\s*\{[^}]*--mobile-app-nav-bottom:\s*max\(8px, env\(safe-area-inset-bottom\)\);[^}]*--mobile-app-nav-height:\s*56px/s);
     assert.match(css, /\.mobile-play-pane \.mobile-pane-heading\s*\{[^}]*min-height:\s*20px;[^}]*height:\s*20px/s);
     assert.match(css, /\.mobile-play-pane \.mobile-pane-heading \.status-pill\s*\{[^}]*min-height:\s*18px/s);
-    assert.match(css, /\.mobile-play-pane\.active\s*\{[^}]*transform:\s*none/s);
-    assert.match(css, /\.mobile-play-wrap \.wilds-command-system\s*\{[^}]*position:\s*fixed;[^}]*bottom:\s*calc\(var\(--mobile-app-nav-bottom\) \+ var\(--mobile-app-nav-height\) \+ 8px\);/s);
+    assert.doesNotMatch(css, /\.mobile-play-wrap \.wilds-command-system\s*\{[^}]*position:\s*fixed/s);
+    assert.match(css, /\.mobile-pane\.mobile-play-pane\s*\{[^}]*bottom:\s*calc\(var\(--mobile-app-nav-bottom\) \+ var\(--mobile-app-nav-height\) \+ 8px\);[^}]*overflow:\s*hidden/s);
+    assert.match(css, /\.mobile-play-wrap \.wilds-shell\s*\{[^}]*grid-template-rows:\s*minmax\(0, 1fr\) auto;[^}]*height:\s*100%/s);
+    assert.match(css, /\.mobile-play-wrap \.wilds-world\s*\{[^}]*grid-template-rows:\s*minmax\(0, 1fr\) 68px/s);
+    assert.match(css, /\.mobile-play-wrap \.wilds-stage\s*\{[^}]*min-height:\s*0/s);
+    assert.match(css, /\.mobile-play-wrap \.wilds-trackpad\s*\{[^}]*width:\s*68px;[^}]*height:\s*68px/s);
   });
 
   it("uses customer ownership language on the mobile assets page", () => {

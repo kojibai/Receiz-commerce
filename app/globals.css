@@ -6384,7 +6384,11 @@ a {
     font-size: 9px;
   }
 
-  .mobile-play-pane.active { transform: none; }
+  .mobile-pane.mobile-play-pane {
+    bottom: calc(var(--mobile-app-nav-bottom) + var(--mobile-app-nav-height) + 8px);
+    padding-bottom: 0;
+    overflow: hidden;
+  }
 
   .mobile-shop-hero {
     display: grid;
@@ -7253,21 +7257,19 @@ a {
   }
 
   .mobile-play-wrap {
+    display: flex;
+    flex-direction: column;
     min-height: 0;
-    overflow: visible;
-    padding-bottom: calc(var(--mobile-app-nav-height) + 80px);
+    padding-bottom: 0;
+    overflow: hidden;
   }
 
-  .mobile-play-wrap .wilds-command-system {
-    position: fixed;
-    right: 18px;
-    bottom: calc(var(--mobile-app-nav-bottom) + var(--mobile-app-nav-height) + 8px);
-    left: 18px;
-    z-index: 49;
+  .mobile-play-pane > .mobile-play-wrap {
+    flex: 1 1 auto;
   }
 
   .mobile-play-wrap .wilds-play-panel {
-    height: auto;
+    height: 100%;
     min-height: 0;
     padding: 8px;
     border-radius: 16px;
@@ -7280,15 +7282,20 @@ a {
 
   .mobile-play-wrap .wilds-shell {
     grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) auto;
     gap: 8px;
+    height: 100%;
+    min-height: 0;
   }
 
   .mobile-play-wrap .wilds-world {
+    grid-template-rows: minmax(0, 1fr) 68px;
     gap: 4px;
+    min-height: 0;
   }
 
   .mobile-play-wrap .wilds-stage {
-    min-height: clamp(430px, 64dvh, 620px);
+    min-height: 0;
     border-radius: 16px;
   }
 
@@ -7307,6 +7314,7 @@ a {
   .mobile-play-wrap .wilds-screen-controls {
     gap: 5px;
     width: calc(100% - 16px);
+    height: 68px;
   }
 
   .mobile-play-wrap .wilds-screen-actions {
@@ -7330,7 +7338,7 @@ a {
   }
 
   .mobile-play-wrap .wilds-screen-controls .wilds-action {
-    min-height: 36px;
+    min-height: 32px;
     padding: 3px;
     border-radius: 11px;
   }
@@ -7348,19 +7356,19 @@ a {
   }
 
   .mobile-play-wrap .wilds-trackpad {
-    width: 82px;
-    height: 82px;
-    border-radius: 18px;
+    width: 68px;
+    height: 68px;
+    border-radius: 16px;
   }
 
   .mobile-play-wrap .wilds-trackpad-ring {
-    width: 46px;
-    height: 46px;
+    width: 40px;
+    height: 40px;
   }
 
   .mobile-play-wrap .wilds-trackpad-knob {
-    width: 26px;
-    height: 26px;
+    width: 22px;
+    height: 22px;
   }
 
   .mobile-play-wrap .wilds-dpad {
@@ -8132,7 +8140,7 @@ a {
   }
 
   .mobile-play-wrap .wilds-stage {
-    min-height: clamp(430px, 64dvh, 620px);
+    min-height: 0;
   }
 
   .mobile-play-wrap .wilds-control-deck {

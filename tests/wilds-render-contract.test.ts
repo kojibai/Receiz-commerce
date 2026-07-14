@@ -129,7 +129,7 @@ describe("Receiz Wilds rendering contract", () => {
     assert.match(source, /<WildsInventory/);
     assert.match(source, /aria-label="Make camp and recover energy"/);
     assert.match(source, /aria-label="Run world mission"/);
-    assert.match(css, /\.mobile-play-wrap \.wilds-stage\s*\{[^}]*min-height: clamp\(430px, 64dvh, 620px\)/);
+    assert.match(css, /\.mobile-play-wrap \.wilds-stage\s*\{[^}]*min-height:\s*0/);
     assert.doesNotMatch(css, /\.mobile-play-wrap \.wilds-stage\s*\{[^}]*min-height: 286px/);
     assert.match(source, /wilds-coordinate-badges/);
     assert.match(source, /Discovery on/);
@@ -208,7 +208,9 @@ describe("Receiz Wilds rendering contract", () => {
     assert.doesNotMatch(cardExport, /function creatureMark/);
     assert.match(css, /\.heartbound-card-art\s*>\s*svg\s*\{[^}]*width:\s*100%;[^}]*height:\s*100%;[^}]*max-width:\s*100%;/s);
     assert.match(css, /\.wilds-command-dock\s*\{[^}]*grid-template-columns:\s*repeat\(4/s);
-    assert.match(css, /\.mobile-play-wrap \.wilds-command-system\s*\{[^}]*position:\s*fixed;[^}]*bottom:\s*calc\(var\(--mobile-app-nav-bottom\) \+ var\(--mobile-app-nav-height\) \+ 8px\)/s);
+    assert.doesNotMatch(css, /\.mobile-play-wrap \.wilds-command-system\s*\{[^}]*position:\s*fixed/s);
+    assert.match(css, /\.mobile-play-wrap \.wilds-shell\s*\{[^}]*grid-template-rows:\s*minmax\(0, 1fr\) auto;[^}]*height:\s*100%/s);
+    assert.match(css, /\.mobile-play-wrap \.wilds-world\s*\{[^}]*grid-template-rows:\s*minmax\(0, 1fr\) 68px/s);
     assert.match(css, /\.wilds-command-badge/);
     assert.match(css, /\.wilds-command-sheet\s*\{[^}]*position:\s*absolute/s);
     assert.match(css, /env\(safe-area-inset-bottom\)/);
