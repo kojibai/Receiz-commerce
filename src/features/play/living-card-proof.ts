@@ -23,6 +23,7 @@ export function emptyLivingGrowth(bond = 0): LivingGrowthSnapshot {
   return {
     bond,
     paths: { bond, battle: 0, exploration: 0, legacy: 0, community: 0, character: 0 },
+    eventIds: [],
     achievementIds: [],
     consumedAchievementIds: [],
     completedQuestIds: [],

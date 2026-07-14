@@ -8,6 +8,7 @@ export type LivingCardStatus = "sealed_local" | "verified" | "listed" | "suspend
 export type LivingGrowthSnapshot = {
   bond: number;
   paths: Record<GrowthPath, number>;
+  eventIds: string[];
   achievementIds: string[];
   consumedAchievementIds: string[];
   completedQuestIds: string[];

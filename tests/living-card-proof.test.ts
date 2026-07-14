@@ -53,6 +53,7 @@ describe("Wilds living card proof chain", () => {
         growth: {
           bond: 100,
           paths: { bond: 100, battle: 4, exploration: 3, legacy: 0, community: 0, character: 1 },
+          eventIds: ["bond:mastery:1"],
           achievementIds: ["bond_mastery_1"],
           consumedAchievementIds: ["bond_mastery_1"],
           completedQuestIds: ["ledgerfox_bond_1"],
