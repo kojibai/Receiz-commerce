@@ -55,7 +55,13 @@ function qrSvg(value: string, x: number, y: number, size: number) {
   return `<g id="card-qr" aria-label="QR link to standalone card page">${squares.join("")}</g>`;
 }
 
-export function renderWildsCardSvg(asset: PortableCardAsset) {
+export function standaloneCardUrl(assetId: string, origin: string) {
+  const base = new URL(origin);
+  if (base.protocol !== "https:" && base.protocol !== "http:") throw new Error("wilds_card_origin_invalid");
+  return new URL(`/cards/${encodeURIComponent(assetId)}`, base.origin).toString();
+}
+
+export function renderWildsCardSvg(asset: PortableCardAsset, options: { origin?: string } = {}) {
   const form = creatureForm(asset.manifest.formId);
   if (!form) throw new Error("wilds_card_form_unknown");
   const stats = asset.manifest.stats;
@@ -74,7 +80,7 @@ export function renderWildsCardSvg(asset: PortableCardAsset) {
   ].join("");
   const abilityOne = form.abilities[0];
   const abilityTwo = form.abilities[1];
-  const cardPath = `/cards/${encodeURIComponent(asset.id)}`;
+  const cardPath = standaloneCardUrl(asset.id, options.origin ?? "https://receiz.com");
   return `<svg xmlns="http://www.w3.org/2000/svg" width="750" height="1050" viewBox="0 0 750 1050" role="img" aria-labelledby="title description">
   <title id="title">${xml(asset.manifest.name)} Wilds card</title><desc id="description">Stage ${asset.manifest.stage} ${xml(asset.manifest.rarity)} portable Receiz card</desc>
   <defs>
@@ -307,7 +313,7 @@ export async function downloadPortableCard(asset: PortableCardAsset) {
 
 export async function portableCardPngBlob(asset: PortableCardAsset) {
   if (typeof document === "undefined") throw new Error("wilds_card_png_browser_required");
-  const rendered = await svgPngBlob(renderWildsCardSvg(asset));
+  const rendered = await svgPngBlob(renderWildsCardSvg(asset, { origin: window.location.origin }));
   const portable = embedPortableCardInPng(new Uint8Array(await rendered.arrayBuffer()), asset);
   return new Blob([portable.slice().buffer], { type: "image/png" });
 }

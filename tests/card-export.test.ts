@@ -7,6 +7,7 @@ import {
   readPortableVaultFromPng,
   renderWildsCardSvg,
   renderWildsVaultSvg,
+  standaloneCardUrl,
   verifyPortableCardPng,
   verifyPortableVaultPng
 } from "../src/features/play/card-export.js";
@@ -21,7 +22,7 @@ describe("Wilds card export", () => {
   });
 
   it("renders a complete high-resolution collectible card document", () => {
-    const svg = renderWildsCardSvg(card);
+    const svg = renderWildsCardSvg(card, { origin: "https://cards.kaiturah.example" });
 
     assert.match(svg, /viewBox="0 0 750 1050"/);
     assert.match(svg, />Voltray</);
@@ -33,6 +34,7 @@ describe("Wilds card export", () => {
     assert.match(svg, /id="card-qr"/);
     assert.match(svg, /QR link to standalone card page/);
     assert.match(svg, /RARE|UNCOMMON|TRAIL|MYTHIC|ETERNAL/);
+    assert.equal(standaloneCardUrl(card.id, "https://cards.kaiturah.example/store"), `https://cards.kaiturah.example/cards/${encodeURIComponent(card.id)}`);
   });
 
   it("escapes manifest text before placing it in SVG", () => {

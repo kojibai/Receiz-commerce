@@ -21,7 +21,7 @@ export function WildsCard({ asset, compact = false }: { asset: PortableCardAsset
   const genome = isLivingCardAsset(asset)
     ? currentLivingGenome(asset)
     : deriveBirthGenome({ formId: asset.manifest.formId, proofDigest: asset.proof.digest, variant });
-  const creatureSvg = renderHeartboundSvg(genome, "card", { width: 640, height: 405, title: asset.manifest.name });
+  const creatureSvg = renderHeartboundSvg(genome, "card", { width: 640, height: 405, title: asset.manifest.name, fit: "full-body" });
   return (
     <article
       aria-label={`${asset.manifest.name}, Stage ${form.stage}, ${form.rarity} Wilds card`}

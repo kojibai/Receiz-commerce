@@ -4,6 +4,7 @@ import Link from "next/link";
 import QRCode from "qrcode";
 import { useEffect, useMemo, useState } from "react";
 import { initialPlayState, restorePlayState } from "./game-state";
+import { standaloneCardUrl } from "./card-export";
 import type { PortableCardAsset } from "./portable-card";
 import { WildsCardScene } from "./WildsCardScene";
 
@@ -14,7 +15,7 @@ export function WildsCardPage({ assetId }: { assetId: string }) {
   useEffect(() => {
     const restored = restorePlayState(window.localStorage.getItem("receiz:wilds:save:v2"));
     setAsset(restored.inventory.find((item) => item.id === assetId) ?? null);
-    void QRCode.toDataURL(window.location.href, { errorCorrectionLevel: "M", margin: 4, width: 160 }).then(setQr);
+    void QRCode.toDataURL(standaloneCardUrl(assetId, window.location.origin), { errorCorrectionLevel: "M", margin: 4, width: 160 }).then(setQr);
   }, [assetId]);
   const detail = useMemo(() => {
     if (!asset) return "This proof-sealed card is not stored on this device yet.";

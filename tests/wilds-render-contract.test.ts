@@ -89,9 +89,12 @@ describe("Receiz Wilds rendering contract", () => {
     assert.match(inventory, /type: "evolve"/);
     assert.match(card, /wilds-card-foil/);
     assert.match(card, /renderHeartboundSvg/);
+    assert.match(card, /fit:\s*"full-body"/);
     assert.match(cardExport, /renderHeartboundSvg/);
     assert.doesNotMatch(card, /wilds-card-creature-core/);
     assert.doesNotMatch(cardExport, /function creatureMark/);
+    assert.match(css, /\.heartbound-card-art\s*>\s*svg\s*\{[^}]*width:\s*100%;[^}]*height:\s*100%;[^}]*max-width:\s*100%;/s);
+    assert.match(css, /\.heartbound-card-art\s*\{[^}]*aspect-ratio:\s*16\s*\/\s*10;/s);
     assert.match(css, /@media \(prefers-reduced-motion: reduce\)[\s\S]*\.wilds-capture-capsule/);
   });
 

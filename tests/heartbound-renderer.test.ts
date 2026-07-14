@@ -36,4 +36,11 @@ describe("Heartbound full-body renderer", () => {
     assert.match(first, /aria-label="SealCub full-body companion"/);
     assert.match(renderedHeartboundDigest(genome, "card", "SealCub"), /^sha256:[a-f0-9]{64}$/);
   });
+
+  it("offers padded full-body framing for the interactive card viewer", () => {
+    const framed = renderHeartboundSvg(genome, "card", { width: 640, height: 405, title: "SealCub", fit: "full-body" });
+
+    assert.match(framed, /data-framing="full-body"/);
+    assert.match(framed, /scale\(0\.[0-9]+\)/);
+  });
 });

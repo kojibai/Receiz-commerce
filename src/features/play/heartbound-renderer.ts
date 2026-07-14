@@ -43,9 +43,11 @@ export function heartboundLayers(genome: LivingCardGenome, pose: HeartboundPose)
   ];
 }
 
-export function renderHeartboundSvg(genome: LivingCardGenome, pose: HeartboundPose, options: { width: number; height: number; title: string }) {
+export function renderHeartboundSvg(genome: LivingCardGenome, pose: HeartboundPose, options: { width: number; height: number; title: string; fit?: "native" | "full-body" }) {
   const body = heartboundLayers(genome, pose).map((item) => item.markup).join("");
-  return `<svg xmlns="http://www.w3.org/2000/svg" data-heartbound="heroic-companion" width="${options.width}" height="${options.height}" viewBox="0 0 560 440" role="img" aria-label="${xml(options.title)} full-body companion"><g transform="translate(0 8) scale(${genome.variant.bodyScale})" transform-origin="280px 220px">${body}</g></svg>`;
+  const framing = options.fit ?? "native";
+  const scale = framing === "full-body" ? Number((genome.variant.bodyScale * 0.82).toFixed(3)) : genome.variant.bodyScale;
+  return `<svg xmlns="http://www.w3.org/2000/svg" data-heartbound="heroic-companion" width="${options.width}" height="${options.height}" viewBox="0 0 560 440" role="img" aria-label="${xml(options.title)} full-body companion"><g data-framing="${framing}" transform="translate(0 8) scale(${scale})" transform-origin="280px 220px">${body}</g></svg>`;
 }
 
 export function renderedHeartboundDigest(genome: LivingCardGenome, pose: HeartboundPose, title: string) {
