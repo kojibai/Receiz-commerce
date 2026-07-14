@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { admitLegacyCard } from "../src/features/play/living-card-proof.js";
-import { admitPublicWildsCard, parsePublicWildsCardRecord, resolveLocalPublicWildsCard } from "../src/features/play/public-card-registry.js";
+import { admitPublicWildsCard, parsePublicWildsCardRecord, registerPublicWildsCard, resolveLocalPublicWildsCard } from "../src/features/play/public-card-registry.js";
 import { sealCollectedCard } from "../src/features/play/portable-card.js";
 
 const bornAt = "2026-07-13T20:00:00.000Z";
@@ -21,9 +21,52 @@ describe("verified public Wilds card registry", () => {
     assert.equal(parsePublicWildsCardRecord({ state: record })?.sourceUrl, sourceUrl);
   });
 
+  it("admits the compact URL that is actually encoded in the card QR", () => {
+    const asset = card();
+    const sourceUrl = `https://cards.example/c/${asset.id.slice("wilds:".length)}`;
+    const record = admitPublicWildsCard(asset, sourceUrl, bornAt);
+
+    assert.equal(record.sourceUrl, sourceUrl);
+  });
+
   it("rejects a tampered card before it can become publicly resolvable", () => {
     const asset = card();
     const tampered = { ...asset, manifest: { ...asset.manifest, name: "Counterfeit" } };
     assert.throws(() => admitPublicWildsCard(tampered, `https://cards.example/cards/${asset.id}`, bornAt), /verification/);
+  });
+
+  it("rejects a registration that was not durably published", async () => {
+    const asset = card();
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = async () => new Response(JSON.stringify({
+      ok: true,
+      published: false,
+      record: admitPublicWildsCard(asset, `https://cards.example/cards/${encodeURIComponent(asset.id)}`, bornAt)
+    }), { status: 200, headers: { "content-type": "application/json" } });
+
+    try {
+      await assert.rejects(() => registerPublicWildsCard(asset), /publication/);
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
+  it("forwards a restored Identity Seal for signed Receiz publication", async () => {
+    const asset = card();
+    const keyFile = { schema: "receiz.identity.key.v1", keyId: "key:test" };
+    const record = admitPublicWildsCard(asset, `https://cards.example/c/${asset.id.slice("wilds:".length)}`, bornAt);
+    const originalFetch = globalThis.fetch;
+    let submitted: unknown = null;
+    globalThis.fetch = async (_input, init) => {
+      submitted = JSON.parse(String(init?.body));
+      return new Response(JSON.stringify({ ok: true, published: true, record }), { status: 200, headers: { "content-type": "application/json" } });
+    };
+
+    try {
+      await registerPublicWildsCard(asset, { identityProof: { keyFile } });
+      assert.deepEqual(submitted, { asset, identityProof: { keyFile } });
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
   });
 });

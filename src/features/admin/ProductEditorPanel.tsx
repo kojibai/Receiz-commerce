@@ -1,11 +1,14 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Icons } from "@/components/icons";
 import { Button, ProductVisual, Panel, SectionHeader, StatusPill } from "@/components/ui";
 import { requestTwinAssist } from "@/lib/content/twin-client";
 import { hasReceizTwinCapability } from "@/lib/receiz/capabilities";
 import { ImageUploadField } from "@/features/admin/ImageUploadField";
+import { verifyPortableCardPng, verifyPortableVaultPng } from "@/features/play/card-export";
+import { registerPublicWildsCard } from "@/features/play/public-card-registry";
+import { wildsStoreProduct } from "@/features/play/wilds-store-product";
 import type { BrandConfig, Collection, Product, ProductType } from "@/types/domain";
 
 const productTypes: ProductType[] = ["physical", "digital", "access", "benefit", "experience", "receized_asset"];
@@ -87,6 +90,10 @@ export function ProductEditorPanel({
   const [activeProductId, setActiveProductId] = useState(products[0]?.id ?? "");
   const [twinLoading, setTwinLoading] = useState(false);
   const [twinError, setTwinError] = useState("");
+  const [wildsPrice, setWildsPrice] = useState("25.00");
+  const [wildsImportMessage, setWildsImportMessage] = useState("");
+  const [wildsImporting, setWildsImporting] = useState(false);
+  const wildsInput = useRef<HTMLInputElement>(null);
   const activeProduct = useMemo(
     () => products.find((product) => product.id === activeProductId) ?? products[0] ?? null,
     [activeProductId, products]
@@ -99,6 +106,40 @@ export function ProductEditorPanel({
   };
   const addCollection = () => {
     onAddCollection(newCollection());
+  };
+  const importWildsProducts = async (files: File[]) => {
+    setWildsImporting(true);
+    setWildsImportMessage("Verifying and publishing card links…");
+    let added = 0;
+    let rejected = 0;
+
+    for (const file of files) {
+      const bytes = new Uint8Array(await file.arrayBuffer());
+      const card = verifyPortableCardPng(bytes);
+      const vault = card.ok ? null : verifyPortableVaultPng(bytes);
+      const assets = card.ok && card.asset ? [card.asset] : vault?.ok ? vault.assets : [];
+      if (!assets.length) {
+        rejected += 1;
+        continue;
+      }
+      for (const asset of assets) {
+        if (products.some((product) => product.wildsAsset?.assetId === asset.id)) continue;
+        try {
+          await registerPublicWildsCard(asset);
+          const product = wildsStoreProduct(asset, wildsPrice);
+          onAddProduct(product);
+          setActiveProductId(product.id);
+          added += 1;
+        } catch {
+          rejected += 1;
+        }
+      }
+    }
+
+    setWildsImporting(false);
+    setWildsImportMessage(added
+      ? `${added} verified card${added === 1 ? "" : "s"} added as one-of-one shop products${rejected ? ` · ${rejected} rejected` : ""}. Set individual prices below, then publish changes.`
+      : "No products were added. Connect the owner’s Receiz ID and upload an untampered card or vault PNG.");
   };
   const toggleCollectionProduct = (collection: Collection, productId: string) => {
     const productIds = collection.productIds.includes(productId)
@@ -137,6 +178,31 @@ export function ProductEditorPanel({
         title="Product builder"
         action={<Button onClick={addProduct} variant="primary">Add product</Button>}
       />
+      <div className="wilds-shop-importer">
+        <div>
+          <strong>Sell earned Wilds cards</strong>
+          <span>Import a card or vault PNG. Receiz verifies it and creates one product per verified card.</span>
+        </div>
+        <label>
+          <span>Starting price per card</span>
+          <input aria-label="Starting Wilds card price" inputMode="decimal" min="0.01" onChange={(event) => setWildsPrice(event.target.value)} step="0.01" type="number" value={wildsPrice} />
+        </label>
+        <Button disabled={wildsImporting} onClick={() => wildsInput.current?.click()} variant="outline">
+          {wildsImporting ? "Publishing…" : "Import card or vault"}
+        </Button>
+        <input
+          ref={wildsInput}
+          accept="image/png,.png"
+          hidden
+          multiple
+          onChange={async (event) => {
+            await importWildsProducts(Array.from(event.currentTarget.files ?? []));
+            event.currentTarget.value = "";
+          }}
+          type="file"
+        />
+        {wildsImportMessage ? <p aria-live="polite">{wildsImportMessage}</p> : null}
+      </div>
       <div className="product-builder-grid">
         <div className="collection-builder-panel">
           <div className="collection-builder-head">

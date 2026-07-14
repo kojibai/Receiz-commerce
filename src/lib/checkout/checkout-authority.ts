@@ -49,6 +49,7 @@ export function authoritativeCheckoutQuote(state: CommerceState, cartLines: unkn
   const items = [...quantities].map(([productId, quantity]) => {
     const product = state.products.find((candidate) => candidate.id === productId && candidate.status === "active");
     if (!product) throw new Error("checkout_product_unavailable");
+    if (product.wildsAsset && quantity !== 1) throw new Error("wilds_card_quantity_invalid");
     const unitPriceCents = centsFromPriceLabel(product.priceLabel);
     const lineTotalCents = unitPriceCents * quantity;
 
@@ -77,6 +78,10 @@ export function authoritativeCheckoutQuote(state: CommerceState, cartLines: unkn
     itemCount: items.reduce((total, item) => total + item.quantity, 0),
     merchantReceizId,
     recipientUserId,
+    wildsAssets: [...quantities].flatMap(([productId]) => {
+      const product = state.products.find((candidate) => candidate.id === productId);
+      return product?.wildsAsset ? [{ productId, ...product.wildsAsset }] : [];
+    }),
     items: items.map(({ unitPriceCents: _unitPriceCents, lineTotalCents: _lineTotalCents, ...item }) => item)
   };
 }

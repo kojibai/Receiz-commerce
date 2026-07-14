@@ -225,6 +225,12 @@ export type Product = {
   imageProof?: MediaProofReference | null;
   description?: string;
   seo?: SeoConfig;
+  wildsAsset?: {
+    schema: "receiz.wilds_store_product.v1";
+    assetId: string;
+    proofDigest: string;
+    ownerReceizId: string;
+  };
 };
 
 export type CartLine = {

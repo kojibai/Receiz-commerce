@@ -26,6 +26,7 @@ export function WildsInventory({
   const [priceUsd, setPriceUsd] = useState("25.00");
   const [listing, setListing] = useState(false);
   const [listingMessage, setListingMessage] = useState("");
+  const [downloadMessage, setDownloadMessage] = useState("");
   const [importMessage, setImportMessage] = useState("");
   const [fusionOpen, setFusionOpen] = useState(false);
   const [fusionParentB, setFusionParentB] = useState("");
@@ -128,7 +129,19 @@ export function WildsInventory({
             <div className="wilds-inventory-actions">
               <button className="button button-primary" disabled={state.selectedAssetId === selected.id} onClick={() => onInput({ type: "select-asset", assetId: selected.id })} type="button">{state.selectedAssetId === selected.id ? "Active deck leader" : "Set as active deck leader"}</button>
               <Link className="button button-outline" href={`/cards/${encodeURIComponent(selected.id)}`}>Open standalone card page</Link>
-              <button className="button button-outline" onClick={() => void downloadPortableCard(selected)} type="button">Download portable PNG</button>
+              <button
+                className="button button-outline"
+                onClick={async () => {
+                  setDownloadMessage("Publishing verified card link…");
+                  try {
+                    await downloadPortableCard(selected);
+                    setDownloadMessage("Portable PNG downloaded. Its QR opens this verified card from another device.");
+                  } catch {
+                    setDownloadMessage("This card’s public QR could not be published. Restore or connect the owner’s Receiz ID, then try again.");
+                  }
+                }}
+                type="button"
+              >Download portable PNG</button>
               {onListAsset && selected.status !== "listed" ? (
                 <div className="wilds-listing-control">
                   <label>List price <span>$</span><input aria-label="Wilds card listing price" inputMode="decimal" min="0.01" onChange={(event) => setPriceUsd(event.target.value)} step="0.01" type="number" value={priceUsd} /></label>
@@ -152,6 +165,7 @@ export function WildsInventory({
                 </div>
               ) : selected.status === "listed" ? <span className="wilds-apex-label">Listed on Exchange</span> : null}
               {next ? <button className="button button-outline" disabled={!canEvolve} onClick={() => onInput({ type: "evolve", assetId: selected.id, evolvedAt: new Date().toISOString() })} type="button">{canEvolve ? `Evolve into ${next.name}` : `Needs L${next.evolution.level} · Bond ${next.evolution.bond}`}</button> : <span className="wilds-apex-label">Apex form reached</span>}
+              {downloadMessage ? <p aria-live="polite">{downloadMessage}</p> : null}
               {listingMessage ? <p aria-live="polite">{listingMessage}</p> : null}
             </div>
             <WildsGrowthPanel

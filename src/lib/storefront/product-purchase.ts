@@ -94,7 +94,11 @@ export function buildProductPurchaseModel(state: CommerceState, product: Product
       {
         label: "Store",
         value: storeHost
-      }
+      },
+      ...(product.wildsAsset ? [
+        { label: "Card proof", value: product.wildsAsset.proofDigest.slice(0, 22) },
+        { label: "Ownership", value: "Transfers on settled purchase" }
+      ] : [])
     ]
   };
 }

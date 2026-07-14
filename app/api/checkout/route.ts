@@ -223,6 +223,80 @@ async function publishSettledExchangeTrade(input: {
   };
 }
 
+async function publishSettledWildsSales(input: {
+  accessToken: string;
+  actorReceizId: string;
+  merchantReceizId: string;
+  proofStore: Awaited<ReturnType<typeof getServerProofStateStore>>;
+  sales: Array<{
+    productId: string;
+    schema: "receiz.wilds_store_product.v1";
+    assetId: string;
+    proofDigest: string;
+    ownerReceizId: string;
+  }>;
+  settlementLedgerEventId: string;
+  state: CommerceState;
+  tenantHost: string;
+}) {
+  const receiz = createReceizCommerceAdapter({ accessToken: input.accessToken });
+  const transferredAt = new Date().toISOString();
+  const transfers = [];
+  for (const sale of input.sales) {
+    const append = await receiz.connectRecord({
+      schema: "receiz.wilds_ownership_append.v1",
+      action: "ownership.transferred",
+      assetId: sale.assetId,
+      proofDigest: sale.proofDigest,
+      previousOwnerReceizId: sale.ownerReceizId,
+      ownerReceizId: input.actorReceizId,
+      merchantReceizId: input.merchantReceizId,
+      settlementLedgerEventId: input.settlementLedgerEventId,
+      transferredAt
+    });
+    transfers.push({ ...sale, ownerReceizId: input.actorReceizId, transferredAt, append });
+  }
+
+  const soldProductIds = new Set(input.sales.map((sale) => sale.productId));
+  const soldAssetIds = new Set(input.sales.map((sale) => sale.assetId));
+  const transferredAssets = input.sales.map((sale) => ({
+    id: sale.assetId,
+    name: input.state.products.find((product) => product.id === sale.productId)?.name ?? "Wilds Card",
+    type: "claim" as const,
+    ownerId: input.actorReceizId,
+    status: "owned" as const,
+    priceLabel: input.state.products.find((product) => product.id === sale.productId)?.priceLabel ?? "$0.00",
+    proofSource: sale.proofDigest
+  }));
+  const state: CommerceState = {
+    ...input.state,
+    products: input.state.products.map((product) => soldProductIds.has(product.id)
+      ? { ...product, status: "draft", inventoryLabel: "Sold" }
+      : product),
+    assets: [...input.state.assets.filter((asset) => !soldAssetIds.has(asset.id)), ...transferredAssets]
+  };
+  const record = buildStoreStateRecord(state, {
+    actorReceizId: input.actorReceizId,
+    reason: "sync",
+    tenantHost: input.tenantHost
+  });
+  const publication = await publishAndAdmitReceizStoreState({
+    accessToken: input.accessToken,
+    proofStore: input.proofStore,
+    record
+  });
+
+  return {
+    transfers,
+    state,
+    storeStateSync: {
+      ok: receizStoreStateWriteSucceeded(publication),
+      synced: receizStoreStateSyncCompleted(publication),
+      result: summarizeReceizStoreStatePublicationResult(publication)
+    }
+  };
+}
+
 export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => ({}));
   const requestSession = receizRequestSession(request);
@@ -396,6 +470,18 @@ export async function POST(request: NextRequest) {
           tenantHost
         })
       : null;
+    const wildsOwnership = !exchangeTrade && settlement.paid && quote?.wildsAssets.length
+      ? await publishSettledWildsSales({
+          accessToken,
+          actorReceizId,
+          merchantReceizId,
+          proofStore: published.proofStore,
+          sales: quote.wildsAssets,
+          settlementLedgerEventId,
+          state: published.state,
+          tenantHost
+        })
+      : null;
 
     return NextResponse.json({
       ok: true,
@@ -408,6 +494,7 @@ export async function POST(request: NextRequest) {
       session,
       commerceEvent: commerceProjection?.event,
       exchange,
+      wildsOwnership,
       proofMemory: commerceProjection?.proofMemory
     });
   }

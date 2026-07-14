@@ -66,6 +66,23 @@ describe("authoritative checkout quote", () => {
     }
   });
 
+  it("carries one-of-one Wilds ownership into the authoritative quote", () => {
+    const state = baseState();
+    state.products[0]!.wildsAsset = {
+      schema: "receiz.wilds_store_product.v1",
+      assetId: "wilds:0123456789abcdef01234567",
+      proofDigest: `sha256:${"a".repeat(64)}`,
+      ownerReceizId: "merchant.receiz.id"
+    };
+
+    const quote = authoritativeCheckoutQuote(state, [{ productId: state.products[0]!.id, quantity: 1 }]);
+    assert.deepEqual(quote.wildsAssets, [{ productId: state.products[0]!.id, ...state.products[0]!.wildsAsset }]);
+    assert.throws(
+      () => authoritativeCheckoutQuote(state, [{ productId: state.products[0]!.id, quantity: 2 }]),
+      /wilds_card_quantity_invalid/
+    );
+  });
+
   it("binds idempotency to the full economic operation", () => {
     const base = {
       actorReceizId: "buyer.receiz.id",

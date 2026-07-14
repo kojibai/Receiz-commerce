@@ -5,6 +5,8 @@ import { renderHeartboundSvg } from "./heartbound-renderer";
 import { currentLivingGenome } from "./living-card-proof";
 import { isLivingCardAsset } from "./living-card-types";
 import { registerPublicWildsCard } from "./public-card-registry";
+import { safeGetLocalStorage } from "../../lib/storage/browser-storage";
+import { BROWSER_RECEIZ_ID_SESSION_KEY, parseBrowserReceizIdSession } from "../../lib/storefront/tenant-customer-session";
 import {
   canonicalPortableCardJson,
   sha256PortableBasis,
@@ -316,7 +318,8 @@ export async function downloadPortableCard(asset: PortableCardAsset) {
 
 export async function portableCardPngBlob(asset: PortableCardAsset) {
   if (typeof document === "undefined") throw new Error("wilds_card_png_browser_required");
-  await registerPublicWildsCard(asset);
+  const browserIdentity = parseBrowserReceizIdSession(safeGetLocalStorage(window.localStorage, BROWSER_RECEIZ_ID_SESSION_KEY));
+  await registerPublicWildsCard(asset, browserIdentity?.keyFile ? { identityProof: { keyFile: browserIdentity.keyFile } } : {});
   const rendered = await svgPngBlob(renderWildsCardSvg(asset, { origin: window.location.origin }));
   const portable = embedPortableCardInPng(new Uint8Array(await rendered.arrayBuffer()), asset);
   return new Blob([portable.slice().buffer], { type: "image/png" });

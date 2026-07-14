@@ -3405,6 +3405,9 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
               settlement: "merchant_receiz_reserve";
               merchantReceizId: string;
             };
+            wildsOwnership?: {
+              transfers: Array<{ assetId: string; productId: string; ownerReceizId: string }>;
+            } | null;
           }>("/api/checkout", {
             cartLines: checkoutSnapshot.cart.lines,
             customerId: checkoutSnapshot.auth.customer.id,
@@ -3467,9 +3470,12 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
           setState((current) => {
             const base = identity.apply(current);
             const checkoutSessionId = result.session?.checkoutSessionId ?? `receiz-${Date.now()}`;
+            const wildsTransfers = result.wildsOwnership?.transfers ?? [];
+            const soldProductIds = new Set(wildsTransfers.map((transfer) => transfer.productId));
             const customer = {
               ...base.auth.customer,
-              receizHandle: base.auth.receizId.handle
+              receizHandle: base.auth.receizId.handle,
+              assetIds: Array.from(new Set([...base.auth.customer.assetIds, ...wildsTransfers.map((transfer) => transfer.assetId)]))
             };
             const shipping = checkoutCustomerShipping(base, customer);
             const completion = checkoutCompletionState({
@@ -3499,10 +3505,12 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
             return {
               ...base,
               cart: { lines: [] },
+              products: base.products.map((item) => soldProductIds.has(item.id) ? { ...item, status: "draft", inventoryLabel: "Sold" } : item),
               orders: [order, ...base.orders],
               customers: upsertCheckoutCustomer(base.customers, customer, order.id),
               proofEvents: [
                 makeEvent("RECEIZ_ID_CONNECTED", identity.detail),
+                ...(wildsTransfers.length ? [makeEvent("ASSET_RECEIZED", `${wildsTransfers.length} Wilds card ownership transfer${wildsTransfers.length === 1 ? "" : "s"} appended`)] : []),
                 makeEvent("ORDER_VERIFIED", completion.fulfillmentMessage),
                 ...base.proofEvents
               ]

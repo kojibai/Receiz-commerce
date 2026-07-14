@@ -8,6 +8,11 @@ export type PublicWildsCardRecord = {
   asset: PortableCardAsset;
 };
 
+export type PublicWildsCardIdentityProof = {
+  keyFile: unknown;
+  passphrase?: string;
+};
+
 const registryKey = Symbol.for("receiz.wilds.public-card-registry.v1");
 
 function registry() {
@@ -26,7 +31,9 @@ function currentRevision(asset: PortableCardAsset) {
 export function admitPublicWildsCard(asset: PortableCardAsset, sourceUrl: string, registeredAt = new Date().toISOString()) {
   if (!verifyAnyWildsCard(asset).ok) throw new Error("wilds_public_card_verification_failed");
   const url = new URL(sourceUrl);
-  if (!/^https?:$/.test(url.protocol) || !url.pathname.endsWith(`/cards/${encodeURIComponent(asset.id)}`)) throw new Error("wilds_public_card_url_invalid");
+  const compactPath = `/c/${asset.id.slice("wilds:".length)}`;
+  const legacyPath = `/cards/${encodeURIComponent(asset.id)}`;
+  if (!/^https?:$/.test(url.protocol) || (url.pathname !== compactPath && url.pathname !== legacyPath)) throw new Error("wilds_public_card_url_invalid");
   if (!Number.isFinite(Date.parse(registeredAt))) throw new Error("wilds_public_card_time_invalid");
 
   const record: PublicWildsCardRecord = { schema: "receiz.wilds_public_card.v1", assetId: asset.id, sourceUrl: url.toString(), registeredAt, asset };
@@ -56,12 +63,14 @@ export function parsePublicWildsCardRecord(value: unknown): PublicWildsCardRecor
   return null;
 }
 
-export async function registerPublicWildsCard(asset: PortableCardAsset) {
+export async function registerPublicWildsCard(asset: PortableCardAsset, options: { identityProof?: PublicWildsCardIdentityProof } = {}) {
   const response = await fetch(`/api/cards/${encodeURIComponent(asset.id)}`, {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({ asset })
+    body: JSON.stringify({ asset, ...(options.identityProof ? { identityProof: options.identityProof } : {}) })
   });
   if (!response.ok) throw new Error("wilds_public_card_registration_failed");
-  return await response.json() as { ok: true; record: PublicWildsCardRecord };
+  const result = await response.json() as { ok?: boolean; published?: boolean; record?: PublicWildsCardRecord };
+  if (result.ok !== true || result.published !== true || !result.record) throw new Error("wilds_public_card_publication_failed");
+  return result as { ok: true; published: true; record: PublicWildsCardRecord };
 }

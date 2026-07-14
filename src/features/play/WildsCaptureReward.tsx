@@ -13,18 +13,20 @@ export function WildsCaptureReward({ asset, onClose }: { asset: PortableCardAsse
   return (
     <div className="wilds-capture-backdrop" role="presentation">
       <section aria-describedby="wilds-capture-status" aria-labelledby="wilds-capture-title" aria-modal="true" className="wilds-capture-dialog" role="dialog">
-        <div className="wilds-capture-stage" aria-hidden="true">
-          <div className="wilds-capture-rays" />
-          <div className="wilds-capture-capsule"><span /><i /></div>
-          <div className="wilds-capture-proof-ring" />
+        <div className="wilds-capture-showcase">
+          <div className="wilds-capture-stage" aria-hidden="true">
+            <div className="wilds-capture-rays" />
+            <div className="wilds-capture-capsule"><span /><i /></div>
+            <div className="wilds-capture-proof-ring" />
+          </div>
+          <div className="wilds-capture-copy" aria-live="assertive">
+            <span>Creature collected · proof sealed</span>
+            <h2 id="wilds-capture-title" ref={titleRef} tabIndex={-1}>{asset.manifest.name} joined your Wilds</h2>
+            <p id="wilds-capture-status">Portable, verified, and ready in your inventory.</p>
+          </div>
+          <button className="button button-primary" onClick={onClose} type="button">Open inventory</button>
         </div>
-        <div className="wilds-capture-copy" aria-live="assertive">
-          <span>Creature collected · proof sealed</span>
-          <h2 id="wilds-capture-title" ref={titleRef} tabIndex={-1}>{asset.manifest.name} joined your Wilds</h2>
-          <p id="wilds-capture-status">This portable card is sealed for offline use and ready to download from inventory.</p>
-        </div>
-        <WildsCard asset={asset} compact />
-        <button className="button button-primary" onClick={onClose} type="button">Open inventory</button>
+        <WildsCard asset={asset} />
       </section>
     </div>
   );

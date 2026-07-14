@@ -84,6 +84,8 @@ describe("Receiz Wilds rendering contract", () => {
     assert.match(reward, /role="dialog"/);
     assert.match(reward, /aria-live="assertive"/);
     assert.match(reward, /wilds-capture-capsule/);
+    assert.match(reward, /wilds-capture-showcase/);
+    assert.doesNotMatch(reward, /<WildsCard asset=\{asset\} compact/);
     assert.match(inventory, /type="search"/);
     assert.match(inventory, /INVENTORY_PAGE_SIZE = 36/);
     assert.match(inventory, /downloadPortableCard/);
@@ -107,6 +109,7 @@ describe("Receiz Wilds rendering contract", () => {
     assert.doesNotMatch(cardExport, /function creatureMark/);
     assert.match(css, /\.heartbound-card-art\s*>\s*svg\s*\{[^}]*width:\s*100%;[^}]*height:\s*100%;[^}]*max-width:\s*100%;/s);
     assert.match(css, /\.heartbound-card-art\s*\{[^}]*aspect-ratio:\s*16\s*\/\s*10;/s);
+    assert.match(css, /\.wilds-capture-showcase\s*\{[^}]*isolation:\s*isolate/s);
     assert.match(css, /@media \(prefers-reduced-motion: reduce\)[\s\S]*\.wilds-capture-capsule/);
   });
 
@@ -129,6 +132,8 @@ describe("Receiz Wilds rendering contract", () => {
     const page = await readFile("src/features/play/WildsCardPage.tsx", "utf8");
     const scene = await readFile("src/features/play/WildsCardScene.tsx", "utf8");
     const cardExport = await readFile("src/features/play/card-export.ts", "utf8");
+    const cardRoute = await readFile("app/api/cards/[assetId]/route.ts", "utf8");
+    const inventory = await readFile("src/features/play/WildsInventory.tsx", "utf8");
     const css = await readFile("app/globals.css", "utf8");
     const campaign = await readFile("src/features/play/PlayCampaign.tsx", "utf8");
 
@@ -145,6 +150,13 @@ describe("Receiz Wilds rendering contract", () => {
     assert.doesNotMatch(scene, /wilds-card-flip-control/);
     assert.doesNotMatch(css, /\.wilds-card-flip-control/);
     assert.match(cardExport, /registerPublicWildsCard/);
+    assert.match(cardExport, /BROWSER_RECEIZ_ID_SESSION_KEY/);
+    assert.match(cardRoute, /publishPublicStoreWithIdentityProof/);
+    assert.match(cardRoute, /compactCardPath\(assetId\)/);
+    assert.match(cardRoute, /status:\s*503/);
+    assert.match(inventory, /Publishing verified card link/);
+    assert.match(inventory, /Portable PNG downloaded/);
+    assert.match(inventory, /could not be published/);
     assert.match(cardExport, /premiumQrSvg\(cardPath/);
     assert.match(cardExport, /errorCorrectionLevel:\s*"L"/);
     assert.match(css, /backface-visibility:\s*hidden/);
@@ -235,5 +247,15 @@ describe("Receiz Wilds rendering contract", () => {
     assert.doesNotMatch(source, /<a\s+[^>]*href=\{?[`"]\/?/);
     assert.match(source, /<Link className="wilds-card-home" href="\/#play">/);
     assert.match(source, /<Link href=\{`\/?\?card=/);
+  });
+
+  it("imports verified card and vault PNGs into one-of-one shop products", async () => {
+    const products = await readFile("src/features/admin/ProductEditorPanel.tsx", "utf8");
+
+    assert.match(products, /verifyPortableCardPng/);
+    assert.match(products, /verifyPortableVaultPng/);
+    assert.match(products, /wildsStoreProduct/);
+    assert.match(products, /Import card or vault/);
+    assert.match(products, /one product per verified card/i);
   });
 });
