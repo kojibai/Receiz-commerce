@@ -331,14 +331,14 @@ export function applyWildsInput(state: PlayState, input: WildsInput): PlayState 
       z: clamp(input.z, worldBounds.min, worldBounds.max)
     };
     const result = searchHiddenHotspots(nearbyHiddenHotspots(point), point, state.capturedHotspotIds);
-    const encounter = encounterFromSearch(result, point, input.searchedAt, input.ownerReceizId.trim());
+    const encounter = encounterFromSearch(result, point, input.searchedAt, input.ownerReceizId.trim(), state.encounter);
     const lastEvent = result.kind === "hit"
       ? `Something is moving beneath the ${result.hotspot.cover}. Keep watching.`
       : result.kind === "near_miss"
-        ? "A wild signal flickers nearby. Follow the search clue."
+        ? `Signal ${encounter.proximity}${encounter.trend ? ` · ${encounter.trend}` : ""}. Follow the search clue.`
         : result.kind === "captured"
           ? "This hotspot is quiet now. Its sealed card is already in your inventory."
-          : "The search pulse found no creature at that exact spot.";
+          : "Signal cold. Try another point and keep moving.";
     return { ...state, activeAction: "explore", encounter, lastEvent, lastSearchPoint: point };
   }
 

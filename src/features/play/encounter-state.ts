@@ -1,6 +1,8 @@
 import type { HotspotCover, HotspotSearchResult } from "./hidden-hotspots";
 
 export type EncounterPhase = "idle" | "searching" | "hint" | "emerging" | "capsule" | "sealed" | "revealed";
+export type SearchProximity = "cold" | "warm" | "hot";
+export type SearchTrend = "closer" | "farther" | "steady" | null;
 
 export type IdleEncounterState = { phase: "idle" };
 
@@ -14,6 +16,9 @@ export type ActiveEncounterState = {
   formId?: string;
   cover?: HotspotCover;
   direction?: { x: number; z: number };
+  distance?: number;
+  proximity: SearchProximity;
+  trend: SearchTrend;
   assetId?: string;
 };
 
@@ -25,15 +30,27 @@ export function encounterFromSearch(
   result: HotspotSearchResult,
   searchPoint: { x: number; z: number },
   searchedAt: string,
-  ownerReceizId: string
-): EncounterState {
-  const shared = { searchedAt, searchPoint: { ...searchPoint }, ownerReceizId };
+  ownerReceizId: string,
+  previous?: EncounterState
+): ActiveEncounterState {
+  const distance = result.kind === "empty" ? undefined : result.distance;
+  const proximity: SearchProximity = distance === undefined ? "cold" : distance <= 2.25 ? "hot" : "warm";
+  const hotspotId = result.kind === "empty" ? undefined : result.hotspot.id;
+  const previousActive = previous?.phase === "idle" ? undefined : previous;
+  let trend: SearchTrend = null;
+  if (previousActive && previousActive.hotspotId === hotspotId && previousActive.distance !== undefined && distance !== undefined) {
+    trend = distance < previousActive.distance - 0.15
+      ? "closer"
+      : distance > previousActive.distance + 0.15 ? "farther" : "steady";
+  }
+  const shared = { searchedAt, searchPoint: { ...searchPoint }, ownerReceizId, proximity, trend };
   if (result.kind === "empty") return { phase: "searching", ...shared };
   const hotspot = {
     hotspotId: result.hotspot.id,
     familyId: result.hotspot.familyId,
     formId: result.hotspot.formId,
-    cover: result.hotspot.cover
+    cover: result.hotspot.cover,
+    distance: result.distance
   };
   if (result.kind === "hit") return { phase: "emerging", ...shared, ...hotspot };
   if (result.kind === "near_miss") return { phase: "hint", ...shared, ...hotspot, direction: { ...result.direction } };

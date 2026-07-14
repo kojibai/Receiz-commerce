@@ -1423,7 +1423,7 @@ a {
   left: 14px;
   z-index: 3;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 10px;
 }
@@ -1446,7 +1446,16 @@ a {
   gap: 9px;
   min-width: 0;
   padding: 7px 10px 7px 7px;
-  border-radius: 999px;
+  overflow: hidden;
+  border-radius: 16px;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.2), inset 0 1px rgba(255, 255, 255, 0.08);
+}
+
+.wilds-player-chip > div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .wilds-avatar {
@@ -1467,6 +1476,8 @@ a {
   min-width: 0;
   line-height: 1.05;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .wilds-player-chip strong {
@@ -1474,9 +1485,28 @@ a {
 }
 
 .wilds-player-chip small {
-  margin-top: 3px;
+  margin-top: 0;
   color: rgba(255, 255, 255, 0.68);
   font-size: 10px;
+}
+
+.wilds-coordinate-badges {
+  display: flex;
+  gap: 4px;
+  min-width: 0;
+}
+
+.wilds-coordinate-badges b {
+  max-width: 78px;
+  padding: 2px 5px;
+  overflow: hidden;
+  color: rgba(255, 255, 255, 0.82);
+  background: rgba(255, 255, 255, 0.09);
+  border-radius: 999px;
+  font-size: 8px;
+  line-height: 1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .wilds-resource-strip {
@@ -1487,7 +1517,8 @@ a {
   width: fit-content;
   margin-left: auto;
   padding: 8px;
-  border-radius: 999px;
+  border-radius: 16px;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.2), inset 0 1px rgba(255, 255, 255, 0.08);
 }
 
 .wilds-resource-strip span {
@@ -2063,6 +2094,22 @@ a {
   text-align: center;
   transform: translateX(-50%);
   pointer-events: none;
+}
+
+.wilds-search-reticle.cold {
+  border-color: rgba(143, 215, 255, 0.64);
+  background: rgba(222, 244, 255, 0.9);
+}
+
+.wilds-search-reticle.warm {
+  border-color: rgba(247, 201, 72, 0.72);
+  background: rgba(255, 244, 179, 0.94);
+}
+
+.wilds-search-reticle.hot {
+  border-color: rgba(255, 112, 93, 0.8);
+  background: rgba(255, 220, 196, 0.95);
+  box-shadow: 0 0 0 5px rgba(255, 112, 93, 0.12), 0 12px 30px rgba(23, 19, 17, 0.22);
 }
 
 .wilds-canvas-fallback {
@@ -5745,17 +5792,18 @@ a {
 
   .mobile-header {
     display: grid;
-    grid-template-columns: 64px 1fr auto auto;
-    gap: 8px;
+    grid-template-columns: 46px minmax(0, 1fr) auto;
+    gap: 7px;
     align-items: center;
-    padding: 10px 12px;
+    min-height: 50px;
+    padding: 5px 10px;
     background: rgba(255, 255, 255, 0.94);
   }
 
   .mobile-header .brand-mark {
-    width: 56px;
-    height: 56px;
-    padding: 7px;
+    width: 42px;
+    height: 42px;
+    padding: 5px;
   }
 
   .mobile-header .brand-mark span {
@@ -5781,7 +5829,7 @@ a {
   .mobile-header strong {
     display: block;
     min-width: 0;
-    font-size: clamp(16px, 5.7vw, 21px);
+    font-size: clamp(14px, 4.8vw, 18px);
     line-height: 1.02;
     overflow-wrap: anywhere;
   }
@@ -5793,7 +5841,7 @@ a {
     gap: 5px;
     color: var(--muted);
     min-width: 0;
-    font-size: clamp(9px, 2.9vw, 11.5px);
+    font-size: clamp(8.5px, 2.6vw, 10.5px);
     line-height: 1.12;
     overflow-wrap: anywhere;
   }
@@ -5809,8 +5857,8 @@ a {
   .mobile-stage {
     position: relative;
     display: block;
-    height: calc(100dvh - 78px - 90px);
-    padding: 0 12px 8px;
+    height: calc(100dvh - 58px);
+    padding: 0 12px;
     overflow: hidden;
   }
 
@@ -5822,7 +5870,8 @@ a {
     gap: 10px;
     min-height: 0;
     overflow-y: auto;
-    padding-bottom: 10px;
+    padding-bottom: max(94px, calc(80px + env(safe-area-inset-bottom)));
+    scroll-padding-bottom: max(94px, calc(80px + env(safe-area-inset-bottom)));
     opacity: 0;
     pointer-events: none;
     scrollbar-width: none;
@@ -6854,8 +6903,10 @@ a {
 
   .mobile-play-wrap .wilds-player-chip {
     gap: 6px;
-    max-width: 46%;
-    padding: 5px 8px 5px 5px;
+    width: min(52%, 176px);
+    max-width: none;
+    padding: 4px 7px 4px 4px;
+    border-radius: 13px;
   }
 
   .mobile-play-wrap .wilds-avatar {
@@ -6869,20 +6920,31 @@ a {
   }
 
   .mobile-play-wrap .wilds-player-chip small {
-    font-size: 9px;
+    font-size: 8px;
+  }
+
+  .mobile-play-wrap .wilds-coordinate-badges b {
+    max-width: 52px;
+    padding: 2px 4px;
+    font-size: 7.5px;
   }
 
   .mobile-play-wrap .wilds-resource-strip {
-    justify-content: end;
-    flex-wrap: wrap;
-    max-width: 168px;
-    padding: 5px;
-    border-radius: 14px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 3px;
+    width: min(46%, 154px);
+    max-width: none;
+    padding: 4px;
+    border-radius: 13px;
   }
 
   .mobile-play-wrap .wilds-resource-strip span {
-    padding: 4px 6px;
-    font-size: clamp(8.5px, 2.6vw, 10px);
+    padding: 3px 4px;
+    overflow: hidden;
+    font-size: clamp(7.5px, 2.25vw, 9px);
+    text-align: center;
+    text-overflow: ellipsis;
   }
 
   .mobile-play-wrap .wilds-combo-meter {
@@ -7110,7 +7172,7 @@ a {
   .bottom-nav {
     position: fixed;
     right: 12px;
-    bottom: 12px;
+    bottom: max(8px, env(safe-area-inset-bottom));
     left: 12px;
     z-index: 50;
     display: grid;
@@ -7380,15 +7442,16 @@ a {
   }
 
   .mobile-header {
-    grid-template-columns: 50px minmax(0, 1fr) 36px 36px;
-    gap: 7px;
-    padding: 7px 10px;
+    grid-template-columns: 40px minmax(0, 1fr) 36px;
+    gap: 6px;
+    min-height: 46px;
+    padding: 4px 8px;
   }
 
   .mobile-header .brand-mark {
-    width: 46px;
-    height: 46px;
-    padding: 6px;
+    width: 36px;
+    height: 36px;
+    padding: 4px;
   }
 
   .mobile-header .brand-mark span {
@@ -7412,8 +7475,8 @@ a {
   }
 
   .mobile-stage {
-    height: calc(100dvh - 62px - 82px);
-    padding: 0 10px 8px;
+    height: calc(100dvh - 50px);
+    padding: 0 10px;
   }
 
   .mobile-pane {
@@ -7587,11 +7650,11 @@ a {
   }
 
   .mobile-play-wrap .wilds-player-chip {
-    max-width: 48%;
+    width: min(52%, 168px);
   }
 
   .mobile-play-wrap .wilds-resource-strip {
-    max-width: 150px;
+    width: min(45%, 146px);
   }
 
   .mobile-play-wrap .arena-node {
@@ -7640,7 +7703,7 @@ a {
 
   .bottom-nav {
     right: 10px;
-    bottom: 8px;
+    bottom: max(8px, env(safe-area-inset-bottom));
     left: 10px;
     padding: 8px;
     border-radius: 16px;

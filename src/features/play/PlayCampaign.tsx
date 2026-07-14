@@ -121,7 +121,6 @@ export function PlayCampaign({
   const [state, setState] = useState(initialPlayState);
   const [saveRestored, setSaveRestored] = useState(false);
   const [rewardAsset, setRewardAsset] = useState<PortableCardAsset | null>(null);
-  const [searchArmed, setSearchArmed] = useState(false);
   const activeMission = missionCards[state.completedMissionIds.length % missionCards.length];
   const activeCard = selectedCard(state);
   const deckCards = discoveredCards(state);
@@ -162,11 +161,6 @@ export function PlayCampaign({
       const target = event.target as HTMLElement | null;
       if (target?.matches("input, textarea, select, button, [contenteditable='true']")) return;
       const key = event.key.toLowerCase();
-      if (key === " ") {
-        event.preventDefault();
-        setSearchArmed((current) => !current);
-        return;
-      }
       const input: WildsInput | null =
         key === "arrowup" || key === "w" ? { type: "move", direction: "north" }
           : key === "arrowdown" || key === "s" ? { type: "move", direction: "south" }
@@ -209,6 +203,10 @@ export function PlayCampaign({
       return next;
     });
   };
+  const discoveryActive = state.encounter.phase === "idle" || state.encounter.phase === "searching" || state.encounter.phase === "hint";
+  const proximityLabel = state.encounter.phase === "idle"
+    ? "Tap terrain to scan"
+    : `${state.encounter.proximity}${state.encounter.trend ? ` · ${state.encounter.trend}` : ""}`;
 
   return (
     <section className="panel play-panel wilds-play-panel" id="play">
@@ -231,10 +229,9 @@ export function PlayCampaign({
           <div className="wilds-stage" aria-label="Receiz Wilds playable 3D world">
             <WildsWorldCanvas
               state={state}
-              searchEnabled={searchArmed}
+              searchEnabled={discoveryActive}
               onSearchPoint={(point) => {
                 dispatch({ type: "search-point", ...point, searchedAt: new Date().toISOString(), ownerReceizId });
-                setSearchArmed(false);
               }}
             />
 
@@ -243,7 +240,10 @@ export function PlayCampaign({
                 <span className="wilds-avatar">RZ</span>
                 <div>
                   <strong>Wilds scout</strong>
-                  <small>{state.worldRank} · {activeCard.name} L{activeProgress.level} · X{Math.round(state.player.x)} Z{Math.round(state.player.z)}</small>
+                  <small>{state.worldRank} · {activeCard.name} L{activeProgress.level}</small>
+                  <span className="wilds-coordinate-badges" aria-label={`World coordinates X ${Math.round(state.player.x)}, Z ${Math.round(state.player.z)}`}>
+                    <b>X {Math.round(state.player.x)}</b><b>Z {Math.round(state.player.z)}</b>
+                  </span>
                 </div>
               </div>
               <div className="wilds-resource-strip">
@@ -262,12 +262,12 @@ export function PlayCampaign({
             <div className="runner-card runner-primary">
               <span className="runner-core" />
               <div>
-                <strong>{searchArmed ? "Choose a hiding place" : state.encounter.phase === "hint" ? "A signal is close" : "Search the Wilds"}</strong>
-                <small>{searchArmed ? "Tap the terrain to send a search pulse." : state.encounter.phase === "hint" ? "Search around the glowing clue." : activeCard.role}</small>
+                <strong>{state.encounter.phase === "hint" ? `Signal ${proximityLabel}` : "Discovery on"}</strong>
+                <small>{state.encounter.phase === "hint" ? "Keep tapping around the clue." : "Tap terrain repeatedly to scan."}</small>
               </div>
             </div>
 
-            {searchArmed ? <div className="wilds-search-reticle" aria-live="polite">Tap anywhere in the world to search that exact spot</div> : null}
+            {discoveryActive ? <div className={`wilds-search-reticle ${state.encounter.phase === "idle" ? "" : state.encounter.proximity}`} aria-live="polite">{proximityLabel}</div> : null}
 
             <div className="wilds-event-toast" aria-live="polite">
               {state.lastEvent}
@@ -277,11 +277,10 @@ export function PlayCampaign({
           <div className="wilds-screen-controls" aria-label="World controls">
             <div className="wilds-screen-actions" aria-label="Explore actions">
               <button
-                aria-pressed={searchArmed}
-                className={cx("wilds-action", searchArmed && "active ready")}
-                onClick={() => setSearchArmed((current) => !current)}
-                aria-label={searchArmed ? "Cancel terrain search" : "Search for a hidden creature"}
-                title={searchArmed ? "Cancel search" : "Search terrain"}
+                aria-pressed="true"
+                className="wilds-action active ready"
+                aria-label="Discovery on. Tap terrain to search for a hidden creature"
+                title="Discovery is always on"
                 type="button"
               >
                 <Icons.game size={20} />

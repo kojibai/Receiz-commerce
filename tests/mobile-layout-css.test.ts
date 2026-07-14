@@ -26,12 +26,19 @@ describe("mobile storefront layout CSS", () => {
   });
 
   it("keeps the mobile account proof card compact above the cart", () => {
-    assert.match(css, /@media \(max-width:\s*760px\)\s*\{[\s\S]*\.mobile-header\s*\{[\s\S]*grid-template-columns:\s*64px 1fr auto auto;[\s\S]*padding:\s*10px 12px;[\s\S]*\}/);
+    assert.match(css, /@media \(max-width:\s*760px\)\s*\{[\s\S]*\.mobile-header\s*\{[\s\S]*grid-template-columns:\s*46px minmax\(0,\s*1fr\) auto;[\s\S]*padding:\s*5px 10px;[\s\S]*\}/);
     assert.match(css, /@media \(max-width:\s*760px\)\s*\{[\s\S]*\.mobile-pane-heading\s*\{[\s\S]*min-height:\s*26px;[\s\S]*\}/);
     assert.match(css, /@media \(max-width:\s*760px\)\s*\{[\s\S]*\.mobile-account-card\s*\{[\s\S]*gap:\s*5px;[\s\S]*padding:\s*6px;[\s\S]*\}/);
     assert.match(css, /@media \(max-width:\s*760px\)\s*\{[\s\S]*\.mobile-account-card \.large-avatar\s*\{[\s\S]*width:\s*36px;[\s\S]*height:\s*36px;[\s\S]*\}/);
     assert.match(css, /@media \(max-width:\s*760px\)\s*\{[\s\S]*\.mobile-account-scope div\s*\{[\s\S]*min-height:\s*36px;[\s\S]*padding:\s*5px;[\s\S]*\}/);
     assert.match(css, /@media \(max-width:\s*760px\)\s*\{[\s\S]*\.mobile-pane \.cart-summary-empty\s*\{[\s\S]*grid-template-columns:\s*24px minmax\(0,\s*1fr\);[\s\S]*padding:\s*8px;[\s\S]*\}/);
+  });
+
+  it("lets content flow behind the floating toolbar with clearance only at scroll end", () => {
+    assert.match(css, /\.mobile-stage\s*\{[^}]*height:\s*calc\(100dvh - 58px\);/s);
+    assert.doesNotMatch(css, /height:\s*calc\(100dvh - 78px - 90px\)/);
+    assert.match(css, /\.mobile-pane\s*\{[^}]*padding-bottom:\s*max\(94px,\s*calc\(80px \+ env\(safe-area-inset-bottom\)\)\);/s);
+    assert.match(css, /\.bottom-nav\s*\{[^}]*bottom:\s*max\(8px,\s*env\(safe-area-inset-bottom\)\);/s);
   });
 
   it("uses customer ownership language on the mobile assets page", () => {

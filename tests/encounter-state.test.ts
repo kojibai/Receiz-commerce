@@ -31,6 +31,40 @@ describe("Wilds encounter presentation state", () => {
     assert.equal(encounter.phase, "hint");
     assert.deepEqual(encounter.direction, { x: 1, z: 0 });
     assert.equal(encounter.hotspotId, hotspot.id);
+    assert.equal(encounter.proximity, "warm");
+    assert.equal(encounter.distance, 3);
+    assert.equal(encounter.trend, null);
+  });
+
+  it("reports whether repeated searches are getting closer", () => {
+    const first = encounterFromSearch(
+      { kind: "near_miss", hotspot, distance: 3.8, direction: { x: 1, z: 0 } },
+      { x: hotspot.position.x - 3.8, z: hotspot.position.z },
+      "2026-07-13T15:00:00.000Z",
+      "player.receiz.id"
+    );
+    const closer = encounterFromSearch(
+      { kind: "near_miss", hotspot, distance: 1.8, direction: { x: 1, z: 0 } },
+      { x: hotspot.position.x - 1.8, z: hotspot.position.z },
+      "2026-07-13T15:00:01.000Z",
+      "player.receiz.id",
+      first
+    );
+
+    assert.equal(closer.proximity, "hot");
+    assert.equal(closer.trend, "closer");
+  });
+
+  it("uses cold feedback for an empty exact-point search", () => {
+    const encounter = encounterFromSearch(
+      { kind: "empty" },
+      { x: 99, z: 99 },
+      "2026-07-13T15:00:00.000Z",
+      "player.receiz.id"
+    );
+
+    assert.equal(encounter.phase, "searching");
+    assert.equal(encounter.proximity, "cold");
   });
 
   it("represents an untouched game with a stable idle value", () => {

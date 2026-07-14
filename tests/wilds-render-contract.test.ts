@@ -47,6 +47,10 @@ describe("Receiz Wilds rendering contract", () => {
     assert.match(source, /aria-label="Run world mission"/);
     assert.match(css, /\.mobile-play-wrap \.wilds-stage\s*\{[^}]*min-height: clamp\(430px, 64dvh, 620px\)/);
     assert.doesNotMatch(css, /\.mobile-play-wrap \.wilds-stage\s*\{[^}]*min-height: 286px/);
+    assert.match(source, /wilds-coordinate-badges/);
+    assert.match(source, /Discovery on/);
+    assert.doesNotMatch(source, /setSearchArmed\(false\)/);
+    assert.match(source, /state\.encounter\.proximity/);
   });
 
   it("uses a drag trackpad and streams terrain around the player", async () => {
