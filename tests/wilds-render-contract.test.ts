@@ -80,7 +80,7 @@ describe("Receiz Wilds rendering contract", () => {
     assert.match(campaign, /WildsCaptureReward/);
     assert.match(campaign, /WildsInventory/);
     assert.match(campaign, /useState\(initialPlayState\)/);
-    assert.match(campaign, /setState\(restorePlayState\(window\.localStorage\.getItem\(WILDS_SAVE_KEY\)\)\)/);
+    assert.match(campaign, /const restored = restorePlayState\(window\.localStorage\.getItem\(WILDS_SAVE_KEY\)\)/);
     assert.match(reward, /role="dialog"/);
     assert.match(reward, /aria-live="assertive"/);
     assert.match(reward, /wilds-capture-capsule/);
@@ -185,6 +185,29 @@ describe("Receiz Wilds rendering contract", () => {
     assert.match(world, /encounter\.proximity === "hot"/);
     assert.match(world, /HabitatCover cover=\{encounter\.cover/);
     assert.match(campaign, /signal-\$\{state\.encounter\.proximity\}/);
+  });
+
+  it("renders the SDK-native live multiplayer loop inside the shared world", async () => {
+    const campaign = await readFile("src/features/play/PlayCampaign.tsx", "utf8");
+    const world = await readFile("src/features/play/WildsWorldCanvas.tsx", "utf8");
+    const multiplayer = await readFile("src/features/play/WildsMultiplayer.tsx", "utf8");
+    const hook = await readFile("src/features/play/use-wilds-multiplayer.ts", "utf8");
+
+    assert.match(campaign, /useWildsMultiplayer/);
+    assert.match(campaign, /remotePlayers=\{multiplayer\.remotePlayers\}/);
+    assert.match(campaign, /multiplayer\.activeBattle \? " pvp-active"/);
+    assert.match(world, /function RemoteExplorer/);
+    assert.match(world, /onSelectPlayer/);
+    assert.match(world, /zIndexRange=\{\[12, 0\]\}/);
+    assert.match(multiplayer, /Copy invite link/);
+    assert.match(multiplayer, /Friendly battle/);
+    assert.match(multiplayer, /Return to world/);
+    assert.match(hook, /dismissBattle/);
+    assert.match(multiplayer, /Card stake/);
+    assert.match(multiplayer, /Compliance locked/);
+    assert.match(hook, /\/api\/wilds\/multiplayer\/session/);
+    assert.match(hook, /\/api\/wilds\/multiplayer\/snapshot/);
+    assert.match(hook, /wildsJoin/);
   });
 
   it("uses Next navigation for every internal standalone-card action", async () => {

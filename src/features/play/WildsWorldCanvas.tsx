@@ -11,16 +11,21 @@ import {
 } from "@/features/play/game-state";
 import { creatureForm } from "@/features/play/creature-catalog";
 import type { HotspotCover } from "@/features/play/hidden-hotspots";
+import type { WildsPresence } from "@/features/play/multiplayer-core";
 
 export function WildsWorldCanvas({
   state,
   avatarStyle,
+  remotePlayers,
   searchEnabled,
+  onSelectPlayer,
   onSearchPoint
 }: {
   state: PlayState;
   avatarStyle: "female" | "male";
+  remotePlayers: WildsPresence[];
   searchEnabled: boolean;
+  onSelectPlayer: (player: WildsPresence | null) => void;
   onSearchPoint: (point: { x: number; z: number }) => void;
 }) {
   return (
@@ -39,7 +44,7 @@ export function WildsWorldCanvas({
         shadows
       >
         <Suspense fallback={null}>
-          <WildsScene state={state} avatarStyle={avatarStyle} searchEnabled={searchEnabled} onSearchPoint={onSearchPoint} />
+          <WildsScene state={state} avatarStyle={avatarStyle} remotePlayers={remotePlayers} searchEnabled={searchEnabled} onSelectPlayer={onSelectPlayer} onSearchPoint={onSearchPoint} />
         </Suspense>
       </Canvas>
     </div>
@@ -49,12 +54,16 @@ export function WildsWorldCanvas({
 function WildsScene({
   state,
   avatarStyle,
+  remotePlayers,
   searchEnabled,
+  onSelectPlayer,
   onSearchPoint
 }: {
   state: PlayState;
   avatarStyle: "female" | "male";
+  remotePlayers: WildsPresence[];
   searchEnabled: boolean;
+  onSelectPlayer: (player: WildsPresence | null) => void;
   onSearchPoint: (point: { x: number; z: number }) => void;
 }) {
   return (
@@ -77,9 +86,48 @@ function WildsScene({
       <WildsDiagnostics state={state} />
       <SearchableTerrain player={state.player} enabled={searchEnabled} onSearchPoint={onSearchPoint} />
       <EncounterSequence state={state} />
+      {remotePlayers.map((player) => <RemoteExplorer key={player.playerId} player={player} localPlayer={state.player} onSelect={onSelectPlayer} />)}
       <ExplorerAvatar style={avatarStyle} worldPosition={state.player} />
       <Sparkles count={54} scale={[8, 2.4, 8]} size={2.1} speed={0.22} color="#fff5b6" />
     </>
+  );
+}
+
+function RemoteExplorer({
+  player,
+  localPlayer,
+  onSelect
+}: {
+  player: WildsPresence;
+  localPlayer: PlayState["player"];
+  onSelect: (player: WildsPresence) => void;
+}) {
+  const group = useRef<THREE.Group>(null);
+  const target = useRef(new THREE.Vector3(player.x - localPlayer.x, 0, player.z - localPlayer.z));
+  useEffect(() => {
+    target.current.set(player.x - localPlayer.x, 0, player.z - localPlayer.z);
+  }, [localPlayer.x, localPlayer.z, player.x, player.z]);
+  useFrame(() => {
+    group.current?.position.lerp(target.current, 0.18);
+  });
+  return (
+    <group
+      onClick={(event) => {
+        event.stopPropagation();
+        onSelect(player);
+      }}
+      position={[player.x - localPlayer.x, 0, player.z - localPlayer.z]}
+      ref={group}
+    >
+      <ExplorerAvatar style={player.style} worldPosition={{ x: player.x, z: player.z }} />
+      <mesh position={[0, 0.035, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <torusGeometry args={[0.48, 0.04, 8, 32]} />
+        <meshStandardMaterial color={player.practice ? "#f7c948" : "#6ef0c9"} emissive={player.practice ? "#f7c948" : "#37d688"} emissiveIntensity={0.62} />
+      </mesh>
+      <Html center className="wilds-remote-nameplate" distanceFactor={8} position={[0, 1.42, 0]} zIndexRange={[12, 0]}>
+        <span>{player.handle}</span><small>{player.activeCard.name}</small>
+      </Html>
+    </group>
   );
 }
 

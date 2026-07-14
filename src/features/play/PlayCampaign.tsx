@@ -22,6 +22,8 @@ import { WildsInventory } from "@/features/play/WildsInventory";
 import { WildsBattle } from "@/features/play/WildsBattle";
 import { WildsTransformation } from "@/features/play/WildsTransformation";
 import { WildsChildCeremony } from "@/features/play/WildsChildCeremony";
+import { WildsMultiplayer } from "@/features/play/WildsMultiplayer";
+import { useWildsMultiplayer } from "@/features/play/use-wilds-multiplayer";
 
 const WILDS_SAVE_KEY = "receiz:wilds:save:v2";
 const WILDS_AVATAR_KEY = "receiz:wilds:explorer:v1";
@@ -131,9 +133,22 @@ export function PlayCampaign({
   const activeAsset = selectedAsset(state);
   const deckCards = state.inventory;
   const activeProgress = state.companionProgress[activeCard.id] ?? { level: 1, xp: 0, bond: 0 };
+  const multiplayer = useWildsMultiplayer({
+    enabled: enabled && Boolean(avatarStyle) && Boolean(activeAsset),
+    style: avatarStyle ?? "female",
+    position: state.player,
+    activeCard: activeAsset
+  });
 
   useEffect(() => {
-    setState(restorePlayState(window.localStorage.getItem(WILDS_SAVE_KEY)));
+    const restored = restorePlayState(window.localStorage.getItem(WILDS_SAVE_KEY));
+    const params = new URLSearchParams(window.location.search);
+    const joinRoom = params.get("wildsJoin");
+    const joinX = Number(params.get("wildsX"));
+    const joinZ = Number(params.get("wildsZ"));
+    setState(/^invite:[a-f0-9]{16}$/.test(joinRoom ?? "") && Number.isFinite(joinX) && Number.isFinite(joinZ)
+      ? { ...restored, player: { x: joinX + 1.4, z: joinZ + 1.4 }, lastEvent: "Invite signal found. You joined the shared trail beside its sender." }
+      : restored);
     const savedAvatar = window.localStorage.getItem(WILDS_AVATAR_KEY);
     if (savedAvatar === "female" || savedAvatar === "male") setAvatarStyle(savedAvatar);
     setSaveRestored(true);
@@ -242,17 +257,21 @@ export function PlayCampaign({
       <div className="wilds-shell wilds-playable-shell">
         <div className="wilds-world">
           <div
-            className={`wilds-stage${state.encounter.phase === "hint" ? ` signal-${state.encounter.proximity}` : ""}`}
+            className={`wilds-stage${state.encounter.phase === "hint" ? ` signal-${state.encounter.proximity}` : ""}${multiplayer.activeBattle ? " pvp-active" : ""}`}
             aria-label="Receiz Wilds playable 3D world"
           >
             <WildsWorldCanvas
               state={state}
               avatarStyle={avatarStyle ?? "female"}
+              remotePlayers={multiplayer.remotePlayers}
               searchEnabled={discoveryActive && Boolean(avatarStyle)}
+              onSelectPlayer={multiplayer.selectPlayer}
               onSearchPoint={(point) => {
                 dispatch({ type: "search-point", ...point, searchedAt: new Date().toISOString(), ownerReceizId });
               }}
             />
+
+            {avatarStyle ? <WildsMultiplayer multiplayer={multiplayer} position={state.player} /> : null}
 
             {state.battle && ["player_turn", "capture_ready", "fled", "defeated"].includes(state.encounter.phase) ? (
               <WildsBattle
