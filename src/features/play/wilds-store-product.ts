@@ -8,8 +8,10 @@ function priceLabel(value: string) {
   return `$${amount.toFixed(2)}`;
 }
 
-export function wildsStoreProduct(asset: PortableCardAsset, price: string): Product {
+export function wildsStoreProduct(asset: PortableCardAsset, price: string, custodyOwnerReceizId = asset.manifest.ownerReceizId): Product {
   if (!verifyAnyWildsCard(asset).ok) throw new Error("wilds_product_card_invalid");
+  const listingOwner = custodyOwnerReceizId.trim();
+  if (!listingOwner) throw new Error("wilds_product_owner_required");
   const shortId = asset.id.slice("wilds:".length);
   const title = `${asset.manifest.name} · ${asset.manifest.rarity} Wilds Card`;
   const stats = asset.manifest.stats;
@@ -18,7 +20,7 @@ export function wildsStoreProduct(asset: PortableCardAsset, price: string): Prod
     `Health ${stats.health} · Power ${stats.power} · Guard ${stats.guard} · Speed ${stats.speed} · Bond ${stats.bond}.`,
     `Abilities: ${asset.manifest.abilityNames.join(" and ")}.`,
     `Visual DNA: ${asset.manifest.variant.traits.visualFingerprint}. Kai pulse: ${asset.manifest.variant.kaiPulse}.`,
-    `Offline proof: ${asset.proof.digest}. Current sealed owner: ${asset.manifest.ownerReceizId}.`,
+    `Offline proof: ${asset.proof.digest}. Original sealed owner: ${asset.manifest.ownerReceizId}. Verified bearer custody: ${listingOwner}.`,
     "Purchase settlement appends the ownership handoff to the Receiz proof trail and retires this one-of-one listing."
   ].join(" ");
 
@@ -45,7 +47,7 @@ export function wildsStoreProduct(asset: PortableCardAsset, price: string): Prod
       schema: "receiz.wilds_store_product.v1",
       assetId: asset.id,
       proofDigest: asset.proof.digest,
-      ownerReceizId: asset.manifest.ownerReceizId
+      ownerReceizId: listingOwner
     }
   };
 }

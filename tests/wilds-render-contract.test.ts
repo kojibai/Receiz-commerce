@@ -40,6 +40,8 @@ describe("Receiz Wilds rendering contract", () => {
     assert.doesNotMatch(explorer, /"leftLeg"/);
     assert.doesNotMatch(explorer, /name="bootSole"/);
     assert.match(explorer, /name="rearHair"/);
+    assert.match(explorer, /name="leftEar"/);
+    assert.match(explorer, /name="rightEar"/);
   });
 
   it("adds deterministic canopy atmosphere and proximity motion", async () => {
@@ -350,8 +352,10 @@ describe("Receiz Wilds rendering contract", () => {
     assert.match(products, /verifyPortableCardPng/);
     assert.match(products, /verifyPortableVaultPng/);
     assert.match(products, /wildsStoreProduct/);
+    assert.match(products, /merchantReceizId/);
     assert.match(products, /Import card or vault/);
     assert.match(products, /one product per verified card/i);
+    assert.doesNotMatch(products, /Connect the owner.s Receiz ID/);
   });
 
   it("integrates a gesture-safe audio lifecycle and accessible settings", async () => {

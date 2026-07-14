@@ -71,6 +71,7 @@ export function ProductEditorPanel({
   brandLabel,
   brand,
   collections,
+  merchantReceizId,
   onAddCollection,
   onUpdateCollection,
   onAddProduct,
@@ -81,6 +82,7 @@ export function ProductEditorPanel({
   brand: BrandConfig;
   brandLabel: string;
   collections: Collection[];
+  merchantReceizId: string;
   onAddCollection: (collection: Collection) => void;
   onUpdateCollection: (collectionId: string, input: Partial<Collection>) => void;
   onAddProduct: (product: Product) => void;
@@ -126,7 +128,7 @@ export function ProductEditorPanel({
         if (products.some((product) => product.wildsAsset?.assetId === asset.id)) continue;
         try {
           await registerPublicWildsCard(asset);
-          const product = wildsStoreProduct(asset, wildsPrice);
+          const product = wildsStoreProduct(asset, wildsPrice, merchantReceizId);
           onAddProduct(product);
           setActiveProductId(product.id);
           added += 1;
@@ -139,7 +141,7 @@ export function ProductEditorPanel({
     setWildsImporting(false);
     setWildsImportMessage(added
       ? `${added} verified card${added === 1 ? "" : "s"} added as one-of-one shop products${rejected ? ` · ${rejected} rejected` : ""}. Set individual prices below, then publish changes.`
-      : "No products were added. Connect the owner’s Receiz ID and upload an untampered card or vault PNG.");
+      : "No products were added. Upload an untampered verified card or vault PNG. Cards already in this store are skipped.");
   };
   const toggleCollectionProduct = (collection: Collection, productId: string) => {
     const productIds = collection.productIds.includes(productId)
@@ -181,7 +183,7 @@ export function ProductEditorPanel({
       <div className="wilds-shop-importer">
         <div>
           <strong>Sell earned Wilds cards</strong>
-          <span>Import a card or vault PNG. Receiz verifies it and creates one product per verified card.</span>
+          <span>Import a card or vault PNG. Receiz verifies it, transfers bearer custody to this store, and creates one product per verified card.</span>
         </div>
         <label>
           <span>Starting price per card</span>

@@ -313,11 +313,13 @@ export function evolvePortableCard(input: {
   });
 }
 
-export function portableCardExchangeAsset(asset: PortableCardAsset, priceCents: number): ReceizedAsset {
+export function portableCardExchangeAsset(asset: PortableCardAsset, priceCents: number, custodyOwnerReceizId = asset.manifest.ownerReceizId): ReceizedAsset {
   if (asset.status !== "verified" && asset.status !== "listed") throw new Error("wilds_card_sync_required");
   const verification = verifyAnyWildsCard(asset);
   if (!verification.ok) throw new Error("wilds_card_verification_failed");
   if (!Number.isInteger(priceCents) || priceCents <= 0 || priceCents > 100_000_000) throw new Error("exchange_listing_price_invalid");
+  const listingOwner = custodyOwnerReceizId.trim();
+  if (!listingOwner) throw new Error("exchange_listing_owner_required");
   const form = creatureForm(asset.manifest.formId)!;
   const claimId = asset.proof.digest.slice(7, 39);
   const pulse = String(Date.parse(asset.proof.sealedAt));
@@ -326,7 +328,7 @@ export function portableCardExchangeAsset(asset: PortableCardAsset, priceCents: 
     id: asset.id,
     name: asset.manifest.name,
     type: "limited_drop",
-    ownerId: asset.manifest.ownerReceizId,
+    ownerId: listingOwner,
     status: asset.status === "listed" ? "listed" : "owned",
     priceLabel: `$${(priceCents / 100).toFixed(2)}`,
     proofSource: claimId,
@@ -343,8 +345,8 @@ export function portableCardExchangeAsset(asset: PortableCardAsset, priceCents: 
         artifactSha256Basis: asset.proof.digest
       },
       owner: {
-        receizSubject: asset.manifest.ownerReceizId,
-        displayName: asset.manifest.ownerReceizId,
+        receizSubject: listingOwner,
+        displayName: listingOwner,
         custody: asset.status === "listed" ? "fractionalized" : "current"
       },
       links: { verify: verifyPath }

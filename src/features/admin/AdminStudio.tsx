@@ -113,6 +113,7 @@ export function AdminStudio() {
               brandImageUrl={state.brand.logoImageUrl}
               brandLabel={state.brand.logoText}
               collections={state.collections}
+              merchantReceizId={merchantReceizAccount}
               onAddCollection={actions.addCollection}
               onAddProduct={actions.addProduct}
               onUpdateCollection={actions.updateCollection}
@@ -598,6 +599,7 @@ function MobileAdminConsole({
             brandImageUrl={state.brand.logoImageUrl}
             brandLabel={state.brand.logoText}
             collections={state.collections}
+            merchantReceizId={currentMerchantReceizAccount(state)}
             onAddCollection={actions.addCollection}
             onAddProduct={actions.addProduct}
             onUpdateCollection={actions.updateCollection}

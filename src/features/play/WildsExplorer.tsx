@@ -160,10 +160,16 @@ export function WildsExplorer({
           </mesh>
         ) : null}
         {!remote ? (
-          <mesh position={[-0.23, -0.02, 0]} rotation={[0, 0, 0.2]}>
-            <sphereGeometry args={[0.045, 8, 6]} />
-            <meshStandardMaterial color={palette.skin} roughness={0.72} />
-          </mesh>
+          <>
+            <mesh name="leftEar" position={[-0.23, -0.02, 0]} rotation={[0, 0, 0.2]}>
+              <sphereGeometry args={[0.045, 8, 6]} />
+              <meshStandardMaterial color={palette.skin} roughness={0.72} />
+            </mesh>
+            <mesh name="rightEar" position={[0.23, -0.02, 0]} rotation={[0, 0, -0.2]}>
+              <sphereGeometry args={[0.045, 8, 6]} />
+              <meshStandardMaterial color={palette.skin} roughness={0.72} />
+            </mesh>
+          </>
         ) : null}
       </group>
     </group>

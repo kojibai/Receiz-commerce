@@ -29,6 +29,21 @@ describe("Wilds storefront products", () => {
     assert.match(product.description ?? "", /Offline proof:/);
   });
 
+  it("assigns verified bearer custody to the uploading merchant without rewriting provenance", () => {
+    const transferred = sealCollectedCard({
+      formId: "mintcub-1",
+      ownerReceizId: "original.collector.receiz.id",
+      encounterId: "offline-transfer",
+      capturedAt: "2026-07-14T12:05:00.000Z"
+    });
+    const product = wildsStoreProduct(transferred, "$64.00", "recipient.store.receiz.id");
+
+    assert.equal(product.wildsAsset?.ownerReceizId, "recipient.store.receiz.id");
+    assert.match(product.description ?? "", /Original sealed owner: original\.collector\.receiz\.id/);
+    assert.match(product.description ?? "", /Verified bearer custody: recipient\.store\.receiz\.id/);
+    assert.equal(transferred.manifest.ownerReceizId, "original.collector.receiz.id");
+  });
+
   it("rejects invalid prices and tampered cards", () => {
     assert.throws(() => wildsStoreProduct(card, "$0.00"), /wilds_product_price_invalid/);
     assert.throws(

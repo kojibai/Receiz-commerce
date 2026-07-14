@@ -29,9 +29,9 @@ export function synchronizeWildsCard(input: {
   card: PortableCardAsset;
   synchronizedAt?: string;
 }): PortableCardAsset {
+  if (!input.actorReceizId.trim()) throw new Error("exchange_owner_authority_required");
   const verification = verifyAnyWildsCard(input.card);
   if (!verification.ok) throw new Error("wilds_card_verification_failed");
-  if (input.card.manifest.ownerReceizId !== input.actorReceizId) throw new Error("exchange_owner_authority_required");
   if (input.card.status === "suspended" || input.card.status === "revoked") throw new Error("wilds_card_not_admissible");
   const synchronizedAt = input.synchronizedAt ?? new Date().toISOString();
   if (!Number.isFinite(Date.parse(synchronizedAt))) throw new Error("wilds_card_sync_time_invalid");
@@ -45,11 +45,11 @@ export function admitWildsCard(input: {
   existingAssetIds: readonly string[];
 }) {
   if (input.card.status !== "verified" && input.card.status !== "listed") throw new Error("wilds_card_sync_required");
+  if (!input.actorReceizId.trim()) throw new Error("exchange_owner_authority_required");
   const verification = verifyAnyWildsCard(input.card);
   if (!verification.ok) throw new Error("wilds_card_verification_failed");
-  if (input.card.manifest.ownerReceizId !== input.actorReceizId) throw new Error("exchange_owner_authority_required");
   assertUnique(input.card.id, input.existingAssetIds);
-  return withLocalVerification(portableCardExchangeAsset(input.card, input.priceCents));
+  return withLocalVerification(portableCardExchangeAsset(input.card, input.priceCents, input.actorReceizId));
 }
 
 export function admitUploadedAsset(input: {

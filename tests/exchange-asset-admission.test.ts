@@ -6,7 +6,7 @@ import { admitLegacyCard } from "../src/features/play/living-card-proof.js";
 import { baseState } from "./support/commerce-state.js";
 
 describe("Exchange asset admission", () => {
-  it("offline-verifies and synchronizes a locally sealed card for its owner", () => {
+  it("offline-verifies and synchronizes a locally sealed bearer card for the uploader", () => {
     const local = sealCollectedCard({
       formId: "mintcub-1",
       ownerReceizId: "player.receiz.id",
@@ -21,8 +21,31 @@ describe("Exchange asset admission", () => {
 
     assert.equal(synchronized.status, "verified");
     assert.equal(synchronized.synchronizedAt, "2026-07-13T15:00:00.000Z");
-    assert.throws(() => synchronizeWildsCard({ actorReceizId: "other.receiz.id", card: local }), /owner_authority/);
+    const transferred = synchronizeWildsCard({ actorReceizId: "other.receiz.id", card: local });
+    assert.equal(transferred.status, "verified");
+    assert.equal(transferred.manifest.ownerReceizId, "player.receiz.id");
     assert.throws(() => synchronizeWildsCard({ actorReceizId: "player.receiz.id", card: { ...local, proof: { ...local.proof, digest: "sha256:bad" } } }), /verification_failed/);
+  });
+
+  it("lists a verified offline transfer under the uploading owner while preserving card proof", () => {
+    const card = sealCollectedCard({
+      formId: "mintcub-1",
+      ownerReceizId: "original.receiz.id",
+      encounterId: "bearer-admission",
+      capturedAt: "2026-07-13T15:00:00.000Z"
+    });
+    const synchronized = synchronizeWildsCard({ actorReceizId: "recipient.receiz.id", card });
+    const admitted = admitWildsCard({
+      actorReceizId: "recipient.receiz.id",
+      card: synchronized,
+      existingAssetIds: [],
+      priceCents: 2500
+    });
+
+    assert.equal(admitted.ownerId, "recipient.receiz.id");
+    assert.equal(admitted.manifest?.owner.receizSubject, "recipient.receiz.id");
+    assert.equal(card.manifest.ownerReceizId, "original.receiz.id");
+    assert.equal(admitted.verifiedArtifact?.sha256Basis, card.proof.digest);
   });
 
   it("admits a synchronized owned Wilds card with local verification", () => {
@@ -58,7 +81,7 @@ describe("Exchange asset admission", () => {
     assert.equal(living.manifest.revisions.length, 1);
   });
 
-  it("rejects local-only, tampered, foreign-owned, and duplicate Wilds cards", () => {
+  it("rejects local-only, tampered, and duplicate Wilds cards", () => {
     const card = sealCollectedCard({
       formId: "voltray-1",
       ownerReceizId: "player.receiz.id",
@@ -66,7 +89,7 @@ describe("Exchange asset admission", () => {
       capturedAt: "2026-07-13T15:00:00.000Z"
     });
     assert.throws(() => admitWildsCard({ actorReceizId: "player.receiz.id", card, priceCents: 1000, existingAssetIds: [] }), /sync_required/);
-    assert.throws(() => admitWildsCard({ actorReceizId: "other.receiz.id", card: { ...card, status: "verified" }, priceCents: 1000, existingAssetIds: [] }), /owner_authority/);
+    assert.equal(admitWildsCard({ actorReceizId: "other.receiz.id", card: { ...card, status: "verified" }, priceCents: 1000, existingAssetIds: [] }).ownerId, "other.receiz.id");
     assert.throws(() => admitWildsCard({ actorReceizId: "player.receiz.id", card: { ...card, status: "verified", proof: { ...card.proof, digest: "sha256:bad" } }, priceCents: 1000, existingAssetIds: [] }), /verification_failed/);
     assert.throws(() => admitWildsCard({ actorReceizId: "player.receiz.id", card: { ...card, status: "verified" }, priceCents: 1000, existingAssetIds: [card.id] }), /duplicate/);
   });
