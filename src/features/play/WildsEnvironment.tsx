@@ -54,10 +54,12 @@ function useInstances(
 export function WildsEnvironment({
   player,
   missionProgress,
+  worldMastery,
   qualityProfile
 }: {
   player: PlayState["player"];
   missionProgress: number;
+  worldMastery: number;
   qualityProfile: WildsQualityProfile;
 }) {
   const centerX = Math.floor(player.x / WILDS_TILE_SIZE);
@@ -68,11 +70,11 @@ export function WildsEnvironment({
       for (let dx = -STREAM_RADIUS; dx <= STREAM_RADIUS; dx += 1) {
         const tileX = centerX + dx;
         const tileZ = centerZ + dz;
-        projected.push({ key: `${tileX}:${tileZ}`, tileX, tileZ, ...projectWildsBiome(tileX, tileZ, missionProgress) });
+        projected.push({ key: `${tileX}:${tileZ}`, tileX, tileZ, ...projectWildsBiome(tileX, tileZ, missionProgress, worldMastery) });
       }
     }
     return projected;
-  }, [centerX, centerZ, missionProgress]);
+  }, [centerX, centerZ, missionProgress, worldMastery]);
 
   const trees = useMemo(() => placements(tiles, "treeCount", 101, qualityProfile.foliage), [qualityProfile.foliage, tiles]);
   const bushes = useMemo(() => placements(tiles, "bushCount", 211, qualityProfile.foliage), [qualityProfile.foliage, tiles]);
@@ -86,7 +88,7 @@ export function WildsEnvironment({
         <TrailNetwork player={player} palette={tiles[12]?.trail ?? { base: "#cbb778", edge: "#9b8b56" }} />
       </group>
       <group name="world-layer-mid">
-        <EcologyInstances bushes={bushes} flowers={flowers} player={player} rocks={rocks} trees={trees} />
+        <EcologyInstances bushes={bushes} flowers={flowers} palette={tiles[12]?.canopy} player={player} rocks={rocks} trees={trees} />
         {tiles.filter((tile) => tile.landmark.kind !== "none").map((tile) => (
           <Landmark key={`landmark:${tile.key}`} player={player} tile={tile} />
         ))}
@@ -139,12 +141,14 @@ function TrailNetwork({ player, palette }: { player: PlayState["player"]; palett
 function EcologyInstances({
   bushes,
   flowers,
+  palette,
   player,
   rocks,
   trees
 }: {
   bushes: Placement[];
   flowers: Placement[];
+  palette?: WildsBiomeTile["canopy"];
   player: PlayState["player"];
   rocks: Placement[];
   trees: Placement[];
@@ -175,15 +179,15 @@ function EcologyInstances({
       </instancedMesh>
       <instancedMesh args={[undefined, undefined, trees.length]} castShadow ref={lowerCrowns}>
         <dodecahedronGeometry args={[0.72, 1]} />
-        <meshStandardMaterial color="#246b46" roughness={0.82} />
+        <meshStandardMaterial color={palette?.deep ?? "#246b46"} roughness={0.82} />
       </instancedMesh>
       <instancedMesh args={[undefined, undefined, trees.length]} castShadow ref={upperCrowns}>
         <dodecahedronGeometry args={[0.56, 1]} />
-        <meshStandardMaterial color="#3d9250" roughness={0.78} />
+        <meshStandardMaterial color={palette?.mid ?? "#3d9250"} roughness={0.78} />
       </instancedMesh>
       <instancedMesh args={[undefined, undefined, bushes.length]} castShadow ref={shrubMesh}>
         <dodecahedronGeometry args={[1, 1]} />
-        <meshStandardMaterial color="#3b8d49" roughness={0.88} />
+        <meshStandardMaterial color={palette?.highlight ?? "#3b8d49"} roughness={0.88} />
       </instancedMesh>
       <instancedMesh args={[undefined, undefined, rocks.length]} castShadow receiveShadow ref={rockMesh}>
         <dodecahedronGeometry args={[1, 0]} />

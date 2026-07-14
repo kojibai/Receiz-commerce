@@ -297,6 +297,7 @@ describe("Receiz Wilds game state", () => {
     assert.equal(next.missionProgress, 100);
     assert.equal(next.rewardCards.length, 1);
     assert.match(next.rewardCards[0].businessUse, /coupon/);
+    assert.equal(next.worldMastery, readyState.worldMastery + 25);
   });
 
   it("levels and bonds the selected companion through deterministic training", () => {

@@ -33,6 +33,10 @@ describe("Receiz Wilds rendering contract", () => {
     assert.match(explorer, /breath/);
     assert.match(explorer, /footPlant/);
     assert.match(world, /<WildsExplorer/);
+    assert.match(explorer, /"leftLeg"/);
+    assert.match(explorer, /"rightLeg"/);
+    assert.match(explorer, /name="rearHair"/);
+    assert.match(explorer, /name="bootSole"/);
   });
 
   it("adds deterministic canopy atmosphere and proximity motion", async () => {
@@ -121,6 +125,15 @@ describe("Receiz Wilds rendering contract", () => {
     assert.match(source, /Discovery on/);
     assert.doesNotMatch(source, /setSearchArmed\(false\)/);
     assert.match(source, /state\.encounter\.proximity/);
+  });
+
+  it("surfaces endless chapter equity and deterministic world events", async () => {
+    const campaign = await readFile("src/features/play/PlayCampaign.tsx", "utf8");
+    const environment = await readFile("src/features/play/WildsEnvironment.tsx", "utf8");
+    assert.match(campaign, /projectWorldProgression/);
+    assert.match(campaign, /wilds-world-chapter/);
+    assert.match(campaign, /Permanent mastery/);
+    assert.match(environment, /worldMastery/);
   });
 
   it("uses a drag trackpad and streams terrain around the player", async () => {

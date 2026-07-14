@@ -1920,6 +1920,41 @@ a {
   line-height: 1.25;
 }
 
+.wilds-world-chapter {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 6px 10px;
+  padding: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(217, 255, 159, 0.1), rgba(112, 219, 255, 0.05));
+}
+
+.wilds-world-chapter > p,
+.wilds-world-chapter > .wilds-progress,
+.wilds-world-chapter > .wilds-world-event,
+.wilds-world-chapter > small {
+  grid-column: 1 / -1;
+}
+
+.wilds-world-chapter strong,
+.wilds-world-chapter small,
+.wilds-world-chapter em {
+  display: block;
+}
+
+.wilds-world-chapter em {
+  margin-top: 2px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.68rem;
+  font-style: normal;
+}
+
+.wilds-world-event {
+  padding-left: 8px;
+  border-left: 2px solid #d9ff9f;
+}
+
 .wilds-progress,
 .wilds-mini-charge {
   overflow: hidden;

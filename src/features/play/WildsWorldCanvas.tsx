@@ -16,6 +16,7 @@ import { WildsEnvironment } from "@/features/play/WildsEnvironment";
 import { WildsExplorer } from "@/features/play/WildsExplorer";
 import { WildsAtmosphere } from "@/features/play/WildsAtmosphere";
 import { WildsCreatureActor, type WildsCreaturePose } from "@/features/play/WildsCreatureActor";
+import { projectWorldProgression } from "@/features/play/world-progression";
 import {
   rendererBudgetStatus,
   type WildsQualityProfile
@@ -77,10 +78,11 @@ function WildsScene({
   onSelectPlayer: (player: WildsPresence | null) => void;
   onSearchPoint: (point: { x: number; z: number }) => void;
 }) {
+  const world = projectWorldProgression(state.worldMastery);
   return (
     <>
-      <color attach="background" args={["#8fd7ff"]} />
-      <fog attach="fog" args={["#91dca7", 10, 24]} />
+      <color attach="background" args={[world.chapter.palette.fog]} />
+      <fog attach="fog" args={[world.chapter.palette.fog, 10, 24]} />
       <WildsAtmosphere encounter={state.encounter} missionProgress={state.missionProgress} player={state.player} qualityProfile={qualityProfile} />
       <CameraRig encounter={state.encounter} />
       <WildsDiagnostics qualityProfile={qualityProfile} state={state} />
@@ -90,6 +92,7 @@ function WildsScene({
         onSearchPoint={onSearchPoint}
         player={state.player}
         qualityProfile={qualityProfile}
+        worldMastery={state.worldMastery}
       />
       <EncounterSequence state={state} />
       {remotePlayers.map((player) => <RemoteExplorer key={player.playerId} player={player} localPlayer={state.player} onSelect={onSelectPlayer} />)}
@@ -163,12 +166,14 @@ function SearchableTerrain({
   enabled,
   missionProgress,
   qualityProfile,
+  worldMastery,
   onSearchPoint
 }: {
   player: PlayState["player"];
   enabled: boolean;
   missionProgress: number;
   qualityProfile: WildsQualityProfile;
+  worldMastery: number;
   onSearchPoint: (point: { x: number; z: number }) => void;
 }) {
   return (
@@ -179,7 +184,7 @@ function SearchableTerrain({
         onSearchPoint({ x: player.x + event.point.x, z: player.z + event.point.z });
       }}
     >
-      <StreamedTerrain missionProgress={missionProgress} player={player} qualityProfile={qualityProfile} />
+      <StreamedTerrain missionProgress={missionProgress} player={player} qualityProfile={qualityProfile} worldMastery={worldMastery} />
     </group>
   );
 }
@@ -187,13 +192,15 @@ function SearchableTerrain({
 function StreamedTerrain({
   missionProgress,
   player,
-  qualityProfile
+  qualityProfile,
+  worldMastery
 }: {
   missionProgress: number;
   player: PlayState["player"];
   qualityProfile: WildsQualityProfile;
+  worldMastery: number;
 }) {
-  return <WildsEnvironment missionProgress={missionProgress} player={player} qualityProfile={qualityProfile} />;
+  return <WildsEnvironment missionProgress={missionProgress} player={player} qualityProfile={qualityProfile} worldMastery={worldMastery} />;
 }
 
 function Creature({ card, formId = `${card.id}-1`, pose = "idle" }: { card: CreatureCard; formId?: string; pose?: WildsCreaturePose }) {

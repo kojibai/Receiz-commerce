@@ -1,3 +1,5 @@
+import { projectWorldProgression } from "./world-progression";
+
 export type WildsWeather = "clear" | "sun-shower" | "pollen-drift";
 
 export type WildsLandmark = {
@@ -20,6 +22,7 @@ export type WildsBiomeTile = {
     flowerCount: number;
   };
   luminosity: number;
+  chapterId: string;
 };
 
 function hashTile(x: number, z: number, salt = 0) {
@@ -38,8 +41,9 @@ function count(seed: number, salt: number, min: number, max: number) {
   return min + Math.floor(unit(seed, salt) * (max - min + 1));
 }
 
-export function projectWildsBiome(tileX: number, tileZ: number, missionProgress: number): WildsBiomeTile {
+export function projectWildsBiome(tileX: number, tileZ: number, missionProgress: number, worldMastery = 0): WildsBiomeTile {
   const seed = hashTile(tileX, tileZ);
+  const world = projectWorldProgression(worldMastery);
   const mastery = Math.max(0, Math.min(1, missionProgress / 100));
   const weatherRoll = unit(seed, 19);
   const landmarkRoll = unit(seed, 37);
@@ -53,9 +57,9 @@ export function projectWildsBiome(tileX: number, tileZ: number, missionProgress:
 
   return {
     seed,
-    ground: { base: "#4f9254", moss: "#75b95c", soil: "#8b6b46" },
+    ground: { base: world.chapter.palette.ground, moss: world.chapter.palette.accent, soil: world.chapter.palette.canopy },
     trail: { base: "#cbb778", edge: "#9b8b56" },
-    canopy: { deep: "#15533a", mid: "#2f8150", highlight: "#68b85b" },
+    canopy: { deep: world.chapter.palette.canopy, mid: world.chapter.palette.ground, highlight: world.chapter.palette.accent },
     weather: weatherRoll > 0.78 ? "sun-shower" : weatherRoll < 0.22 ? "pollen-drift" : "clear",
     landmark,
     ecology: {
@@ -64,6 +68,7 @@ export function projectWildsBiome(tileX: number, tileZ: number, missionProgress:
       rockCount: count(seed, 71, 1, 4),
       flowerCount: count(seed, 73, 2, 5) + Math.floor(mastery * 4)
     },
-    luminosity: 0.74 + mastery * 0.18 + unit(seed, 79) * 0.06
+    luminosity: 0.74 + mastery * 0.18 + unit(seed, 79) * 0.06,
+    chapterId: world.chapter.id
   };
 }

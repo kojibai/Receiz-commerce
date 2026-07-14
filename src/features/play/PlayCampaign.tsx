@@ -27,6 +27,7 @@ import { useWildsMultiplayer } from "@/features/play/use-wilds-multiplayer";
 import { WildsAudioSettings } from "@/features/play/WildsAudioSettings";
 import { useWildsPresentation } from "@/features/play/use-wilds-presentation";
 import { selectWildsQualityProfile } from "@/features/play/wilds-quality-profile";
+import { projectWorldProgression } from "@/features/play/world-progression";
 
 const WILDS_SAVE_KEY = "receiz:wilds:save:v2";
 const WILDS_AVATAR_KEY = "receiz:wilds:explorer:v1";
@@ -147,6 +148,7 @@ export function PlayCampaign({
   const [avatarStyle, setAvatarStyle] = useState<"female" | "male" | null>(null);
   const [qualityProfile, setQualityProfile] = useState(currentWildsQualityProfile);
   const activeMission = missionCards[state.completedMissionIds.length % missionCards.length];
+  const worldProgression = projectWorldProgression(state.worldMastery);
   const activeCard = selectedCard(state);
   const activeAsset = selectedAsset(state);
   const deckCards = state.inventory;
@@ -451,6 +453,23 @@ export function PlayCampaign({
               <Icons.chevronDown aria-hidden="true" size={18} />
             </summary>
             <div className="wilds-mission-details">
+              <div className="wilds-world-chapter">
+                <span>
+                  <small>Chapter {worldProgression.chapterIndex + 1} · Cycle {worldProgression.cycle}</small>
+                  <strong>{worldProgression.chapter.name}</strong>
+                </span>
+                <b>{worldProgression.chapter.element}</b>
+                <p>{worldProgression.chapter.objective}</p>
+                <div className="wilds-progress" aria-label={`${worldProgression.chapterMastery}% chapter mastery`}>
+                  <span style={{ width: `${worldProgression.chapterMastery}%` }} />
+                </div>
+                <span className="wilds-world-event">
+                  <small>Live world event</small>
+                  <strong>{worldProgression.worldEvent.name}</strong>
+                  <em>{worldProgression.worldEvent.objective}</em>
+                </span>
+                <small>Permanent mastery {state.worldMastery} · Next realm at {worldProgression.nextChapterAt}</small>
+              </div>
               <p>{activeMission.requirement}</p>
               <div className="wilds-progress" aria-label={`${state.missionProgress}% mission progress`}>
                 <span style={{ width: `${state.missionProgress}%` }} />

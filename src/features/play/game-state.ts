@@ -15,6 +15,7 @@ import { admitLegacyCard, appendLivingCardRevision, currentLivingGenome, current
 import { deriveAscensionGenome } from "./heartbound-genome";
 import { isLivingCardAsset, type GrowthPath, type LivingGrowthSnapshot } from "./living-card-types";
 import { createLivingChildTransaction, lineageEligibility } from "./living-lineage";
+import { worldMasteryAward, type WorldMasteryVerb } from "./world-progression";
 
 export type GameAction = "explore" | "train" | "mission";
 export type MoveDirection = "north" | "south" | "west" | "east";
@@ -127,6 +128,7 @@ export type PlayState = {
     eventId: string;
   };
   worldRank: "Grove scout" | "Trail keeper" | "Wilds ranger" | "Titan challenger";
+  worldMastery: number;
 };
 
 export const worldBounds = {
@@ -262,7 +264,8 @@ export const initialPlayState: PlayState = {
   bondCooldowns: {},
   transformation: null,
   lineageReveal: null,
-  worldRank: "Grove scout"
+  worldRank: "Grove scout",
+  worldMastery: 38
 };
 
 const PLAY_SAVE_SCHEMA = "receiz.wilds.save.v5";
@@ -354,7 +357,8 @@ export function restorePlayState(value: string | null | undefined): PlayState {
         : [],
       bondCooldowns: saved.bondCooldowns && typeof saved.bondCooldowns === "object" ? saved.bondCooldowns : {},
       transformation: saved.transformation ?? null,
-      lineageReveal: saved.lineageReveal ?? null
+      lineageReveal: saved.lineageReveal ?? null,
+      worldMastery: typeof saved.worldMastery === "number" && Number.isFinite(saved.worldMastery) ? Math.max(0, Math.floor(saved.worldMastery)) : initialPlayState.worldMastery
     });
   } catch {
     return initialPlayState;
@@ -440,6 +444,10 @@ function strongestGrowthPath(progress: LivingGrowthSnapshot): GrowthPath {
   return (Object.entries(progress.paths) as Array<[GrowthPath, number]>).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "character";
 }
 
+function awardWorldMastery(state: PlayState, verb: WorldMasteryVerb) {
+  return { ...state, worldMastery: state.worldMastery + worldMasteryAward(verb) };
+}
+
 export function applyWildsInput(state: PlayState, input: WildsInput): PlayState {
   if (input.type === "reset") return initialPlayState;
 
@@ -496,7 +504,7 @@ export function applyWildsInput(state: PlayState, input: WildsInput): PlayState 
     } catch {
       return { ...state, lastEvent: "Ascension sealing failed. Nothing was consumed." };
     }
-    return {
+    return awardWorldMastery({
       ...state,
       inventory: state.inventory.map((item) => item.id === ascended.id ? ascended : item),
       livingProgress: { ...state.livingProgress, [ascended.id]: nextGrowth },
@@ -504,7 +512,7 @@ export function applyWildsInput(state: PlayState, input: WildsInput): PlayState 
       pendingSyncAssetIds: Array.from(new Set([...state.pendingSyncAssetIds, ascended.id])),
       transformation: { assetId: ascended.id, fromRevision: prior.revision, toRevision: currentRevision(ascended).revision, reason: currentRevision(ascended).reason.label },
       lastEvent: `${asset.manifest.name} reached Ascension ${candidate.ascensionRank}. Its living proof history grew in place.`
-    };
+    }, "ascension");
   }
 
   if (input.type === "import-card") {
@@ -565,7 +573,7 @@ export function applyWildsInput(state: PlayState, input: WildsInput): PlayState 
     }
     if (state.inventory.some((asset) => asset.id === transaction.child.id)) return state;
     const replacements = new Map([[transaction.parentA.id, transaction.parentA], [transaction.parentB.id, transaction.parentB]]);
-    return {
+    return awardWorldMastery({
       ...state,
       achievements: Array.from(new Set([...state.achievements, "first_fusion_child"])),
       discoveredCardIds: Array.from(new Set([...state.discoveredCardIds, transaction.child.manifest.familyId])),
@@ -583,7 +591,7 @@ export function applyWildsInput(state: PlayState, input: WildsInput): PlayState 
       selectedCardId: transaction.child.manifest.familyId,
       lineageReveal: { childId: transaction.child.id, parentIds: [parentA.id, parentB.id], eventId: transaction.eventId },
       lastEvent: `${parentA.manifest.name} and ${parentB.manifest.name} created ${transaction.child.manifest.name}. Both parents remain usable.`
-    };
+    }, "lineage");
   }
 
   if (input.type === "dismiss-reveal") {
@@ -624,7 +632,9 @@ export function applyWildsInput(state: PlayState, input: WildsInput): PlayState 
       path: "battle" as const,
       occurredAt
     })));
-    return { ...progressed, lastEvent: last };
+    return awards.some((award) => award.kind === "battle_win")
+      ? awardWorldMastery({ ...progressed, lastEvent: last }, "battle")
+      : { ...progressed, lastEvent: last };
   }
 
   if (input.type === "search-point") {
@@ -685,7 +695,7 @@ export function applyWildsInput(state: PlayState, input: WildsInput): PlayState 
     }
     if (!verifyPortableCard(sealed).ok) return { ...state, encounter: { ...encounter, phase: "emerging" }, lastEvent: "The capsule reopened because its offline seal could not be verified." };
     const nextDiscovered = Array.from(new Set([...state.discoveredCardIds, sealed.manifest.familyId]));
-    return withWorldProgress({
+    return withWorldProgress(awardWorldMastery({
       ...state,
       beans: state.beans + 6,
       cardXp: state.cardXp + 12,
@@ -701,7 +711,7 @@ export function applyWildsInput(state: PlayState, input: WildsInput): PlayState 
       selectedAssetId: sealed.id,
       selectedCardId: sealed.manifest.familyId,
       streak: state.streak + 1
-    });
+    }, "capture"));
   }
 
   if (input.type === "mark-synced" || input.type === "mark-listed") {
@@ -789,7 +799,7 @@ export function applyWildsInput(state: PlayState, input: WildsInput): PlayState 
       amount: 1,
       occurredAt: new Date(Date.UTC(2026, 6, 13, 12, Math.abs(Math.floor(nextPlayer.x / 8)) % 60, Math.abs(Math.floor(nextPlayer.z / 8)) % 60)).toISOString()
     });
-    return { ...progressed, lastEvent: nearbyText };
+    return awardWorldMastery({ ...progressed, lastEvent: nearbyText }, "travel");
   }
 
   if (input.type === "rest") {
@@ -850,7 +860,7 @@ export function applyWildsInput(state: PlayState, input: WildsInput): PlayState 
     }
 
     const nextDiscovered = [...state.discoveredCardIds, nearest.card.id];
-    return withWorldProgress({
+    return withWorldProgress(awardWorldMastery({
       ...state,
       activeAction: "explore",
       beans: state.beans + 6,
@@ -865,7 +875,7 @@ export function applyWildsInput(state: PlayState, input: WildsInput): PlayState 
       selectedAssetId: sealed.id,
       selectedCardId: nearest.card.id,
       streak: state.streak + 1
-    });
+    }, "capture"));
   }
 
   if (input.type === "train") {
@@ -891,7 +901,7 @@ export function applyWildsInput(state: PlayState, input: WildsInput): PlayState 
       bond: Math.min(100, currentProgress.bond + 1)
     };
 
-    const trained = withWorldProgress({
+    const trained = withWorldProgress(awardWorldMastery({
       ...state,
       activeAction: "train",
       beans: state.beans + 4,
@@ -908,7 +918,7 @@ export function applyWildsInput(state: PlayState, input: WildsInput): PlayState 
       selectedAssetId: [...state.inventory].reverse().find((asset) => asset.manifest.familyId === targetCardId)?.id ?? state.selectedAssetId,
       selectedCardId: targetCardId,
       streak: state.streak + 1
-    });
+    }, "training"));
     const progressed = applyRecordedGrowth(trained, targetAsset, {
       eventId: `bond_moment:${targetAsset.id}:${trainedAt}`,
       kind: "bond_moment",
@@ -927,7 +937,7 @@ export function applyWildsInput(state: PlayState, input: WildsInput): PlayState 
   const nextProgress = Math.min(100, state.missionProgress + progressGain);
   const earnedReward = nextProgress >= 100 && !state.rewardCards.some((reward) => reward.id === "merchant-perk");
 
-  return withWorldProgress({
+  return withWorldProgress(awardWorldMastery({
     ...state,
     activeAction: "mission",
     beans: state.beans + 10,
@@ -956,7 +966,7 @@ export function applyWildsInput(state: PlayState, input: WildsInput): PlayState 
       ? Array.from(new Set([...state.completedMissionIds, "daily-expedition"]))
       : state.completedMissionIds,
     streak: state.streak + 1
-  });
+  }, "mission"));
 }
 
 function withWorldProgress(state: PlayState): PlayState {
