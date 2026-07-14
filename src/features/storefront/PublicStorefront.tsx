@@ -1042,16 +1042,18 @@ function MobileStage({
 function MobilePane({
   active,
   children,
+  className,
   title,
   action
 }: {
   active: boolean;
   children: ReactNode;
+  className?: string;
   title: string;
   action?: React.ReactNode;
 }) {
   return (
-    <section aria-hidden={!active} className={active ? "mobile-pane active" : "mobile-pane"}>
+    <section aria-hidden={!active} className={["mobile-pane", active && "active", className].filter(Boolean).join(" ")}>
       {active ? (
         <>
           <div className="mobile-pane-heading">
@@ -1957,7 +1959,7 @@ function MobilePlayPanel({
   campaign: ReactNode;
 }) {
   return (
-    <MobilePane active={active} action={<StatusPill tone="pink">Game on</StatusPill>} title="Play">
+    <MobilePane active={active} action={<StatusPill tone="pink">Game on</StatusPill>} className="mobile-play-pane" title="Play">
       <div className="mobile-play-wrap">
         {campaign}
       </div>

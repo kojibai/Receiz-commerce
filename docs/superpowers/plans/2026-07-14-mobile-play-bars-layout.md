@@ -60,7 +60,7 @@ function MobilePane({ active, children, className, title, action }: {
   action?: React.ReactNode;
 }) {
   return (
-    <section aria-hidden={!active} className={cx("mobile-pane", active && "active", className)}>
+    <section aria-hidden={!active} className={["mobile-pane", active && "active", className].filter(Boolean).join(" ")}>
 ```
 
 - [ ] **Step 4: Run the focused test and verify GREEN**
@@ -121,7 +121,8 @@ Within the mobile media query:
 .mobile-header > .icon-button { width: 36px; height: 36px; }
 .mobile-play-pane .mobile-pane-heading { min-height: 20px; height: 20px; }
 .mobile-play-pane .mobile-pane-heading h2 { font-size: 16px; }
-.mobile-play-pane .mobile-pane-heading .status-pill { padding: 3px 7px; font-size: 9px; }
+.mobile-play-pane .mobile-pane-heading .status-pill { min-height: 18px; padding: 2px 7px; font-size: 9px; }
+.mobile-play-pane.active { transform: none; }
 .mobile-play-wrap { padding-bottom: calc(var(--mobile-app-nav-height) + 80px); }
 .mobile-play-wrap .wilds-command-system {
   position: fixed;

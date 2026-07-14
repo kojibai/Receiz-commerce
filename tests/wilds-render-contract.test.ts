@@ -208,6 +208,7 @@ describe("Receiz Wilds rendering contract", () => {
     assert.doesNotMatch(cardExport, /function creatureMark/);
     assert.match(css, /\.heartbound-card-art\s*>\s*svg\s*\{[^}]*width:\s*100%;[^}]*height:\s*100%;[^}]*max-width:\s*100%;/s);
     assert.match(css, /\.wilds-command-dock\s*\{[^}]*grid-template-columns:\s*repeat\(4/s);
+    assert.match(css, /\.mobile-play-wrap \.wilds-command-system\s*\{[^}]*position:\s*fixed;[^}]*bottom:\s*calc\(var\(--mobile-app-nav-bottom\) \+ var\(--mobile-app-nav-height\) \+ 8px\)/s);
     assert.match(css, /\.wilds-command-badge/);
     assert.match(css, /\.wilds-command-sheet\s*\{[^}]*position:\s*absolute/s);
     assert.match(css, /env\(safe-area-inset-bottom\)/);

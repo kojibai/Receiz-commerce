@@ -6231,6 +6231,8 @@ a {
   }
 
   .commerce-app {
+    --mobile-app-nav-bottom: max(8px, env(safe-area-inset-bottom));
+    --mobile-app-nav-height: 56px;
     height: 100dvh;
     min-height: 100dvh;
     overflow: hidden;
@@ -6248,19 +6250,22 @@ a {
 
   .mobile-header {
     display: grid;
-    grid-template-columns: 46px minmax(0, 1fr) auto;
-    gap: 7px;
+    grid-template-columns: 38px minmax(0, 1fr) 36px;
+    gap: 6px;
     align-items: center;
-    min-height: 50px;
-    padding: 5px 10px;
+    height: 44px;
+    min-height: 44px;
+    padding: 2px 8px;
     background: rgba(255, 255, 255, 0.94);
   }
 
   .mobile-header .brand-mark {
-    width: 42px;
-    height: 42px;
-    padding: 5px;
+    width: 34px;
+    height: 34px;
+    padding: 4px;
   }
+
+  .mobile-header > .icon-button { width: 36px; height: 36px; }
 
   .mobile-header .brand-mark span {
     overflow: visible;
@@ -6313,7 +6318,7 @@ a {
   .mobile-stage {
     position: relative;
     display: block;
-    height: calc(100dvh - 58px);
+    height: calc(100dvh - 44px);
     padding: 0 12px;
     overflow: hidden;
   }
@@ -6365,6 +6370,21 @@ a {
     line-height: 1;
     overflow-wrap: anywhere;
   }
+
+  .mobile-play-pane .mobile-pane-heading {
+    min-height: 20px;
+    height: 20px;
+  }
+
+  .mobile-play-pane .mobile-pane-heading h2 { font-size: 16px; }
+
+  .mobile-play-pane .mobile-pane-heading .status-pill {
+    min-height: 18px;
+    padding: 2px 7px;
+    font-size: 9px;
+  }
+
+  .mobile-play-pane.active { transform: none; }
 
   .mobile-shop-hero {
     display: grid;
@@ -7235,7 +7255,15 @@ a {
   .mobile-play-wrap {
     min-height: 0;
     overflow: visible;
-    padding-bottom: 86px;
+    padding-bottom: calc(var(--mobile-app-nav-height) + 80px);
+  }
+
+  .mobile-play-wrap .wilds-command-system {
+    position: fixed;
+    right: 18px;
+    bottom: calc(var(--mobile-app-nav-bottom) + var(--mobile-app-nav-height) + 8px);
+    left: 18px;
+    z-index: 49;
   }
 
   .mobile-play-wrap .wilds-play-panel {
@@ -7643,12 +7671,13 @@ a {
   .bottom-nav {
     position: fixed;
     right: 12px;
-    bottom: max(8px, env(safe-area-inset-bottom));
+    bottom: var(--mobile-app-nav-bottom);
     left: 12px;
     z-index: 50;
     display: grid;
     grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: 4px;
+    min-height: var(--mobile-app-nav-height);
     padding: 8px;
     border: 1px solid var(--border);
     border-radius: 18px;
@@ -7913,15 +7942,16 @@ a {
   }
 
   .mobile-header {
-    grid-template-columns: 40px minmax(0, 1fr) 36px;
+    grid-template-columns: 38px minmax(0, 1fr) 36px;
     gap: 6px;
-    min-height: 46px;
-    padding: 4px 8px;
+    height: 44px;
+    min-height: 44px;
+    padding: 2px 8px;
   }
 
   .mobile-header .brand-mark {
-    width: 36px;
-    height: 36px;
+    width: 34px;
+    height: 34px;
     padding: 4px;
   }
 
@@ -7946,7 +7976,7 @@ a {
   }
 
   .mobile-stage {
-    height: calc(100dvh - 50px);
+    height: calc(100dvh - 44px);
     padding: 0 10px;
   }
 
@@ -8174,7 +8204,7 @@ a {
 
   .bottom-nav {
     right: 10px;
-    bottom: max(8px, env(safe-area-inset-bottom));
+    bottom: var(--mobile-app-nav-bottom);
     left: 10px;
     padding: 8px;
     border-radius: 16px;

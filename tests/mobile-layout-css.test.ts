@@ -6,6 +6,10 @@ const css = readFileSync("app/globals.css", "utf8");
 const storefront = readFileSync("src/features/storefront/PublicStorefront.tsx", "utf8");
 
 describe("mobile storefront layout CSS", () => {
+  it("gives the Play pane a dedicated compact-layout hook", () => {
+    assert.match(storefront, /<MobilePane active=\{active\} action=\{<StatusPill tone="pink">Game on<\/StatusPill>\} className="mobile-play-pane" title="Play">/);
+  });
+
   it("keeps the five-item storefront toolbar on one mobile row", () => {
     assert.match(css, /\.bottom-nav\s*\{[\s\S]*grid-template-columns:\s*repeat\(5,\s*minmax\(0,\s*1fr\)\);[\s\S]*\}/);
     assert.match(css, /\.bottom-nav button\s*\{[\s\S]*min-width:\s*0;[\s\S]*\}/);
@@ -26,7 +30,7 @@ describe("mobile storefront layout CSS", () => {
   });
 
   it("keeps the mobile account proof card compact above the cart", () => {
-    assert.match(css, /@media \(max-width:\s*760px\)\s*\{[\s\S]*\.mobile-header\s*\{[\s\S]*grid-template-columns:\s*46px minmax\(0,\s*1fr\) auto;[\s\S]*padding:\s*5px 10px;[\s\S]*\}/);
+    assert.match(css, /@media \(max-width:\s*760px\)\s*\{[\s\S]*\.mobile-header\s*\{[\s\S]*height:\s*44px;[\s\S]*min-height:\s*44px;[\s\S]*\}/);
     assert.match(css, /@media \(max-width:\s*760px\)\s*\{[\s\S]*\.mobile-pane-heading\s*\{[\s\S]*min-height:\s*26px;[\s\S]*\}/);
     assert.match(css, /@media \(max-width:\s*760px\)\s*\{[\s\S]*\.mobile-account-card\s*\{[\s\S]*gap:\s*5px;[\s\S]*padding:\s*6px;[\s\S]*\}/);
     assert.match(css, /@media \(max-width:\s*760px\)\s*\{[\s\S]*\.mobile-account-card \.large-avatar\s*\{[\s\S]*width:\s*36px;[\s\S]*height:\s*36px;[\s\S]*\}/);
@@ -35,10 +39,18 @@ describe("mobile storefront layout CSS", () => {
   });
 
   it("lets content flow behind the floating toolbar with clearance only at scroll end", () => {
-    assert.match(css, /\.mobile-stage\s*\{[^}]*height:\s*calc\(100dvh - 58px\);/s);
+    assert.match(css, /\.mobile-stage\s*\{[^}]*height:\s*calc\(100dvh - 44px\);/s);
     assert.doesNotMatch(css, /height:\s*calc\(100dvh - 78px - 90px\)/);
     assert.match(css, /\.mobile-pane\s*\{[^}]*padding-bottom:\s*max\(94px,\s*calc\(80px \+ env\(safe-area-inset-bottom\)\)\);/s);
-    assert.match(css, /\.bottom-nav\s*\{[^}]*bottom:\s*max\(8px,\s*env\(safe-area-inset-bottom\)\);/s);
+    assert.match(css, /\.bottom-nav\s*\{[^}]*bottom:\s*var\(--mobile-app-nav-bottom\);[^}]*min-height:\s*var\(--mobile-app-nav-height\);/s);
+  });
+
+  it("shares compact mobile chrome geometry with the fixed Wilds dock", () => {
+    assert.match(css, /\.commerce-app\s*\{[^}]*--mobile-app-nav-bottom:\s*max\(8px, env\(safe-area-inset-bottom\)\);[^}]*--mobile-app-nav-height:\s*56px/s);
+    assert.match(css, /\.mobile-play-pane \.mobile-pane-heading\s*\{[^}]*min-height:\s*20px;[^}]*height:\s*20px/s);
+    assert.match(css, /\.mobile-play-pane \.mobile-pane-heading \.status-pill\s*\{[^}]*min-height:\s*18px/s);
+    assert.match(css, /\.mobile-play-pane\.active\s*\{[^}]*transform:\s*none/s);
+    assert.match(css, /\.mobile-play-wrap \.wilds-command-system\s*\{[^}]*position:\s*fixed;[^}]*bottom:\s*calc\(var\(--mobile-app-nav-bottom\) \+ var\(--mobile-app-nav-height\) \+ 8px\);/s);
   });
 
   it("uses customer ownership language on the mobile assets page", () => {
