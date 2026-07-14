@@ -8,8 +8,9 @@ import {
   type CreatureStats
 } from "./creature-catalog";
 import { deriveCardVariant, displayCreatureName, variantSeedFor, type CardVariantTraits } from "./card-variant";
-import { admitLegacyCard, appendLivingCardRevision, currentRevision, verifyLivingCard } from "./living-card-proof";
+import { admitLegacyCard, appendLivingCardRevision, currentLivingGenome, currentRevision, verifyLivingCard } from "./living-card-proof";
 import { isLivingCardAsset, type LivingCardAsset } from "./living-card-types";
+import { deriveHeartboundPresentation } from "./heartbound-anime-genome";
 
 export type PortableCardStatus = "sealed_local" | "verified" | "listed" | "suspended" | "revoked";
 
@@ -276,6 +277,11 @@ export function evolvePortableCard(input: {
   if (!next || next.evolvesFromId !== living.manifest.formId) throw new Error("wilds_evolution_lineage_invalid");
   if (!Number.isFinite(Date.parse(input.evolvedAt))) throw new Error("wilds_evolution_time_invalid");
   const prior = currentRevision(living);
+  const currentGenome = currentLivingGenome(living);
+  const nextAnatomy = { ...next.anatomy };
+  const nextPresentation = currentGenome.generatorVersion === 3
+    ? deriveHeartboundPresentation({ genome: { ...currentGenome, anatomy: nextAnatomy, presentation: undefined }, stage: next.stage, ascensionRank: prior.ascensionRank })
+    : undefined;
   return appendLivingCardRevision({
     asset: living,
     revision: {
@@ -289,7 +295,8 @@ export function evolvePortableCard(input: {
       qualifyingAchievementIds: [],
       consumedCatalystId: `catalog-stage:${next.id}`,
       genomeDelta: {
-        anatomy: { ...next.anatomy },
+        anatomy: nextAnatomy,
+        ...(nextPresentation ? { presentation: nextPresentation } : {}),
         provenance: {
           ...living.manifest.birthGenome.provenance,
           skeleton: "ascension",

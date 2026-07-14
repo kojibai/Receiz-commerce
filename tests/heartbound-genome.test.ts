@@ -58,8 +58,10 @@ describe("Heartbound living genome", () => {
     assert.ok(Object.values(child.provenance).includes("parent_b"));
     assert.notEqual(child.face.identityAnchor, parentA.face.identityAnchor);
     assert.notEqual(child.face.identityAnchor, parentB.face.identityAnchor);
-    assert.equal(child.generatorVersion, 2);
+    assert.equal(child.generatorVersion, 3);
     assert.ok(child.identity);
+    assert.equal(child.presentation?.archetype, "hybrid");
+    assert.match(child.presentation?.signature ?? "", /^sha256:[a-f0-9]{64}$/);
     assert.equal(child.identity?.faceGeometry.head, parentB.identity?.faceGeometry.head);
     assert.equal(child.identity?.body.build, parentA.identity?.body.build);
     assert.equal(child.identity?.appendageMorphs.tail, parentB.identity?.appendageMorphs.tail);

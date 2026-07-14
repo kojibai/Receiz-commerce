@@ -35,6 +35,12 @@ describe("Heartbound full-body renderer", () => {
     const first = renderHeartboundSvg(genome, "card", { width: 640, height: 405, title: "SealCub" });
     assert.equal(renderHeartboundSvg(genome, "card", { width: 640, height: 405, title: "SealCub" }), first);
     assert.match(first, /data-heartbound="heroic-companion"/);
+    assert.match(first, /data-presentation-signature="sha256:[a-f0-9]{64}"/);
+    assert.match(first, /data-template="[a-z-]+"/);
+    assert.match(first, /data-archetype="[a-z-]+"/);
+    assert.match(first, /data-maturity="baby"/);
+    assert.match(first, /data-anime-eyes=/);
+    assert.match(first, /data-friendly-mouth=/);
     assert.match(first, /data-slot="torso"/);
     assert.match(first, /data-slot="head"/);
     assert.match(first, /aria-label="SealCub full-body companion"/);
@@ -46,6 +52,13 @@ describe("Heartbound full-body renderer", () => {
 
     assert.match(framed, /data-framing="full-body"/);
     assert.match(framed, /scale\(0\.[0-9]+\)/);
+  });
+
+  it("keeps the authored baby face prominent without covering its body", () => {
+    const head = slotMarkup(renderHeartboundSvg(genome, "card", { width: 640, height: 405, title: "SealCub" }), "head");
+    const scale = Number(head.match(/scale\(([0-9.]+)\)/)?.[1]);
+
+    assert.ok(scale >= .78 && scale <= 1.05);
   });
 
   it("renders structurally different faces, bodies, markings, and behavior", () => {

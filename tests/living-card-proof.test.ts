@@ -30,8 +30,9 @@ describe("Wilds living card proof chain", () => {
     assert.equal(living.manifest.birth.legacyDigest, legacy.proof.digest);
     assert.equal(living.manifest.currentRevision, 0);
     assert.equal(living.manifest.revisions.length, 1);
-    assert.equal(living.manifest.birthGenome.generatorVersion, 2);
-    assert.equal(living.manifest.revisions[0]?.rendererVersion, 2);
+    assert.equal(living.manifest.birthGenome.generatorVersion, 3);
+    assert.equal(living.manifest.revisions[0]?.rendererVersion, 3);
+    assert.match(living.manifest.birthGenome.presentation?.signature ?? "", /^sha256:[a-f0-9]{64}$/);
     assert.equal(verifyLivingCard(living).ok, true);
   });
 
@@ -42,6 +43,16 @@ describe("Wilds living card proof chain", () => {
 
     assert.equal(living.manifest.birthGenome.generatorVersion, 1);
     assert.equal(living.manifest.revisions[0]?.rendererVersion, 1);
+    assert.equal(verifyLivingCard(living).ok, true);
+  });
+
+  it("keeps explicitly admitted version-two living cards verifiable", () => {
+    const legacy = sealCollectedCard({ formId: "mintcub-1", ownerReceizId: "player.receiz.id", encounterId: "living-card-v2", capturedAt: T0 });
+    const genome = deriveBirthGenome({ formId: legacy.manifest.formId, proofDigest: legacy.proof.digest, variant: legacy.manifest.variant.traits }, { generatorVersion: 2 });
+    const living = admitLegacyCard(legacy, T0, { birthGenome: genome });
+
+    assert.equal(living.manifest.birthGenome.generatorVersion, 2);
+    assert.equal(living.manifest.revisions[0]?.rendererVersion, 2);
     assert.equal(verifyLivingCard(living).ok, true);
   });
 

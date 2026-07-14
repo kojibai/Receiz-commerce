@@ -1,6 +1,7 @@
 import { canonicalPortableCardJson, sha256PortableBasis } from "./portable-card";
 import type { LivingCardGenome } from "./living-card-types";
 import { renderAppendages, renderEyes, renderHeadShape, renderLimbs, renderMarkings, renderMouth, renderTorso } from "./heartbound-shapes";
+import { animeHeartboundMarkup } from "./heartbound-anime-shapes";
 
 export type HeartboundPose = "idle" | "card" | "walk" | "run" | "battle" | "damage" | "celebrate" | "bond" | "transform";
 export type HeartboundSlot =
@@ -45,6 +46,17 @@ function legacyHeartboundLayers(genome: LivingCardGenome, pose: HeartboundPose):
 }
 
 export function heartboundLayers(genome: LivingCardGenome, pose: HeartboundPose): HeartboundLayer[] {
+  if (genome.generatorVersion === 3 && genome.presentation) {
+    const art = animeHeartboundMarkup(genome, genome.presentation, pose);
+    return [
+      layer("aura_back", art.auraBack), layer("tail", art.tail),
+      layer("left_hindlimb", art.hind), layer("right_hindlimb", ""),
+      layer("torso", art.torso), layer("left_forelimb", art.fore), layer("right_forelimb", ""),
+      layer("neck_ruff", art.neck), layer("ears_back", art.ears), layer("head", art.head),
+      layer("face_markings", art.markings), layer("eyes", art.eyes), layer("mouth", art.mouth),
+      layer("crest_front", art.crest), layer("aura_front", art.auraFront)
+    ];
+  }
   if (genome.generatorVersion !== 2 || !genome.identity) return legacyHeartboundLayers(genome, pose);
   const identity = genome.identity;
   const p = genome.palette;
@@ -75,10 +87,12 @@ export function renderHeartboundSvg(genome: LivingCardGenome, pose: HeartboundPo
   const framing = options.fit ?? "native";
   const scale = framing === "full-body" ? Number((genome.variant.bodyScale * 0.82).toFixed(3)) : genome.variant.bodyScale;
   const identity = genome.identity;
+  const presentation = genome.presentation;
+  const presentationAttributes = presentation ? ` data-presentation-signature="${presentation.signature}" data-template="${presentation.template}" data-archetype="${presentation.archetype}" data-maturity="${presentation.maturity}"` : "";
   const identityAttributes = identity ? ` data-identity-signature="${identity.signature}" data-body-build="${identity.body.build}" data-locomotion="${identity.family.locomotion}" style="--heartbound-blink:${identity.behavior.blinkMs}ms;--heartbound-idle:${genome.behavior.idleCadenceMs}ms;--heartbound-gesture:${Math.round((identity.behavior.blinkMs + genome.behavior.idleCadenceMs) / 2)}ms"` : "";
-  return `<svg xmlns="http://www.w3.org/2000/svg" data-heartbound="heroic-companion"${identityAttributes} width="${options.width}" height="${options.height}" viewBox="0 0 560 440" role="img" aria-label="${xml(options.title)} full-body companion"><g data-framing="${framing}" transform="translate(0 8) scale(${scale})" transform-origin="280px 220px">${body}</g></svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" data-heartbound="heroic-companion"${identityAttributes}${presentationAttributes} width="${options.width}" height="${options.height}" viewBox="0 0 560 440" role="img" aria-label="${xml(options.title)} full-body companion"><g data-framing="${framing}" transform="translate(0 8) scale(${scale})" transform-origin="280px 220px">${body}</g></svg>`;
 }
 
 export function renderedHeartboundDigest(genome: LivingCardGenome, pose: HeartboundPose, title: string) {
-  return sha256PortableBasis(canonicalPortableCardJson({ renderer: "heartbound.v1", pose, title, genome }));
+  return sha256PortableBasis(canonicalPortableCardJson({ renderer: genome.generatorVersion === 3 ? "heartbound.v3" : "heartbound.v1", pose, title, genome }));
 }

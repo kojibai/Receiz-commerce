@@ -33,6 +33,9 @@ describe("Wilds card export", () => {
     assert.match(svg, /Voltray Bond/);
     assert.match(svg, /sha256:[a-f0-9]{64}/);
     assert.match(svg, /id="card-qr"/);
+    assert.match(svg, /data-presentation-signature="sha256:[a-f0-9]{64}"/);
+    assert.match(svg, /data-archetype="[a-z-]+"/);
+    assert.match(svg, /data-maturity="baby"/);
     assert.match(svg, /QR link to standalone card page/);
     const premiumQr = svg.match(/data-premium-qr="true" data-module-grid="crisp-vector" data-qr-size="(\d+)"/);
     assert.ok(premiumQr);

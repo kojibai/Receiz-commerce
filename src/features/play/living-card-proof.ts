@@ -1,6 +1,6 @@
 import { displayCreatureName } from "./card-variant";
 import { creatureForm } from "./creature-catalog";
-import { deriveBirthGenome, genomeDigest, mergeLivingGenome } from "./heartbound-genome";
+import { deriveBirthGenome, genomeDigest, mergeLivingGenome, validateGenome } from "./heartbound-genome";
 import {
   canonicalPortableCardJson,
   sha256PortableBasis,
@@ -43,11 +43,13 @@ export function livingGenomeDigest(genome: LivingCardGenome) {
 }
 
 function renderedArtDigest(genome: LivingCardGenome, formId: string, title: string) {
-  return sha256PortableBasis(canonicalPortableCardJson({ renderer: 1, genome, formId, title }));
+  return sha256PortableBasis(canonicalPortableCardJson(genome.generatorVersion === 3
+    ? { renderer: 3, presentationSignature: genome.presentation?.signature, genome, formId, title }
+    : { renderer: 1, genome, formId, title }));
 }
 
-function rendererVersionForGenome(genome: LivingCardGenome): 1 | 2 {
-  return genome.generatorVersion === 2 ? 2 : 1;
+function rendererVersionForGenome(genome: LivingCardGenome): 1 | 2 | 3 {
+  return genome.generatorVersion;
 }
 
 function revisionBasis(revision: LivingCardRevision) {
@@ -212,6 +214,7 @@ export function verifyLivingCard(asset: LivingCardAsset): PortableCardVerificati
     const expectedDigest = sha256PortableBasis(canonicalPortableCardJson(revisionBasis(revision)));
     if (revision.digest !== expectedDigest) errors.push("revision_digest_invalid");
     genome = mergeGenome(genome, revision.genomeDelta);
+    if (!validateGenome(genome).ok) errors.push("revision_genome_contract_invalid");
     if (revision.rendererVersion !== rendererVersionForGenome(genome)) errors.push("revision_renderer_version_invalid");
     if (revision.genomeDigest !== livingGenomeDigest(genome)) errors.push("revision_genome_invalid");
     if (revision.renderedArtDigest !== renderedArtDigest(genome, revision.formId, revision.title)) errors.push("revision_art_invalid");

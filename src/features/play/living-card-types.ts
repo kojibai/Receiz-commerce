@@ -1,5 +1,6 @@
 import type { CardVariantTraits } from "./card-variant";
 import type { CreatureFoil, CreatureRarity, CreatureStage, CreatureStats } from "./creature-catalog";
+import type { HeartboundPresentationV3 } from "./heartbound-anime-types";
 
 export type GrowthPath = "bond" | "battle" | "exploration" | "legacy" | "community" | "character";
 export type TraitSource = "birth" | "parent_a" | "parent_b" | "blended" | "mutation" | "ascension";
@@ -83,8 +84,9 @@ export type LivingGrowthSnapshot = {
 };
 
 export type LivingCardGenome = {
-  generatorVersion: 1 | 2;
+  generatorVersion: 1 | 2 | 3;
   identity?: HeartboundIdentityV2;
+  presentation?: HeartboundPresentationV3;
   identityAnchor: string;
   skeleton: {
     locomotion: "biped" | "quadruped" | "serpentine" | "flying";
@@ -135,7 +137,7 @@ export type LivingCardRevision = {
   stats: CreatureStats;
   abilityNames: readonly [string, string];
   title: string;
-  rendererVersion: 1 | 2;
+  rendererVersion: 1 | 2 | 3;
   renderedArtDigest: string;
   childEventIds: string[];
 };

@@ -35,6 +35,8 @@ describe("Living card character and proof dossier", () => {
     assert.ok(dossier.personality.careCues.length >= 2);
     assert.ok(dossier.gameplay.strengths.length >= 2);
     assert.ok(dossier.dna.identityFingerprint.length > 20);
+    assert.ok(dossier.dna.presentation.includes("Hybrid"));
+    assert.ok(dossier.dna.presentation.includes("Baby"));
     assert.equal(dossier.lineage.parents.length, 2);
     assert.equal(dossier.verification.ok, true);
     assert.equal(dossier.verification.checks.every((check) => check.status === "pass"), true);

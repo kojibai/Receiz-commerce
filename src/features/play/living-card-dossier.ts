@@ -33,6 +33,7 @@ export type LivingCardDossier = {
     genomeDigest: string;
     generatorVersion: number;
     rendererVersion: number;
+    presentation: string[];
     face: string[];
     body: string[];
     appendages: string[];
@@ -105,6 +106,7 @@ export function projectLivingCardDossier(asset: PortableCardAsset, origin: strin
   const face = identity.faceGeometry;
   const temperament = genome.face.expressionSet;
   const gesture = identity.behavior.gesture;
+  const presentation = genome.presentation;
   const powerEntries = Object.entries(asset.manifest.stats).sort((a, b) => b[1] - a[1]);
   return {
     story: storyFor(asset, temperament, gesture),
@@ -137,7 +139,10 @@ export function projectLivingCardDossier(asset: PortableCardAsset, origin: strin
       identityFingerprint: identity.signature,
       genomeDigest: revision?.genomeDigest ?? identity.signature,
       generatorVersion: genome.generatorVersion,
-      rendererVersion: revision?.rendererVersion ?? (genome.generatorVersion === 2 ? 2 : 1),
+      rendererVersion: revision?.rendererVersion ?? genome.generatorVersion,
+      presentation: presentation
+        ? [title(presentation.archetype), title(presentation.template), title(presentation.maturity), `${presentation.face.catchlights} catchlights`, ...presentation.corrections.map((correction) => `${title(correction.trait)}: ${title(correction.resolved)}`)]
+        : ["Historical Heartbound presentation"],
       face: [title(face.head), `${face.eyeSize}× ${title(face.pupil)} eyes`, `${face.cheek} cheek`, `${face.muzzle} muzzle`, title(face.brow)],
       body: [title(body.build), title(identity.family.locomotion), `${body.torso} torso`, `${body.limb} limb`, `${body.paw} paw`],
       appendages: Object.entries(identity.appendageMorphs).map(([key, value]) => `${title(key)}: ${title(value)}`),

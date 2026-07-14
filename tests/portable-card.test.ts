@@ -8,6 +8,7 @@ import {
   verifyAnyWildsCard,
   verifyPortableCard
 } from "../src/features/play/portable-card.js";
+import { currentLivingGenome } from "../src/features/play/living-card-proof.js";
 
 const NOW = "2026-07-13T15:00:00.000Z";
 
@@ -86,6 +87,8 @@ describe("Wilds portable cards", () => {
     assert.equal(evolved.manifest.currentRevision, 1);
     assert.equal(evolved.manifest.revisions.length, 2);
     assert.equal(evolved.manifest.birth.legacyDigest, base.proof.digest);
+    assert.equal(currentLivingGenome(evolved).presentation?.maturity, "adolescent");
+    assert.equal(currentLivingGenome(evolved).presentation?.identityAnchors.face, evolved.manifest.birthGenome.presentation?.identityAnchors.face);
   });
 
   it("projects only synchronized cards into verified Exchange assets", () => {

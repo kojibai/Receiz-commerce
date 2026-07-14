@@ -3,6 +3,7 @@ import { canonicalPortableCardJson, sha256PortableBasis } from "./portable-card"
 import type { CardVariantTraits } from "./card-variant";
 import type { GenomeTraitKey, GrowthPath, LivingCardGenome, TraitSource } from "./living-card-types";
 import { deriveHeartboundIdentity, identityForGenome, sealHeartboundIdentity, validateHeartboundIdentity } from "./heartbound-identity";
+import { deriveHeartboundPresentation, validateHeartboundPresentation } from "./heartbound-anime-genome";
 
 const sources = (source: TraitSource): Record<GenomeTraitKey, TraitSource> => ({
   skeleton: source, face: source, appendages: source, surface: source,
@@ -22,16 +23,16 @@ function bounded(value: number, min = 0.65, max = 1.45) {
   return Number(Math.max(min, Math.min(max, value)).toFixed(3));
 }
 
-export function deriveBirthGenome(input: { formId: string; proofDigest: string; variant: CardVariantTraits }, options: { generatorVersion?: 1 | 2 } = {}): LivingCardGenome {
+export function deriveBirthGenome(input: { formId: string; proofDigest: string; variant: CardVariantTraits }, options: { generatorVersion?: 1 | 2 | 3 } = {}): LivingCardGenome {
   const form = creatureForm(input.formId);
   if (!form || !/^sha256:[a-f0-9]{64}$/.test(input.proofDigest)) throw new Error("wilds_genome_birth_invalid");
   const seed = sha256PortableBasis(canonicalPortableCardJson({ generator: "heartbound.v1", ...input }));
   const locomotion = form.anatomy.body === "serpentine" ? "serpentine" : form.anatomy.body === "winged" ? "flying" : form.anatomy.body === "long" ? "quadruped" : "biped";
   const identityAnchor = sha256PortableBasis(`${input.proofDigest}:heartbound-face`).slice(7, 31);
   const detail = form.anatomy.detail;
-  const generatorVersion = options.generatorVersion ?? 2;
-  const identity = generatorVersion === 2 ? deriveHeartboundIdentity(input.proofDigest, { familyId: form.familyId, locomotion, signatureDetail: detail }) : undefined;
-  return {
+  const generatorVersion = options.generatorVersion ?? 3;
+  const identity = generatorVersion >= 2 ? deriveHeartboundIdentity(input.proofDigest, { familyId: form.familyId, locomotion, signatureDetail: detail }) : undefined;
+  const genome: LivingCardGenome = {
     generatorVersion,
     ...(identity ? { identity } : {}),
     identityAnchor,
@@ -57,6 +58,8 @@ export function deriveBirthGenome(input: { formId: string; proofDigest: string; 
     variant: { ...input.variant, palette: { ...input.variant.palette } },
     provenance: sources("birth")
   };
+  if (generatorVersion === 3) genome.presentation = deriveHeartboundPresentation({ genome, stage: form.stage, ascensionRank: 0, proofDigest: input.proofDigest });
+  return genome;
 }
 
 export function genomeDigest(genome: LivingCardGenome) {
@@ -65,9 +68,11 @@ export function genomeDigest(genome: LivingCardGenome) {
 
 export function validateGenome(genome: LivingCardGenome) {
   const errors: string[] = [];
-  if ((genome.generatorVersion !== 1 && genome.generatorVersion !== 2) || genome.face.identityAnchor !== genome.identityAnchor) errors.push("identity_invalid");
-  if (genome.generatorVersion === 2 && (!genome.identity || !validateHeartboundIdentity(genome.identity).ok)) errors.push("advanced_identity_invalid");
+  if (![1, 2, 3].includes(genome.generatorVersion) || genome.face.identityAnchor !== genome.identityAnchor) errors.push("identity_invalid");
+  if (genome.generatorVersion >= 2 && (!genome.identity || !validateHeartboundIdentity(genome.identity).ok)) errors.push("advanced_identity_invalid");
   if (genome.generatorVersion === 1 && genome.identity) errors.push("legacy_identity_invalid");
+  if (genome.generatorVersion === 3 && (!genome.presentation || !validateHeartboundPresentation(genome.presentation).ok)) errors.push("presentation_invalid");
+  if (genome.generatorVersion < 3 && genome.presentation) errors.push("unexpected_presentation");
   for (const value of [genome.skeleton.head, genome.skeleton.torso, genome.skeleton.limb]) if (!Number.isFinite(value) || value < 0.65 || value > 1.45) errors.push("proportion_invalid");
   if (!genome.palette.primary || !genome.palette.accent || !genome.behavior.signatureGesture) errors.push("render_trait_missing");
   if (Object.keys(genome.provenance).length !== 8) errors.push("provenance_invalid");
@@ -78,7 +83,7 @@ export function deriveAscensionGenome(input: { previous: LivingCardGenome; rank:
   if (!validateGenome(input.previous).ok || !Number.isSafeInteger(input.rank) || input.rank < 1) throw new Error("wilds_ascension_genome_invalid");
   const seed = sha256PortableBasis(canonicalPortableCardJson({ prior: genomeDigest(input.previous), ...input, previous: undefined }));
   const battle = input.path === "battle";
-  return {
+  const ascended: LivingCardGenome = {
     ...input.previous,
     skeleton: {
       ...input.previous.skeleton,
@@ -89,7 +94,9 @@ export function deriveAscensionGenome(input: { previous: LivingCardGenome; rank:
     auraProfile: { ...input.previous.auraProfile, intensity: bounded(input.previous.auraProfile.intensity + 0.02, 0.2, 1.45) },
     surface: { ...input.previous.surface, pattern: `${input.previous.surface.pattern}-a${input.rank}` },
     provenance: { ...input.previous.provenance, skeleton: "ascension", stance: "ascension", aura: "ascension", surface: "ascension" }
-  } satisfies LivingCardGenome;
+  };
+  if (ascended.generatorVersion === 3) ascended.presentation = deriveHeartboundPresentation({ genome: ascended, stage: 3, ascensionRank: input.rank });
+  return ascended;
 }
 
 function mixColor(a: string, b: string, seed: string) {
@@ -124,9 +131,9 @@ export function deriveFusionGenome(input: { parentA: LivingCardGenome; parentB: 
       celebration: identityB.behavior.celebration
     }
   });
-  return {
+  const child: LivingCardGenome = {
     ...input.parentA,
-    generatorVersion: 2,
+    generatorVersion: 3,
     identity: childIdentity,
     identityAnchor,
     skeleton: { ...input.parentA.skeleton },
@@ -141,14 +148,18 @@ export function deriveFusionGenome(input: { parentA: LivingCardGenome; parentB: 
     },
     behavior: { ...input.parentA.behavior, signatureGesture: input.parentB.behavior.signatureGesture },
     auraProfile: { ...input.parentB.auraProfile, particle: `child-${seed.slice(7, 13)}` },
-    provenance: { skeleton: "parent_a", face: "parent_b", appendages: "parent_b", surface: "blended", palette: "blended", behavior: "parent_a", aura: "parent_b", stance: "parent_a" }
-  } satisfies LivingCardGenome;
+    provenance: { skeleton: "parent_a", face: "parent_b", appendages: "parent_b", surface: "blended", palette: "blended", behavior: "parent_a", aura: "parent_b", stance: "parent_a" },
+    presentation: undefined
+  };
+  child.presentation = deriveHeartboundPresentation({ genome: child, stage: 1, ascensionRank: 0, proofDigest: seed });
+  return child;
 }
 
 export function mergeLivingGenome(previous: LivingCardGenome, delta: Partial<LivingCardGenome>): LivingCardGenome {
   return {
     ...previous,
     ...delta,
+    presentation: delta.presentation ?? previous.presentation,
     skeleton: { ...previous.skeleton, ...(delta.skeleton ?? {}) },
     face: { ...previous.face, ...(delta.face ?? {}) },
     appendages: { ...previous.appendages, ...(delta.appendages ?? {}) },
