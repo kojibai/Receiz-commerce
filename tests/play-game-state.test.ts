@@ -38,7 +38,17 @@ describe("Receiz Wilds game state", () => {
     assert.equal(fused.inventory.some((asset) => asset.id === ready.inventory[0]!.id), true);
     assert.equal(fused.inventory.some((asset) => asset.id === second.id), true);
     assert.equal(fused.fusionSparks, ready.fusionSparks - 1);
+    assert.equal(fused.selectedAssetId, fused.inventory.at(-1)?.id);
     assert.equal(replay.inventory.length, fused.inventory.length);
+  });
+
+  it("selects any exact inventory asset as the active battle card", () => {
+    const uploaded = sealCollectedCard({ formId: "voltray-1", ownerReceizId: "wilds.player.receiz.id", encounterId: "active-upload", capturedAt: "2026-07-13T16:00:00.000Z" });
+    const inventory = applyWildsInput(initialPlayState, { type: "import-card", asset: uploaded });
+    const selected = applyWildsInput(inventory, { type: "select-asset", assetId: uploaded.id });
+    assert.equal(selected.selectedAssetId, uploaded.id);
+    assert.equal(selected.selectedCardId, uploaded.manifest.familyId);
+    assert.match(selected.lastEvent, /leading your active deck/i);
   });
 
   it("moves the player into range and collects a new companion card", () => {

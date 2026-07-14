@@ -83,6 +83,8 @@ describe("Receiz Wilds rendering contract", () => {
     assert.match(inventory, /type="search"/);
     assert.match(inventory, /INVENTORY_PAGE_SIZE = 36/);
     assert.match(inventory, /downloadPortableCard/);
+    assert.match(inventory, /Set as active deck leader/);
+    assert.match(inventory, /type: "select-asset"/);
     assert.match(inventory, /type: "evolve"/);
     assert.match(card, /wilds-card-foil/);
     assert.match(css, /@media \(prefers-reduced-motion: reduce\)[\s\S]*\.wilds-capture-capsule/);

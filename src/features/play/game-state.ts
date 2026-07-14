@@ -31,6 +31,7 @@ export type WildsInput =
   | { type: "mission" }
   | { type: "rest" }
   | { type: "select-card"; cardId: string }
+  | { type: "select-asset"; assetId: string }
   | { type: "reset" };
 
 export type Vec3 = readonly [number, number, number];
@@ -94,6 +95,7 @@ export type PlayState = {
   pendingSyncAssetIds: string[];
   rewardCards: RewardCard[];
   selectedCardId: string;
+  selectedAssetId: string;
   streak: number;
   bossUnlocked: boolean;
   battle: BattleState | null;
@@ -192,6 +194,13 @@ export const missionCards: MissionCard[] = [
   }
 ];
 
+const starterCardAsset = sealCollectedCard({
+  formId: "mintcub-1",
+  ownerReceizId: "wilds.player.receiz.id",
+  encounterId: "starter-mintcub",
+  capturedAt: "2026-06-29T12:00:00.000Z"
+});
+
 export const initialPlayState: PlayState = {
   activeAction: "explore",
   beans: 28,
@@ -205,18 +214,7 @@ export const initialPlayState: PlayState = {
   discoveredCardIds: ["mintcub"],
   energy: 84,
   encounter: idleEncounterState,
-  inventory: [
-    {
-      ...sealCollectedCard({
-        formId: "mintcub-1",
-        ownerReceizId: "wilds.player.receiz.id",
-        encounterId: "starter-mintcub",
-        capturedAt: "2026-06-29T12:00:00.000Z"
-      }),
-      status: "verified",
-      synchronizedAt: "2026-06-29T12:00:00.000Z"
-    }
-  ],
+  inventory: [{ ...starterCardAsset, status: "verified", synchronizedAt: "2026-06-29T12:00:00.000Z" }],
   lastEvent: "SealCub joined your deck. Walk near another wild companion.",
   level: 7,
   missionProgress: 38,
@@ -228,6 +226,7 @@ export const initialPlayState: PlayState = {
   pendingSyncAssetIds: [],
   rewardCards: [],
   selectedCardId: "mintcub",
+  selectedAssetId: starterCardAsset.id,
   streak: 9,
   bossUnlocked: false,
   battle: null,
@@ -268,6 +267,9 @@ export function restorePlayState(value: string | null | undefined): PlayState {
       return [...assets, sealed];
     }, restoredInventory);
     const restoredEncounter = restoreEncounter(saved.encounter);
+    const restoredSelectedAssetId = typeof saved.selectedAssetId === "string" && migratedInventory.some((asset) => asset.id === saved.selectedAssetId)
+      ? saved.selectedAssetId
+      : [...migratedInventory].reverse().find((asset) => asset.manifest.familyId === saved.selectedCardId)?.id ?? migratedInventory[0]?.id ?? starterCardAsset.id;
     return withWorldProgress({
       ...initialPlayState,
       ...saved,
@@ -277,6 +279,7 @@ export function restorePlayState(value: string | null | undefined): PlayState {
       },
       discoveredCardIds,
       inventory: migratedInventory,
+      selectedAssetId: restoredSelectedAssetId,
       capturedHotspotIds: Array.isArray(saved.capturedHotspotIds)
         ? saved.capturedHotspotIds.filter((id): id is string => typeof id === "string")
         : [],
@@ -311,7 +314,12 @@ function restoreEncounter(value: unknown): EncounterState {
 }
 
 export function selectedCard(state: PlayState) {
-  return creatureCards.find((card) => card.id === state.selectedCardId) ?? creatureCards[0];
+  const asset = selectedAsset(state);
+  return creatureCards.find((card) => card.id === (asset?.manifest.familyId ?? state.selectedCardId)) ?? creatureCards[0];
+}
+
+export function selectedAsset(state: PlayState) {
+  return state.inventory.find((asset) => asset.id === state.selectedAssetId) ?? state.inventory.find((asset) => asset.manifest.familyId === state.selectedCardId) ?? state.inventory[0];
 }
 
 export function discoveredCards(state: PlayState) {
@@ -339,13 +347,14 @@ export function applyWildsInput(state: PlayState, input: WildsInput): PlayState 
     const asset = input.asset;
     if (!verifyPortableCard(asset).ok) return { ...state, lastEvent: "That PNG did not pass the offline card verifier." };
     if (state.inventory.some((candidate) => candidate.id === asset.id)) {
-      return { ...state, selectedCardId: asset.manifest.familyId, lastEvent: `${asset.manifest.name} is already in your inventory.` };
+      return { ...state, selectedAssetId: asset.id, selectedCardId: asset.manifest.familyId, lastEvent: `${asset.manifest.name} is already in your inventory and now leads your active deck.` };
     }
     const discoveredCardIds = Array.from(new Set([...state.discoveredCardIds, asset.manifest.familyId]));
     return withWorldProgress({
       ...state,
       discoveredCardIds,
       inventory: [...state.inventory, asset],
+      selectedAssetId: asset.id,
       selectedCardId: asset.manifest.familyId,
       lastEvent: `${asset.manifest.name} passed offline verification and joined your playable inventory.`
     });
@@ -374,6 +383,7 @@ export function applyWildsInput(state: PlayState, input: WildsInput): PlayState 
       fusionCooldowns: { ...state.fusionCooldowns, [parentA.id]: cooldown, [parentB.id]: cooldown },
       inventory: [...state.inventory, child],
       pendingSyncAssetIds: [...state.pendingSyncAssetIds, child.id],
+      selectedAssetId: child.id,
       selectedCardId: child.manifest.familyId,
       lastEvent: `${parentA.manifest.name} and ${parentB.manifest.name} created ${child.manifest.name}. Both parents remain usable.`
     };
@@ -387,8 +397,8 @@ export function applyWildsInput(state: PlayState, input: WildsInput): PlayState 
   if (input.type === "start-battle") {
     if (state.encounter.phase !== "battle_intro" || !state.encounter.formId || !state.encounter.hotspotId) return state;
     const wild = creatureForm(state.encounter.formId);
-    const playerAsset = [...state.inventory].reverse().find((asset) => asset.manifest.familyId === state.selectedCardId && verifyPortableCard(asset).ok);
-    if (!wild || !playerAsset) return { ...state, encounter: { ...state.encounter, phase: "defeated" }, lastEvent: "No verified playable card was available for battle." };
+    const playerAsset = selectedAsset(state);
+    if (!wild || !playerAsset || !verifyPortableCard(playerAsset).ok) return { ...state, encounter: { ...state.encounter, phase: "defeated" }, lastEvent: "No verified playable card was available for battle." };
     const battle = startWildBattle({
       encounterSeed: state.encounter.hotspotId,
       player: { assetId: playerAsset.id, name: playerAsset.manifest.name, ...playerAsset.manifest.stats, health: playerAsset.manifest.stats.health * 2 },
@@ -470,6 +480,7 @@ export function applyWildsInput(state: PlayState, input: WildsInput): PlayState 
       level: nextDiscovered.length >= 3 ? Math.max(state.level, 8) : state.level,
       missionProgress: Math.min(100, state.missionProgress + 12),
       pendingSyncAssetIds: [...state.pendingSyncAssetIds, sealed.id],
+      selectedAssetId: sealed.id,
       selectedCardId: sealed.manifest.familyId,
       streak: state.streak + 1
     });
@@ -513,10 +524,23 @@ export function applyWildsInput(state: PlayState, input: WildsInput): PlayState 
 
   if (input.type === "select-card") {
     if (!state.discoveredCardIds.includes(input.cardId)) return state;
+    const asset = [...state.inventory].reverse().find((candidate) => candidate.manifest.familyId === input.cardId);
     return {
       ...state,
+      selectedAssetId: asset?.id ?? state.selectedAssetId,
       selectedCardId: input.cardId,
       lastEvent: `${cardName(input.cardId)} is now leading your deck.`
+    };
+  }
+
+  if (input.type === "select-asset") {
+    const asset = state.inventory.find((candidate) => candidate.id === input.assetId);
+    if (!asset || !verifyPortableCard(asset).ok) return state;
+    return {
+      ...state,
+      selectedAssetId: asset.id,
+      selectedCardId: asset.manifest.familyId,
+      lastEvent: `${asset.manifest.name} is now leading your active deck.`
     };
   }
 
@@ -563,6 +587,7 @@ export function applyWildsInput(state: PlayState, input: WildsInput): PlayState 
       return {
         ...state,
         activeAction: "explore",
+        selectedAssetId: [...state.inventory].reverse().find((asset) => asset.manifest.familyId === nearest.card.id)?.id ?? state.selectedAssetId,
         selectedCardId: nearest.card.id,
         lastEvent: `${nearest.card.name} is already in your deck.`
       };
@@ -575,6 +600,7 @@ export function applyWildsInput(state: PlayState, input: WildsInput): PlayState 
     if (existingEncounter) {
       return {
         ...state,
+        selectedAssetId: existingEncounter.id,
         selectedCardId: existingEncounter.manifest.familyId,
         lastEvent: `${existingEncounter.manifest.name} is already sealed in your inventory.`
       };
@@ -607,6 +633,7 @@ export function applyWildsInput(state: PlayState, input: WildsInput): PlayState 
       level: nextDiscovered.length >= 3 ? Math.max(state.level, 8) : state.level,
       missionProgress: Math.min(100, state.missionProgress + 12),
       pendingSyncAssetIds: [...state.pendingSyncAssetIds, sealed.id],
+      selectedAssetId: sealed.id,
       selectedCardId: nearest.card.id,
       streak: state.streak + 1
     });
@@ -640,6 +667,7 @@ export function applyWildsInput(state: PlayState, input: WildsInput): PlayState 
         ? `${cardName(targetCardId)} reached Level ${nextProgress.level}. A new mastery tier is active.`
         : `${cardName(targetCardId)} gained 40 XP and strengthened your bond.`,
       missionProgress: Math.min(100, state.missionProgress + 9),
+      selectedAssetId: [...state.inventory].reverse().find((asset) => asset.manifest.familyId === targetCardId)?.id ?? state.selectedAssetId,
       selectedCardId: targetCardId,
       streak: state.streak + 1
     });

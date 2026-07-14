@@ -124,8 +124,9 @@ export function WildsInventory({
           <aside className="wilds-inventory-detail">
             <WildsCard asset={selected} />
             <div className="wilds-inventory-actions">
+              <button className="button button-primary" disabled={state.selectedAssetId === selected.id} onClick={() => onInput({ type: "select-asset", assetId: selected.id })} type="button">{state.selectedAssetId === selected.id ? "Active deck leader" : "Set as active deck leader"}</button>
               <a className="button button-outline" href={`/cards/${encodeURIComponent(selected.id)}`}>Open standalone card page</a>
-              <button className="button button-primary" onClick={() => void downloadPortableCard(selected)} type="button">Download portable PNG</button>
+              <button className="button button-outline" onClick={() => void downloadPortableCard(selected)} type="button">Download portable PNG</button>
               {onListAsset && selected.status !== "listed" ? (
                 <div className="wilds-listing-control">
                   <label>List price <span>$</span><input aria-label="Wilds card listing price" inputMode="decimal" min="0.01" onChange={(event) => setPriceUsd(event.target.value)} step="0.01" type="number" value={priceUsd} /></label>

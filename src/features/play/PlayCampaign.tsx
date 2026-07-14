@@ -6,11 +6,11 @@ import { Button, StatusPill } from "@/components/ui";
 import { cx } from "@/lib/utils";
 import {
   applyWildsInput,
-  discoveredCards,
   initialPlayState,
   missionCards,
   restorePlayState,
   serializePlayState,
+  selectedAsset,
   selectedCard,
   type PlayState,
   type WildsInput
@@ -126,7 +126,8 @@ export function PlayCampaign({
   const [avatarStyle, setAvatarStyle] = useState<"female" | "male" | null>(null);
   const activeMission = missionCards[state.completedMissionIds.length % missionCards.length];
   const activeCard = selectedCard(state);
-  const deckCards = discoveredCards(state);
+  const activeAsset = selectedAsset(state);
+  const deckCards = state.inventory;
   const activeProgress = state.companionProgress[activeCard.id] ?? { level: 1, xp: 0, bond: 0 };
 
   useEffect(() => {
@@ -292,7 +293,7 @@ export function PlayCampaign({
                 <span className="wilds-avatar">RZ</span>
                 <div>
                   <strong>Wilds scout</strong>
-                  <small>{state.worldRank} · {activeCard.name} L{activeProgress.level}</small>
+                  <small>{state.worldRank} · {activeAsset?.manifest.name ?? activeCard.name} L{activeProgress.level}</small>
                   <span className="wilds-coordinate-badges" aria-label={`World coordinates X ${Math.round(state.player.x)}, Z ${Math.round(state.player.z)}`}>
                     <b>X {Math.round(state.player.x)}</b><b>Z {Math.round(state.player.z)}</b>
                   </span>
@@ -423,7 +424,7 @@ export function PlayCampaign({
             <summary>
               <span>
                 <small>Active deck</small>
-                <strong>{activeCard.name} leads</strong>
+                <strong>{activeAsset?.manifest.name ?? activeCard.name} leads</strong>
               </span>
               <b>{deckCards.length}/4</b>
               <Icons.chevronDown aria-hidden="true" size={18} />
@@ -431,20 +432,20 @@ export function PlayCampaign({
             <div className="wilds-squad-list" aria-label="Collected companion cards">
               {deckCards.map((card) => (
                 <button
-                  aria-pressed={state.selectedCardId === card.id}
+                  aria-pressed={state.selectedAssetId === card.id}
                   className="wilds-squad-card"
                   key={card.id}
-                  onClick={() => dispatch({ type: "select-card", cardId: card.id })}
+                  onClick={() => dispatch({ type: "select-asset", assetId: card.id })}
                   type="button"
                 >
-                  <span style={{ background: card.color }}>{card.name.slice(0, 2).toUpperCase()}</span>
+                  <span style={{ background: card.manifest.variant.traits.palette.primary }}>{card.manifest.name.slice(0, 2).toUpperCase()}</span>
                   <div>
-                    <strong>{card.name}</strong>
-                    <small>Level {state.companionProgress[card.id]?.level ?? 1} · Bond {state.companionProgress[card.id]?.bond ?? 0}</small>
+                    <strong>{card.manifest.name}</strong>
+                    <small>Stage {card.manifest.stage} · Level {state.companionProgress[card.manifest.familyId]?.level ?? 1} · Bond {state.companionProgress[card.manifest.familyId]?.bond ?? 0}</small>
                   </div>
-                  <b>{card.power}</b>
-                  <div className="wilds-mini-charge" aria-label={`${card.power}% power`}>
-                    <i style={{ width: `${card.power}%` }} />
+                  <b>{card.manifest.stats.power}</b>
+                  <div className="wilds-mini-charge" aria-label={`${card.manifest.stats.power}% power`}>
+                    <i style={{ width: `${card.manifest.stats.power}%` }} />
                   </div>
                 </button>
               ))}
