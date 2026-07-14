@@ -11093,6 +11093,100 @@ button.product-purchase-secondary-link {
   border-radius: 11px;
 }
 
+/* One-handed Wilds command dock and focused sheets */
+.wilds-command-system {
+  grid-column: 1 / -1;
+  position: relative;
+  z-index: 12;
+  display: grid;
+  justify-items: center;
+  min-width: 0;
+}
+
+.wilds-command-dock {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  width: min(100%, 368px);
+  padding: 6px;
+  border: 1px solid rgb(131 235 207 / 25%);
+  border-radius: 22px;
+  background: rgb(5 22 29 / 78%);
+  box-shadow: 0 18px 44px rgb(0 12 18 / 28%), inset 0 1px rgb(255 255 255 / 10%);
+  backdrop-filter: blur(18px);
+}
+
+.wilds-command-button {
+  position: relative;
+  display: grid;
+  min-width: 0;
+  min-height: 48px;
+  place-items: center;
+  border: 1px solid transparent;
+  border-radius: 16px;
+  color: #9bb7bf;
+  background: transparent;
+  transition: color 160ms ease, background 160ms ease, transform 100ms ease, border-color 160ms ease;
+}
+
+.wilds-command-button:hover,
+.wilds-command-button:focus-visible {
+  color: #effff9;
+  border-color: rgb(113 232 195 / 30%);
+  background: rgb(113 232 195 / 10%);
+}
+
+.wilds-command-button:active { transform: translateY(1px) scale(.97); }
+.wilds-command-button[aria-pressed="true"] { color: #071a1e; border-color: rgb(255 209 92 / 72%); background: linear-gradient(145deg, #f7d25b, #6fe6bd); box-shadow: 0 8px 22px rgb(92 232 185 / 20%); }
+.wilds-command-icon { position: relative; display: grid; place-items: center; width: 30px; height: 30px; }
+.wilds-command-badge { position: absolute; top: -9px; right: -15px; display: grid; min-width: 27px; height: 17px; padding: 0 4px; place-items: center; color: #08191c; background: #f7d25b; border: 2px solid #09222a; border-radius: 999px; font-size: 8px; font-variant-numeric: tabular-nums; line-height: 1; white-space: nowrap; }
+.wilds-command-button[aria-pressed="true"] .wilds-command-badge { border-color: #7ce8c5; }
+
+.wilds-command-overlay { position: fixed; z-index: 1500; inset: 0; pointer-events: none; }
+.wilds-command-backdrop { position: absolute; inset: 0; width: 100%; border: 0; background: rgb(1 10 15 / 48%); opacity: 1; pointer-events: auto; backdrop-filter: blur(5px); }
+.wilds-command-sheet { position: absolute; right: max(10px, env(safe-area-inset-right)); bottom: max(10px, env(safe-area-inset-bottom)); left: max(10px, env(safe-area-inset-left)); display: grid; width: min(760px, calc(100% - 20px)); max-height: min(78dvh, 720px); margin-inline: auto; overflow: hidden; color: #effaff; border: 1px solid rgb(131 235 207 / 28%); border-radius: 28px; background: linear-gradient(145deg, rgb(8 37 47 / 98%), rgb(4 17 25 / 98%)); box-shadow: 0 30px 100px rgb(0 0 0 / 54%), inset 0 1px rgb(255 255 255 / 10%); pointer-events: auto; transform: translateY(var(--wilds-sheet-drag, 0)); animation: wilds-command-sheet-in 260ms cubic-bezier(.2,.8,.2,1) both; }
+.wilds-command-handle { display: grid; width: 100%; min-height: 24px; place-items: center; border: 0; background: transparent; touch-action: none; }
+.wilds-command-handle span { width: 42px; height: 4px; border-radius: 999px; background: rgb(183 239 222 / 50%); }
+.wilds-command-sheet-header { display: grid; grid-template-columns: 34px minmax(0, 1fr) 34px; align-items: center; gap: 10px; padding: 2px 18px 12px; }
+.wilds-command-sheet-header h3 { margin: 0; font-size: 17px; letter-spacing: -.01em; }
+.wilds-command-sheet-icon { display: grid; width: 32px; height: 32px; place-items: center; color: #071a1e; border-radius: 11px; background: linear-gradient(145deg, #f7d25b, #6fe6bd); }
+.wilds-command-close { display: grid; width: 34px; height: 34px; place-items: center; color: #a7c2ca; border: 1px solid rgb(131 235 207 / 22%); border-radius: 11px; background: rgb(255 255 255 / 7%); }
+.wilds-command-sheet-content { min-height: 0; padding: 0 18px max(18px, env(safe-area-inset-bottom)); overflow: auto; overscroll-behavior: contain; }
+.wilds-command-content { display: grid; gap: 12px; }
+.wilds-command-content-lead { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px; border: 1px solid rgb(131 235 207 / 15%); border-radius: 15px; background: rgb(255 255 255 / 6%); }
+.wilds-command-content-lead span { display: grid; gap: 3px; min-width: 0; }
+.wilds-command-content-lead small { color: #7fa1aa; font-size: 9px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
+.wilds-command-content-lead strong { overflow: hidden; font-size: 14px; text-overflow: ellipsis; white-space: nowrap; }
+.wilds-command-content-lead > b { color: var(--game-gold); font-size: 15px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.wilds-command-reward-label { color: #f7d25b; font-size: 12px; }
+.wilds-vault-sheet-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; padding-bottom: 2px; }
+.wilds-vault-sheet-heading small { color: #7fa1aa; font-size: 9px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
+.wilds-vault-sheet-heading strong { font-size: 13px; }
+.wilds-command-sheet-content .wilds-inventory { margin: 0; padding: 0; border: 0; background: transparent; box-shadow: none; }
+.wilds-command-sheet-content .wilds-inventory > header { display: none; }
+.wilds-command-sheet-content .wilds-inventory-toolbar { grid-template-columns: minmax(0, 1fr) 150px; }
+.wilds-command-sheet-content .wilds-inventory-layout { grid-template-columns: minmax(0, 1fr); }
+.wilds-command-sheet-content .wilds-inventory-detail { grid-row: 2; }
+.wilds-command-sheet-content .wilds-inventory-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.wilds-vault-page-controls { display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: 10px; }
+.wilds-vault-page-controls > button { display: grid; width: 36px; height: 36px; place-items: center; color: #a7c2ca; border: 1px solid rgb(131 235 207 / 22%); border-radius: 11px; background: rgb(255 255 255 / 7%); }
+.wilds-vault-page-controls > button:disabled { opacity: .3; }
+.wilds-vault-page-dots { display: flex; align-items: center; gap: 5px; max-width: 180px; overflow: auto; }
+.wilds-vault-page-dots button { display: grid; width: 18px; height: 18px; place-items: center; border: 0; background: transparent; }
+.wilds-vault-page-dots span { width: 5px; height: 5px; border-radius: 50%; background: #63808a; transition: width 160ms ease, border-radius 160ms ease, background 160ms ease; }
+.wilds-vault-page-dots button[aria-pressed="true"] span { width: 15px; border-radius: 999px; background: #f7d25b; }
+@keyframes wilds-command-sheet-in { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(var(--wilds-sheet-drag, 0)); } }
+@media (prefers-reduced-motion: reduce) { .wilds-command-sheet, .wilds-command-button, .wilds-vault-page-dots span { animation: none; transition: none; } }
+@media (max-width: 560px) {
+  .mobile-play-wrap .wilds-command-sheet {
+    bottom: calc(58px + env(safe-area-inset-bottom));
+    max-height: min(78dvh, calc(100dvh - 78px));
+  }
+  .mobile-play-wrap .wilds-command-sheet-content {
+    padding-bottom: max(18px, env(safe-area-inset-bottom));
+  }
+}
+
 .wilds-collectible-card {
   --card-primary: #38d989;
   --card-accent: #f5d36c;

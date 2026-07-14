@@ -28,6 +28,7 @@ import { WildsAudioSettings } from "@/features/play/WildsAudioSettings";
 import { useWildsPresentation } from "@/features/play/use-wilds-presentation";
 import { selectWildsQualityProfile } from "@/features/play/wilds-quality-profile";
 import { projectWorldProgression } from "@/features/play/world-progression";
+import { WildsCommandDock, type WildsCommandItem } from "@/features/play/WildsCommandDock";
 
 const WILDS_SAVE_KEY = "receiz:wilds:save:v2";
 const WILDS_AVATAR_KEY = "receiz:wilds:explorer:v1";
@@ -275,6 +276,110 @@ export function PlayCampaign({
   const proximityLabel = state.encounter.phase === "idle"
     ? "Tap terrain to scan"
     : `${activeProximity}${state.encounter.trend ? ` · ${state.encounter.trend}` : ""}`;
+  const commandItems: readonly WildsCommandItem[] = [
+    {
+      key: "mission",
+      label: "World Mission",
+      icon: <Icons.trophy size={21} />,
+      badge: `${state.missionProgress}%`,
+      content: (
+        <div className="wilds-command-content wilds-mission-content">
+          <div className="wilds-command-content-lead">
+            <span><small>Current mission</small><strong>{activeMission.title}</strong></span>
+            <b>{state.missionProgress}%</b>
+          </div>
+          <div className="wilds-world-chapter">
+            <span>
+              <small>Chapter {worldProgression.chapterIndex + 1} · Cycle {worldProgression.cycle}</small>
+              <strong>{worldProgression.chapter.name}</strong>
+            </span>
+            <b>{worldProgression.chapter.element}</b>
+            <p>{worldProgression.chapter.objective}</p>
+            <div className="wilds-progress" aria-label={`${worldProgression.chapterMastery}% chapter mastery`}>
+              <span style={{ width: `${worldProgression.chapterMastery}%` }} />
+            </div>
+            <span className="wilds-world-event">
+              <small>Live world event</small>
+              <strong>{worldProgression.worldEvent.name}</strong>
+              <em>{worldProgression.worldEvent.objective}</em>
+            </span>
+            <small>Permanent mastery {state.worldMastery} · Next realm at {worldProgression.nextChapterAt}</small>
+          </div>
+          <p>{activeMission.requirement}</p>
+          <div className="wilds-progress" aria-label={`${state.missionProgress}% mission progress`}>
+            <span style={{ width: `${state.missionProgress}%` }} />
+          </div>
+          <strong className="wilds-command-reward-label">{activeMission.reward}</strong>
+          <div className="wilds-economy-grid">
+            <div><span>Deck</span><strong>{deckCards.length}/∞</strong></div>
+            <div><span>Near</span><strong>{state.encounter.phase === "idle" ? "Hidden" : state.encounter.phase}</strong></div>
+            <div><span>Titan Gate</span><strong>{state.bossUnlocked ? "Open" : "Locked"}</strong></div>
+          </div>
+          <Button className="wilds-reset" variant="outline" onClick={() => dispatch({ type: "reset" })}>Reset world</Button>
+        </div>
+      )
+    },
+    {
+      key: "rewards",
+      label: "Rewards",
+      icon: <Icons.gift size={21} />,
+      badge: state.rewardCards.length ? "100%" : `${state.missionProgress}%`,
+      content: (
+        <div className="wilds-command-content wilds-reward-card">
+          <div className="wilds-command-content-lead">
+            <span><small>Portable reward</small><strong>{state.rewardCards.length ? `${state.rewardCards.length} reward ready` : "Locked merchant card"}</strong></span>
+            <b>{state.rewardCards.length ? "Ready" : `${Math.max(0, 100 - state.missionProgress)}% left`}</b>
+          </div>
+          {state.rewardCards.length ? state.rewardCards.map((reward) => (
+            <div key={reward.id}><strong>{reward.title}</strong><p>{reward.businessUse}</p><b>{reward.value}</b></div>
+          )) : (
+            <div><strong>Clear the world mission</strong><p>Mint a portable card businesses can map to coupons, access, perks, or custom proof logic.</p></div>
+          )}
+        </div>
+      )
+    },
+    {
+      key: "deck",
+      label: "Active Deck",
+      icon: <Icons.assets size={21} />,
+      content: (
+        <div className="wilds-command-content">
+          <div className="wilds-command-content-lead">
+            <span><small>Active leader</small><strong>{activeAsset?.manifest.name ?? activeCard.name}</strong></span>
+            <b>{deckCards.length}/∞</b>
+          </div>
+          <div className="wilds-squad-list" aria-label="Collected companion cards">
+            {deckCards.map((card) => (
+              <button
+                aria-pressed={state.selectedAssetId === card.id}
+                className="wilds-squad-card"
+                key={card.id}
+                onClick={() => dispatch({ type: "select-asset", assetId: card.id })}
+                type="button"
+              >
+                <span style={{ background: card.manifest.variant.traits.palette.primary }}>{card.manifest.name.slice(0, 2).toUpperCase()}</span>
+                <div><strong>{card.manifest.name}</strong><small>Stage {card.manifest.stage} · Level {state.companionProgress[card.manifest.familyId]?.level ?? 1} · Bond {state.companionProgress[card.manifest.familyId]?.bond ?? 0}</small></div>
+                <b>{card.manifest.stats.power}</b>
+                <div className="wilds-mini-charge" aria-label={`${card.manifest.stats.power}% power`}><i style={{ width: `${card.manifest.stats.power}%` }} /></div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )
+    },
+    {
+      key: "vault",
+      label: "Card Vault",
+      icon: <Icons.box size={21} />,
+      badge: state.inventory.length,
+      content: (
+        <div className="wilds-command-content wilds-vault-command-content">
+          <div className="wilds-vault-sheet-heading"><small>Portable card vault</small><strong>{state.inventory.length} sealed {state.inventory.length === 1 ? "card" : "cards"}</strong></div>
+          <WildsInventory state={state} onInput={dispatch} onListAsset={onListAsset} />
+        </div>
+      )
+    }
+  ];
 
   return (
     <section className="panel play-panel wilds-play-panel" id="play">
@@ -442,132 +547,8 @@ export function PlayCampaign({
           </div>
         </div>
 
-        <aside className="wilds-command-panel" aria-label="Deck and mission strategy">
-          <details className="wilds-mission-card">
-            <summary>
-              <span>
-                <small>World mission</small>
-                <strong>{activeMission.title}</strong>
-              </span>
-              <b>{state.missionProgress}%</b>
-              <Icons.chevronDown aria-hidden="true" size={18} />
-            </summary>
-            <div className="wilds-mission-details">
-              <div className="wilds-world-chapter">
-                <span>
-                  <small>Chapter {worldProgression.chapterIndex + 1} · Cycle {worldProgression.cycle}</small>
-                  <strong>{worldProgression.chapter.name}</strong>
-                </span>
-                <b>{worldProgression.chapter.element}</b>
-                <p>{worldProgression.chapter.objective}</p>
-                <div className="wilds-progress" aria-label={`${worldProgression.chapterMastery}% chapter mastery`}>
-                  <span style={{ width: `${worldProgression.chapterMastery}%` }} />
-                </div>
-                <span className="wilds-world-event">
-                  <small>Live world event</small>
-                  <strong>{worldProgression.worldEvent.name}</strong>
-                  <em>{worldProgression.worldEvent.objective}</em>
-                </span>
-                <small>Permanent mastery {state.worldMastery} · Next realm at {worldProgression.nextChapterAt}</small>
-              </div>
-              <p>{activeMission.requirement}</p>
-              <div className="wilds-progress" aria-label={`${state.missionProgress}% mission progress`}>
-                <span style={{ width: `${state.missionProgress}%` }} />
-              </div>
-              <b>{activeMission.reward}</b>
-            </div>
-          </details>
-
-          <details className="wilds-command-tray wilds-reward-tray">
-            <summary>
-              <span>
-                <small>Portable reward</small>
-                <strong>{state.rewardCards.length ? `${state.rewardCards.length} reward ready` : "Locked merchant card"}</strong>
-              </span>
-              <b>{state.rewardCards.length ? "Ready" : `${Math.max(0, 100 - state.missionProgress)}% left`}</b>
-              <Icons.chevronDown aria-hidden="true" size={18} />
-            </summary>
-            <div className="wilds-reward-card">
-              {state.rewardCards.length ? (
-                state.rewardCards.map((reward) => (
-                  <div key={reward.id}>
-                    <strong>{reward.title}</strong>
-                    <p>{reward.businessUse}</p>
-                    <b>{reward.value}</b>
-                  </div>
-                ))
-              ) : (
-                <div>
-                  <strong>Clear the world mission</strong>
-                  <p>Mint a portable card businesses can map to coupons, access, perks, or custom proof logic.</p>
-                </div>
-              )}
-            </div>
-          </details>
-
-          <details className="wilds-command-tray wilds-deck-tray">
-            <summary>
-              <span>
-                <small>Active deck</small>
-                <strong>{activeAsset?.manifest.name ?? activeCard.name} leads</strong>
-              </span>
-              <b>{deckCards.length}/∞</b>
-              <Icons.chevronDown aria-hidden="true" size={18} />
-            </summary>
-            <div className="wilds-squad-list" aria-label="Collected companion cards">
-              {deckCards.map((card) => (
-                <button
-                  aria-pressed={state.selectedAssetId === card.id}
-                  className="wilds-squad-card"
-                  key={card.id}
-                  onClick={() => dispatch({ type: "select-asset", assetId: card.id })}
-                  type="button"
-                >
-                  <span style={{ background: card.manifest.variant.traits.palette.primary }}>{card.manifest.name.slice(0, 2).toUpperCase()}</span>
-                  <div>
-                    <strong>{card.manifest.name}</strong>
-                    <small>Stage {card.manifest.stage} · Level {state.companionProgress[card.manifest.familyId]?.level ?? 1} · Bond {state.companionProgress[card.manifest.familyId]?.bond ?? 0}</small>
-                  </div>
-                  <b>{card.manifest.stats.power}</b>
-                  <div className="wilds-mini-charge" aria-label={`${card.manifest.stats.power}% power`}>
-                    <i style={{ width: `${card.manifest.stats.power}%` }} />
-                  </div>
-                </button>
-              ))}
-            </div>
-          </details>
-
-          <div className="wilds-economy-grid">
-            <div>
-              <span>Deck</span>
-              <strong>{deckCards.length}/∞</strong>
-            </div>
-            <div>
-              <span>Near</span>
-              <strong>{state.encounter.phase === "idle" ? "Hidden" : state.encounter.phase}</strong>
-            </div>
-            <div>
-              <span>Titan Gate</span>
-              <strong>{state.bossUnlocked ? "Open" : "Locked"}</strong>
-            </div>
-          </div>
-
-          <Button className="wilds-reset" variant="outline" onClick={() => dispatch({ type: "reset" })}>
-            Reset world
-          </Button>
-        </aside>
+        <WildsCommandDock items={commandItems} />
       </div>
-      <details className="wilds-inventory-tray">
-        <summary>
-          <span>
-            <small>Portable card vault</small>
-            <strong>{state.inventory.length} sealed {state.inventory.length === 1 ? "card" : "cards"}</strong>
-          </span>
-          <span>Open inventory</span>
-          <Icons.chevronDown aria-hidden="true" size={20} />
-        </summary>
-        <WildsInventory state={state} onInput={dispatch} onListAsset={onListAsset} />
-      </details>
       <WildsCaptureReward asset={rewardAsset} onClose={() => {
         setRewardAsset(null);
         dispatch({ type: "dismiss-reveal" });

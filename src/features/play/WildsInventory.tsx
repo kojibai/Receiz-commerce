@@ -1,14 +1,14 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { Icons } from "@/components/icons";
 import { creatureForm } from "./creature-catalog";
 import { downloadPortableCard, downloadPortableVault, verifyPortableCardPng, verifyPortableVaultPng } from "./card-export";
 import type { PlayState, WildsInput } from "./game-state";
 import { WildsCard } from "./WildsCard";
 import { WildsGrowthPanel } from "./WildsGrowthPanel";
-
-const INVENTORY_PAGE_SIZE = 36;
+import { clampInventoryPage, inventoryPageSize } from "./inventory-pagination";
 
 export function WildsInventory({
   state,
@@ -30,20 +30,52 @@ export function WildsInventory({
   const [importMessage, setImportMessage] = useState("");
   const [fusionOpen, setFusionOpen] = useState(false);
   const [fusionParentB, setFusionParentB] = useState("");
+  const [compact, setCompact] = useState(false);
   const importInput = useRef<HTMLInputElement>(null);
+  const swipeStart = useRef<{ x: number; y: number } | null>(null);
+  const suppressCardClick = useRef(false);
   const matches = useMemo(() => state.inventory.filter((asset) => {
     const form = creatureForm(asset.manifest.formId);
     if (!form) return false;
     const haystack = `${form.name} ${form.species} ${form.habitat} ${form.abilities.map((ability) => ability.name).join(" ")} ${form.cardNumber}`.toLowerCase();
     return haystack.includes(query.trim().toLowerCase()) && (rarity === "all" || form.rarity === rarity);
   }), [query, rarity, state.inventory]);
-  const pages = Math.max(1, Math.ceil(matches.length / INVENTORY_PAGE_SIZE));
-  const visible = matches.slice(page * INVENTORY_PAGE_SIZE, page * INVENTORY_PAGE_SIZE + INVENTORY_PAGE_SIZE);
+  const pageSize = inventoryPageSize(compact);
+  const pages = Math.max(1, Math.ceil(matches.length / pageSize));
+  const safePage = clampInventoryPage(page, matches.length, pageSize);
+  const visible = matches.slice(safePage * pageSize, safePage * pageSize + pageSize);
   const selected = state.inventory.find((asset) => asset.id === selectedId) ?? visible[0] ?? state.inventory[0];
   const selectedForm = selected ? creatureForm(selected.manifest.formId) : null;
   const progress = selectedForm ? state.companionProgress[selectedForm.familyId] ?? { level: 1, xp: 0, bond: 0 } : null;
   const next = selectedForm && selectedForm.stage < 3 ? creatureForm(`${selectedForm.familyId}-${selectedForm.stage + 1}`) : null;
   const canEvolve = Boolean(next && progress && progress.level >= next.evolution.level && progress.bond >= next.evolution.bond);
+
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 820px)");
+    const update = () => setCompact(media.matches);
+    update();
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
+
+  useEffect(() => {
+    setPage((current) => clampInventoryPage(current, matches.length, pageSize));
+  }, [matches.length, pageSize]);
+
+  const changePage = (nextPage: number) => setPage(clampInventoryPage(nextPage, matches.length, pageSize));
+  const endSwipe = (target: HTMLElement, pointerId: number) => {
+    const start = swipeStart.current;
+    swipeStart.current = null;
+    if (target.hasPointerCapture?.(pointerId)) target.releasePointerCapture(pointerId);
+    if (!start) return;
+    const dx = (target as HTMLElement).dataset.swipeX ? Number((target as HTMLElement).dataset.swipeX) - start.x : 0;
+    const dy = (target as HTMLElement).dataset.swipeY ? Number((target as HTMLElement).dataset.swipeY) - start.y : 0;
+    delete (target as HTMLElement).dataset.swipeX;
+    delete (target as HTMLElement).dataset.swipeY;
+    if (Math.abs(dx) < 48 || Math.abs(dx) < Math.abs(dy)) return;
+    suppressCardClick.current = true;
+    changePage(page + (dx < 0 ? 1 : -1));
+  };
 
   return (
     <section className="wilds-inventory" aria-label="Portable creature card inventory">
@@ -116,12 +148,37 @@ export function WildsInventory({
         </select>
       </div>
       <div className="wilds-inventory-layout">
+        <div
+          className="wilds-inventory-page"
+          onLostPointerCapture={(event) => { swipeStart.current = null; delete event.currentTarget.dataset.swipeX; delete event.currentTarget.dataset.swipeY; }}
+          onPointerCancel={(event) => { swipeStart.current = null; delete event.currentTarget.dataset.swipeX; delete event.currentTarget.dataset.swipeY; }}
+          onPointerDown={(event) => {
+            swipeStart.current = { x: event.clientX, y: event.clientY };
+            event.currentTarget.setPointerCapture(event.pointerId);
+          }}
+          onPointerMove={(event) => {
+            if (!swipeStart.current) return;
+            event.currentTarget.dataset.swipeX = String(event.clientX);
+            event.currentTarget.dataset.swipeY = String(event.clientY);
+          }}
+          onPointerUp={(event) => endSwipe(event.currentTarget, event.pointerId)}
+          role="region"
+          aria-label={`Vault page ${safePage + 1} of ${pages}`}
+        >
         <div className="wilds-inventory-grid">
           {visible.map((asset) => {
             const form = creatureForm(asset.manifest.formId)!;
-            return <button aria-pressed={selected?.id === asset.id} key={asset.id} onClick={() => setSelectedId(asset.id)} type="button"><span style={{ background: asset.manifest.variant.traits.palette.primary }}>{asset.manifest.name.slice(0, 2).toUpperCase()}</span><strong>{asset.manifest.name}</strong><small>Stage {form.stage} · {form.rarity}</small><b>{asset.status === "sealed_local" ? "Offline sealed" : "Verified"}</b></button>;
+            return <button aria-pressed={selected?.id === asset.id} key={asset.id} onClick={() => { if (suppressCardClick.current) { suppressCardClick.current = false; return; } setSelectedId(asset.id); }} type="button"><span style={{ background: asset.manifest.variant.traits.palette.primary }}>{asset.manifest.name.slice(0, 2).toUpperCase()}</span><strong>{asset.manifest.name}</strong><small>Stage {form.stage} · {form.rarity}</small><b>{asset.status === "sealed_local" ? "Offline sealed" : "Verified"}</b></button>;
           })}
           {!visible.length ? <p className="wilds-inventory-empty">No collected cards match this search.</p> : null}
+        </div>
+        <div className="wilds-vault-page-controls" aria-label="Vault pages">
+          <button aria-label="Previous vault page" disabled={safePage === 0} onClick={() => changePage(safePage - 1)} type="button"><Icons.chevronLeft aria-hidden="true" size={17} /></button>
+          <div className="wilds-vault-page-dots">
+            {Array.from({ length: pages }, (_, index) => <button aria-label={`Go to vault page ${index + 1}`} aria-pressed={safePage === index} key={index} onClick={() => changePage(index)} type="button"><span /></button>)}
+          </div>
+          <button aria-label="Next vault page" disabled={safePage + 1 >= pages} onClick={() => changePage(safePage + 1)} type="button"><Icons.chevronRight aria-hidden="true" size={17} /></button>
+        </div>
         </div>
         {selected && selectedForm ? (
           <aside className="wilds-inventory-detail">
@@ -182,7 +239,7 @@ export function WildsInventory({
           </aside>
         ) : null}
       </div>
-      <footer><button disabled={page === 0} onClick={() => setPage((value) => Math.max(0, value - 1))} type="button">Previous</button><span>Page {page + 1} of {pages}</span><button disabled={page + 1 >= pages} onClick={() => setPage((value) => Math.min(pages - 1, value + 1))} type="button">Next</button></footer>
+      <footer><span>Page {safePage + 1} of {pages}</span></footer>
     </section>
   );
 }

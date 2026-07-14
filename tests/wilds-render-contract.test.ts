@@ -109,19 +109,24 @@ describe("Receiz Wilds rendering contract", () => {
     assert.match(world, /<WildsCreatureActor/);
   });
 
-  it("keeps compact controls below the world and collapses mission detail", async () => {
+  it("keeps compact controls below the world and opens strategy from one icon dock", async () => {
     const source = await readFile("src/features/play/PlayCampaign.tsx", "utf8");
     const css = await readFile("app/globals.css", "utf8");
     const stageEnd = source.indexOf('<div className="wilds-screen-controls"');
     const eventToast = source.indexOf('<div className="wilds-event-toast"');
 
     assert.ok(stageEnd > eventToast);
-    assert.match(source, /<details className="wilds-mission-card">/);
-    assert.match(source, /<details className="wilds-command-tray wilds-reward-tray">/);
-    assert.match(source, /<details className="wilds-command-tray wilds-deck-tray">/);
-    assert.match(source, /<details className="wilds-inventory-tray">/);
+    assert.match(source, /<WildsCommandDock items=\{commandItems\}/);
+    for (const key of ["mission", "rewards", "deck", "vault"]) assert.match(source, new RegExp(`key: "${key}"`));
+    assert.match(source, /badge: `\$\{state\.missionProgress\}%`/);
+    assert.match(source, /badge: state\.rewardCards\.length \? "100%" : `\$\{state\.missionProgress\}%`/);
+    assert.match(source, /badge: state\.inventory\.length/);
+    assert.doesNotMatch(source, /<details className="wilds-mission-card">/);
+    assert.doesNotMatch(source, /<details className="wilds-command-tray/);
+    assert.doesNotMatch(source, /<details className="wilds-inventory-tray">/);
     assert.match(source, /Portable card vault/);
-    assert.match(source, /<summary>/);
+    assert.match(source, /type: "select-asset"/);
+    assert.match(source, /<WildsInventory/);
     assert.match(source, /aria-label="Make camp and recover energy"/);
     assert.match(source, /aria-label="Run world mission"/);
     assert.match(css, /\.mobile-play-wrap \.wilds-stage\s*\{[^}]*min-height: clamp\(430px, 64dvh, 620px\)/);
@@ -176,7 +181,12 @@ describe("Receiz Wilds rendering contract", () => {
     assert.match(reward, /wilds-capture-showcase/);
     assert.doesNotMatch(reward, /<WildsCard asset=\{asset\} compact/);
     assert.match(inventory, /type="search"/);
-    assert.match(inventory, /INVENTORY_PAGE_SIZE = 36/);
+    assert.match(inventory, /inventoryPageSize/);
+    assert.match(inventory, /wilds-inventory-page/);
+    assert.match(inventory, /onPointerDown=/);
+    assert.match(inventory, /onPointerCancel=/);
+    assert.match(inventory, /onLostPointerCapture=/);
+    assert.match(inventory, /wilds-vault-page-dots/);
     assert.match(inventory, /downloadPortableCard/);
     assert.match(inventory, /Set as active deck leader/);
     assert.match(inventory, /type: "select-asset"/);
@@ -197,6 +207,12 @@ describe("Receiz Wilds rendering contract", () => {
     assert.doesNotMatch(card, /wilds-card-creature-core/);
     assert.doesNotMatch(cardExport, /function creatureMark/);
     assert.match(css, /\.heartbound-card-art\s*>\s*svg\s*\{[^}]*width:\s*100%;[^}]*height:\s*100%;[^}]*max-width:\s*100%;/s);
+    assert.match(css, /\.wilds-command-dock\s*\{[^}]*grid-template-columns:\s*repeat\(4/s);
+    assert.match(css, /\.wilds-command-badge/);
+    assert.match(css, /\.wilds-command-sheet\s*\{[^}]*position:\s*absolute/s);
+    assert.match(css, /env\(safe-area-inset-bottom\)/);
+    assert.match(css, /\.wilds-vault-page-dots/);
+    assert.match(css, /prefers-reduced-motion/);
     assert.match(css, /\.heartbound-card-art\s*\{[^}]*aspect-ratio:\s*16\s*\/\s*10;/s);
     assert.match(css, /\.wilds-capture-showcase\s*\{[^}]*isolation:\s*isolate/s);
     assert.match(css, /@media \(prefers-reduced-motion: reduce\)[\s\S]*\.wilds-capture-capsule/);
