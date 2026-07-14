@@ -11166,8 +11166,39 @@ button.product-purchase-secondary-link {
 .wilds-command-sheet-content .wilds-inventory > header { grid-template-columns: minmax(0, 1fr); align-items: stretch; gap: 10px; padding: 14px; border: 1px solid rgb(131 235 207 / 14%); border-radius: 18px; background: linear-gradient(135deg, rgb(113 232 195 / 9%), rgb(247 210 91 / 5%)); }
 .wilds-command-sheet-content .wilds-inventory > header h3 { margin-top: 2px; font-size: clamp(21px, 5vw, 28px); }
 .wilds-command-sheet-content .wilds-inventory > header p { font-size: 11px; line-height: 1.4; }
-.wilds-command-sheet-content .wilds-vault-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
-.wilds-command-sheet-content .wilds-import-card { min-width: 0; min-height: 50px; justify-content: center; padding: 9px 10px; text-align: center; }
+.wilds-command-sheet-content .wilds-vault-actions {
+  display: grid;
+  grid-template-columns: repeat(3, 44px);
+  justify-content: end;
+  gap: 4px;
+}
+.wilds-command-sheet-content .wilds-import-card {
+  position: relative;
+  width: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 13px;
+  background: transparent;
+  text-align: center;
+}
+.wilds-command-sheet-content .wilds-import-card::before {
+  position: absolute;
+  inset: 4px;
+  border: 1px solid rgb(113 232 195 / 32%);
+  border-radius: 11px;
+  background: rgb(113 232 195 / 9%);
+  content: "";
+  pointer-events: none;
+}
+.wilds-command-sheet-content .wilds-import-card svg { position: relative; z-index: 1; width: 16px; }
+.wilds-command-sheet-content .wilds-import-card:hover,
+.wilds-command-sheet-content .wilds-import-card:focus-visible { border-color: transparent; background: transparent; }
+.wilds-command-sheet-content .wilds-import-card:hover::before,
+.wilds-command-sheet-content .wilds-import-card:focus-visible::before { border-color: #71e8c3; background: rgb(113 232 195 / 16%); }
+.wilds-command-sheet-content .wilds-import-card:focus-visible { outline: 2px solid rgb(113 232 195 / 65%); outline-offset: -2px; }
 .wilds-command-sheet-content .wilds-import-card span { display: none; }
 .wilds-command-sheet-content .wilds-import-message { padding: 9px 10px; color: #bcebdd; border: 1px solid rgb(113 232 195 / 14%); border-radius: 11px; background: rgb(4 18 25 / 48%); }
 .wilds-command-sheet-content .wilds-inventory-toolbar { grid-template-columns: minmax(0, 1fr) 150px; }
@@ -11201,8 +11232,6 @@ button.product-purchase-secondary-link {
   .mobile-play-wrap .wilds-command-sheet-content {
     padding: 0 12px max(18px, env(safe-area-inset-bottom));
   }
-  .wilds-command-sheet-content .wilds-vault-actions { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .wilds-command-sheet-content .wilds-inventory > header .wilds-import-card { width: 100%; min-height: 52px; }
   .wilds-command-sheet-content .wilds-inventory > header .wilds-import-card span { display: none; }
   .wilds-command-sheet-content .wilds-inventory-toolbar { grid-template-columns: 1fr; }
   .wilds-command-sheet-content .wilds-inventory-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }

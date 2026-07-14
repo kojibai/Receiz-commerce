@@ -4,7 +4,7 @@
 
 **Goal:** Replace the Card Vault popover's stretched action row with a tasteful compact icon cluster while preserving accessible mobile touch targets and all existing behavior.
 
-**Architecture:** Keep `WildsInventory` markup and action handlers unchanged. Refine only the popover-scoped CSS so the visual controls are 36px squircles centered within 44px layout targets, then protect the treatment with the existing render-contract test and verify it in a narrow real-browser viewport.
+**Architecture:** Keep `WildsInventory` markup and action handlers unchanged. Refine only the popover-scoped CSS so each control has a real 44px button target with a 36px inset visual squircle, then protect the treatment with the existing render-contract test and verify it in a narrow real-browser viewport.
 
 **Tech Stack:** React, TypeScript, CSS, Node test runner, Playwright CLI
 
@@ -34,7 +34,8 @@ Add assertions to the restored-vault-controls test:
 
 ```ts
 assert.match(css, /\.wilds-command-sheet-content \.wilds-vault-actions\s*\{[^}]*grid-template-columns:\s*repeat\(3, 44px\)[^}]*justify-content:\s*end/s);
-assert.match(css, /\.wilds-command-sheet-content \.wilds-import-card\s*\{[^}]*width:\s*36px[^}]*min-height:\s*36px[^}]*margin:\s*4px/s);
+assert.match(css, /\.wilds-command-sheet-content \.wilds-import-card\s*\{[^}]*width:\s*44px[^}]*min-height:\s*44px/s);
+assert.match(css, /\.wilds-command-sheet-content \.wilds-import-card::before\s*\{[^}]*inset:\s*4px/s);
 assert.doesNotMatch(css, /\.wilds-command-sheet-content \.wilds-inventory > header \.wilds-import-card\s*\{[^}]*width:\s*100%/s);
 ```
 
@@ -60,14 +61,24 @@ Replace the stretched action rules with:
   gap: 4px;
 }
 .wilds-command-sheet-content .wilds-import-card {
-  width: 36px;
-  min-width: 36px;
-  min-height: 36px;
-  margin: 4px;
+  position: relative;
+  width: 44px;
+  min-width: 44px;
+  min-height: 44px;
   justify-content: center;
   padding: 0;
-  border-radius: 11px;
+  border: 0;
+  border-radius: 13px;
+  background: transparent;
   text-align: center;
+}
+.wilds-command-sheet-content .wilds-import-card::before {
+  position: absolute;
+  inset: 4px;
+  border: 1px solid rgb(113 232 195 / 32%);
+  border-radius: 11px;
+  background: rgb(113 232 195 / 9%);
+  content: "";
 }
 .wilds-command-sheet-content .wilds-import-card svg { width: 16px; }
 ```
