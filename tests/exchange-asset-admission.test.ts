@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { admitUploadedAsset, admitWildsCard, localAssetVerifyPath, synchronizeWildsCard } from "../src/lib/exchange/asset-admission.js";
 import { sealCollectedCard } from "../src/features/play/portable-card.js";
+import { admitLegacyCard } from "../src/features/play/living-card-proof.js";
 import { baseState } from "./support/commerce-state.js";
 
 describe("Exchange asset admission", () => {
@@ -41,6 +42,20 @@ describe("Exchange asset admission", () => {
     assert.equal(asset.ownerId, "player.receiz.id");
     assert.match(asset.manifest?.links.verify ?? "", /^\/verify\?/);
     assert.equal(localAssetVerifyPath(asset.manifest!), asset.manifest?.links.verify);
+  });
+
+  it("admits a verified living card with its append-only history intact", () => {
+    const living = admitLegacyCard(sealCollectedCard({
+      formId: "mintcub-1",
+      ownerReceizId: "player.receiz.id",
+      encounterId: "living-admission",
+      capturedAt: "2026-07-13T15:00:00.000Z"
+    }), "2026-07-13T15:00:00.000Z");
+    const synchronized = synchronizeWildsCard({ actorReceizId: "player.receiz.id", card: living, synchronizedAt: "2026-07-13T15:01:00.000Z" });
+    const admitted = admitWildsCard({ actorReceizId: "player.receiz.id", card: synchronized, existingAssetIds: [], priceCents: 3200 });
+
+    assert.equal(admitted.ownerId, "player.receiz.id");
+    assert.equal(living.manifest.revisions.length, 1);
   });
 
   it("rejects local-only, tampered, foreign-owned, and duplicate Wilds cards", () => {

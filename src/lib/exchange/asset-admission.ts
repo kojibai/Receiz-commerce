@@ -1,5 +1,5 @@
 import type { DocumentVerifyResponse } from "@receiz/sdk";
-import { portableCardExchangeAsset, verifyPortableCard, type PortableCardAsset } from "../../features/play/portable-card";
+import { portableCardExchangeAsset, verifyAnyWildsCard, type PortableCardAsset } from "../../features/play/portable-card";
 import type { ReceizAssetManifestProjection, ReceizedAsset } from "@/types/domain";
 import { verifiedExchangeAsset } from "./listing-authority";
 
@@ -29,7 +29,7 @@ export function synchronizeWildsCard(input: {
   card: PortableCardAsset;
   synchronizedAt?: string;
 }): PortableCardAsset {
-  const verification = verifyPortableCard(input.card);
+  const verification = verifyAnyWildsCard(input.card);
   if (!verification.ok) throw new Error("wilds_card_verification_failed");
   if (input.card.manifest.ownerReceizId !== input.actorReceizId) throw new Error("exchange_owner_authority_required");
   if (input.card.status === "suspended" || input.card.status === "revoked") throw new Error("wilds_card_not_admissible");
@@ -45,7 +45,7 @@ export function admitWildsCard(input: {
   existingAssetIds: readonly string[];
 }) {
   if (input.card.status !== "verified" && input.card.status !== "listed") throw new Error("wilds_card_sync_required");
-  const verification = verifyPortableCard(input.card);
+  const verification = verifyAnyWildsCard(input.card);
   if (!verification.ok) throw new Error("wilds_card_verification_failed");
   if (input.card.manifest.ownerReceizId !== input.actorReceizId) throw new Error("exchange_owner_authority_required");
   assertUnique(input.card.id, input.existingAssetIds);

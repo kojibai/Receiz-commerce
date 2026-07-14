@@ -125,6 +125,25 @@ describe("Receiz Wilds rendering contract", () => {
     assert.match(cardBack, /aria-live="polite"/);
   });
 
+  it("resolves public cards across devices and physically flips the complete card", async () => {
+    const page = await readFile("src/features/play/WildsCardPage.tsx", "utf8");
+    const scene = await readFile("src/features/play/WildsCardScene.tsx", "utf8");
+    const cardExport = await readFile("src/features/play/card-export.ts", "utf8");
+    const css = await readFile("app/globals.css", "utf8");
+    const campaign = await readFile("src/features/play/PlayCampaign.tsx", "utf8");
+
+    assert.match(page, /fetch\(`\/api\/cards\/\$\{encodeURIComponent\(assetId\)\}`/);
+    assert.doesNotMatch(page, /not found locally/i);
+    assert.match(scene, /WildsCardBack/);
+    assert.match(scene, /aria-pressed=\{flipped\}/);
+    assert.match(scene, /wilds-card-flipper/);
+    assert.match(cardExport, /registerPublicWildsCard/);
+    assert.match(css, /backface-visibility:\s*hidden/);
+    assert.match(css, /clip-path:\s*inset\(0 round/);
+    assert.doesNotMatch(css, /\.wilds-card-foil\s*\{[^}]*inset:\s*-35%/s);
+    assert.match(campaign, /\{deckCards\.length\}\/∞/);
+  });
+
   it("keeps creatures hidden until an exact terrain search reveals one", async () => {
     const state = await readFile("src/features/play/game-state.ts", "utf8");
     const world = await readFile("src/features/play/WildsWorldCanvas.tsx", "utf8");

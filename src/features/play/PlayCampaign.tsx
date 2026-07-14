@@ -150,7 +150,7 @@ export function PlayCampaign({
 
   useEffect(() => {
     if (state.encounter.phase === "battle_intro") {
-      const timer = window.setTimeout(() => dispatch({ type: "start-battle", at: new Date().toISOString() }), 650);
+      const timer = window.setTimeout(() => setState((current) => applyWildsInput(current, { type: "start-battle", at: new Date().toISOString() })), 650);
       return () => window.clearTimeout(timer);
     }
     const delay = state.encounter.phase === "emerging" ? 1_050 : state.encounter.phase === "capsule" ? 1_250 : state.encounter.phase === "sealed" ? 700 : null;
@@ -428,7 +428,7 @@ export function PlayCampaign({
                 <small>Active deck</small>
                 <strong>{activeAsset?.manifest.name ?? activeCard.name} leads</strong>
               </span>
-              <b>{deckCards.length}/4</b>
+              <b>{deckCards.length}/∞</b>
               <Icons.chevronDown aria-hidden="true" size={18} />
             </summary>
             <div className="wilds-squad-list" aria-label="Collected companion cards">
@@ -457,7 +457,7 @@ export function PlayCampaign({
           <div className="wilds-economy-grid">
             <div>
               <span>Deck</span>
-              <strong>{deckCards.length}/4</strong>
+              <strong>{deckCards.length}/∞</strong>
             </div>
             <div>
               <span>Near</span>

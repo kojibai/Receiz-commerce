@@ -308,7 +308,7 @@ export function evolvePortableCard(input: {
 
 export function portableCardExchangeAsset(asset: PortableCardAsset, priceCents: number): ReceizedAsset {
   if (asset.status !== "verified" && asset.status !== "listed") throw new Error("wilds_card_sync_required");
-  const verification = verifyPortableCard(asset);
+  const verification = verifyAnyWildsCard(asset);
   if (!verification.ok) throw new Error("wilds_card_verification_failed");
   if (!Number.isInteger(priceCents) || priceCents <= 0 || priceCents > 100_000_000) throw new Error("exchange_listing_price_invalid");
   const form = creatureForm(asset.manifest.formId)!;

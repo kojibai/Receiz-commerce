@@ -1,0 +1,67 @@
+import { verifyAnyWildsCard, type PortableCardAsset } from "./portable-card";
+
+export type PublicWildsCardRecord = {
+  schema: "receiz.wilds_public_card.v1";
+  assetId: string;
+  sourceUrl: string;
+  registeredAt: string;
+  asset: PortableCardAsset;
+};
+
+const registryKey = Symbol.for("receiz.wilds.public-card-registry.v1");
+
+function registry() {
+  const root = globalThis as typeof globalThis & { [registryKey]?: Map<string, PublicWildsCardRecord> };
+  return (root[registryKey] ??= new Map());
+}
+
+function isObject(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function currentRevision(asset: PortableCardAsset) {
+  return "revisions" in asset.manifest ? asset.manifest.revisions.length : 0;
+}
+
+export function admitPublicWildsCard(asset: PortableCardAsset, sourceUrl: string, registeredAt = new Date().toISOString()) {
+  if (!verifyAnyWildsCard(asset).ok) throw new Error("wilds_public_card_verification_failed");
+  const url = new URL(sourceUrl);
+  if (!/^https?:$/.test(url.protocol) || !url.pathname.endsWith(`/cards/${encodeURIComponent(asset.id)}`)) throw new Error("wilds_public_card_url_invalid");
+  if (!Number.isFinite(Date.parse(registeredAt))) throw new Error("wilds_public_card_time_invalid");
+
+  const record: PublicWildsCardRecord = { schema: "receiz.wilds_public_card.v1", assetId: asset.id, sourceUrl: url.toString(), registeredAt, asset };
+  const existing = registry().get(asset.id);
+  if (!existing || currentRevision(asset) >= currentRevision(existing.asset)) registry().set(asset.id, record);
+  return registry().get(asset.id)!;
+}
+
+export function resolveLocalPublicWildsCard(assetId: string) {
+  const record = registry().get(assetId);
+  return record && verifyAnyWildsCard(record.asset).ok ? record : null;
+}
+
+export function parsePublicWildsCardRecord(value: unknown): PublicWildsCardRecord | null {
+  if (!isObject(value)) return null;
+  if (value.schema === "receiz.wilds_public_card.v1" && value.assetId && value.asset && isObject(value.asset)) {
+    try {
+      return admitPublicWildsCard(value.asset as PortableCardAsset, String(value.sourceUrl), String(value.registeredAt));
+    } catch {
+      return null;
+    }
+  }
+  for (const key of ["state", "data", "record", "appState", "result"]) {
+    const parsed = parsePublicWildsCardRecord(value[key]);
+    if (parsed) return parsed;
+  }
+  return null;
+}
+
+export async function registerPublicWildsCard(asset: PortableCardAsset) {
+  const response = await fetch(`/api/cards/${encodeURIComponent(asset.id)}`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ asset })
+  });
+  if (!response.ok) throw new Error("wilds_public_card_registration_failed");
+  return await response.json() as { ok: true; record: PublicWildsCardRecord };
+}
