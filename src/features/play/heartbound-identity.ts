@@ -119,6 +119,12 @@ export function heartboundIdentitySignature(identity: HeartboundIdentityV2) {
   return sha256PortableBasis(canonicalPortableCardJson(basis));
 }
 
+export function sealHeartboundIdentity(identity: Omit<HeartboundIdentityV2, "signature">): HeartboundIdentityV2 {
+  const sealed: HeartboundIdentityV2 = { ...identity, signature: "" };
+  sealed.signature = heartboundIdentitySignature(sealed);
+  return sealed;
+}
+
 export function validateHeartboundIdentity(identity: HeartboundIdentityV2) {
   const errors: string[] = [];
   const inRange = (value: number, min: number, max: number) => Number.isFinite(value) && value >= min && value <= max;

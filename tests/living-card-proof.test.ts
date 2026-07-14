@@ -8,6 +8,7 @@ import {
 } from "../src/features/play/living-card-proof.js";
 import { creatureForm } from "../src/features/play/creature-catalog.js";
 import { sealCollectedCard } from "../src/features/play/portable-card.js";
+import { deriveBirthGenome } from "../src/features/play/heartbound-genome.js";
 
 const T0 = "2026-07-13T15:00:00.000Z";
 const T1 = "2026-07-14T15:00:00.000Z";
@@ -29,6 +30,18 @@ describe("Wilds living card proof chain", () => {
     assert.equal(living.manifest.birth.legacyDigest, legacy.proof.digest);
     assert.equal(living.manifest.currentRevision, 0);
     assert.equal(living.manifest.revisions.length, 1);
+    assert.equal(living.manifest.birthGenome.generatorVersion, 2);
+    assert.equal(living.manifest.revisions[0]?.rendererVersion, 2);
+    assert.equal(verifyLivingCard(living).ok, true);
+  });
+
+  it("keeps explicitly admitted version-one living cards verifiable", () => {
+    const legacy = sealCollectedCard({ formId: "mintcub-1", ownerReceizId: "player.receiz.id", encounterId: "living-card-v1", capturedAt: T0 });
+    const genome = deriveBirthGenome({ formId: legacy.manifest.formId, proofDigest: legacy.proof.digest, variant: legacy.manifest.variant.traits }, { generatorVersion: 1 });
+    const living = admitLegacyCard(legacy, T0, { birthGenome: genome });
+
+    assert.equal(living.manifest.birthGenome.generatorVersion, 1);
+    assert.equal(living.manifest.revisions[0]?.rendererVersion, 1);
     assert.equal(verifyLivingCard(living).ok, true);
   });
 

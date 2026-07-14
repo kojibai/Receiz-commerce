@@ -2,6 +2,7 @@ import { creatureForm } from "./creature-catalog";
 import { canonicalPortableCardJson, sha256PortableBasis } from "./portable-card";
 import type { CardVariantTraits } from "./card-variant";
 import type { GenomeTraitKey, GrowthPath, LivingCardGenome, TraitSource } from "./living-card-types";
+import { deriveHeartboundIdentity, identityForGenome, sealHeartboundIdentity, validateHeartboundIdentity } from "./heartbound-identity";
 
 const sources = (source: TraitSource): Record<GenomeTraitKey, TraitSource> => ({
   skeleton: source, face: source, appendages: source, surface: source,
@@ -21,15 +22,18 @@ function bounded(value: number, min = 0.65, max = 1.45) {
   return Number(Math.max(min, Math.min(max, value)).toFixed(3));
 }
 
-export function deriveBirthGenome(input: { formId: string; proofDigest: string; variant: CardVariantTraits }): LivingCardGenome {
+export function deriveBirthGenome(input: { formId: string; proofDigest: string; variant: CardVariantTraits }, options: { generatorVersion?: 1 | 2 } = {}): LivingCardGenome {
   const form = creatureForm(input.formId);
   if (!form || !/^sha256:[a-f0-9]{64}$/.test(input.proofDigest)) throw new Error("wilds_genome_birth_invalid");
   const seed = sha256PortableBasis(canonicalPortableCardJson({ generator: "heartbound.v1", ...input }));
   const locomotion = form.anatomy.body === "serpentine" ? "serpentine" : form.anatomy.body === "winged" ? "flying" : form.anatomy.body === "long" ? "quadruped" : "biped";
   const identityAnchor = sha256PortableBasis(`${input.proofDigest}:heartbound-face`).slice(7, 31);
   const detail = form.anatomy.detail;
+  const generatorVersion = options.generatorVersion ?? 2;
+  const identity = generatorVersion === 2 ? deriveHeartboundIdentity(input.proofDigest, { familyId: form.familyId, locomotion, signatureDetail: detail }) : undefined;
   return {
-    generatorVersion: 1,
+    generatorVersion,
+    ...(identity ? { identity } : {}),
     identityAnchor,
     skeleton: { locomotion, head: bounded(0.92 + unit(seed, 2) * 0.28), torso: bounded(0.84 + unit(seed, 10) * 0.34), limb: bounded(0.82 + unit(seed, 18) * 0.38) },
     face: {
@@ -61,7 +65,9 @@ export function genomeDigest(genome: LivingCardGenome) {
 
 export function validateGenome(genome: LivingCardGenome) {
   const errors: string[] = [];
-  if (genome.generatorVersion !== 1 || genome.face.identityAnchor !== genome.identityAnchor) errors.push("identity_invalid");
+  if ((genome.generatorVersion !== 1 && genome.generatorVersion !== 2) || genome.face.identityAnchor !== genome.identityAnchor) errors.push("identity_invalid");
+  if (genome.generatorVersion === 2 && (!genome.identity || !validateHeartboundIdentity(genome.identity).ok)) errors.push("advanced_identity_invalid");
+  if (genome.generatorVersion === 1 && genome.identity) errors.push("legacy_identity_invalid");
   for (const value of [genome.skeleton.head, genome.skeleton.torso, genome.skeleton.limb]) if (!Number.isFinite(value) || value < 0.65 || value > 1.45) errors.push("proportion_invalid");
   if (!genome.palette.primary || !genome.palette.accent || !genome.behavior.signatureGesture) errors.push("render_trait_missing");
   if (Object.keys(genome.provenance).length !== 8) errors.push("provenance_invalid");
@@ -94,8 +100,34 @@ export function deriveFusionGenome(input: { parentA: LivingCardGenome; parentB: 
   if (!validateGenome(input.parentA).ok || !validateGenome(input.parentB).ok) throw new Error("wilds_fusion_genome_invalid");
   const seed = sha256PortableBasis(canonicalPortableCardJson({ a: genomeDigest(input.parentA), b: genomeDigest(input.parentB), emphasis: input.emphasis, kaiPulse: input.kaiPulse, mutationNonce: input.mutationNonce }));
   const identityAnchor = sha256PortableBasis(`${seed}:child-face`).slice(7, 31);
+  const identityA = identityForGenome(input.parentA, genomeDigest(input.parentA));
+  const identityB = identityForGenome(input.parentB, genomeDigest(input.parentB));
+  const baseIdentity = deriveHeartboundIdentity(seed, {
+    familyId: `fusion:${identityA.family.familyId}+${identityB.family.familyId}`,
+    locomotion: input.emphasis === "parent_b" ? identityB.family.locomotion : identityA.family.locomotion,
+    signatureDetail: `${identityA.family.signatureDetail}+${identityB.family.signatureDetail}`
+  });
+  const childIdentity = sealHeartboundIdentity({
+    ...baseIdentity,
+    faceGeometry: { ...identityB.faceGeometry },
+    body: { ...identityA.body },
+    appendageMorphs: { ...identityB.appendageMorphs },
+    markings: {
+      ...baseIdentity.markings,
+      topology: identityA.markings.topology,
+      placements: Array.from(new Set([...identityA.markings.placements, ...identityB.markings.placements]))
+    },
+    behavior: {
+      ...baseIdentity.behavior,
+      posture: identityA.behavior.posture,
+      gesture: identityA.behavior.gesture,
+      celebration: identityB.behavior.celebration
+    }
+  });
   return {
     ...input.parentA,
+    generatorVersion: 2,
+    identity: childIdentity,
     identityAnchor,
     skeleton: { ...input.parentA.skeleton },
     face: { ...input.parentB.face, identityAnchor, expressionSet: choice(seed, 8, [input.parentA.face.expressionSet, input.parentB.face.expressionSet]) },

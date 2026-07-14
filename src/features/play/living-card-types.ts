@@ -135,7 +135,7 @@ export type LivingCardRevision = {
   stats: CreatureStats;
   abilityNames: readonly [string, string];
   title: string;
-  rendererVersion: 1;
+  rendererVersion: 1 | 2;
   renderedArtDigest: string;
   childEventIds: string[];
 };

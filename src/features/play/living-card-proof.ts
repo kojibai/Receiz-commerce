@@ -46,6 +46,10 @@ function renderedArtDigest(genome: LivingCardGenome, formId: string, title: stri
   return sha256PortableBasis(canonicalPortableCardJson({ renderer: 1, genome, formId, title }));
 }
 
+function rendererVersionForGenome(genome: LivingCardGenome): 1 | 2 {
+  return genome.generatorVersion === 2 ? 2 : 1;
+}
+
 function revisionBasis(revision: LivingCardRevision) {
   const { digest: _digest, ...basis } = revision;
   return basis;
@@ -92,7 +96,7 @@ export function admitLegacyCard(legacy: LegacyPortableCardAsset, admittedAt: str
     stats: { ...form.stats },
     abilityNames: [form.abilities[0].name, form.abilities[1].name],
     title: name,
-    rendererVersion: 1,
+    rendererVersion: rendererVersionForGenome(genome),
     renderedArtDigest: renderedArtDigest(genome, form.id, name),
     childEventIds: []
   });
@@ -159,7 +163,7 @@ export function appendLivingCardRevision(input: { asset: LivingCardAsset; revisi
     revision: prior.revision + 1,
     previousRevisionDigest: prior.digest,
     genomeDigest: livingGenomeDigest(genome),
-    rendererVersion: 1,
+    rendererVersion: rendererVersionForGenome(genome),
     renderedArtDigest: renderedArtDigest(genome, form.id, input.revision.title)
   });
   const manifest: LivingCardManifest = {
@@ -208,6 +212,7 @@ export function verifyLivingCard(asset: LivingCardAsset): PortableCardVerificati
     const expectedDigest = sha256PortableBasis(canonicalPortableCardJson(revisionBasis(revision)));
     if (revision.digest !== expectedDigest) errors.push("revision_digest_invalid");
     genome = mergeGenome(genome, revision.genomeDelta);
+    if (revision.rendererVersion !== rendererVersionForGenome(genome)) errors.push("revision_renderer_version_invalid");
     if (revision.genomeDigest !== livingGenomeDigest(genome)) errors.push("revision_genome_invalid");
     if (revision.renderedArtDigest !== renderedArtDigest(genome, revision.formId, revision.title)) errors.push("revision_art_invalid");
     previousDigest = revision.digest;
