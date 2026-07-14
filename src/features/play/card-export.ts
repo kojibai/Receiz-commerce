@@ -7,18 +7,18 @@ import { isLivingCardAsset } from "./living-card-types";
 import {
   canonicalPortableCardJson,
   sha256PortableBasis,
-  verifyPortableCard,
+  verifyAnyWildsCard,
   type PortableCardAsset
 } from "./portable-card";
 
 export type PortableCardPngProof = {
-  schema: "receiz.wilds_png_proof.v1";
+  schema: "receiz.wilds_png_proof.v1" | "receiz.wilds_png_proof.v2";
   imageDigest: string;
   asset: PortableCardAsset;
 };
 
 export type PortableVaultPngProof = {
-  schema: "receiz.wilds_vault_png_proof.v1";
+  schema: "receiz.wilds_vault_png_proof.v1" | "receiz.wilds_vault_png_proof.v2";
   imageDigest: string;
   vaultDigest: string;
   assets: PortableCardAsset[];
@@ -108,7 +108,7 @@ export function renderWildsCardSvg(asset: PortableCardAsset, options: { origin?:
 }
 
 export function renderWildsVaultSvg(assets: PortableCardAsset[]) {
-  const verified = assets.filter((asset) => verifyPortableCard(asset).ok);
+  const verified = assets.filter((asset) => verifyAnyWildsCard(asset).ok);
   if (!verified.length || verified.length !== assets.length) throw new Error("wilds_vault_cards_invalid");
   const featured = verified.slice(0, 12);
   const tiles = featured.map((asset, index) => {
@@ -194,10 +194,10 @@ function imageDigest(chunks: readonly PngChunk[]) {
 }
 
 export function embedPortableCardInPng(source: Uint8Array, asset: PortableCardAsset) {
-  if (!verifyPortableCard(asset).ok) throw new Error("wilds_card_proof_invalid");
+  if (!verifyAnyWildsCard(asset).ok) throw new Error("wilds_card_proof_invalid");
   const sourceChunks = parsePng(source).filter((chunk) => chunk.type !== PROOF_CHUNK_TYPE);
   const proof: PortableCardPngProof = {
-    schema: "receiz.wilds_png_proof.v1",
+    schema: "receiz.wilds_png_proof.v2",
     imageDigest: imageDigest(sourceChunks),
     asset
   };
@@ -215,7 +215,7 @@ export function readPortableCardFromPng(source: Uint8Array): PortableCardPngProo
   const proofs = chunks.filter((chunk) => chunk.type === PROOF_CHUNK_TYPE);
   if (proofs.length !== 1) throw new Error(proofs.length ? "wilds_png_proof_duplicate" : "wilds_png_proof_missing");
   const decoded = JSON.parse(new TextDecoder().decode(proofs[0]!.data)) as Partial<PortableCardPngProof>;
-  if (decoded.schema !== "receiz.wilds_png_proof.v1" || typeof decoded.imageDigest !== "string" || !decoded.asset || typeof decoded.asset !== "object") throw new Error("wilds_png_proof_invalid");
+  if ((decoded.schema !== "receiz.wilds_png_proof.v1" && decoded.schema !== "receiz.wilds_png_proof.v2") || typeof decoded.imageDigest !== "string" || !decoded.asset || typeof decoded.asset !== "object") throw new Error("wilds_png_proof_invalid");
   return decoded as PortableCardPngProof;
 }
 
@@ -223,7 +223,7 @@ export function verifyPortableCardPng(source: Uint8Array): { ok: boolean; errors
   try {
     const chunks = parsePng(source);
     const proof = readPortableCardFromPng(source);
-    const errors = verifyPortableCard(proof.asset).errors;
+    const errors = [...verifyAnyWildsCard(proof.asset).errors];
     if (proof.imageDigest !== imageDigest(chunks)) errors.push("png_image_digest_mismatch");
     return { ok: errors.length === 0, errors, asset: errors.length ? null : proof.asset };
   } catch (error) {
@@ -232,12 +232,12 @@ export function verifyPortableCardPng(source: Uint8Array): { ok: boolean; errors
 }
 
 export function embedPortableVaultInPng(source: Uint8Array, assets: PortableCardAsset[]) {
-  if (!assets.length || assets.some((asset) => !verifyPortableCard(asset).ok)) throw new Error("wilds_vault_cards_invalid");
+  if (!assets.length || assets.some((asset) => !verifyAnyWildsCard(asset).ok)) throw new Error("wilds_vault_cards_invalid");
   if (new Set(assets.map((asset) => asset.id)).size !== assets.length) throw new Error("wilds_vault_duplicate_card");
   const sourceChunks = parsePng(source).filter((chunk) => chunk.type !== VAULT_CHUNK_TYPE && chunk.type !== PROOF_CHUNK_TYPE);
   const vaultDigest = sha256PortableBasis(canonicalPortableCardJson(assets.map((asset) => ({ id: asset.id, proof: asset.proof.digest }))));
   const proof: PortableVaultPngProof = {
-    schema: "receiz.wilds_vault_png_proof.v1",
+    schema: "receiz.wilds_vault_png_proof.v2",
     imageDigest: imageDigest(sourceChunks),
     vaultDigest,
     assets
@@ -256,7 +256,7 @@ export function readPortableVaultFromPng(source: Uint8Array): PortableVaultPngPr
   const proofs = chunks.filter((chunk) => chunk.type === VAULT_CHUNK_TYPE);
   if (proofs.length !== 1) throw new Error(proofs.length ? "wilds_vault_proof_duplicate" : "wilds_vault_proof_missing");
   const decoded = JSON.parse(new TextDecoder().decode(proofs[0]!.data)) as Partial<PortableVaultPngProof>;
-  if (decoded.schema !== "receiz.wilds_vault_png_proof.v1" || typeof decoded.imageDigest !== "string" || typeof decoded.vaultDigest !== "string" || !Array.isArray(decoded.assets)) throw new Error("wilds_vault_proof_invalid");
+  if ((decoded.schema !== "receiz.wilds_vault_png_proof.v1" && decoded.schema !== "receiz.wilds_vault_png_proof.v2") || typeof decoded.imageDigest !== "string" || typeof decoded.vaultDigest !== "string" || !Array.isArray(decoded.assets)) throw new Error("wilds_vault_proof_invalid");
   return decoded as PortableVaultPngProof;
 }
 
@@ -267,7 +267,7 @@ export function verifyPortableVaultPng(source: Uint8Array): { ok: boolean; error
     const errors: string[] = [];
     if (!proof.assets.length) errors.push("wilds_vault_empty");
     if (new Set(proof.assets.map((asset) => asset.id)).size !== proof.assets.length) errors.push("wilds_vault_duplicate_card");
-    proof.assets.forEach((asset, index) => verifyPortableCard(asset).errors.forEach((error) => errors.push(`card_${index}:${error}`)));
+    proof.assets.forEach((asset, index) => verifyAnyWildsCard(asset).errors.forEach((error) => errors.push(`card_${index}:${error}`)));
     const expectedVaultDigest = sha256PortableBasis(canonicalPortableCardJson(proof.assets.map((asset) => ({ id: asset.id, proof: asset.proof.digest }))));
     if (proof.vaultDigest !== expectedVaultDigest) errors.push("wilds_vault_digest_mismatch");
     if (proof.imageDigest !== imageDigest(chunks)) errors.push("png_image_digest_mismatch");

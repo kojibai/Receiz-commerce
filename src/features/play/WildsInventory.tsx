@@ -1,10 +1,12 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { creatureForm } from "./creature-catalog";
 import { downloadPortableCard, downloadPortableVault, verifyPortableCardPng, verifyPortableVaultPng } from "./card-export";
 import type { PlayState, WildsInput } from "./game-state";
 import { WildsCard } from "./WildsCard";
+import { WildsGrowthPanel } from "./WildsGrowthPanel";
 
 const INVENTORY_PAGE_SIZE = 36;
 
@@ -125,7 +127,7 @@ export function WildsInventory({
             <WildsCard asset={selected} />
             <div className="wilds-inventory-actions">
               <button className="button button-primary" disabled={state.selectedAssetId === selected.id} onClick={() => onInput({ type: "select-asset", assetId: selected.id })} type="button">{state.selectedAssetId === selected.id ? "Active deck leader" : "Set as active deck leader"}</button>
-              <a className="button button-outline" href={`/cards/${encodeURIComponent(selected.id)}`}>Open standalone card page</a>
+              <Link className="button button-outline" href={`/cards/${encodeURIComponent(selected.id)}`}>Open standalone card page</Link>
               <button className="button button-outline" onClick={() => void downloadPortableCard(selected)} type="button">Download portable PNG</button>
               {onListAsset && selected.status !== "listed" ? (
                 <div className="wilds-listing-control">
@@ -152,6 +154,13 @@ export function WildsInventory({
               {next ? <button className="button button-outline" disabled={!canEvolve} onClick={() => onInput({ type: "evolve", assetId: selected.id, evolvedAt: new Date().toISOString() })} type="button">{canEvolve ? `Evolve into ${next.name}` : `Needs L${next.evolution.level} · Bond ${next.evolution.bond}`}</button> : <span className="wilds-apex-label">Apex form reached</span>}
               {listingMessage ? <p aria-live="polite">{listingMessage}</p> : null}
             </div>
+            <WildsGrowthPanel
+              asset={selected}
+              catalystIds={state.ascensionCatalysts}
+              now={new Date().toISOString()}
+              onAscend={() => onInput({ type: "ascend-card", assetId: selected.id, at: new Date().toISOString() })}
+              progress={state.livingProgress[selected.id] ?? null}
+            />
           </aside>
         ) : null}
       </div>

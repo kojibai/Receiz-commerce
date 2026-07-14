@@ -12,6 +12,7 @@ import {
   verifyPortableVaultPng
 } from "../src/features/play/card-export.js";
 import { sealCollectedCard } from "../src/features/play/portable-card.js";
+import { admitLegacyCard } from "../src/features/play/living-card-proof.js";
 
 describe("Wilds card export", () => {
   const card = sealCollectedCard({
@@ -54,12 +55,23 @@ describe("Wilds card export", () => {
     const decoded = readPortableCardFromPng(portablePng);
     const verified = verifyPortableCardPng(portablePng);
 
-    assert.equal(decoded.schema, "receiz.wilds_png_proof.v1");
+    assert.equal(decoded.schema, "receiz.wilds_png_proof.v2");
     assert.equal(decoded.asset.id, card.id);
     assert.equal(decoded.asset.proof.digest, card.proof.digest);
     assert.equal(decoded.asset.manifest.lineage.rootAssetId, card.manifest.lineage.rootAssetId);
     assert.equal(verified.ok, true);
     assert.equal(verified.asset?.id, card.id);
+  });
+
+  it("round-trips a living card with its complete append-only history", () => {
+    const living = admitLegacyCard(card, "2026-07-13T15:02:00.000Z");
+    const sourcePng = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=", "base64");
+    const portablePng = embedPortableCardInPng(sourcePng, living);
+    const verified = verifyPortableCardPng(portablePng);
+
+    assert.equal(verified.ok, true);
+    assert.equal(verified.asset?.manifest.schema, "receiz.wilds_living_card_manifest.v2");
+    assert.equal(verified.asset?.id, living.id);
   });
 
   it("rejects a PNG when its image or embedded proof bytes are changed", () => {
@@ -84,6 +96,7 @@ describe("Wilds card export", () => {
     const verified = verifyPortableVaultPng(vaultPng);
 
     assert.match(renderWildsVaultSvg([card, second]), /WILDS VAULT/);
+    assert.equal(decoded.schema, "receiz.wilds_vault_png_proof.v2");
     assert.equal(decoded.assets.length, 2);
     assert.equal(verified.ok, true);
     assert.deepEqual(verified.assets.map((asset) => asset.id), [card.id, second.id]);

@@ -71,6 +71,9 @@ describe("Receiz Wilds rendering contract", () => {
     const card = await readFile("src/features/play/WildsCard.tsx", "utf8");
     const cardExport = await readFile("src/features/play/card-export.ts", "utf8");
     const css = await readFile("app/globals.css", "utf8");
+    const growth = await readFile("src/features/play/WildsGrowthPanel.tsx", "utf8");
+    const transformation = await readFile("src/features/play/WildsTransformation.tsx", "utf8");
+    const ceremony = await readFile("src/features/play/WildsChildCeremony.tsx", "utf8");
 
     assert.match(campaign, /type: "search-point"/);
     assert.match(campaign, /type: "advance-encounter"/);
@@ -91,6 +94,15 @@ describe("Receiz Wilds rendering contract", () => {
     assert.match(card, /renderHeartboundSvg/);
     assert.match(card, /fit:\s*"full-body"/);
     assert.match(cardExport, /renderHeartboundSvg/);
+    assert.match(growth, /What remains/);
+    assert.match(growth, /Revision history/);
+    assert.match(transformation, /aria-label="Living card transformation"/);
+    assert.match(transformation, /aria-live="assertive"/);
+    assert.match(ceremony, /Both parents remain yours/);
+    assert.match(ceremony, /aria-label="Living child ceremony"/);
+    assert.match(inventory, /WildsGrowthPanel/);
+    assert.match(campaign, /WildsTransformation/);
+    assert.match(campaign, /WildsChildCeremony/);
     assert.doesNotMatch(card, /wilds-card-creature-core/);
     assert.doesNotMatch(cardExport, /function creatureMark/);
     assert.match(css, /\.heartbound-card-art\s*>\s*svg\s*\{[^}]*width:\s*100%;[^}]*height:\s*100%;[^}]*max-width:\s*100%;/s);

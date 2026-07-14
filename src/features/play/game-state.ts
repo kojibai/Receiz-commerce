@@ -36,6 +36,7 @@ export type WildsInput =
   | { type: "record-growth"; assetId: string; event: GrowthEvent }
   | { type: "ascend-card"; assetId: string; at: string }
   | { type: "finish-transformation" }
+  | { type: "finish-lineage-reveal" }
   | { type: "train"; cardId?: string; at?: string }
   | { type: "mission" }
   | { type: "rest" }
@@ -119,6 +120,11 @@ export type PlayState = {
     fromRevision: number;
     toRevision: number;
     reason: string;
+  };
+  lineageReveal: null | {
+    childId: string;
+    parentIds: [string, string];
+    eventId: string;
   };
   worldRank: "Grove scout" | "Trail keeper" | "Wilds ranger" | "Titan challenger";
 };
@@ -255,6 +261,7 @@ export const initialPlayState: PlayState = {
   ascensionCatalysts: [],
   bondCooldowns: {},
   transformation: null,
+  lineageReveal: null,
   worldRank: "Grove scout"
 };
 
@@ -346,7 +353,8 @@ export function restorePlayState(value: string | null | undefined): PlayState {
         ? saved.ascensionCatalysts.filter((id): id is string => typeof id === "string")
         : [],
       bondCooldowns: saved.bondCooldowns && typeof saved.bondCooldowns === "object" ? saved.bondCooldowns : {},
-      transformation: saved.transformation ?? null
+      transformation: saved.transformation ?? null,
+      lineageReveal: saved.lineageReveal ?? null
     });
   } catch {
     return initialPlayState;
@@ -436,6 +444,7 @@ export function applyWildsInput(state: PlayState, input: WildsInput): PlayState 
   if (input.type === "reset") return initialPlayState;
 
   if (input.type === "finish-transformation") return state.transformation ? { ...state, transformation: null } : state;
+  if (input.type === "finish-lineage-reveal") return state.lineageReveal ? { ...state, lineageReveal: null } : state;
 
   if (input.type === "record-growth") {
     const asset = state.inventory.find((candidate) => candidate.id === input.assetId);
@@ -501,7 +510,24 @@ export function applyWildsInput(state: PlayState, input: WildsInput): PlayState 
   if (input.type === "import-card") {
     const asset = input.asset;
     if (!verifyAnyWildsCard(asset).ok) return { ...state, lastEvent: "That PNG did not pass the offline card verifier." };
-    if (state.inventory.some((candidate) => candidate.id === asset.id)) {
+    const existing = state.inventory.find((candidate) => candidate.id === asset.id);
+    if (existing) {
+      const canExtend = isLivingCardAsset(asset) && (!isLivingCardAsset(existing) || (
+        asset.manifest.revisions.length > existing.manifest.revisions.length
+        && existing.manifest.revisions.every((revision, index) => asset.manifest.revisions[index]?.digest === revision.digest)
+      ));
+      if (canExtend) {
+        const progress = currentRevision(asset).growth;
+        return withWorldProgress({
+          ...state,
+          inventory: state.inventory.map((candidate) => candidate.id === asset.id ? asset : candidate),
+          livingProgress: { ...state.livingProgress, [asset.id]: progress },
+          pendingSyncAssetIds: Array.from(new Set([...state.pendingSyncAssetIds, asset.id])),
+          selectedAssetId: asset.id,
+          selectedCardId: asset.manifest.familyId,
+          lastEvent: `${asset.manifest.name}'s newer verified proof history merged into your living card.`
+        });
+      }
       return { ...state, selectedAssetId: asset.id, selectedCardId: asset.manifest.familyId, lastEvent: `${asset.manifest.name} is already in your inventory and now leads your active deck.` };
     }
     const discoveredCardIds = Array.from(new Set([...state.discoveredCardIds, asset.manifest.familyId]));
@@ -555,6 +581,7 @@ export function applyWildsInput(state: PlayState, input: WildsInput): PlayState 
       pendingSyncAssetIds: Array.from(new Set([...state.pendingSyncAssetIds, transaction.parentA.id, transaction.parentB.id, transaction.child.id])),
       selectedAssetId: transaction.child.id,
       selectedCardId: transaction.child.manifest.familyId,
+      lineageReveal: { childId: transaction.child.id, parentIds: [parentA.id, parentB.id], eventId: transaction.eventId },
       lastEvent: `${parentA.manifest.name} and ${parentB.manifest.name} created ${transaction.child.manifest.name}. Both parents remain usable.`
     };
   }

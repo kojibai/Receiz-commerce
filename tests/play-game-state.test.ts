@@ -82,6 +82,25 @@ describe("Receiz Wilds game state", () => {
     assert.equal(duplicate.inventory.length, imported.inventory.length);
   });
 
+  it("merges a newer valid living revision for the same portable asset id", () => {
+    const legacy = sealCollectedCard({
+      formId: "voltray-1",
+      ownerReceizId: "returning.player.receiz.id",
+      encounterId: "uploaded-living-card",
+      capturedAt: "2026-07-13T16:00:00.000Z"
+    });
+    const living = admitLegacyCard(legacy, "2026-07-13T16:01:00.000Z");
+    const evolved = evolvePortableCard({ previous: living, nextFormId: "voltray-2", evolvedAt: "2026-07-13T17:00:00.000Z" });
+    const imported = applyWildsInput(initialPlayState, { type: "import-card", asset: living });
+    const merged = applyWildsInput(imported, { type: "import-card", asset: evolved });
+    const restored = merged.inventory.find((asset) => asset.id === evolved.id);
+
+    assert.equal(merged.inventory.filter((asset) => asset.id === evolved.id).length, 1);
+    assert.equal(restored?.manifest.formId, "voltray-2");
+    assert.equal(isLivingCardAsset(restored) ? restored.manifest.revisions.length : 0, evolved.manifest.revisions.length);
+    assert.equal(merged.livingProgress[evolved.id]?.eventIds.length, currentRevision(evolved).growth.eventIds.length);
+  });
+
   it("spends one earned Spark to add a child while preserving reusable parents", () => {
     const second = sealCollectedCard({ formId: "voltray-1", ownerReceizId: "wilds.player.receiz.id", encounterId: "fusion-test-b", capturedAt: "2026-07-13T15:00:00.000Z" });
     const ready = applyWildsInput(initialPlayState, { type: "import-card", asset: second });

@@ -20,6 +20,8 @@ import type { PortableCardAsset } from "@/features/play/portable-card";
 import { WildsCaptureReward } from "@/features/play/WildsCaptureReward";
 import { WildsInventory } from "@/features/play/WildsInventory";
 import { WildsBattle } from "@/features/play/WildsBattle";
+import { WildsTransformation } from "@/features/play/WildsTransformation";
+import { WildsChildCeremony } from "@/features/play/WildsChildCeremony";
 
 const WILDS_SAVE_KEY = "receiz:wilds:save:v2";
 const WILDS_AVATAR_KEY = "receiz:wilds:explorer:v1";
@@ -487,6 +489,8 @@ export function PlayCampaign({
         setRewardAsset(null);
         dispatch({ type: "dismiss-reveal" });
       }} />
+      <WildsTransformation state={state} onInput={dispatch} />
+      <WildsChildCeremony state={state} onInput={dispatch} />
     </section>
   );
 }
