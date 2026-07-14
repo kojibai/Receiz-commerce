@@ -7,6 +7,7 @@ import {
   type CreatureStage,
   type CreatureStats
 } from "./creature-catalog";
+import { deriveCardVariant, displayCreatureName, variantSeedFor, type CardVariantTraits } from "./card-variant";
 
 export type PortableCardStatus = "sealed_local" | "verified" | "listed" | "suspended" | "revoked";
 
@@ -27,6 +28,14 @@ export type PortableCardManifest = {
   ownerReceizId: string;
   encounterId: string;
   capturedAt: string;
+  variant: {
+    generatorVersion: 1;
+    seed: string;
+    traitsDigest: string;
+    kaiPulse: string;
+    battleTranscriptDigest: string;
+    traits: CardVariantTraits;
+  };
   lineage: {
     rootAssetId: string;
     rootDigest: string;
@@ -136,6 +145,8 @@ export function sealCollectedCard(input: {
   ownerReceizId: string;
   encounterId: string;
   capturedAt: string;
+  kaiPulse?: string;
+  battleTranscriptDigest?: string;
 }): PortableCardAsset {
   const form = creatureForm(input.formId);
   if (!form || form.stage !== 1) throw new Error("wilds_capture_base_form_required");
@@ -144,6 +155,17 @@ export function sealCollectedCard(input: {
   if (!input.encounterId.trim()) throw new Error("wilds_card_encounter_required");
   if (!Number.isFinite(Date.parse(input.capturedAt))) throw new Error("wilds_card_capture_time_invalid");
   const assetId = assetIdFor({ ownerReceizId, formId: form.id, encounterId: input.encounterId });
+  const kaiPulse = input.kaiPulse ?? String(Date.parse(input.capturedAt));
+  const battleTranscriptDigest = input.battleTranscriptDigest ?? "sha256:none";
+  const variantSeed = variantSeedFor({
+    formId: form.id,
+    encounterId: input.encounterId,
+    ownerReceizId,
+    capturedAt: input.capturedAt,
+    kaiPulse,
+    battleTranscriptDigest
+  });
+  const variantTraits = deriveCardVariant(variantSeed, 1);
   const manifest: PortableCardManifest = {
     schema: "receiz.wilds_card_manifest.v1",
     catalogVersion: CREATURE_CATALOG_VERSION,
@@ -152,7 +174,7 @@ export function sealCollectedCard(input: {
     familyId: form.familyId,
     stage: form.stage,
     cardNumber: form.cardNumber,
-    name: form.name,
+    name: displayCreatureName(form.id, form.name),
     species: form.species,
     rarity: form.rarity,
     foil: form.foil,
@@ -161,6 +183,14 @@ export function sealCollectedCard(input: {
     ownerReceizId,
     encounterId: input.encounterId,
     capturedAt: input.capturedAt,
+    variant: {
+      generatorVersion: 1,
+      seed: variantSeed,
+      traitsDigest: sha256PortableBasis(canonicalPortableCardJson(variantTraits)),
+      kaiPulse,
+      battleTranscriptDigest,
+      traits: variantTraits
+    },
     lineage: {
       rootAssetId: assetId,
       rootDigest: "self",
@@ -202,6 +232,22 @@ export function verifyPortableCard(asset: PortableCardAsset): PortableCardVerifi
     if (canonicalPortableCardJson(manifest.stats) !== canonicalPortableCardJson(form.stats)) errors.push("stats_mismatch");
     if (canonicalPortableCardJson(manifest.abilityNames) !== canonicalPortableCardJson(form.abilities.map((ability) => ability.name))) errors.push("abilities_mismatch");
   }
+  if (form && manifest.variant) {
+    const expectedSeed = variantSeedFor({
+      formId: manifest.formId,
+      encounterId: manifest.encounterId,
+      ownerReceizId: manifest.ownerReceizId,
+      capturedAt: manifest.capturedAt,
+      kaiPulse: manifest.variant.kaiPulse,
+      battleTranscriptDigest: manifest.variant.battleTranscriptDigest
+    });
+    const expectedTraits = deriveCardVariant(expectedSeed, 1);
+    if (manifest.variant.generatorVersion !== 1 || manifest.variant.seed !== expectedSeed) errors.push("variant_seed_mismatch");
+    if (canonicalPortableCardJson(manifest.variant.traits) !== canonicalPortableCardJson(expectedTraits)) errors.push("variant_traits_mismatch");
+    if (manifest.variant.traitsDigest !== sha256PortableBasis(canonicalPortableCardJson(expectedTraits))) errors.push("variant_digest_mismatch");
+  } else {
+    errors.push("variant_required");
+  }
   if (asset.proof.digest !== manifestDigest(manifest)) errors.push("digest_mismatch");
   return { ok: errors.length === 0, errors };
 }
@@ -221,6 +267,17 @@ export function evolvePortableCard(input: {
     ? input.previous.manifest.lineage.rootDigest
     : input.previous.proof.digest;
   const id = `wilds:${sha256PortableBasis(canonicalPortableCardJson({ previous: input.previous.id, next: next.id, evolvedAt: input.evolvedAt })).slice(7, 31)}`;
+  const evolvedPulse = String(Date.parse(input.evolvedAt));
+  const evolvedBattleDigest = input.previous.proof.digest;
+  const evolvedSeed = variantSeedFor({
+    formId: next.id,
+    encounterId: `evolution:${input.previous.id}`,
+    ownerReceizId: input.previous.manifest.ownerReceizId,
+    capturedAt: input.evolvedAt,
+    kaiPulse: evolvedPulse,
+    battleTranscriptDigest: evolvedBattleDigest
+  });
+  const evolvedTraits = deriveCardVariant(evolvedSeed, 1);
   const manifest: PortableCardManifest = {
     ...input.previous.manifest,
     assetId: id,
@@ -228,12 +285,22 @@ export function evolvePortableCard(input: {
     familyId: next.familyId,
     stage: next.stage,
     cardNumber: next.cardNumber,
-    name: next.name,
+    name: displayCreatureName(next.id, next.name),
     species: next.species,
     rarity: next.rarity,
     foil: next.foil,
     stats: { ...next.stats },
     abilityNames: [next.abilities[0].name, next.abilities[1].name],
+    capturedAt: input.evolvedAt,
+    encounterId: `evolution:${input.previous.id}`,
+    variant: {
+      generatorVersion: 1,
+      seed: evolvedSeed,
+      traitsDigest: sha256PortableBasis(canonicalPortableCardJson(evolvedTraits)),
+      kaiPulse: evolvedPulse,
+      battleTranscriptDigest: evolvedBattleDigest,
+      traits: evolvedTraits
+    },
     lineage: {
       rootAssetId,
       rootDigest,
@@ -267,7 +334,7 @@ export function portableCardExchangeAsset(asset: PortableCardAsset, priceCents: 
   const verifyPath = `/verify?claim=${encodeURIComponent(claimId)}&pulse=${encodeURIComponent(pulse)}`;
   return {
     id: asset.id,
-    name: form.name,
+    name: asset.manifest.name,
     type: "limited_drop",
     ownerId: asset.manifest.ownerReceizId,
     status: asset.status === "listed" ? "listed" : "owned",

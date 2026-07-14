@@ -73,7 +73,7 @@ type FamilySeed = {
 const flagshipSeeds: readonly FamilySeed[] = [
   {
     id: "mintcub",
-    names: ["Mintcub", "Verdelion", "Crownwood"],
+    names: ["SealCub", "Verdelion", "Crownwood"],
     habitat: "Mint Grove",
     element: "Grove",
     temperament: "steadfast",

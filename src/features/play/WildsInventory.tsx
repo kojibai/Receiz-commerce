@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { creatureForm } from "./creature-catalog";
-import { downloadPortableCard } from "./card-export";
+import { downloadPortableCard, verifyPortableCardPng } from "./card-export";
 import type { PlayState, WildsInput } from "./game-state";
 import { WildsCard } from "./WildsCard";
 
@@ -24,6 +24,8 @@ export function WildsInventory({
   const [priceUsd, setPriceUsd] = useState("25.00");
   const [listing, setListing] = useState(false);
   const [listingMessage, setListingMessage] = useState("");
+  const [importMessage, setImportMessage] = useState("");
+  const importInput = useRef<HTMLInputElement>(null);
   const matches = useMemo(() => state.inventory.filter((asset) => {
     const form = creatureForm(asset.manifest.formId);
     if (!form) return false;
@@ -40,7 +42,37 @@ export function WildsInventory({
 
   return (
     <section className="wilds-inventory" aria-label="Portable creature card inventory">
-      <header><div><span>Portable collection</span><h3>Wilds Inventory</h3><p>{state.inventory.length} sealed forms · 750 in the complete set</p></div></header>
+      <header>
+        <div><span>Portable collection</span><h3>Wilds Inventory</h3><p>{state.inventory.length} sealed forms · unlimited unique variants</p></div>
+        <button className="wilds-import-card" onClick={() => importInput.current?.click()} title="Import verified card PNG" type="button">
+          <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 3v11m0-11L8 7m4-4 4 4M5 13v6h14v-6" /></svg>
+          <span>Import sealed card</span>
+        </button>
+        <input
+          ref={importInput}
+          accept="image/png,.png"
+          className="wilds-import-input"
+          multiple
+          onChange={async (event) => {
+            const files = Array.from(event.currentTarget.files ?? []);
+            let imported = 0;
+            let rejected = 0;
+            for (const file of files) {
+              const verified = verifyPortableCardPng(new Uint8Array(await file.arrayBuffer()));
+              if (!verified.ok || !verified.asset) { rejected += 1; continue; }
+              onInput({ type: "import-card", asset: verified.asset });
+              setSelectedId(verified.asset.id);
+              imported += 1;
+            }
+            event.currentTarget.value = "";
+            setImportMessage(imported
+              ? `${imported} verified card${imported === 1 ? "" : "s"} added${rejected ? ` · ${rejected} rejected` : ""}.`
+              : "No card was added. Only an untampered Receiz sealed PNG can enter the game.");
+          }}
+          type="file"
+        />
+        {importMessage ? <p className="wilds-import-message" role="status">{importMessage}</p> : null}
+      </header>
       <div className="wilds-inventory-toolbar">
         <input aria-label="Search creature cards" onChange={(event) => { setQuery(event.target.value); setPage(0); }} placeholder="Search creatures, habitats, abilities…" type="search" value={query} />
         <select aria-label="Filter card rarity" onChange={(event) => { setRarity(event.target.value); setPage(0); }} value={rarity}>
@@ -51,7 +83,7 @@ export function WildsInventory({
         <div className="wilds-inventory-grid">
           {visible.map((asset) => {
             const form = creatureForm(asset.manifest.formId)!;
-            return <button aria-pressed={selected?.id === asset.id} key={asset.id} onClick={() => setSelectedId(asset.id)} type="button"><span style={{ background: form.palette.primary }}>{form.name.slice(0, 2).toUpperCase()}</span><strong>{form.name}</strong><small>Stage {form.stage} · {form.rarity}</small><b>{asset.status === "sealed_local" ? "Offline sealed" : "Verified"}</b></button>;
+            return <button aria-pressed={selected?.id === asset.id} key={asset.id} onClick={() => setSelectedId(asset.id)} type="button"><span style={{ background: asset.manifest.variant.traits.palette.primary }}>{asset.manifest.name.slice(0, 2).toUpperCase()}</span><strong>{asset.manifest.name}</strong><small>Stage {form.stage} · {form.rarity}</small><b>{asset.status === "sealed_local" ? "Offline sealed" : "Verified"}</b></button>;
           })}
           {!visible.length ? <p className="wilds-inventory-empty">No collected cards match this search.</p> : null}
         </div>

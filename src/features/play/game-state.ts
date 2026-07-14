@@ -20,6 +20,7 @@ export type WildsInput =
   | { type: "dismiss-reveal" }
   | { type: "mark-synced"; assetId: string; synchronizedAt: string }
   | { type: "mark-listed"; assetId: string; synchronizedAt: string }
+  | { type: "import-card"; asset: PortableCardAsset }
   | { type: "evolve"; assetId: string; evolvedAt: string }
   | { type: "train"; cardId?: string }
   | { type: "mission" }
@@ -207,7 +208,7 @@ export const initialPlayState: PlayState = {
       synchronizedAt: "2026-06-29T12:00:00.000Z"
     }
   ],
-  lastEvent: "Mintcub joined your deck. Walk near another wild companion.",
+  lastEvent: "SealCub joined your deck. Walk near another wild companion.",
   level: 7,
   missionProgress: 38,
   lastSearchPoint: null,
@@ -318,6 +319,22 @@ export function canDiscover(state: PlayState) {
 
 export function applyWildsInput(state: PlayState, input: WildsInput): PlayState {
   if (input.type === "reset") return initialPlayState;
+
+  if (input.type === "import-card") {
+    const asset = input.asset;
+    if (!verifyPortableCard(asset).ok) return { ...state, lastEvent: "That PNG did not pass the offline card verifier." };
+    if (state.inventory.some((candidate) => candidate.id === asset.id)) {
+      return { ...state, selectedCardId: asset.manifest.familyId, lastEvent: `${asset.manifest.name} is already in your inventory.` };
+    }
+    const discoveredCardIds = Array.from(new Set([...state.discoveredCardIds, asset.manifest.familyId]));
+    return withWorldProgress({
+      ...state,
+      discoveredCardIds,
+      inventory: [...state.inventory, asset],
+      selectedCardId: asset.manifest.familyId,
+      lastEvent: `${asset.manifest.name} passed offline verification and joined your playable inventory.`
+    });
+  }
 
   if (input.type === "dismiss-reveal") {
     if (state.encounter.phase === "idle") return state;

@@ -8,10 +8,26 @@ import {
   serializePlayState,
   type PlayState
 } from "../src/features/play/game-state";
-import { verifyPortableCard } from "../src/features/play/portable-card.js";
+import { sealCollectedCard, verifyPortableCard } from "../src/features/play/portable-card.js";
 import { nearbyHiddenHotspots } from "../src/features/play/hidden-hotspots.js";
 
 describe("Receiz Wilds game state", () => {
+  it("imports an offline-verified portable card once and makes its family playable", () => {
+    const uploaded = sealCollectedCard({
+      formId: "voltray-1",
+      ownerReceizId: "returning.player.receiz.id",
+      encounterId: "uploaded-card-1",
+      capturedAt: "2026-07-13T16:00:00.000Z"
+    });
+    const imported = applyWildsInput(initialPlayState, { type: "import-card", asset: uploaded });
+    const duplicate = applyWildsInput(imported, { type: "import-card", asset: uploaded });
+
+    assert.equal(imported.inventory.some((asset) => asset.id === uploaded.id), true);
+    assert.equal(imported.discoveredCardIds.includes("voltray"), true);
+    assert.equal(imported.selectedCardId, "voltray");
+    assert.equal(duplicate.inventory.length, imported.inventory.length);
+  });
+
   it("moves the player into range and collects a new companion card", () => {
     let state = initialPlayState;
 

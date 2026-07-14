@@ -7,24 +7,25 @@ export function WildsCard({ asset, compact = false }: { asset: PortableCardAsset
   const form = creatureForm(asset.manifest.formId);
   if (!form) return null;
   const stats = [
-    ["Health", form.stats.health],
-    ["Power", form.stats.power],
-    ["Guard", form.stats.guard],
-    ["Speed", form.stats.speed],
-    ["Bond", form.stats.bond]
+    ["Health", asset.manifest.stats.health],
+    ["Power", asset.manifest.stats.power],
+    ["Guard", asset.manifest.stats.guard],
+    ["Speed", asset.manifest.stats.speed],
+    ["Bond", asset.manifest.stats.bond]
   ] as const;
+  const variant = asset.manifest.variant.traits;
   return (
     <article
-      aria-label={`${form.name}, Stage ${form.stage}, ${form.rarity} Wilds card`}
+      aria-label={`${asset.manifest.name}, Stage ${form.stage}, ${form.rarity} Wilds card`}
       className={`wilds-collectible-card foil-${form.foil}${compact ? " compact" : ""}`}
-      style={{ "--card-primary": form.palette.primary, "--card-accent": form.palette.accent, "--card-glow": form.palette.glow } as React.CSSProperties}
+      style={{ "--card-primary": variant.palette.primary, "--card-accent": variant.palette.accent, "--card-glow": variant.palette.glow, "--card-body-scale": variant.bodyScale, "--card-motion": `${variant.animationMs}ms` } as React.CSSProperties}
     >
       <div className="wilds-card-foil" aria-hidden="true" />
       <header>
-        <div><strong>{form.name}</strong><span>{form.species}</span></div>
+        <div><strong>{asset.manifest.name}</strong><span>{form.species}</span></div>
         <div><b>STAGE {form.stage}</b><small>{form.cardNumber}</small></div>
       </header>
-      <div className={`wilds-card-art body-${form.anatomy.body} detail-${form.anatomy.detail}`} aria-label={`${form.name} creature artwork`} role="img">
+      <div className={`wilds-card-art body-${form.anatomy.body} detail-${form.anatomy.detail}`} aria-label={`${asset.manifest.name} creature artwork`} role="img">
         <span className="wilds-card-creature-core" />
         <i className="wilds-card-creature-detail left" /><i className="wilds-card-creature-detail right" />
         <em className="wilds-card-eye left" /><em className="wilds-card-eye right" />

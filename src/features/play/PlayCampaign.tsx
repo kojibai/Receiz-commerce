@@ -21,6 +21,7 @@ import { WildsCaptureReward } from "@/features/play/WildsCaptureReward";
 import { WildsInventory } from "@/features/play/WildsInventory";
 
 const WILDS_SAVE_KEY = "receiz:wilds:save:v2";
+const WILDS_AVATAR_KEY = "receiz:wilds:explorer:v1";
 
 const WildsWorldCanvas = dynamic(
   () => import("@/features/play/WildsWorldCanvas").then((mod) => mod.WildsWorldCanvas),
@@ -121,6 +122,7 @@ export function PlayCampaign({
   const [state, setState] = useState(initialPlayState);
   const [saveRestored, setSaveRestored] = useState(false);
   const [rewardAsset, setRewardAsset] = useState<PortableCardAsset | null>(null);
+  const [avatarStyle, setAvatarStyle] = useState<"female" | "male" | null>(null);
   const activeMission = missionCards[state.completedMissionIds.length % missionCards.length];
   const activeCard = selectedCard(state);
   const deckCards = discoveredCards(state);
@@ -128,6 +130,8 @@ export function PlayCampaign({
 
   useEffect(() => {
     setState(restorePlayState(window.localStorage.getItem(WILDS_SAVE_KEY)));
+    const savedAvatar = window.localStorage.getItem(WILDS_AVATAR_KEY);
+    if (savedAvatar === "female" || savedAvatar === "male") setAvatarStyle(savedAvatar);
     setSaveRestored(true);
   }, []);
 
@@ -158,6 +162,7 @@ export function PlayCampaign({
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
+      if (!avatarStyle) return;
       const target = event.target as HTMLElement | null;
       if (target?.matches("input, textarea, select, button, [contenteditable='true']")) return;
       const key = event.key.toLowerCase();
@@ -180,7 +185,7 @@ export function PlayCampaign({
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [onComplete, ownerReceizId]);
+  }, [avatarStyle, onComplete, ownerReceizId]);
 
   if (!enabled) {
     return (
@@ -195,6 +200,7 @@ export function PlayCampaign({
   }
 
   const dispatch = (input: WildsInput) => {
+    if (!avatarStyle) return;
     setState((current) => {
       const next = applyWildsInput(current, input);
       if (!current.completed && next.completed) {
@@ -232,11 +238,39 @@ export function PlayCampaign({
           >
             <WildsWorldCanvas
               state={state}
-              searchEnabled={discoveryActive}
+              avatarStyle={avatarStyle ?? "female"}
+              searchEnabled={discoveryActive && Boolean(avatarStyle)}
               onSearchPoint={(point) => {
                 dispatch({ type: "search-point", ...point, searchedAt: new Date().toISOString(), ownerReceizId });
               }}
             />
+
+            {!avatarStyle ? (
+              <div className="wilds-avatar-select" role="dialog" aria-labelledby="wilds-avatar-title" aria-modal="true">
+                <div className="wilds-avatar-select-card">
+                  <span className="eyebrow">Your journey begins</span>
+                  <h3 id="wilds-avatar-title">Choose your explorer</h3>
+                  <p>You’ll see your explorer from behind as you walk, search, battle, and capture.</p>
+                  <div className="wilds-avatar-options">
+                    {(["female", "male"] as const).map((choice) => (
+                      <button
+                        key={choice}
+                        className={`wilds-avatar-option ${choice}`}
+                        onClick={() => {
+                          setAvatarStyle(choice);
+                          try { window.localStorage.setItem(WILDS_AVATAR_KEY, choice); } catch { /* selection remains active for this session */ }
+                        }}
+                        type="button"
+                      >
+                        <span className="wilds-avatar-preview" aria-hidden="true"><i /><b /><em /></span>
+                        <strong>{choice === "female" ? "Female explorer" : "Male explorer"}</strong>
+                        <small>Select and enter the Wilds</small>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ) : null}
 
             <div className="wilds-hud-top">
               <div className="wilds-player-chip">

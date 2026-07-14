@@ -56,13 +56,14 @@ export function renderWildsCardSvg(asset: PortableCardAsset) {
   const form = creatureForm(asset.manifest.formId);
   if (!form) throw new Error("wilds_card_form_unknown");
   const stats = asset.manifest.stats;
+  const palette = asset.manifest.variant.traits.palette;
   const foilOpacity = form.foil === "standard" ? 0.08 : form.foil === "shimmer" ? 0.2 : 0.32;
   const statRows = [
-    statRow("HEALTH", stats.health, 0, form.palette.primary),
-    statRow("POWER", stats.power, 126, form.palette.accent),
-    statRow("GUARD", stats.guard, 252, form.palette.primary),
-    statRow("SPEED", stats.speed, 378, form.palette.accent),
-    statRow("BOND", stats.bond, 504, form.palette.primary)
+    statRow("HEALTH", stats.health, 0, palette.primary),
+    statRow("POWER", stats.power, 126, palette.accent),
+    statRow("GUARD", stats.guard, 252, palette.primary),
+    statRow("SPEED", stats.speed, 378, palette.accent),
+    statRow("BOND", stats.bond, 504, palette.primary)
   ].join("");
   const abilityOne = form.abilities[0];
   const abilityTwo = form.abilities[1];
@@ -74,21 +75,21 @@ export function renderWildsCardSvg(asset: PortableCardAsset) {
     <filter id="glow"><feGaussianBlur stdDeviation="18"/></filter>
     <clipPath id="art"><rect x="55" y="164" width="640" height="405" rx="35"/></clipPath>
   </defs>
-  <rect x="12" y="12" width="726" height="1026" rx="50" fill="url(#bg)" stroke="${xml(form.palette.accent)}" stroke-width="18"/>
+  <rect x="12" y="12" width="726" height="1026" rx="50" fill="url(#bg)" stroke="${xml(palette.accent)}" stroke-width="18"/>
   <rect x="35" y="35" width="680" height="980" rx="34" fill="none" stroke="#fff" stroke-opacity=".2" stroke-width="2"/>
-  <path d="M55 132h640" stroke="${xml(form.palette.primary)}" stroke-width="4"/>
+  <path d="M55 132h640" stroke="${xml(palette.primary)}" stroke-width="4"/>
   <text x="58" y="94" fill="#fff" font-family="system-ui,sans-serif" font-size="42" font-weight="900">${xml(asset.manifest.name)}</text>
-  <text x="692" y="75" text-anchor="end" fill="${xml(form.palette.accent)}" font-family="system-ui,sans-serif" font-size="18" font-weight="800">STAGE ${asset.manifest.stage}</text>
+  <text x="692" y="75" text-anchor="end" fill="${xml(palette.accent)}" font-family="system-ui,sans-serif" font-size="18" font-weight="800">STAGE ${asset.manifest.stage}</text>
   <text x="692" y="104" text-anchor="end" fill="#b9d1da" font-family="system-ui,sans-serif" font-size="16" font-weight="700">${xml(asset.manifest.cardNumber)}</text>
-  <g clip-path="url(#art)"><rect x="55" y="164" width="640" height="405" fill="#0d2632"/><circle cx="358" cy="330" r="230" fill="${xml(form.palette.glow)}" opacity=".2" filter="url(#glow)"/><g transform="translate(0 82)">${creatureMark(form.anatomy.body, form.anatomy.detail, form.palette.primary, form.palette.accent)}</g><rect x="55" y="164" width="640" height="405" fill="url(#foil)" opacity="${foilOpacity}"/></g>
-  <rect x="55" y="164" width="640" height="405" rx="35" fill="none" stroke="${xml(form.palette.accent)}" stroke-width="5"/>
-  <text x="70" y="604" fill="${xml(form.palette.accent)}" font-family="system-ui,sans-serif" font-size="17" font-weight="850" letter-spacing="2">${xml(asset.manifest.rarity.toUpperCase())} · ${xml(asset.manifest.foil.toUpperCase())}</text>
+  <g clip-path="url(#art)"><rect x="55" y="164" width="640" height="405" fill="#0d2632"/><circle cx="358" cy="330" r="230" fill="${xml(palette.glow)}" opacity=".2" filter="url(#glow)"/><g transform="translate(0 82) scale(${asset.manifest.variant.traits.bodyScale})">${creatureMark(form.anatomy.body, form.anatomy.detail, palette.primary, palette.accent)}</g><rect x="55" y="164" width="640" height="405" fill="url(#foil)" opacity="${foilOpacity}"/></g>
+  <rect x="55" y="164" width="640" height="405" rx="35" fill="none" stroke="${xml(palette.accent)}" stroke-width="5"/>
+  <text x="70" y="604" fill="${xml(palette.accent)}" font-family="system-ui,sans-serif" font-size="17" font-weight="850" letter-spacing="2">${xml(asset.manifest.rarity.toUpperCase())} · ${xml(asset.manifest.foil.toUpperCase())}</text>
   <text x="680" y="604" text-anchor="end" fill="#b9d1da" font-family="system-ui,sans-serif" font-size="17" font-weight="700">${xml(form.species)}</text>
   <g transform="translate(65 630)">${statRows}</g>
-  <g transform="translate(65 727)"><rect width="620" height="88" rx="22" fill="#0a202b" stroke="${xml(form.palette.primary)}" stroke-opacity=".52"/><text x="24" y="32" fill="#fff" font-family="system-ui,sans-serif" font-size="23" font-weight="850">${xml(abilityOne.name)}</text><text x="590" y="32" text-anchor="end" fill="${xml(form.palette.accent)}" font-family="system-ui,sans-serif" font-size="23" font-weight="900">${abilityOne.power}</text><text x="24" y="63" fill="#a9c2cb" font-family="system-ui,sans-serif" font-size="16">${xml(abilityOne.text)}</text></g>
-  <g transform="translate(65 829)"><rect width="620" height="88" rx="22" fill="#0a202b" stroke="${xml(form.palette.accent)}" stroke-opacity=".52"/><text x="24" y="32" fill="#fff" font-family="system-ui,sans-serif" font-size="23" font-weight="850">${xml(abilityTwo.name)}</text><text x="590" y="32" text-anchor="end" fill="${xml(form.palette.primary)}" font-family="system-ui,sans-serif" font-size="23" font-weight="900">${abilityTwo.power}</text><text x="24" y="63" fill="#a9c2cb" font-family="system-ui,sans-serif" font-size="16">${xml(abilityTwo.text)}</text></g>
+  <g transform="translate(65 727)"><rect width="620" height="88" rx="22" fill="#0a202b" stroke="${xml(palette.primary)}" stroke-opacity=".52"/><text x="24" y="32" fill="#fff" font-family="system-ui,sans-serif" font-size="23" font-weight="850">${xml(abilityOne.name)}</text><text x="590" y="32" text-anchor="end" fill="${xml(palette.accent)}" font-family="system-ui,sans-serif" font-size="23" font-weight="900">${abilityOne.power}</text><text x="24" y="63" fill="#a9c2cb" font-family="system-ui,sans-serif" font-size="16">${xml(abilityOne.text)}</text></g>
+  <g transform="translate(65 829)"><rect width="620" height="88" rx="22" fill="#0a202b" stroke="${xml(palette.accent)}" stroke-opacity=".52"/><text x="24" y="32" fill="#fff" font-family="system-ui,sans-serif" font-size="23" font-weight="850">${xml(abilityTwo.name)}</text><text x="590" y="32" text-anchor="end" fill="${xml(palette.primary)}" font-family="system-ui,sans-serif" font-size="23" font-weight="900">${abilityTwo.power}</text><text x="24" y="63" fill="#a9c2cb" font-family="system-ui,sans-serif" font-size="16">${xml(abilityTwo.text)}</text></g>
   <text x="65" y="960" fill="#7896a1" font-family="ui-monospace,monospace" font-size="12">${xml(asset.proof.digest)}</text>
-  <text x="65" y="990" fill="#fff" font-family="system-ui,sans-serif" font-size="15" font-weight="750">RECEIZ WILDS · PORTABLE PROOF CARD</text><text x="685" y="990" text-anchor="end" fill="${xml(form.palette.accent)}" font-family="system-ui,sans-serif" font-size="15" font-weight="850">${xml(asset.status.replace("_", " ").toUpperCase())}</text>
+  <text x="65" y="990" fill="#fff" font-family="system-ui,sans-serif" font-size="15" font-weight="750">RECEIZ WILDS · PORTABLE PROOF CARD</text><text x="685" y="990" text-anchor="end" fill="${xml(palette.accent)}" font-family="system-ui,sans-serif" font-size="15" font-weight="850">${xml(asset.status.replace("_", " ").toUpperCase())}</text>
 </svg>`;
 }
 

@@ -2072,6 +2072,124 @@ a {
   box-shadow: inset 0 0 0 2px rgba(255, 242, 168, 0.62), inset 0 0 52px rgba(247, 201, 72, 0.26), 0 24px 52px rgba(23, 19, 17, 0.16);
 }
 
+.wilds-avatar-select {
+  position: absolute;
+  inset: 0;
+  z-index: 12;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: linear-gradient(180deg, rgba(10, 28, 22, 0.34), rgba(10, 24, 19, 0.76));
+  backdrop-filter: blur(5px) saturate(0.9);
+}
+
+.wilds-avatar-select-card {
+  width: min(430px, 100%);
+  padding: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 20px;
+  background: rgba(22, 29, 25, 0.94);
+  color: #fff;
+  box-shadow: 0 28px 70px rgba(8, 18, 14, 0.42);
+  text-align: center;
+}
+
+.wilds-avatar-select-card .eyebrow {
+  color: #f7c948;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.wilds-avatar-select-card h3 {
+  margin: 4px 0 5px;
+  font-size: clamp(22px, 5vw, 30px);
+  line-height: 1.05;
+}
+
+.wilds-avatar-select-card p {
+  margin: 0 auto 15px;
+  max-width: 340px;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.wilds-avatar-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.wilds-avatar-option {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  min-height: 150px;
+  padding: 12px 8px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 15px;
+  background: rgba(255, 255, 255, 0.07);
+  color: #fff;
+  cursor: pointer;
+}
+
+.wilds-avatar-option:hover,
+.wilds-avatar-option:focus-visible {
+  border-color: #f7c948;
+  background: rgba(247, 201, 72, 0.13);
+  transform: translateY(-2px);
+}
+
+.wilds-avatar-option small {
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 9px;
+}
+
+.wilds-avatar-preview {
+  position: relative;
+  display: block;
+  width: 54px;
+  height: 80px;
+}
+
+.wilds-avatar-preview i,
+.wilds-avatar-preview b,
+.wilds-avatar-preview em {
+  position: absolute;
+  left: 50%;
+  display: block;
+  transform: translateX(-50%);
+}
+
+.wilds-avatar-preview i {
+  top: 3px;
+  width: 27px;
+  height: 27px;
+  border-radius: 50%;
+  background: #b87552;
+  box-shadow: inset 0 7px #2b201b;
+}
+
+.wilds-avatar-preview b {
+  top: 27px;
+  width: 31px;
+  height: 34px;
+  border-radius: 12px 12px 8px 8px;
+  background: #2f6f9f;
+}
+
+.wilds-avatar-option.female .wilds-avatar-preview b { background: #f05f8f; }
+
+.wilds-avatar-preview em {
+  top: 57px;
+  width: 28px;
+  height: 22px;
+  border-left: 8px solid #263747;
+  border-right: 8px solid #263747;
+}
+
 @keyframes wilds-hot-signal {
   0%, 100% { filter: saturate(1); }
   50% { filter: saturate(1.12) brightness(1.025); }
@@ -10106,6 +10224,56 @@ button.product-purchase-secondary-link {
   box-shadow: 0 28px 80px rgb(0 16 24 / 28%);
 }
 
+.wilds-inventory > header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+}
+
+.wilds-import-card {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid rgb(113 232 195 / 32%);
+  border-radius: 12px;
+  color: #effaff;
+  background: rgb(113 232 195 / 9%);
+  cursor: pointer;
+}
+
+.wilds-import-card:hover,
+.wilds-import-card:focus-visible {
+  border-color: #71e8c3;
+  background: rgb(113 232 195 / 16%);
+}
+
+.wilds-import-card svg {
+  width: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
+.wilds-inventory > header .wilds-import-card span {
+  color: inherit;
+  font-size: 11px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.wilds-import-input { display: none; }
+
+.wilds-inventory > header .wilds-import-message {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: 12px;
+}
+
 .wilds-inventory > header span,
 .wilds-capture-copy > span {
   color: #71e8c3;
@@ -10338,6 +10506,13 @@ button.product-purchase-secondary-link {
   background: var(--card-primary);
   border-radius: 48% 52% 43% 57%;
   box-shadow: 0 0 42px color-mix(in srgb, var(--card-glow) 60%, transparent);
+  transform: scale(var(--card-body-scale, 1));
+  animation: wilds-card-breathe var(--card-motion, 3200ms) ease-in-out infinite;
+}
+
+@keyframes wilds-card-breathe {
+  0%, 100% { transform: scale(var(--card-body-scale, 1)); }
+  50% { transform: scale(calc(var(--card-body-scale, 1) * 1.035)); }
 }
 
 .wilds-card-creature-detail {
@@ -10444,6 +10619,9 @@ button.product-purchase-secondary-link {
   .wilds-inventory-tray > summary strong { font-size: 13px; }
   .wilds-inventory-tray > summary > span:nth-child(2) { font-size: 10px; }
   .wilds-inventory-tray .wilds-inventory { padding: 12px; border-radius: 0 0 15px 15px; }
+  .wilds-inventory > header { grid-template-columns: minmax(0, 1fr) auto; }
+  .wilds-import-card { width: 42px; padding: 8px; justify-content: center; }
+  .wilds-inventory > header .wilds-import-card span { display: none; }
   .wilds-inventory-toolbar { grid-template-columns: 1fr; }
   .wilds-inventory-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .wilds-capture-backdrop { align-items: start; padding: 10px; }
@@ -10454,6 +10632,7 @@ button.product-purchase-secondary-link {
   .wilds-capture-capsule,
   .wilds-capture-proof-ring,
   .wilds-capture-rays,
+  .wilds-card-creature-core,
   .wilds-card-foil {
     animation: none;
     transition: none;
