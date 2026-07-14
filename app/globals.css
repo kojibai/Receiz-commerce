@@ -2472,7 +2472,7 @@ a {
 
 .wilds-screen-actions {
   display: grid;
-  grid-template-columns: repeat(3, 44px);
+  grid-template-columns: repeat(2, 44px);
   justify-content: center;
   gap: 6px;
 }
@@ -2480,6 +2480,31 @@ a {
 .wilds-audio-settings {
   position: relative;
   z-index: 12;
+}
+
+.wilds-audio-overlay {
+  position: absolute;
+  z-index: 24;
+  top: 76px;
+  left: 12px;
+}
+
+.wilds-audio-overlay .wilds-audio-settings > summary {
+  width: 30px;
+  min-height: 30px;
+  border-radius: 50%;
+}
+
+.wilds-audio-overlay .wilds-audio-settings > summary svg {
+  width: 20px;
+  height: 20px;
+  padding: 4px;
+}
+
+.wilds-audio-overlay .wilds-audio-sheet {
+  top: calc(100% + 8px);
+  bottom: auto;
+  left: 0;
 }
 
 .wilds-audio-settings > summary {
@@ -7201,13 +7226,18 @@ a {
   }
 
   .mobile-play-wrap .wilds-screen-actions {
-    grid-template-columns: repeat(3, 42px);
+    grid-template-columns: repeat(2, 42px);
     gap: 1px;
   }
 
   .mobile-play-wrap .wilds-audio-settings > summary {
     width: 42px;
     min-height: 44px;
+  }
+
+  .mobile-play-wrap .wilds-audio-overlay .wilds-audio-settings > summary {
+    width: 30px;
+    min-height: 30px;
   }
 
   .mobile-play-wrap .wilds-audio-sheet {
@@ -10489,6 +10519,7 @@ button.product-purchase-secondary-link {
 
 @media (max-width: 640px) {
   .wilds-live-cluster { top: 65px; right: 8px; }
+  .wilds-audio-overlay { top: 65px; left: 8px; }
   .wilds-live-roster { top: 108px; right: 8px; width: calc(100% - 16px); max-height: calc(100% - 116px); }
   .wilds-player-sheet { right: 8px; bottom: 8px; width: calc(100% - 16px); }
   .wilds-pvp-battle { inset: 5px; gap: 8px; padding: 11px; border-radius: 18px; }

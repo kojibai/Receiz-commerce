@@ -19,6 +19,9 @@ export type WildsAudioCue =
   | "evolve"
   | "lineage"
   | "player-arrival"
+  | "weather-pollen"
+  | "landmark-near"
+  | "foliage-surge"
   | "confirm"
   | "error";
 
@@ -85,6 +88,9 @@ const CUE_VOICES: Readonly<Record<WildsAudioCue, CueVoice>> = {
   evolve: { frequency: 420, endFrequency: 1_480, duration: 1.1, gain: 0.2, type: "sine" },
   lineage: { frequency: 360, endFrequency: 1_040, duration: 1.15, gain: 0.18, type: "triangle" },
   "player-arrival": { frequency: 490, endFrequency: 820, duration: 0.36, gain: 0.14, type: "sine" },
+  "weather-pollen": { frequency: 310, endFrequency: 470, duration: 0.7, gain: 0.08, type: "sine" },
+  "landmark-near": { frequency: 330, endFrequency: 880, duration: 0.72, gain: 0.14, type: "triangle" },
+  "foliage-surge": { frequency: 170, endFrequency: 390, duration: 0.34, gain: 0.11, type: "sawtooth" },
   confirm: { frequency: 540, endFrequency: 760, duration: 0.18, gain: 0.14, type: "sine" },
   error: { frequency: 210, endFrequency: 130, duration: 0.24, gain: 0.16, type: "square" }
 };
@@ -112,6 +118,10 @@ export function audioCuesForTransition(
   next: WildsEncounterAudioState
 ): WildsAudioCue[] {
   if (previous.phase === next.phase && previous.proximity === next.proximity) return [];
+  if (previous.phase === "hint" && next.phase === "hint") {
+    if (next.proximity === "hot") return ["proximity-hot", "foliage-surge"];
+    if (next.proximity === "warm") return ["proximity-warm"];
+  }
   if (next.phase === "searching") return ["search"];
   if (next.phase === "hint") {
     const proximityCue = next.proximity === "hot"

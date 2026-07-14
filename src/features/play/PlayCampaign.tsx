@@ -309,6 +309,14 @@ export function PlayCampaign({
             />
 
             {avatarStyle ? <WildsMultiplayer multiplayer={multiplayer} position={state.player} /> : null}
+            <div className="wilds-audio-overlay">
+              <WildsAudioSettings
+                onChange={presentation.setAudioSettings}
+                onUnlock={() => { void presentation.unlockAudio(); }}
+                ready={presentation.audioReady}
+                settings={presentation.audioSettings}
+              />
+            </div>
 
             {state.battle && ["player_turn", "capture_ready", "fled", "defeated"].includes(state.encounter.phase) ? (
               <WildsBattle
@@ -405,12 +413,6 @@ export function PlayCampaign({
               >
                 <Icons.home size={20} />
               </button>
-              <WildsAudioSettings
-                onChange={presentation.setAudioSettings}
-                onUnlock={() => { void presentation.unlockAudio(); }}
-                ready={presentation.audioReady}
-                settings={presentation.audioSettings}
-              />
             </div>
 
             <WildsTrackpad onInput={dispatch} />

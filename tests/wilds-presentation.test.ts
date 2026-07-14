@@ -107,6 +107,13 @@ describe("Wilds synthesized audio", () => {
       ),
       ["seal"]
     );
+    assert.deepEqual(
+      audioCuesForTransition(
+        { phase: "hint", proximity: "warm" },
+        { phase: "hint", proximity: "hot" }
+      ),
+      ["proximity-hot", "foliage-surge"]
+    );
   });
 
   it("destroys every synthesized audio resource", async () => {

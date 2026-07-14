@@ -30,6 +30,17 @@ describe("Receiz Wilds rendering contract", () => {
     assert.match(world, /<WildsExplorer/);
   });
 
+  it("adds deterministic canopy atmosphere and proximity motion", async () => {
+    const atmosphere = await readFile("src/features/play/WildsAtmosphere.tsx", "utf8");
+    const world = await readFile("src/features/play/WildsWorldCanvas.tsx", "utf8");
+
+    assert.match(atmosphere, /function SunShafts/);
+    assert.match(atmosphere, /function PollenDrift/);
+    assert.match(atmosphere, /function CanopyShadows/);
+    assert.match(atmosphere, /foliage-surge/);
+    assert.match(world, /<WildsAtmosphere/);
+  });
+
   it("avoids competing float transforms and unstable contact shadows", async () => {
     const source = await readFile("src/features/play/WildsWorldCanvas.tsx", "utf8");
 
@@ -315,5 +326,8 @@ describe("Receiz Wilds rendering contract", () => {
     assert.match(controls, /Ambience volume/);
     assert.match(controls, /Music volume/);
     assert.match(controls, /Mute Wilds audio/);
+    assert.match(campaign, /wilds-audio-overlay/);
+    const worldControls = campaign.slice(campaign.indexOf('className="wilds-screen-controls"'));
+    assert.doesNotMatch(worldControls, /<WildsAudioSettings/);
   });
 });

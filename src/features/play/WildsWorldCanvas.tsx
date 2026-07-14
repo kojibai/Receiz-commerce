@@ -14,6 +14,7 @@ import type { HotspotCover } from "@/features/play/hidden-hotspots";
 import type { WildsPresence } from "@/features/play/multiplayer-core";
 import { WildsEnvironment } from "@/features/play/WildsEnvironment";
 import { WildsExplorer } from "@/features/play/WildsExplorer";
+import { WildsAtmosphere } from "@/features/play/WildsAtmosphere";
 import {
   rendererBudgetStatus,
   type WildsQualityProfile
@@ -79,18 +80,7 @@ function WildsScene({
     <>
       <color attach="background" args={["#8fd7ff"]} />
       <fog attach="fog" args={["#91dca7", 10, 24]} />
-      <ambientLight intensity={0.78} />
-      <directionalLight
-        castShadow
-        intensity={1.45}
-        position={[4, 8, 5]}
-        shadow-camera-bottom={-8}
-        shadow-camera-left={-8}
-        shadow-camera-right={8}
-        shadow-camera-top={8}
-        shadow-mapSize-height={qualityProfile.shadowMapSize}
-        shadow-mapSize-width={qualityProfile.shadowMapSize}
-      />
+      <WildsAtmosphere encounter={state.encounter} missionProgress={state.missionProgress} player={state.player} qualityProfile={qualityProfile} />
       <CameraRig encounter={state.encounter} />
       <WildsDiagnostics qualityProfile={qualityProfile} state={state} />
       <SearchableTerrain
