@@ -138,6 +138,7 @@ describe("Receiz Wilds rendering contract", () => {
     assert.match(scene, /aria-pressed=\{flipped\}/);
     assert.match(scene, /wilds-card-flipper/);
     assert.match(cardExport, /registerPublicWildsCard/);
+    assert.match(cardExport, /qrSvg\(cardPath, 578, 895, 112\)/);
     assert.match(css, /backface-visibility:\s*hidden/);
     assert.match(css, /clip-path:\s*inset\(0 round/);
     assert.doesNotMatch(css, /\.wilds-card-foil\s*\{[^}]*inset:\s*-35%/s);

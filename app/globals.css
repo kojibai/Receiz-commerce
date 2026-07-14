@@ -10264,7 +10264,8 @@ button.product-purchase-secondary-link {
 .wilds-card-flip-control { position: absolute; z-index: 4; right: 8px; bottom: -22px; min-height: 38px; padding: 7px 14px; color: #f4fffb; background: rgb(8 28 37 / 88%); border: 1px solid rgb(113 232 195 / 45%); border-radius: 999px; box-shadow: 0 10px 32px rgb(0 0 0 / 38%); }
 
 .wilds-card-back { height: 100%; overflow: hidden; color: #eefdff; background: radial-gradient(circle at 20% 6%, rgb(95 236 198 / 20%), transparent 30%), linear-gradient(155deg, #103746, #06151e 55%, #0d2634); border: 8px solid #7de8c8; border-radius: 25px; box-shadow: inset 0 0 0 2px rgb(255 255 255 / 20%), 0 22px 60px rgb(0 0 0 / 38%); }
-.wilds-card-back-scroll { display: grid; height: 100%; gap: 10px; padding: 16px; overflow: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+.wilds-card-back-scroll { display: grid; height: 100%; gap: 10px; padding: 16px; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+.wilds-card-back-scroll > *, .wilds-card-back section, .wilds-card-back dl, .wilds-card-back dl div { min-width: 0; }
 .wilds-card-back header, .wilds-card-back footer { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
 .wilds-card-back header div, .wilds-card-back footer div { display: grid; min-width: 0; gap: 2px; }
 .wilds-card-back header span, .wilds-card-back section > h2, .wilds-card-back section > span { color: #83f0ce; font-size: 9px; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; }
@@ -10272,7 +10273,7 @@ button.product-purchase-secondary-link {
 .wilds-card-back header b { color: #ffd873; font-size: 9px; text-transform: uppercase; }
 .wilds-card-back section { padding: 9px; background: rgb(2 15 22 / 48%); border: 1px solid rgb(255 255 255 / 8%); border-radius: 11px; }
 .wilds-card-back section h2, .wilds-card-back section p { margin: 0 0 6px; }
-.wilds-card-back section p, .wilds-card-back dd { color: #b7cdd5; font-size: 9px; line-height: 1.4; }
+.wilds-card-back section p, .wilds-card-back dd { color: #b7cdd5; font-size: 9px; line-height: 1.4; overflow-wrap: anywhere; }
 .wilds-card-back dl { display: grid; gap: 5px; margin: 5px 0 0; }
 .wilds-card-back dl div { display: grid; grid-template-columns: 74px 1fr; gap: 7px; }
 .wilds-card-back dt { color: #6f929e; font-size: 8px; font-weight: 800; }
@@ -10332,6 +10333,8 @@ button.product-purchase-secondary-link {
 .wilds-card-dock-actions a:first-child { border-color: rgb(113 232 195 / 48%); background: rgb(113 232 195 / 14%); }
 .wilds-card-dock p { margin: 0; overflow-wrap: anywhere; color: #a9c3cc; font-size: 11px; }
 .wilds-card-dock-actions img { width: 42px; height: 42px; margin-left: auto; border-radius: 5px; }
+.wilds-card-dock-actions .wilds-card-qr-link { display: grid; min-width: 42px; min-height: 42px; margin-left: auto; padding: 0; place-items: center; background: #fff; }
+.wilds-card-dock-actions .wilds-card-qr-link img { margin: 0; }
 .wilds-card-missing { text-align: center; }
 
 @media (max-width: 560px) {

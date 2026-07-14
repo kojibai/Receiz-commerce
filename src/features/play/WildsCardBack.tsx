@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import { portableCardPngBlob, readPortableCardFromPng, type PortableCardPngProof } from "./card-export";
 import { projectLivingCardDossier } from "./living-card-dossier";
@@ -126,7 +127,7 @@ export function WildsCardBack({ asset, origin, qr }: { asset: PortableCardAsset;
 
         <footer>
           <div><span>Proof-sealed living character</span><code>{asset.proof.digest}</code></div>
-          {qr ? <Image alt="QR code for this exact standalone card page" height={88} src={qr} unoptimized width={88} /> : null}
+          {qr ? <Link aria-label="Open this exact standalone card page" href={dossier.verification.route}><Image alt="QR code for this exact standalone card page" height={88} src={qr} unoptimized width={88} /></Link> : null}
         </footer>
       </div>
     </article>
