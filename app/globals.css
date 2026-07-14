@@ -10245,7 +10245,9 @@ button.product-purchase-secondary-link {
   min-height: min(70vh, 650px);
   place-items: center;
   perspective: 1200px;
+  touch-action: pan-y;
 }
+.wilds-card-scene:focus-visible { outline: 2px solid rgb(113 232 195 / 75%); outline-offset: 8px; border-radius: 28px; }
 
 .wilds-card-float {
   width: 100%;
@@ -10264,7 +10266,6 @@ button.product-purchase-secondary-link {
 .wilds-card-face-back { opacity: 0; pointer-events: none; transform: rotateY(180deg); }
 .wilds-card-flipper.is-flipped .wilds-card-face-front { opacity: 0; pointer-events: none; }
 .wilds-card-flipper.is-flipped .wilds-card-face-back { opacity: 1; pointer-events: auto; }
-.wilds-card-flip-control { position: absolute; z-index: 4; right: 8px; bottom: -22px; min-height: 38px; padding: 7px 14px; color: #f4fffb; background: rgb(8 28 37 / 88%); border: 1px solid rgb(113 232 195 / 45%); border-radius: 999px; box-shadow: 0 10px 32px rgb(0 0 0 / 38%); }
 
 .wilds-card-back { height: 100%; overflow: hidden; color: #eefdff; background: radial-gradient(circle at 20% 6%, rgb(95 236 198 / 20%), transparent 30%), linear-gradient(155deg, #103746, #06151e 55%, #0d2634); border: 8px solid #7de8c8; border-radius: 25px; box-shadow: inset 0 0 0 2px rgb(255 255 255 / 20%), 0 22px 60px rgb(0 0 0 / 38%); }
 .wilds-card-back-scroll { display: grid; height: 100%; gap: 10px; padding: 16px; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }

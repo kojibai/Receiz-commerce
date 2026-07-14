@@ -135,8 +135,15 @@ describe("Receiz Wilds rendering contract", () => {
     assert.match(page, /fetch\(`\/api\/cards\/\$\{encodeURIComponent\(assetId\)\}`/);
     assert.doesNotMatch(page, /not found locally/i);
     assert.match(scene, /WildsCardBack/);
-    assert.match(scene, /aria-pressed=\{flipped\}/);
     assert.match(scene, /wilds-card-flipper/);
+    assert.match(scene, /onPointerDown/);
+    assert.match(scene, /onPointerUp/);
+    assert.match(scene, /Math\.abs\(deltaX\) >= 28/);
+    assert.match(scene, /event\.key === "Enter" \|\| event\.key === " "/);
+    assert.match(scene, /aria-hidden=\{flipped\}/);
+    assert.match(scene, /aria-hidden=\{!flipped\}/);
+    assert.doesNotMatch(scene, /wilds-card-flip-control/);
+    assert.doesNotMatch(css, /\.wilds-card-flip-control/);
     assert.match(cardExport, /registerPublicWildsCard/);
     assert.match(cardExport, /premiumQrSvg\(cardPath/);
     assert.match(cardExport, /errorCorrectionLevel:\s*"L"/);
