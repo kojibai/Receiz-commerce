@@ -4,6 +4,7 @@ import { isLivingCardAsset } from "./living-card-types";
 import {
   canonicalPortableCardJson,
   sha256PortableBasis,
+  verifyAnyWildsCard,
   verifyPortableCard,
   type LegacyPortableCardAsset,
   type PortableCardAsset,
@@ -21,7 +22,7 @@ export function fusionEligibility(input: {
   at: string;
 }): FusionEligibility {
   const reasons: string[] = [];
-  if (!verifyPortableCard(input.parentA).ok || !verifyPortableCard(input.parentB).ok) reasons.push("parent_proof_invalid");
+  if (!verifyAnyWildsCard(input.parentA).ok || !verifyAnyWildsCard(input.parentB).ok) reasons.push("parent_proof_invalid");
   if (input.parentA.id === input.parentB.id) reasons.push("distinct_parents_required");
   if (input.parentA.manifest.ownerReceizId !== input.parentB.manifest.ownerReceizId) reasons.push("same_owner_required");
   if (!Number.isFinite(Date.parse(input.at))) reasons.push("fusion_time_invalid");

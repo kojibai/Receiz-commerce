@@ -94,6 +94,9 @@ describe("Receiz Wilds game state", () => {
     assert.equal(fused.fusionSparks, ready.fusionSparks - 1);
     assert.equal(fused.selectedAssetId, fused.inventory.at(-1)?.id);
     assert.equal(replay.inventory.length, fused.inventory.length);
+    assert.equal(fused.inventory.every((asset) => isLivingCardAsset(asset)), true);
+    assert.equal(currentRevision(fused.inventory[0] as ReturnType<typeof admitLegacyCard>).childEventIds.length, 1);
+    assert.equal(currentRevision(fused.inventory[1] as ReturnType<typeof admitLegacyCard>).childEventIds.length, 1);
   });
 
   it("selects any exact inventory asset as the active battle card", () => {

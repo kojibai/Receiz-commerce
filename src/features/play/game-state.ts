@@ -9,11 +9,12 @@ import {
 import { encounterFromSearch, idleEncounterState, isCapturableEncounter, type EncounterState } from "./encounter-state";
 import { nearbyHiddenHotspots, searchHiddenHotspots } from "./hidden-hotspots";
 import { applyBattleAction, battleGrowthAwards, battleTranscriptDigest, startWildBattle, type BattleAction, type BattleState } from "./battle-engine";
-import { fusionChild, fusionEligibility, type FusionInheritance } from "./card-fusion";
+import type { FusionInheritance } from "./card-fusion";
 import { applyGrowthEvent, buildTransformationCandidate, growthReadiness, nextGrowthRequirements, type GrowthEvent } from "./growth-engine";
 import { admitLegacyCard, appendLivingCardRevision, currentLivingGenome, currentRevision, emptyLivingGrowth } from "./living-card-proof";
 import { deriveAscensionGenome } from "./heartbound-genome";
 import { isLivingCardAsset, type GrowthPath, type LivingGrowthSnapshot } from "./living-card-types";
+import { createLivingChildTransaction, lineageEligibility } from "./living-lineage";
 
 export type GameAction = "explore" | "train" | "mission";
 export type MoveDirection = "north" | "south" | "west" | "east";
@@ -518,28 +519,43 @@ export function applyWildsInput(state: PlayState, input: WildsInput): PlayState 
     const parentA = state.inventory.find((asset) => asset.id === input.parentAId);
     const parentB = state.inventory.find((asset) => asset.id === input.parentBId);
     if (!parentA || !parentB) return { ...state, lastEvent: "Choose two cards from your verified inventory." };
-    const sparkId = `spark:${input.fusedAt}`;
-    let child: PortableCardAsset;
-    try {
-      child = fusionChild({ parentA, parentB, inheritance: input.inheritance, fusionKaiPulse: String(Date.parse(input.fusedAt)), fusedAt: input.fusedAt, sparkId });
-    } catch {
-      return { ...state, lastEvent: "Those cards could not form a verified fusion child." };
-    }
-    if (state.inventory.some((asset) => asset.id === child.id)) return state;
-    const eligibility = fusionEligibility({ parentA, parentB, fusionSparks: state.fusionSparks, fusionCooldowns: state.fusionCooldowns, at: input.fusedAt });
+    const transactionInput = {
+      parentA,
+      parentB,
+      inheritance: input.inheritance,
+      sparkId: `spark:${input.fusedAt}`,
+      kaiPulse: String(Date.parse(input.fusedAt)),
+      createdAt: input.fusedAt,
+      fusionSparks: state.fusionSparks,
+      recovery: state.fusionCooldowns
+    };
+    const eligibility = lineageEligibility(transactionInput);
     if (!eligibility.ok) return { ...state, lastEvent: eligibility.availableAt ? `A parent is resting until ${eligibility.availableAt}.` : "Earn a Fusion Spark and choose two eligible parents." };
-    const cooldown = new Date(Date.parse(input.fusedAt) + 24 * 60 * 60 * 1000).toISOString();
+    let transaction;
+    try {
+      transaction = createLivingChildTransaction(transactionInput);
+    } catch {
+      return { ...state, lastEvent: "The living lineage seal failed. Both parents and the Spark remain unchanged." };
+    }
+    if (state.inventory.some((asset) => asset.id === transaction.child.id)) return state;
+    const replacements = new Map([[transaction.parentA.id, transaction.parentA], [transaction.parentB.id, transaction.parentB]]);
     return {
       ...state,
       achievements: Array.from(new Set([...state.achievements, "first_fusion_child"])),
-      discoveredCardIds: Array.from(new Set([...state.discoveredCardIds, child.manifest.familyId])),
-      fusionSparks: state.fusionSparks - 1,
-      fusionCooldowns: { ...state.fusionCooldowns, [parentA.id]: cooldown, [parentB.id]: cooldown },
-      inventory: [...state.inventory, child],
-      pendingSyncAssetIds: [...state.pendingSyncAssetIds, child.id],
-      selectedAssetId: child.id,
-      selectedCardId: child.manifest.familyId,
-      lastEvent: `${parentA.manifest.name} and ${parentB.manifest.name} created ${child.manifest.name}. Both parents remain usable.`
+      discoveredCardIds: Array.from(new Set([...state.discoveredCardIds, transaction.child.manifest.familyId])),
+      fusionSparks: state.fusionSparks - transaction.sparkConsumed,
+      fusionCooldowns: { ...state.fusionCooldowns, [parentA.id]: transaction.recoveryUntil, [parentB.id]: transaction.recoveryUntil },
+      inventory: [...state.inventory.map((asset) => replacements.get(asset.id) ?? asset), transaction.child],
+      livingProgress: {
+        ...state.livingProgress,
+        [transaction.parentA.id]: currentRevision(transaction.parentA).growth,
+        [transaction.parentB.id]: currentRevision(transaction.parentB).growth,
+        [transaction.child.id]: currentRevision(transaction.child).growth
+      },
+      pendingSyncAssetIds: Array.from(new Set([...state.pendingSyncAssetIds, transaction.parentA.id, transaction.parentB.id, transaction.child.id])),
+      selectedAssetId: transaction.child.id,
+      selectedCardId: transaction.child.manifest.familyId,
+      lastEvent: `${parentA.manifest.name} and ${parentB.manifest.name} created ${transaction.child.manifest.name}. Both parents remain usable.`
     };
   }
 

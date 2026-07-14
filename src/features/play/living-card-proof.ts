@@ -11,7 +11,9 @@ import {
 import {
   isLivingCardAsset,
   type LivingCardAsset,
+  type LivingCardBirth,
   type LivingCardGenome,
+  type LivingLineage,
   type LivingCardManifest,
   type LivingCardRevision,
   type LivingCardRevisionDraft,
@@ -62,11 +64,17 @@ function birthGenome(legacy: LegacyPortableCardAsset): LivingCardGenome {
   return deriveBirthGenome({ formId: legacy.manifest.formId, proofDigest: legacy.proof.digest, variant: legacy.manifest.variant.traits });
 }
 
-export function admitLegacyCard(legacy: LegacyPortableCardAsset, admittedAt: string): LivingCardAsset {
+export function admitLegacyCard(legacy: LegacyPortableCardAsset, admittedAt: string, options: {
+  birth?: LivingCardBirth;
+  birthGenome?: LivingCardGenome;
+  lineage?: LivingLineage;
+  name?: string;
+} = {}): LivingCardAsset {
   if (!verifyPortableCard(legacy).ok) throw new Error("wilds_legacy_card_invalid");
   if (!Number.isFinite(Date.parse(admittedAt))) throw new Error("wilds_living_admission_time_invalid");
   const form = creatureForm(legacy.manifest.formId)!;
-  const genome = birthGenome(legacy);
+  const genome = options.birthGenome ?? birthGenome(legacy);
+  const name = options.name ?? legacy.manifest.name;
   const revision = sealRevision({
     revision: 0,
     previousRevisionDigest: null,
@@ -83,16 +91,17 @@ export function admitLegacyCard(legacy: LegacyPortableCardAsset, admittedAt: str
     genomeDigest: livingGenomeDigest(genome),
     stats: { ...form.stats },
     abilityNames: [form.abilities[0].name, form.abilities[1].name],
-    title: legacy.manifest.name,
+    title: name,
     rendererVersion: 1,
-    renderedArtDigest: renderedArtDigest(genome, form.id, legacy.manifest.name),
+    renderedArtDigest: renderedArtDigest(genome, form.id, name),
     childEventIds: []
   });
   const manifest: LivingCardManifest = {
     ...legacy.manifest,
     schema: "receiz.wilds_living_card_manifest.v2",
-    lineage: { ...legacy.manifest.lineage, childAssetIds: [] },
-    birth: { kind: "legacy_admission", bornAt: legacy.manifest.capturedAt, formId: form.id, legacyDigest: legacy.proof.digest },
+    name,
+    lineage: options.lineage ?? { ...legacy.manifest.lineage, childAssetIds: [] },
+    birth: options.birth ?? { kind: "legacy_admission", bornAt: legacy.manifest.capturedAt, formId: form.id, legacyDigest: legacy.proof.digest },
     birthGenome: genome,
     currentRevision: 0,
     revisions: [revision]
@@ -135,7 +144,7 @@ export function currentLivingProjection(asset: LivingCardAsset) {
   };
 }
 
-export function appendLivingCardRevision(input: { asset: LivingCardAsset; revision: LivingCardRevisionDraft }): LivingCardAsset {
+export function appendLivingCardRevision(input: { asset: LivingCardAsset; revision: LivingCardRevisionDraft; lineageChildAssetId?: string }): LivingCardAsset {
   const checked = verifyLivingCard(input.asset);
   if (!checked.ok) throw new Error("wilds_living_previous_invalid");
   if (!Number.isFinite(Date.parse(input.revision.sealedAt))) throw new Error("wilds_revision_time_invalid");
@@ -165,7 +174,13 @@ export function appendLivingCardRevision(input: { asset: LivingCardAsset; revisi
     foil: form.foil,
     stats: { ...revision.stats },
     abilityNames: revision.abilityNames,
-    lineage: { ...input.asset.manifest.lineage, evolvedAt: input.revision.sealedAt },
+    lineage: {
+      ...input.asset.manifest.lineage,
+      evolvedAt: input.revision.reason.kind === "stage" || input.revision.reason.kind === "ascension" ? input.revision.sealedAt : input.asset.manifest.lineage.evolvedAt,
+      childAssetIds: input.lineageChildAssetId
+        ? Array.from(new Set([...input.asset.manifest.lineage.childAssetIds, input.lineageChildAssetId]))
+        : input.asset.manifest.lineage.childAssetIds
+    },
     currentRevision: revision.revision,
     revisions: [...input.asset.manifest.revisions, revision]
   };
