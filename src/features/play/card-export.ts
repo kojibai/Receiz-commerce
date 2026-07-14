@@ -1,5 +1,9 @@
 import { creatureForm } from "./creature-catalog";
 import QRCode from "qrcode";
+import { deriveBirthGenome } from "./heartbound-genome";
+import { renderHeartboundSvg } from "./heartbound-renderer";
+import { currentLivingGenome } from "./living-card-proof";
+import { isLivingCardAsset } from "./living-card-types";
 import {
   canonicalPortableCardJson,
   sha256PortableBasis,
@@ -37,30 +41,6 @@ function statRow(label: string, value: number, x: number, color: string) {
   return `<g transform="translate(${x} 0)"><rect width="116" height="70" rx="18" fill="#071c26" fill-opacity=".88" stroke="${xml(color)}" stroke-opacity=".55"/><text x="58" y="26" text-anchor="middle" fill="#8da9b3" font-family="system-ui,sans-serif" font-size="15" font-weight="700" letter-spacing="1.5">${label}</text><text x="58" y="55" text-anchor="middle" fill="#ffffff" font-family="system-ui,sans-serif" font-size="27" font-weight="850">${value}</text></g>`;
 }
 
-function creatureMark(body: string, detail: string, primary: string, accent: string) {
-  const bodyShape = body === "serpentine"
-    ? `<path d="M200 178c90-116 259-75 213 38-31 75-157 23-125 101 20 50 104 28 142-2" fill="none" stroke="${xml(primary)}" stroke-width="86" stroke-linecap="round"/>`
-    : body === "winged"
-      ? `<path d="M188 235 62 124l42 176 118 45m306-110 126-111-42 176-118 45" fill="${xml(accent)}" opacity=".9"/><ellipse cx="358" cy="240" rx="145" ry="132" fill="${xml(primary)}"/>`
-      : body === "armored"
-        ? `<path d="M194 330 156 187l88-91 114-37 114 37 88 91-38 143-164 72z" fill="${xml(primary)}" stroke="${xml(accent)}" stroke-width="18"/>`
-        : body === "long"
-          ? `<ellipse cx="358" cy="245" rx="184" ry="105" fill="${xml(primary)}"/><path d="M500 255c120 7 118 119 30 126" fill="none" stroke="${xml(primary)}" stroke-width="54" stroke-linecap="round"/>`
-          : `<circle cx="358" cy="246" r="145" fill="${xml(primary)}"/>`;
-  const detailShape = detail === "horns"
-    ? `<path d="m262 142-48-99 99 76m141 23 48-99-99 76" fill="${xml(accent)}"/>`
-    : detail === "ears"
-      ? `<path d="m253 150-73-111 126 63m157 48 73-111-126 63" fill="${xml(accent)}"/>`
-      : detail === "crest"
-        ? `<path d="m358 81-54-70 4 101 50-31 50 31 4-101z" fill="${xml(accent)}"/>`
-        : detail === "shell"
-          ? `<path d="M236 253c17-99 227-99 244 0-34 101-210 101-244 0z" fill="none" stroke="${xml(accent)}" stroke-width="24"/>`
-          : detail === "tail"
-            ? `<path d="M494 303c134 36 134-115 47-117" fill="none" stroke="${xml(accent)}" stroke-width="34" stroke-linecap="round"/>`
-            : `<path d="M244 236 84 133l111 176m277-73 160-103-111 176" fill="${xml(accent)}" opacity=".78"/>`;
-  return `${bodyShape}${detailShape}<circle cx="310" cy="236" r="13" fill="#05131b"/><circle cx="406" cy="236" r="13" fill="#05131b"/><path d="M329 288q29 24 58 0" fill="none" stroke="#fff" stroke-width="9" stroke-linecap="round" opacity=".86"/>`;
-}
-
 function qrSvg(value: string, x: number, y: number, size: number) {
   const qr = QRCode.create(value, { errorCorrectionLevel: "M" });
   const modules = qr.modules.size;
@@ -80,6 +60,10 @@ export function renderWildsCardSvg(asset: PortableCardAsset) {
   if (!form) throw new Error("wilds_card_form_unknown");
   const stats = asset.manifest.stats;
   const palette = asset.manifest.variant.traits.palette;
+  const genome = isLivingCardAsset(asset)
+    ? currentLivingGenome(asset)
+    : deriveBirthGenome({ formId: asset.manifest.formId, proofDigest: asset.proof.digest, variant: asset.manifest.variant.traits });
+  const heartboundArt = renderHeartboundSvg(genome, "card", { width: 640, height: 405, title: asset.manifest.name });
   const foilOpacity = form.foil === "standard" ? 0.08 : form.foil === "shimmer" ? 0.2 : 0.32;
   const statRows = [
     statRow("HEALTH", stats.health, 0, palette.primary),
@@ -105,7 +89,7 @@ export function renderWildsCardSvg(asset: PortableCardAsset) {
   <text x="58" y="94" fill="#fff" font-family="system-ui,sans-serif" font-size="42" font-weight="900">${xml(asset.manifest.name)}</text>
   <text x="692" y="75" text-anchor="end" fill="${xml(palette.accent)}" font-family="system-ui,sans-serif" font-size="18" font-weight="800">STAGE ${asset.manifest.stage}</text>
   <text x="692" y="104" text-anchor="end" fill="#b9d1da" font-family="system-ui,sans-serif" font-size="16" font-weight="700">${xml(asset.manifest.cardNumber)}</text>
-  <g clip-path="url(#art)"><rect x="55" y="164" width="640" height="405" fill="#0d2632"/><circle cx="358" cy="330" r="230" fill="${xml(palette.glow)}" opacity=".2" filter="url(#glow)"/><g transform="translate(0 82) scale(${asset.manifest.variant.traits.bodyScale})">${creatureMark(form.anatomy.body, form.anatomy.detail, palette.primary, palette.accent)}</g><rect x="55" y="164" width="640" height="405" fill="url(#foil)" opacity="${foilOpacity}"/></g>
+  <g clip-path="url(#art)"><rect x="55" y="164" width="640" height="405" fill="#0d2632"/><circle cx="358" cy="330" r="230" fill="${xml(palette.glow)}" opacity=".2" filter="url(#glow)"/><g transform="translate(55 164)">${heartboundArt}</g><rect x="55" y="164" width="640" height="405" fill="url(#foil)" opacity="${foilOpacity}"/></g>
   <rect x="55" y="164" width="640" height="405" rx="35" fill="none" stroke="${xml(palette.accent)}" stroke-width="5"/>
   <text x="70" y="604" fill="${xml(palette.accent)}" font-family="system-ui,sans-serif" font-size="17" font-weight="850" letter-spacing="2">${xml(asset.manifest.rarity.toUpperCase())} · ${xml(asset.manifest.foil.toUpperCase())}</text>
   <text x="680" y="604" text-anchor="end" fill="#b9d1da" font-family="system-ui,sans-serif" font-size="17" font-weight="700">${xml(form.species)}</text>

@@ -1,6 +1,10 @@
 "use client";
 
 import { creatureForm } from "./creature-catalog";
+import { deriveBirthGenome } from "./heartbound-genome";
+import { renderHeartboundSvg } from "./heartbound-renderer";
+import { currentLivingGenome } from "./living-card-proof";
+import { isLivingCardAsset } from "./living-card-types";
 import type { PortableCardAsset } from "./portable-card";
 
 export function WildsCard({ asset, compact = false }: { asset: PortableCardAsset; compact?: boolean }) {
@@ -14,6 +18,10 @@ export function WildsCard({ asset, compact = false }: { asset: PortableCardAsset
     ["Bond", asset.manifest.stats.bond]
   ] as const;
   const variant = asset.manifest.variant.traits;
+  const genome = isLivingCardAsset(asset)
+    ? currentLivingGenome(asset)
+    : deriveBirthGenome({ formId: asset.manifest.formId, proofDigest: asset.proof.digest, variant });
+  const creatureSvg = renderHeartboundSvg(genome, "card", { width: 640, height: 405, title: asset.manifest.name });
   return (
     <article
       aria-label={`${asset.manifest.name}, Stage ${form.stage}, ${form.rarity} Wilds card`}
@@ -25,11 +33,7 @@ export function WildsCard({ asset, compact = false }: { asset: PortableCardAsset
         <div><strong>{asset.manifest.name}</strong><span>{form.species}</span></div>
         <div><b>STAGE {form.stage}</b><small>{form.cardNumber}</small></div>
       </header>
-      <div className={`wilds-card-art body-${form.anatomy.body} detail-${form.anatomy.detail}`} aria-label={`${asset.manifest.name} creature artwork`} role="img">
-        <span className="wilds-card-creature-core" />
-        <i className="wilds-card-creature-detail left" /><i className="wilds-card-creature-detail right" />
-        <em className="wilds-card-eye left" /><em className="wilds-card-eye right" />
-      </div>
+      <div className="wilds-card-art heartbound-card-art" dangerouslySetInnerHTML={{ __html: creatureSvg }} />
       <div className="wilds-card-rarity"><span>{form.rarity}</span><b>{form.foil}</b></div>
       <dl className="wilds-card-stats">
         {stats.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}

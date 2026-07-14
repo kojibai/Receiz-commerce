@@ -69,6 +69,7 @@ describe("Receiz Wilds rendering contract", () => {
     const reward = await readFile("src/features/play/WildsCaptureReward.tsx", "utf8");
     const inventory = await readFile("src/features/play/WildsInventory.tsx", "utf8");
     const card = await readFile("src/features/play/WildsCard.tsx", "utf8");
+    const cardExport = await readFile("src/features/play/card-export.ts", "utf8");
     const css = await readFile("app/globals.css", "utf8");
 
     assert.match(campaign, /type: "search-point"/);
@@ -87,6 +88,10 @@ describe("Receiz Wilds rendering contract", () => {
     assert.match(inventory, /type: "select-asset"/);
     assert.match(inventory, /type: "evolve"/);
     assert.match(card, /wilds-card-foil/);
+    assert.match(card, /renderHeartboundSvg/);
+    assert.match(cardExport, /renderHeartboundSvg/);
+    assert.doesNotMatch(card, /wilds-card-creature-core/);
+    assert.doesNotMatch(cardExport, /function creatureMark/);
     assert.match(css, /@media \(prefers-reduced-motion: reduce\)[\s\S]*\.wilds-capture-capsule/);
   });
 
