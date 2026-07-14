@@ -10210,6 +10210,106 @@ button.product-purchase-secondary-link {
     transition: none;
   }
 }
+
+.wilds-public-card-page {
+  position: relative;
+  display: grid;
+  min-height: 100dvh;
+  place-items: center;
+  overflow: hidden;
+  padding: 56px 18px 150px;
+  color: #fff;
+  background: radial-gradient(circle at 50% 38%, #1b5968, #081b24 54%, #030b10);
+}
+
+.wilds-card-home {
+  position: fixed;
+  z-index: 4;
+  top: 18px;
+  left: 18px;
+  padding: 9px 12px;
+  border: 1px solid rgb(255 255 255 / 15%);
+  border-radius: 999px;
+  color: #fff;
+  background: rgb(6 20 29 / 72%);
+  text-decoration: none;
+  backdrop-filter: blur(12px);
+}
+
+.wilds-card-scene {
+  --tilt-x: 0deg;
+  --tilt-y: 0deg;
+  position: relative;
+  display: grid;
+  width: min(78vw, 410px);
+  min-height: min(70vh, 650px);
+  place-items: center;
+  perspective: 1200px;
+}
+
+.wilds-card-float {
+  width: 100%;
+  transform: rotateX(var(--tilt-x)) rotateY(var(--tilt-y)) translateZ(42px);
+  transform-style: preserve-3d;
+  animation: wilds-public-float 4.6s ease-in-out infinite;
+  transition: transform 120ms ease-out;
+}
+
+.wilds-card-orbit,
+.wilds-card-orbit i {
+  position: absolute;
+  inset: 5%;
+  border: 1px solid rgb(113 232 195 / 18%);
+  border-radius: 50%;
+  transform: rotateX(68deg);
+}
+.wilds-card-orbit i:nth-child(1) { inset: 12%; border-color: rgb(247 201 72 / 21%); }
+.wilds-card-orbit i:nth-child(2) { inset: 22%; border-color: rgb(255 114 191 / 18%); }
+.wilds-card-orbit i:nth-child(3) { inset: 33%; border-color: rgb(255 255 255 / 12%); }
+
+@keyframes wilds-public-float {
+  0%, 100% { translate: 0 -5px; }
+  50% { translate: 0 9px; }
+}
+
+.wilds-card-dock {
+  position: fixed;
+  z-index: 5;
+  right: 50%;
+  bottom: max(16px, env(safe-area-inset-bottom));
+  display: grid;
+  width: min(720px, calc(100% - 24px));
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid rgb(255 255 255 / 16%);
+  border-radius: 19px;
+  background: rgb(6 18 25 / 84%);
+  box-shadow: 0 24px 70px rgb(0 0 0 / 42%);
+  translate: 50% 0;
+  backdrop-filter: blur(18px) saturate(1.2);
+}
+
+.wilds-card-dock-tabs,
+.wilds-card-dock-actions { display: flex; align-items: center; gap: 6px; }
+.wilds-card-dock button,
+.wilds-card-dock a { min-height: 34px; padding: 7px 10px; border: 1px solid rgb(255 255 255 / 13%); border-radius: 10px; color: #fff; background: rgb(255 255 255 / 6%); text-align: center; text-decoration: none; }
+.wilds-card-dock-tabs button[aria-pressed="true"],
+.wilds-card-dock-actions a:first-child { border-color: rgb(113 232 195 / 48%); background: rgb(113 232 195 / 14%); }
+.wilds-card-dock p { margin: 0; overflow-wrap: anywhere; color: #a9c3cc; font-size: 11px; }
+.wilds-card-dock-actions img { width: 42px; height: 42px; margin-left: auto; border-radius: 5px; }
+.wilds-card-missing { text-align: center; }
+
+@media (max-width: 560px) {
+  .wilds-public-card-page { padding-bottom: 180px; }
+  .wilds-card-scene { width: min(76vw, 340px); min-height: 55vh; }
+  .wilds-card-dock-tabs { overflow-x: auto; }
+  .wilds-card-dock-actions a { flex: 1; padding-inline: 5px; font-size: 10px; }
+  .wilds-card-dock-actions img { width: 36px; height: 36px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wilds-card-float { animation: none; transition: none; transform: none; }
+}
 .embedded-payment-backdrop {
   position: fixed;
   inset: 0;
@@ -10408,6 +10508,25 @@ button.product-purchase-secondary-link {
   margin: 0;
   font-size: 12px;
 }
+
+.wilds-fusion-sheet {
+  display: grid;
+  grid-template-columns: minmax(180px, 1.2fr) minmax(130px, 0.8fr) minmax(180px, 1fr) auto;
+  align-items: end;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid rgb(247 201 72 / 28%);
+  border-radius: 16px;
+  background: radial-gradient(circle at 0 0, rgb(247 201 72 / 12%), transparent 44%), #0b222e;
+}
+
+.wilds-fusion-sheet > div,
+.wilds-fusion-sheet label { display: grid; gap: 4px; }
+.wilds-fusion-sheet > div > span,
+.wilds-fusion-sheet label { color: #8eaab5; font-size: 10px; font-weight: 800; text-transform: uppercase; }
+.wilds-fusion-sheet strong { color: #fff; font-size: 14px; text-transform: none; }
+.wilds-fusion-sheet p { margin: 0; font-size: 10px; line-height: 1.35; }
+.wilds-fusion-sheet select { min-height: 40px; padding: 0 10px; border: 1px solid rgb(151 209 220 / 18%); border-radius: 10px; color: #fff; background: #06141d; }
 
 .wilds-inventory > header span,
 .wilds-capture-copy > span {
@@ -10740,6 +10859,7 @@ button.product-purchase-secondary-link {
   .wilds-capture-stage { grid-row: auto; min-height: 190px; }
   .wilds-capture-dialog > .wilds-collectible-card { grid-row: auto; grid-column: auto; }
   .wilds-capture-dialog > button { grid-column: auto; width: 100%; }
+  .wilds-fusion-sheet { grid-template-columns: 1fr 1fr; }
 }
 
 @media (max-width: 560px) {
@@ -10757,6 +10877,7 @@ button.product-purchase-secondary-link {
   .wilds-inventory > header { grid-template-columns: minmax(0, 1fr) auto; }
   .wilds-import-card { width: 42px; padding: 8px; justify-content: center; }
   .wilds-inventory > header .wilds-import-card span { display: none; }
+  .wilds-fusion-sheet { grid-template-columns: 1fr; }
   .wilds-inventory-toolbar { grid-template-columns: 1fr; }
   .wilds-inventory-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .wilds-capture-backdrop { align-items: start; padding: 10px; }

@@ -28,6 +28,19 @@ describe("Receiz Wilds game state", () => {
     assert.equal(duplicate.inventory.length, imported.inventory.length);
   });
 
+  it("spends one earned Spark to add a child while preserving reusable parents", () => {
+    const second = sealCollectedCard({ formId: "voltray-1", ownerReceizId: "wilds.player.receiz.id", encounterId: "fusion-test-b", capturedAt: "2026-07-13T15:00:00.000Z" });
+    const ready = applyWildsInput(initialPlayState, { type: "import-card", asset: second });
+    const input = { type: "fuse-cards" as const, parentAId: ready.inventory[0]!.id, parentBId: second.id, inheritance: "balanced" as const, fusedAt: "2026-07-13T17:00:00.000Z" };
+    const fused = applyWildsInput(ready, input);
+    const replay = applyWildsInput(fused, input);
+    assert.equal(fused.inventory.length, ready.inventory.length + 1);
+    assert.equal(fused.inventory.some((asset) => asset.id === ready.inventory[0]!.id), true);
+    assert.equal(fused.inventory.some((asset) => asset.id === second.id), true);
+    assert.equal(fused.fusionSparks, ready.fusionSparks - 1);
+    assert.equal(replay.inventory.length, fused.inventory.length);
+  });
+
   it("moves the player into range and collects a new companion card", () => {
     let state = initialPlayState;
 
@@ -230,6 +243,22 @@ describe("Receiz Wilds game state", () => {
     const trained = applyWildsInput(initialPlayState, { type: "train" });
     assert.deepEqual(restorePlayState(serializePlayState(trained)), trained);
     assert.deepEqual(restorePlayState("not-json"), initialPlayState);
+  });
+
+  it("defaults proximity fields when restoring an older active encounter", () => {
+    const envelope = JSON.parse(serializePlayState(initialPlayState));
+    envelope.state.encounter = {
+      phase: "searching",
+      searchedAt: "2026-07-13T15:00:00.000Z",
+      ownerReceizId: "player.receiz.id",
+      searchPoint: { x: 1, z: 2 }
+    };
+    const restored = restorePlayState(JSON.stringify(envelope));
+    assert.notEqual(restored.encounter.phase, "idle");
+    if (restored.encounter.phase !== "idle") {
+      assert.equal(restored.encounter.proximity, "cold");
+      assert.equal(restored.encounter.trend, null);
+    }
   });
 
   it("migrates a v2 discovery save into sealed portable inventory", () => {

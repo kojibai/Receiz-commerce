@@ -197,7 +197,7 @@ function InstancedForest({
   const treeData = useMemo(() => tiles.flatMap((tile) => [0, 1].map((slot) => ({
     x: tile.tileX * WORLD_TILE_SIZE + 1.7 + seededUnit(tile.tileX, tile.tileZ, slot) * 8.6,
     z: tile.tileZ * WORLD_TILE_SIZE + 1.4 + seededUnit(tile.tileZ, tile.tileX, slot + 11) * 9,
-    scale: 0.68 + seededUnit(tile.tileX, tile.tileZ, slot + 23) * 0.58
+    scale: 0.85 + seededUnit(tile.tileX, tile.tileZ, slot + 23) * 0.68
   }))), [tiles]);
 
   useLayoutEffect(() => {
@@ -711,7 +711,7 @@ function ExplorerAvatar({
   });
 
   return (
-    <group ref={groupRef} position={[0, 0, 0]} scale={0.78}>
+    <group ref={groupRef} position={[0, 0, 0]} scale={0.68}>
       <mesh castShadow position={[0, 0.94, 0]}>
         <capsuleGeometry args={[style === "female" ? 0.2 : 0.23, 0.42, 8, 16]} />
         <meshStandardMaterial color={style === "female" ? "#f05f8f" : "#2f6f9f"} roughness={0.62} />

@@ -42,6 +42,9 @@ export type PortableCardManifest = {
     previousAssetId: string | null;
     previousDigest: string | null;
     evolvedAt: string | null;
+    parentAssetIds?: [string, string];
+    parentDigests?: [string, string];
+    fusionSparkId?: string;
   };
 };
 

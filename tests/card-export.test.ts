@@ -30,6 +30,8 @@ describe("Wilds card export", () => {
     assert.match(svg, /Spark Pulse/);
     assert.match(svg, /Voltray Bond/);
     assert.match(svg, /sha256:[a-f0-9]{64}/);
+    assert.match(svg, /id="card-qr"/);
+    assert.match(svg, /QR link to standalone card page/);
     assert.match(svg, /RARE|UNCOMMON|TRAIL|MYTHIC|ETERNAL/);
   });
 

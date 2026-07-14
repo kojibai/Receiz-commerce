@@ -25,6 +25,8 @@ export function WildsInventory({
   const [listing, setListing] = useState(false);
   const [listingMessage, setListingMessage] = useState("");
   const [importMessage, setImportMessage] = useState("");
+  const [fusionOpen, setFusionOpen] = useState(false);
+  const [fusionParentB, setFusionParentB] = useState("");
   const importInput = useRef<HTMLInputElement>(null);
   const matches = useMemo(() => state.inventory.filter((asset) => {
     const form = creatureForm(asset.manifest.formId);
@@ -52,6 +54,10 @@ export function WildsInventory({
           <button className="wilds-import-card vault" disabled={!state.inventory.length} onClick={() => void downloadPortableVault(state.inventory)} title="Download portable vault PNG" type="button">
             <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 6h16v13H4zM8 6V4h8v2m-4 3v6m0 0-3-3m3 3 3-3" /></svg>
             <span>Download vault</span>
+          </button>
+          <button className="wilds-import-card fusion" disabled={state.inventory.length < 2} onClick={() => setFusionOpen((value) => !value)} title="Fuse two reusable parent cards" type="button">
+            <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 7h5l2 3 2-3h5M5 17h5l2-3 2 3h5" /></svg>
+            <span>Fuse cards</span>
           </button>
         </div>
         <input
@@ -82,6 +88,24 @@ export function WildsInventory({
         />
         {importMessage ? <p className="wilds-import-message" role="status">{importMessage}</p> : null}
       </header>
+      {fusionOpen ? (
+        <section className="wilds-fusion-sheet" aria-label="Create a fusion child">
+          <div><span>Earned creation</span><strong>{state.fusionSparks} Fusion Spark{state.fusionSparks === 1 ? "" : "s"}</strong><p>Both parents stay in your vault. Each rests for 24 hours after creating a child.</p></div>
+          <label>Parent A<strong>{selected?.manifest.name ?? "Select a card below"}</strong></label>
+          <label>Parent B<select aria-label="Second fusion parent" onChange={(event) => setFusionParentB(event.target.value)} value={fusionParentB}><option value="">Choose a different card…</option>{state.inventory.filter((asset) => asset.id !== selected?.id).map((asset) => <option key={asset.id} value={asset.id}>{asset.manifest.name} · {asset.manifest.variant.traits.visualFingerprint}</option>)}</select></label>
+          <button
+            className="button button-primary"
+            disabled={!selected || !fusionParentB || state.fusionSparks < 1}
+            onClick={() => {
+              if (!selected || !fusionParentB) return;
+              onInput({ type: "fuse-cards", parentAId: selected.id, parentBId: fusionParentB, inheritance: "balanced", fusedAt: new Date().toISOString() });
+              setFusionParentB("");
+              setFusionOpen(false);
+            }}
+            type="button"
+          >Create unique child</button>
+        </section>
+      ) : null}
       <div className="wilds-inventory-toolbar">
         <input aria-label="Search creature cards" onChange={(event) => { setQuery(event.target.value); setPage(0); }} placeholder="Search creatures, habitats, abilities…" type="search" value={query} />
         <select aria-label="Filter card rarity" onChange={(event) => { setRarity(event.target.value); setPage(0); }} value={rarity}>
@@ -100,6 +124,7 @@ export function WildsInventory({
           <aside className="wilds-inventory-detail">
             <WildsCard asset={selected} />
             <div className="wilds-inventory-actions">
+              <a className="button button-outline" href={`/cards/${encodeURIComponent(selected.id)}`}>Open standalone card page</a>
               <button className="button button-primary" onClick={() => void downloadPortableCard(selected)} type="button">Download portable PNG</button>
               {onListAsset && selected.status !== "listed" ? (
                 <div className="wilds-listing-control">

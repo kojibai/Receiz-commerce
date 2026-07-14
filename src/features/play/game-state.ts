@@ -8,6 +8,7 @@ import {
 import { encounterFromSearch, idleEncounterState, isCapturableEncounter, type EncounterState } from "./encounter-state";
 import { nearbyHiddenHotspots, searchHiddenHotspots } from "./hidden-hotspots";
 import { applyBattleAction, battleTranscriptDigest, startWildBattle, type BattleAction, type BattleState } from "./battle-engine";
+import { fusionChild, fusionEligibility, type FusionInheritance } from "./card-fusion";
 
 export type GameAction = "explore" | "train" | "mission";
 export type MoveDirection = "north" | "south" | "west" | "east";
@@ -24,6 +25,7 @@ export type WildsInput =
   | { type: "mark-synced"; assetId: string; synchronizedAt: string }
   | { type: "mark-listed"; assetId: string; synchronizedAt: string }
   | { type: "import-card"; asset: PortableCardAsset }
+  | { type: "fuse-cards"; parentAId: string; parentBId: string; inheritance: FusionInheritance; fusedAt: string }
   | { type: "evolve"; assetId: string; evolvedAt: string }
   | { type: "train"; cardId?: string }
   | { type: "mission" }
@@ -95,6 +97,9 @@ export type PlayState = {
   streak: number;
   bossUnlocked: boolean;
   battle: BattleState | null;
+  fusionSparks: number;
+  fusionCooldowns: Record<string, string>;
+  achievements: string[];
   worldRank: "Grove scout" | "Trail keeper" | "Wilds ranger" | "Titan challenger";
 };
 
@@ -226,6 +231,9 @@ export const initialPlayState: PlayState = {
   streak: 9,
   bossUnlocked: false,
   battle: null,
+  fusionSparks: 1,
+  fusionCooldowns: {},
+  achievements: ["first_spark"],
   worldRank: "Grove scout"
 };
 
@@ -297,7 +305,9 @@ function restoreEncounter(value: unknown): EncounterState {
   if (!phases.has(String(candidate.phase)) || typeof candidate.searchedAt !== "string" || typeof candidate.ownerReceizId !== "string") return idleEncounterState;
   const point = candidate.searchPoint as Record<string, unknown> | undefined;
   if (!point || typeof point.x !== "number" || typeof point.z !== "number") return idleEncounterState;
-  return candidate as EncounterState;
+  const proximity = candidate.proximity === "warm" || candidate.proximity === "hot" ? candidate.proximity : "cold";
+  const trend = candidate.trend === "closer" || candidate.trend === "farther" || candidate.trend === "steady" ? candidate.trend : null;
+  return { ...candidate, proximity, trend } as EncounterState;
 }
 
 export function selectedCard(state: PlayState) {
@@ -339,6 +349,34 @@ export function applyWildsInput(state: PlayState, input: WildsInput): PlayState 
       selectedCardId: asset.manifest.familyId,
       lastEvent: `${asset.manifest.name} passed offline verification and joined your playable inventory.`
     });
+  }
+
+  if (input.type === "fuse-cards") {
+    const parentA = state.inventory.find((asset) => asset.id === input.parentAId);
+    const parentB = state.inventory.find((asset) => asset.id === input.parentBId);
+    if (!parentA || !parentB) return { ...state, lastEvent: "Choose two cards from your verified inventory." };
+    const sparkId = `spark:${input.fusedAt}`;
+    let child: PortableCardAsset;
+    try {
+      child = fusionChild({ parentA, parentB, inheritance: input.inheritance, fusionKaiPulse: String(Date.parse(input.fusedAt)), fusedAt: input.fusedAt, sparkId });
+    } catch {
+      return { ...state, lastEvent: "Those cards could not form a verified fusion child." };
+    }
+    if (state.inventory.some((asset) => asset.id === child.id)) return state;
+    const eligibility = fusionEligibility({ parentA, parentB, fusionSparks: state.fusionSparks, fusionCooldowns: state.fusionCooldowns, at: input.fusedAt });
+    if (!eligibility.ok) return { ...state, lastEvent: eligibility.availableAt ? `A parent is resting until ${eligibility.availableAt}.` : "Earn a Fusion Spark and choose two eligible parents." };
+    const cooldown = new Date(Date.parse(input.fusedAt) + 24 * 60 * 60 * 1000).toISOString();
+    return {
+      ...state,
+      achievements: Array.from(new Set([...state.achievements, "first_fusion_child"])),
+      discoveredCardIds: Array.from(new Set([...state.discoveredCardIds, child.manifest.familyId])),
+      fusionSparks: state.fusionSparks - 1,
+      fusionCooldowns: { ...state.fusionCooldowns, [parentA.id]: cooldown, [parentB.id]: cooldown },
+      inventory: [...state.inventory, child],
+      pendingSyncAssetIds: [...state.pendingSyncAssetIds, child.id],
+      selectedCardId: child.manifest.familyId,
+      lastEvent: `${parentA.manifest.name} and ${parentB.manifest.name} created ${child.manifest.name}. Both parents remain usable.`
+    };
   }
 
   if (input.type === "dismiss-reveal") {

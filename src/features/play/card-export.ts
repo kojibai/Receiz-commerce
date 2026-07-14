@@ -1,4 +1,5 @@
 import { creatureForm } from "./creature-catalog";
+import QRCode from "qrcode";
 import {
   canonicalPortableCardJson,
   sha256PortableBasis,
@@ -60,6 +61,20 @@ function creatureMark(body: string, detail: string, primary: string, accent: str
   return `${bodyShape}${detailShape}<circle cx="310" cy="236" r="13" fill="#05131b"/><circle cx="406" cy="236" r="13" fill="#05131b"/><path d="M329 288q29 24 58 0" fill="none" stroke="#fff" stroke-width="9" stroke-linecap="round" opacity=".86"/>`;
 }
 
+function qrSvg(value: string, x: number, y: number, size: number) {
+  const qr = QRCode.create(value, { errorCorrectionLevel: "M" });
+  const modules = qr.modules.size;
+  const quiet = 4;
+  const cell = size / (modules + quiet * 2);
+  const squares: string[] = [`<rect x="${x}" y="${y}" width="${size}" height="${size}" rx="5" fill="#fff"/>`];
+  for (let row = 0; row < modules; row += 1) {
+    for (let col = 0; col < modules; col += 1) {
+      if (qr.modules.get(row, col)) squares.push(`<rect x="${(x + (col + quiet) * cell).toFixed(2)}" y="${(y + (row + quiet) * cell).toFixed(2)}" width="${(cell + 0.08).toFixed(2)}" height="${(cell + 0.08).toFixed(2)}" fill="#07141c"/>`);
+    }
+  }
+  return `<g id="card-qr" aria-label="QR link to standalone card page">${squares.join("")}</g>`;
+}
+
 export function renderWildsCardSvg(asset: PortableCardAsset) {
   const form = creatureForm(asset.manifest.formId);
   if (!form) throw new Error("wilds_card_form_unknown");
@@ -75,6 +90,7 @@ export function renderWildsCardSvg(asset: PortableCardAsset) {
   ].join("");
   const abilityOne = form.abilities[0];
   const abilityTwo = form.abilities[1];
+  const cardPath = `/cards/${encodeURIComponent(asset.id)}`;
   return `<svg xmlns="http://www.w3.org/2000/svg" width="750" height="1050" viewBox="0 0 750 1050" role="img" aria-labelledby="title description">
   <title id="title">${xml(asset.manifest.name)} Wilds card</title><desc id="description">Stage ${asset.manifest.stage} ${xml(asset.manifest.rarity)} portable Receiz card</desc>
   <defs>
@@ -96,8 +112,8 @@ export function renderWildsCardSvg(asset: PortableCardAsset) {
   <g transform="translate(65 630)">${statRows}</g>
   <g transform="translate(65 727)"><rect width="620" height="88" rx="22" fill="#0a202b" stroke="${xml(palette.primary)}" stroke-opacity=".52"/><text x="24" y="32" fill="#fff" font-family="system-ui,sans-serif" font-size="23" font-weight="850">${xml(abilityOne.name)}</text><text x="590" y="32" text-anchor="end" fill="${xml(palette.accent)}" font-family="system-ui,sans-serif" font-size="23" font-weight="900">${abilityOne.power}</text><text x="24" y="63" fill="#a9c2cb" font-family="system-ui,sans-serif" font-size="16">${xml(abilityOne.text)}</text></g>
   <g transform="translate(65 829)"><rect width="620" height="88" rx="22" fill="#0a202b" stroke="${xml(palette.accent)}" stroke-opacity=".52"/><text x="24" y="32" fill="#fff" font-family="system-ui,sans-serif" font-size="23" font-weight="850">${xml(abilityTwo.name)}</text><text x="590" y="32" text-anchor="end" fill="${xml(palette.primary)}" font-family="system-ui,sans-serif" font-size="23" font-weight="900">${abilityTwo.power}</text><text x="24" y="63" fill="#a9c2cb" font-family="system-ui,sans-serif" font-size="16">${xml(abilityTwo.text)}</text></g>
-  <text x="65" y="960" fill="#7896a1" font-family="ui-monospace,monospace" font-size="12">${xml(asset.proof.digest)}</text>
-  <text x="65" y="990" fill="#fff" font-family="system-ui,sans-serif" font-size="15" font-weight="750">RECEIZ WILDS · PORTABLE PROOF CARD</text><text x="685" y="990" text-anchor="end" fill="${xml(palette.accent)}" font-family="system-ui,sans-serif" font-size="15" font-weight="850">${xml(asset.status.replace("_", " ").toUpperCase())}</text>
+  <text x="65" y="960" fill="#7896a1" font-family="ui-monospace,monospace" font-size="12">${xml(asset.proof.digest)}</text>${qrSvg(cardPath, 618, 920, 66)}
+  <text x="65" y="990" fill="#fff" font-family="system-ui,sans-serif" font-size="15" font-weight="750">RECEIZ WILDS · PORTABLE PROOF CARD</text><text x="600" y="990" text-anchor="end" fill="${xml(palette.accent)}" font-family="system-ui,sans-serif" font-size="15" font-weight="850">${xml(asset.status.replace("_", " ").toUpperCase())}</text>
 </svg>`;
 }
 

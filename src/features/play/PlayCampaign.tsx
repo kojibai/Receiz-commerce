@@ -215,9 +215,10 @@ export function PlayCampaign({
     });
   };
   const discoveryActive = state.encounter.phase === "idle" || state.encounter.phase === "searching" || state.encounter.phase === "hint";
+  const activeProximity = state.encounter.phase === "idle" ? "cold" : state.encounter.proximity ?? "cold";
   const proximityLabel = state.encounter.phase === "idle"
     ? "Tap terrain to scan"
-    : `${state.encounter.proximity}${state.encounter.trend ? ` · ${state.encounter.trend}` : ""}`;
+    : `${activeProximity}${state.encounter.trend ? ` · ${state.encounter.trend}` : ""}`;
 
   return (
     <section className="panel play-panel wilds-play-panel" id="play">
@@ -318,7 +319,7 @@ export function PlayCampaign({
               </div>
             </div>
 
-            {discoveryActive ? <div className={`wilds-search-reticle ${state.encounter.phase === "idle" ? "" : state.encounter.proximity}`} aria-live="polite">{proximityLabel}</div> : null}
+            {discoveryActive ? <div className={`wilds-search-reticle ${state.encounter.phase === "idle" ? "" : activeProximity}`} aria-live="polite">{proximityLabel}</div> : null}
 
             <div className="wilds-event-toast" aria-live="polite">
               {state.lastEvent}
