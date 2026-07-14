@@ -14,8 +14,16 @@ import {
   createWildsAudioRuntime,
   normalizeWildsAudioSettings
 } from "../src/features/play/wilds-audio";
+import { readFileSync } from "node:fs";
 
 describe("Wilds presentation quality", () => {
+  it("mounts a single responsive campaign owner", () => {
+    const storefront = readFileSync(`${process.cwd()}/src/features/storefront/PublicStorefront.tsx`, "utf8");
+    assert.equal(storefront.match(/<PlayCampaign\b/g)?.length, 1);
+    assert.match(storefront, /mobileCampaign=\{compactLayout \? campaign : null\}/);
+    assert.match(storefront, /\{compactLayout === false \? campaign : null\}/);
+  });
+
   it("selects bounded mobile and desktop profiles", () => {
     assert.equal(selectWildsQualityProfile({ width: 390, hardwareConcurrency: 4, deviceMemory: 4, reducedMotion: false }).tier, "medium");
     assert.equal(selectWildsQualityProfile({ width: 360, hardwareConcurrency: 2, deviceMemory: 2, reducedMotion: false }).dpr, 1);

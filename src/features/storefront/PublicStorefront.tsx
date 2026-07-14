@@ -55,6 +55,20 @@ import {
 
 const mobileViews = new Set<MobileView>(["store", "exchange", "rewards", "assets", "play", "account"]);
 
+function useCompactStorefrontLayout() {
+  const [compact, setCompact] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const query = window.matchMedia("(max-width: 760px)");
+    const update = () => setCompact(query.matches);
+    update();
+    query.addEventListener("change", update);
+    return () => query.removeEventListener("change", update);
+  }, []);
+
+  return compact;
+}
+
 function mobileViewFromHash(hash: string): MobileView | null {
   const value = hash.replace(/^#/, "");
   return mobileViews.has(value as MobileView) ? (value as MobileView) : null;
@@ -85,6 +99,7 @@ export function PublicStorefront({
   const [cartOpen, setCartOpen] = useState(false);
   const [cartPulseProductId, setCartPulseProductId] = useState<string | null>(null);
   const [platformAccountResolving, setPlatformAccountResolving] = useState(false);
+  const compactLayout = useCompactStorefrontLayout();
   const platformAccountAutoResolvedRef = useRef(false);
   const tenantSurface = hostContext.surface === "tenant";
   const customer = customerForAccountSurface(state, tenantSurface);
@@ -317,6 +332,16 @@ export function PublicStorefront({
     }
   }, [cartSummary.lines.length]);
 
+  const campaign = compactLayout === null ? null : (
+    <PlayCampaign
+      campaignName={campaignName}
+      enabled={gameEnabled}
+      onComplete={completeGame}
+      onListAsset={listWildsCard}
+      ownerReceizId={receizHandle}
+    />
+  );
+
   return (
     <>
     <main className={tenantSurface ? "commerce-app tenant-store" : "commerce-app"} style={brandThemeStyle(state.brand)}>
@@ -351,13 +376,7 @@ export function PublicStorefront({
                   showAdminActions={!tenantSurface}
                   showCartActions={tenantSurface}
                 />
-                <PlayCampaign
-                  campaignName={campaignName}
-                  enabled={gameEnabled}
-                  onComplete={completeGame}
-                  onListAsset={listWildsCard}
-                  ownerReceizId={receizHandle}
-                />
+                {compactLayout === false ? campaign : null}
               </>
             ) : homepageMode === "exchange" ? (
               <>
@@ -384,13 +403,7 @@ export function PublicStorefront({
               </>
             ) : homepageMode === "game" ? (
               <>
-                <PlayCampaign
-                  campaignName={campaignName}
-                  enabled={gameEnabled}
-                  onComplete={completeGame}
-                  onListAsset={listWildsCard}
-                  ownerReceizId={receizHandle}
-                />
+                {compactLayout === false ? campaign : null}
                 <ProductCatalog
                   addedProductId={cartPulseProductId}
                   brandImageUrl={state.brand.logoImageUrl}
@@ -441,13 +454,7 @@ export function PublicStorefront({
                   </div>
                 )}
 
-                <PlayCampaign
-                  campaignName={campaignName}
-                  enabled={gameEnabled}
-                  onComplete={completeGame}
-                  onListAsset={listWildsCard}
-                  ownerReceizId={receizHandle}
-                />
+                {compactLayout === false ? campaign : null}
 
                 <ProductCatalog
                   addedProductId={cartPulseProductId}
@@ -525,7 +532,6 @@ export function PublicStorefront({
           exchangeListAssetFeedback={actionFeedback["exchange.listAsset"]}
           shippingFeedback={actionFeedback.shipping}
           onExchangeListAsset={listExchangeAsset}
-          onWildsListAsset={listWildsCard}
           onExchangeLiquidity={provideExchangeLiquidity}
           onExchangeSelectAsset={selectExchangeAsset}
           onExchangeTrade={tradeExchangeAsset}
@@ -542,8 +548,7 @@ export function PublicStorefront({
           showIdentityEntry={showIdentityEntry}
           showIdentityUpload={showIdentityUploadFallback}
           tenantSurface={tenantSurface}
-          onPlayComplete={completeGame}
-          campaignName={campaignName}
+          mobileCampaign={compactLayout ? campaign : null}
           reward={reward}
           state={state}
         />
@@ -903,7 +908,6 @@ function MobileProductDetailPanel({
 function MobileStage({
   activeView,
   addedProductId,
-  campaignName,
   customer,
   checkoutFeedback,
   exchangeListAssetFeedback,
@@ -911,7 +915,6 @@ function MobileStage({
   onAddToCart,
   onCheckout,
   onExchangeListAsset,
-  onWildsListAsset,
   onExchangeLiquidity,
   onExchangeSelectAsset,
   onExchangeTrade,
@@ -920,7 +923,7 @@ function MobileStage({
   onDownloadIdentitySeal,
   onExistingReceizId,
   onIssueReward,
-  onPlayComplete,
+  mobileCampaign,
   onQuantityChange,
   onRemoveFromCart,
   onRestoreArtifact,
@@ -935,7 +938,6 @@ function MobileStage({
 }: {
   activeView: MobileView;
   addedProductId?: string | null;
-  campaignName: string;
   customer: CustomerAccount;
   checkoutFeedback?: ActionFeedbackState;
   customerReceizHandle: string;
@@ -944,7 +946,6 @@ function MobileStage({
   onAddToCart: (productId: string) => void;
   onCheckout: () => void;
   onExchangeListAsset: (file?: File) => void | Promise<void>;
-  onWildsListAsset: (card: PortableCardAsset, priceCents: number) => Promise<PortableCardAsset | null>;
   onExchangeLiquidity: (assetId: string, amountCents: number) => void;
   onExchangeSelectAsset: (assetId: string) => void;
   onExchangeTrade: (assetId: string, side: ExchangeTradeSide, shares: number) => void;
@@ -953,7 +954,7 @@ function MobileStage({
   onDownloadIdentitySeal: () => void | Promise<void>;
   onExistingReceizId: () => void | Promise<void>;
   onIssueReward: () => void;
-  onPlayComplete: (beans: number) => void;
+  mobileCampaign: ReactNode;
   onQuantityChange: (productId: string, quantity: number) => void;
   onRemoveFromCart: (productId: string) => void;
   onRestoreArtifact: (file: File) => void | Promise<void>;
@@ -1014,11 +1015,7 @@ function MobileStage({
       />
       <MobilePlayPanel
         active={activeView === "play"}
-        campaignName={campaignName}
-        enabled={state.game.enabled || state.storefront.homepageMode === "game"}
-        onComplete={onPlayComplete}
-        onListAsset={onWildsListAsset}
-        ownerReceizId={customerReceizHandle}
+        campaign={mobileCampaign}
       />
       <MobileAccountPanel
         active={activeView === "account"}
@@ -1954,23 +1951,15 @@ function MobileAssetsPanel({
 
 function MobilePlayPanel({
   active,
-  campaignName,
-  enabled,
-  onComplete,
-  onListAsset,
-  ownerReceizId
+  campaign
 }: {
   active: boolean;
-  campaignName: string;
-  enabled: boolean;
-  onComplete: (beans: number) => void;
-  onListAsset: (card: PortableCardAsset, priceCents: number) => Promise<PortableCardAsset | null>;
-  ownerReceizId: string;
+  campaign: ReactNode;
 }) {
   return (
     <MobilePane active={active} action={<StatusPill tone="pink">Game on</StatusPill>} title="Play">
       <div className="mobile-play-wrap">
-        <PlayCampaign campaignName={campaignName} enabled={enabled} onComplete={onComplete} onListAsset={onListAsset} ownerReceizId={ownerReceizId} />
+        {campaign}
       </div>
     </MobilePane>
   );
