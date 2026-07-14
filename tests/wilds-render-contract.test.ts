@@ -3,6 +3,20 @@ import { readFile } from "node:fs/promises";
 import { describe, it } from "node:test";
 
 describe("Receiz Wilds rendering contract", () => {
+  it("layers an authored biome around meaningful landmarks", async () => {
+    const environment = await readFile("src/features/play/WildsEnvironment.tsx", "utf8");
+    const world = await readFile("src/features/play/WildsWorldCanvas.tsx", "utf8");
+
+    assert.match(environment, /name="world-layer-play"/);
+    assert.match(environment, /name="world-layer-mid"/);
+    assert.match(environment, /name="world-layer-far"/);
+    assert.match(environment, /function HearttreeSanctum/);
+    assert.match(environment, /function RootArch/);
+    assert.match(environment, /function SpringLandmark/);
+    assert.match(environment, /instancedMesh/);
+    assert.match(world, /<WildsEnvironment/);
+  });
+
   it("avoids competing float transforms and unstable contact shadows", async () => {
     const source = await readFile("src/features/play/WildsWorldCanvas.tsx", "utf8");
 
@@ -68,12 +82,13 @@ describe("Receiz Wilds rendering contract", () => {
   it("uses a drag trackpad and streams terrain around the player", async () => {
     const campaign = await readFile("src/features/play/PlayCampaign.tsx", "utf8");
     const world = await readFile("src/features/play/WildsWorldCanvas.tsx", "utf8");
+    const environment = await readFile("src/features/play/WildsEnvironment.tsx", "utf8");
 
     assert.match(campaign, /function WildsTrackpad/);
     assert.match(campaign, /setPointerCapture/);
     assert.match(campaign, /move-vector/);
     assert.match(world, /function StreamedTerrain/);
-    assert.match(world, /WORLD_TILE_SIZE/);
+    assert.match(environment, /WILDS_TILE_SIZE/);
   });
 
   it("renders an accessible Receiz Capsule reward and bounded card inventory", async () => {
@@ -183,13 +198,14 @@ describe("Receiz Wilds rendering contract", () => {
   it("keeps creatures hidden until an exact terrain search reveals one", async () => {
     const state = await readFile("src/features/play/game-state.ts", "utf8");
     const world = await readFile("src/features/play/WildsWorldCanvas.tsx", "utf8");
+    const environment = await readFile("src/features/play/WildsEnvironment.tsx", "utf8");
     const campaign = await readFile("src/features/play/PlayCampaign.tsx", "utf8");
     const battle = await readFile("src/features/play/WildsBattle.tsx", "utf8");
 
     assert.match(state, /searchHiddenHotspots/);
     assert.match(world, /function SearchableTerrain/);
-    assert.match(world, /function InstancedGroundCover/);
-    assert.match(world, /<InstancedGroundCover player=\{player\} tiles=\{tiles\}/);
+    assert.match(environment, /function EcologyInstances/);
+    assert.match(environment, /<EcologyInstances/);
     assert.match(world, /function ExplorerAvatar/);
     assert.match(world, /movingUntil/);
     assert.match(campaign, /Choose your explorer/);

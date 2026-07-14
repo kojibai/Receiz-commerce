@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useLayoutEffect, useMemo, useRef } from "react";
+import { Suspense, useEffect, useMemo, useRef } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Html, Sparkles } from "@react-three/drei";
 import * as THREE from "three";
@@ -12,6 +12,7 @@ import {
 import { creatureForm } from "@/features/play/creature-catalog";
 import type { HotspotCover } from "@/features/play/hidden-hotspots";
 import type { WildsPresence } from "@/features/play/multiplayer-core";
+import { WildsEnvironment } from "@/features/play/WildsEnvironment";
 import {
   rendererBudgetStatus,
   type WildsQualityProfile
@@ -91,7 +92,13 @@ function WildsScene({
       />
       <CameraRig encounter={state.encounter} />
       <WildsDiagnostics qualityProfile={qualityProfile} state={state} />
-      <SearchableTerrain player={state.player} enabled={searchEnabled} onSearchPoint={onSearchPoint} />
+      <SearchableTerrain
+        enabled={searchEnabled}
+        missionProgress={state.missionProgress}
+        onSearchPoint={onSearchPoint}
+        player={state.player}
+        qualityProfile={qualityProfile}
+      />
       <EncounterSequence state={state} />
       {remotePlayers.map((player) => <RemoteExplorer key={player.playerId} player={player} localPlayer={state.player} onSelect={onSelectPlayer} />)}
       <ExplorerAvatar style={avatarStyle} worldPosition={state.player} />
@@ -155,9 +162,6 @@ function CameraRig({ encounter }: { encounter: PlayState["encounter"] }) {
   return null;
 }
 
-const WORLD_TILE_SIZE = 12;
-const STREAM_RADIUS = 2;
-
 function frameSeconds() {
   return performance.now() / 1_000;
 }
@@ -165,10 +169,14 @@ function frameSeconds() {
 function SearchableTerrain({
   player,
   enabled,
+  missionProgress,
+  qualityProfile,
   onSearchPoint
 }: {
   player: PlayState["player"];
   enabled: boolean;
+  missionProgress: number;
+  qualityProfile: WildsQualityProfile;
   onSearchPoint: (point: { x: number; z: number }) => void;
 }) {
   return (
@@ -179,185 +187,21 @@ function SearchableTerrain({
         onSearchPoint({ x: player.x + event.point.x, z: player.z + event.point.z });
       }}
     >
-      <StreamedTerrain player={player} />
+      <StreamedTerrain missionProgress={missionProgress} player={player} qualityProfile={qualityProfile} />
     </group>
   );
 }
 
-function StreamedTerrain({ player }: { player: PlayState["player"] }) {
-  const centerX = Math.floor(player.x / WORLD_TILE_SIZE);
-  const centerZ = Math.floor(player.z / WORLD_TILE_SIZE);
-  const tiles = useMemo(() => {
-    const result: Array<{ key: string; tileX: number; tileZ: number; tone: string }> = [];
-    for (let dz = -STREAM_RADIUS; dz <= STREAM_RADIUS; dz += 1) {
-      for (let dx = -STREAM_RADIUS; dx <= STREAM_RADIUS; dx += 1) {
-        const tileX = centerX + dx;
-        const tileZ = centerZ + dz;
-        result.push({
-          key: `${tileX}:${tileZ}`,
-          tileX,
-          tileZ,
-          tone: seededUnit(tileX, tileZ, 5) > 0.5 ? "#69ad5b" : "#63a957"
-        });
-      }
-    }
-    return result;
-  }, [centerX, centerZ]);
-
-  return (
-    <group>
-      {tiles.map((tile) => (
-        <mesh
-          key={tile.key}
-          receiveShadow
-          position={[
-            tile.tileX * WORLD_TILE_SIZE + WORLD_TILE_SIZE / 2 - player.x,
-            -0.03,
-            tile.tileZ * WORLD_TILE_SIZE + WORLD_TILE_SIZE / 2 - player.z
-          ]}
-          rotation={[-Math.PI / 2, 0, 0]}
-        >
-          <planeGeometry args={[WORLD_TILE_SIZE + 0.05, WORLD_TILE_SIZE + 0.05]} />
-          <meshStandardMaterial color={tile.tone} roughness={0.96} />
-        </mesh>
-      ))}
-      <WorldTrails player={player} />
-      <InstancedForest player={player} tiles={tiles} />
-      <InstancedGroundCover player={player} tiles={tiles} />
-    </group>
-  );
-}
-
-function WorldTrails({ player }: { player: PlayState["player"] }) {
-  const offsetX = -(((player.x % WORLD_TILE_SIZE) + WORLD_TILE_SIZE) % WORLD_TILE_SIZE);
-  const offsetZ = -(((player.z % WORLD_TILE_SIZE) + WORLD_TILE_SIZE) % WORLD_TILE_SIZE);
-  return (
-    <group position={[offsetX, 0.035, offsetZ]}>
-      <mesh rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[WORLD_TILE_SIZE * 5, 0.72]} />
-        <meshStandardMaterial color="#ead285" roughness={0.9} />
-      </mesh>
-      <mesh rotation={[-Math.PI / 2, 0, Math.PI / 2]}>
-        <planeGeometry args={[WORLD_TILE_SIZE * 5, 0.56]} />
-        <meshStandardMaterial color="#d9c16d" roughness={0.92} />
-      </mesh>
-    </group>
-  );
-}
-
-function InstancedForest({
+function StreamedTerrain({
+  missionProgress,
   player,
-  tiles
+  qualityProfile
 }: {
+  missionProgress: number;
   player: PlayState["player"];
-  tiles: Array<{ key: string; tileX: number; tileZ: number }>;
+  qualityProfile: WildsQualityProfile;
 }) {
-  const trunks = useRef<THREE.InstancedMesh>(null);
-  const crowns = useRef<THREE.InstancedMesh>(null);
-  const treeData = useMemo(() => tiles.flatMap((tile) => [0, 1].map((slot) => ({
-    x: tile.tileX * WORLD_TILE_SIZE + 1.7 + seededUnit(tile.tileX, tile.tileZ, slot) * 8.6,
-    z: tile.tileZ * WORLD_TILE_SIZE + 1.4 + seededUnit(tile.tileZ, tile.tileX, slot + 11) * 9,
-    scale: 0.85 + seededUnit(tile.tileX, tile.tileZ, slot + 23) * 0.68
-  }))), [tiles]);
-
-  useLayoutEffect(() => {
-    const matrix = new THREE.Matrix4();
-    const quaternion = new THREE.Quaternion();
-    const scale = new THREE.Vector3();
-    treeData.forEach((tree, index) => {
-      scale.set(tree.scale, tree.scale, tree.scale);
-      matrix.compose(new THREE.Vector3(tree.x - player.x, 0.34, tree.z - player.z), quaternion, scale);
-      trunks.current?.setMatrixAt(index, matrix);
-      matrix.compose(new THREE.Vector3(tree.x - player.x, 1.02 * tree.scale, tree.z - player.z), quaternion, scale);
-      crowns.current?.setMatrixAt(index, matrix);
-    });
-    if (trunks.current) trunks.current.instanceMatrix.needsUpdate = true;
-    if (crowns.current) crowns.current.instanceMatrix.needsUpdate = true;
-  }, [player.x, player.z, treeData]);
-
-  return (
-    <group>
-      <instancedMesh castShadow args={[undefined, undefined, treeData.length]} ref={trunks}>
-        <cylinderGeometry args={[0.09, 0.14, 0.68, 7]} />
-        <meshStandardMaterial color="#765135" roughness={0.92} />
-      </instancedMesh>
-      <instancedMesh castShadow args={[undefined, undefined, treeData.length]} ref={crowns}>
-        <coneGeometry args={[0.48, 1.05, 9]} />
-        <meshStandardMaterial color="#2e7b48" roughness={0.8} />
-      </instancedMesh>
-    </group>
-  );
-}
-
-function InstancedGroundCover({
-  player,
-  tiles
-}: {
-  player: PlayState["player"];
-  tiles: Array<{ key: string; tileX: number; tileZ: number }>;
-}) {
-  const bushes = useRef<THREE.InstancedMesh>(null);
-  const rocks = useRef<THREE.InstancedMesh>(null);
-  const flowers = useRef<THREE.InstancedMesh>(null);
-  const bushData = useMemo(() => tiles.flatMap((tile) => [0, 1, 2, 3].map((slot) => ({
-    x: tile.tileX * WORLD_TILE_SIZE + 0.8 + seededUnit(tile.tileX, tile.tileZ, slot + 41) * 10.4,
-    z: tile.tileZ * WORLD_TILE_SIZE + 0.8 + seededUnit(tile.tileZ, tile.tileX, slot + 53) * 10.4,
-    scale: 0.42 + seededUnit(tile.tileX, tile.tileZ, slot + 67) * 0.38
-  }))), [tiles]);
-  const rockData = useMemo(() => tiles.flatMap((tile) => [0, 1].map((slot) => ({
-    x: tile.tileX * WORLD_TILE_SIZE + 1 + seededUnit(tile.tileX, tile.tileZ, slot + 79) * 10,
-    z: tile.tileZ * WORLD_TILE_SIZE + 1 + seededUnit(tile.tileZ, tile.tileX, slot + 91) * 10,
-    scale: 0.18 + seededUnit(tile.tileX, tile.tileZ, slot + 103) * 0.24
-  }))), [tiles]);
-  const flowerData = useMemo(() => tiles.flatMap((tile) => [0, 1, 2].map((slot) => ({
-    x: tile.tileX * WORLD_TILE_SIZE + 0.6 + seededUnit(tile.tileX, tile.tileZ, slot + 113) * 10.8,
-    z: tile.tileZ * WORLD_TILE_SIZE + 0.6 + seededUnit(tile.tileZ, tile.tileX, slot + 127) * 10.8,
-    scale: 0.12 + seededUnit(tile.tileX, tile.tileZ, slot + 139) * 0.11
-  }))), [tiles]);
-
-  useLayoutEffect(() => {
-    const matrix = new THREE.Matrix4();
-    const quaternion = new THREE.Quaternion();
-    const scale = new THREE.Vector3();
-    const place = (
-      mesh: THREE.InstancedMesh | null,
-      items: Array<{ x: number; z: number; scale: number }>,
-      y: number,
-      yScale = 1
-    ) => {
-      items.forEach((item, index) => {
-        scale.set(item.scale, item.scale * yScale, item.scale);
-        matrix.compose(new THREE.Vector3(item.x - player.x, y, item.z - player.z), quaternion, scale);
-        mesh?.setMatrixAt(index, matrix);
-      });
-      if (mesh) mesh.instanceMatrix.needsUpdate = true;
-    };
-    place(bushes.current, bushData, 0.22, 0.78);
-    place(rocks.current, rockData, 0.09, 0.62);
-    place(flowers.current, flowerData, 0.11, 1.7);
-  }, [bushData, flowerData, player.x, player.z, rockData]);
-
-  return (
-    <group>
-      <instancedMesh castShadow args={[undefined, undefined, bushData.length]} ref={bushes}>
-        <dodecahedronGeometry args={[0.58, 1]} />
-        <meshStandardMaterial color="#3f9551" roughness={0.9} />
-      </instancedMesh>
-      <instancedMesh castShadow receiveShadow args={[undefined, undefined, rockData.length]} ref={rocks}>
-        <dodecahedronGeometry args={[0.68, 0]} />
-        <meshStandardMaterial color="#879083" roughness={0.97} />
-      </instancedMesh>
-      <instancedMesh args={[undefined, undefined, flowerData.length]} ref={flowers}>
-        <coneGeometry args={[0.32, 0.72, 5]} />
-        <meshStandardMaterial color="#ffd15c" emissive="#ff8dad" emissiveIntensity={0.18} roughness={0.72} />
-      </instancedMesh>
-    </group>
-  );
-}
-
-function seededUnit(x: number, z: number, salt: number) {
-  const value = Math.sin(x * 127.1 + z * 311.7 + salt * 74.7) * 43758.5453123;
-  return value - Math.floor(value);
+  return <WildsEnvironment missionProgress={missionProgress} player={player} qualityProfile={qualityProfile} />;
 }
 
 function Creature({ card }: { card: CreatureCard }) {
