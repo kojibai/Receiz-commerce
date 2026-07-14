@@ -258,4 +258,21 @@ describe("Receiz Wilds rendering contract", () => {
     assert.match(products, /Import card or vault/);
     assert.match(products, /one product per verified card/i);
   });
+
+  it("integrates a gesture-safe audio lifecycle and accessible settings", async () => {
+    const campaign = await readFile("src/features/play/PlayCampaign.tsx", "utf8");
+    const hook = await readFile("src/features/play/use-wilds-presentation.ts", "utf8");
+    const controls = await readFile("src/features/play/WildsAudioSettings.tsx", "utf8");
+
+    assert.match(campaign, /useWildsPresentation/);
+    assert.match(campaign, /<WildsAudioSettings/);
+    assert.match(hook, /pointerdown/);
+    assert.match(hook, /runtime\.destroy\(\)/);
+    assert.match(controls, /aria-label="Wilds audio settings"/);
+    assert.match(controls, /Master volume/);
+    assert.match(controls, /Effects volume/);
+    assert.match(controls, /Ambience volume/);
+    assert.match(controls, /Music volume/);
+    assert.match(controls, /Mute Wilds audio/);
+  });
 });

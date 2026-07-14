@@ -2472,9 +2472,104 @@ a {
 
 .wilds-screen-actions {
   display: grid;
-  grid-template-columns: repeat(2, 44px);
+  grid-template-columns: repeat(3, 44px);
   justify-content: center;
   gap: 6px;
+}
+
+.wilds-audio-settings {
+  position: relative;
+  z-index: 12;
+}
+
+.wilds-audio-settings > summary {
+  display: grid;
+  width: 44px;
+  min-height: 44px;
+  place-items: center;
+  border: 1px solid var(--game-line);
+  border-radius: 12px;
+  color: #ffffff;
+  background: rgba(23, 19, 17, 0.76);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  list-style: none;
+  backdrop-filter: blur(16px);
+}
+
+.wilds-audio-settings > summary::-webkit-details-marker {
+  display: none;
+}
+
+.wilds-audio-settings > summary svg {
+  width: 32px;
+  height: 32px;
+  padding: 7px;
+  fill: currentColor;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.7;
+}
+
+.wilds-audio-settings > summary:focus-visible {
+  outline: 3px solid rgba(255, 242, 168, 0.92);
+  outline-offset: 2px;
+}
+
+.wilds-audio-sheet {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 0;
+  display: grid;
+  width: min(320px, calc(100vw - 24px));
+  gap: 11px;
+  padding: 14px;
+  border: 1px solid rgba(216, 255, 242, 0.2);
+  border-radius: 16px;
+  color: #ffffff;
+  background: rgba(10, 25, 29, 0.94);
+  box-shadow: 0 22px 56px rgba(0, 0, 0, 0.38);
+  backdrop-filter: blur(22px);
+}
+
+.wilds-audio-sheet-head,
+.wilds-audio-sheet label:not(.wilds-audio-mute) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 4px 12px;
+}
+
+.wilds-audio-sheet-head strong {
+  font-size: 13px;
+}
+
+.wilds-audio-sheet-head span,
+.wilds-audio-sheet label span,
+.wilds-audio-sheet output {
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.wilds-audio-sheet input[type="range"] {
+  grid-column: 1 / -1;
+  width: 100%;
+  accent-color: var(--game-mint);
+}
+
+.wilds-audio-mute {
+  display: flex;
+  min-height: 36px;
+  align-items: center;
+  gap: 9px;
+}
+
+.wilds-audio-mute input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--game-mint);
 }
 
 .wilds-trackpad {
@@ -7106,8 +7201,18 @@ a {
   }
 
   .mobile-play-wrap .wilds-screen-actions {
-    grid-template-columns: repeat(2, 36px);
-    gap: 4px;
+    grid-template-columns: repeat(3, 42px);
+    gap: 1px;
+  }
+
+  .mobile-play-wrap .wilds-audio-settings > summary {
+    width: 42px;
+    min-height: 44px;
+  }
+
+  .mobile-play-wrap .wilds-audio-sheet {
+    left: -2px;
+    padding-bottom: max(14px, env(safe-area-inset-bottom));
   }
 
   .mobile-play-wrap .wilds-screen-controls .wilds-action {
@@ -10230,6 +10335,11 @@ button.product-purchase-secondary-link {
   .cart-add-button.added svg,
   .floating-cart-popover {
     animation: none;
+    transition: none;
+  }
+  .wilds-audio-settings,
+  .wilds-audio-sheet {
+    scroll-behavior: auto;
     transition: none;
   }
 }

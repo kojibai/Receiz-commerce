@@ -24,6 +24,8 @@ import { WildsTransformation } from "@/features/play/WildsTransformation";
 import { WildsChildCeremony } from "@/features/play/WildsChildCeremony";
 import { WildsMultiplayer } from "@/features/play/WildsMultiplayer";
 import { useWildsMultiplayer } from "@/features/play/use-wilds-multiplayer";
+import { WildsAudioSettings } from "@/features/play/WildsAudioSettings";
+import { useWildsPresentation } from "@/features/play/use-wilds-presentation";
 
 const WILDS_SAVE_KEY = "receiz:wilds:save:v2";
 const WILDS_AVATAR_KEY = "receiz:wilds:explorer:v1";
@@ -138,6 +140,13 @@ export function PlayCampaign({
     style: avatarStyle ?? "female",
     position: state.player,
     activeCard: activeAsset
+  });
+  const presentation = useWildsPresentation({
+    encounter: {
+      phase: state.encounter.phase,
+      proximity: state.encounter.phase === "idle" ? "cold" : state.encounter.proximity
+    },
+    enabled: enabled && Boolean(avatarStyle)
   });
 
   useEffect(() => {
@@ -368,6 +377,12 @@ export function PlayCampaign({
               >
                 <Icons.home size={20} />
               </button>
+              <WildsAudioSettings
+                onChange={presentation.setAudioSettings}
+                onUnlock={() => { void presentation.unlockAudio(); }}
+                ready={presentation.audioReady}
+                settings={presentation.audioSettings}
+              />
             </div>
 
             <WildsTrackpad onInput={dispatch} />
