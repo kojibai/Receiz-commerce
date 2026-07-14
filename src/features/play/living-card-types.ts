@@ -3,6 +3,7 @@ import type { CreatureFoil, CreatureRarity, CreatureStage, CreatureStats } from 
 
 export type GrowthPath = "bond" | "battle" | "exploration" | "legacy" | "community" | "character";
 export type TraitSource = "birth" | "parent_a" | "parent_b" | "blended" | "mutation" | "ascension";
+export type GenomeTraitKey = "skeleton" | "face" | "appendages" | "surface" | "palette" | "behavior" | "aura" | "stance";
 export type LivingCardStatus = "sealed_local" | "verified" | "listed" | "suspended" | "revoked";
 
 export type LivingGrowthSnapshot = {
@@ -18,13 +19,30 @@ export type LivingGrowthSnapshot = {
 export type LivingCardGenome = {
   generatorVersion: 1;
   identityAnchor: string;
+  skeleton: {
+    locomotion: "biped" | "quadruped" | "serpentine" | "flying";
+    head: number;
+    torso: number;
+    limb: number;
+  };
+  face: {
+    identityAnchor: string;
+    eye: "round" | "almond" | "star" | "crescent";
+    mouth: "smile" | "muzzle" | "beak" | "fang";
+    expressionSet: "gentle" | "brave" | "curious" | "mischievous";
+  };
+  appendages: { ears: string; horns: string; wings: string; tail: string; crest: string };
+  surface: { kind: "fur" | "feather" | "scale" | "shell" | "energy"; pattern: string };
+  palette: { primary: string; secondary: string; accent: string; glow: string };
+  behavior: { temperament: string; idleCadenceMs: number; signatureGesture: string; battleStance: string };
+  auraProfile: { kind: string; intensity: number; particle: string };
   anatomy: {
     body: "round" | "long" | "armored" | "winged" | "serpentine";
     detail: "ears" | "horns" | "wings" | "crest" | "shell" | "tail";
     aura: "leaf" | "spark" | "tide" | "ember" | "prism" | "stone";
   };
   variant: CardVariantTraits;
-  provenance: Record<"anatomy" | "face" | "palette" | "behavior" | "aura", TraitSource>;
+  provenance: Record<GenomeTraitKey, TraitSource>;
 };
 
 export type LivingCardRevisionReason = {

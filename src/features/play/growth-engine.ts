@@ -94,7 +94,7 @@ export function characterQuest(asset: LivingCardAsset, rank: number): CharacterQ
     assetId: asset.id,
     rank,
     genome: projection.revisionDigest,
-    temperament: projection.genome.identityAnchor
+    temperament: projection.genome.face.identityAnchor
   }));
   const index = Number.parseInt(seed.slice(7, 15), 16) % QUESTS.length;
   const template = QUESTS[index]!;

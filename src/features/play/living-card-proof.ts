@@ -1,5 +1,6 @@
 import { displayCreatureName } from "./card-variant";
 import { creatureForm } from "./creature-catalog";
+import { deriveBirthGenome, genomeDigest, mergeLivingGenome } from "./heartbound-genome";
 import {
   canonicalPortableCardJson,
   sha256PortableBasis,
@@ -32,21 +33,11 @@ export function emptyLivingGrowth(bond = 0): LivingGrowthSnapshot {
 }
 
 function mergeGenome(previous: LivingCardGenome, delta: Partial<LivingCardGenome>): LivingCardGenome {
-  return {
-    ...previous,
-    ...delta,
-    anatomy: { ...previous.anatomy, ...(delta.anatomy ?? {}) },
-    variant: {
-      ...previous.variant,
-      ...(delta.variant ?? {}),
-      palette: { ...previous.variant.palette, ...(delta.variant?.palette ?? {}) }
-    },
-    provenance: { ...previous.provenance, ...(delta.provenance ?? {}) }
-  };
+  return mergeLivingGenome(previous, delta);
 }
 
 export function livingGenomeDigest(genome: LivingCardGenome) {
-  return sha256PortableBasis(canonicalPortableCardJson(genome));
+  return genomeDigest(genome);
 }
 
 function renderedArtDigest(genome: LivingCardGenome, formId: string, title: string) {
@@ -68,18 +59,7 @@ function manifestDigest(manifest: LivingCardManifest) {
 }
 
 function birthGenome(legacy: LegacyPortableCardAsset): LivingCardGenome {
-  const form = creatureForm(legacy.manifest.formId);
-  if (!form) throw new Error("wilds_living_form_unknown");
-  return {
-    generatorVersion: 1,
-    identityAnchor: sha256PortableBasis(canonicalPortableCardJson({ legacy: legacy.proof.digest, face: "heartbound" })).slice(7, 31),
-    anatomy: { ...form.anatomy },
-    variant: {
-      ...legacy.manifest.variant.traits,
-      palette: { ...legacy.manifest.variant.traits.palette }
-    },
-    provenance: { anatomy: "birth", face: "birth", palette: "birth", behavior: "birth", aura: "birth" }
-  };
+  return deriveBirthGenome({ formId: legacy.manifest.formId, proofDigest: legacy.proof.digest, variant: legacy.manifest.variant.traits });
 }
 
 export function admitLegacyCard(legacy: LegacyPortableCardAsset, admittedAt: string): LivingCardAsset {

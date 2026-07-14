@@ -287,7 +287,16 @@ export function evolvePortableCard(input: {
       growth: prior.growth,
       qualifyingAchievementIds: [],
       consumedCatalystId: `catalog-stage:${next.id}`,
-      genomeDelta: { anatomy: { ...next.anatomy }, provenance: { ...living.manifest.birthGenome.provenance, anatomy: "ascension" } },
+      genomeDelta: {
+        anatomy: { ...next.anatomy },
+        provenance: {
+          ...living.manifest.birthGenome.provenance,
+          skeleton: "ascension",
+          appendages: "ascension",
+          surface: "ascension",
+          aura: "ascension"
+        }
+      },
       stats: { ...next.stats },
       abilityNames: [next.abilities[0].name, next.abilities[1].name],
       title: displayCreatureName(next.id, next.name),
