@@ -8,6 +8,12 @@ import {
   activeWildsVisualEvents,
   appendWildsVisualEvent
 } from "../src/features/play/wilds-visual-events";
+import {
+  DEFAULT_WILDS_AUDIO_SETTINGS,
+  audioCuesForTransition,
+  createWildsAudioRuntime,
+  normalizeWildsAudioSettings
+} from "../src/features/play/wilds-audio";
 
 describe("Wilds presentation quality", () => {
   it("selects bounded mobile and desktop profiles", () => {
@@ -57,5 +63,72 @@ describe("Wilds visual events", () => {
     }
     assert.equal(events.length, 24);
     assert.equal(activeWildsVisualEvents(events, 2_000).length, 0);
+  });
+});
+
+describe("Wilds synthesized audio", () => {
+  it("normalizes persisted audio settings", () => {
+    assert.deepEqual(normalizeWildsAudioSettings({
+      master: 2,
+      effects: -1,
+      ambience: 0.4,
+      music: 0.3,
+      muted: true
+    }), {
+      master: 1,
+      effects: 0,
+      ambience: 0.4,
+      music: 0.3,
+      muted: true
+    });
+    assert.deepEqual(normalizeWildsAudioSettings(null), DEFAULT_WILDS_AUDIO_SETTINGS);
+  });
+
+  it("maps encounter changes onto intentional cues", () => {
+    assert.deepEqual(
+      audioCuesForTransition(
+        { phase: "idle", proximity: "cold" },
+        { phase: "hint", proximity: "hot" }
+      ),
+      ["search", "proximity-hot", "rustle"]
+    );
+    assert.deepEqual(
+      audioCuesForTransition(
+        { phase: "capsule", proximity: "hot" },
+        { phase: "sealed", proximity: "hot" }
+      ),
+      ["seal"]
+    );
+  });
+
+  it("destroys every synthesized audio resource", async () => {
+    const calls: string[] = [];
+    const audioParam = {
+      setValueAtTime() {},
+      exponentialRampToValueAtTime() {}
+    };
+    const runtime = createWildsAudioRuntime(() => ({
+      currentTime: 0,
+      destination: {},
+      resume: async () => { calls.push("resume"); },
+      close: async () => { calls.push("close"); },
+      createOscillator: () => ({
+        type: "sine",
+        frequency: audioParam,
+        connect() {},
+        disconnect() {},
+        start() {},
+        stop() { calls.push("stop"); }
+      }),
+      createGain: () => ({
+        gain: audioParam,
+        connect() {},
+        disconnect() {}
+      })
+    }));
+    await runtime.unlock();
+    runtime.play("search");
+    await runtime.destroy();
+    assert.deepEqual(calls, ["resume", "stop", "close"]);
   });
 });
