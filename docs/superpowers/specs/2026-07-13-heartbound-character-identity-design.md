@@ -183,7 +183,20 @@ Raw proof fields remain available in an advanced disclosure, while the default v
 
 ### Proof and privacy
 
-The back shows revision history, lineage, current digest, offline verification status, and the domain-correct standalone QR. It exposes only safe public card information. Private account data, email addresses, unpublished achievements, and hidden ownership metadata never appear in public story text or DNA fields.
+The back shows a complete offline-verification dossier rather than only a shortened digest. Its default proof summary explains every passed or failed check in readable language. An advanced disclosure exposes the full safe canonical proof data required to independently verify the card:
+
+- complete public manifest and stable asset identity;
+- full revision chain, revision numbers, reasons, seal times, Kai Pulses, previous-revision links, and unshortened digests;
+- current and birth genome commitments, generator and renderer versions, rendered-art digest, and visual identity signature;
+- stats, abilities, growth snapshots, qualifying achievements, consumed catalysts, and child-event commitments;
+- lineage roots, parents, children, provenance, mutations, and associated proof digests;
+- proof kind, canonicalization method, current seal timestamp, and complete proof digest;
+- portable PNG proof schema, image digest, vault relationship when applicable, and verification result metadata;
+- the domain-correct standalone QR and exact verification route.
+
+The canonical data view supports copy and local export so a verifier can reproduce the checks without relying on the hosted page. Digests are never shortened inside the advanced proof view.
+
+The public page exposes only safe public card information. Private account data, email addresses, unpublished achievements, secret tokens, and hidden ownership metadata are redacted before canonical proof data is projected. The interface states when a field was intentionally omitted for privacy so redaction cannot be mistaken for proof corruption.
 
 The back is a projection of the same verified portable asset. It cannot contain mutable biography text that diverges from the PNG proof or current admitted revision.
 
