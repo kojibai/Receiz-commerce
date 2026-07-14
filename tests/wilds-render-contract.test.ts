@@ -302,6 +302,7 @@ describe("Receiz Wilds rendering contract", () => {
     assert.match(css, /\.wilds-command-sheet-content \.wilds-vault-actions\s*\{[^}]*grid-template-columns/s);
     assert.match(css, /\.wilds-command-sheet-content \.wilds-import-card span\s*\{[^}]*display:\s*none/s);
     assert.match(css, /\.wilds-inventory-detail \.wilds-card-scene\s*\{[^}]*aspect-ratio:\s*5\s*\/\s*7/s);
+    assert.match(css, /\.mobile-play-wrap \.wilds-command-sheet\s*\{[^}]*top:\s*calc\(52px \+ env\(safe-area-inset-top\)\)[^}]*max-height:\s*none/s);
   });
 
   it("keeps creatures hidden until an exact terrain search reveals one", async () => {

@@ -11194,8 +11194,9 @@ button.product-purchase-secondary-link {
 @media (prefers-reduced-motion: reduce) { .wilds-command-sheet, .wilds-command-button, .wilds-vault-page-dots span { animation: none; transition: none; } }
 @media (max-width: 560px) {
   .mobile-play-wrap .wilds-command-sheet {
+    top: calc(52px + env(safe-area-inset-top));
     bottom: calc(58px + env(safe-area-inset-bottom));
-    max-height: min(86dvh, calc(100dvh - 78px));
+    max-height: none;
   }
   .mobile-play-wrap .wilds-command-sheet-content {
     padding: 0 12px max(18px, env(safe-area-inset-bottom));
