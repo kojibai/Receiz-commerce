@@ -51,7 +51,7 @@
     "qrcode": "^1.5.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "three": "^0.185.1"
+    "three": "0.182.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.5",

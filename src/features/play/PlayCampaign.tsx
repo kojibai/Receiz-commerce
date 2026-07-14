@@ -26,9 +26,24 @@ import { WildsMultiplayer } from "@/features/play/WildsMultiplayer";
 import { useWildsMultiplayer } from "@/features/play/use-wilds-multiplayer";
 import { WildsAudioSettings } from "@/features/play/WildsAudioSettings";
 import { useWildsPresentation } from "@/features/play/use-wilds-presentation";
+import { selectWildsQualityProfile } from "@/features/play/wilds-quality-profile";
 
 const WILDS_SAVE_KEY = "receiz:wilds:save:v2";
 const WILDS_AVATAR_KEY = "receiz:wilds:explorer:v1";
+
+function currentWildsQualityProfile() {
+  if (typeof window === "undefined") {
+    return selectWildsQualityProfile({ width: 390, reducedMotion: false });
+  }
+  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const deviceMemory = (navigator as Navigator & { deviceMemory?: number }).deviceMemory;
+  return selectWildsQualityProfile({
+    width: window.innerWidth,
+    hardwareConcurrency: navigator.hardwareConcurrency,
+    deviceMemory,
+    reducedMotion
+  });
+}
 
 const WildsWorldCanvas = dynamic(
   () => import("@/features/play/WildsWorldCanvas").then((mod) => mod.WildsWorldCanvas),
@@ -130,6 +145,7 @@ export function PlayCampaign({
   const [saveRestored, setSaveRestored] = useState(false);
   const [rewardAsset, setRewardAsset] = useState<PortableCardAsset | null>(null);
   const [avatarStyle, setAvatarStyle] = useState<"female" | "male" | null>(null);
+  const [qualityProfile, setQualityProfile] = useState(currentWildsQualityProfile);
   const activeMission = missionCards[state.completedMissionIds.length % missionCards.length];
   const activeCard = selectedCard(state);
   const activeAsset = selectedAsset(state);
@@ -148,6 +164,17 @@ export function PlayCampaign({
     },
     enabled: enabled && Boolean(avatarStyle)
   });
+
+  useEffect(() => {
+    const preference = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () => setQualityProfile(currentWildsQualityProfile());
+    window.addEventListener("resize", update);
+    preference.addEventListener("change", update);
+    return () => {
+      window.removeEventListener("resize", update);
+      preference.removeEventListener("change", update);
+    };
+  }, []);
 
   useEffect(() => {
     const restored = restorePlayState(window.localStorage.getItem(WILDS_SAVE_KEY));
@@ -273,6 +300,7 @@ export function PlayCampaign({
               state={state}
               avatarStyle={avatarStyle ?? "female"}
               remotePlayers={multiplayer.remotePlayers}
+              qualityProfile={qualityProfile}
               searchEnabled={discoveryActive && Boolean(avatarStyle)}
               onSelectPlayer={multiplayer.selectPlayer}
               onSearchPoint={(point) => {

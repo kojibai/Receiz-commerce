@@ -21,6 +21,18 @@ describe("Receiz Wilds rendering contract", () => {
     assert.match(source, /renderer:\s*gl\.info/);
   });
 
+  it("uses a warning-free quality profile and publishes budget status", async () => {
+    const world = await readFile("src/features/play/WildsWorldCanvas.tsx", "utf8");
+    const pkg = JSON.parse(await readFile("package.json", "utf8")) as { dependencies: Record<string, string> };
+
+    assert.equal(pkg.dependencies.three, "0.182.0");
+    assert.doesNotMatch(world, /\n\s*shadows\s*\n/);
+    assert.match(world, /shadows=\{\{ type: THREE\.PCFShadowMap \}\}/);
+    assert.match(world, /qualityProfile\.dpr/);
+    assert.match(world, /rendererBudgetStatus/);
+    assert.match(world, /warningFreeCompatibility/);
+  });
+
   it("gives the four companions distinct authored silhouettes", async () => {
     const source = await readFile("src/features/play/WildsWorldCanvas.tsx", "utf8");
 

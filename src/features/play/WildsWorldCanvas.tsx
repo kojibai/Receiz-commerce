@@ -12,11 +12,16 @@ import {
 import { creatureForm } from "@/features/play/creature-catalog";
 import type { HotspotCover } from "@/features/play/hidden-hotspots";
 import type { WildsPresence } from "@/features/play/multiplayer-core";
+import {
+  rendererBudgetStatus,
+  type WildsQualityProfile
+} from "@/features/play/wilds-quality-profile";
 
 export function WildsWorldCanvas({
   state,
   avatarStyle,
   remotePlayers,
+  qualityProfile,
   searchEnabled,
   onSelectPlayer,
   onSearchPoint
@@ -24,6 +29,7 @@ export function WildsWorldCanvas({
   state: PlayState;
   avatarStyle: "female" | "male";
   remotePlayers: WildsPresence[];
+  qualityProfile: WildsQualityProfile;
   searchEnabled: boolean;
   onSelectPlayer: (player: WildsPresence | null) => void;
   onSearchPoint: (point: { x: number; z: number }) => void;
@@ -32,19 +38,18 @@ export function WildsWorldCanvas({
     <div className={`wilds-canvas-wrap${searchEnabled ? " search-armed" : ""}`}>
       <Canvas
         camera={{ fov: 42, near: 0.1, far: 80, position: [4.6, 5.8, 7.2] }}
-        dpr={[1, 1.5]}
+        dpr={qualityProfile.dpr}
         gl={{ antialias: true, powerPreference: "high-performance" }}
         onCreated={({ gl, size }) => {
           gl.outputColorSpace = THREE.SRGBColorSpace;
           gl.toneMapping = THREE.ACESFilmicToneMapping;
           gl.toneMappingExposure = 1.08;
-          gl.shadowMap.type = THREE.PCFShadowMap;
-          publishWildsDiagnostics(gl, size, state);
+          publishWildsDiagnostics(gl, size, state, qualityProfile);
         }}
-        shadows
+        shadows={{ type: THREE.PCFShadowMap }}
       >
         <Suspense fallback={null}>
-          <WildsScene state={state} avatarStyle={avatarStyle} remotePlayers={remotePlayers} searchEnabled={searchEnabled} onSelectPlayer={onSelectPlayer} onSearchPoint={onSearchPoint} />
+          <WildsScene state={state} avatarStyle={avatarStyle} remotePlayers={remotePlayers} qualityProfile={qualityProfile} searchEnabled={searchEnabled} onSelectPlayer={onSelectPlayer} onSearchPoint={onSearchPoint} />
         </Suspense>
       </Canvas>
     </div>
@@ -55,6 +60,7 @@ function WildsScene({
   state,
   avatarStyle,
   remotePlayers,
+  qualityProfile,
   searchEnabled,
   onSelectPlayer,
   onSearchPoint
@@ -62,6 +68,7 @@ function WildsScene({
   state: PlayState;
   avatarStyle: "female" | "male";
   remotePlayers: WildsPresence[];
+  qualityProfile: WildsQualityProfile;
   searchEnabled: boolean;
   onSelectPlayer: (player: WildsPresence | null) => void;
   onSearchPoint: (point: { x: number; z: number }) => void;
@@ -79,16 +86,16 @@ function WildsScene({
         shadow-camera-left={-8}
         shadow-camera-right={8}
         shadow-camera-top={8}
-        shadow-mapSize-height={1024}
-        shadow-mapSize-width={1024}
+        shadow-mapSize-height={qualityProfile.shadowMapSize}
+        shadow-mapSize-width={qualityProfile.shadowMapSize}
       />
       <CameraRig encounter={state.encounter} />
-      <WildsDiagnostics state={state} />
+      <WildsDiagnostics qualityProfile={qualityProfile} state={state} />
       <SearchableTerrain player={state.player} enabled={searchEnabled} onSearchPoint={onSearchPoint} />
       <EncounterSequence state={state} />
       {remotePlayers.map((player) => <RemoteExplorer key={player.playerId} player={player} localPlayer={state.player} onSelect={onSelectPlayer} />)}
       <ExplorerAvatar style={avatarStyle} worldPosition={state.player} />
-      <Sparkles count={54} scale={[8, 2.4, 8]} size={2.1} speed={0.22} color="#fff5b6" />
+      <Sparkles count={Math.round(54 * qualityProfile.particles)} scale={[8, 2.4, 8]} size={2.1} speed={0.22} color="#fff5b6" />
     </>
   );
 }
@@ -135,9 +142,10 @@ function CameraRig({ encounter }: { encounter: PlayState["encounter"] }) {
   const target = useMemo(() => new THREE.Vector3(), []);
   const lookAt = useMemo(() => new THREE.Vector3(), []);
 
-  useFrame(({ camera, clock }) => {
+  useFrame(({ camera }) => {
+    const elapsed = frameSeconds();
     const hot = encounter.phase === "hint" && encounter.proximity === "hot";
-    const tremor = hot ? Math.sin(clock.elapsedTime * 13) * 0.025 : 0;
+    const tremor = hot ? Math.sin(elapsed * 13) * 0.025 : 0;
     target.set(4.6 + tremor, 5.4 + Math.abs(tremor) * 0.45, 6.6);
     lookAt.set(0, 0.35, 0);
     camera.position.lerp(target, 0.08);
@@ -149,6 +157,10 @@ function CameraRig({ encounter }: { encounter: PlayState["encounter"] }) {
 
 const WORLD_TILE_SIZE = 12;
 const STREAM_RADIUS = 2;
+
+function frameSeconds() {
+  return performance.now() / 1_000;
+}
 
 function SearchableTerrain({
   player,
@@ -351,10 +363,11 @@ function seededUnit(x: number, z: number, salt: number) {
 function Creature({ card }: { card: CreatureCard }) {
   const groupRef = useRef<THREE.Group>(null);
 
-  useFrame(({ clock }) => {
+  useFrame(() => {
     if (!groupRef.current) return;
-    groupRef.current.position.y = 0.5 + Math.sin(clock.elapsedTime * 1.8 + card.position[0]) * 0.06;
-    groupRef.current.rotation.y = Math.sin(clock.elapsedTime * 0.85 + card.position[2]) * 0.18;
+    const elapsed = frameSeconds();
+    groupRef.current.position.y = 0.5 + Math.sin(elapsed * 1.8 + card.position[0]) * 0.06;
+    groupRef.current.rotation.y = Math.sin(elapsed * 0.85 + card.position[2]) * 0.18;
   });
 
   return (
@@ -450,12 +463,13 @@ function RustlingClue({
     encounter.searchPoint.z + direction.z * distance - player.z
   ];
 
-  useFrame(({ clock }) => {
+  useFrame(() => {
     if (!ref.current) return;
+    const elapsed = frameSeconds();
     const energy = hot ? 1 : 0.55;
-    ref.current.rotation.y = Math.sin(clock.elapsedTime * (hot ? 15 : 9)) * 0.12 * energy;
-    ref.current.position.y = 0.03 + Math.abs(Math.sin(clock.elapsedTime * 7)) * 0.045 * energy;
-    const pulse = 1 + Math.sin(clock.elapsedTime * 6) * 0.035 * energy;
+    ref.current.rotation.y = Math.sin(elapsed * (hot ? 15 : 9)) * 0.12 * energy;
+    ref.current.position.y = 0.03 + Math.abs(Math.sin(elapsed * 7)) * 0.045 * energy;
+    const pulse = 1 + Math.sin(elapsed * 6) * 0.035 * energy;
     ref.current.scale.setScalar(pulse);
   });
 
@@ -476,11 +490,12 @@ function RustlingClue({
 
 function SearchPulse({ hint, position }: { hint: boolean; position: [number, number, number] }) {
   const ref = useRef<THREE.Group>(null);
-  useFrame(({ clock }) => {
+  useFrame(() => {
     if (!ref.current) return;
-    const wave = 0.8 + (clock.elapsedTime % 1) * 0.65;
+    const elapsed = frameSeconds();
+    const wave = 0.8 + (elapsed % 1) * 0.65;
     ref.current.scale.setScalar(wave);
-    ref.current.rotation.y = clock.elapsedTime * 0.7;
+    ref.current.rotation.y = elapsed * 0.7;
   });
   return (
     <group ref={ref} position={position}>
@@ -511,10 +526,11 @@ function HabitatCover({ cover, open }: { cover: HotspotCover; open: boolean }) {
 
 function CaptureCapsule({ sealed }: { sealed: boolean }) {
   const ref = useRef<THREE.Group>(null);
-  useFrame(({ clock }) => {
+  useFrame(() => {
     if (!ref.current) return;
-    ref.current.rotation.y = clock.elapsedTime * (sealed ? 0.7 : 2.4);
-    ref.current.position.y = 0.7 + Math.sin(clock.elapsedTime * 3) * (sealed ? 0.04 : 0.1);
+    const elapsed = frameSeconds();
+    ref.current.rotation.y = elapsed * (sealed ? 0.7 : 2.4);
+    ref.current.position.y = 0.7 + Math.sin(elapsed * 3) * (sealed ? 0.04 : 0.1);
   });
   return (
     <group ref={ref} scale={sealed ? 0.9 : 1.08}>
@@ -638,7 +654,13 @@ function CreatureDetails({ cardId, color, accent }: { cardId: string; color: str
   );
 }
 
-function WildsDiagnostics({ state }: { state: PlayState }) {
+function WildsDiagnostics({
+  qualityProfile,
+  state
+}: {
+  qualityProfile: WildsQualityProfile;
+  state: PlayState;
+}) {
   const { camera, gl, scene, size } = useThree();
   const outputRef = useRef<HTMLOutputElement>(null);
 
@@ -648,7 +670,7 @@ function WildsDiagnostics({ state }: { state: PlayState }) {
       camera: { position: camera.position.toArray(), fov: camera instanceof THREE.PerspectiveCamera ? camera.fov : null },
       scene: { children: scene.children.length }
     };
-    publishWildsDiagnostics(gl, size, state, extra);
+    publishWildsDiagnostics(gl, size, state, qualityProfile, extra);
     if (outputRef.current) {
       outputRef.current.dataset.snapshot = JSON.stringify({
         canvas: { width: size.width, height: size.height, dpr: gl.getPixelRatio() },
@@ -662,7 +684,7 @@ function WildsDiagnostics({ state }: { state: PlayState }) {
     sample();
     const interval = window.setInterval(sample, 500);
     return () => window.clearInterval(interval);
-  }, [camera, gl, scene, size, state]);
+  }, [camera, gl, qualityProfile, scene, size, state]);
 
   return (
     <Html className="wilds-diagnostics-anchor">
@@ -684,8 +706,13 @@ function publishWildsDiagnostics(
   gl: THREE.WebGLRenderer,
   size: { width: number; height: number },
   state: PlayState,
+  qualityProfile: WildsQualityProfile,
   extra: Record<string, unknown> = {}
 ) {
+  const budget = rendererBudgetStatus(qualityProfile, {
+    calls: gl.info.render.calls,
+    triangles: gl.info.render.triangles
+  });
   const diagnostics = {
     renderer: gl.info,
     canvas: {
@@ -703,6 +730,9 @@ function publishWildsDiagnostics(
       energy: state.energy,
       combo: state.combo
     },
+    quality: { tier: qualityProfile.tier, dpr: qualityProfile.dpr },
+    budget,
+    warningFreeCompatibility: { three: "0.182.0", shadowType: "PCFShadowMap" },
     ...extra
   };
   (window as typeof window & { __THREE_GAME_DIAGNOSTICS__?: unknown }).__THREE_GAME_DIAGNOSTICS__ = diagnostics;
@@ -716,6 +746,9 @@ function publishWildsDiagnostics(
       lines: gl.info.render.lines
     },
     memory: gl.info.memory,
+    quality: diagnostics.quality,
+    budget: diagnostics.budget,
+    warningFreeCompatibility: diagnostics.warningFreeCompatibility,
     ...extra
   });
 }
@@ -746,12 +779,13 @@ function ExplorerAvatar({
     previousPosition.current = worldPosition;
   }, [worldPosition]);
 
-  useFrame(({ clock }) => {
+  useFrame(() => {
     if (!groupRef.current) return;
+    const elapsed = frameSeconds();
     const moving = Date.now() < movingUntil.current;
-    const stride = moving ? Math.sin(clock.elapsedTime * 12) * 0.62 : 0;
+    const stride = moving ? Math.sin(elapsed * 12) * 0.62 : 0;
     groupRef.current.rotation.y = THREE.MathUtils.lerp(groupRef.current.rotation.y, facing.current, 0.18);
-    groupRef.current.position.y = moving ? Math.abs(Math.sin(clock.elapsedTime * 12)) * 0.035 : 0;
+    groupRef.current.position.y = moving ? Math.abs(Math.sin(elapsed * 12)) * 0.035 : 0;
     if (leftArm.current) leftArm.current.rotation.x = stride * 0.72;
     if (rightArm.current) rightArm.current.rotation.x = -stride * 0.72;
     if (leftLeg.current) leftLeg.current.rotation.x = -stride;
