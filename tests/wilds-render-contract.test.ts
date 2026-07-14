@@ -77,12 +77,27 @@ describe("Receiz Wilds rendering contract", () => {
   });
 
   it("gives the four companions distinct authored silhouettes", async () => {
-    const source = await readFile("src/features/play/WildsWorldCanvas.tsx", "utf8");
+    const source = await readFile("src/features/play/WildsCreatureActor.tsx", "utf8");
 
-    assert.match(source, /function CreatureDetails/);
+    assert.match(source, /function CreatureIdentityDetail/);
     for (const id of ["mintcub", "voltray", "ledgerfox", "titanseal"]) {
-      assert.match(source, new RegExp(`cardId === ["']${id}["']`));
+      assert.match(source, new RegExp(`familyId === ["']${id}["']`));
     }
+  });
+
+  it("renders genome-driven creature actors with emotional battle poses", async () => {
+    const actor = await readFile("src/features/play/WildsCreatureActor.tsx", "utf8");
+    const world = await readFile("src/features/play/WildsWorldCanvas.tsx", "utf8");
+    for (const pose of ["idle", "curious", "attack", "impact", "weakened", "capture"]) {
+      assert.match(actor, new RegExp(`"${pose}"`));
+    }
+    for (const body of ["round", "long", "armored", "winged", "serpentine"]) {
+      assert.match(actor, new RegExp(`body === "${body}"`));
+    }
+    assert.match(actor, /wilds-creature-face/);
+    assert.match(actor, /wilds-creature-limbs/);
+    assert.match(actor, /useFrame/);
+    assert.match(world, /<WildsCreatureActor/);
   });
 
   it("keeps compact controls below the world and collapses mission detail", async () => {

@@ -15,6 +15,7 @@ import type { WildsPresence } from "@/features/play/multiplayer-core";
 import { WildsEnvironment } from "@/features/play/WildsEnvironment";
 import { WildsExplorer } from "@/features/play/WildsExplorer";
 import { WildsAtmosphere } from "@/features/play/WildsAtmosphere";
+import { WildsCreatureActor, type WildsCreaturePose } from "@/features/play/WildsCreatureActor";
 import {
   rendererBudgetStatus,
   type WildsQualityProfile
@@ -195,7 +196,7 @@ function StreamedTerrain({
   return <WildsEnvironment missionProgress={missionProgress} player={player} qualityProfile={qualityProfile} />;
 }
 
-function Creature({ card }: { card: CreatureCard }) {
+function Creature({ card, formId = `${card.id}-1`, pose = "idle" }: { card: CreatureCard; formId?: string; pose?: WildsCreaturePose }) {
   const groupRef = useRef<THREE.Group>(null);
 
   useFrame(() => {
@@ -207,27 +208,7 @@ function Creature({ card }: { card: CreatureCard }) {
 
   return (
       <group ref={groupRef} position={[card.position[0], 0.42, card.position[2]]}>
-        <mesh castShadow>
-          <sphereGeometry args={[0.36, 24, 18]} />
-          <meshStandardMaterial color={card.color} roughness={0.58} emissive={card.color} emissiveIntensity={0.08} />
-        </mesh>
-        <mesh castShadow position={[-0.22, 0.24, -0.02]}>
-          <sphereGeometry args={[0.14, 16, 12]} />
-          <meshStandardMaterial color={card.accent} roughness={0.58} />
-        </mesh>
-        <mesh castShadow position={[0.22, 0.24, -0.02]}>
-          <sphereGeometry args={[0.14, 16, 12]} />
-          <meshStandardMaterial color={card.accent} roughness={0.58} />
-        </mesh>
-        <mesh position={[-0.12, 0.08, 0.31]}>
-          <sphereGeometry args={[0.04, 8, 8]} />
-          <meshStandardMaterial color="#142115" roughness={0.35} />
-        </mesh>
-        <mesh position={[0.12, 0.08, 0.31]}>
-          <sphereGeometry args={[0.04, 8, 8]} />
-          <meshStandardMaterial color="#142115" roughness={0.35} />
-        </mesh>
-        <CreatureDetails cardId={card.id} color={card.color} accent={card.accent} />
+        <WildsCreatureActor accent={card.accent} familyId={card.id} formId={formId} pose={pose} primary={card.color} />
         <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.34, 0]}>
           <torusGeometry args={[0.46, 0.035, 8, 36]} />
           <meshStandardMaterial
@@ -267,12 +248,19 @@ function EncounterSequence({ state }: { state: PlayState }) {
   const card = creatureCards.find((candidate) => candidate.id === encounter.familyId);
   if (!card || !encounter.cover) return null;
   const localCard: CreatureCard = { ...card, position: [0, 0, 0] };
+  const lastBattleAction = state.battle?.transcript.at(-1)?.action;
+  const pose: WildsCreaturePose = encounter.phase === "capture_ready" ? "capture"
+    : state.battle?.wild.hpRatio !== undefined && state.battle.wild.hpRatio <= 0.3 ? "weakened"
+      : lastBattleAction === "ability" ? "impact"
+        : lastBattleAction && lastBattleAction !== "capture" ? "attack"
+        : encounter.phase === "battle_intro" ? "curious"
+          : "idle";
   return (
     <group position={position}>
       <SearchPulse hint position={[0, 0, 0]} />
       <HabitatCover cover={encounter.cover} open={encounter.phase !== "emerging"} />
       <group scale={encounter.phase === "capsule" ? 0.68 : encounter.phase === "sealed" || encounter.phase === "revealed" ? 0.01 : 1}>
-        <Creature card={localCard} />
+        <Creature card={localCard} formId={encounter.formId} pose={pose} />
       </group>
       {encounter.phase === "capsule" || encounter.phase === "sealed" || encounter.phase === "revealed" ? (
         <CaptureCapsule sealed={encounter.phase !== "capsule"} />
