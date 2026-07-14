@@ -136,6 +136,57 @@ Automated verification must cover:
 
 Browser checks cover desktop and mobile inventory cards, battle views, transformation ceremonies, child reveals, standalone 3D presentation, and downloaded PNG comparison. The release fails if characters are clipped, facial features overlap, different cards collapse to the same visible design, or a surface depicts a different individual.
 
+## 10. Living Card Back and character dossier
+
+The standalone page presents the card as a two-sided object floating in 3D space. A player can flip it with a visible control, pointer drag, touch swipe, or keyboard action. The interaction preserves the current route, supports reduced motion, retains focus correctly, and never requires navigation away from the card.
+
+The back uses the same physical dimensions, materials, rarity treatment, and living visual fingerprint as the front. It may scroll internally to keep all information legible without enlarging or clipping the card. The mobile presentation can temporarily expand the back to the available viewport while preserving the sense of a physical card.
+
+### Emotional story
+
+The back tells a deterministic character story assembled only from sealed facts:
+
+- birth or capture moment and habitat;
+- temperament, expression set, behavior, and signature gesture;
+- meaningful battles, quests, achievements, and transformations;
+- bond, growth path, Ascension, parenthood, and descendant history;
+- inherited traits and visible mutations for fusion children;
+- the character's current role in the player's journey.
+
+Story text may use warm second-person language, but it cannot invent an event that is absent from the proof chain. Empty histories receive personality-focused language derived from the birth genome rather than fabricated memories. The prose remains stable for a given verified revision and grows when new append-only history is sealed.
+
+### Personality and relationship profile
+
+The dossier presents motivations, emotional traits, favorite habitat conditions, bonding behaviors, fears or cautions, quirks, communication style, care cues, signature gestures, and celebration behavior. These traits derive deterministically from temperament, face, behavior, anatomy, element, and growth history.
+
+The profile is designed to help the player understand how the companion behaves and why it matters, not merely provide collectible flavor text.
+
+### Gameplay intelligence
+
+The back includes current stats, abilities, battle role, strengths, vulnerabilities, preferred teammate traits, mastered actions, growth paths, active character quest, next earned transformation requirements, and strategic usage guidance. It clearly separates sealed current facts from recommendations derived by the game rules.
+
+### Full visual DNA
+
+The DNA section exposes readable projections of:
+
+- stable identity and visual fingerprints;
+- face and body geometry;
+- skeleton, locomotion, build, and proportions;
+- appendage and surface morphologies;
+- palette relationships, markings, materials, and aura;
+- behavior and animation personality;
+- family anchors and individual variations;
+- parent trait provenance and mutations;
+- genome, generator, renderer, and current revision versions.
+
+Raw proof fields remain available in an advanced disclosure, while the default view translates DNA into language a player can understand.
+
+### Proof and privacy
+
+The back shows revision history, lineage, current digest, offline verification status, and the domain-correct standalone QR. It exposes only safe public card information. Private account data, email addresses, unpublished achievements, and hidden ownership metadata never appear in public story text or DNA fields.
+
+The back is a projection of the same verified portable asset. It cannot contain mutable biography text that diverges from the PNG proof or current admitted revision.
+
 ## Success criteria
 
 - Players can distinguish collected individuals by face and silhouette without reading their names.
@@ -144,3 +195,4 @@ Browser checks cover desktop and mobile inventory cards, battle views, transform
 - Evolution looks like growth of a beloved companion rather than replacement.
 - Children visibly inherit both parents and remain independent one-of-one characters.
 - The exact artwork and animation identity reconstruct offline from the sealed portable proof.
+- The standalone card flips accessibly to a beautiful, complete, proof-derived story, personality, gameplay, DNA, lineage, and verification back.
