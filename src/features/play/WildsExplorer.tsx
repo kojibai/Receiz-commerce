@@ -79,7 +79,7 @@ export function WildsExplorer({
     root.current.position.y = moving ? Math.abs(Math.sin(elapsed * 11.5)) * 0.026 : 0;
     if (hips.current) {
       hips.current.rotation.y = stride * 0.08;
-      hips.current.position.y = footPlant * 0.012;
+      hips.current.position.y = 0.72 + footPlant * 0.012;
     }
     if (spine.current) {
       spine.current.rotation.y = -stride * 0.06;
@@ -101,7 +101,7 @@ export function WildsExplorer({
 
   return (
     <group name={`wilds-explorer-${style}`} ref={root} scale={remote ? 0.62 : 0.68}>
-      <group name="hips" position={[0, 0.76, 0]} ref={hips}>
+      <group name="hips" position={[0, 0.72, 0]} ref={hips}>
         <mesh castShadow scale={[0.86, 0.52, 0.66]}>
           <capsuleGeometry args={[0.18, 0.2, 6, 12]} />
           <meshStandardMaterial color={jacketDark} roughness={0.68} />
@@ -197,23 +197,13 @@ function Arm({
 
 function Leg({ side, knee }: { side: -1 | 1; knee: React.RefObject<THREE.Group | null> }) {
   return (
-    <group name={side < 0 ? "leftLeg" : "rightLeg"} position={[side * 0.155, -0.08, 0.025]} ref={knee}>
-      <group name={side < 0 ? "leftKnee" : "rightKnee"}>
-        <LimbSegment color={palette.trousers} length={0.34} radius={0.082} />
-        <mesh castShadow position={[0, -0.285, 0.072]}>
-          <sphereGeometry args={[0.087, 9, 7]} />
-          <meshStandardMaterial color="#35536a" roughness={0.78} />
-        </mesh>
-      </group>
+    <group name={side < 0 ? "leftKnee" : "rightKnee"} position={[side * 0.12, -0.06, 0]} ref={knee}>
+      <LimbSegment color={palette.trousers} length={0.34} radius={0.08} />
       <group position={[0, -0.32, 0]}>
         <LimbSegment color={palette.trousers} length={0.31} radius={0.072} />
         <mesh castShadow position={[0, -0.34, -0.055]}>
           <boxGeometry args={[0.17, 0.13, 0.31]} />
           <meshStandardMaterial color={palette.boots} roughness={0.9} />
-        </mesh>
-        <mesh castShadow name="bootSole" position={[0, -0.408, -0.055]}>
-          <boxGeometry args={[0.178, 0.035, 0.32]} />
-          <meshStandardMaterial color="#2b201a" roughness={0.94} />
         </mesh>
       </group>
     </group>
