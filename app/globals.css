@@ -2063,6 +2063,20 @@ a {
   isolation: isolate;
 }
 
+.wilds-stage.signal-warm {
+  box-shadow: inset 0 0 0 2px rgba(216, 255, 242, 0.3), inset 0 0 34px rgba(55, 214, 136, 0.14), 0 24px 52px rgba(23, 19, 17, 0.16);
+}
+
+.wilds-stage.signal-hot {
+  animation: wilds-hot-signal 1.15s ease-in-out infinite;
+  box-shadow: inset 0 0 0 2px rgba(255, 242, 168, 0.62), inset 0 0 52px rgba(247, 201, 72, 0.26), 0 24px 52px rgba(23, 19, 17, 0.16);
+}
+
+@keyframes wilds-hot-signal {
+  0%, 100% { filter: saturate(1); }
+  50% { filter: saturate(1.12) brightness(1.025); }
+}
+
 .wilds-canvas-wrap,
 .wilds-canvas-wrap canvas,
 .wilds-canvas-fallback {
@@ -9942,6 +9956,9 @@ button.product-purchase-secondary-link {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .wilds-stage.signal-hot {
+    animation: none;
+  }
   .cart-add-button,
   .cart-add-button.added,
   .cart-add-button.added svg,

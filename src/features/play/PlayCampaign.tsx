@@ -226,7 +226,10 @@ export function PlayCampaign({
 
       <div className="wilds-shell wilds-playable-shell">
         <div className="wilds-world">
-          <div className="wilds-stage" aria-label="Receiz Wilds playable 3D world">
+          <div
+            className={`wilds-stage${state.encounter.phase === "hint" ? ` signal-${state.encounter.proximity}` : ""}`}
+            aria-label="Receiz Wilds playable 3D world"
+          >
             <WildsWorldCanvas
               state={state}
               searchEnabled={discoveryActive}

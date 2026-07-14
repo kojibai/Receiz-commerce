@@ -34,6 +34,10 @@ describe("Wilds portable cards", () => {
     assert.equal(verifyPortableCard(first).ok, true);
     assert.equal(first.manifest.schema, "receiz.wilds_card_manifest.v1");
     assert.equal(first.manifest.formId, "mintcub-1");
+    assert.equal(first.manifest.name, "SealCub");
+    assert.equal(first.manifest.variant.generatorVersion, 1);
+    assert.match(first.manifest.variant.seed, /^sha256:[a-f0-9]{64}$/);
+    assert.match(first.manifest.variant.traitsDigest, /^sha256:[a-f0-9]{64}$/);
   });
 
   it("rejects owner, stat, and digest tampering", () => {
@@ -53,6 +57,13 @@ describe("Wilds portable cards", () => {
       manifest: { ...asset.manifest, stats: { ...asset.manifest.stats, power: 999 } }
     }).ok, false);
     assert.equal(verifyPortableCard({ ...asset, proof: { ...asset.proof, digest: "sha256:tampered" } }).ok, false);
+    assert.equal(verifyPortableCard({
+      ...asset,
+      manifest: {
+        ...asset.manifest,
+        variant: { ...asset.manifest.variant, traits: { ...asset.manifest.variant.traits, potential: 100 } }
+      }
+    }).ok, false);
   });
 
   it("evolves through proof-linked forms without erasing the collection seal", () => {

@@ -91,12 +91,25 @@ describe("Receiz Wilds rendering contract", () => {
   it("keeps creatures hidden until an exact terrain search reveals one", async () => {
     const state = await readFile("src/features/play/game-state.ts", "utf8");
     const world = await readFile("src/features/play/WildsWorldCanvas.tsx", "utf8");
+    const campaign = await readFile("src/features/play/PlayCampaign.tsx", "utf8");
 
     assert.match(state, /searchHiddenHotspots/);
     assert.match(world, /function SearchableTerrain/);
+    assert.match(world, /function InstancedGroundCover/);
+    assert.match(world, /<InstancedGroundCover player=\{player\} tiles=\{tiles\}/);
+    assert.match(world, /function ExplorerAvatar/);
+    assert.match(world, /movingUntil/);
+    assert.match(campaign, /Choose your explorer/);
+    assert.match(campaign, /Female explorer/);
+    assert.match(campaign, /Male explorer/);
     assert.match(world, /function EncounterSequence/);
     assert.match(world, /const encounter = state\.encounter/);
     assert.doesNotMatch(world, /nearbyCreatureCards\(state\.player\)/);
     assert.doesNotMatch(world, /\{creatureCards\.map/);
+    assert.doesNotMatch(world, /habitatNodes\.map/);
+    assert.match(world, /function RustlingClue/);
+    assert.match(world, /encounter\.proximity === "hot"/);
+    assert.match(world, /HabitatCover cover=\{encounter\.cover/);
+    assert.match(campaign, /signal-\$\{state\.encounter\.proximity\}/);
   });
 });

@@ -6,9 +6,7 @@ import { Html, Sparkles } from "@react-three/drei";
 import * as THREE from "three";
 import {
   creatureCards,
-  habitatNodes,
   type CreatureCard,
-  type HabitatNode,
   type PlayState
 } from "@/features/play/game-state";
 import { creatureForm } from "@/features/play/creature-catalog";
@@ -71,14 +69,9 @@ function WildsScene({
         shadow-mapSize-height={1024}
         shadow-mapSize-width={1024}
       />
-      <CameraRig />
+      <CameraRig encounter={state.encounter} />
       <WildsDiagnostics state={state} />
       <SearchableTerrain player={state.player} enabled={searchEnabled} onSearchPoint={onSearchPoint} />
-      <group position={[-state.player.x, 0, -state.player.z]}>
-        {habitatNodes.map((node) => (
-          <Habitat key={node.id} node={node} />
-        ))}
-      </group>
       <EncounterSequence state={state} />
       <PlayerMarker position={[0, 0, 0]} />
       <Sparkles count={54} scale={[8, 2.4, 8]} size={2.1} speed={0.22} color="#fff5b6" />
@@ -86,12 +79,14 @@ function WildsScene({
   );
 }
 
-function CameraRig() {
+function CameraRig({ encounter }: { encounter: PlayState["encounter"] }) {
   const target = useMemo(() => new THREE.Vector3(), []);
   const lookAt = useMemo(() => new THREE.Vector3(), []);
 
-  useFrame(({ camera }) => {
-    target.set(4.6, 5.4, 6.6);
+  useFrame(({ camera, clock }) => {
+    const hot = encounter.phase === "hint" && encounter.proximity === "hot";
+    const tremor = hot ? Math.sin(clock.elapsedTime * 13) * 0.025 : 0;
+    target.set(4.6 + tremor, 5.4 + Math.abs(tremor) * 0.45, 6.6);
     lookAt.set(0, 0.35, 0);
     camera.position.lerp(target, 0.08);
     camera.lookAt(lookAt);
@@ -164,6 +159,7 @@ function StreamedTerrain({ player }: { player: PlayState["player"] }) {
       ))}
       <WorldTrails player={player} />
       <InstancedForest player={player} tiles={tiles} />
+      <InstancedGroundCover player={player} tiles={tiles} />
     </group>
   );
 }
@@ -229,26 +225,75 @@ function InstancedForest({
   );
 }
 
+function InstancedGroundCover({
+  player,
+  tiles
+}: {
+  player: PlayState["player"];
+  tiles: Array<{ key: string; tileX: number; tileZ: number }>;
+}) {
+  const bushes = useRef<THREE.InstancedMesh>(null);
+  const rocks = useRef<THREE.InstancedMesh>(null);
+  const flowers = useRef<THREE.InstancedMesh>(null);
+  const bushData = useMemo(() => tiles.flatMap((tile) => [0, 1, 2, 3].map((slot) => ({
+    x: tile.tileX * WORLD_TILE_SIZE + 0.8 + seededUnit(tile.tileX, tile.tileZ, slot + 41) * 10.4,
+    z: tile.tileZ * WORLD_TILE_SIZE + 0.8 + seededUnit(tile.tileZ, tile.tileX, slot + 53) * 10.4,
+    scale: 0.42 + seededUnit(tile.tileX, tile.tileZ, slot + 67) * 0.38
+  }))), [tiles]);
+  const rockData = useMemo(() => tiles.flatMap((tile) => [0, 1].map((slot) => ({
+    x: tile.tileX * WORLD_TILE_SIZE + 1 + seededUnit(tile.tileX, tile.tileZ, slot + 79) * 10,
+    z: tile.tileZ * WORLD_TILE_SIZE + 1 + seededUnit(tile.tileZ, tile.tileX, slot + 91) * 10,
+    scale: 0.18 + seededUnit(tile.tileX, tile.tileZ, slot + 103) * 0.24
+  }))), [tiles]);
+  const flowerData = useMemo(() => tiles.flatMap((tile) => [0, 1, 2].map((slot) => ({
+    x: tile.tileX * WORLD_TILE_SIZE + 0.6 + seededUnit(tile.tileX, tile.tileZ, slot + 113) * 10.8,
+    z: tile.tileZ * WORLD_TILE_SIZE + 0.6 + seededUnit(tile.tileZ, tile.tileX, slot + 127) * 10.8,
+    scale: 0.12 + seededUnit(tile.tileX, tile.tileZ, slot + 139) * 0.11
+  }))), [tiles]);
+
+  useLayoutEffect(() => {
+    const matrix = new THREE.Matrix4();
+    const quaternion = new THREE.Quaternion();
+    const scale = new THREE.Vector3();
+    const place = (
+      mesh: THREE.InstancedMesh | null,
+      items: Array<{ x: number; z: number; scale: number }>,
+      y: number,
+      yScale = 1
+    ) => {
+      items.forEach((item, index) => {
+        scale.set(item.scale, item.scale * yScale, item.scale);
+        matrix.compose(new THREE.Vector3(item.x - player.x, y, item.z - player.z), quaternion, scale);
+        mesh?.setMatrixAt(index, matrix);
+      });
+      if (mesh) mesh.instanceMatrix.needsUpdate = true;
+    };
+    place(bushes.current, bushData, 0.22, 0.78);
+    place(rocks.current, rockData, 0.09, 0.62);
+    place(flowers.current, flowerData, 0.11, 1.7);
+  }, [bushData, flowerData, player.x, player.z, rockData]);
+
+  return (
+    <group>
+      <instancedMesh castShadow args={[undefined, undefined, bushData.length]} ref={bushes}>
+        <dodecahedronGeometry args={[0.58, 1]} />
+        <meshStandardMaterial color="#3f9551" roughness={0.9} />
+      </instancedMesh>
+      <instancedMesh castShadow receiveShadow args={[undefined, undefined, rockData.length]} ref={rocks}>
+        <dodecahedronGeometry args={[0.68, 0]} />
+        <meshStandardMaterial color="#879083" roughness={0.97} />
+      </instancedMesh>
+      <instancedMesh args={[undefined, undefined, flowerData.length]} ref={flowers}>
+        <coneGeometry args={[0.32, 0.72, 5]} />
+        <meshStandardMaterial color="#ffd15c" emissive="#ff8dad" emissiveIntensity={0.18} roughness={0.72} />
+      </instancedMesh>
+    </group>
+  );
+}
+
 function seededUnit(x: number, z: number, salt: number) {
   const value = Math.sin(x * 127.1 + z * 311.7 + salt * 74.7) * 43758.5453123;
   return value - Math.floor(value);
-}
-
-function Habitat({ node }: { node: HabitatNode }) {
-  const tone = habitatTone(node.tone);
-
-  return (
-    <group position={node.position}>
-      <mesh receiveShadow position={[0, 0.035, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <circleGeometry args={[0.64, 32]} />
-        <meshStandardMaterial color={tone.base} roughness={0.72} emissive={tone.glow} emissiveIntensity={0.08} />
-      </mesh>
-      <mesh position={[0, 0.09, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <torusGeometry args={[0.58, 0.035, 10, 40]} />
-        <meshStandardMaterial color={tone.ring} roughness={0.48} emissive={tone.ring} emissiveIntensity={0.24} />
-      </mesh>
-    </group>
-  );
 }
 
 function Creature({ card }: { card: CreatureCard }) {
@@ -308,8 +353,16 @@ function EncounterSequence({ state }: { state: PlayState }) {
     0.04,
     encounter.searchPoint.z - state.player.z
   ];
-  if (encounter.phase === "searching" || encounter.phase === "hint") {
-    return <SearchPulse hint={encounter.phase === "hint"} position={position} />;
+  if (encounter.phase === "searching") {
+    return <SearchPulse hint={false} position={position} />;
+  }
+  if (encounter.phase === "hint") {
+    return (
+      <>
+        <SearchPulse hint position={position} />
+        <RustlingClue encounter={encounter} player={state.player} />
+      </>
+    );
   }
   const card = creatureCards.find((candidate) => candidate.id === encounter.familyId);
   if (!card || !encounter.cover) return null;
@@ -324,6 +377,47 @@ function EncounterSequence({ state }: { state: PlayState }) {
       {encounter.phase === "capsule" || encounter.phase === "sealed" || encounter.phase === "revealed" ? (
         <CaptureCapsule sealed={encounter.phase !== "capsule"} />
       ) : null}
+    </group>
+  );
+}
+
+function RustlingClue({
+  encounter,
+  player
+}: {
+  encounter: Exclude<PlayState["encounter"], { phase: "idle" }>;
+  player: PlayState["player"];
+}) {
+  const ref = useRef<THREE.Group>(null);
+  const hot = encounter.proximity === "hot";
+  const distance = encounter.distance ?? 0;
+  const direction = encounter.direction ?? { x: 0, z: 0 };
+  const position: [number, number, number] = [
+    encounter.searchPoint.x + direction.x * distance - player.x,
+    0.03,
+    encounter.searchPoint.z + direction.z * distance - player.z
+  ];
+
+  useFrame(({ clock }) => {
+    if (!ref.current) return;
+    const energy = hot ? 1 : 0.55;
+    ref.current.rotation.y = Math.sin(clock.elapsedTime * (hot ? 15 : 9)) * 0.12 * energy;
+    ref.current.position.y = 0.03 + Math.abs(Math.sin(clock.elapsedTime * 7)) * 0.045 * energy;
+    const pulse = 1 + Math.sin(clock.elapsedTime * 6) * 0.035 * energy;
+    ref.current.scale.setScalar(pulse);
+  });
+
+  if (!encounter.cover) return null;
+  return (
+    <group ref={ref} position={position}>
+      <HabitatCover cover={encounter.cover} open={false} />
+      <Sparkles
+        count={hot ? 18 : 9}
+        scale={hot ? [1.45, 1.05, 1.45] : [1.05, 0.7, 1.05]}
+        size={hot ? 4 : 2.4}
+        speed={hot ? 1.1 : 0.55}
+        color={hot ? "#fff0a6" : "#d8fff2"}
+      />
     </group>
   );
 }
@@ -598,12 +692,4 @@ function PlayerMarker({ position }: { position: readonly [number, number, number
       </mesh>
     </group>
   );
-}
-
-function habitatTone(tone: HabitatNode["tone"]) {
-  if (tone === "spark") return { base: "#ff9f6b", ring: "#ffd15c", glow: "#ff7466" };
-  if (tone === "trade") return { base: "#62c8ff", ring: "#a7efff", glow: "#62c8ff" };
-  if (tone === "reward") return { base: "#f7c948", ring: "#fff2a8", glow: "#f7c948" };
-  if (tone === "gate") return { base: "#6c8142", ring: "#c7ec5a", glow: "#c7ec5a" };
-  return { base: "#37d688", ring: "#b8ffd9", glow: "#37d688" };
 }
