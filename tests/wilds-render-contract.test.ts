@@ -125,4 +125,13 @@ describe("Receiz Wilds rendering contract", () => {
     assert.match(world, /HabitatCover cover=\{encounter\.cover/);
     assert.match(campaign, /signal-\$\{state\.encounter\.proximity\}/);
   });
+
+  it("uses Next navigation for every internal standalone-card action", async () => {
+    const source = await readFile("src/features/play/WildsCardPage.tsx", "utf8");
+
+    assert.match(source, /import Link from "next\/link"/);
+    assert.doesNotMatch(source, /<a\s+[^>]*href=\{?[`"]\/?/);
+    assert.match(source, /<Link className="wilds-card-home" href="\/#play">/);
+    assert.match(source, /<Link href=\{`\/?\?card=/);
+  });
 });
