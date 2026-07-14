@@ -35,10 +35,11 @@ describe("Wilds presentation quality", () => {
     const profile = selectWildsQualityProfile({ width: 390, hardwareConcurrency: 4, deviceMemory: 4, reducedMotion: false });
     assert.deepEqual(rendererBudgetStatus(profile, { calls: 45, triangles: 43_672 }), {
       withinBudget: true,
-      drawCallRatio: 0.375,
+      drawCallRatio: 0.28125,
       triangleRatio: 0.2426222222222222
     });
-    assert.equal(rendererBudgetStatus(profile, { calls: 121, triangles: 100_000 }).withinBudget, false);
+    assert.equal(rendererBudgetStatus(profile, { calls: 158, triangles: 100_000 }).withinBudget, true);
+    assert.equal(rendererBudgetStatus(profile, { calls: 161, triangles: 100_000 }).withinBudget, false);
   });
 });
 

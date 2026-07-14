@@ -8,12 +8,16 @@ describe("Receiz Wilds rendering contract", () => {
     const world = await readFile("src/features/play/WildsWorldCanvas.tsx", "utf8");
 
     assert.match(environment, /name="world-layer-play"/);
+    assert.match(environment, /function GroundField/);
     assert.match(environment, /name="world-layer-mid"/);
     assert.match(environment, /name="world-layer-far"/);
     assert.match(environment, /function HearttreeSanctum/);
     assert.match(environment, /function RootArch/);
-    assert.match(environment, /<mesh castShadow position=\{\[0, 1\.14, 0\]\}>/);
+    assert.match(environment, /<mesh position=\{\[0, 1\.14, 0\]\}>/);
     assert.match(environment, /function SpringLandmark/);
+    assert.match(environment, /const springStones = useRef<THREE\.InstancedMesh>/);
+    assert.match(environment, /const farCanopyMesh = useRef<THREE\.InstancedMesh>/);
+    assert.match(environment, /args=\{\[undefined, undefined, silhouettes\.length\]\}/);
     assert.match(environment, /instancedMesh/);
     assert.match(world, /<WildsEnvironment/);
   });

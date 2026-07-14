@@ -82,17 +82,7 @@ export function WildsEnvironment({
   return (
     <group>
       <group name="world-layer-play">
-        {tiles.map((tile) => (
-          <mesh
-            key={tile.key}
-            receiveShadow
-            position={[tile.tileX * WILDS_TILE_SIZE + WILDS_TILE_SIZE / 2 - player.x, -0.04, tile.tileZ * WILDS_TILE_SIZE + WILDS_TILE_SIZE / 2 - player.z]}
-            rotation={[-Math.PI / 2, 0, 0]}
-          >
-            <planeGeometry args={[WILDS_TILE_SIZE + 0.06, WILDS_TILE_SIZE + 0.06]} />
-            <meshStandardMaterial color={tile.ground.base} roughness={0.92} />
-          </mesh>
-        ))}
+        <GroundField centerX={centerX} centerZ={centerZ} color={tiles[12]?.ground.base ?? "#4f9254"} player={player} />
         <TrailNetwork player={player} palette={tiles[12]?.trail ?? { base: "#cbb778", edge: "#9b8b56" }} />
       </group>
       <group name="world-layer-mid">
@@ -105,6 +95,19 @@ export function WildsEnvironment({
         <FarCanopy centerX={centerX} centerZ={centerZ} player={player} />
       </group>
     </group>
+  );
+}
+
+function GroundField({ centerX, centerZ, color, player }: { centerX: number; centerZ: number; color: string; player: PlayState["player"] }) {
+  return (
+    <mesh
+      receiveShadow
+      position={[centerX * WILDS_TILE_SIZE + WILDS_TILE_SIZE / 2 - player.x, -0.04, centerZ * WILDS_TILE_SIZE + WILDS_TILE_SIZE / 2 - player.z]}
+      rotation={[-Math.PI / 2, 0, 0]}
+    >
+      <planeGeometry args={[WILDS_TILE_SIZE * 5 + 0.06, WILDS_TILE_SIZE * 5 + 0.06]} />
+      <meshStandardMaterial color={color} roughness={0.92} />
+    </mesh>
   );
 }
 
@@ -213,12 +216,12 @@ function HearttreeSanctum() {
   return (
     <group name="hearttree-sanctum">
       {[-1, -0.5, 0, 0.5, 1].map((side) => (
-        <mesh key={side} castShadow position={[side * 0.7, 0.18, 0]} rotation={[0.1, side * 0.22, side * -0.72]}>
+        <mesh key={side} position={[side * 0.7, 0.18, 0]} rotation={[0.1, side * 0.22, side * -0.72]}>
           <capsuleGeometry args={[0.16, 1.15 - Math.abs(side) * 0.25, 6, 10]} />
           <meshStandardMaterial color="#573c2b" roughness={0.95} />
         </mesh>
       ))}
-      <mesh castShadow position={[0, 1.72, 0]}>
+      <mesh position={[0, 1.72, 0]}>
         <cylinderGeometry args={[0.46, 0.78, 3.1, 10]} />
         <meshStandardMaterial color="#5e412d" roughness={0.93} />
       </mesh>
@@ -227,7 +230,7 @@ function HearttreeSanctum() {
         <meshStandardMaterial color="#23452f" emissive="#75e59c" emissiveIntensity={0.2} roughness={0.66} />
       </mesh>
       {([[-0.66, 3.08, 0], [0.6, 3.12, 0.05], [0, 3.52, -0.08]] as const).map((position, index) => (
-        <mesh key={index} castShadow position={position} scale={[1.45, 0.86, 1.18]}>
+        <mesh key={index} position={position} scale={[1.45, 0.86, 1.18]}>
           <dodecahedronGeometry args={[0.82, 1]} />
           <meshStandardMaterial color={index === 2 ? "#4d9e51" : "#287149"} roughness={0.76} />
         </mesh>
@@ -240,13 +243,13 @@ function HearttreeSanctum() {
 function RootArch() {
   return (
     <group name="root-arch">
-      <mesh castShadow position={[0, 1.14, 0]}>
+      <mesh position={[0, 1.14, 0]}>
         <torusGeometry args={[1.18, 0.22, 10, 32, Math.PI]} />
         <meshStandardMaterial color="#62432d" roughness={0.94} />
       </mesh>
       {[-1, 1].map((side) => (
         <group key={side} position={[side * 1.17, 0.54, 0]}>
-          <mesh castShadow><cylinderGeometry args={[0.18, 0.3, 1.3, 8]} /><meshStandardMaterial color="#62432d" roughness={0.94} /></mesh>
+          <mesh><cylinderGeometry args={[0.18, 0.3, 1.3, 8]} /><meshStandardMaterial color="#62432d" roughness={0.94} /></mesh>
           <mesh position={[side * 0.08, 0.28, 0.18]}><dodecahedronGeometry args={[0.28, 0]} /><meshStandardMaterial color="#5f9b50" roughness={0.86} /></mesh>
         </group>
       ))}
@@ -255,45 +258,69 @@ function RootArch() {
 }
 
 function SpringLandmark() {
+  const springStones = useRef<THREE.InstancedMesh>(null);
+  const springReeds = useRef<THREE.InstancedMesh>(null);
+  useLayoutEffect(() => {
+    const matrix = new THREE.Matrix4();
+    const quaternion = new THREE.Quaternion();
+    const stoneScale = new THREE.Vector3(0.34, 0.22, 0.48);
+    for (let index = 0; index < 11; index += 1) {
+      const angle = (index / 11) * Math.PI * 2;
+      quaternion.setFromEuler(new THREE.Euler(0, angle, 0));
+      matrix.compose(new THREE.Vector3(Math.cos(angle) * 1.05, 0.14, Math.sin(angle) * 1.05), quaternion, stoneScale);
+      springStones.current?.setMatrixAt(index, matrix);
+    }
+    [-0.72, -0.48, 0.58, 0.82].forEach((x, index) => {
+      quaternion.setFromEuler(new THREE.Euler(0, 0, x * 0.15));
+      matrix.compose(new THREE.Vector3(x, 0.38, 0.76), quaternion, new THREE.Vector3(1, 1, 1));
+      springReeds.current?.setMatrixAt(index, matrix);
+    });
+    if (springStones.current) springStones.current.instanceMatrix.needsUpdate = true;
+    if (springReeds.current) springReeds.current.instanceMatrix.needsUpdate = true;
+  }, []);
   return (
     <group name="spring-landmark">
       <mesh receiveShadow position={[0, 0.08, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <circleGeometry args={[1.08, 28]} />
         <meshPhysicalMaterial color="#57b8c8" roughness={0.18} metalness={0.02} clearcoat={0.8} />
       </mesh>
-      {Array.from({ length: 11 }, (_, index) => {
-        const angle = (index / 11) * Math.PI * 2;
-        return (
-          <mesh key={index} castShadow position={[Math.cos(angle) * 1.05, 0.14, Math.sin(angle) * 1.05]} rotation={[0, angle, 0]} scale={[0.34, 0.22, 0.48]}>
-            <dodecahedronGeometry args={[0.52, 0]} />
-            <meshStandardMaterial color="#748278" roughness={0.98} />
-          </mesh>
-        );
-      })}
-      {[-0.72, -0.48, 0.58, 0.82].map((x) => (
-        <mesh key={x} castShadow position={[x, 0.38, 0.76]} rotation={[0, 0, x * 0.15]}>
-          <coneGeometry args={[0.08, 0.76, 5]} />
-          <meshStandardMaterial color="#4a9852" roughness={0.83} />
-        </mesh>
-      ))}
+      <instancedMesh args={[undefined, undefined, 11]} ref={springStones}>
+        <dodecahedronGeometry args={[0.52, 0]} />
+        <meshStandardMaterial color="#748278" roughness={0.98} />
+      </instancedMesh>
+      <instancedMesh args={[undefined, undefined, 4]} ref={springReeds}>
+        <coneGeometry args={[0.08, 0.76, 5]} />
+        <meshStandardMaterial color="#4a9852" roughness={0.83} />
+      </instancedMesh>
     </group>
   );
 }
 
 function FarCanopy({ centerX, centerZ, player }: { centerX: number; centerZ: number; player: PlayState["player"] }) {
+  const farCanopyMesh = useRef<THREE.InstancedMesh>(null);
   const silhouettes = useMemo(() => Array.from({ length: 14 }, (_, index) => {
     const angle = (index / 14) * Math.PI * 2;
     const radius = 24 + seededUnit(centerX * 31 + centerZ, index) * 8;
     return { x: Math.cos(angle) * radius, z: Math.sin(angle) * radius, scale: 3.2 + seededUnit(index, centerX - centerZ) * 2.4 };
   }), [centerX, centerZ]);
+  useLayoutEffect(() => {
+    const matrix = new THREE.Matrix4();
+    silhouettes.forEach((item, index) => {
+      matrix.compose(
+        new THREE.Vector3(item.x, item.scale * 0.42, item.z),
+        new THREE.Quaternion(),
+        new THREE.Vector3(item.scale, item.scale, item.scale)
+      );
+      farCanopyMesh.current?.setMatrixAt(index, matrix);
+    });
+    if (farCanopyMesh.current) farCanopyMesh.current.instanceMatrix.needsUpdate = true;
+  }, [silhouettes]);
   return (
     <group position={[-(player.x % WILDS_TILE_SIZE), 0, -(player.z % WILDS_TILE_SIZE)]}>
-      {silhouettes.map((item, index) => (
-        <mesh key={index} position={[item.x, item.scale * 0.42, item.z]} scale={[item.scale, item.scale, item.scale]}>
-          <dodecahedronGeometry args={[0.72, 0]} />
-          <meshStandardMaterial color="#174f3b" fog roughness={1} />
-        </mesh>
-      ))}
+      <instancedMesh args={[undefined, undefined, silhouettes.length]} ref={farCanopyMesh}>
+        <dodecahedronGeometry args={[0.72, 0]} />
+        <meshStandardMaterial color="#174f3b" fog roughness={1} />
+      </instancedMesh>
     </group>
   );
 }

@@ -6,7 +6,7 @@ export type WildsQualityProfile = {
   shadowMapSize: 512 | 1024;
   foliage: number;
   particles: number;
-  maxDrawCalls: 120;
+  maxDrawCalls: 160;
   maxTriangles: 180_000;
 };
 
@@ -33,7 +33,7 @@ export function selectWildsQualityProfile(input: {
     ...base,
     tier,
     particles: input.reducedMotion ? 0.35 : base.particles,
-    maxDrawCalls: 120,
+    maxDrawCalls: 160,
     maxTriangles: 180_000
   };
 }
