@@ -19,6 +19,7 @@ import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } f
 import type { PortableCardAsset } from "@/features/play/portable-card";
 import { WildsCaptureReward } from "@/features/play/WildsCaptureReward";
 import { WildsInventory } from "@/features/play/WildsInventory";
+import { WildsBattle } from "@/features/play/WildsBattle";
 
 const WILDS_SAVE_KEY = "receiz:wilds:save:v2";
 const WILDS_AVATAR_KEY = "receiz:wilds:explorer:v1";
@@ -145,6 +146,10 @@ export function PlayCampaign({
   }, [saveRestored, state]);
 
   useEffect(() => {
+    if (state.encounter.phase === "battle_intro") {
+      const timer = window.setTimeout(() => dispatch({ type: "start-battle", at: new Date().toISOString() }), 650);
+      return () => window.clearTimeout(timer);
+    }
     const delay = state.encounter.phase === "emerging" ? 1_050 : state.encounter.phase === "capsule" ? 1_250 : state.encounter.phase === "sealed" ? 700 : null;
     if (delay === null) return;
     const timer = window.setTimeout(() => {
@@ -244,6 +249,15 @@ export function PlayCampaign({
                 dispatch({ type: "search-point", ...point, searchedAt: new Date().toISOString(), ownerReceizId });
               }}
             />
+
+            {state.battle && ["player_turn", "capture_ready", "fled", "defeated"].includes(state.encounter.phase) ? (
+              <WildsBattle
+                battle={state.battle}
+                inventory={state.inventory}
+                onAction={(action) => dispatch({ type: "battle-action", action })}
+                onDismiss={() => dispatch({ type: "dismiss-reveal" })}
+              />
+            ) : null}
 
             {!avatarStyle ? (
               <div className="wilds-avatar-select" role="dialog" aria-labelledby="wilds-avatar-title" aria-modal="true">

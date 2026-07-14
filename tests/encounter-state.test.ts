@@ -6,7 +6,7 @@ import { hotspotsForRegion } from "../src/features/play/hidden-hotspots";
 describe("Wilds encounter presentation state", () => {
   const hotspot = hotspotsForRegion(0, 0)[0]!;
 
-  it("turns an exact hotspot search into a covered emergence", () => {
+  it("turns an exact hotspot search into a covered battle intro", () => {
     const encounter = encounterFromSearch(
       { kind: "hit", hotspot, distance: 0 },
       hotspot.position,
@@ -14,7 +14,7 @@ describe("Wilds encounter presentation state", () => {
       "player.receiz.id"
     );
 
-    assert.equal(encounter.phase, "emerging");
+    assert.equal(encounter.phase, "battle_intro");
     assert.equal(encounter.hotspotId, hotspot.id);
     assert.equal(encounter.cover, hotspot.cover);
     assert.equal(encounter.formId, hotspot.formId);

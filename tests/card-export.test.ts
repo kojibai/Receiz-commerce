@@ -2,9 +2,13 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   embedPortableCardInPng,
+  embedPortableVaultInPng,
   readPortableCardFromPng,
+  readPortableVaultFromPng,
   renderWildsCardSvg,
-  verifyPortableCardPng
+  renderWildsVaultSvg,
+  verifyPortableCardPng,
+  verifyPortableVaultPng
 } from "../src/features/play/card-export.js";
 import { sealCollectedCard } from "../src/features/play/portable-card.js";
 
@@ -61,5 +65,23 @@ describe("Wilds card export", () => {
     tampered[tampered.length - 18] ^= 0x01;
 
     assert.equal(verifyPortableCardPng(tampered).ok, false);
+  });
+
+  it("seals and restores a complete collection from one showcase vault PNG", () => {
+    const second = sealCollectedCard({
+      formId: "ledgerfox-1",
+      ownerReceizId: "player.receiz.id",
+      encounterId: "export-ledgerfox",
+      capturedAt: "2026-07-13T15:01:00.000Z"
+    });
+    const sourcePng = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=", "base64");
+    const vaultPng = embedPortableVaultInPng(sourcePng, [card, second]);
+    const decoded = readPortableVaultFromPng(vaultPng);
+    const verified = verifyPortableVaultPng(vaultPng);
+
+    assert.match(renderWildsVaultSvg([card, second]), /WILDS VAULT/);
+    assert.equal(decoded.assets.length, 2);
+    assert.equal(verified.ok, true);
+    assert.deepEqual(verified.assets.map((asset) => asset.id), [card.id, second.id]);
   });
 });

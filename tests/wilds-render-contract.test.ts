@@ -92,6 +92,7 @@ describe("Receiz Wilds rendering contract", () => {
     const state = await readFile("src/features/play/game-state.ts", "utf8");
     const world = await readFile("src/features/play/WildsWorldCanvas.tsx", "utf8");
     const campaign = await readFile("src/features/play/PlayCampaign.tsx", "utf8");
+    const battle = await readFile("src/features/play/WildsBattle.tsx", "utf8");
 
     assert.match(state, /searchHiddenHotspots/);
     assert.match(world, /function SearchableTerrain/);
@@ -102,6 +103,11 @@ describe("Receiz Wilds rendering contract", () => {
     assert.match(campaign, /Choose your explorer/);
     assert.match(campaign, /Female explorer/);
     assert.match(campaign, /Male explorer/);
+    assert.match(campaign, /<WildsBattle/);
+    assert.match(battle, /wilds-battle-health/);
+    assert.match(battle, /aria-label="Capture weakened creature"/);
+    assert.match(battle, /Switch active card/);
+    assert.match(battle, /battle\.wild\.hpRatio > 0\.3/);
     assert.match(world, /function EncounterSequence/);
     assert.match(world, /const encounter = state\.encounter/);
     assert.doesNotMatch(world, /nearbyCreatureCards\(state\.player\)/);

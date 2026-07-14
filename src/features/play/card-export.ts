@@ -12,8 +12,16 @@ export type PortableCardPngProof = {
   asset: PortableCardAsset;
 };
 
+export type PortableVaultPngProof = {
+  schema: "receiz.wilds_vault_png_proof.v1";
+  imageDigest: string;
+  vaultDigest: string;
+  assets: PortableCardAsset[];
+};
+
 const PNG_SIGNATURE = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]);
 const PROOF_CHUNK_TYPE = "rzCd";
+const VAULT_CHUNK_TYPE = "rzVt";
 
 function xml(value: string | number) {
   return String(value)
@@ -91,6 +99,22 @@ export function renderWildsCardSvg(asset: PortableCardAsset) {
   <text x="65" y="960" fill="#7896a1" font-family="ui-monospace,monospace" font-size="12">${xml(asset.proof.digest)}</text>
   <text x="65" y="990" fill="#fff" font-family="system-ui,sans-serif" font-size="15" font-weight="750">RECEIZ WILDS · PORTABLE PROOF CARD</text><text x="685" y="990" text-anchor="end" fill="${xml(palette.accent)}" font-family="system-ui,sans-serif" font-size="15" font-weight="850">${xml(asset.status.replace("_", " ").toUpperCase())}</text>
 </svg>`;
+}
+
+export function renderWildsVaultSvg(assets: PortableCardAsset[]) {
+  const verified = assets.filter((asset) => verifyPortableCard(asset).ok);
+  if (!verified.length || verified.length !== assets.length) throw new Error("wilds_vault_cards_invalid");
+  const featured = verified.slice(0, 12);
+  const tiles = featured.map((asset, index) => {
+    const palette = asset.manifest.variant.traits.palette;
+    const col = index % 4;
+    const row = Math.floor(index / 4);
+    const x = 62 + col * 270;
+    const y = 246 + row * 190;
+    return `<g transform="translate(${x} ${y})"><rect width="238" height="156" rx="24" fill="#102733" stroke="${xml(palette.accent)}" stroke-width="3"/><circle cx="54" cy="62" r="35" fill="${xml(palette.primary)}"/><circle cx="54" cy="62" r="47" fill="none" stroke="${xml(palette.glow)}" stroke-opacity=".5"/><text x="104" y="50" fill="#fff" font-family="system-ui,sans-serif" font-size="19" font-weight="850">${xml(asset.manifest.name)}</text><text x="104" y="77" fill="#94b2bc" font-family="system-ui,sans-serif" font-size="13">STAGE ${asset.manifest.stage} · ${xml(asset.manifest.rarity.toUpperCase())}</text><text x="22" y="128" fill="${xml(palette.accent)}" font-family="ui-monospace,monospace" font-size="11">${xml(asset.manifest.variant.traits.visualFingerprint)}</text></g>`;
+  }).join("");
+  const vaultDigest = sha256PortableBasis(canonicalPortableCardJson(verified.map((asset) => ({ id: asset.id, proof: asset.proof.digest }))));
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="900" viewBox="0 0 1200 900" role="img" aria-labelledby="vault-title vault-description"><title id="vault-title">Receiz Wilds Vault</title><desc id="vault-description">A portable showcase containing ${verified.length} offline-verifiable creature cards.</desc><defs><radialGradient id="vault-bg"><stop stop-color="#153f4f"/><stop offset="1" stop-color="#06141d"/></radialGradient><linearGradient id="vault-line"><stop stop-color="#71e8c3"/><stop offset=".5" stop-color="#f7c948"/><stop offset="1" stop-color="#ff72bf"/></linearGradient></defs><rect width="1200" height="900" rx="54" fill="url(#vault-bg)"/><rect x="22" y="22" width="1156" height="856" rx="40" fill="none" stroke="url(#vault-line)" stroke-width="5"/><text x="62" y="86" fill="#71e8c3" font-family="system-ui,sans-serif" font-size="17" font-weight="850" letter-spacing="5">RECEIZ · PROOF-SEALED COLLECTION</text><text x="62" y="150" fill="#fff" font-family="system-ui,sans-serif" font-size="54" font-weight="900">WILDS VAULT</text><text x="1138" y="146" text-anchor="end" fill="#f7c948" font-family="system-ui,sans-serif" font-size="42" font-weight="900">${verified.length}</text><text x="1138" y="175" text-anchor="end" fill="#94b2bc" font-family="system-ui,sans-serif" font-size="14">SEALED CARDS</text>${tiles}${verified.length > featured.length ? `<text x="600" y="824" text-anchor="middle" fill="#fff" font-family="system-ui,sans-serif" font-size="18" font-weight="750">+ ${verified.length - featured.length} more cards sealed inside this image</text>` : ""}<text x="62" y="856" fill="#7896a1" font-family="ui-monospace,monospace" font-size="12">${xml(vaultDigest)}</text><text x="1138" y="856" text-anchor="end" fill="#71e8c3" font-family="system-ui,sans-serif" font-size="13" font-weight="800">OFFLINE RECOVERABLE · ONE IMAGE</text></svg>`;
 }
 
 type PngChunk = { type: string; data: Uint8Array };
@@ -201,6 +225,52 @@ export function verifyPortableCardPng(source: Uint8Array): { ok: boolean; errors
   }
 }
 
+export function embedPortableVaultInPng(source: Uint8Array, assets: PortableCardAsset[]) {
+  if (!assets.length || assets.some((asset) => !verifyPortableCard(asset).ok)) throw new Error("wilds_vault_cards_invalid");
+  if (new Set(assets.map((asset) => asset.id)).size !== assets.length) throw new Error("wilds_vault_duplicate_card");
+  const sourceChunks = parsePng(source).filter((chunk) => chunk.type !== VAULT_CHUNK_TYPE && chunk.type !== PROOF_CHUNK_TYPE);
+  const vaultDigest = sha256PortableBasis(canonicalPortableCardJson(assets.map((asset) => ({ id: asset.id, proof: asset.proof.digest }))));
+  const proof: PortableVaultPngProof = {
+    schema: "receiz.wilds_vault_png_proof.v1",
+    imageDigest: imageDigest(sourceChunks),
+    vaultDigest,
+    assets
+  };
+  const proofData = new TextEncoder().encode(canonicalPortableCardJson(proof));
+  const output = [PNG_SIGNATURE];
+  for (const chunk of sourceChunks) {
+    if (chunk.type === "IEND") output.push(makeChunk(VAULT_CHUNK_TYPE, proofData));
+    output.push(makeChunk(chunk.type, chunk.data));
+  }
+  return concatBytes(output);
+}
+
+export function readPortableVaultFromPng(source: Uint8Array): PortableVaultPngProof {
+  const chunks = parsePng(source);
+  const proofs = chunks.filter((chunk) => chunk.type === VAULT_CHUNK_TYPE);
+  if (proofs.length !== 1) throw new Error(proofs.length ? "wilds_vault_proof_duplicate" : "wilds_vault_proof_missing");
+  const decoded = JSON.parse(new TextDecoder().decode(proofs[0]!.data)) as Partial<PortableVaultPngProof>;
+  if (decoded.schema !== "receiz.wilds_vault_png_proof.v1" || typeof decoded.imageDigest !== "string" || typeof decoded.vaultDigest !== "string" || !Array.isArray(decoded.assets)) throw new Error("wilds_vault_proof_invalid");
+  return decoded as PortableVaultPngProof;
+}
+
+export function verifyPortableVaultPng(source: Uint8Array): { ok: boolean; errors: string[]; assets: PortableCardAsset[] } {
+  try {
+    const chunks = parsePng(source);
+    const proof = readPortableVaultFromPng(source);
+    const errors: string[] = [];
+    if (!proof.assets.length) errors.push("wilds_vault_empty");
+    if (new Set(proof.assets.map((asset) => asset.id)).size !== proof.assets.length) errors.push("wilds_vault_duplicate_card");
+    proof.assets.forEach((asset, index) => verifyPortableCard(asset).errors.forEach((error) => errors.push(`card_${index}:${error}`)));
+    const expectedVaultDigest = sha256PortableBasis(canonicalPortableCardJson(proof.assets.map((asset) => ({ id: asset.id, proof: asset.proof.digest }))));
+    if (proof.vaultDigest !== expectedVaultDigest) errors.push("wilds_vault_digest_mismatch");
+    if (proof.imageDigest !== imageDigest(chunks)) errors.push("png_image_digest_mismatch");
+    return { ok: errors.length === 0, errors, assets: errors.length ? [] : proof.assets };
+  } catch (error) {
+    return { ok: false, errors: [error instanceof Error ? error.message : "wilds_vault_proof_invalid"], assets: [] };
+  }
+}
+
 function downloadBlob(blob: Blob, filename: string) {
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
@@ -210,7 +280,7 @@ function downloadBlob(blob: Blob, filename: string) {
   window.setTimeout(() => URL.revokeObjectURL(url), 0);
 }
 
-async function svgPngBlob(svg: string) {
+async function svgPngBlob(svg: string, width = 750, height = 1050) {
   const source = URL.createObjectURL(new Blob([svg], { type: "image/svg+xml" }));
   try {
     const image = new Image();
@@ -218,8 +288,8 @@ async function svgPngBlob(svg: string) {
     image.src = source;
     await image.decode();
     const canvas = document.createElement("canvas");
-    canvas.width = 750;
-    canvas.height = 1050;
+    canvas.width = width;
+    canvas.height = height;
     const context = canvas.getContext("2d");
     if (!context) throw new Error("wilds_card_canvas_unavailable");
     context.drawImage(image, 0, 0, canvas.width, canvas.height);
@@ -240,4 +310,17 @@ export async function portableCardPngBlob(asset: PortableCardAsset) {
   const rendered = await svgPngBlob(renderWildsCardSvg(asset));
   const portable = embedPortableCardInPng(new Uint8Array(await rendered.arrayBuffer()), asset);
   return new Blob([portable.slice().buffer], { type: "image/png" });
+}
+
+export async function portableVaultPngBlob(assets: PortableCardAsset[]) {
+  if (typeof document === "undefined") throw new Error("wilds_vault_png_browser_required");
+  const rendered = await svgPngBlob(renderWildsVaultSvg(assets), 1200, 900);
+  const portable = embedPortableVaultInPng(new Uint8Array(await rendered.arrayBuffer()), assets);
+  return new Blob([portable.slice().buffer], { type: "image/png" });
+}
+
+export async function downloadPortableVault(assets: PortableCardAsset[]) {
+  if (!assets.length) throw new Error("wilds_vault_empty");
+  const digest = sha256PortableBasis(canonicalPortableCardJson(assets.map((asset) => asset.id))).slice(7, 19);
+  downloadBlob(await portableVaultPngBlob(assets), `wilds-vault-${digest}.png`);
 }

@@ -7,6 +7,7 @@ import {
 } from "./portable-card";
 import { encounterFromSearch, idleEncounterState, isCapturableEncounter, type EncounterState } from "./encounter-state";
 import { nearbyHiddenHotspots, searchHiddenHotspots } from "./hidden-hotspots";
+import { applyBattleAction, battleTranscriptDigest, startWildBattle, type BattleAction, type BattleState } from "./battle-engine";
 
 export type GameAction = "explore" | "train" | "mission";
 export type MoveDirection = "north" | "south" | "west" | "east";
@@ -17,6 +18,8 @@ export type WildsInput =
   | { type: "capture"; encounterId: string; capturedAt: string; ownerReceizId: string }
   | { type: "search-point"; x: number; z: number; searchedAt: string; ownerReceizId: string }
   | { type: "advance-encounter"; at: string }
+  | { type: "start-battle"; at: string }
+  | { type: "battle-action"; action: BattleAction }
   | { type: "dismiss-reveal" }
   | { type: "mark-synced"; assetId: string; synchronizedAt: string }
   | { type: "mark-listed"; assetId: string; synchronizedAt: string }
@@ -91,6 +94,7 @@ export type PlayState = {
   selectedCardId: string;
   streak: number;
   bossUnlocked: boolean;
+  battle: BattleState | null;
   worldRank: "Grove scout" | "Trail keeper" | "Wilds ranger" | "Titan challenger";
 };
 
@@ -221,6 +225,7 @@ export const initialPlayState: PlayState = {
   selectedCardId: "mintcub",
   streak: 9,
   bossUnlocked: false,
+  battle: null,
   worldRank: "Grove scout"
 };
 
@@ -288,7 +293,7 @@ function restoreEncounter(value: unknown): EncounterState {
   if (!value || typeof value !== "object") return idleEncounterState;
   const candidate = value as Record<string, unknown>;
   if (candidate.phase === "idle") return idleEncounterState;
-  const phases = new Set(["searching", "hint", "emerging", "capsule", "sealed", "revealed"]);
+  const phases = new Set(["searching", "hint", "battle_intro", "player_turn", "capture_ready", "fled", "defeated", "emerging", "capsule", "sealed", "revealed"]);
   if (!phases.has(String(candidate.phase)) || typeof candidate.searchedAt !== "string" || typeof candidate.ownerReceizId !== "string") return idleEncounterState;
   const point = candidate.searchPoint as Record<string, unknown> | undefined;
   if (!point || typeof point.x !== "number" || typeof point.z !== "number") return idleEncounterState;
@@ -338,7 +343,32 @@ export function applyWildsInput(state: PlayState, input: WildsInput): PlayState 
 
   if (input.type === "dismiss-reveal") {
     if (state.encounter.phase === "idle") return state;
-    return { ...state, encounter: idleEncounterState };
+    return { ...state, battle: null, encounter: idleEncounterState };
+  }
+
+  if (input.type === "start-battle") {
+    if (state.encounter.phase !== "battle_intro" || !state.encounter.formId || !state.encounter.hotspotId) return state;
+    const wild = creatureForm(state.encounter.formId);
+    const playerAsset = [...state.inventory].reverse().find((asset) => asset.manifest.familyId === state.selectedCardId && verifyPortableCard(asset).ok);
+    if (!wild || !playerAsset) return { ...state, encounter: { ...state.encounter, phase: "defeated" }, lastEvent: "No verified playable card was available for battle." };
+    const battle = startWildBattle({
+      encounterSeed: state.encounter.hotspotId,
+      player: { assetId: playerAsset.id, name: playerAsset.manifest.name, ...playerAsset.manifest.stats, health: playerAsset.manifest.stats.health * 2 },
+      wild: { formId: wild.id, name: wild.name, ...wild.stats }
+    });
+    return { ...state, battle, encounter: { ...state.encounter, phase: "player_turn" }, lastEvent: `${wild.name} emerged. Weaken it below 30% before capture.` };
+  }
+
+  if (input.type === "battle-action") {
+    if (!state.battle || (state.encounter.phase !== "player_turn" && state.encounter.phase !== "capture_ready")) return state;
+    const battle = applyBattleAction(state.battle, input.action);
+    if (battle === state.battle) return state;
+    if (battle.phase === "captured") {
+      return { ...state, battle, encounter: { ...state.encounter, phase: "capsule" }, lastEvent: "Capture locked. Sealing the portable card now." };
+    }
+    const phase = battle.phase === "capture_ready" ? "capture_ready" : battle.phase === "fled" ? "fled" : battle.phase === "defeated" ? "defeated" : "player_turn";
+    const last = battle.transcript.at(-1)?.detail ?? "Battle turn resolved.";
+    return { ...state, battle, encounter: { ...state.encounter, phase }, lastEvent: last };
   }
 
   if (input.type === "search-point") {
@@ -381,7 +411,8 @@ export function applyWildsInput(state: PlayState, input: WildsInput): PlayState 
         formId: encounter.formId,
         ownerReceizId: encounter.ownerReceizId,
         encounterId: encounter.hotspotId,
-        capturedAt: input.at
+        capturedAt: input.at,
+        battleTranscriptDigest: state.battle ? battleTranscriptDigest(state.battle) : undefined
       });
     } catch {
       return { ...state, encounter: { ...encounter, phase: "emerging" }, lastEvent: "The capsule reopened because its offline seal could not be verified." };

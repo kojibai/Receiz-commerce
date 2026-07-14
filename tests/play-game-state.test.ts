@@ -67,7 +67,7 @@ describe("Receiz Wilds game state", () => {
     assert.match(once.lastEvent, /sealed for offline use/i);
   });
 
-  it("searches, emerges, seals, and reveals a hidden hotspot atomically", () => {
+  it("searches, battles, seals, and reveals a hidden hotspot atomically", () => {
     const hotspot = nearbyHiddenHotspots(initialPlayState.player)[0]!;
     const searched = applyWildsInput(initialPlayState, {
       type: "search-point",
@@ -77,10 +77,19 @@ describe("Receiz Wilds game state", () => {
       ownerReceizId: "player.receiz.id"
     });
 
-    assert.equal(searched.encounter.phase, "emerging");
+    assert.equal(searched.encounter.phase, "battle_intro");
     assert.equal(searched.inventory.length, initialPlayState.inventory.length);
 
-    const capsule = applyWildsInput(searched, { type: "advance-encounter", at: "2026-07-13T15:00:01.000Z" });
+    let battling = applyWildsInput(searched, { type: "start-battle", at: "2026-07-13T15:00:01.000Z" });
+    assert.equal(battling.encounter.phase, "player_turn");
+    for (let turn = 0; turn < 20 && battling.encounter.phase === "player_turn"; turn += 1) {
+      battling = applyWildsInput(battling, { type: "battle-action", action: battling.battle!.player.energy >= 12 ? { type: "ability", slot: 0 } : { type: "guard" } });
+    }
+    assert.equal(battling.encounter.phase, "capture_ready");
+    for (let attempt = 0; attempt < 5 && battling.encounter.phase === "capture_ready"; attempt += 1) {
+      battling = applyWildsInput(battling, { type: "battle-action", action: { type: "capture" } });
+    }
+    const capsule = battling;
     assert.equal(capsule.encounter.phase, "capsule");
     assert.equal(capsule.inventory.length, initialPlayState.inventory.length);
 

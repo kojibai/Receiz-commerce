@@ -1,6 +1,6 @@
 import type { HotspotCover, HotspotSearchResult } from "./hidden-hotspots";
 
-export type EncounterPhase = "idle" | "searching" | "hint" | "emerging" | "capsule" | "sealed" | "revealed";
+export type EncounterPhase = "idle" | "searching" | "hint" | "battle_intro" | "player_turn" | "capture_ready" | "fled" | "defeated" | "emerging" | "capsule" | "sealed" | "revealed";
 export type SearchProximity = "cold" | "warm" | "hot";
 export type SearchTrend = "closer" | "farther" | "steady" | null;
 
@@ -52,7 +52,7 @@ export function encounterFromSearch(
     cover: result.hotspot.cover,
     distance: result.distance
   };
-  if (result.kind === "hit") return { phase: "emerging", ...shared, ...hotspot };
+  if (result.kind === "hit") return { phase: "battle_intro", ...shared, ...hotspot };
   if (result.kind === "near_miss") return { phase: "hint", ...shared, ...hotspot, direction: { ...result.direction } };
   return { phase: "hint", ...shared, ...hotspot };
 }

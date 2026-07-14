@@ -2195,6 +2195,131 @@ a {
   50% { filter: saturate(1.12) brightness(1.025); }
 }
 
+.wilds-battle {
+  position: absolute;
+  z-index: 10;
+  inset: 8px;
+  display: grid;
+  align-content: space-between;
+  pointer-events: none;
+}
+
+.wilds-battle-versus {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: start;
+  gap: 10px;
+}
+
+.wilds-battle-versus > span {
+  padding: 7px 9px;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 999px;
+  background: rgba(15, 24, 20, 0.78);
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+}
+
+.wilds-battle-fighter {
+  display: grid;
+  gap: 5px;
+  padding: 8px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 12px;
+  background: rgba(11, 24, 19, 0.86);
+  box-shadow: 0 10px 28px rgba(8, 18, 14, 0.2);
+}
+
+.wilds-battle-fighter > div:first-child {
+  display: flex;
+  justify-content: space-between;
+  gap: 7px;
+  font-size: 10px;
+}
+
+.wilds-battle-fighter span { color: rgba(255, 255, 255, 0.65); font-size: 8px; }
+
+.wilds-battle-health {
+  height: 7px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.wilds-battle-health i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #37d688, #c7ec5a);
+  transition: width 240ms ease;
+}
+
+.wilds-battle-console {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 16px;
+  background: rgba(13, 22, 18, 0.92);
+  box-shadow: 0 18px 44px rgba(4, 12, 9, 0.34);
+  pointer-events: auto;
+}
+
+.wilds-battle-console > p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.76);
+  font-size: 10px;
+}
+
+.wilds-battle-actions {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.wilds-battle-actions button,
+.wilds-battle-primary {
+  display: grid;
+  gap: 2px;
+  min-height: 48px;
+  padding: 7px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 10px;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.07);
+  cursor: pointer;
+}
+
+.wilds-battle-actions button:disabled { opacity: 0.38; cursor: not-allowed; }
+.wilds-battle-actions button strong { font-size: 10px; }
+.wilds-battle-actions button span { color: rgba(255, 255, 255, 0.58); font-size: 8px; }
+.wilds-battle-actions .wilds-battle-primary,
+.wilds-battle-primary { border-color: rgba(247, 201, 72, 0.52); background: rgba(247, 201, 72, 0.16); }
+
+.wilds-battle-meta {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 8px;
+  color: #f7c948;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.wilds-battle-meta label { display: flex; align-items: center; gap: 6px; }
+.wilds-battle-meta select { max-width: 150px; min-height: 28px; border: 0; border-radius: 8px; font-size: 9px; }
+
+@media (max-width: 560px) {
+  .wilds-battle { inset: 7px; }
+  .wilds-battle-versus { gap: 5px; }
+  .wilds-battle-versus > span { padding: 6px; font-size: 7px; }
+  .wilds-battle-fighter { padding: 6px 7px; }
+  .wilds-battle-fighter > div:first-child { display: grid; font-size: 9px; }
+  .wilds-battle-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .wilds-battle-console { padding: 8px; }
+}
+
 .wilds-canvas-wrap,
 .wilds-canvas-wrap canvas,
 .wilds-canvas-fallback {
@@ -10242,6 +10367,16 @@ button.product-purchase-secondary-link {
   color: #effaff;
   background: rgb(113 232 195 / 9%);
   cursor: pointer;
+}
+
+.wilds-vault-actions {
+  display: flex;
+  gap: 7px;
+}
+
+.wilds-import-card:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
 }
 
 .wilds-import-card:hover,

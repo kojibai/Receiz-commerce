@@ -2,7 +2,7 @@
 
 import { useMemo, useRef, useState } from "react";
 import { creatureForm } from "./creature-catalog";
-import { downloadPortableCard, verifyPortableCardPng } from "./card-export";
+import { downloadPortableCard, downloadPortableVault, verifyPortableCardPng, verifyPortableVaultPng } from "./card-export";
 import type { PlayState, WildsInput } from "./game-state";
 import { WildsCard } from "./WildsCard";
 
@@ -44,10 +44,16 @@ export function WildsInventory({
     <section className="wilds-inventory" aria-label="Portable creature card inventory">
       <header>
         <div><span>Portable collection</span><h3>Wilds Inventory</h3><p>{state.inventory.length} sealed forms · unlimited unique variants</p></div>
-        <button className="wilds-import-card" onClick={() => importInput.current?.click()} title="Import verified card PNG" type="button">
-          <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 3v11m0-11L8 7m4-4 4 4M5 13v6h14v-6" /></svg>
-          <span>Import sealed card</span>
-        </button>
+        <div className="wilds-vault-actions">
+          <button className="wilds-import-card" onClick={() => importInput.current?.click()} title="Import verified card or vault PNG" type="button">
+            <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 3v11m0-11L8 7m4-4 4 4M5 13v6h14v-6" /></svg>
+            <span>Import card or vault</span>
+          </button>
+          <button className="wilds-import-card vault" disabled={!state.inventory.length} onClick={() => void downloadPortableVault(state.inventory)} title="Download portable vault PNG" type="button">
+            <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 6h16v13H4zM8 6V4h8v2m-4 3v6m0 0-3-3m3 3 3-3" /></svg>
+            <span>Download vault</span>
+          </button>
+        </div>
         <input
           ref={importInput}
           accept="image/png,.png"
@@ -58,11 +64,14 @@ export function WildsInventory({
             let imported = 0;
             let rejected = 0;
             for (const file of files) {
-              const verified = verifyPortableCardPng(new Uint8Array(await file.arrayBuffer()));
-              if (!verified.ok || !verified.asset) { rejected += 1; continue; }
-              onInput({ type: "import-card", asset: verified.asset });
-              setSelectedId(verified.asset.id);
-              imported += 1;
+              const bytes = new Uint8Array(await file.arrayBuffer());
+              const verifiedCard = verifyPortableCardPng(bytes);
+              const verifiedVault = verifiedCard.ok ? null : verifyPortableVaultPng(bytes);
+              const assets = verifiedCard.ok && verifiedCard.asset ? [verifiedCard.asset] : verifiedVault?.ok ? verifiedVault.assets : [];
+              if (!assets.length) { rejected += 1; continue; }
+              assets.forEach((asset) => onInput({ type: "import-card", asset }));
+              setSelectedId(assets.at(-1)!.id);
+              imported += assets.length;
             }
             event.currentTarget.value = "";
             setImportMessage(imported
