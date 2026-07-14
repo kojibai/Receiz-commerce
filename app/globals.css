@@ -2272,9 +2272,28 @@ a {
   font-size: 10px;
 }
 
+.wilds-battle-intent {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 24px;
+  padding: 4px 7px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.055);
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 8px;
+}
+
+.wilds-battle-intent strong { color: #fff2a8; font-size: 9px; text-transform: uppercase; }
+.wilds-battle-intent.intent-break { border-color: rgba(255, 118, 103, 0.48); }
+.wilds-battle-intent.intent-recover { border-color: rgba(110, 240, 201, 0.38); }
+.wilds-battle-conditions { display: flex; flex-wrap: wrap; gap: 4px; }
+.wilds-battle-condition { padding: 3px 6px; border-radius: 999px; background: rgba(247, 201, 72, 0.14); color: #fff2a8; font-size: 7px; font-weight: 850; text-transform: uppercase; }
+
 .wilds-battle-actions {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 6px;
 }
 
@@ -2317,7 +2336,9 @@ a {
   .wilds-battle-fighter { padding: 6px 7px; }
   .wilds-battle-fighter > div:first-child { display: grid; font-size: 9px; }
   .wilds-battle-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .wilds-battle-console { padding: 8px; }
+  .wilds-battle-actions button { min-height: 41px; padding: 5px; }
+  .wilds-battle-console { gap: 5px; padding: 7px; }
+  .wilds-battle-intent span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 }
 
 .wilds-canvas-wrap,

@@ -1,11 +1,11 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { applyBattleAction, battleGrowthAwards, battleTranscriptDigest, startWildBattle } from "../src/features/play/battle-engine";
+import { applyBattleAction, battleGrowthAwards, battleTranscriptDigest, elementEffectiveness, startWildBattle } from "../src/features/play/battle-engine";
 
 const input = {
   encounterSeed: "hotspot:0:0:1",
-  player: { assetId: "wilds:player", name: "SealCub", health: 82, power: 44, guard: 40, speed: 48 },
-  wild: { formId: "voltray-1", name: "Voltray", health: 76, power: 39, guard: 31, speed: 45 }
+  player: { assetId: "wilds:player", name: "SealCub", element: "Grove", health: 82, power: 44, guard: 40, speed: 48 },
+  wild: { formId: "voltray-1", name: "Voltray", element: "Tide", health: 76, power: 39, guard: 31, speed: 45 }
 };
 
 describe("Wilds deterministic battle engine", () => {
@@ -59,5 +59,34 @@ describe("Wilds deterministic battle engine", () => {
     assert.equal(battle.phase, "capture_ready");
     assert.equal(battleGrowthAwards(before, battle).some((award) => award.kind === "battle_win"), true);
     assert.equal(battleGrowthAwards(before, battle).some((award) => award.kind === "ability_mastery"), true);
+  });
+
+  it("uses a readable six-element advantage grammar", () => {
+    assert.equal(elementEffectiveness("Grove", "Tide"), 1.35);
+    assert.equal(elementEffectiveness("Tide", "Grove"), 0.75);
+    assert.equal(elementEffectiveness("Spark", "Stone"), 1.35);
+    assert.equal(elementEffectiveness("Prism", "Ember"), 1);
+  });
+
+  it("telegraphs deterministic wild intent and rewards focus timing", () => {
+    const first = startWildBattle(input);
+    assert.deepEqual(first.intent, startWildBattle(input).intent);
+    assert.match(first.intent.label, /Strike|Break|Recover/);
+
+    const focused = applyBattleAction(first, { type: "focus" });
+    assert.equal(focused.player.focus, 1);
+    assert.equal(focused.player.combo, 1);
+    assert.equal(focused.transcript.at(-1)?.action, "focus");
+    assert.deepEqual(focused.intent, applyBattleAction(startWildBattle(input), { type: "focus" }).intent);
+  });
+
+  it("applies bounded elemental conditions and consumes focus for guard break", () => {
+    let battle = startWildBattle(input);
+    battle = applyBattleAction(battle, { type: "focus" });
+    battle = applyBattleAction(battle, { type: "focus" });
+    const burst = applyBattleAction(battle, { type: "ability", slot: 1 });
+    assert.equal(burst.player.focus, 0);
+    assert.ok(burst.wild.conditions.some((condition) => condition.kind === "guard_broken"));
+    assert.ok(burst.wild.conditions.every((condition) => condition.turns >= 1 && condition.turns <= 2));
   });
 });

@@ -29,6 +29,7 @@ export function WildsBattle({
   const form = active ? creatureForm(active.manifest.formId) : null;
   const ended = battle.phase === "fled" || battle.phase === "defeated";
   const message = battle.transcript.at(-1)?.detail ?? "A wild creature challenges your active card.";
+  const effectiveness = battle.player.element === battle.wild.element ? "even" : `${battle.player.element} vs ${battle.wild.element}`;
 
   return (
     <section className={`wilds-battle phase-${battle.phase}`} aria-label="Wild creature battle">
@@ -38,7 +39,13 @@ export function WildsBattle({
         <HealthBar label={`Wild ${battle.wild.name}`} hp={battle.wild.hp} maxHp={battle.wild.maxHp} />
       </div>
       <div className="wilds-battle-console">
+        <div className={`wilds-battle-intent intent-${battle.intent.kind}`} aria-label={`Wild intent: ${battle.intent.label}`}>
+          <strong>{battle.intent.label}</strong><span>{battle.intent.detail}</span>
+        </div>
         <p aria-live="polite">{message}</p>
+        {battle.wild.conditions.length ? <div className="wilds-battle-conditions" aria-label="Wild creature conditions">
+          {battle.wild.conditions.map((condition) => <span className="wilds-battle-condition" key={condition.kind}>{condition.kind.replace("_", " ")} · {condition.turns}</span>)}
+        </div> : null}
         {ended ? (
           <button className="wilds-battle-primary" onClick={onDismiss} type="button">Return to discovery</button>
         ) : (
@@ -47,6 +54,7 @@ export function WildsBattle({
               <button disabled={battle.player.energy < 12} onClick={() => onAction({ type: "ability", slot: 0 })} type="button"><strong>{form?.abilities[0].name ?? "Pulse strike"}</strong><span>12 energy</span></button>
               <button disabled={battle.player.energy < 18} onClick={() => onAction({ type: "ability", slot: 1 })} type="button"><strong>{form?.abilities[1].name ?? "Bond burst"}</strong><span>18 energy</span></button>
               <button onClick={() => onAction({ type: "guard" })} type="button"><strong>Guard</strong><span>Recover energy</span></button>
+              <button onClick={() => onAction({ type: "focus" })} type="button"><strong>Focus</strong><span>Read intent · {battle.player.focus}/3</span></button>
               <button
                 aria-label="Capture weakened creature"
                 className="wilds-battle-primary"
@@ -56,7 +64,7 @@ export function WildsBattle({
               ><strong>{battle.wild.hpRatio <= 0.3 ? "Capture now" : "Weaken to 30%"}</strong><span>Seal into capsule</span></button>
             </div>
             <div className="wilds-battle-meta">
-              <span>{battle.player.energy}/50 energy</span>
+              <span>{battle.player.energy}/50 energy · {battle.player.combo}x combo · {effectiveness}</span>
               <label>
                 <span>Switch active card</span>
                 <select
@@ -65,7 +73,7 @@ export function WildsBattle({
                   onChange={(event) => {
                     const asset = inventory.find((candidate) => candidate.id === event.target.value);
                     if (!asset) return;
-                    onAction({ type: "switch", player: { assetId: asset.id, name: asset.manifest.name, ...asset.manifest.stats, health: asset.manifest.stats.health * 2 } });
+                    onAction({ type: "switch", player: { assetId: asset.id, name: asset.manifest.name, element: creatureForm(asset.manifest.formId)?.element, ...asset.manifest.stats, health: asset.manifest.stats.health * 2 } });
                     event.currentTarget.value = "";
                   }}
                 >

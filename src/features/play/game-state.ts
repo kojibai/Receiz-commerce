@@ -598,8 +598,8 @@ export function applyWildsInput(state: PlayState, input: WildsInput): PlayState 
     if (!wild || !playerAsset || !verifyAnyWildsCard(playerAsset).ok) return { ...state, encounter: { ...state.encounter, phase: "defeated" }, lastEvent: "No verified playable card was available for battle." };
     const battle = startWildBattle({
       encounterSeed: state.encounter.hotspotId,
-      player: { assetId: playerAsset.id, name: playerAsset.manifest.name, ...playerAsset.manifest.stats, health: playerAsset.manifest.stats.health * 2 },
-      wild: { formId: wild.id, name: wild.name, ...wild.stats }
+      player: { assetId: playerAsset.id, name: playerAsset.manifest.name, element: creatureForm(playerAsset.manifest.formId)?.element, ...playerAsset.manifest.stats, health: playerAsset.manifest.stats.health * 2 },
+      wild: { formId: wild.id, name: wild.name, element: wild.element, ...wild.stats }
     });
     return { ...state, battle, encounter: { ...state.encounter, phase: "player_turn" }, lastEvent: `${wild.name} emerged. Weaken it below 30% before capture.` };
   }

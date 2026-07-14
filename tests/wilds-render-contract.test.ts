@@ -246,6 +246,9 @@ describe("Receiz Wilds rendering contract", () => {
     assert.match(campaign, /Male explorer/);
     assert.match(campaign, /<WildsBattle/);
     assert.match(battle, /wilds-battle-health/);
+    assert.match(battle, /wilds-battle-intent/);
+    assert.match(battle, /wilds-battle-condition/);
+    assert.match(battle, /type: "focus"/);
     assert.match(battle, /aria-label="Capture weakened creature"/);
     assert.match(battle, /Switch active card/);
     assert.match(battle, /battle\.wild\.hpRatio > 0\.3/);
