@@ -15,8 +15,8 @@ test("the repository identifies the shipped release as 2.0.0", async () => {
   const lockfile = await read("pnpm-lock.yaml");
 
   assert.equal(packageJson.version, "2.0.0");
-  assert.equal(packageJson.dependencies?.["@receiz/sdk"], "^99.0.0");
-  assert.match(lockfile, /'@receiz\/sdk':[\s\S]*?specifier: \^99\.0\.0[\s\S]*?version: 99\.0\.0/);
+  assert.equal(packageJson.dependencies?.["@receiz/sdk"], "^100.0.0");
+  assert.match(lockfile, /'@receiz\/sdk':[\s\S]*?specifier: \^100\.0\.0[\s\S]*?version: 100\.0\.0/);
 });
 
 test("the v2 release has migration, release, and operator evidence", async () => {
@@ -33,7 +33,7 @@ test("the v2 release has migration, release, and operator evidence", async () =>
   assert.match(readme, /Current release:\s*`2\.0\.0`/);
   assert.match(changelog, /## 2\.0\.0 - Commerce OS/);
   assert.match(releaseNotes, /Receiz Commerce Kit v2\.0\.0/);
-  assert.match(releaseNotes, /@receiz\/sdk@99\.0\.0/);
+  assert.match(releaseNotes, /@receiz\/sdk@100\.0\.0/);
   assert.match(migration, /# Migrating to v2\.0\.0/);
   assert.match(migration, /rollback/i);
   assert.match(readiness, /remote financial and domain mutations also require/i);

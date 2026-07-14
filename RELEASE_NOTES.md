@@ -6,7 +6,7 @@ Status: Repository release
 
 Release unit: Repository release, not an npm package
 
-SDK target: `@receiz/sdk@99.0.0`
+SDK target: `@receiz/sdk@100.0.0`
 
 ## v2 Release Statement
 

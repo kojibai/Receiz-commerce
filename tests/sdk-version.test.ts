@@ -10,8 +10,8 @@ describe("Receiz v2 dependency contract", () => {
       pnpm?: { overrides?: Record<string, string> };
     };
 
-    assert.equal(RECEIZ_SDK_VERSION, "99.0.0");
-    assert.equal(pkg.dependencies["@receiz/sdk"], "^99.0.0");
+    assert.equal(RECEIZ_SDK_VERSION, "100.0.0");
+    assert.equal(pkg.dependencies["@receiz/sdk"], "^100.0.0");
     assert.equal(pkg.pnpm?.overrides?.postcss, ">=8.5.10");
   });
 
@@ -19,9 +19,9 @@ describe("Receiz v2 dependency contract", () => {
     const readme = readFileSync("README.md", "utf8");
     const rails = readFileSync("docs/SDK_RAILS.md", "utf8");
 
-    assert.match(readme, /@receiz\/mcp-server@99\.0\.0/);
+    assert.match(readme, /@receiz\/mcp-server@100\.0\.0/);
     assert.match(readme, /Publish theme/);
-    assert.match(rails, /@receiz\/sdk@99\.0\.0/);
+    assert.match(rails, /@receiz\/sdk@100\.0\.0/);
     assert.match(rails, /authoritative public-store revision/);
   });
 });

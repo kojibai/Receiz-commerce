@@ -1,6 +1,6 @@
 # Migrating to v2.0.0
 
-Version 2.0.0 is a repository release targeting `@receiz/sdk@99.0.0`. It strengthens the authority model for checkout, Exchange, hosting, domains, OAuth, and public state. Existing v1 browser workspaces are read through the current store migration and remain drafts until the merchant explicitly publishes them.
+Version 2.0.0 is a repository release targeting `@receiz/sdk@100.0.0`. It strengthens the authority model for checkout, Exchange, hosting, domains, OAuth, and public state. Existing v1 browser workspaces are read through the current store migration and remain drafts until the merchant explicitly publishes them.
 
 ## Required changes
 
