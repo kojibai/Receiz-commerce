@@ -31,7 +31,7 @@ The popover preserves every capability available in the former dropdown vault:
 - Evolve eligible cards and inspect or perform growth and ascension actions.
 - Show import, save, verification, listing, and error status messages in context.
 
-User-facing action labels use direct language: `Upload card or vault`, `Save vault image`, and `Save card image`. Existing verification and portable PNG behavior remains authoritative; this work changes presentation and access, not the proof format.
+User-facing action labels preserve the familiar vault language: `Import card or vault`, `Save vault image`, and `Save card image`. Existing verification and portable PNG behavior remains authoritative; this work changes presentation and access, not the proof format.
 
 ## Selected Card Experience
 

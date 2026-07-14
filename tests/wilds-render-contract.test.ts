@@ -277,6 +277,30 @@ describe("Receiz Wilds rendering contract", () => {
     assert.match(campaign, /\{deckCards\.length\}\/∞/);
   });
 
+  it("restores the complete vault inside a scrollable mobile command sheet", async () => {
+    const inventory = await readFile("src/features/play/WildsInventory.tsx", "utf8");
+    const css = await readFile("app/globals.css", "utf8");
+
+    assert.match(inventory, /import QRCode from "qrcode"/);
+    assert.match(inventory, /standaloneCardUrl/);
+    assert.match(inventory, /<WildsCardScene asset=\{selected\} origin=\{origin\} qr=\{qr\}/);
+    assert.match(inventory, />Import card or vault</);
+    assert.match(inventory, />Save vault image</);
+    assert.match(inventory, />Save card image</);
+    assert.match(inventory, /setVaultMessage/);
+    assert.match(inventory, /type: "fuse-cards"/);
+    assert.match(inventory, /WildsGrowthPanel/);
+    assert.match(inventory, /type: "evolve"/);
+    assert.match(inventory, /Verify \+ list on Exchange/);
+    assert.doesNotMatch(inventory, /<WildsCard asset=\{selected\}/);
+    assert.doesNotMatch(css, /\.wilds-command-sheet-content \.wilds-inventory > header \{ display: none; \}/);
+    assert.match(css, /\.wilds-command-sheet\s*\{[^}]*grid-template-rows:\s*auto auto minmax\(0, 1fr\)/s);
+    assert.match(css, /\.wilds-command-sheet-content\s*\{[^}]*overflow-y:\s*auto/s);
+    assert.match(css, /\.wilds-command-sheet-content \.wilds-vault-actions\s*\{[^}]*grid-template-columns/s);
+    assert.match(css, /\.wilds-command-sheet-content \.wilds-import-card span\s*\{[^}]*white-space:\s*normal/s);
+    assert.match(css, /\.wilds-inventory-detail \.wilds-card-scene\s*\{[^}]*aspect-ratio:\s*5\s*\/\s*7/s);
+  });
+
   it("keeps creatures hidden until an exact terrain search reveals one", async () => {
     const state = await readFile("src/features/play/game-state.ts", "utf8");
     const world = await readFile("src/features/play/WildsWorldCanvas.tsx", "utf8");

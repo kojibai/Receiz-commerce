@@ -12,7 +12,7 @@
 
 - Reuse `WildsCardScene` and `WildsCardBack`; do not create a vault-only back or duplicate flip behavior.
 - Preserve upload verification, portable PNG proof formats, game progression, fusion, evolution, listing, and public-card routing.
-- Use the labels `Upload card or vault`, `Save vault image`, and `Save card image`.
+- Use the labels `Import card or vault`, `Save vault image`, and `Save card image`.
 - All mobile labels remain visible and may wrap; no icon-only replacement, clipping, or ellipsis.
 - Preserve sheet dismissal, focus restoration, drag-to-close, inventory paging/swiping, and safe-area behavior.
 
@@ -36,7 +36,7 @@ Extend the inventory/rendering test with assertions equivalent to:
 assert.match(inventory, /import QRCode from "qrcode"/);
 assert.match(inventory, /standaloneCardUrl/);
 assert.match(inventory, /<WildsCardScene asset=\{selected\} origin=\{origin\} qr=\{qr\}/);
-assert.match(inventory, />Upload card or vault</);
+assert.match(inventory, />Import card or vault</);
 assert.match(inventory, />Save vault image</);
 assert.match(inventory, />Save card image</);
 assert.match(inventory, /setVaultMessage/);
@@ -97,7 +97,7 @@ useEffect(() => {
 
 - [ ] **Step 2: Restore and relabel all header actions**
 
-Keep the existing file input verification logic, but change the visible actions to `Upload card or vault`, `Save vault image`, and `Fuse cards`. Wrap vault download in `try/catch`:
+Keep the existing file input verification logic and the familiar `Import card or vault` wording, alongside `Save vault image` and `Fuse cards`. Wrap vault download in `try/catch`:
 
 ```ts
 onClick={async () => {

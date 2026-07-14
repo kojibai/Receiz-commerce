@@ -11144,14 +11144,14 @@ button.product-purchase-secondary-link {
 
 .wilds-command-overlay { position: fixed; z-index: 1500; inset: 0; pointer-events: none; }
 .wilds-command-backdrop { position: absolute; inset: 0; width: 100%; border: 0; background: rgb(1 10 15 / 48%); opacity: 1; pointer-events: auto; backdrop-filter: blur(5px); }
-.wilds-command-sheet { position: absolute; right: max(10px, env(safe-area-inset-right)); bottom: max(10px, env(safe-area-inset-bottom)); left: max(10px, env(safe-area-inset-left)); display: grid; width: min(760px, calc(100% - 20px)); max-height: min(78dvh, 720px); margin-inline: auto; overflow: hidden; color: #effaff; border: 1px solid rgb(131 235 207 / 28%); border-radius: 28px; background: linear-gradient(145deg, rgb(8 37 47 / 98%), rgb(4 17 25 / 98%)); box-shadow: 0 30px 100px rgb(0 0 0 / 54%), inset 0 1px rgb(255 255 255 / 10%); pointer-events: auto; transform: translateY(var(--wilds-sheet-drag, 0)); animation: wilds-command-sheet-in 260ms cubic-bezier(.2,.8,.2,1) both; }
+.wilds-command-sheet { position: absolute; right: max(10px, env(safe-area-inset-right)); bottom: max(10px, env(safe-area-inset-bottom)); left: max(10px, env(safe-area-inset-left)); display: grid; grid-template-rows: auto auto minmax(0, 1fr); width: min(760px, calc(100% - 20px)); max-height: min(86dvh, 760px); margin-inline: auto; overflow: hidden; color: #effaff; border: 1px solid rgb(131 235 207 / 28%); border-radius: 28px; background: linear-gradient(145deg, rgb(8 37 47 / 98%), rgb(4 17 25 / 98%)); box-shadow: 0 30px 100px rgb(0 0 0 / 54%), inset 0 1px rgb(255 255 255 / 10%); pointer-events: auto; transform: translateY(var(--wilds-sheet-drag, 0)); animation: wilds-command-sheet-in 260ms cubic-bezier(.2,.8,.2,1) both; }
 .wilds-command-handle { display: grid; width: 100%; min-height: 24px; place-items: center; border: 0; background: transparent; touch-action: none; }
 .wilds-command-handle span { width: 42px; height: 4px; border-radius: 999px; background: rgb(183 239 222 / 50%); }
 .wilds-command-sheet-header { display: grid; grid-template-columns: 34px minmax(0, 1fr) 34px; align-items: center; gap: 10px; padding: 2px 18px 12px; }
 .wilds-command-sheet-header h3 { margin: 0; font-size: 17px; letter-spacing: -.01em; }
 .wilds-command-sheet-icon { display: grid; width: 32px; height: 32px; place-items: center; color: #071a1e; border-radius: 11px; background: linear-gradient(145deg, #f7d25b, #6fe6bd); }
 .wilds-command-close { display: grid; width: 34px; height: 34px; place-items: center; color: #a7c2ca; border: 1px solid rgb(131 235 207 / 22%); border-radius: 11px; background: rgb(255 255 255 / 7%); }
-.wilds-command-sheet-content { min-height: 0; padding: 0 18px max(18px, env(safe-area-inset-bottom)); overflow: auto; overscroll-behavior: contain; }
+.wilds-command-sheet-content { min-height: 0; padding: 0 18px max(18px, env(safe-area-inset-bottom)); overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
 .wilds-command-content { display: grid; gap: 12px; }
 .wilds-command-content-lead { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px; border: 1px solid rgb(131 235 207 / 15%); border-radius: 15px; background: rgb(255 255 255 / 6%); }
 .wilds-command-content-lead span { display: grid; gap: 3px; min-width: 0; }
@@ -11163,11 +11163,26 @@ button.product-purchase-secondary-link {
 .wilds-vault-sheet-heading small { color: #7fa1aa; font-size: 9px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
 .wilds-vault-sheet-heading strong { font-size: 13px; }
 .wilds-command-sheet-content .wilds-inventory { margin: 0; padding: 0; border: 0; background: transparent; box-shadow: none; }
-.wilds-command-sheet-content .wilds-inventory > header { display: none; }
+.wilds-command-sheet-content .wilds-inventory > header { grid-template-columns: minmax(0, 1fr); align-items: stretch; gap: 10px; padding: 14px; border: 1px solid rgb(131 235 207 / 14%); border-radius: 18px; background: linear-gradient(135deg, rgb(113 232 195 / 9%), rgb(247 210 91 / 5%)); }
+.wilds-command-sheet-content .wilds-inventory > header h3 { margin-top: 2px; font-size: clamp(21px, 5vw, 28px); }
+.wilds-command-sheet-content .wilds-inventory > header p { font-size: 11px; line-height: 1.4; }
+.wilds-command-sheet-content .wilds-vault-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.wilds-command-sheet-content .wilds-import-card { min-width: 0; min-height: 50px; justify-content: center; padding: 9px 10px; text-align: center; }
+.wilds-command-sheet-content .wilds-import-card span { display: inline; overflow: visible; text-overflow: clip; white-space: normal; line-height: 1.25; }
+.wilds-command-sheet-content .wilds-import-message { padding: 9px 10px; color: #bcebdd; border: 1px solid rgb(113 232 195 / 14%); border-radius: 11px; background: rgb(4 18 25 / 48%); }
 .wilds-command-sheet-content .wilds-inventory-toolbar { grid-template-columns: minmax(0, 1fr) 150px; }
 .wilds-command-sheet-content .wilds-inventory-layout { grid-template-columns: minmax(0, 1fr); }
-.wilds-command-sheet-content .wilds-inventory-detail { grid-row: 2; }
+.wilds-command-sheet-content .wilds-inventory-detail { grid-row: 2; justify-items: center; padding-top: 4px; }
 .wilds-command-sheet-content .wilds-inventory-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.wilds-command-sheet-content .wilds-inventory-grid > button { min-height: 92px; grid-template-columns: 36px minmax(0, 1fr); align-content: center; }
+.wilds-command-sheet-content .wilds-inventory-grid > button > span { width: 36px; height: 36px; }
+.wilds-command-sheet-content .wilds-inventory-grid strong,
+.wilds-command-sheet-content .wilds-inventory-grid small,
+.wilds-command-sheet-content .wilds-inventory-grid b { overflow: visible; text-overflow: clip; white-space: normal; overflow-wrap: anywhere; line-height: 1.2; }
+.wilds-inventory-detail .wilds-card-scene { width: min(100%, 380px); min-height: 0; aspect-ratio: 5 / 7; }
+.wilds-inventory-detail .wilds-card-float { height: 100%; }
+.wilds-command-sheet-content .wilds-inventory-actions,
+.wilds-command-sheet-content .wilds-growth-panel { width: min(100%, 380px); }
 .wilds-vault-page-controls { display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: 10px; }
 .wilds-vault-page-controls > button { display: grid; width: 36px; height: 36px; place-items: center; color: #a7c2ca; border: 1px solid rgb(131 235 207 / 22%); border-radius: 11px; background: rgb(255 255 255 / 7%); }
 .wilds-vault-page-controls > button:disabled { opacity: .3; }
@@ -11180,11 +11195,18 @@ button.product-purchase-secondary-link {
 @media (max-width: 560px) {
   .mobile-play-wrap .wilds-command-sheet {
     bottom: calc(58px + env(safe-area-inset-bottom));
-    max-height: min(78dvh, calc(100dvh - 78px));
+    max-height: min(86dvh, calc(100dvh - 78px));
   }
   .mobile-play-wrap .wilds-command-sheet-content {
-    padding-bottom: max(18px, env(safe-area-inset-bottom));
+    padding: 0 12px max(18px, env(safe-area-inset-bottom));
   }
+  .wilds-command-sheet-content .wilds-vault-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .wilds-command-sheet-content .wilds-vault-actions > :last-child:nth-child(odd) { grid-column: 1 / -1; }
+  .wilds-command-sheet-content .wilds-inventory > header .wilds-import-card { width: 100%; min-height: 52px; }
+  .wilds-command-sheet-content .wilds-inventory > header .wilds-import-card span { display: inline; overflow: visible; text-overflow: clip; white-space: normal; }
+  .wilds-command-sheet-content .wilds-inventory-toolbar { grid-template-columns: 1fr; }
+  .wilds-command-sheet-content .wilds-inventory-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .wilds-command-sheet-content .wilds-inventory-grid > button { min-height: 100px; }
 }
 
 .wilds-collectible-card {

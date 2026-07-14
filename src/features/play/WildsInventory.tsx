@@ -2,11 +2,12 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import QRCode from "qrcode";
 import { Icons } from "@/components/icons";
 import { creatureForm } from "./creature-catalog";
-import { downloadPortableCard, downloadPortableVault, verifyPortableCardPng, verifyPortableVaultPng } from "./card-export";
+import { downloadPortableCard, downloadPortableVault, standaloneCardUrl, verifyPortableCardPng, verifyPortableVaultPng } from "./card-export";
 import type { PlayState, WildsInput } from "./game-state";
-import { WildsCard } from "./WildsCard";
+import { WildsCardScene } from "./WildsCardScene";
 import { WildsGrowthPanel } from "./WildsGrowthPanel";
 import { clampInventoryPage, inventoryPageSize } from "./inventory-pagination";
 
@@ -28,9 +29,12 @@ export function WildsInventory({
   const [listingMessage, setListingMessage] = useState("");
   const [downloadMessage, setDownloadMessage] = useState("");
   const [importMessage, setImportMessage] = useState("");
+  const [vaultMessage, setVaultMessage] = useState("");
   const [fusionOpen, setFusionOpen] = useState(false);
   const [fusionParentB, setFusionParentB] = useState("");
   const [compact, setCompact] = useState(false);
+  const [origin, setOrigin] = useState("https://receiz.app");
+  const [qr, setQr] = useState("");
   const importInput = useRef<HTMLInputElement>(null);
   const swipeStart = useRef<{ x: number; y: number } | null>(null);
   const suppressCardClick = useRef(false);
@@ -62,6 +66,22 @@ export function WildsInventory({
     setPage((current) => clampInventoryPage(current, matches.length, pageSize));
   }, [matches.length, pageSize]);
 
+  useEffect(() => {
+    setOrigin(window.location.origin);
+  }, []);
+
+  useEffect(() => {
+    if (!selected) {
+      setQr("");
+      return;
+    }
+    let active = true;
+    void QRCode.toDataURL(standaloneCardUrl(selected.id, origin), { errorCorrectionLevel: "M", margin: 4, width: 160 })
+      .then((value) => { if (active) setQr(value); })
+      .catch(() => { if (active) setQr(""); });
+    return () => { active = false; };
+  }, [origin, selected]);
+
   const changePage = (nextPage: number) => setPage(clampInventoryPage(nextPage, matches.length, pageSize));
   const endSwipe = (target: HTMLElement, pointerId: number) => {
     const start = swipeStart.current;
@@ -86,9 +106,23 @@ export function WildsInventory({
             <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 3v11m0-11L8 7m4-4 4 4M5 13v6h14v-6" /></svg>
             <span>Import card or vault</span>
           </button>
-          <button className="wilds-import-card vault" disabled={!state.inventory.length} onClick={() => void downloadPortableVault(state.inventory)} title="Download portable vault PNG" type="button">
+          <button
+            className="wilds-import-card vault"
+            disabled={!state.inventory.length}
+            onClick={async () => {
+              setVaultMessage("Preparing portable vault image…");
+              try {
+                await downloadPortableVault(state.inventory);
+                setVaultMessage("Vault image saved with every verified card sealed inside.");
+              } catch (error) {
+                setVaultMessage(error instanceof Error ? `Vault save failed: ${error.message}` : "Vault save failed. Try again from this browser.");
+              }
+            }}
+            title="Save portable vault image"
+            type="button"
+          >
             <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 6h16v13H4zM8 6V4h8v2m-4 3v6m0 0-3-3m3 3 3-3" /></svg>
-            <span>Download vault</span>
+            <span>Save vault image</span>
           </button>
           <button className="wilds-import-card fusion" disabled={state.inventory.length < 2} onClick={() => setFusionOpen((value) => !value)} title="Fuse two reusable parent cards" type="button">
             <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 7h5l2 3 2-3h5M5 17h5l2-3 2 3h5" /></svg>
@@ -122,6 +156,7 @@ export function WildsInventory({
           type="file"
         />
         {importMessage ? <p className="wilds-import-message" role="status">{importMessage}</p> : null}
+        {vaultMessage ? <p className="wilds-import-message" role="status">{vaultMessage}</p> : null}
       </header>
       {fusionOpen ? (
         <section className="wilds-fusion-sheet" aria-label="Create a fusion child">
@@ -182,7 +217,7 @@ export function WildsInventory({
         </div>
         {selected && selectedForm ? (
           <aside className="wilds-inventory-detail">
-            <WildsCard asset={selected} />
+            <WildsCardScene asset={selected} origin={origin} qr={qr} />
             <div className="wilds-inventory-actions">
               <button className="button button-primary" disabled={state.selectedAssetId === selected.id} onClick={() => onInput({ type: "select-asset", assetId: selected.id })} type="button">{state.selectedAssetId === selected.id ? "Active deck leader" : "Set as active deck leader"}</button>
               <Link className="button button-outline" href={`/cards/${encodeURIComponent(selected.id)}`}>Open standalone card page</Link>
@@ -202,7 +237,7 @@ export function WildsInventory({
                   }
                 }}
                 type="button"
-              >Download portable PNG</button>
+              >Save card image</button>
               {onListAsset && selected.status !== "listed" ? (
                 <div className="wilds-listing-control">
                   <label>List price <span>$</span><input aria-label="Wilds card listing price" inputMode="decimal" min="0.01" onChange={(event) => setPriceUsd(event.target.value)} step="0.01" type="number" value={priceUsd} /></label>
