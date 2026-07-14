@@ -177,7 +177,7 @@ export function PlayCampaign({
           : key === "arrowdown" || key === "s" ? { type: "move", direction: "south" }
             : key === "arrowleft" || key === "a" ? { type: "move", direction: "west" }
               : key === "arrowright" || key === "d" ? { type: "move", direction: "east" }
-                : key === "t" ? { type: "train" }
+                : key === "t" ? { type: "train", at: new Date().toISOString() }
                     : key === "m" ? { type: "mission" }
                       : key === "r" ? { type: "rest" }
                         : null;
@@ -354,7 +354,7 @@ export function PlayCampaign({
             <div className="wilds-screen-actions" aria-label="Progression actions">
               <button
                 className={cx("wilds-action", state.activeAction === "train" && "active")}
-                onClick={() => dispatch({ type: "train" })}
+                onClick={() => dispatch({ type: "train", at: new Date().toISOString() })}
                 aria-label={`Train ${activeCard.name}`}
                 title={`Train ${activeCard.name}`}
                 type="button"

@@ -14,6 +14,7 @@ export type GrowthEventKind =
 
 export type GrowthEvent = {
   eventId: string;
+  kind?: GrowthEventKind;
   path: GrowthPath;
   amount: number;
   occurredAt: string;

@@ -8,10 +8,64 @@ import {
   serializePlayState,
   type PlayState
 } from "../src/features/play/game-state";
-import { sealCollectedCard, verifyPortableCard } from "../src/features/play/portable-card.js";
+import { admitLegacyCard, currentRevision, emptyLivingGrowth } from "../src/features/play/living-card-proof.js";
+import { nextGrowthRequirements } from "../src/features/play/growth-engine.js";
+import { evolvePortableCard, sealCollectedCard, verifyAnyWildsCard, verifyPortableCard } from "../src/features/play/portable-card.js";
 import { nearbyHiddenHotspots } from "../src/features/play/hidden-hotspots.js";
+import { isLivingCardAsset } from "../src/features/play/living-card-types.js";
 
 describe("Receiz Wilds game state", () => {
+  it("records each gameplay growth event once and awards earned catalysts", () => {
+    const assetId = initialPlayState.inventory[0]!.id;
+    const event = {
+      eventId: "battle:boss:first",
+      path: "battle" as const,
+      amount: 20,
+      occurredAt: "2026-07-13T17:00:00.000Z",
+      achievementId: "boss_victory_first"
+    };
+    const once = applyWildsInput(initialPlayState, { type: "record-growth", assetId, event });
+    const replay = applyWildsInput(once, { type: "record-growth", assetId, event });
+
+    assert.equal(once.livingProgress[assetId]!.paths.battle, 20);
+    assert.equal(once.ascensionCatalysts.length, initialPlayState.ascensionCatalysts.length + 1);
+    assert.deepEqual(replay.livingProgress[assetId], once.livingProgress[assetId]);
+    assert.deepEqual(replay.ascensionCatalysts, once.ascensionCatalysts);
+  });
+
+  it("appends an earned Ascension under the stable card id and consumes its catalyst once", () => {
+    const legacy = sealCollectedCard({ formId: "mintcub-1", ownerReceizId: "wilds.player.receiz.id", encounterId: "ascension-game", capturedAt: "2026-07-10T15:00:00.000Z" });
+    const birth = admitLegacyCard(legacy, "2026-07-10T15:00:00.000Z");
+    const stageTwo = evolvePortableCard({ previous: birth, nextFormId: "mintcub-2", evolvedAt: "2026-07-11T15:00:00.000Z" });
+    const stageThree = evolvePortableCard({ previous: stageTwo, nextFormId: "mintcub-3", evolvedAt: "2026-07-12T15:00:00.000Z" });
+    const at = "2026-07-13T17:00:00.000Z";
+    const requirements = nextGrowthRequirements(stageThree, at);
+    const progress = {
+      ...emptyLivingGrowth(requirements.bond),
+      achievementIds: ["boss_victory_ascension"],
+      completedQuestIds: [requirements.quest.id]
+    };
+    const catalyst = `ascension:tier:${requirements.catalystTier}:boss-reward`;
+    const ready: PlayState = {
+      ...initialPlayState,
+      inventory: [stageThree],
+      selectedAssetId: stageThree.id,
+      selectedCardId: stageThree.manifest.familyId,
+      livingProgress: { [stageThree.id]: progress },
+      ascensionCatalysts: [catalyst]
+    };
+
+    const ascended = applyWildsInput(ready, { type: "ascend-card", assetId: stageThree.id, at });
+    const replay = applyWildsInput(ascended, { type: "ascend-card", assetId: stageThree.id, at });
+
+    assert.equal(ascended.inventory.length, 1);
+    assert.equal(ascended.inventory[0]!.id, stageThree.id);
+    assert.equal(currentRevision(ascended.inventory[0] as typeof stageThree).ascensionRank, 1);
+    assert.equal((ascended.inventory[0] as typeof stageThree).manifest.revisions.length, stageThree.manifest.revisions.length + 1);
+    assert.equal(ascended.ascensionCatalysts.includes(catalyst), false);
+    assert.equal(ascended.transformation?.assetId, stageThree.id);
+    assert.equal((replay.inventory[0] as typeof stageThree).manifest.revisions.length, (ascended.inventory[0] as typeof stageThree).manifest.revisions.length);
+  });
   it("imports an offline-verified portable card once and makes its family playable", () => {
     const uploaded = sealCollectedCard({
       formId: "voltray-1",
@@ -91,6 +145,7 @@ describe("Receiz Wilds game state", () => {
   });
 
   it("searches, battles, seals, and reveals a hidden hotspot atomically", () => {
+    const leaderId = initialPlayState.selectedAssetId;
     const hotspot = nearbyHiddenHotspots(initialPlayState.player)[0]!;
     const searched = applyWildsInput(initialPlayState, {
       type: "search-point",
@@ -102,6 +157,7 @@ describe("Receiz Wilds game state", () => {
 
     assert.equal(searched.encounter.phase, "battle_intro");
     assert.equal(searched.inventory.length, initialPlayState.inventory.length);
+    assert.equal(searched.livingProgress[leaderId]!.paths.exploration > initialPlayState.livingProgress[leaderId]!.paths.exploration, true);
 
     let battling = applyWildsInput(searched, { type: "start-battle", at: "2026-07-13T15:00:01.000Z" });
     assert.equal(battling.encounter.phase, "player_turn");
@@ -109,6 +165,7 @@ describe("Receiz Wilds game state", () => {
       battling = applyWildsInput(battling, { type: "battle-action", action: battling.battle!.player.energy >= 12 ? { type: "ability", slot: 0 } : { type: "guard" } });
     }
     assert.equal(battling.encounter.phase, "capture_ready");
+    assert.equal(battling.livingProgress[leaderId]!.paths.battle > searched.livingProgress[leaderId]!.paths.battle, true);
     for (let attempt = 0; attempt < 5 && battling.encounter.phase === "capture_ready"; attempt += 1) {
       battling = applyWildsInput(battling, { type: "battle-action", action: { type: "capture" } });
     }
@@ -167,10 +224,15 @@ describe("Receiz Wilds game state", () => {
 
   it("evolves an eligible living card in place while retaining append-only history", () => {
     const base = initialPlayState.inventory[0]!;
+    const earned = applyWildsInput(initialPlayState, {
+      type: "record-growth",
+      assetId: base.id,
+      event: { eventId: "battle_win:evolution-proof", kind: "battle_win", path: "battle", amount: 9, occurredAt: "2026-07-14T14:00:00.000Z" }
+    });
     const ready: PlayState = {
-      ...initialPlayState,
+      ...earned,
       companionProgress: {
-        ...initialPlayState.companionProgress,
+        ...earned.companionProgress,
         mintcub: { level: 10, xp: 0, bond: 100 }
       }
     };
@@ -184,9 +246,10 @@ describe("Receiz Wilds game state", () => {
     assert.equal(evolved.inventory[0]?.id, base.id);
     assert.equal(evolved.inventory[0]?.manifest.formId, "mintcub-2");
     assert.equal(evolved.inventory[0]?.manifest.schema, "receiz.wilds_living_card_manifest.v2");
-    if (evolved.inventory[0]?.manifest.schema === "receiz.wilds_living_card_manifest.v2") {
+    if (evolved.inventory[0] && isLivingCardAsset(evolved.inventory[0])) {
       assert.equal(evolved.inventory[0].manifest.currentRevision, 1);
       assert.equal(evolved.inventory[0].manifest.revisions.length, 2);
+      assert.equal(currentRevision(evolved.inventory[0]).growth.paths.battle, 9);
     }
   });
 
@@ -216,13 +279,25 @@ describe("Receiz Wilds game state", () => {
 
   it("levels and bonds the selected companion through deterministic training", () => {
     let state = initialPlayState;
-    state = applyWildsInput(state, { type: "train" });
-    state = applyWildsInput(state, { type: "train" });
-    state = applyWildsInput(state, { type: "train" });
+    state = applyWildsInput(state, { type: "train", at: "2026-07-13T12:00:00.000Z" });
+    const blocked = applyWildsInput(state, { type: "train", at: "2026-07-13T12:01:00.000Z" });
+    state = applyWildsInput(blocked, { type: "train", at: "2026-07-13T12:15:00.000Z" });
+    state = applyWildsInput(state, { type: "train", at: "2026-07-13T12:30:00.000Z" });
 
+    assert.equal(blocked.companionProgress.mintcub.bond, 1);
     assert.equal(state.companionProgress.mintcub.level, 2);
     assert.equal(state.companionProgress.mintcub.bond, 3);
+    assert.equal(state.livingProgress[state.selectedAssetId]!.paths.bond, 3);
     assert.match(state.lastEvent, /Level 2/);
+  });
+
+  it("records active travel only when the leading card crosses a bounded milestone", () => {
+    const ready: PlayState = { ...initialPlayState, player: { x: 7.9, z: 0 } };
+    const crossed = applyWildsInput(ready, { type: "move", direction: "east" });
+    const within = applyWildsInput(crossed, { type: "move-vector", x: 0.2, z: 0 });
+
+    assert.equal(crossed.livingProgress[ready.selectedAssetId]!.paths.bond, ready.livingProgress[ready.selectedAssetId]!.paths.bond + 1);
+    assert.equal(within.livingProgress[ready.selectedAssetId]!.paths.bond, crossed.livingProgress[ready.selectedAssetId]!.paths.bond);
   });
 
   it("blocks exhausted actions and lets the scout make camp to recover", () => {
@@ -255,7 +330,9 @@ describe("Receiz Wilds game state", () => {
 
   it("round-trips versioned progression and rejects corrupted saves", () => {
     const trained = applyWildsInput(initialPlayState, { type: "train" });
-    assert.deepEqual(restorePlayState(serializePlayState(trained)), trained);
+    const migrated = restorePlayState(serializePlayState(trained));
+    assert.equal(migrated.inventory.every((asset) => isLivingCardAsset(asset)), true);
+    assert.deepEqual(restorePlayState(serializePlayState(migrated)), migrated);
     assert.deepEqual(restorePlayState("not-json"), initialPlayState);
   });
 
@@ -284,7 +361,33 @@ describe("Receiz Wilds game state", () => {
 
     assert.equal(restored.inventory.some((asset) => asset.manifest.formId === "mintcub-1"), true);
     assert.equal(restored.inventory.some((asset) => asset.manifest.formId === "voltray-1"), true);
-    assert.equal(restored.inventory.every((asset) => verifyPortableCard(asset).ok), true);
+    assert.equal(restored.inventory.every((asset) => verifyAnyWildsCard(asset).ok), true);
+    assert.equal(restored.inventory.every((asset) => isLivingCardAsset(asset)), true);
+  });
+
+  it("migrates v4 saves with safe living-growth and bond-cooldown defaults", () => {
+    const legacyState = { ...initialPlayState } as Partial<PlayState> & Record<string, unknown>;
+    delete legacyState.livingProgress;
+    delete legacyState.ascensionCatalysts;
+    delete legacyState.transformation;
+    delete legacyState.bondCooldowns;
+    const restored = restorePlayState(JSON.stringify({ schema: "receiz.wilds.save.v4", state: legacyState }));
+
+    assert.deepEqual(restored.bondCooldowns, {});
+    assert.equal(Boolean(restored.livingProgress[restored.selectedAssetId]), true);
+  });
+
+  it("merges duplicate stable ids to the newest valid living chain during restore", () => {
+    const legacy = sealCollectedCard({ formId: "mintcub-1", ownerReceizId: "wilds.player.receiz.id", encounterId: "restore-merge", capturedAt: "2026-07-10T12:00:00.000Z" });
+    const living = evolvePortableCard({ previous: legacy, nextFormId: "mintcub-2", evolvedAt: "2026-07-11T12:00:00.000Z" });
+    const envelope = JSON.parse(serializePlayState(initialPlayState));
+    envelope.state.inventory = [legacy, living];
+    envelope.state.discoveredCardIds = ["mintcub"];
+    envelope.state.selectedAssetId = legacy.id;
+    const restored = restorePlayState(JSON.stringify(envelope));
+
+    assert.equal(restored.inventory.filter((asset) => asset.id === legacy.id).length, 1);
+    assert.equal(restored.inventory.find((asset) => asset.id === legacy.id)?.manifest.formId, "mintcub-2");
   });
 
   it("supports continuous analog travel across a billion-unit world", () => {

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { applyBattleAction, battleTranscriptDigest, startWildBattle } from "../src/features/play/battle-engine";
+import { applyBattleAction, battleGrowthAwards, battleTranscriptDigest, startWildBattle } from "../src/features/play/battle-engine";
 
 const input = {
   encounterSeed: "hotspot:0:0:1",
@@ -46,5 +46,18 @@ describe("Wilds deterministic battle engine", () => {
     });
     assert.equal(switched.player.id, "wilds:second");
     assert.equal(switched.transcript.at(-1)?.action, "switch");
+  });
+
+  it("summarizes authoritative growth only when a wild is weakened for capture", () => {
+    let battle = startWildBattle(input);
+    const before = battle;
+    for (let turn = 0; turn < 20 && battle.phase === "player_turn"; turn += 1) {
+      battle = applyBattleAction(battle, battle.player.energy >= 12 ? { type: "ability", slot: 0 } : { type: "guard" });
+    }
+
+    assert.deepEqual(battleGrowthAwards(before, applyBattleAction(before, { type: "guard" })), []);
+    assert.equal(battle.phase, "capture_ready");
+    assert.equal(battleGrowthAwards(before, battle).some((award) => award.kind === "battle_win"), true);
+    assert.equal(battleGrowthAwards(before, battle).some((award) => award.kind === "ability_mastery"), true);
   });
 });

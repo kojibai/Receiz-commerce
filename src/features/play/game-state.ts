@@ -2,13 +2,18 @@ import { creatureFamilies, creatureForm, creatureForms, type CreatureRarity } fr
 import {
   evolvePortableCard,
   sealCollectedCard,
+  verifyAnyWildsCard,
   verifyPortableCard,
   type PortableCardAsset
 } from "./portable-card";
 import { encounterFromSearch, idleEncounterState, isCapturableEncounter, type EncounterState } from "./encounter-state";
 import { nearbyHiddenHotspots, searchHiddenHotspots } from "./hidden-hotspots";
-import { applyBattleAction, battleTranscriptDigest, startWildBattle, type BattleAction, type BattleState } from "./battle-engine";
+import { applyBattleAction, battleGrowthAwards, battleTranscriptDigest, startWildBattle, type BattleAction, type BattleState } from "./battle-engine";
 import { fusionChild, fusionEligibility, type FusionInheritance } from "./card-fusion";
+import { applyGrowthEvent, buildTransformationCandidate, growthReadiness, nextGrowthRequirements, type GrowthEvent } from "./growth-engine";
+import { admitLegacyCard, appendLivingCardRevision, currentLivingGenome, currentRevision, emptyLivingGrowth } from "./living-card-proof";
+import { deriveAscensionGenome } from "./heartbound-genome";
+import { isLivingCardAsset, type GrowthPath, type LivingGrowthSnapshot } from "./living-card-types";
 
 export type GameAction = "explore" | "train" | "mission";
 export type MoveDirection = "north" | "south" | "west" | "east";
@@ -27,7 +32,10 @@ export type WildsInput =
   | { type: "import-card"; asset: PortableCardAsset }
   | { type: "fuse-cards"; parentAId: string; parentBId: string; inheritance: FusionInheritance; fusedAt: string }
   | { type: "evolve"; assetId: string; evolvedAt: string }
-  | { type: "train"; cardId?: string }
+  | { type: "record-growth"; assetId: string; event: GrowthEvent }
+  | { type: "ascend-card"; assetId: string; at: string }
+  | { type: "finish-transformation" }
+  | { type: "train"; cardId?: string; at?: string }
   | { type: "mission" }
   | { type: "rest" }
   | { type: "select-card"; cardId: string }
@@ -102,6 +110,15 @@ export type PlayState = {
   fusionSparks: number;
   fusionCooldowns: Record<string, string>;
   achievements: string[];
+  livingProgress: Record<string, LivingGrowthSnapshot>;
+  ascensionCatalysts: string[];
+  bondCooldowns: Record<string, string>;
+  transformation: null | {
+    assetId: string;
+    fromRevision: number;
+    toRevision: number;
+    reason: string;
+  };
   worldRank: "Grove scout" | "Trail keeper" | "Wilds ranger" | "Titan challenger";
 };
 
@@ -233,14 +250,38 @@ export const initialPlayState: PlayState = {
   fusionSparks: 1,
   fusionCooldowns: {},
   achievements: ["first_spark"],
+  livingProgress: { [starterCardAsset.id]: emptyLivingGrowth(0) },
+  ascensionCatalysts: [],
+  bondCooldowns: {},
+  transformation: null,
   worldRank: "Grove scout"
 };
 
-const PLAY_SAVE_SCHEMA = "receiz.wilds.save.v4";
-const LEGACY_PLAY_SAVE_SCHEMAS = new Set(["receiz.wilds.save.v2", "receiz.wilds.save.v3"]);
+const PLAY_SAVE_SCHEMA = "receiz.wilds.save.v5";
+const LEGACY_PLAY_SAVE_SCHEMAS = new Set(["receiz.wilds.save.v2", "receiz.wilds.save.v3", "receiz.wilds.save.v4"]);
 
 export function serializePlayState(state: PlayState) {
   return JSON.stringify({ schema: PLAY_SAVE_SCHEMA, state });
+}
+
+function admitAndMergeInventory(assets: PortableCardAsset[]) {
+  const merged = new Map<string, PortableCardAsset>();
+  for (const source of assets) {
+    const asset = isLivingCardAsset(source) ? source : admitLegacyCard(source, source.manifest.capturedAt);
+    const existing = merged.get(asset.id);
+    if (!existing) {
+      merged.set(asset.id, asset);
+      continue;
+    }
+    const existingRevision = isLivingCardAsset(existing) ? currentRevision(existing) : null;
+    const candidateRevision = currentRevision(asset);
+    if (!existingRevision
+      || candidateRevision.revision > existingRevision.revision
+      || (candidateRevision.revision === existingRevision.revision && Date.parse(candidateRevision.sealedAt) > Date.parse(existingRevision.sealedAt))) {
+      merged.set(asset.id, asset);
+    }
+  }
+  return [...merged.values()];
 }
 
 export function restorePlayState(value: string | null | undefined): PlayState {
@@ -254,9 +295,9 @@ export function restorePlayState(value: string | null | undefined): PlayState {
       ? saved.discoveredCardIds.filter((id): id is string => typeof id === "string" && creatureCards.some((card) => card.id === id))
       : initialPlayState.discoveredCardIds;
     const restoredInventory = Array.isArray(saved.inventory)
-      ? saved.inventory.filter((asset): asset is PortableCardAsset => Boolean(asset) && verifyPortableCard(asset as PortableCardAsset).ok)
+      ? saved.inventory.filter((asset): asset is PortableCardAsset => Boolean(asset) && verifyAnyWildsCard(asset as PortableCardAsset).ok)
       : [];
-    const migratedInventory = discoveredCardIds.reduce<PortableCardAsset[]>((assets, cardId, index) => {
+    const inventoryWithMigrations = discoveredCardIds.reduce<PortableCardAsset[]>((assets, cardId, index) => {
       if (assets.some((asset) => asset.manifest.familyId === cardId)) return assets;
       const sealed = sealCollectedCard({
         formId: `${cardId}-1`,
@@ -266,6 +307,7 @@ export function restorePlayState(value: string | null | undefined): PlayState {
       });
       return [...assets, sealed];
     }, restoredInventory);
+    const migratedInventory = admitAndMergeInventory(inventoryWithMigrations);
     const restoredEncounter = restoreEncounter(saved.encounter);
     const restoredSelectedAssetId = typeof saved.selectedAssetId === "string" && migratedInventory.some((asset) => asset.id === saved.selectedAssetId)
       ? saved.selectedAssetId
@@ -293,7 +335,17 @@ export function restorePlayState(value: string | null | undefined): PlayState {
       companionProgress: {
         ...initialPlayState.companionProgress,
         ...(saved.companionProgress ?? {})
-      }
+      },
+      livingProgress: Object.fromEntries(migratedInventory.map((asset) => {
+        const savedProgress = saved.livingProgress?.[asset.id];
+        const admitted = isLivingCardAsset(asset) ? currentRevision(asset).growth : emptyLivingGrowth(0);
+        return [asset.id, savedProgress && Array.isArray(savedProgress.eventIds) ? savedProgress : admitted];
+      })),
+      ascensionCatalysts: Array.isArray(saved.ascensionCatalysts)
+        ? saved.ascensionCatalysts.filter((id): id is string => typeof id === "string")
+        : [],
+      bondCooldowns: saved.bondCooldowns && typeof saved.bondCooldowns === "object" ? saved.bondCooldowns : {},
+      transformation: saved.transformation ?? null
     });
   } catch {
     return initialPlayState;
@@ -340,12 +392,114 @@ export function canDiscover(state: PlayState) {
   return Boolean(nearest && nearest.distance <= 1.25 && !state.discoveredCardIds.includes(nearest.card.id));
 }
 
+function growthForAsset(state: PlayState, asset: PortableCardAsset) {
+  return state.livingProgress[asset.id]
+    ?? (isLivingCardAsset(asset) ? currentRevision(asset).growth : emptyLivingGrowth(state.companionProgress[asset.manifest.familyId]?.bond ?? 0));
+}
+
+function applyRecordedGrowth(state: PlayState, asset: PortableCardAsset, event: GrowthEvent): PlayState {
+  const prior = growthForAsset(state, asset);
+  let prepared = event;
+  if (isLivingCardAsset(asset) && event.kind) {
+    const quest = nextGrowthRequirements(asset, event.occurredAt).quest;
+    const matchingEvents = prior.eventIds.filter((id) => id.startsWith(`${event.kind}:`)).length + (prior.eventIds.includes(event.eventId) ? 0 : 1);
+    if (quest.eventKind === event.kind && matchingEvents >= quest.target) prepared = { ...event, questId: quest.id };
+  }
+  let progress: LivingGrowthSnapshot;
+  try {
+    progress = applyGrowthEvent(prior, prepared);
+  } catch {
+    return { ...state, lastEvent: "That growth event could not be verified." };
+  }
+  if (progress === state.livingProgress[asset.id]) return state;
+  const catalyst = event.achievementId?.startsWith("boss_victory")
+    ? `ascension:tier:2:${event.eventId.replace(/[^a-zA-Z0-9_-]/g, "-")}`
+    : null;
+  return {
+    ...state,
+    livingProgress: { ...state.livingProgress, [asset.id]: progress },
+    ascensionCatalysts: catalyst ? Array.from(new Set([...state.ascensionCatalysts, catalyst])) : state.ascensionCatalysts,
+    lastEvent: event.achievementId ? `${asset.manifest.name} earned ${event.achievementId.replaceAll("_", " ")}.` : `${asset.manifest.name} grew through ${event.path}.`
+  };
+}
+
+function applyRecordedGrowthEvents(state: PlayState, asset: PortableCardAsset, events: GrowthEvent[]) {
+  return events.reduce((next, event) => applyRecordedGrowth(next, asset, event), state);
+}
+
+function strongestGrowthPath(progress: LivingGrowthSnapshot): GrowthPath {
+  return (Object.entries(progress.paths) as Array<[GrowthPath, number]>).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "character";
+}
+
 export function applyWildsInput(state: PlayState, input: WildsInput): PlayState {
   if (input.type === "reset") return initialPlayState;
 
+  if (input.type === "finish-transformation") return state.transformation ? { ...state, transformation: null } : state;
+
+  if (input.type === "record-growth") {
+    const asset = state.inventory.find((candidate) => candidate.id === input.assetId);
+    return asset ? applyRecordedGrowth(state, asset, input.event) : state;
+  }
+
+  if (input.type === "ascend-card") {
+    const asset = state.inventory.find((candidate) => candidate.id === input.assetId);
+    if (!asset || !isLivingCardAsset(asset) || asset.manifest.stage !== 3 || !verifyAnyWildsCard(asset).ok) return state;
+    const progress = growthForAsset(state, asset);
+    const readiness = growthReadiness(asset, { progress, catalystIds: state.ascensionCatalysts }, input.at);
+    if (!readiness.ready) return { ...state, lastEvent: `${asset.manifest.name} still needs ${readiness.missing.join(", ")}.` };
+    const candidate = buildTransformationCandidate(asset, readiness, input.at);
+    const prior = currentRevision(asset);
+    const nextGrowth: LivingGrowthSnapshot = {
+      ...progress,
+      consumedAchievementIds: Array.from(new Set([...progress.consumedAchievementIds, candidate.achievementId])),
+      recoveryUntil: new Date(Date.parse(input.at) + readiness.requirements.recoveryMs).toISOString()
+    };
+    const nextGenome = deriveAscensionGenome({
+      previous: currentLivingGenome(asset),
+      rank: candidate.ascensionRank,
+      achievementId: candidate.achievementId,
+      questId: candidate.questId,
+      kaiPulse: String(Date.parse(input.at)),
+      path: strongestGrowthPath(progress)
+    });
+    let ascended;
+    try {
+      ascended = appendLivingCardRevision({
+        asset,
+        revision: {
+          sealedAt: input.at,
+          kaiPulse: String(Date.parse(input.at)),
+          reason: { kind: "ascension", label: `Ascension ${candidate.ascensionRank} earned through ${candidate.achievementId.replaceAll("_", " ")}` },
+          stage: 3,
+          ascensionRank: candidate.ascensionRank,
+          formId: asset.manifest.formId,
+          growth: nextGrowth,
+          qualifyingAchievementIds: [candidate.achievementId],
+          consumedCatalystId: candidate.catalystId,
+          genomeDelta: nextGenome,
+          stats: { ...asset.manifest.stats },
+          abilityNames: asset.manifest.abilityNames,
+          title: `${asset.manifest.name} · Ascension ${candidate.ascensionRank}`,
+          childEventIds: [...prior.childEventIds]
+        }
+      });
+    } catch {
+      return { ...state, lastEvent: "Ascension sealing failed. Nothing was consumed." };
+    }
+    return {
+      ...state,
+      inventory: state.inventory.map((item) => item.id === ascended.id ? ascended : item),
+      livingProgress: { ...state.livingProgress, [ascended.id]: nextGrowth },
+      ascensionCatalysts: state.ascensionCatalysts.filter((id) => id !== candidate.catalystId),
+      pendingSyncAssetIds: Array.from(new Set([...state.pendingSyncAssetIds, ascended.id])),
+      transformation: { assetId: ascended.id, fromRevision: prior.revision, toRevision: currentRevision(ascended).revision, reason: currentRevision(ascended).reason.label },
+      lastEvent: `${asset.manifest.name} reached Ascension ${candidate.ascensionRank}. Its living proof history grew in place.`
+    };
+  }
+
   if (input.type === "import-card") {
     const asset = input.asset;
-    if (!verifyPortableCard(asset).ok) return { ...state, lastEvent: "That PNG did not pass the offline card verifier." };
+    if (!verifyAnyWildsCard(asset).ok) return { ...state, lastEvent: "That PNG did not pass the offline card verifier." };
     if (state.inventory.some((candidate) => candidate.id === asset.id)) {
       return { ...state, selectedAssetId: asset.id, selectedCardId: asset.manifest.familyId, lastEvent: `${asset.manifest.name} is already in your inventory and now leads your active deck.` };
     }
@@ -398,7 +552,7 @@ export function applyWildsInput(state: PlayState, input: WildsInput): PlayState 
     if (state.encounter.phase !== "battle_intro" || !state.encounter.formId || !state.encounter.hotspotId) return state;
     const wild = creatureForm(state.encounter.formId);
     const playerAsset = selectedAsset(state);
-    if (!wild || !playerAsset || !verifyPortableCard(playerAsset).ok) return { ...state, encounter: { ...state.encounter, phase: "defeated" }, lastEvent: "No verified playable card was available for battle." };
+    if (!wild || !playerAsset || !verifyAnyWildsCard(playerAsset).ok) return { ...state, encounter: { ...state.encounter, phase: "defeated" }, lastEvent: "No verified playable card was available for battle." };
     const battle = startWildBattle({
       encounterSeed: state.encounter.hotspotId,
       player: { assetId: playerAsset.id, name: playerAsset.manifest.name, ...playerAsset.manifest.stats, health: playerAsset.manifest.stats.health * 2 },
@@ -414,9 +568,20 @@ export function applyWildsInput(state: PlayState, input: WildsInput): PlayState 
     if (battle.phase === "captured") {
       return { ...state, battle, encounter: { ...state.encounter, phase: "capsule" }, lastEvent: "Capture locked. Sealing the portable card now." };
     }
-    const phase = battle.phase === "capture_ready" ? "capture_ready" : battle.phase === "fled" ? "fled" : battle.phase === "defeated" ? "defeated" : "player_turn";
+    const phase: EncounterState["phase"] = battle.phase === "capture_ready" ? "capture_ready" : battle.phase === "fled" ? "fled" : battle.phase === "defeated" ? "defeated" : "player_turn";
     const last = battle.transcript.at(-1)?.detail ?? "Battle turn resolved.";
-    return { ...state, battle, encounter: { ...state.encounter, phase }, lastEvent: last };
+    const resolved: PlayState = { ...state, battle, encounter: { ...state.encounter, phase }, lastEvent: last };
+    const asset = state.inventory.find((candidate) => candidate.id === state.battle?.player.id);
+    if (!asset) return resolved;
+    const wild = state.encounter.formId ? creatureForm(state.encounter.formId) : null;
+    const occurredAt = state.encounter.searchedAt;
+    const awards = battleGrowthAwards(state.battle, battle, { boss: wild?.rarity === "mythic" || wild?.rarity === "eternal" });
+    const progressed = applyRecordedGrowthEvents(resolved, asset, awards.map((award) => ({
+      ...award,
+      path: "battle" as const,
+      occurredAt
+    })));
+    return { ...progressed, lastEvent: last };
   }
 
   if (input.type === "search-point") {
@@ -434,7 +599,17 @@ export function applyWildsInput(state: PlayState, input: WildsInput): PlayState 
         : result.kind === "captured"
           ? "This hotspot is quiet now. Its sealed card is already in your inventory."
           : "Signal cold. Try another point and keep moving.";
-    return { ...state, activeAction: "explore", encounter, lastEvent, lastSearchPoint: point };
+    const searched = { ...state, activeAction: "explore" as const, encounter, lastEvent, lastSearchPoint: point };
+    const leader = selectedAsset(state);
+    if (result.kind !== "hit" || !leader) return searched;
+    const progressed = applyRecordedGrowth(searched, leader, {
+      eventId: `habitat_discovery:${result.hotspot.id}`,
+      kind: "habitat_discovery",
+      path: "exploration",
+      amount: 6,
+      occurredAt: input.searchedAt
+    });
+    return { ...progressed, lastEvent };
   }
 
   if (input.type === "advance-encounter") {
@@ -511,7 +686,7 @@ export function applyWildsInput(state: PlayState, input: WildsInput): PlayState 
     if (!next || progress.level < next.evolution.level || progress.bond < next.evolution.bond) {
       return { ...state, lastEvent: `${previous.manifest.name} needs more levels and bond before evolving.` };
     }
-    const evolved = evolvePortableCard({ previous, nextFormId: next.id, evolvedAt: input.evolvedAt });
+    const evolved = evolvePortableCard({ previous, nextFormId: next.id, evolvedAt: input.evolvedAt, growth: growthForAsset(state, previous) });
     return {
       ...state,
       inventory: state.inventory.map((asset) => asset.id === evolved.id ? evolved : asset),
@@ -534,7 +709,7 @@ export function applyWildsInput(state: PlayState, input: WildsInput): PlayState 
 
   if (input.type === "select-asset") {
     const asset = state.inventory.find((candidate) => candidate.id === input.assetId);
-    if (!asset || !verifyPortableCard(asset).ok) return state;
+    if (!asset || !verifyAnyWildsCard(asset).ok) return state;
     return {
       ...state,
       selectedAssetId: asset.id,
@@ -553,13 +728,25 @@ export function applyWildsInput(state: PlayState, input: WildsInput): PlayState 
         ? `${nearest.card.name} is within discovery range.`
         : "Explore the wilds and look for companion signals.";
 
-    return {
+    const moved: PlayState = {
       ...state,
       activeAction: "explore",
       energy: Math.max(0, state.energy - 1),
       lastEvent: nearbyText,
       player: nextPlayer
     };
+    const crossedMilestone = Math.floor(state.player.x / 8) !== Math.floor(nextPlayer.x / 8) || Math.floor(state.player.z / 8) !== Math.floor(nextPlayer.z / 8);
+    const leader = selectedAsset(state);
+    if (!crossedMilestone || !leader) return moved;
+    const milestoneId = `${Math.floor(nextPlayer.x / 8)}:${Math.floor(nextPlayer.z / 8)}`;
+    const progressed = applyRecordedGrowth(moved, leader, {
+      eventId: `active_travel:${leader.id}:${milestoneId}`,
+      kind: "active_travel",
+      path: "bond",
+      amount: 1,
+      occurredAt: new Date(Date.UTC(2026, 6, 13, 12, Math.abs(Math.floor(nextPlayer.x / 8)) % 60, Math.abs(Math.floor(nextPlayer.z / 8)) % 60)).toISOString()
+    });
+    return { ...progressed, lastEvent: nearbyText };
   }
 
   if (input.type === "rest") {
@@ -645,6 +832,14 @@ export function applyWildsInput(state: PlayState, input: WildsInput): PlayState 
       return { ...state, lastEvent: "Not enough energy to train. Make camp before the next session." };
     }
     const currentProgress = state.companionProgress[targetCardId] ?? { level: 1, xp: 0, bond: 0 };
+    const trainedAt = input.at ?? new Date(Date.UTC(2026, 6, 13, 12, currentProgress.bond * 15)).toISOString();
+    if (!Number.isFinite(Date.parse(trainedAt))) return state;
+    const targetAsset = [...state.inventory].reverse().find((asset) => asset.manifest.familyId === targetCardId);
+    if (!targetAsset) return state;
+    const cooldownUntil = state.bondCooldowns[targetAsset.id];
+    if (cooldownUntil && Date.parse(cooldownUntil) > Date.parse(trainedAt)) {
+      return { ...state, lastEvent: `${targetAsset.manifest.name} is resting after your last bond moment.` };
+    }
     const totalXp = currentProgress.xp + 40;
     const leveledUp = totalXp >= 100;
     const nextProgress = {
@@ -653,7 +848,7 @@ export function applyWildsInput(state: PlayState, input: WildsInput): PlayState 
       bond: Math.min(100, currentProgress.bond + 1)
     };
 
-    return withWorldProgress({
+    const trained = withWorldProgress({
       ...state,
       activeAction: "train",
       beans: state.beans + 4,
@@ -661,6 +856,7 @@ export function applyWildsInput(state: PlayState, input: WildsInput): PlayState 
       challenge: Math.min(100, state.challenge + 4),
       combo: state.combo + 1,
       companionProgress: { ...state.companionProgress, [targetCardId]: nextProgress },
+      bondCooldowns: { ...state.bondCooldowns, [targetAsset.id]: new Date(Date.parse(trainedAt) + 10 * 60 * 1000).toISOString() },
       energy: Math.max(0, state.energy - 6),
       lastEvent: leveledUp
         ? `${cardName(targetCardId)} reached Level ${nextProgress.level}. A new mastery tier is active.`
@@ -670,6 +866,14 @@ export function applyWildsInput(state: PlayState, input: WildsInput): PlayState 
       selectedCardId: targetCardId,
       streak: state.streak + 1
     });
+    const progressed = applyRecordedGrowth(trained, targetAsset, {
+      eventId: `bond_moment:${targetAsset.id}:${trainedAt}`,
+      kind: "bond_moment",
+      path: "bond",
+      amount: 1,
+      occurredAt: trainedAt
+    });
+    return { ...progressed, lastEvent: trained.lastEvent };
   }
 
   if (state.energy < 10) {

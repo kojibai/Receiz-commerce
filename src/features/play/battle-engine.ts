@@ -46,6 +46,13 @@ export type BattleState = {
   transcript: BattleTranscriptEntry[];
 };
 
+export type BattleGrowthAward = {
+  kind: "battle_win" | "ability_mastery";
+  eventId: string;
+  amount: number;
+  achievementId?: string;
+};
+
 function fighter(input: BattleParticipantInput, fallbackId: string): BattleFighter {
   const maxHp = Math.max(1, Math.round(input.health));
   return {
@@ -98,6 +105,25 @@ export function startWildBattle(input: {
 
 export function battleTranscriptDigest(state: BattleState) {
   return sha256PortableBasis(canonicalPortableCardJson(state.transcript));
+}
+
+export function battleGrowthAwards(previous: BattleState, next: BattleState, options: { boss?: boolean } = {}): BattleGrowthAward[] {
+  if (previous.phase === "capture_ready" || next.phase !== "capture_ready") return [];
+  const digest = battleTranscriptDigest(next).slice(7, 23);
+  const abilityCount = next.transcript.filter((item) => item.action === "ability").length;
+  const comeback = next.player.hpRatio <= 0.3;
+  const awards: BattleGrowthAward[] = [{
+    kind: "battle_win",
+    eventId: `battle_win:${next.encounterSeed}:${digest}`,
+    amount: comeback ? 24 : 18,
+    ...(options.boss ? { achievementId: `boss_victory:${next.encounterSeed}` } : comeback ? { achievementId: `comeback_victory:${next.encounterSeed}` } : {})
+  }];
+  if (abilityCount >= 2) awards.push({
+    kind: "ability_mastery",
+    eventId: `ability_mastery:${next.encounterSeed}:${digest}`,
+    amount: Math.min(10, abilityCount * 2)
+  });
+  return awards;
 }
 
 function wildCounter(state: BattleState, player: BattleFighter, wild: BattleFighter, guarded: boolean) {

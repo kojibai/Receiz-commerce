@@ -267,6 +267,7 @@ export function evolvePortableCard(input: {
   previous: PortableCardAsset;
   nextFormId: string;
   evolvedAt: string;
+  growth?: LivingCardAsset["manifest"]["revisions"][number]["growth"];
 }): LivingCardAsset {
   const verified = verifyAnyWildsCard(input.previous);
   if (!verified.ok) throw new Error("wilds_previous_card_invalid");
@@ -284,7 +285,7 @@ export function evolvePortableCard(input: {
       stage: next.stage,
       ascensionRank: prior.ascensionRank,
       formId: next.id,
-      growth: prior.growth,
+      growth: input.growth ?? prior.growth,
       qualifyingAchievementIds: [],
       consumedCatalystId: `catalog-stage:${next.id}`,
       genomeDelta: {
