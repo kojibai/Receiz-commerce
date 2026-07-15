@@ -90,6 +90,15 @@ describe("mobile storefront layout CSS", () => {
     assert.doesNotMatch(css, /\.wilds-settlement-(?:districts|panel|footer)[^{]*\{[^}]*text-overflow:\s*ellipsis/s);
   });
 
+  it("keeps every living ecology action and exit reachable at 320px", () => {
+    assert.match(css, /\.wilds-ecology-experience\s*\{[^}]*position:\s*fixed;[^}]*height:\s*100dvh;[^}]*overflow:\s*hidden/s);
+    assert.match(css, /\.wilds-ecology-close\s*\{[^}]*min-width:\s*44px;[^}]*min-height:\s*44px/s);
+    assert.match(css, /\.wilds-ecology-objectives\s*\{[^}]*overflow-x:\s*auto;[^}]*scroll-snap-type:\s*x mandatory/s);
+    assert.match(css, /\.wilds-ecology-action\s*\{[^}]*min-height:\s*44px/s);
+    assert.match(css, /\.wilds-ecology-experience\s*\{[^}]*padding-top:\s*env\(safe-area-inset-top\);[^}]*padding-bottom:\s*env\(safe-area-inset-bottom\)/s);
+    assert.doesNotMatch(css, /\.wilds-ecology-(?:objectives|arena|footer)[^{]*\{[^}]*text-overflow:\s*ellipsis/s);
+  });
+
   it("uses customer ownership language on the mobile assets page", () => {
     assert.match(storefront, /Purchased products, benefits, and access can become Receized assets\./);
     assert.doesNotMatch(storefront, /Sold products, benefits, and access can become Receized assets\./);

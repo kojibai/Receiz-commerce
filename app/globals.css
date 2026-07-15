@@ -12191,3 +12191,81 @@ button.product-purchase-secondary-link {
   .wilds-route-orbit i { animation: none; }
   .wilds-settlement-experience button { transition: none; }
 }
+
+/* Living ecology uses one focus-safe game shell across all eight event families. */
+.wilds-ecology-experience {
+  --ecology-accent: #71e7bd;
+  position: fixed;
+  inset: 0;
+  z-index: 7200;
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  width: 100%;
+  height: 100dvh;
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  overflow: hidden;
+  color: #effff9;
+  background: #061815;
+  isolation: isolate;
+}
+.wilds-ecology-experience.family-wandering-market { --ecology-accent: #f2c86b; }
+.wilds-ecology-experience.family-echo-ruin { --ecology-accent: #a9d7c4; }
+.wilds-ecology-experience.family-unstable-portal { --ecology-accent: #9aa8ff; }
+.wilds-ecology-experience.family-convergence-festival { --ecology-accent: #ff8dc6; }
+.wilds-ecology-experience.family-creature-migration { --ecology-accent: #6ee9c3; }
+.wilds-ecology-experience.family-resource-bloom { --ecology-accent: #f3df67; }
+.wilds-ecology-experience.family-stormfront { --ecology-accent: #74c6ff; }
+.wilds-ecology-experience.family-settlement-distress { --ecology-accent: #ff8b73; }
+.wilds-ecology-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto 44px;
+  align-items: center;
+  gap: 10px;
+  min-height: 68px;
+  padding: 8px clamp(10px, 3vw, 30px);
+  border-bottom: 1px solid color-mix(in srgb, var(--ecology-accent) 22%, transparent);
+  background: rgb(4 23 20 / 84%);
+  backdrop-filter: blur(18px);
+}
+.wilds-ecology-header > div:first-child { min-width: 0; }
+.wilds-ecology-header span { display: block; color: var(--ecology-accent); font-size: 9px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; }
+.wilds-ecology-header h2 { margin: 2px 0 0; color: #f8fff8; font-size: clamp(20px, 4vw, 30px); line-height: 1; overflow-wrap: anywhere; }
+.wilds-ecology-party { display: grid; grid-template-columns: auto auto; align-items: center; gap: 0 5px; min-width: 55px; color: var(--ecology-accent); }
+.wilds-ecology-party svg { grid-row: 1 / 3; }.wilds-ecology-party strong { font-size: 18px; line-height: 1; font-variant-numeric: tabular-nums; }.wilds-ecology-party small { font-size: 7px; font-weight: 900; }
+.wilds-ecology-close {
+  display: grid;
+  min-width: 44px;
+  min-height: 44px;
+  place-items: center;
+  padding: 0;
+  color: #effff9;
+  border: 1px solid rgb(255 255 255 / 14%);
+  border-radius: 50%;
+  background: rgb(255 255 255 / 7%);
+}
+.wilds-ecology-objectives { display: flex; gap: 7px; min-width: 0; padding: 7px clamp(10px, 3vw, 30px); overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; border-bottom: 1px solid rgb(255 255 255 / 7%); }
+.wilds-ecology-objectives::-webkit-scrollbar { display: none; }
+.wilds-ecology-objectives > div { display: grid; grid-template-columns: 25px minmax(70px, 1fr); flex: 1 0 min(190px, 44vw); min-width: 0; min-height: 44px; align-content: center; gap: 1px 7px; padding: 5px 9px; scroll-snap-align: start; color: #829f96; border: 1px solid rgb(255 255 255 / 8%); border-radius: 13px 4px 13px 4px; background: rgb(255 255 255 / 4%); }
+.wilds-ecology-objectives > div[aria-current="step"] { color: #effff9; border-color: color-mix(in srgb, var(--ecology-accent) 48%, transparent); background: color-mix(in srgb, var(--ecology-accent) 11%, transparent); }
+.wilds-ecology-objectives > div.is-complete { color: var(--ecology-accent); }
+.wilds-ecology-objectives > div > span { grid-row: 1 / 3; display: grid; width: 25px; aspect-ratio: 1; place-items: center; align-self: center; border: 1px solid currentColor; border-radius: 50%; font-size: 9px; font-weight: 950; }
+.wilds-ecology-objectives strong { font-size: 10px; }.wilds-ecology-objectives small { color: #7f9b92; font-size: 8px; white-space: normal; }
+.wilds-ecology-arena { position: relative; min-height: 0; overflow: hidden; background: radial-gradient(circle at 50% 52%, color-mix(in srgb, var(--ecology-accent) 24%, transparent), transparent 24%), linear-gradient(155deg, #071c19, #0b2925 55%, #061411); }
+.wilds-ecology-arena::before { position: absolute; inset: 0; opacity: .18; background-image: radial-gradient(circle, var(--ecology-accent) 0 1px, transparent 1.5px); background-size: 37px 37px; mask-image: linear-gradient(#000, transparent 88%); content: ""; }
+.wilds-ecology-sky { position: absolute; inset: 8% 8% 34%; border: 1px solid color-mix(in srgb, var(--ecology-accent) 18%, transparent); border-radius: 50%; transform: perspective(700px) rotateX(64deg); }
+.wilds-ecology-sky i { position: absolute; border: 1px solid color-mix(in srgb, var(--ecology-accent) 24%, transparent); border-radius: 50%; }.wilds-ecology-sky i:nth-child(1) { inset: 12%; }.wilds-ecology-sky i:nth-child(2) { inset: 27%; }.wilds-ecology-sky i:nth-child(3) { inset: 42%; background: color-mix(in srgb, var(--ecology-accent) 13%, transparent); }
+.wilds-ecology-signal { position: absolute; top: 50%; left: 50%; width: clamp(105px, 24vw, 190px); aspect-ratio: 1; border: 2px solid var(--ecology-accent); border-radius: 44% 56% 48% 52%; background: radial-gradient(circle, color-mix(in srgb, var(--ecology-accent) 34%, #071a16), #071a16 70%); box-shadow: 0 0 70px color-mix(in srgb, var(--ecology-accent) 25%, transparent); transform: translate(-50%, -40%) rotate(45deg); }
+.wilds-ecology-signal span { position: absolute; inset: -16%; border: 1px solid color-mix(in srgb, var(--ecology-accent) 28%, transparent); border-radius: 50%; }.wilds-ecology-signal span:nth-child(2) { inset: -36%; }
+.wilds-ecology-signal b { position: absolute; inset: 0; display: grid; place-items: center; color: #fff; font-size: clamp(22px, 5vw, 38px); font-variant-numeric: tabular-nums; transform: rotate(-45deg); }
+.wilds-ecology-brief { position: absolute; top: 12px; left: max(12px, env(safe-area-inset-left)); display: grid; width: min(370px, calc(100% - 24px)); gap: 4px; padding: 12px 14px; border: 1px solid color-mix(in srgb, var(--ecology-accent) 22%, transparent); border-radius: 18px 5px 18px 5px; background: rgb(3 19 17 / 78%); backdrop-filter: blur(16px); }
+.wilds-ecology-brief > span { color: var(--ecology-accent); font-size: 8px; font-weight: 900; letter-spacing: .09em; text-transform: uppercase; }.wilds-ecology-brief h3 { margin: 0; font-size: clamp(18px, 4vw, 27px); }.wilds-ecology-brief p { margin: 0; color: #b3cbc3; font-size: 11px; line-height: 1.4; }.wilds-ecology-brief > strong { margin-top: 3px; color: #e7f7f1; font-size: 10px; line-height: 1.35; }
+.wilds-ecology-card-role { position: absolute; right: max(12px, env(safe-area-inset-right)); bottom: 10px; display: grid; grid-template-columns: 28px minmax(0, 1fr); align-items: center; gap: 9px; max-width: calc(100% - 24px); padding: 9px 11px; color: #9aada7; border: 1px solid rgb(255 255 255 / 10%); border-radius: 5px 17px 5px 17px; background: rgb(4 20 18 / 82%); backdrop-filter: blur(16px); }
+.wilds-ecology-card-role.is-verified { color: var(--ecology-accent); border-color: color-mix(in srgb, var(--ecology-accent) 28%, transparent); }.wilds-ecology-card-role small, .wilds-ecology-card-role strong, .wilds-ecology-card-role code { display: block; overflow-wrap: anywhere; }.wilds-ecology-card-role small { font-size: 8px; text-transform: uppercase; }.wilds-ecology-card-role strong { color: #f0faf6; font-size: 11px; }.wilds-ecology-card-role code { color: #76968c; font-size: 8px; }
+.wilds-ecology-footer { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; padding: 7px max(8px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left)); background: #061a16; }
+.wilds-ecology-action { display: flex; min-width: 0; min-height: 44px; align-items: center; justify-content: center; gap: 7px; padding: 6px; color: #dffff3; border: 1px solid color-mix(in srgb, var(--ecology-accent) 19%, transparent); border-radius: 14px 4px 14px 4px; background: rgb(255 255 255 / 6%); }
+.wilds-ecology-action:disabled { opacity: .28; }.wilds-ecology-action span { display: grid; min-width: 0; text-align: left; }.wilds-ecology-action strong { font-size: 10px; overflow-wrap: anywhere; }.wilds-ecology-action small { color: #789b90; font-size: 8px; overflow-wrap: anywhere; }.wilds-ecology-action.is-primary { grid-column: 1 / -1; color: #05231a; background: var(--ecology-accent); }.wilds-ecology-action.is-primary small { color: rgb(5 35 26 / 66%); }
+.wilds-ecology-experience button:focus-visible { outline: 3px solid var(--ecology-accent); outline-offset: 2px; }
+@media (max-width: 430px) { .wilds-ecology-header { min-height: 60px; padding-block: 6px; }.wilds-ecology-header h2 { font-size: 19px; }.wilds-ecology-objectives { padding-block: 5px; }.wilds-ecology-brief { top: 8px; padding: 9px 11px; }.wilds-ecology-brief p { font-size: 10px; }.wilds-ecology-signal { transform: translate(-50%, -26%) rotate(45deg); }.wilds-ecology-footer { gap: 4px; padding-inline: 5px; }.wilds-ecology-action { gap: 4px; padding-inline: 3px; }.wilds-ecology-action svg { width: 16px; }.wilds-ecology-action small { display: none; } }
+@media (max-width: 340px) { .wilds-ecology-party small { display: none; }.wilds-ecology-objectives > div { flex-basis: 132px; }.wilds-ecology-card-role { left: 8px; right: 8px; max-width: none; }.wilds-ecology-brief h3 { font-size: 17px; } }
+@media (prefers-reduced-motion: reduce) { .wilds-ecology-experience *, .wilds-ecology-experience *::before, .wilds-ecology-experience *::after { animation: none !important; transition: none !important; } }
