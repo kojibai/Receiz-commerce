@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 import type { JsonObject } from "@receiz/sdk";
 import { WildsWorldService, type WildsWorldCommand } from "@/features/play/wilds-world-service";
-import { findWildsWorldRecord } from "@/features/play/wilds-world-record";
+import { findWildsWorldRecord, selectWildsWorldSnapshot } from "@/features/play/wilds-world-record";
 import type { WildsWorldEvent } from "@/features/play/wilds-world-event";
 import { platform } from "@/lib/platform";
 import { createReceizCommerceAdapter } from "./adapter";
@@ -20,10 +20,19 @@ function sourceUrl(request: NextRequest) {
 }
 
 const serviceKey = Symbol.for("receiz.wilds.world.service.v3");
+const practiceKey = Symbol.for("receiz.wilds.world.practice.v3");
 const hydrationKey = Symbol.for("receiz.wilds.world.hydrated.v3");
-type WorldGlobal = typeof globalThis & { [serviceKey]?: WildsWorldService; [hydrationKey]?: boolean };
+type WorldGlobal = typeof globalThis & { [serviceKey]?: WildsWorldService; [practiceKey]?: WildsWorldService; [hydrationKey]?: boolean };
 function root() { return globalThis as WorldGlobal; }
 function service() { return (root()[serviceKey] ??= new WildsWorldService()); }
+function practiceService() {
+  if (!root()[practiceKey]) {
+    const practice = new WildsWorldService();
+    practice.tick({ pulse: "2026-07-15T00:00:00.000Z", occurredAt: "2026-07-15T00:00:00.000Z", systemActorId: "receiz:pulse" });
+    root()[practiceKey] = practice;
+  }
+  return root()[practiceKey]!;
+}
 
 export async function hydrateWildsWorldFromReceiz(request: NextRequest) {
   if (root()[hydrationKey]) return;
@@ -81,14 +90,22 @@ async function auditMajorEvents(request: NextRequest, actor: WildsMultiplayerAct
 
 export async function worldSnapshot(request: NextRequest) {
   await hydrateWildsWorldFromReceiz(request);
-  return service().snapshot();
+  return selectWildsWorldSnapshot(service().snapshot(), practiceService().snapshot());
 }
 
 export async function executeWildsWorldCommand(request: NextRequest, body: unknown) {
   const value = body && typeof body === "object" ? body as Record<string, unknown> : {};
   const actor = await resolveWildsMultiplayerActor(request, value.guestId);
-  if (actor.practice) throw new Error("wilds_world_canonical_authority_required");
   await hydrateWildsWorldFromReceiz(request);
+  if (actor.practice) {
+    const now = new Date().toISOString();
+    const result = practiceService().execute(value.command as WildsWorldCommand, { actorId: actor.playerId, canonical: true, pulse: now, occurredAt: now });
+    return {
+      projection: result.projection,
+      events: result.events,
+      publication: { published: false, mode: "local_practice" as const, revision: result.projection.revision }
+    };
+  }
   const current = service();
   const before = { checkpoint: current.checkpoint(), events: current.events() };
   const command = value.command as WildsWorldCommand;

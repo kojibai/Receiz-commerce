@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { WildsWorldService } from "../src/features/play/wilds-world-service.js";
-import { findWildsWorldRecord } from "../src/features/play/wilds-world-record.js";
+import { findWildsWorldRecord, selectWildsWorldSnapshot } from "../src/features/play/wilds-world-record.js";
+import { initialWildsWorldProjection } from "../src/features/play/wilds-world-state.js";
 
 const authority = {
   actorId: "player:captain",
@@ -57,5 +58,17 @@ describe("Receiz Wilds world recovery", () => {
 
     assert.deepEqual(findWildsWorldRecord({ result: { appState: record } }), record);
     assert.equal(findWildsWorldRecord({ state: { schema: "receiz.wilds_world_checkpoint.v2" } }), null);
+  });
+
+  it("uses an explicit isolated practice projection until Receiz has a canonical revision", () => {
+    const canonical = initialWildsWorldProjection();
+    const practiceService = new WildsWorldService();
+    const practice = practiceService.tick({ pulse: authority.pulse, occurredAt: authority.occurredAt, systemActorId: "receiz:pulse" }).projection;
+
+    assert.deepEqual(selectWildsWorldSnapshot(canonical, practice), { projection: practice, mode: "local_practice" });
+    assert.deepEqual(selectWildsWorldSnapshot({ ...canonical, revision: 1 }, practice), {
+      projection: { ...canonical, revision: 1 },
+      mode: "receiz_live"
+    });
   });
 });

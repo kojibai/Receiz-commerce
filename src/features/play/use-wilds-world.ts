@@ -50,9 +50,10 @@ export function useWildsWorld(input: { enabled: boolean; guestId: string; active
   const refresh = useCallback(async () => {
     if (!input.enabled) return;
     try {
-      const projection = parseWildsWorldSnapshotResponse(await request("/api/wilds/world/snapshot"));
+      const value = await request("/api/wilds/world/snapshot");
+      const projection = parseWildsWorldSnapshotResponse(value);
       setSnapshot((current) => acceptWildsWorldSnapshot(current, projection));
-      setMode((current) => current === "receiz_live" || current === "local_practice" ? current : "connecting");
+      setMode(value.mode === "receiz_live" ? "receiz_live" : value.mode === "local_practice" ? "local_practice" : "connecting");
       setError("");
     } catch (cause) {
       if ((cause as Error).name === "AbortError") return;
