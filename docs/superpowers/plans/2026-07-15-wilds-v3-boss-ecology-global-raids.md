@@ -89,7 +89,7 @@ git commit -m "feat: define the Wilds boss ecology"
 - Consumes: `WildsBossDefinition`, existing six-by-six admission, SHA-256 helpers.
 - Produces: `WildsRaidRound`, `WildsRaidLease`, `WildsRaidQueueEntry`, `createWildsRaidRound(input)`, `admitWildsRaidParticipant(round, input)`, `renewWildsRaidLease(round, input)`, `rotateExpiredWildsRaidSlots(round, now)`, `retreatWildsRaidParticipant(round, input)`, `settleWildsRaidRound(round, input)`.
 
-- [ ] **Step 1: Write failing round-capacity and lease tests**
+- [x] **Step 1: Write failing round-capacity and lease tests**
 
 ```ts
 it("admits 36 fighters, 144 support participants, and rejects overflow", () => {
@@ -107,16 +107,16 @@ it("preserves a fighter for 90 seconds then rotates the oldest support request",
 });
 ```
 
-- [ ] **Step 2: Verify RED**
+- [x] **Step 2: Verify RED**
 
 Run: compile the test build.  
 Expected: missing raid-round module errors.
 
-- [ ] **Step 3: Implement bounded round state**
+- [x] **Step 3: Implement bounded round state**
 
 Use phases `forming | active | transformation_lock | resolving | settled | expired`, deterministic 10–15 minute duration, 20-second minimum formation, maximum 180 participants, one admission per actor, stable lowest-fill allocation, 90-second leases, FIFO queue by admitted event order, idempotent renew/retreat/rotation, and immutable prior contribution references.
 
-- [ ] **Step 4: Verify GREEN and old raid regression**
+- [x] **Step 4: Verify GREEN and old raid regression**
 
 Run the new round tests and existing raid-core tests.  
 Expected: PASS with the legacy raid wrapper retaining its old public behavior.

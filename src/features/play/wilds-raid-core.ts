@@ -3,6 +3,7 @@ import type { WildsBoss } from "./wilds-boss-generator";
 
 export const WILDS_RAID_SQUADS = 6;
 export const WILDS_RAID_FIGHTERS_PER_SQUAD = 6;
+export { WILDS_RAID_LEASE_MS, WILDS_RAID_SUPPORT_CAPACITY } from "./wilds-raid-round";
 
 export type WildsRaidRole = "fighter" | "support";
 export type WildsRaidSquads = [string[], string[], string[], string[], string[], string[]];
