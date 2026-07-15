@@ -6,6 +6,11 @@ import {
   verifyWildsWorldEvent,
   WILDS_WORLD_ID
 } from "../src/features/play/wilds-world-event.js";
+import {
+  checkpointWildsWorld,
+  initialWildsWorldProjection,
+  replayWildsWorld
+} from "../src/features/play/wilds-world-state.js";
 
 const firstInput = {
   kind: "site.spawned" as const,
@@ -65,5 +70,63 @@ describe("Wilds world event", () => {
     assert.throws(() => createWildsWorldEvent({ ...firstInput, occurredAt: "not-a-time" }), /wilds_world_time_invalid/);
     assert.throws(() => createWildsWorldEvent({ ...firstInput, kaiKlok: 0 }), /wilds_world_kai_klok_invalid/);
     assert.throws(() => createWildsWorldEvent({ ...firstInput, payload: { health: Number.POSITIVE_INFINITY } }), /wilds_world_payload_invalid/);
+  });
+});
+
+describe("Wilds world replay", () => {
+  const spawned = () => createWildsWorldEvent({
+    ...firstInput,
+    payload: {
+      site: {
+        id: "site:crystal-burrow:genesis",
+        familyId: "crystal-burrow",
+        name: "Crystal Burrow",
+        position: { x: 144, z: 96 },
+        radius: 9,
+        phase: "rumored",
+        spawnedAt: "2026-07-15T12:00:00.000Z",
+        expiresAt: "2026-07-18T12:00:00.000Z",
+        bossId: null,
+        seedDigest: `sha256:${"a".repeat(64)}`
+      }
+    }
+  });
+
+  it("replays ordered events and ignores exact duplicates", () => {
+    const first = spawned();
+    const state = replayWildsWorld([first, first]);
+
+    assert.equal(state.revision, 1);
+    assert.equal(state.sites["site:crystal-burrow:genesis"]?.phase, "rumored");
+    assert.equal(state.cursor?.eventId, first.eventId);
+  });
+
+  it("continues from a verified checkpoint", () => {
+    const first = spawned();
+    const checkpoint = checkpointWildsWorld(replayWildsWorld([first]));
+    const second = createWildsWorldEvent({
+      ...firstInput,
+      kind: "site.phase_changed",
+      kaiKlok: 2,
+      previousEventId: first.eventId,
+      payload: { siteId: "site:crystal-burrow:genesis", phase: "tracked" }
+    });
+    const state = replayWildsWorld([second], checkpoint);
+
+    assert.equal(state.revision, 2);
+    assert.equal(state.sites["site:crystal-burrow:genesis"]?.phase, "tracked");
+  });
+
+  it("rejects out-of-order events and checkpoint mutation", () => {
+    const first = spawned();
+    const checkpoint = checkpointWildsWorld(replayWildsWorld([first]));
+    const corrupt = { ...checkpoint, projection: { ...checkpoint.projection, revision: 99 } };
+
+    assert.throws(() => replayWildsWorld([first, createWildsWorldEvent({ ...firstInput, kaiKlok: 1, payload: { site: { id: "other" } } })]), /wilds_world_event_order_invalid/);
+    assert.throws(() => replayWildsWorld([], corrupt), /wilds_world_checkpoint_invalid/);
+  });
+
+  it("starts with one stable empty projection", () => {
+    assert.deepEqual(replayWildsWorld([]), initialWildsWorldProjection());
   });
 });
