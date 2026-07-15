@@ -6,6 +6,7 @@ import { createWildsWorldEvent, type WildsWorldEvent, type WildsWorldEventKind }
 import {
   checkpointWildsWorld,
   initialWildsWorldProjection,
+  replayWildsWorld,
   reduceWildsWorldEvent,
   type WildsWorldCheckpoint,
   type WildsWorldProjection
@@ -33,7 +34,7 @@ export class WildsWorldService {
   private eventTail: WildsWorldEvent[];
 
   constructor(input?: { checkpoint?: WildsWorldCheckpoint; events?: WildsWorldEvent[] }) {
-    this.projection = input?.checkpoint?.projection ?? initialWildsWorldProjection();
+    this.projection = input?.checkpoint ? replayWildsWorld([], input.checkpoint) : initialWildsWorldProjection();
     this.eventTail = [];
     for (const event of input?.events ?? []) this.appendExisting(event);
   }
