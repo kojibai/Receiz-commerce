@@ -126,7 +126,7 @@ function WildsScene({
       />
       <WildsEcologyEnvironment livingWorld={livingWorld} player={state.player} worldMode={worldMode} />
       <WildsBossEnvironment livingWorld={livingWorld} player={state.player} qualityProfile={qualityProfile} />
-      <EncounterSequence state={state} onCollectEnergy={onCollectEnergy} />
+      <EncounterSequence state={state} onCollectEnergy={onCollectEnergy} onSearchPoint={onSearchPoint} />
       {remotePlayers.map((player) => <RemoteExplorer key={player.playerId} player={player} localPlayer={state.player} onSelect={onSelectPlayer} />)}
       <WildsExplorer style={avatarStyle} worldPosition={state.player} />
       <Sparkles count={Math.round(54 * qualityProfile.particles)} scale={[8, 2.4, 8]} size={2.1} speed={0.22} color="#fff5b6" />
@@ -307,7 +307,7 @@ function Creature({ card, formId = `${card.id}-1`, pose = "idle" }: { card: Crea
   );
 }
 
-function EncounterSequence({ state, onCollectEnergy }: { state: PlayState; onCollectEnergy: (crystalId: string) => void }) {
+function EncounterSequence({ state, onCollectEnergy, onSearchPoint }: { state: PlayState; onCollectEnergy: (crystalId: string) => void; onSearchPoint: (point: { x: number; z: number }) => void }) {
   const encounter = state.encounter;
   if (encounter.phase === "idle") return null;
   const position: [number, number, number] = [
@@ -322,7 +322,7 @@ function EncounterSequence({ state, onCollectEnergy }: { state: PlayState; onCol
     return (
       <>
         <SearchPulse hint position={position} />
-        <RustlingClue encounter={encounter} player={state.player} onCollectEnergy={onCollectEnergy} />
+        <RustlingClue encounter={encounter} player={state.player} onCollectEnergy={onCollectEnergy} onSearchPoint={onSearchPoint} />
       </>
     );
   }
@@ -353,11 +353,13 @@ function EncounterSequence({ state, onCollectEnergy }: { state: PlayState; onCol
 function RustlingClue({
   encounter,
   player,
-  onCollectEnergy
+  onCollectEnergy,
+  onSearchPoint
 }: {
   encounter: Exclude<PlayState["encounter"], { phase: "idle" }>;
   player: PlayState["player"];
   onCollectEnergy: (crystalId: string) => void;
+  onSearchPoint: (point: { x: number; z: number }) => void;
 }) {
   const ref = useRef<THREE.Group>(null);
   const hot = encounter.proximity === "hot";
@@ -390,7 +392,12 @@ function RustlingClue({
         if (encounter.hotspotId && encounter.cover === "energy") {
           event.stopPropagation();
           onCollectEnergy(encounter.hotspotId);
+          return;
         }
+        event.stopPropagation();
+        const direction = encounter.direction ?? { x: 0, z: 0 };
+        const distance = encounter.distance ?? 0;
+        onSearchPoint({ x: encounter.searchPoint.x + direction.x * distance, z: encounter.searchPoint.z + direction.z * distance });
       }}
     >
       <HabitatCover cover={encounter.cover} open={false} />
