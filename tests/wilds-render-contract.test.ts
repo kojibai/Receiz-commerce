@@ -47,7 +47,7 @@ describe("Receiz Wilds rendering contract", () => {
     assert.doesNotMatch(route, /activeCard/);
   });
 
-  it("opens Hearttree as a full-screen proof-pinned landmark experience", async () => {
+  it("opens three full-screen proof-pinned landmark experiences", async () => {
     const campaign = await readFile("src/features/play/PlayCampaign.tsx", "utf8");
     const experience = await readFile("src/features/play/WildsLandmarkExperience.tsx", "utf8");
     const css = await readFile("app/globals.css", "utf8");
@@ -57,8 +57,14 @@ describe("Receiz Wilds rendering contract", () => {
     assert.match(experience, /createPortal/);
     assert.match(experience, /aria-label="Return to world"/);
     assert.match(experience, /createHearttreeTrial/);
+    assert.match(experience, /createArenaMatch/);
+    assert.match(experience, /createPrismRun/);
+    assert.match(experience, /Arena of Echoes duel/);
+    assert.match(experience, /Prism Arcade cooperative run/);
     assert.match(experience, /card\.proof\.digest/);
     assert.match(css, /\.wilds-landmark-experience\s*\{[^}]*position:\s*fixed;[^}]*height:\s*100dvh;[^}]*overflow:\s*hidden/s);
+    assert.match(css, /\.wilds-arena-world/);
+    assert.match(css, /\.wilds-prism-world/);
   });
 
   it("layers an authored biome around meaningful landmarks", async () => {

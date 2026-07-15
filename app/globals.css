@@ -11556,7 +11556,7 @@ button.product-purchase-secondary-link {
   background: linear-gradient(180deg, rgb(3 18 15 / 92%), rgb(3 18 15 / 35%));
 }
 .wilds-landmark-header h2 { margin: 2px 0 0; font-size: clamp(20px, 3vw, 32px); line-height: 1; }
-.wilds-landmark-header .eyebrow { color: #7cf0be; }
+.wilds-landmark-header .eyebrow { color: var(--landmark-accent, #7cf0be); }
 .wilds-landmark-header > button { display: grid; flex: 0 0 44px; width: 44px; height: 44px; place-items: center; color: #eafff8; border: 1px solid rgb(126 240 190 / 25%); border-radius: 15px; background: rgb(6 35 28 / 78%); backdrop-filter: blur(18px); }
 .wilds-hearttree-world {
   position: relative;
@@ -11590,6 +11590,29 @@ button.product-purchase-secondary-link {
 .wilds-hearttree-card-pin small { color: #7cf0be; font-size: 8px; text-transform: uppercase; }
 .wilds-hearttree-card-pin strong { font-size: 12px; }
 .wilds-hearttree-card-pin code { color: #789b90; font-size: 8px; }
+.wilds-landmark-world { position: relative; min-height: 0; overflow: hidden; perspective: 900px; }
+.wilds-landmark-experience.competition { color: #fff9e8; background: #120d05; }
+.wilds-landmark-experience.competition .wilds-landmark-header { background: linear-gradient(180deg, rgb(22 12 3 / 95%), rgb(22 12 3 / 28%)); }
+.wilds-arena-world { background: radial-gradient(circle at 50% 55%, rgb(247 201 72 / 25%), transparent 24%), radial-gradient(circle at 50% 20%, rgb(255 102 41 / 12%), transparent 35%), linear-gradient(180deg, #1a0d08, #40220e 58%, #130a05); }
+.wilds-arena-world::before { position: absolute; inset: 0; opacity: .2; background-image: linear-gradient(90deg, transparent 49.8%, #f7c948 50%, transparent 50.2%), linear-gradient(transparent 49.8%, #f7c948 50%, transparent 50.2%); background-size: 72px 72px; transform: rotateX(68deg) scale(1.8); content: ""; }
+.wilds-arena-crowd { position: absolute; inset: 5% -4% 30%; border: 16px solid rgb(246 155 45 / 10%); border-radius: 50%; box-shadow: inset 0 0 0 24px rgb(247 201 72 / 7%), inset 0 0 0 55px rgb(255 117 54 / 5%); transform: rotateX(68deg); }
+.wilds-arena-crowd i { position: absolute; width: 7px; height: 7px; border-radius: 50%; background: #f7c948; box-shadow: 0 0 12px #f7c948; }
+.wilds-arena-crowd i:nth-child(1) { top: -12px; left: 20%; }.wilds-arena-crowd i:nth-child(2) { top: 35%; right: -12px; }.wilds-arena-crowd i:nth-child(3) { bottom: -12px; left: 36%; }.wilds-arena-crowd i:nth-child(4) { top: 40%; left: -12px; }
+.wilds-arena-ring { position: absolute; bottom: 5%; left: 50%; width: min(66vw, 540px); aspect-ratio: 1.9; border: 2px solid rgb(247 201 72 / 55%); border-radius: 50%; background: radial-gradient(ellipse, rgb(255 178 53 / 16%), rgb(19 8 3 / 68%) 68%); box-shadow: 0 0 70px rgb(247 201 72 / 20%), inset 0 0 35px rgb(255 169 31 / 18%); transform: translateX(-50%) rotateX(62deg); }
+.wilds-arena-ring i { position: absolute; inset: 12%; border: 1px solid rgb(247 201 72 / 28%); border-radius: 50%; }.wilds-arena-ring i:nth-child(2) { inset: 27%; }.wilds-arena-ring i:nth-child(3) { inset: 43%; }
+.wilds-arena-rival { position: absolute; bottom: 23%; left: 50%; display: grid; width: clamp(90px, 17vw, 150px); aspect-ratio: 1; place-items: center; color: #2b1305; border: 2px solid #ffe580; border-radius: 44% 44% 38% 38%; background: linear-gradient(145deg, #f9dd62, #d77020 66%, #5b2508); box-shadow: 0 0 70px rgb(247 201 72 / 32%); clip-path: polygon(20% 0, 80% 0, 100% 22%, 84% 100%, 16% 100%, 0 22%); transform: translateX(-50%); }
+.wilds-arena-rival b { position: absolute; right: -8px; top: -8px; display: grid; width: 28px; height: 28px; place-items: center; color: #fff5c4; border-radius: 50%; background: #51190d; }
+.wilds-arena-score { position: absolute; right: 14px; top: 14px; display: grid; min-width: 90px; gap: 2px; padding: 10px 12px; text-align: right; border: 1px solid rgb(247 201 72 / 28%); border-radius: 17px; background: rgb(37 17 5 / 76%); backdrop-filter: blur(18px); }.wilds-arena-score span { color: #d39d44; font-size: 8px; font-weight: 900; }.wilds-arena-score strong { color: #ffe274; font-size: 24px; line-height: 1; }
+.wilds-landmark-experience.arcade { background: #08061b; }
+.wilds-landmark-experience.arcade .wilds-landmark-header { background: linear-gradient(180deg, rgb(8 4 27 / 96%), rgb(8 4 27 / 25%)); }
+.wilds-prism-world { background: radial-gradient(circle at 50% 32%, rgb(255 114 191 / 28%), transparent 24%), radial-gradient(circle at 26% 40%, rgb(75 218 255 / 18%), transparent 36%), linear-gradient(180deg, #100827, #1c0e3e 58%, #08051a); }
+.wilds-prism-world::before { position: absolute; inset: 0; opacity: .36; background-image: linear-gradient(rgb(94 223 255 / 20%) 1px, transparent 1px), linear-gradient(90deg, rgb(255 98 196 / 20%) 1px, transparent 1px); background-size: 42px 42px; mask-image: linear-gradient(transparent 0, #000 24%, #000 100%); transform: perspective(500px) rotateX(62deg) scale(1.8) translateY(24%); content: ""; }
+.wilds-prism-sun { position: absolute; top: 8%; left: 50%; width: min(38vw, 260px); aspect-ratio: 1; border: 2px solid #ff72bf; border-radius: 50%; background: repeating-linear-gradient(180deg, #ff72bf 0 5px, transparent 5px 11px); filter: drop-shadow(0 0 34px rgb(255 114 191 / 48%)); transform: translateX(-50%); }
+.wilds-prism-track { position: absolute; bottom: -12%; left: 50%; width: min(72vw, 640px); height: 75%; border-right: 2px solid #ff72bf; border-left: 2px solid #58dcff; background: linear-gradient(90deg, rgb(88 220 255 / 12%), transparent 48%, rgb(255 114 191 / 12%)); clip-path: polygon(38% 0, 62% 0, 100% 100%, 0 100%); transform: translateX(-50%) perspective(650px) rotateX(28deg); }
+.wilds-prism-track i { position: absolute; top: calc(var(--n, 1) * 17%); left: 18%; width: 64%; height: 2px; background: linear-gradient(90deg, #58dcff, #fff, #ff72bf); box-shadow: 0 0 12px #9c7bff; }.wilds-prism-track i:nth-child(1) { --n: 1; }.wilds-prism-track i:nth-child(2) { --n: 2; }.wilds-prism-track i:nth-child(3) { --n: 3; }.wilds-prism-track i:nth-child(4) { --n: 4; }.wilds-prism-track i:nth-child(5) { --n: 5; }
+.wilds-prism-rider { position: absolute; bottom: 22%; left: 50%; display: grid; width: 70px; height: 70px; place-items: center; color: #fff; border: 1px solid rgb(255 255 255 / 52%); border-radius: 24px; background: linear-gradient(135deg, #54dfff, #8b5cff 52%, #ff72bf); box-shadow: 0 0 38px rgb(121 104 255 / 52%); transform: translateX(-50%) rotate(45deg); }.wilds-prism-rider svg { transform: rotate(-45deg); }
+.wilds-prism-harmony { position: absolute; top: 14px; right: 14px; display: grid; gap: 6px; padding: 10px 12px; border: 1px solid rgb(255 114 191 / 27%); border-radius: 17px; background: rgb(15 7 42 / 76%); backdrop-filter: blur(18px); }.wilds-prism-harmony small { color: #ff91ce; font-size: 8px; font-weight: 900; }.wilds-prism-harmony span { display: flex; gap: 4px; }.wilds-prism-harmony i { width: 20px; height: 5px; border-radius: 10px; background: rgb(255 255 255 / 12%); }.wilds-prism-harmony i.is-lit { background: linear-gradient(90deg, #5fe4ff, #ff72bf); box-shadow: 0 0 10px #bd7eff; }
+.wilds-landmark-experience.competition .wilds-landmark-actions { grid-template-columns: repeat(3, minmax(0, 1fr)); background: #170c05; }.wilds-landmark-experience.arcade .wilds-landmark-actions { background: #0b071f; }
 .wilds-landmark-actions { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 7px; padding: 8px max(10px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left)); background: #061a15; }
 .wilds-landmark-actions > button { display: flex; min-width: 0; min-height: 58px; align-items: center; justify-content: center; gap: 8px; padding: 7px; color: #dffff3; border: 1px solid rgb(121 255 193 / 17%); border-radius: 16px; background: rgb(255 255 255 / 6%); }
 .wilds-landmark-actions > button:disabled { opacity: .3; }
@@ -11602,6 +11625,9 @@ button.product-purchase-secondary-link {
   .wilds-hearttree-status { top: 8px; right: 10px; left: 10px; max-width: none; padding: 10px 12px; }
   .wilds-hearttree-status strong { font-size: 16px; }
   .wilds-hearttree-card-pin { right: 10px; bottom: 8px; }
+  .wilds-arena-score, .wilds-prism-harmony { top: auto; right: 10px; bottom: 8px; }
+  .wilds-arena-world .wilds-hearttree-card-pin, .wilds-prism-world .wilds-hearttree-card-pin { right: auto; left: 10px; max-width: calc(100% - 126px); }
+  .wilds-arena-rival { bottom: 28%; }
   .wilds-landmark-actions { gap: 4px; padding-right: 7px; padding-left: 7px; }
   .wilds-landmark-actions > button { min-height: 56px; gap: 4px; padding: 5px 3px; }
   .wilds-landmark-actions > button svg { width: 16px; }

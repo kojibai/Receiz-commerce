@@ -10,6 +10,8 @@ import {
 } from "../src/features/play/wilds-activity-core";
 import { sealCollectedCard } from "../src/features/play/portable-card";
 import { applyHearttreeIntent, createHearttreeTrial } from "../src/features/play/hearttree-trial";
+import { applyArenaIntent, createArenaMatch } from "../src/features/play/arena-match";
+import { applyPrismIntent, createPrismRun } from "../src/features/play/prism-run";
 
 const now = "2026-07-15T12:00:00.000Z";
 const card = sealCollectedCard({
@@ -69,5 +71,29 @@ describe("Wilds landmark activity lifecycle", () => {
     assert.equal(first.reward?.kind, "achievement");
     assert.equal(new Set(first.events.map((event) => event.id)).size, first.events.length);
     assert.equal(first.admittedProofDigest, card.proof.digest);
+  });
+
+  it("replays an Arena duel and seals one proof-pinned victory", () => {
+    const intents = ["focus", "guard", "strike", "strike"] as const;
+    const first = intents.reduce(applyArenaIntent, createArenaMatch("arena-seed", card));
+    const replay = intents.reduce(applyArenaIntent, createArenaMatch("arena-seed", card));
+
+    assert.deepEqual(replay, first);
+    assert.equal(first.phase, "result");
+    assert.equal(first.reward?.kind, "achievement");
+    assert.equal(first.admittedProofDigest, card.proof.digest);
+    assert.equal(new Set(first.events.map((event) => event.id)).size, first.events.length);
+  });
+
+  it("replays a Prism co-op run and unlocks one bounded cosmetic", () => {
+    const intents = ["sync", "left", "right", "burst"] as const;
+    const first = intents.reduce(applyPrismIntent, createPrismRun("prism-seed", card));
+    const replay = intents.reduce(applyPrismIntent, createPrismRun("prism-seed", card));
+
+    assert.deepEqual(replay, first);
+    assert.equal(first.phase, "result");
+    assert.equal(first.reward?.kind, "cosmetic");
+    assert.equal(first.admittedProofDigest, card.proof.digest);
+    assert.equal(new Set(first.events.map((event) => event.id)).size, first.events.length);
   });
 });
