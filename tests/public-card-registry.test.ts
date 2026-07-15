@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { admitLegacyCard } from "../src/features/play/living-card-proof.js";
-import { admitPublicWildsCard, attemptPublicWildsCardRegistration, parsePublicWildsCardRecord, registerPublicWildsCard, resolveLocalPublicWildsCard } from "../src/features/play/public-card-registry.js";
+import { admitPublicWildsCard, attemptPublicWildsCardRegistration, parsePublicWildsCardRecord, publicWildsCardRecoverySourceUrls, registerPublicWildsCard, resolveLocalPublicWildsCard } from "../src/features/play/public-card-registry.js";
 import { sealCollectedCard } from "../src/features/play/portable-card.js";
 
 const bornAt = "2026-07-13T20:00:00.000Z";
@@ -27,6 +27,20 @@ describe("verified public Wilds card registry", () => {
     const record = admitPublicWildsCard(asset, sourceUrl, bornAt);
 
     assert.equal(record.sourceUrl, sourceUrl);
+  });
+
+  it("recovers platform-published cards when their image is requested on a custom domain", () => {
+    const asset = card();
+
+    assert.deepEqual(
+      publicWildsCardRecoverySourceUrls(asset.id, "https://shop.bjk.ceo", "receiz.app"),
+      [
+        `https://shop.bjk.ceo/c/${asset.id.slice("wilds:".length)}`,
+        `https://shop.bjk.ceo/cards/${encodeURIComponent(asset.id)}`,
+        `https://receiz.app/c/${asset.id.slice("wilds:".length)}`,
+        `https://receiz.app/cards/${encodeURIComponent(asset.id)}`
+      ]
+    );
   });
 
   it("rejects a tampered card before it can become publicly resolvable", () => {

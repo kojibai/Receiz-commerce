@@ -28,6 +28,15 @@ function currentRevision(asset: PortableCardAsset) {
   return "revisions" in asset.manifest ? asset.manifest.revisions.length : 0;
 }
 
+export function publicWildsCardRecoverySourceUrls(assetId: string, requestOrigin: string, platformDomain: string) {
+  const compactPath = `/c/${assetId.slice("wilds:".length)}`;
+  const legacyPath = `/cards/${encodeURIComponent(assetId)}`;
+  const platformOrigin = new URL(/^https?:\/\//i.test(platformDomain) ? platformDomain : `https://${platformDomain}`).origin;
+  const origins = [...new Set([new URL(requestOrigin).origin, platformOrigin])];
+
+  return origins.flatMap((origin) => [`${origin}${compactPath}`, `${origin}${legacyPath}`]);
+}
+
 export function admitPublicWildsCard(asset: PortableCardAsset, sourceUrl: string, registeredAt = new Date().toISOString()) {
   if (!verifyAnyWildsCard(asset).ok) throw new Error("wilds_public_card_verification_failed");
   const url = new URL(sourceUrl);

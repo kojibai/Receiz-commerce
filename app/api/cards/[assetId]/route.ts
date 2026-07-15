@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import type { JsonObject, ReceizKeyFileV1 } from "@receiz/sdk";
-import { admitPublicWildsCard, parsePublicWildsCardRecord, resolveLocalPublicWildsCard, type PublicWildsCardIdentityProof } from "@/features/play/public-card-registry";
+import { admitPublicWildsCard, parsePublicWildsCardRecord, publicWildsCardRecoverySourceUrls, resolveLocalPublicWildsCard, type PublicWildsCardIdentityProof } from "@/features/play/public-card-registry";
 import type { PortableCardAsset } from "@/features/play/portable-card";
 import { createReceizCommerceAdapter } from "@/lib/receiz/adapter";
 import { receizRequestSession } from "@/lib/receiz/session";
@@ -93,10 +93,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ ass
   if (local) return NextResponse.json({ ok: true, record: local });
 
   const origin = publicOrigin(request);
-  const sourceUrls = [
-    `${origin}${compactCardPath(assetId)}`,
-    `${origin}/cards/${encodeURIComponent(assetId)}`
-  ];
+  const sourceUrls = publicWildsCardRecoverySourceUrls(assetId, origin, platform.domain);
   for (const sourceUrl of sourceUrls) {
     try {
       const recovered = parsePublicWildsCardRecord(await createReceizCommerceAdapter().readAppStateByUrl(sourceUrl));
