@@ -383,7 +383,7 @@ describe("Receiz Wilds rendering contract", () => {
     const controls = await readFile("src/features/play/WildsWorldControls.tsx", "utf8");
 
     assert.match(world, /OrbitControls/);
-    assert.match(world, /enableDamping/);
+    assert.match(world, /enableDamping=\{false\}/);
     assert.match(world, /enablePan=\{false\}/);
     assert.match(world, /minDistance=\{4\.8\}/);
     assert.match(world, /maxDistance=\{13\.5\}/);

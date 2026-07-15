@@ -176,7 +176,7 @@ function CameraRig({ onCameraHeadingChange }: { onCameraHeadingChange: (heading:
   });
   return <OrbitControls
       dampingFactor={.08}
-      enableDamping
+    enableDamping={false}
       enablePan={false}
       maxDistance={13.5}
       maxPolarAngle={Math.PI / 2.15}

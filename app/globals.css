@@ -2803,7 +2803,7 @@ a {
 .wilds-control-flank:focus-visible { border-color: rgba(247, 201, 72, 0.72); color: #fff2a8; transform: translateY(-1px); }
 .wilds-control-flank:focus-visible { outline: 3px solid rgba(255, 242, 168, 0.82); outline-offset: 2px; }
 .wilds-control-flank:active { transform: translateY(1px) scale(0.96); }
-.wilds-living-world-hud { position: absolute; z-index: 25; top: 76px; right: 12px; display: flex; max-width: calc(100% - 108px); gap: 6px; }
+.wilds-living-world-hud { position: absolute; z-index: 8; top: 76px; right: 12px; display: flex; max-width: calc(100% - 108px); gap: 6px; }
 .wilds-live-pill { display: flex; min-height: 34px; align-items: center; gap: 7px; padding: 0 10px; border: 1px solid rgba(113,232,195,.32); border-radius: 999px; color: #effff9; background: rgba(7,25,31,.84); box-shadow: 0 10px 24px rgba(0,0,0,.24); backdrop-filter: blur(16px); font-size: 10px; font-weight: 850; }
 .wilds-live-pill i { width: 7px; height: 7px; border-radius: 50%; background: #f7c948; box-shadow: 0 0 12px currentColor; }
 .wilds-live-pill.mode-receiz_live i { background: #71e8c3; }
