@@ -11344,6 +11344,14 @@ button.product-purchase-secondary-link {
 .wilds-mastery-grid small, .wilds-mastery-affinity { color: #7fa1aa; font-size: 8px; font-weight: 850; letter-spacing: .05em; text-transform: uppercase; }
 .wilds-mastery-grid strong { color: #effff9; font-size: 13px; }
 .wilds-mastery-affinity { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wilds-narrative-memory { display: grid; gap: 7px; padding: 11px; border: 1px solid rgb(247 210 91 / 20%); border-radius: 15px; background: linear-gradient(135deg, rgb(247 210 91 / 9%), rgb(126 235 205 / 6%)); }
+.wilds-narrative-memory > span, .wilds-narrative-memory > div { display: grid; gap: 3px; min-width: 0; }
+.wilds-narrative-memory small { color: #91a9ae; font-size: 9px; line-height: 1.35; }
+.wilds-narrative-memory > span small { color: #f7d25b; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
+.wilds-narrative-memory strong { overflow: hidden; font-size: 14px; text-overflow: ellipsis; white-space: nowrap; }
+.wilds-narrative-memory p, .wilds-narrative-memory em { margin: 0; color: #d7ebe6; font-size: 10px; line-height: 1.4; }
+.wilds-narrative-memory b { color: #effff9; font-size: 11px; }
+.wilds-narrative-memory em { color: #9be8ce; font-style: normal; }
 .wilds-command-reward-label { color: #f7d25b; font-size: 12px; }
 .wilds-vault-sheet-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; padding-bottom: 2px; }
 .wilds-vault-sheet-heading small { color: #7fa1aa; font-size: 9px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }

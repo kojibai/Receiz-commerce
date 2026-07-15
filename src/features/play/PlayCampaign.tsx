@@ -52,6 +52,7 @@ import type { WildsRaidEncounterState, WildsRaidIntent } from "@/features/play/w
 import type { WildsBossFamilyId } from "@/features/play/wilds-boss-ecology";
 import { deriveLoadoutSynergy, projectWildsCardMastery } from "@/features/play/wilds-card-mastery";
 import { lineageSummary } from "@/features/play/wilds-lineage-utility";
+import { projectRegionalStory, projectReturnContinuity } from "@/features/play/wilds-narrative-memory";
 
 const WILDS_SAVE_KEY = "receiz:wilds:save:v2";
 const WILDS_AVATAR_KEY = "receiz:wilds:explorer:v1";
@@ -117,6 +118,8 @@ export function PlayCampaign({
   const activeMastery = activeAsset ? projectWildsCardMastery(activeAsset) : null;
   const loadoutSynergy = deriveLoadoutSynergy(deckCards, worldProgression.chapter.name);
   const activeLineage = activeAsset ? lineageSummary(activeAsset.manifest.lineage) : null;
+  const regionalStory = projectRegionalStory({ regionId: "crystal-coast", seasonSeed: `season:${worldProgression.cycle}` });
+  const returnContinuity = projectReturnContinuity({ playerName: "Explorer", regionId: regionalStory.regionId, memories: state.achievements.map((title) => ({ title, occurredAt: new Date().toISOString() })) });
   const multiplayer = useWildsMultiplayer({
     enabled: enabled && Boolean(avatarStyle) && Boolean(activeAsset),
     style: avatarStyle ?? "female",
@@ -458,6 +461,12 @@ export function PlayCampaign({
               <em>{worldProgression.worldEvent.objective}</em>
             </span>
             <small>Permanent mastery {state.worldMastery} · Next realm at {worldProgression.nextChapterAt}</small>
+          </div>
+          <div className="wilds-narrative-memory" aria-label="Regional story and return continuity">
+            <span><small>Living regional story</small><strong>{regionalStory.title}</strong></span>
+            <p>{returnContinuity.greeting}</p>
+            <div><b>{regionalStory.chapters[state.completedMissionIds.length % regionalStory.chapters.length]?.title}</b><small>{regionalStory.chapters[state.completedMissionIds.length % regionalStory.chapters.length]?.premise}</small></div>
+            <em>{returnContinuity.nextHook}</em>
           </div>
           <p>{activeMission.requirement}</p>
           <div className="wilds-progress" aria-label={`${state.missionProgress}% mission progress`}>
