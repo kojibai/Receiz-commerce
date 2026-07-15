@@ -106,6 +106,9 @@ export function merchantProofAuthorityRequirement(input: {
   handle?: string | null;
   localReceizIdConnected?: boolean;
   localProofVerified?: boolean;
+  browserReceizIdConnected?: boolean;
+  browserProofVerified?: boolean;
+  browserProofKeyFile?: unknown;
 }): MerchantAuthorityGate {
   const handle = normalizedHandle(input.handle);
 
@@ -117,7 +120,12 @@ export function merchantProofAuthorityRequirement(input: {
     };
   }
 
-  if (input.localReceizIdConnected && input.localProofVerified) {
+  const persistedBrowserProofAvailable =
+    input.browserReceizIdConnected === true &&
+    input.browserProofVerified === true &&
+    isRecord(input.browserProofKeyFile);
+
+  if ((input.localReceizIdConnected && input.localProofVerified) || persistedBrowserProofAvailable) {
     return {
       ok: true,
       handle: handle || "identity-seal",

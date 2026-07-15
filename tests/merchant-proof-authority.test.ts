@@ -49,6 +49,25 @@ describe("merchant proof authority gate", () => {
     }
   });
 
+  it("accepts the persisted browser Identity Seal when hydrated auth flags are stale", () => {
+    const gate = merchantProofAuthorityRequirement({
+      action: "publish",
+      delegatedPermission: false,
+      handle: "merchant.receiz.id",
+      localReceizIdConnected: false,
+      localProofVerified: false,
+      browserReceizIdConnected: true,
+      browserProofVerified: true,
+      browserProofKeyFile: { schema: "receiz.key.v1", name: "Receiz Key", version: 1 }
+    });
+
+    assert.deepEqual(gate, {
+      ok: true,
+      handle: "merchant.receiz.id",
+      source: "proof_object"
+    });
+  });
+
   it("carries the local Identity Seal key file for signed public-store publish", () => {
     const keyFile = {
       schema: "receiz.key.v1",

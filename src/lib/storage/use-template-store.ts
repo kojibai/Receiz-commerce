@@ -2002,12 +2002,18 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
 
     const snapshot = stateRef.current;
     const result = await fetchReceizProfile().catch(() => null);
+    const browserIdentity = parseBrowserReceizIdSession(
+      safeGetLocalStorage(window.localStorage, BROWSER_RECEIZ_ID_SESSION_KEY)
+    );
     const gate = merchantProofAuthorityRequirement({
       action,
       delegatedPermission: Boolean(result?.connected),
-      handle: result?.profile?.handle,
+      handle: result?.profile?.handle || snapshot.auth.receizId.handle || browserIdentity?.receizId.handle,
       localReceizIdConnected: snapshot.auth.receizId.connected,
-      localProofVerified: snapshot.auth.receizId.localProofVerified
+      localProofVerified: snapshot.auth.receizId.localProofVerified,
+      browserReceizIdConnected: browserIdentity?.receizId.connected,
+      browserProofVerified: browserIdentity?.receizId.localProofVerified,
+      browserProofKeyFile: merchantProofKeyFile()
     });
 
     if (gate.ok) {
@@ -2045,7 +2051,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
     setReceizSessionPending(false);
 
     return false;
-  }, []);
+  }, [merchantProofKeyFile]);
 
   const publishWorkspace = useCallback(async (options: {
     feedbackId: "publish" | "brand.saveTheme";
