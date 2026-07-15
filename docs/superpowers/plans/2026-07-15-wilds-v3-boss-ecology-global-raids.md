@@ -194,7 +194,7 @@ git commit -m "feat: derive canonical raid actions"
 - Consumes: Tasks 1–3 boss, round, and encounter reducers.
 - Produces: boss/round/encounter projections; event kinds for rumor, tracking, movement, assault, round opening/admission/action/lease/rotation/settlement, transformation, vulnerability, defeat, memorial, withdrawal, and successor; commands `boss.track`, `raid.enter`, `raid.act`, `raid.lease`, and `raid.retreat`.
 
-- [ ] **Step 1: Write failing authority/replay/concurrency tests**
+- [x] **Step 1: Write failing authority/replay/concurrency tests**
 
 ```ts
 it("admits semantic actions in Pulse/Kai-Klok order and replays exact global health", () => {
@@ -210,7 +210,7 @@ it("admits one winning event, closes the round, and rejects every later action",
 });
 ```
 
-- [ ] **Step 2: Verify RED**
+- [x] **Step 2: Verify RED**
 
 Run the new service test.  
 Expected: new commands/event kinds are absent.

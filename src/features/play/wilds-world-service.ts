@@ -1,7 +1,11 @@
 import { generateCrystalBurrower, type WildsBoss } from "./wilds-boss-generator";
+import { generateWildsBoss, type WildsBossDefinition } from "./wilds-boss-ecology";
 import { advanceDynamicSite, generateCrystalBurrow, type WildsDynamicSite } from "./wilds-dynamic-sites";
 import { deriveWildsEcologyChild, generateWildsEcologyEnsemble, type WildsEcologySite } from "./wilds-ecology";
 import { admitRaidPlayer, applyRaidContribution, createWildsRaid, type WildsRaid } from "./wilds-raid-core";
+import { applyWildsRaidIntent, createWildsRaidEncounter, type WildsRaidIntent } from "./wilds-raid-encounter";
+import { admitWildsRaidParticipant, createWildsRaidRound, renewWildsRaidLease, retreatWildsRaidParticipant, settleWildsRaidRound, type WildsRaidRound } from "./wilds-raid-round";
+import type { PortableCardAsset } from "./portable-card";
 import { createWildsTeam, joinWildsTeam, scoreWildsLeague } from "./wilds-team-league";
 import { createWildsWorldEvent, type WildsWorldEvent, type WildsWorldEventKind } from "./wilds-world-event";
 import {
@@ -15,6 +19,11 @@ import {
 } from "./wilds-world-state";
 
 export type WildsWorldCommand =
+  | { type: "boss.track"; bossId: string; position: { x: number; z: number }; commandId: string }
+  | { type: "raid.enter"; bossId: string; roundId: string; position: { x: number; z: number }; preferredSquad?: number; commandId: string }
+  | { type: "raid.act"; bossId: string; roundId: string; intent: WildsRaidIntent["type"]; commandId: string }
+  | { type: "raid.lease"; bossId: string; roundId: string; status: "connected" | "disconnected"; commandId: string }
+  | { type: "raid.retreat"; bossId: string; roundId: string; commandId: string }
   | { type: "raid.join"; bossId: string; preferredSquad?: number; commandId: string }
   | { type: "raid.contribute"; bossId: string; damage: number; support: number; cardProofDigest: string; commandId: string }
   | { type: "team.create"; name: string; commandId: string }
@@ -27,6 +36,7 @@ export type WildsWorldAuthority = {
   canonical: boolean;
   pulse: string;
   occurredAt: string;
+  card?: PortableCardAsset;
 };
 
 function commandIdValid(value: string) {
@@ -89,8 +99,8 @@ export class WildsWorldService {
     events.push(this.append("site.phase_changed", { siteId: site.id, phase: tracked.phase }, authority, causeId));
     const emerged = advanceDynamicSite(tracked, "emerged");
     events.push(this.append("site.phase_changed", { siteId: site.id, phase: emerged.phase }, authority, causeId));
-    const boss = generateCrystalBurrower({ site: emerged, pulse: input.pulse, ordinal: 1 });
-    const raid = createWildsRaid({ boss, openedAt: input.occurredAt });
+    const boss = generateWildsBoss({ familyId: "crystal-burrower", site: emerged, pulse: input.pulse, ordinal: 1, existingBosses: Object.values(this.projection.bosses) as WildsBossDefinition[] });
+    const raid = createWildsRaidRound({ boss, ordinal: 1, openedAt: input.occurredAt });
     events.push(this.append("boss.emerged", { boss, raid }, authority, causeId));
     return { events, projection: this.projection };
   }
@@ -121,7 +131,53 @@ export class WildsWorldService {
     if (this.eventTail.some((event) => event.causeId === command.commandId)) return { events: [], projection: this.projection };
     const events: WildsWorldEvent[] = [];
 
-    if (command.type === "ecology.discover") {
+    if (command.type === "boss.track") {
+      const boss = this.projection.bosses[command.bossId];
+      if (!boss) throw new Error("wilds_world_boss_missing");
+      const position = boss.position as { x: number; z: number } | undefined;
+      const radius = Number(boss.territoryRadius ?? 18);
+      if (!position || !positionNear(command.position, position, radius * 2)) throw new Error("wilds_boss_tracking_location_invalid");
+      events.push(this.append("site.phase_changed", { siteId: boss.siteId, phase: "tracked", bossId: boss.id, playerId: authority.actorId }, authority, command.commandId));
+    } else if (command.type === "raid.enter") {
+      const boss = this.projection.bosses[command.bossId];
+      const raid = this.projection.raids[command.roundId] as WildsRaidRound | undefined;
+      if (!boss || !raid || raid.bossId !== boss.id) throw new Error("wilds_world_raid_missing");
+      const position = boss.position as { x: number; z: number } | undefined;
+      if (!position || !positionNear(command.position, position, Number(boss.territoryRadius ?? 18))) throw new Error("wilds_raid_location_invalid");
+      const admitted = admitWildsRaidParticipant(raid, { playerId: authority.actorId, occurredAt: authority.occurredAt, eventOrdinal: this.projection.revision + 1, preferredSquad: command.preferredSquad });
+      events.push(this.append("raid.entered", { raid: admitted.round, boss, playerId: authority.actorId, role: admitted.role, squad: admitted.squad }, authority, command.commandId));
+    } else if (command.type === "raid.lease") {
+      const boss = this.projection.bosses[command.bossId];
+      const raid = this.projection.raids[command.roundId] as WildsRaidRound | undefined;
+      if (!boss || !raid || raid.bossId !== boss.id) throw new Error("wilds_world_raid_missing");
+      const nextRound = renewWildsRaidLease(raid, { playerId: authority.actorId, status: command.status, occurredAt: authority.occurredAt });
+      events.push(this.append("raid.lease_changed", { raid: nextRound, boss, playerId: authority.actorId, status: command.status }, authority, command.commandId));
+    } else if (command.type === "raid.retreat") {
+      const boss = this.projection.bosses[command.bossId];
+      const raid = this.projection.raids[command.roundId] as WildsRaidRound | undefined;
+      if (!boss || !raid || raid.bossId !== boss.id) throw new Error("wilds_world_raid_missing");
+      const nextRound = retreatWildsRaidParticipant(raid, { playerId: authority.actorId, occurredAt: authority.occurredAt });
+      events.push(this.append("raid.retreated", { raid: nextRound, boss, playerId: authority.actorId }, authority, command.commandId));
+    } else if (command.type === "raid.act") {
+      if (!authority.card) throw new Error("wilds_world_verified_card_required");
+      const boss = this.projection.bosses[command.bossId] as unknown as WildsBossDefinition | undefined;
+      const raid = this.projection.raids[command.roundId] as WildsRaidRound & { encounter?: ReturnType<typeof createWildsRaidEncounter> } | undefined;
+      if (!boss || !raid || raid.bossId !== boss.id) throw new Error("wilds_world_raid_missing");
+      if (!raid.squads.flat().includes(authority.actorId) && !raid.supportPlayerIds.includes(authority.actorId)) throw new Error("wilds_raid_player_not_admitted");
+      const encounter = raid.encounter ?? createWildsRaidEncounter({ boss, roundId: raid.id, openedAt: raid.openedAt });
+      const nextEncounter = applyWildsRaidIntent(encounter, { type: command.intent, commandId: command.commandId }, {
+        actorId: authority.actorId, card: authority.card, eventOrdinal: this.projection.revision + 1, occurredAt: authority.occurredAt
+      });
+      const nextBoss = { ...boss, health: nextEncounter.bossHealth, phase: nextEncounter.phase === "active" ? "contested" : nextEncounter.phase } as WildsBossDefinition;
+      const nextRound = nextEncounter.phase === "defeated"
+        ? { ...settleWildsRaidRound(raid, { occurredAt: authority.occurredAt, winningEventId: command.commandId }), encounter: nextEncounter }
+        : { ...raid, phase: nextEncounter.phase === "transforming" ? "transformation_lock" as const : "active" as const, encounter: nextEncounter };
+      const acceptedAction = nextEncounter.actions.at(-1);
+      events.push(this.append("raid.acted", { raid: nextRound, boss: nextBoss, playerId: authority.actorId, acceptedAction: acceptedAction ? { ...acceptedAction } : null }, authority, command.commandId));
+      if (nextEncounter.phase === "defeated") {
+        events.push(this.append("boss.defeated", { bossId: boss.id, defeatedAt: authority.occurredAt, winningCommandId: command.commandId }, authority, command.commandId));
+      }
+    } else if (command.type === "ecology.discover") {
       const site = this.projection.ecologySites[command.siteId];
       if (!site || site.phase !== "foreshadowed") throw new Error("wilds_ecology_discovery_phase_invalid");
       if (!positionNear(command.position, site.position, site.radius)) throw new Error("wilds_ecology_location_invalid");

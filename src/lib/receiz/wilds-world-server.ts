@@ -3,6 +3,7 @@ import type { JsonObject } from "@receiz/sdk";
 import { WildsWorldService, type WildsWorldCommand } from "@/features/play/wilds-world-service";
 import { findWildsWorldRecord, selectWildsWorldSnapshot } from "@/features/play/wilds-world-record";
 import type { WildsWorldEvent } from "@/features/play/wilds-world-event";
+import type { PortableCardAsset } from "@/features/play/portable-card";
 import { platform } from "@/lib/platform";
 import { createReceizCommerceAdapter } from "./adapter";
 import { resolveWildsMultiplayerActor, type WildsMultiplayerActor } from "./wilds-multiplayer-server";
@@ -101,7 +102,7 @@ export async function executeWildsWorldCommand(request: NextRequest, body: unkno
   await hydrateWildsWorldFromReceiz(request);
   if (actor.practice) {
     const now = new Date().toISOString();
-    const result = practiceService().execute(value.command as WildsWorldCommand, { actorId: actor.playerId, canonical: true, pulse: now, occurredAt: now });
+    const result = practiceService().execute(value.command as WildsWorldCommand, { actorId: actor.playerId, canonical: true, pulse: now, occurredAt: now, card: value.card as PortableCardAsset | undefined });
     return {
       projection: result.projection,
       events: result.events,
@@ -112,7 +113,7 @@ export async function executeWildsWorldCommand(request: NextRequest, body: unkno
   const before = { checkpoint: current.checkpoint(), events: current.events() };
   const command = value.command as WildsWorldCommand;
   const now = new Date().toISOString();
-  const result = current.execute(command, { actorId: actor.playerId, canonical: true, pulse: now, occurredAt: now });
+  const result = current.execute(command, { actorId: actor.playerId, canonical: true, pulse: now, occurredAt: now, card: value.card as PortableCardAsset | undefined });
   let publication = await publish(request, actor, current);
   if (!publication.published) {
     root()[serviceKey] = new WildsWorldService(before);

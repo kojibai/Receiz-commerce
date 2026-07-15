@@ -8,6 +8,10 @@ export type WildsWorldEventKind =
   | "boss.emerged"
   | "raid.joined"
   | "raid.contributed"
+  | "raid.entered"
+  | "raid.acted"
+  | "raid.lease_changed"
+  | "raid.retreated"
   | "boss.defeated"
   | "site.memorialized"
   | "ecology.spawned"
@@ -43,6 +47,10 @@ const eventKinds = new Set<WildsWorldEventKind>([
   "boss.emerged",
   "raid.joined",
   "raid.contributed",
+  "raid.entered",
+  "raid.acted",
+  "raid.lease_changed",
+  "raid.retreated",
   "boss.defeated",
   "site.memorialized",
   "ecology.spawned",

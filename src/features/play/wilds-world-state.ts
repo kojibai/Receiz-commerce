@@ -33,7 +33,7 @@ export type WildsWorldEcologyProjection = WildsEcologySite & {
 export type WildsWorldBossProjection = {
   id: string;
   siteId: string;
-  phase: "emerged" | "engaged" | "defeated";
+  phase: "rumored" | "tracked" | "emerged" | "contested" | "engaged" | "transforming" | "vulnerable" | "defeated" | "memorialized" | "withdrawn";
   health: number;
   maxHealth: number;
   defeatedAt: string | null;
@@ -43,7 +43,7 @@ export type WildsWorldBossProjection = {
 export type WildsWorldRaidProjection = {
   id: string;
   bossId: string;
-  phase: "forming" | "active" | "settled";
+  phase: "forming" | "active" | "transformation_lock" | "resolving" | "settled" | "expired";
   [key: string]: unknown;
 };
 
@@ -162,7 +162,11 @@ export function reduceWildsWorldEvent(state: WildsWorldProjection, event: WildsW
       });
     }
     case "raid.joined":
-    case "raid.contributed": {
+    case "raid.contributed":
+    case "raid.entered":
+    case "raid.acted":
+    case "raid.lease_changed":
+    case "raid.retreated": {
       const raid = entity<WildsWorldRaidProjection>(payload.raid, "raid");
       const boss = payload.boss ? entity<WildsWorldBossProjection>(payload.boss, "boss") : null;
       return appendEvent(state, event, {
