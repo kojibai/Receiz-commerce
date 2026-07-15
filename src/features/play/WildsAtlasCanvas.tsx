@@ -2,7 +2,7 @@
 
 import { useLayoutEffect, useMemo, useRef } from "react";
 import { Canvas } from "@react-three/fiber";
-import { OrbitControls, Sparkles } from "@react-three/drei";
+import { Html, OrbitControls, Sparkles } from "@react-three/drei";
 import * as THREE from "three";
 import { WILDS_REGION_SIZE } from "./multiplayer-core";
 import type { WildsAtlasProjection } from "./wilds-world-atlas";
@@ -30,11 +30,14 @@ export function WildsAtlasCanvas({
         gl={{ antialias: true, powerPreference: "high-performance" }}
         shadows={false}
       >
-        <color attach="background" args={["#06151c"]} />
-        <fog attach="fog" args={["#06151c", 11, 26]} />
-        <ambientLight intensity={1.25} />
-        <directionalLight color="#fff2a8" intensity={2.2} position={[4, 10, 3]} />
-        <pointLight color="#71e8c3" intensity={18} position={[-5, 3, 2]} distance={14} />
+        <color attach="background" args={["#061820"]} />
+        <fog attach="fog" args={["#061820", 12, 29]} />
+        <ambientLight intensity={2.05} />
+        <hemisphereLight color="#bffff0" groundColor="#071719" intensity={1.7} />
+        <directionalLight color="#fff2a8" intensity={2.8} position={[4, 10, 3]} />
+        <pointLight color="#71e8c3" intensity={24} position={[-5, 3, 2]} distance={16} />
+        <pointLight color="#ff72bf" intensity={13} position={[6, 2, -5]} distance={13} />
+        <AtlasHorizon />
         <RegionField projection={projection} />
         <LandmarkBeacons projection={projection} selectedId={selectedId} onSelect={onSelect} />
         <PresenceLights projection={projection} />
@@ -65,6 +68,26 @@ export function WildsAtlasCanvas({
   );
 }
 
+function AtlasHorizon() {
+  return (
+    <group name="atlas-horizon">
+      <mesh position={[0, -0.28, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <circleGeometry args={[18, 64]} />
+        <meshBasicMaterial color="#0a3438" transparent opacity={0.78} />
+      </mesh>
+      <gridHelper args={[28, 20, "#278b79", "#123d3f"]} position={[0, -0.255, 0]} />
+      <mesh position={[0, -0.24, 0]} rotation={[Math.PI / 2, 0, 0]}>
+        <torusGeometry args={[7.6, 0.035, 8, 96]} />
+        <meshBasicMaterial color="#71e8c3" transparent opacity={0.28} />
+      </mesh>
+      <mesh position={[0, -0.23, 0]} rotation={[Math.PI / 2, 0, 0]}>
+        <torusGeometry args={[11.4, 0.025, 8, 96]} />
+        <meshBasicMaterial color="#ff72bf" transparent opacity={0.2} />
+      </mesh>
+    </group>
+  );
+}
+
 function RegionField({ projection }: { projection: WildsAtlasProjection }) {
   const mesh = useRef<THREE.InstancedMesh>(null);
   const matrix = useMemo(() => new THREE.Matrix4(), []);
@@ -82,7 +105,7 @@ function RegionField({ projection }: { projection: WildsAtlasProjection }) {
         new THREE.Vector3(1.24, height, 1.24)
       );
       mesh.current!.setMatrixAt(index, matrix);
-      mesh.current!.setColorAt(index, color.set(node.biome.ground.base));
+      mesh.current!.setColorAt(index, color.set(node.biome.ground.base).offsetHSL(0, 0.12, 0.11));
     });
     mesh.current.instanceMatrix.needsUpdate = true;
     if (mesh.current.instanceColor) mesh.current.instanceColor.needsUpdate = true;
@@ -91,7 +114,7 @@ function RegionField({ projection }: { projection: WildsAtlasProjection }) {
   return (
     <instancedMesh args={[undefined, undefined, projection.nodes.length]} ref={mesh}>
       <boxGeometry args={[1, 1, 1]} />
-      <meshStandardMaterial metalness={0.08} roughness={0.72} vertexColors />
+      <meshStandardMaterial emissive="#082f2b" emissiveIntensity={0.34} metalness={0.08} roughness={0.68} vertexColors />
     </instancedMesh>
   );
 }
@@ -140,6 +163,31 @@ function LandmarkBeacons({
           <torusGeometry args={[active ? 0.48 : 0.4, 0.025, 8, 30]} />
           <meshBasicMaterial color={landmark.accent} transparent opacity={active ? 0.92 : 0.5} />
         </mesh>
+        <Html center position={[0, 0.86, 0]} zIndexRange={[2, 1]}>
+          <div
+            className={`wilds-atlas-map-label${active ? " is-active" : ""}`}
+            style={{
+              alignItems: "center",
+              backdropFilter: "blur(12px)",
+              background: active ? "linear-gradient(135deg, #f7d25b, #71e8c3)" : "rgba(4, 23, 29, .84)",
+              border: `1px solid ${active ? "#f9e58e" : "rgba(131, 235, 207, .24)"}`,
+              borderRadius: 999,
+              boxShadow: "0 8px 24px rgba(0, 0, 0, .32)",
+              color: active ? "#071a1e" : "#eafff8",
+              display: "flex",
+              fontSize: 8,
+              fontWeight: 900,
+              gap: 6,
+              minHeight: 28,
+              padding: "0 9px",
+              pointerEvents: "none",
+              whiteSpace: "nowrap"
+            }}
+          >
+            <span style={{ background: landmark.accent, borderRadius: "50%", height: 6, width: 6 }} />
+            {landmark.name}
+          </div>
+        </Html>
       </group>
     );
   });

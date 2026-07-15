@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Icons } from "@/components/icons";
 import type { WildsPresence } from "./multiplayer-core";
 import { WILDS_FLAGSHIP_LANDMARKS, type WildsLandmarkId } from "./wilds-landmarks";
@@ -117,7 +118,7 @@ export function WildsWorldMap({
     };
   }, [currentPosition.x, currentPosition.z, guestId, open]);
 
-  if (!open) return null;
+  if (!open || typeof document === "undefined") return null;
 
   const cancelRiftHold = () => {
     if (holdTimer.current !== null) window.clearTimeout(holdTimer.current);
@@ -134,7 +135,7 @@ export function WildsWorldMap({
     }, 700);
   };
 
-  return (
+  return createPortal((
     <div
       aria-labelledby="wilds-world-map-title"
       aria-modal="true"
@@ -227,5 +228,5 @@ export function WildsWorldMap({
         </aside>
       </div>
     </div>
-  );
+  ), document.body);
 }

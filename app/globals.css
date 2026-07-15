@@ -11344,12 +11344,10 @@ button.product-purchase-secondary-link {
 .wilds-world-map {
   position: fixed;
   inset: 0;
-  z-index: 1600;
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
-  gap: 12px;
+  z-index: 6000;
+  display: block;
   min-width: 0;
-  padding: max(14px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) max(14px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left));
+  padding: 0;
   overflow: hidden;
   color: #effffb;
   background:
@@ -11371,17 +11369,27 @@ button.product-purchase-secondary-link {
 }
 
 .wilds-world-map-header {
+  position: absolute;
+  top: max(12px, env(safe-area-inset-top));
+  left: max(12px, env(safe-area-inset-left));
+  z-index: 5;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
+  width: min(330px, calc(100vw - 88px));
   min-width: 0;
-  padding: 2px 54px 0 4px;
+  padding: 10px 14px;
+  border: 1px solid rgb(131 235 207 / 20%);
+  border-radius: 18px;
+  background: linear-gradient(145deg, rgb(4 22 29 / 88%), rgb(8 35 43 / 72%));
+  box-shadow: 0 18px 50px rgb(0 0 0 / 28%);
+  backdrop-filter: blur(20px);
 }
 
 .wilds-world-map-header > div { min-width: 0; }
 .wilds-world-map-header .eyebrow { color: #71e8c3; }
-.wilds-world-map-header h2 { margin: 3px 0 0; overflow: hidden; font-size: clamp(20px, 3.2vw, 38px); line-height: 1; text-overflow: ellipsis; white-space: nowrap; }
+.wilds-world-map-header h2 { margin: 2px 0 0; overflow: visible; font-size: clamp(16px, 2vw, 20px); line-height: 1.05; text-overflow: clip; white-space: normal; }
 .wilds-world-map-header h2:focus { outline: none; }
 .wilds-world-map-close {
   position: fixed;
@@ -11404,91 +11412,109 @@ button.product-purchase-secondary-link {
 .wilds-world-map-close:focus-visible { outline: 3px solid #fff2a8; outline-offset: 2px; }
 
 .wilds-world-map-body {
-  display: grid;
-  grid-template-columns: minmax(0, 1.55fr) minmax(270px, 0.7fr);
-  gap: 12px;
+  position: absolute;
+  inset: 0;
   min-height: 0;
-  overflow: auto;
-  overscroll-behavior: contain;
+  overflow: hidden;
 }
 
 .wilds-atlas-stage {
-  position: relative;
+  position: absolute;
+  inset: 0;
   min-width: 0;
-  min-height: 360px;
+  min-height: 0;
   overflow: hidden;
-  border: 1px solid rgb(131 235 207 / 22%);
-  border-radius: clamp(20px, 3vw, 32px);
+  border: 0;
+  border-radius: 0;
   background: #06151c;
-  box-shadow: inset 0 1px rgb(255 255 255 / 8%), 0 28px 80px rgb(0 0 0 / 38%);
+  box-shadow: inset 0 1px rgb(255 255 255 / 8%);
 }
 
 .wilds-atlas-canvas,
-.wilds-atlas-canvas > div { width: 100%; height: 100%; min-height: 360px; }
+.wilds-atlas-canvas > div { width: 100%; height: 100%; min-height: 0; }
 .wilds-atlas-canvas canvas { display: block; touch-action: none; }
-.wilds-atlas-zoom { position: absolute; top: 12px; left: 12px; display: flex; gap: 4px; padding: 4px; border: 1px solid rgb(131 235 207 / 18%); border-radius: 14px; background: rgb(5 20 27 / 72%); backdrop-filter: blur(15px); }
+.wilds-atlas-zoom { position: absolute; top: max(100px, calc(env(safe-area-inset-top) + 100px)); left: max(12px, env(safe-area-inset-left)); z-index: 3; display: flex; gap: 4px; padding: 4px; border: 1px solid rgb(131 235 207 / 18%); border-radius: 999px; background: rgb(5 20 27 / 72%); box-shadow: 0 12px 36px rgb(0 0 0 / 24%); backdrop-filter: blur(15px); }
 .wilds-atlas-zoom button { min-height: 36px; padding: 0 11px; color: #86a8b2; border: 0; border-radius: 10px; background: transparent; font-size: 9px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
 .wilds-atlas-zoom button[aria-pressed="true"] { color: #071a1e; background: linear-gradient(145deg, #f7d25b, #6fe6bd); }
-.wilds-atlas-current { position: absolute; right: 12px; bottom: 12px; display: flex; min-height: 38px; align-items: center; gap: 7px; padding: 0 11px; color: #dffdf4; border: 1px solid rgb(131 235 207 / 18%); border-radius: 12px; background: rgb(5 20 27 / 76%); font-size: 10px; font-weight: 850; backdrop-filter: blur(15px); }
+.wilds-atlas-current { position: absolute; right: max(14px, env(safe-area-inset-right)); bottom: max(14px, env(safe-area-inset-bottom)); z-index: 3; display: flex; min-height: 38px; align-items: center; gap: 7px; padding: 0 11px; color: #dffdf4; border: 1px solid rgb(131 235 207 / 18%); border-radius: 999px; background: rgb(5 20 27 / 76%); font-size: 10px; font-weight: 850; box-shadow: 0 12px 36px rgb(0 0 0 / 24%); backdrop-filter: blur(15px); }
 
 .wilds-atlas-destinations {
+  position: absolute;
+  right: max(14px, env(safe-area-inset-right));
+  bottom: max(14px, env(safe-area-inset-bottom));
+  z-index: 4;
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
-  gap: 10px;
+  gap: 8px;
+  width: min(430px, calc(100vw - 28px));
   min-width: 0;
   min-height: 0;
-  overflow: auto;
-  overscroll-behavior: contain;
+  overflow: visible;
 }
-.wilds-atlas-fallback { display: grid; gap: 7px; }
-.wilds-atlas-fallback button { display: grid; grid-template-columns: 12px minmax(0, 1fr); gap: 2px 9px; min-height: 60px; align-content: center; padding: 9px 11px; color: #dff2f7; text-align: left; border: 1px solid rgb(131 235 207 / 14%); border-radius: 16px; background: rgb(255 255 255 / 5%); }
-.wilds-atlas-fallback button > span { grid-row: 1 / 3; align-self: center; width: 9px; height: 34px; border-radius: 999px; box-shadow: 0 0 20px currentColor; }
+.wilds-atlas-fallback { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.wilds-atlas-fallback button { display: grid; grid-template-columns: 7px minmax(0, 1fr); gap: 2px 7px; min-height: 52px; align-content: center; padding: 7px 9px; color: #dff2f7; text-align: left; border: 1px solid rgb(131 235 207 / 18%); border-radius: 17px; background: rgb(5 24 31 / 78%); box-shadow: 0 12px 36px rgb(0 0 0 / 20%); backdrop-filter: blur(16px); }
+.wilds-atlas-fallback button > span { grid-row: 1 / 3; align-self: center; width: 5px; height: 29px; border-radius: 999px; box-shadow: 0 0 20px currentColor; }
 .wilds-atlas-fallback strong { font-size: 12px; }
-.wilds-atlas-fallback small { color: #7597a1; font-size: 9px; line-height: 1.25; }
-.wilds-atlas-fallback button[aria-pressed="true"] { border-color: rgb(247 210 91 / 56%); background: linear-gradient(135deg, rgb(247 210 91 / 12%), rgb(113 232 195 / 9%)); transform: translateX(-3px); }
+.wilds-atlas-fallback small { display: none; }
+.wilds-atlas-fallback button[aria-pressed="true"] { border-color: rgb(247 210 91 / 56%); background: linear-gradient(135deg, rgb(247 210 91 / 18%), rgb(113 232 195 / 14%)); transform: translateY(-2px); }
+.wilds-atlas-map-label {
+  display: flex;
+  min-width: max-content;
+  min-height: 28px;
+  align-items: center;
+  gap: 6px;
+  padding: 0 9px;
+  color: #eafff8;
+  border: 1px solid rgb(131 235 207 / 24%);
+  border-radius: 999px;
+  background: rgb(4 23 29 / 84%);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 32%);
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: .02em;
+  white-space: nowrap;
+  backdrop-filter: blur(12px);
+  transform: translateY(-2px);
+}
+.wilds-atlas-map-label > span { width: 6px; height: 6px; border-radius: 50%; box-shadow: 0 0 12px currentColor; }
+.wilds-atlas-map-label.is-active { color: #071a1e; border-color: #f9e58e; background: linear-gradient(135deg, #f7d25b, #71e8c3); transform: translateY(-4px) scale(1.06); }
 
 .wilds-atlas-destination-card,
-.wilds-atlas-empty { display: grid; align-content: start; gap: 10px; min-height: 0; padding: clamp(16px, 3vw, 24px); border: 1px solid rgb(131 235 207 / 18%); border-radius: 22px; background: linear-gradient(145deg, rgb(10 40 49 / 88%), rgb(5 20 28 / 92%)); box-shadow: inset 0 1px rgb(255 255 255 / 8%); }
+.wilds-atlas-empty { display: grid; align-content: start; gap: 7px; min-height: 0; padding: 14px; border: 1px solid rgb(131 235 207 / 20%); border-radius: 22px; background: linear-gradient(145deg, rgb(10 40 49 / 88%), rgb(5 20 28 / 92%)); box-shadow: inset 0 1px rgb(255 255 255 / 8%), 0 20px 54px rgb(0 0 0 / 30%); backdrop-filter: blur(20px); }
 .wilds-atlas-destination-card h3 { margin: 0; font-size: clamp(22px, 3vw, 34px); line-height: 1; }
 .wilds-atlas-destination-card p,
 .wilds-atlas-empty p { margin: 0; color: #91abb3; font-size: 12px; line-height: 1.5; }
 .wilds-atlas-destination-meta { display: flex; flex-wrap: wrap; gap: 5px; }
 .wilds-atlas-destination-meta span { padding: 5px 8px; color: #bdeee0; border: 1px solid rgb(113 232 195 / 18%); border-radius: 999px; background: rgb(113 232 195 / 7%); font-size: 8px; font-weight: 900; text-transform: uppercase; }
-.wilds-rift-button { position: relative; display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 10px; min-height: 68px; align-items: center; margin-top: auto; padding: 10px 13px; overflow: hidden; color: #071a1e; text-align: left; border: 0; border-radius: 17px; background: linear-gradient(135deg, #f7d25b, #71e8c3 58%, #72dfff); box-shadow: 0 16px 42px rgb(77 226 188 / 22%); touch-action: none; }
+.wilds-rift-button { position: relative; display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 8px; min-height: 54px; align-items: center; margin-top: 2px; padding: 8px 11px; overflow: hidden; color: #071a1e; text-align: left; border: 0; border-radius: 15px; background: linear-gradient(135deg, #f7d25b, #71e8c3 58%, #72dfff); box-shadow: 0 16px 42px rgb(77 226 188 / 22%); touch-action: none; }
 .wilds-rift-button > svg { justify-self: center; }
 .wilds-rift-button span { display: grid; gap: 2px; }
 .wilds-rift-button strong { font-size: 13px; }
 .wilds-rift-button small { color: rgb(4 35 39 / 68%); font-size: 9px; }
 .wilds-rift-button > i { position: absolute; right: 0; bottom: 0; left: 0; height: 4px; background: #fff7b8; transform: scaleX(0); transform-origin: left; }
 .wilds-rift-button.is-holding > i { animation: wilds-rift-hold 700ms linear forwards; }
-.wilds-atlas-empty { place-content: center; justify-items: center; min-height: 150px; text-align: center; }
+.wilds-atlas-empty { place-content: center; justify-items: center; min-height: 82px; text-align: center; }
 .wilds-atlas-empty svg { color: #71e8c3; }
 
 @keyframes wilds-rift-hold { to { transform: scaleX(1); } }
 
 @media (max-width: 760px) {
-  .wilds-world-map { gap: 8px; padding: max(10px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left)); }
-  .wilds-world-map-header { align-items: flex-start; padding-left: 2px; }
-  .wilds-world-map-header h2 { max-width: calc(100vw - 76px); overflow: visible; font-size: clamp(18px, 5.2vw, 25px); line-height: 1.05; text-overflow: clip; white-space: normal; }
-  .wilds-world-map-body { grid-template-columns: minmax(0, 1.3fr) minmax(220px, .7fr); }
-  .wilds-atlas-stage,
-  .wilds-atlas-canvas,
-  .wilds-atlas-canvas > div { min-height: 300px; }
+  .wilds-world-map-header { align-items: flex-start; width: min(312px, calc(100vw - 78px)); }
+  .wilds-world-map-header h2 { max-width: 100%; font-size: 17px; }
 }
 
 @media (max-width: 560px) {
-  .wilds-world-map-body { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(310px, 52dvh) auto; overflow: auto; }
-  .wilds-atlas-stage,
-  .wilds-atlas-canvas,
-  .wilds-atlas-canvas > div { min-height: 310px; }
-  .wilds-atlas-destinations { overflow: visible; }
-  .wilds-atlas-fallback { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .wilds-atlas-fallback button { grid-template-columns: 7px minmax(0, 1fr); min-height: 64px; padding: 7px; }
-  .wilds-atlas-fallback button > span { width: 5px; height: 30px; }
-  .wilds-atlas-fallback small { display: none; }
+  .wilds-world-map-header { top: max(10px, env(safe-area-inset-top)); left: 10px; padding: 8px 11px; border-radius: 16px; }
+  .wilds-world-map-header .eyebrow { font-size: 9px; }
+  .wilds-atlas-zoom { top: max(94px, calc(env(safe-area-inset-top) + 94px)); left: 10px; }
+  .wilds-atlas-destinations { right: 10px; bottom: max(10px, env(safe-area-inset-bottom)); left: 10px; width: auto; }
+  .wilds-atlas-current { right: 10px; bottom: calc(max(10px, env(safe-area-inset-bottom)) + 205px); }
+  .wilds-atlas-fallback button { min-height: 50px; padding: 6px 7px; }
   .wilds-atlas-fallback strong { font-size: 9px; line-height: 1.1; }
-  .wilds-atlas-destination-card { min-height: 188px; padding: 15px; }
-  .wilds-atlas-destination-card h3 { font-size: 23px; }
+  .wilds-atlas-destination-card { padding: 11px; }
+  .wilds-atlas-destination-card h3 { font-size: 20px; }
+  .wilds-atlas-destination-card p { font-size: 10px; line-height: 1.3; }
+  .wilds-atlas-destination-meta span { padding: 4px 6px; font-size: 7px; }
+  .wilds-rift-button { min-height: 48px; }
   .wilds-atlas-zoom button { min-height: 34px; padding: 0 8px; font-size: 7.5px; }
 }
 

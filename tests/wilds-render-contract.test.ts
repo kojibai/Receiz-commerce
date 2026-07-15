@@ -13,6 +13,8 @@ describe("Receiz Wilds rendering contract", () => {
     assert.match(map, /aria-label="Close world map"/);
     assert.match(map, /aria-label="Hold to Rift Drop"/);
     assert.match(map, /wilds-atlas-fallback/);
+    assert.match(map, /createPortal/);
+    assert.match(map, /document\.body/);
     assert.match(map, /\.focus\(\)/);
     assert.match(map, /event\.key === "Escape"/);
     assert.match(map, /previousFocus/);
@@ -21,6 +23,8 @@ describe("Receiz Wilds rendering contract", () => {
     assert.match(canvas, /maxDistance/);
     assert.match(canvas, /qualityProfile\.dpr/);
     assert.match(canvas, /instancedMesh/);
+    assert.match(canvas, /function AtlasHorizon/);
+    assert.match(canvas, /gridHelper/);
     assert.match(css, /@media \(max-width: 760px\)[\s\S]*?\.wilds-world-map-header h2\s*\{[^}]*white-space:\s*normal/s);
   });
 

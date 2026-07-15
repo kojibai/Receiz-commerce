@@ -60,10 +60,12 @@ describe("mobile storefront layout CSS", () => {
   it("keeps the atlas and new flank controls reachable on small screens", () => {
     assert.match(css, /\.wilds-screen-controls\s*\{[^}]*grid-template-columns:\s*minmax\(84px,\s*1fr\) 44px minmax\(68px,\s*108px\) 44px minmax\(84px,\s*1fr\)/s);
     assert.match(css, /\.wilds-control-flank\s*\{[^}]*min-height:\s*44px/s);
-    assert.match(css, /\.wilds-world-map\s*\{[^}]*position:\s*fixed;[^}]*inset:\s*0;[^}]*z-index:\s*1600/s);
+    assert.match(css, /\.wilds-world-map\s*\{[^}]*position:\s*fixed;[^}]*inset:\s*0;[^}]*z-index:\s*6000/s);
     assert.match(css, /\.wilds-world-map-close\s*\{[^}]*top:\s*max\(12px,\s*env\(safe-area-inset-top\)\)/s);
-    assert.match(css, /\.wilds-world-map-body\s*\{[^}]*overflow:\s*auto/s);
-    assert.match(css, /@media \(max-width:\s*560px\)[\s\S]*\.wilds-world-map-body\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\)/s);
+    assert.match(css, /\.wilds-world-map-body\s*\{[^}]*position:\s*absolute;[^}]*inset:\s*0;[^}]*overflow:\s*hidden/s);
+    assert.match(css, /\.wilds-atlas-stage\s*\{[^}]*position:\s*absolute;[^}]*inset:\s*0/s);
+    assert.match(css, /\.wilds-atlas-destinations\s*\{[^}]*position:\s*absolute;[^}]*z-index:\s*4/s);
+    assert.match(css, /@media \(max-width:\s*560px\)[\s\S]*\.wilds-atlas-destinations\s*\{[^}]*right:\s*10px;[^}]*bottom:\s*max\(10px,\s*env\(safe-area-inset-bottom\)\);[^}]*left:\s*10px/s);
   });
 
   it("uses customer ownership language on the mobile assets page", () => {
