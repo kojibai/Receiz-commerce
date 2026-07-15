@@ -5,13 +5,14 @@ import type { PortableCardAsset } from "./portable-card";
 import type { WildsWorldCommand } from "./wilds-world-service";
 import { WILDS_WORLD_ID } from "./wilds-world-event";
 import type { WildsWorldProjection } from "./wilds-world-state";
+import type { WildsRaidIntent } from "./wilds-raid-encounter";
 
 export function acceptWildsWorldSnapshot(current: WildsWorldProjection | null, incoming: WildsWorldProjection) {
   return current && current.revision > incoming.revision ? current : incoming;
 }
 
-export function buildWildsWorldCommandBody(guestId: string, command: WildsWorldCommand) {
-  return { guestId, command };
+export function buildWildsWorldCommandBody(guestId: string, command: WildsWorldCommand, card?: PortableCardAsset) {
+  return card ? { guestId, command, card } : { guestId, command };
 }
 
 export function parseWildsWorldSnapshotResponse(value: unknown): WildsWorldProjection {
@@ -82,7 +83,7 @@ export function useWildsWorld(input: { enabled: boolean; guestId: string; active
       const value = await request("/api/wilds/world/command", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify(buildWildsWorldCommandBody(input.guestId, command))
+        body: JSON.stringify(buildWildsWorldCommandBody(input.guestId, command, command.type === "raid.act" ? input.activeCard ?? undefined : undefined))
       });
       const projection = parseWildsWorldSnapshotResponse({ ok: true, projection: value.projection });
       setSnapshot((current) => acceptWildsWorldSnapshot(current, projection));
@@ -113,6 +114,14 @@ export function useWildsWorld(input: { enabled: boolean; guestId: string; active
       return post({ type: "ecology.contribute", siteId, position, amount, cardProofDigest: input.activeCard.proof.digest, commandId: commandId("command:ecology:contribute") });
     },
     joinRaid: (bossId: string, preferredSquad?: number) => post({ type: "raid.join", bossId, preferredSquad, commandId: commandId("command:raid:join") }),
+    trackBoss: (bossId: string, position: { x: number; z: number }) => post({ type: "boss.track", bossId, position, commandId: commandId("command:boss:track") }),
+    enterRaid: (bossId: string, roundId: string, position: { x: number; z: number }, preferredSquad?: number) => post({ type: "raid.enter", bossId, roundId, position, preferredSquad, commandId: commandId("command:raid:enter") }),
+    actRaid: (bossId: string, roundId: string, intent: WildsRaidIntent["type"]) => {
+      if (!input.activeCard) throw new Error("wilds_world_active_card_required");
+      return post({ type: "raid.act", bossId, roundId, intent, commandId: commandId("command:raid:act") });
+    },
+    leaseRaid: (bossId: string, roundId: string, status: "connected" | "disconnected") => post({ type: "raid.lease", bossId, roundId, status, commandId: commandId("command:raid:lease") }),
+    retreatRaid: (bossId: string, roundId: string) => post({ type: "raid.retreat", bossId, roundId, commandId: commandId("command:raid:retreat") }),
     contribute: (bossId: string, damage: number, support: number) => {
       if (!input.activeCard) throw new Error("wilds_world_active_card_required");
       return post({ type: "raid.contribute", bossId, damage, support, cardProofDigest: input.activeCard.proof.digest, commandId: commandId("command:raid:contribute") });

@@ -708,4 +708,16 @@ describe("Receiz Wilds rendering contract", () => {
     assert.match(actions, /stabilize/);
     assert.match(actions, /rotate_request/);
   });
+
+  it("connects physical boss entry, semantic actions, receipts, and exact world return", async () => {
+    const campaign = await readFile("src/features/play/PlayCampaign.tsx", "utf8");
+    const worldHook = await readFile("src/features/play/use-wilds-world.ts", "utf8");
+    assert.match(campaign, /<WildsRaidExperience/);
+    assert.match(campaign, /record-raid-event/);
+    assert.match(campaign, /createWildsRaidReceipt/);
+    assert.match(campaign, /raidReturnPosition/);
+    assert.match(worldHook, /type:\s*"raid\.act"/);
+    assert.match(worldHook, /type:\s*"raid\.lease"/);
+    assert.match(worldHook, /type:\s*"raid\.retreat"/);
+  });
 });

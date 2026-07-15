@@ -1,4 +1,5 @@
 import type { WildsEcologyFamilyId } from "./wilds-ecology";
+import type { WildsBossFamilyId } from "./wilds-boss-ecology";
 
 export type WildsAudioSettings = {
   master: number;
@@ -39,6 +40,18 @@ export type WildsAudioCue =
   | "ecology-bloom"
   | "ecology-storm"
   | "ecology-distress"
+  | "boss-crystal"
+  | "boss-skycoil"
+  | "boss-mirecrown"
+  | "boss-embermane"
+  | "boss-tidal"
+  | "boss-echo"
+  | "boss-lumen"
+  | "boss-voidroot"
+  | "boss-action"
+  | "boss-transform"
+  | "boss-vulnerable"
+  | "boss-defeat"
   | "confirm"
   | "error";
 
@@ -123,6 +136,18 @@ const CUE_VOICES: Readonly<Record<WildsAudioCue, CueVoice>> = {
   "ecology-bloom": { frequency: 349, endFrequency: 988, duration: 0.72, gain: 0.12, type: "sine" },
   "ecology-storm": { frequency: 123, endFrequency: 247, duration: 0.66, gain: 0.15, type: "sawtooth" },
   "ecology-distress": { frequency: 262, endFrequency: 196, duration: 0.48, gain: 0.14, type: "square" },
+  "boss-crystal": { frequency: 196, endFrequency: 988, duration: .72, gain: .17, type: "triangle" },
+  "boss-skycoil": { frequency: 147, endFrequency: 1_176, duration: .66, gain: .17, type: "sawtooth" },
+  "boss-mirecrown": { frequency: 82, endFrequency: 220, duration: .88, gain: .18, type: "triangle" },
+  "boss-embermane": { frequency: 110, endFrequency: 659, duration: .58, gain: .19, type: "square" },
+  "boss-tidal": { frequency: 123, endFrequency: 523, duration: .82, gain: .16, type: "sine" },
+  "boss-echo": { frequency: 174, endFrequency: 698, duration: .9, gain: .15, type: "sine" },
+  "boss-lumen": { frequency: 392, endFrequency: 1_318, duration: .78, gain: .14, type: "triangle" },
+  "boss-voidroot": { frequency: 73, endFrequency: 294, duration: 1.05, gain: .2, type: "sawtooth" },
+  "boss-action": { frequency: 220, endFrequency: 440, duration: .18, gain: .18, type: "square" },
+  "boss-transform": { frequency: 147, endFrequency: 880, duration: .94, gain: .2, type: "sawtooth" },
+  "boss-vulnerable": { frequency: 523, endFrequency: 1_397, duration: .6, gain: .18, type: "triangle" },
+  "boss-defeat": { frequency: 196, endFrequency: 1_568, duration: 1.35, gain: .22, type: "sine" },
   confirm: { frequency: 540, endFrequency: 760, duration: 0.18, gain: 0.14, type: "sine" },
   error: { frequency: 210, endFrequency: 130, duration: 0.24, gain: 0.16, type: "square" }
 };
@@ -150,6 +175,16 @@ export function ecologyAudioCue(action: "rumor" | "discovered" | "step" | "resol
     : action === "step" ? "ecology-step"
       : action === "resolved" ? "ecology-resolved"
         : ECOLOGY_FAMILY_CUES[familyId];
+}
+
+const BOSS_FAMILY_CUES: Record<WildsBossFamilyId, WildsAudioCue> = {
+  "crystal-burrower": "boss-crystal", "skycoil-tempest": "boss-skycoil", "mirecrown-colossus": "boss-mirecrown",
+  "embermane-siegebeast": "boss-embermane", "tidal-prism-leviathan": "boss-tidal", "echo-antler-warden": "boss-echo",
+  "lumen-moth-sovereign": "boss-lumen", "voidroot-devourer": "boss-voidroot"
+};
+
+export function bossAudioCue(action: "telegraph" | "action" | "transform" | "vulnerable" | "defeat", familyId: WildsBossFamilyId): WildsAudioCue {
+  return action === "action" ? "boss-action" : action === "transform" ? "boss-transform" : action === "vulnerable" ? "boss-vulnerable" : action === "defeat" ? "boss-defeat" : BOSS_FAMILY_CUES[familyId];
 }
 
 function clampUnit(value: unknown, fallback: number) {

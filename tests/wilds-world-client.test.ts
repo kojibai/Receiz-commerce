@@ -24,6 +24,15 @@ describe("Wilds world client contract", () => {
     });
   });
 
+  it("sends sealed card material only for semantic raid actions", () => {
+    const card = { id: "card:one", proof: { digest: `sha256:${"a".repeat(64)}` } } as never;
+    assert.deepEqual(buildWildsWorldCommandBody("guest-12345678", { type: "raid.act", bossId: "boss:one", roundId: "round:one", intent: "strike", commandId: "command:act" }, card), {
+      guestId: "guest-12345678",
+      command: { type: "raid.act", bossId: "boss:one", roundId: "round:one", intent: "strike", commandId: "command:act" },
+      card
+    });
+  });
+
   it("rejects malformed snapshot responses", () => {
     assert.throws(() => parseWildsWorldSnapshotResponse({ ok: true, projection: { revision: 1 } }), /wilds_world_snapshot_invalid/);
     const projection = initialWildsWorldProjection();

@@ -39,12 +39,17 @@ import { evaluateLandmarkAccess, type WildsLandmarkProgress } from "@/features/p
 import type { RiftTravelGrant } from "@/features/play/wilds-rift-travel";
 import { createWildsPlayerVault, reconcileWildsPlayerVault } from "@/features/play/wilds-player-vault";
 import { initialWildsWorldProjection } from "@/features/play/wilds-world-state";
-import { ecologyAudioCue, normalizeWildsAudioSettings, settlementAudioCue } from "@/features/play/wilds-audio";
+import { bossAudioCue, ecologyAudioCue, normalizeWildsAudioSettings, settlementAudioCue } from "@/features/play/wilds-audio";
 import { WildsLivingWorldHud } from "@/features/play/WildsLivingWorldHud";
 import { WildsSettlementExperience } from "@/features/play/WildsSettlementExperience";
 import { createWildsCivicEvent, normalizeWildsCivicActorId, projectWildsCivicHistory } from "@/features/play/wilds-civic-history";
 import { WildsEcologyExperience } from "@/features/play/WildsEcologyExperience";
 import { createWildsEcologyReceipt } from "@/features/play/wilds-ecology-history";
+import { WildsRaidExperience } from "@/features/play/WildsRaidExperience";
+import { projectWildsRaidRoles } from "@/features/play/wilds-raid-roles";
+import { createWildsRaidReceipt } from "@/features/play/wilds-raid-history";
+import type { WildsRaidEncounterState, WildsRaidIntent } from "@/features/play/wilds-raid-encounter";
+import type { WildsBossFamilyId } from "@/features/play/wilds-boss-ecology";
 
 const WILDS_SAVE_KEY = "receiz:wilds:save:v2";
 const WILDS_AVATAR_KEY = "receiz:wilds:explorer:v1";
@@ -96,6 +101,9 @@ export function PlayCampaign({
   const [movementMode, setMovementMode] = useState<WildsMovementMode>("walk");
   const [activeLandmarkId, setActiveLandmarkId] = useState<WildsLandmarkId | null>(null);
   const [activeEcologySiteId, setActiveEcologySiteId] = useState<string | null>(null);
+  const [activeRaid, setActiveRaid] = useState<{ bossId: string; roundId: string; placement: "fighter" | "support"; connected: boolean } | null>(null);
+  const [raidReturnPosition, setRaidReturnPosition] = useState<{ x: number; z: number } | null>(null);
+  const [raidBusyIntent, setRaidBusyIntent] = useState<WildsRaidIntent["type"] | null>(null);
   const [landmarkUnlocks, setLandmarkUnlocks] = useState<string[]>([]);
   const [riftError, setRiftError] = useState("");
   const activeMission = missionCards[state.completedMissionIds.length % missionCards.length];
@@ -291,6 +299,10 @@ export function PlayCampaign({
     .filter(({ site, distance }) => (site.phase === "foreshadowed" || site.phase === "discovered" || site.phase === "active") && distance <= site.radius)
     .sort((left, right) => left.distance - right.distance)[0] ?? null;
   const activeEcologySite = activeEcologySiteId ? livingWorld.snapshot?.ecologySites[activeEcologySiteId] ?? null : null;
+  const activeRaidBoss = activeRaid ? livingWorld.snapshot?.bosses[activeRaid.bossId] ?? null : null;
+  const activeRaidRound = activeRaid ? livingWorld.snapshot?.raids[activeRaid.roundId] ?? null : null;
+  const activeRaidEncounter = activeRaidRound && typeof activeRaidRound.encounter === "object" ? activeRaidRound.encounter as WildsRaidEncounterState : null;
+  const activeRaidRoles = activeAsset ? projectWildsRaidRoles(activeAsset) : null;
   const basePulse = resolveWildsContextAction({
     pendingReward: Boolean(rewardAsset),
     landmark: currentLandmark,
@@ -360,7 +372,17 @@ export function PlayCampaign({
         }).catch((error) => setRiftError(error instanceof Error ? error.message : "wilds_ecology_discovery_failed"));
         return;
       }
-      void livingWorld.joinRaid(pulse.activityId).catch((error) => setRiftError(error instanceof Error ? error.message : "wilds_raid_join_failed"));
+      const round = Object.values(livingWorld.snapshot?.raids ?? {}).find((candidate) => candidate.bossId === pulse.activityId && candidate.phase !== "settled" && candidate.phase !== "expired");
+      if (!round) { setRiftError("wilds_world_raid_missing"); return; }
+      setRaidReturnPosition({ ...state.player });
+      void livingWorld.enterRaid(pulse.activityId, round.id, state.player).then((projection) => {
+        const admitted = projection.raids[round.id];
+        if (!admitted) throw new Error("wilds_raid_admission_missing");
+        const squads = Array.isArray(admitted.squads) ? admitted.squads as string[][] : [];
+        const placement = squads.some((squad) => squad.includes(multiplayer.guestId)) ? "fighter" : "support";
+        setActiveRaid({ bossId: pulse.activityId, roundId: round.id, placement, connected: true });
+        if (nearbyLivingBoss?.familyId) presentation.playCue(bossAudioCue("telegraph", nearbyLivingBoss.familyId as WildsBossFamilyId));
+      }).catch((error) => setRiftError(error instanceof Error ? error.message : "wilds_raid_join_failed"));
       return;
     }
     if (pulse.kind === "collect" || pulse.kind === "greet") return;
@@ -685,6 +707,7 @@ export function PlayCampaign({
         landmarkProgress={landmarkProgress}
         livingWorld={livingWorld.snapshot}
         ecologyKnowledge={state.ecologyKnowledge}
+        bossKnowledge={state.bossKnowledge}
       />
       <WildsLandmarkExperience
         access={activeLandmarkId && activeLandmarkId !== "wayfinder-hollow" ? evaluateLandmarkAccess(WILDS_FLAGSHIP_LANDMARKS.find((item) => item.id === activeLandmarkId)!, landmarkProgress) : null}
@@ -737,6 +760,70 @@ export function PlayCampaign({
         participantCount={(activeEcologySite?.participantIds.length ?? 0) + 1}
         site={activeEcologySite}
         worldMode={settlementWorldMode}
+      />
+      <WildsRaidExperience
+        boss={activeRaidBoss}
+        busyIntent={raidBusyIntent}
+        canonical={livingWorld.mode === "receiz_live"}
+        cardName={activeAsset?.manifest.name ?? activeCard.name}
+        connected={activeRaid?.connected ?? false}
+        encounter={activeRaidEncounter}
+        error={livingWorld.error || riftError || null}
+        onAction={(intent) => {
+          if (!activeRaid || !activeAsset || !activeRaidBoss || !activeRaidRoles) return;
+          setRaidBusyIntent(intent);
+          void livingWorld.actRaid(activeRaid.bossId, activeRaid.roundId, intent).then((projection) => {
+            const boss = projection.bosses[activeRaid.bossId];
+            const round = projection.raids[activeRaid.roundId];
+            const cursor = projection.cursor;
+            if (!boss || !round || !cursor) throw new Error("wilds_raid_receipt_missing");
+            const encounter = round.encounter as WildsRaidEncounterState | undefined;
+            const impact = encounter?.actions.at(-1)?.impact ?? 0;
+            dispatch({
+              type: "record-raid-event",
+              event: createWildsRaidReceipt({
+                actorId: civicActorId,
+                bossId: boss.id,
+                familyId: boss.familyId as WildsBossFamilyId,
+                roundId: round.id,
+                actionId: `action:${cursor.eventId}`,
+                sourceEventId: cursor.eventId,
+                kind: "action",
+                role: activeRaidRoles.primary,
+                placement: activeRaid.placement,
+                contributionBand: impact >= 1_400 ? "legendary" : impact >= 900 ? "strong" : impact >= 400 ? "steady" : "light",
+                result: boss.phase === "defeated" ? "victory" : "accepted",
+                revision: projection.revision,
+                occurredAt: cursor.pulse,
+                cardProofDigest: activeAsset.proof.digest
+              })
+            });
+            presentation.playCue(bossAudioCue(boss.phase === "defeated" ? "defeat" : boss.phase === "transforming" ? "transform" : boss.phase === "vulnerable" ? "vulnerable" : "action", boss.familyId as WildsBossFamilyId));
+          }).catch((error) => setRiftError(error instanceof Error ? error.message : "wilds_raid_action_failed")).finally(() => setRaidBusyIntent(null));
+        }}
+        onClose={() => {
+          if (!activeRaid) return;
+          void livingWorld.retreatRaid(activeRaid.bossId, activeRaid.roundId).catch(() => undefined);
+          if (raidReturnPosition) setState((current) => ({ ...current, player: raidReturnPosition }));
+          setActiveRaid(null);
+          setRaidReturnPosition(null);
+        }}
+        onLease={(status) => {
+          if (!activeRaid) return;
+          void livingWorld.leaseRaid(activeRaid.bossId, activeRaid.roundId, status).then(() => setActiveRaid((current) => current ? { ...current, connected: status === "connected" } : current)).catch((error) => setRiftError(error instanceof Error ? error.message : "wilds_raid_lease_failed"));
+        }}
+        onRetreat={() => {
+          if (!activeRaid) return;
+          void livingWorld.retreatRaid(activeRaid.bossId, activeRaid.roundId).finally(() => {
+            if (raidReturnPosition) setState((current) => ({ ...current, player: raidReturnPosition }));
+            setActiveRaid(null);
+            setRaidReturnPosition(null);
+          });
+        }}
+        open={Boolean(activeRaid && activeRaidBoss && activeRaidRound)}
+        placement={activeRaid?.placement ?? "support"}
+        raid={activeRaidRound}
+        role={activeRaidRoles?.primary ?? "steward"}
       />
       <WildsCaptureReward asset={rewardAsset} onClose={() => {
         setRewardAsset(null);

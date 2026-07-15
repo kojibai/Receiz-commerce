@@ -435,7 +435,7 @@ git commit -m "feat: open the global raid experience"
 - Consumes: Tasks 4–8 commands, projections, personal history, atlas, environment, and raid UI.
 - Produces: nearest-boss Pulse, physical tracking/entry, semantic action dispatch, accepted receipt dispatch, reconnect/retreat, exact return coordinate, family motifs, and resolution/aftermath cues.
 
-- [ ] **Step 1: Add failing end-to-end source/audio contracts**
+- [x] **Step 1: Add failing end-to-end source/audio contracts**
 
 ```ts
 assert.match(campaign, /<WildsRaidExperience/);
@@ -446,16 +446,16 @@ assert.equal(bossAudioCue("telegraph", "skycoil-tempest"), "boss-skycoil");
 assert.equal(bossAudioCue("defeat", "crystal-burrower"), "boss-defeat");
 ```
 
-- [ ] **Step 2: Verify RED**
+- [x] **Step 2: Verify RED**
 
 Run presentation and render contracts.  
 Expected: integration and boss audio mappings are absent.
 
-- [ ] **Step 3: Implement the complete campaign loop**
+- [x] **Step 3: Implement the complete campaign loop**
 
 Project nearest eligible boss, require physical territory radius, track/enter with Pulse, dispatch semantic commands only, append personal receipts only from accepted canonical/practice projections with correct provenance, maintain/release lease, restore focus and exact player coordinate, project boss knowledge into atlas, and synthesize/dispose family, telegraph, support, transformation, vulnerability, defeat, and aftermath cues locally.
 
-- [ ] **Step 4: Verify GREEN and persistence regression**
+- [x] **Step 4: Verify GREEN and persistence regression**
 
 Run presentation, render, raid-history, game-state, and world-client tests.  
 Expected: PASS.

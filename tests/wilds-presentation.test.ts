@@ -13,6 +13,7 @@ import {
   audioCuesForTransition,
   createWildsAudioRuntime,
   ecologyAudioCue,
+  bossAudioCue,
   normalizeWildsAudioSettings,
   settlementAudioCue
 } from "../src/features/play/wilds-audio";
@@ -132,6 +133,12 @@ describe("Wilds synthesized audio", () => {
     assert.equal(ecologyAudioCue("discovered", "stormfront"), "ecology-storm");
     assert.equal(ecologyAudioCue("step", "resource-bloom"), "ecology-step");
     assert.equal(ecologyAudioCue("resolved", "unstable-portal"), "ecology-resolved");
+  });
+
+  it("maps global boss families and outcomes onto local synthesized motifs", () => {
+    assert.equal(bossAudioCue("telegraph", "skycoil-tempest"), "boss-skycoil");
+    assert.equal(bossAudioCue("action", "mirecrown-colossus"), "boss-action");
+    assert.equal(bossAudioCue("defeat", "crystal-burrower"), "boss-defeat");
   });
 
   it("destroys every synthesized audio resource", async () => {
