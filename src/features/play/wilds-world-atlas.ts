@@ -11,6 +11,9 @@ import { WILDS_FLAGSHIP_LANDMARKS, type WildsLandmarkDefinition, type WildsLandm
 import type { WildsWorldSiteProjection } from "./wilds-world-state";
 import type { WildsWorldEcologyProjection } from "./wilds-world-state";
 import type { WildsEcologyKnowledge, WildsEcologyKnowledgeVisibility } from "./wilds-ecology-history";
+import type { WildsWorldBossProjection } from "./wilds-world-state";
+import type { WildsBossKnowledge } from "./wilds-raid-history";
+import type { WildsBossFamilyId } from "./wilds-boss-ecology";
 
 export type WildsAtlasZoom = "world" | "region" | "landmark";
 
@@ -44,7 +47,18 @@ export type WildsAtlasProjection = {
   playerClusters: WildsAtlasPlayerCluster[];
   dynamicSites: (WildsWorldSiteProjection & { visibility: "signal" | "exact" | "memorial" })[];
   ecologySites: WildsAtlasEcologySite[];
+  bosses: WildsAtlasBoss[];
 };
+
+type WildsAtlasBossCommon = {
+  id: string; familyId: WildsBossFamilyId; name: string; phase: WildsWorldBossProjection["phase"];
+  healthBand: "full" | "steady" | "wounded" | "critical" | "defeated"; regionId: string;
+  territoryRadius: number; uncertaintyRadius: number;
+};
+export type WildsAtlasBoss = WildsAtlasBossCommon & (
+  | { visibility: "rumor" | "trace" }
+  | { visibility: "exact" | "contested" | "aftermath" | "historical"; position: { x: number; z: number } }
+);
 
 type WildsAtlasEcologyCommon = Pick<WildsWorldEcologyProjection, "id" | "familyId" | "name" | "phase" | "intensity" | "region" | "radius" | "activityId" | "audioMotif" | "aftermathModule" | "parentSiteId"> & {
   uncertaintyRadius: number;
@@ -66,6 +80,8 @@ export type WildsAtlasInput = {
   dynamicSites?: readonly WildsWorldSiteProjection[];
   ecologySites?: readonly WildsWorldEcologyProjection[];
   ecologyKnowledge?: Record<string, WildsEcologyKnowledge>;
+  bosses?: readonly WildsWorldBossProjection[];
+  bossKnowledge?: Record<string, WildsBossKnowledge>;
   now?: number;
 };
 
@@ -137,8 +153,30 @@ export function projectWildsAtlas(input: WildsAtlasInput): WildsAtlasProjection 
       })),
     ecologySites: (input.ecologySites ?? [])
       .filter((site) => site.phase !== "expired")
-      .map((site) => projectEcologySite(site, input.ecologyKnowledge?.[site.id]))
+      .map((site) => projectEcologySite(site, input.ecologyKnowledge?.[site.id])),
+    bosses: (input.bosses ?? [])
+      .filter((boss) => boss.phase !== "withdrawn")
+      .map((boss) => projectAtlasBoss(boss, input.bossKnowledge?.[boss.id]))
   };
+}
+
+function projectAtlasBoss(boss: WildsWorldBossProjection, knowledge?: WildsBossKnowledge): WildsAtlasBoss {
+  const ratio = boss.maxHealth > 0 ? boss.health / boss.maxHealth : 0;
+  const common: WildsAtlasBossCommon = {
+    id: boss.id,
+    familyId: boss.familyId as WildsBossFamilyId,
+    name: String(boss.name ?? boss.familyId ?? "Unknown boss"),
+    phase: boss.phase,
+    healthBand: boss.phase === "defeated" || boss.phase === "memorialized" ? "defeated" : ratio > 0.8 ? "full" : ratio > 0.45 ? "steady" : ratio > 0.2 ? "wounded" : "critical",
+    regionId: String(boss.regionId ?? "region:unknown"),
+    territoryRadius: Number(boss.territoryRadius ?? 18),
+    uncertaintyRadius: knowledge ? 0 : WILDS_REGION_SIZE * 0.8
+  };
+  const position = boss.position as { x: number; z: number } | undefined;
+  if (!knowledge || !position) return { ...common, visibility: "rumor" };
+  if (boss.phase === "memorialized") return { ...common, visibility: "historical", position: { ...position } };
+  if (boss.phase === "defeated") return { ...common, visibility: "aftermath", position: { ...position } };
+  return { ...common, visibility: boss.phase === "contested" || boss.phase === "transforming" || boss.phase === "vulnerable" ? "contested" : "exact", position: { ...position } };
 }
 
 function projectEcologySite(site: WildsWorldEcologyProjection, knowledge?: WildsEcologyKnowledge): WildsAtlasEcologySite {

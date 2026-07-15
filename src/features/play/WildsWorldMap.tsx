@@ -17,6 +17,8 @@ import { WildsAtlasCanvas } from "./WildsAtlasCanvas";
 import { describeWildsPoint } from "./wilds-world-geography";
 import type { WildsWorldProjection } from "./wilds-world-state";
 import type { WildsEcologyKnowledge } from "./wilds-ecology-history";
+import type { WildsBossKnowledge } from "./wilds-raid-history";
+import { bossTerritoryApproachPoint } from "./wilds-rift-travel";
 
 const zoomLevels: readonly WildsAtlasZoom[] = ["world", "region", "landmark"];
 
@@ -33,6 +35,7 @@ export function WildsWorldMap({
   landmarkProgress,
   livingWorld,
   ecologyKnowledge,
+  bossKnowledge,
   onClose,
   onRift
 }: {
@@ -48,6 +51,7 @@ export function WildsWorldMap({
   landmarkProgress: WildsLandmarkProgress;
   livingWorld?: WildsWorldProjection | null;
   ecologyKnowledge?: Record<string, WildsEcologyKnowledge>;
+  bossKnowledge?: Record<string, WildsBossKnowledge>;
   onClose: () => void;
   onRift: (destination: { x: number; z: number }) => void | Promise<void>;
 }) {
@@ -73,8 +77,10 @@ export function WildsWorldMap({
     players: remotePlayers,
     dynamicSites: Object.values(livingWorld?.sites ?? {}),
     ecologySites: Object.values(livingWorld?.ecologySites ?? {}),
-    ecologyKnowledge
-  }), [currentPosition, discoveredLandmarkIds, ecologyKnowledge, livingWorld?.ecologySites, livingWorld?.sites, missionProgress, remotePlayers, worldMastery, zoom]);
+    ecologyKnowledge,
+    bosses: Object.values(livingWorld?.bosses ?? {}),
+    bossKnowledge
+  }), [bossKnowledge, currentPosition, discoveredLandmarkIds, ecologyKnowledge, livingWorld?.bosses, livingWorld?.ecologySites, livingWorld?.sites, missionProgress, remotePlayers, worldMastery, zoom]);
   const projection = useMemo(() => atlasPresence.loaded ? {
     ...localProjection,
     exactPlayers: atlasPresence.players,
@@ -82,6 +88,7 @@ export function WildsWorldMap({
   } : localProjection, [atlasPresence, localProjection]);
   const selected = projection.landmarks.find((landmark) => landmark.id === selectedId) ?? null;
   const selectedEcology = projection.ecologySites.find((site) => site.id === selectedId) ?? null;
+  const selectedBoss = projection.bosses.find((boss) => boss.id === selectedId) ?? null;
   const selectedAccess = selected ? evaluateLandmarkAccess(selected, landmarkProgress) : null;
   const freeDropRegion = freeDrop ? describeWildsPoint(freeDrop) : null;
 
@@ -207,6 +214,19 @@ export function WildsWorldMap({
 
         <aside className="wilds-atlas-destinations" aria-label="World destinations">
           <div className="wilds-atlas-fallback">
+            {projection.bosses.map((boss) => (
+              <button
+                aria-label={`${boss.visibility === "rumor" ? "Track" : "Travel near"} ${boss.name}`}
+                aria-pressed={selectedId === boss.id}
+                key={boss.id}
+                onClick={() => { setFreeDrop(null); setSelectedId(boss.id); }}
+                type="button"
+              >
+                <span style={{ background: boss.healthBand === "critical" ? "#ff6b5f" : boss.visibility === "aftermath" || boss.visibility === "historical" ? "#9ed8ff" : "#ffbf5b" }} />
+                <strong>{boss.visibility === "rumor" ? "Boss rumor" : boss.name}</strong>
+                <small>{boss.visibility === "rumor" ? `${boss.regionId} · exact location hidden` : `${boss.healthBand} · ${boss.phase}`}</small>
+              </button>
+            ))}
             {projection.ecologySites.map((site) => (
               <button
                 aria-label={`${site.visibility === "rumor" ? "Investigate" : "Travel near"} ${site.name}`}
@@ -276,6 +296,17 @@ export function WildsWorldMap({
                   Accept Rift
                 </button>
               </div>
+            </section>
+          ) : selectedBoss ? (
+            <section className="wilds-atlas-destination-card" aria-live="polite">
+              <span className="eyebrow">{selectedBoss.visibility === "rumor" ? "Regional boss rumor" : selectedBoss.visibility === "aftermath" || selectedBoss.visibility === "historical" ? "World aftermath" : "Tracked global boss"}</span>
+              <h3>{selectedBoss.name}</h3>
+              <p>{selectedBoss.visibility === "rumor" ? `Track this presence in ${selectedBoss.regionId} to reveal its territory.` : `${selectedBoss.phase} · ${selectedBoss.healthBand} global health`}</p>
+              {"position" in selectedBoss ? (
+                <button onClick={() => void onRift(bossTerritoryApproachPoint({ position: selectedBoss.position, territoryRadius: selectedBoss.territoryRadius, seedDigest: selectedBoss.id }))} type="button">
+                  <Icons.globe aria-hidden="true" size={20} /> Rift outside territory
+                </button>
+              ) : <p className="wilds-atlas-access-summary">Exact coordinates remain hidden until tracking is accepted.</p>}
             </section>
           ) : selectedEcology ? (
             <section className="wilds-atlas-destination-card" aria-live="polite">

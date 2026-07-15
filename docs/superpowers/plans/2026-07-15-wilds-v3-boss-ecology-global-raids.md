@@ -295,7 +295,7 @@ git commit -m "feat: carry global raids through the player vault"
 - Consumes: canonical boss projections, player `bossKnowledge`, permanent geography, safe Rift logic.
 - Produces: `WildsAtlasBoss` visibility `rumor | trace | exact | contested | aftermath | historical`, uncertainty fields without coordinate leakage, movement path segments, assault/raid pills, and outside-territory Rift approaches.
 
-- [ ] **Step 1: Write failing privacy and coordinate tests**
+- [x] **Step 1: Write failing privacy and coordinate tests**
 
 ```ts
 it("omits exact boss coordinates until accepted tracking knowledge", () => {
@@ -311,16 +311,16 @@ it("Rifts outside the boss territory and requires walking to enter", () => {
 });
 ```
 
-- [ ] **Step 2: Verify RED**
+- [x] **Step 2: Verify RED**
 
 Run the new atlas test.  
 Expected: boss atlas projection and approach function are absent.
 
-- [ ] **Step 3: Implement progressive tracking projection**
+- [x] **Step 3: Implement progressive tracking projection**
 
 Project rumor/trace objects without `position`, exact/current paths only from valid knowledge, physical territory entry, raid/assault status, health bands without private participant data, exact aftermath monuments, and a non-scrolling one-viewpoint atlas panel. Keep remote raid entry impossible.
 
-- [ ] **Step 4: Verify GREEN and atlas/Rift regressions**
+- [x] **Step 4: Verify GREEN and atlas/Rift regressions**
 
 Run boss atlas, ecology atlas, world atlas, and Rift tests.  
 Expected: PASS.
