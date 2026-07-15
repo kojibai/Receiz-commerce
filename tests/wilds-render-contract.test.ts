@@ -151,6 +151,25 @@ describe("Receiz Wilds rendering contract", () => {
     assert.match(world, /worldMode/);
   });
 
+  it("renders two bounded detailed ecology manifestations in the shared canvas", async () => {
+    const ecology = await readFile("src/features/play/WildsEcologyEnvironment.tsx", "utf8");
+    const world = await readFile("src/features/play/WildsWorldCanvas.tsx", "utf8");
+
+    assert.match(ecology, /WILDS_ECOLOGY_FAMILIES/);
+    assert.match(ecology, /slice\(0,\s*2\)/);
+    assert.match(ecology, /instancedMesh/);
+    assert.match(ecology, /wandering-market/);
+    assert.match(ecology, /echo-ruin/);
+    assert.match(ecology, /unstable-portal/);
+    assert.match(ecology, /convergence-festival/);
+    assert.match(ecology, /creature-migration/);
+    assert.match(ecology, /resource-bloom/);
+    assert.match(ecology, /stormfront/);
+    assert.match(ecology, /settlement-distress/);
+    assert.doesNotMatch(ecology, /<Canvas/);
+    assert.match(world, /<WildsEcologyEnvironment/);
+  });
+
   it("opens the complete Wayfinder Hollow civic experience", async () => {
     const experience = await readFile("src/features/play/WildsSettlementExperience.tsx", "utf8");
     const settlement = await readFile("src/features/play/wilds-settlements.ts", "utf8");

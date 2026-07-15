@@ -23,6 +23,7 @@ import {
 } from "@/features/play/wilds-quality-profile";
 import type { WildsWorldProjection } from "@/features/play/wilds-world-state";
 import type { WildsSettlementWorldMode } from "@/features/play/WildsSettlementEnvironment";
+import { WildsEcologyEnvironment } from "@/features/play/WildsEcologyEnvironment";
 
 export function WildsWorldCanvas({
   state,
@@ -110,6 +111,7 @@ function WildsScene({
         livingWorld={livingWorld}
         worldMode={worldMode}
       />
+      <WildsEcologyEnvironment livingWorld={livingWorld} player={state.player} worldMode={worldMode} />
       <EncounterSequence state={state} />
       {remotePlayers.map((player) => <RemoteExplorer key={player.playerId} player={player} localPlayer={state.player} onSelect={onSelectPlayer} />)}
       <WildsExplorer style={avatarStyle} worldPosition={state.player} />
