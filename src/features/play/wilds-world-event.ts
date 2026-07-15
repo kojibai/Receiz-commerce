@@ -10,6 +10,12 @@ export type WildsWorldEventKind =
   | "raid.contributed"
   | "boss.defeated"
   | "site.memorialized"
+  | "ecology.spawned"
+  | "ecology.phase_changed"
+  | "ecology.discovered"
+  | "ecology.contributed"
+  | "ecology.resolved"
+  | "ecology.historicized"
   | "team.created"
   | "team.joined"
   | "league.scored";
@@ -39,6 +45,12 @@ const eventKinds = new Set<WildsWorldEventKind>([
   "raid.contributed",
   "boss.defeated",
   "site.memorialized",
+  "ecology.spawned",
+  "ecology.phase_changed",
+  "ecology.discovered",
+  "ecology.contributed",
+  "ecology.resolved",
+  "ecology.historicized",
   "team.created",
   "team.joined",
   "league.scored"

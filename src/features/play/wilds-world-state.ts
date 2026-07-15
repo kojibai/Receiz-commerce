@@ -5,6 +5,7 @@ import {
   WILDS_WORLD_ID,
   type WildsWorldEvent
 } from "./wilds-world-event";
+import type { WildsEcologySite } from "./wilds-ecology";
 
 export type WildsDynamicSitePhase = "rumored" | "tracked" | "emerged" | "assaulting" | "engaged" | "defeated" | "memorialized" | "expired";
 
@@ -19,6 +20,14 @@ export type WildsWorldSiteProjection = {
   expiresAt: string;
   bossId: string | null;
   seedDigest: string;
+};
+
+export type WildsWorldEcologyProjection = WildsEcologySite & {
+  discoveredAt: string | null;
+  discoveredBy: string | null;
+  contributionTotal: number;
+  participantIds: string[];
+  resolvedAt: string | null;
 };
 
 export type WildsWorldBossProjection = {
@@ -59,6 +68,8 @@ export type WildsWorldProjection = {
   revision: number;
   cursor: { pulse: string; kaiKlok: number; eventId: string } | null;
   sites: Record<string, WildsWorldSiteProjection>;
+  ecologySites: Record<string, WildsWorldEcologyProjection>;
+  ecologyHistory: string[];
   bosses: Record<string, WildsWorldBossProjection>;
   raids: Record<string, WildsWorldRaidProjection>;
   teams: Record<string, WildsWorldTeamProjection>;
@@ -83,6 +94,8 @@ export function initialWildsWorldProjection(): WildsWorldProjection {
     revision: 0,
     cursor: null,
     sites: {},
+    ecologySites: {},
+    ecologyHistory: [],
     bosses: {},
     raids: {},
     teams: {},
@@ -172,6 +185,33 @@ export function reduceWildsWorldEvent(state: WildsWorldProjection, event: WildsW
       const site = state.sites[siteId];
       if (!site) throw new Error("wilds_world_site_missing");
       return appendEvent(state, event, { sites: { ...state.sites, [siteId]: { ...site, phase: "memorialized" } } });
+    }
+    case "ecology.spawned": {
+      const site = entity<WildsWorldEcologyProjection>(payload.site, "ecology_site");
+      if (state.ecologySites[site.id]) throw new Error("wilds_world_ecology_site_exists");
+      return appendEvent(state, event, { ecologySites: { ...state.ecologySites, [site.id]: site } });
+    }
+    case "ecology.phase_changed": {
+      const siteId = String(payload.siteId ?? "");
+      const phase = String(payload.phase ?? "") as WildsWorldEcologyProjection["phase"];
+      const site = state.ecologySites[siteId];
+      if (!site) throw new Error("wilds_world_ecology_site_missing");
+      return appendEvent(state, event, { ecologySites: { ...state.ecologySites, [siteId]: { ...site, phase } } });
+    }
+    case "ecology.discovered":
+    case "ecology.contributed": {
+      const site = entity<WildsWorldEcologyProjection>(payload.site, "ecology_site");
+      if (!state.ecologySites[site.id]) throw new Error("wilds_world_ecology_site_missing");
+      return appendEvent(state, event, { ecologySites: { ...state.ecologySites, [site.id]: site } });
+    }
+    case "ecology.resolved":
+    case "ecology.historicized": {
+      const site = entity<WildsWorldEcologyProjection>(payload.site, "ecology_site");
+      if (!state.ecologySites[site.id]) throw new Error("wilds_world_ecology_site_missing");
+      return appendEvent(state, event, {
+        ecologySites: { ...state.ecologySites, [site.id]: site },
+        ecologyHistory: state.ecologyHistory.includes(site.id) ? state.ecologyHistory : [...state.ecologyHistory, site.id].slice(-512)
+      });
     }
     case "team.created":
     case "team.joined": {

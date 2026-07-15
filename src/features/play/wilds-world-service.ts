@@ -1,5 +1,6 @@
 import { generateCrystalBurrower, type WildsBoss } from "./wilds-boss-generator";
 import { advanceDynamicSite, generateCrystalBurrow, type WildsDynamicSite } from "./wilds-dynamic-sites";
+import { deriveWildsEcologyChild, generateWildsEcologyEnsemble, type WildsEcologySite } from "./wilds-ecology";
 import { admitRaidPlayer, applyRaidContribution, createWildsRaid, type WildsRaid } from "./wilds-raid-core";
 import { createWildsTeam, joinWildsTeam, scoreWildsLeague } from "./wilds-team-league";
 import { createWildsWorldEvent, type WildsWorldEvent, type WildsWorldEventKind } from "./wilds-world-event";
@@ -9,6 +10,7 @@ import {
   replayWildsWorld,
   reduceWildsWorldEvent,
   type WildsWorldCheckpoint,
+  type WildsWorldEcologyProjection,
   type WildsWorldProjection
 } from "./wilds-world-state";
 
@@ -16,7 +18,9 @@ export type WildsWorldCommand =
   | { type: "raid.join"; bossId: string; preferredSquad?: number; commandId: string }
   | { type: "raid.contribute"; bossId: string; damage: number; support: number; cardProofDigest: string; commandId: string }
   | { type: "team.create"; name: string; commandId: string }
-  | { type: "team.join"; teamId: string; commandId: string };
+  | { type: "team.join"; teamId: string; commandId: string }
+  | { type: "ecology.discover"; siteId: string; position: { x: number; z: number }; commandId: string }
+  | { type: "ecology.contribute"; siteId: string; position: { x: number; z: number }; amount: number; cardProofDigest: string; commandId: string };
 
 export type WildsWorldAuthority = {
   actorId: string;
@@ -91,13 +95,65 @@ export class WildsWorldService {
     return { events, projection: this.projection };
   }
 
+  tickEcology(input: { pulse: string; occurredAt: string; systemActorId: "receiz:pulse" }) {
+    if (input.systemActorId !== "receiz:pulse") throw new Error("wilds_world_pulse_authority_invalid");
+    const causeId = `ecology-pulse:${input.pulse}`;
+    if (this.eventTail.some((event) => event.causeId === causeId)) return { events: [], projection: this.projection };
+    const authority = { actorId: input.systemActorId, pulse: input.pulse, occurredAt: input.occurredAt };
+    const events: WildsWorldEvent[] = [];
+    const aftermath = Object.values(this.projection.ecologySites)
+      .filter((site) => site.phase === "aftermath")
+      .filter((site) => !Object.values(this.projection.ecologySites).some((candidate) => candidate.parentSiteId === site.id));
+    for (const parent of aftermath) {
+      const existingSites = Object.values(this.projection.ecologySites) as WildsEcologySite[];
+      const child = deriveWildsEcologyChild({ parent, ordinal: existingSites.length + 1, existingSites });
+      if (child) events.push(this.append("ecology.spawned", { site: ecologyProjection(child) }, authority, causeId));
+    }
+    const existingSites = Object.values(this.projection.ecologySites) as WildsEcologySite[];
+    const ensemble = generateWildsEcologyEnsemble({ pulse: input.pulse, existingSites, ordinalStart: existingSites.length + 1 });
+    for (const site of ensemble) events.push(this.append("ecology.spawned", { site: ecologyProjection(site) }, authority, causeId));
+    return { events, projection: this.projection };
+  }
+
   execute(command: WildsWorldCommand, authority: WildsWorldAuthority) {
     if (!authority.canonical) throw new Error("wilds_world_canonical_authority_required");
     if (!commandIdValid(command.commandId)) throw new Error("wilds_world_command_id_invalid");
     if (this.eventTail.some((event) => event.causeId === command.commandId)) return { events: [], projection: this.projection };
     const events: WildsWorldEvent[] = [];
 
-    if (command.type === "raid.join") {
+    if (command.type === "ecology.discover") {
+      const site = this.projection.ecologySites[command.siteId];
+      if (!site || site.phase !== "foreshadowed") throw new Error("wilds_ecology_discovery_phase_invalid");
+      if (!positionNear(command.position, site.position, site.radius)) throw new Error("wilds_ecology_location_invalid");
+      const discovered: WildsWorldEcologyProjection = {
+        ...site,
+        phase: "discovered",
+        discoveredAt: authority.occurredAt,
+        discoveredBy: authority.actorId
+      };
+      events.push(this.append("ecology.discovered", { site: discovered, playerId: authority.actorId }, authority, command.commandId));
+    } else if (command.type === "ecology.contribute") {
+      if (!/^sha256:[a-f0-9]{64}$/.test(command.cardProofDigest)) throw new Error("wilds_world_card_proof_invalid");
+      if (!Number.isSafeInteger(command.amount) || command.amount < 1 || command.amount > 10) throw new Error("wilds_ecology_contribution_invalid");
+      let site = this.projection.ecologySites[command.siteId];
+      if (!site || (site.phase !== "discovered" && site.phase !== "active")) throw new Error("wilds_ecology_contribution_phase_invalid");
+      if (!positionNear(command.position, site.position, site.radius)) throw new Error("wilds_ecology_location_invalid");
+      if (site.phase === "discovered") {
+        events.push(this.append("ecology.phase_changed", { siteId: site.id, phase: "active" }, authority, command.commandId));
+        site = this.projection.ecologySites[site.id]!;
+      }
+      const contributed: WildsWorldEcologyProjection = {
+        ...site,
+        contributionTotal: Math.min(10, site.contributionTotal + command.amount),
+        participantIds: site.participantIds.includes(authority.actorId) ? site.participantIds : [...site.participantIds, authority.actorId].slice(-128)
+      };
+      events.push(this.append("ecology.contributed", { site: contributed, playerId: authority.actorId, amount: command.amount, cardProofDigest: command.cardProofDigest }, authority, command.commandId));
+      if (contributed.contributionTotal >= 10) {
+        events.push(this.append("ecology.phase_changed", { siteId: site.id, phase: "resolving" }, authority, command.commandId));
+        const resolved: WildsWorldEcologyProjection = { ...contributed, phase: "aftermath", resolvedAt: authority.occurredAt };
+        events.push(this.append("ecology.resolved", { site: resolved }, authority, command.commandId));
+      }
+    } else if (command.type === "raid.join") {
       const raid = Object.values(this.projection.raids).find((item) => item.bossId === command.bossId) as WildsRaid | undefined;
       if (!raid) throw new Error("wilds_world_raid_missing");
       const admitted = admitRaidPlayer(raid, authority.actorId, command.preferredSquad);
@@ -124,7 +180,7 @@ export class WildsWorldService {
       if (Object.values(this.projection.teams).some((team) => team.memberIds.includes(authority.actorId))) throw new Error("wilds_team_membership_exists");
       const team = createWildsTeam({ captainId: authority.actorId, name: command.name, occurredAt: authority.occurredAt, existingTeams: Object.values(this.projection.teams) });
       events.push(this.append("team.created", { team }, authority, command.commandId));
-    } else {
+    } else if (command.type === "team.join") {
       if (Object.values(this.projection.teams).some((team) => team.memberIds.includes(authority.actorId))) throw new Error("wilds_team_membership_exists");
       const team = this.projection.teams[command.teamId];
       if (!team) throw new Error("wilds_team_missing");
@@ -132,4 +188,19 @@ export class WildsWorldService {
     }
     return { events, projection: this.projection };
   }
+}
+
+function positionNear(left: { x: number; z: number }, right: { x: number; z: number }, radius: number) {
+  return Number.isFinite(left.x) && Number.isFinite(left.z) && Math.hypot(left.x - right.x, left.z - right.z) <= radius;
+}
+
+function ecologyProjection(site: WildsEcologySite): WildsWorldEcologyProjection {
+  return {
+    ...site,
+    discoveredAt: null,
+    discoveredBy: null,
+    contributionTotal: 0,
+    participantIds: [],
+    resolvedAt: null
+  };
 }

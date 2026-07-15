@@ -28,7 +28,9 @@ function service() { return (root()[serviceKey] ??= new WildsWorldService()); }
 function practiceService() {
   if (!root()[practiceKey]) {
     const practice = new WildsWorldService();
-    practice.tick({ pulse: "2026-07-15T00:00:00.000Z", occurredAt: "2026-07-15T00:00:00.000Z", systemActorId: "receiz:pulse" });
+    const pulse = "2026-07-15T00:00:00.000Z";
+    practice.tick({ pulse, occurredAt: pulse, systemActorId: "receiz:pulse" });
+    practice.tickEcology({ pulse, occurredAt: pulse, systemActorId: "receiz:pulse" });
     root()[practiceKey] = practice;
   }
   return root()[practiceKey]!;
@@ -72,7 +74,7 @@ async function publish(request: NextRequest, actor: WildsMultiplayerActor, world
 }
 
 async function auditMajorEvents(request: NextRequest, actor: WildsMultiplayerActor, events: readonly WildsWorldEvent[]) {
-  const major = new Set(["boss.emerged", "boss.defeated", "site.memorialized", "team.created", "league.scored"]);
+  const major = new Set(["boss.emerged", "boss.defeated", "site.memorialized", "ecology.resolved", "ecology.historicized", "team.created", "league.scored"]);
   const client = createReceizCommerceAdapter(actor.accessToken ? { accessToken: actor.accessToken } : undefined);
   try {
     for (const event of events.filter((candidate) => major.has(candidate.kind))) {
@@ -125,7 +127,9 @@ export async function tickWildsWorld(request: NextRequest) {
   const current = service();
   const before = { checkpoint: current.checkpoint(), events: current.events() };
   const now = new Date().toISOString();
-  const result = current.tick({ pulse: now, occurredAt: now, systemActorId: "receiz:pulse" });
+  const world = current.tick({ pulse: now, occurredAt: now, systemActorId: "receiz:pulse" });
+  const ecology = current.tickEcology({ pulse: now, occurredAt: now, systemActorId: "receiz:pulse" });
+  const result = { projection: ecology.projection, events: [...world.events, ...ecology.events] };
   const pulseActor = { playerId: "receiz:pulse", handle: "receiz:pulse", practice: false } as const;
   let publication = await publish(request, pulseActor, current);
   if (!publication.published) {
