@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Icons } from "@/components/icons";
 import type { WildsPresence } from "./multiplayer-core";
-import { landmarkApproachPoint, WILDS_FLAGSHIP_LANDMARKS, type WildsLandmarkId } from "./wilds-landmarks";
+import { landmarkApproachPoint, type WildsLandmarkId } from "./wilds-landmarks";
 import { evaluateLandmarkAccess, type WildsLandmarkProgress } from "./wilds-landmark-access";
 import {
   projectWildsAtlas,
@@ -212,69 +212,7 @@ export function WildsWorldMap({
           </div>
         </div>
 
-        <aside className="wilds-atlas-destinations" aria-label="World destinations">
-          <div className="wilds-atlas-fallback">
-            {projection.bosses.map((boss) => (
-              <button
-                aria-label={`${boss.visibility === "rumor" ? "Track" : "Travel near"} ${boss.name}`}
-                aria-pressed={selectedId === boss.id}
-                key={boss.id}
-                onClick={() => { setFreeDrop(null); setSelectedId(boss.id); }}
-                type="button"
-              >
-                <span style={{ background: boss.healthBand === "critical" ? "#ff6b5f" : boss.visibility === "aftermath" || boss.visibility === "historical" ? "#9ed8ff" : "#ffbf5b" }} />
-                <strong>{boss.visibility === "rumor" ? "Boss rumor" : boss.name}</strong>
-                <small>{boss.visibility === "rumor" ? `${boss.regionId} · exact location hidden` : `${boss.healthBand} · ${boss.phase}`}</small>
-              </button>
-            ))}
-            {projection.ecologySites.map((site) => (
-              <button
-                aria-label={`${site.visibility === "rumor" ? "Investigate" : "Travel near"} ${site.name}`}
-                aria-pressed={selectedId === site.id}
-                key={site.id}
-                onClick={() => {
-                  setFreeDrop(null);
-                  setSelectedId(site.id);
-                }}
-                type="button"
-              >
-                <span style={{ background: site.visibility === "aftermath" || site.visibility === "historical" ? "#9ed8ff" : site.intensity === "high" ? "#ff8c68" : "#7ce0b5" }} />
-                <strong>{site.visibility === "rumor" ? `${site.name} rumor` : site.name}</strong>
-                <small>{site.visibility === "rumor" ? `Region ${site.region.x}, ${site.region.z} · exact location hidden` : site.visibility === "approximate" ? "Signal narrowed · scout on foot" : site.visibility === "aftermath" ? "Canonical aftermath" : "Rift nearby, then discover on foot"}</small>
-              </button>
-            ))}
-            {projection.dynamicSites.map((site) => (
-              <button
-                aria-label={`Travel near ${site.name}`}
-                key={site.id}
-                onClick={() => {
-                  setSelectedId(null);
-                  setFreeDrop({ x: site.position.x + site.radius + 3, z: site.position.z + site.radius + 3 });
-                }}
-                type="button"
-              >
-                <span style={{ background: site.visibility === "memorial" ? "#9ed8ff" : "#b77cff" }} />
-                <strong>{site.visibility === "signal" ? "Unstable signal" : site.name}</strong>
-                <small>{site.visibility === "memorial" ? "A world victory remembered here" : "Rift nearby, then approach on foot"}</small>
-              </button>
-            ))}
-            {WILDS_FLAGSHIP_LANDMARKS.map((landmark) => (
-              <button
-                aria-pressed={selectedId === landmark.id}
-                key={landmark.id}
-                onClick={() => {
-                  setFreeDrop(null);
-                  setSelectedId(landmark.id);
-                }}
-                type="button"
-              >
-                <span style={{ background: landmark.accent }} />
-                <strong>{landmark.name}</strong>
-                <small>{landmark.subtitle}</small>
-              </button>
-            ))}
-          </div>
-
+        <aside className="wilds-atlas-destinations" aria-label="Selected map location">
           {freeDrop ? (
             <section className="wilds-atlas-destination-card wilds-atlas-free-drop" aria-live="polite">
               <span className="eyebrow">Dropped pin · {freeDropRegion}</span>

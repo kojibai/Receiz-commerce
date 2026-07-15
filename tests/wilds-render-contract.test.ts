@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import { describe, it } from "node:test";
 
 describe("Receiz Wilds rendering contract", () => {
-  it("opens a focus-safe 3D atlas with an accessible fallback", async () => {
+  it("opens a focus-safe 3D atlas with map-native location selection", async () => {
     const map = await readFile("src/features/play/WildsWorldMap.tsx", "utf8");
     const canvas = await readFile("src/features/play/WildsAtlasCanvas.tsx", "utf8");
     const css = await readFile("app/globals.css", "utf8");
@@ -14,7 +14,8 @@ describe("Receiz Wilds rendering contract", () => {
     assert.match(map, /aria-label="Hold to Rift Drop"/);
     assert.match(map, /landmarkApproachPoint\(selected\)/);
     assert.match(map, /walk to the physical entrance/);
-    assert.match(map, /wilds-atlas-fallback/);
+    assert.doesNotMatch(map, /wilds-atlas-fallback/);
+    assert.match(map, /aria-label="Selected map location"/);
     assert.match(map, /createPortal/);
     assert.match(map, /document\.body/);
     assert.match(map, /\.focus\(\)/);
