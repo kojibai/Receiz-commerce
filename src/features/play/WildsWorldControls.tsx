@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
+import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type RefObject } from "react";
 import { Icons } from "@/components/icons";
 import { cx } from "@/lib/utils";
 import type { GameAction, WildsInput } from "./game-state";
@@ -8,7 +8,7 @@ import type { WildsContextAction } from "./wilds-context-action";
 import { cameraRelativeMovement, type WildsMovementMode } from "./wilds-movement";
 
 export function WildsWorldControls({
-  cameraHeading,
+  cameraHeadingRef,
   movementMode,
   pulse,
   activeAction,
@@ -20,7 +20,7 @@ export function WildsWorldControls({
   onTrain,
   onMission
 }: {
-  cameraHeading: number;
+  cameraHeadingRef: RefObject<number>;
   movementMode: WildsMovementMode;
   pulse: WildsContextAction;
   activeAction: GameAction;
@@ -59,7 +59,7 @@ export function WildsWorldControls({
         </button>
       </div>
 
-      <WildsTrackpad cameraHeading={cameraHeading} movementMode={movementMode} onInput={onInput} />
+      <WildsTrackpad cameraHeadingRef={cameraHeadingRef} movementMode={movementMode} onInput={onInput} />
 
       <div className="wilds-control-rail wilds-control-rail-right" aria-label="Progression actions">
         <button
@@ -95,11 +95,11 @@ export function WildsWorldControls({
 }
 
 function WildsTrackpad({
-  cameraHeading,
+  cameraHeadingRef,
   movementMode,
   onInput
 }: {
-  cameraHeading: number;
+  cameraHeadingRef: RefObject<number>;
   movementMode: WildsMovementMode;
   onInput: (input: WildsInput) => void;
 }) {
@@ -112,12 +112,12 @@ function WildsTrackpad({
     const timer = window.setInterval(() => {
       const vector = vectorRef.current;
       if (Math.hypot(vector.x, vector.z) >= 0.08) {
-        const relative = cameraRelativeMovement(vector, cameraHeading);
+        const relative = cameraRelativeMovement(vector, cameraHeadingRef.current);
         onInput({ type: "move-vector", x: relative.x, z: relative.z, mode: movementMode });
       }
     }, 45);
     return () => window.clearInterval(timer);
-  }, [active, cameraHeading, movementMode, onInput]);
+  }, [active, cameraHeadingRef, movementMode, onInput]);
 
   const updateVector = (event: ReactPointerEvent<HTMLButtonElement>) => {
     const rect = event.currentTarget.getBoundingClientRect();
