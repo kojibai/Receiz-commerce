@@ -8,6 +8,7 @@ import {
   type WildsPresence
 } from "./multiplayer-core";
 import { WILDS_FLAGSHIP_LANDMARKS, type WildsLandmarkDefinition, type WildsLandmarkId } from "./wilds-landmarks";
+import type { WildsWorldSiteProjection } from "./wilds-world-state";
 
 export type WildsAtlasZoom = "world" | "region" | "landmark";
 
@@ -39,6 +40,7 @@ export type WildsAtlasProjection = {
   landmarks: WildsAtlasLandmark[];
   exactPlayers: WildsAtlasExactPlayer[];
   playerClusters: WildsAtlasPlayerCluster[];
+  dynamicSites: (WildsWorldSiteProjection & { visibility: "signal" | "exact" | "memorial" })[];
 };
 
 export type WildsAtlasInput = {
@@ -49,6 +51,7 @@ export type WildsAtlasInput = {
   discoveredLandmarkIds: readonly (WildsLandmarkId | string)[];
   selfId: string;
   players: WildsPresence[];
+  dynamicSites?: readonly WildsWorldSiteProjection[];
   now?: number;
 };
 
@@ -111,6 +114,12 @@ export function projectWildsAtlas(input: WildsAtlasInput): WildsAtlasProjection 
     nodes,
     landmarks: WILDS_FLAGSHIP_LANDMARKS.map((landmark) => ({ ...landmark, discovered: discovered.has(landmark.id) })),
     exactPlayers,
-    playerClusters: [...clusters.values()]
+    playerClusters: [...clusters.values()],
+    dynamicSites: (input.dynamicSites ?? [])
+      .filter((site) => site.phase !== "expired")
+      .map((site) => ({
+        ...site,
+        visibility: site.phase === "rumored" ? "signal" as const : site.phase === "memorialized" ? "memorial" as const : "exact" as const
+      }))
   };
 }

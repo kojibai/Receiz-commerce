@@ -15,6 +15,7 @@ import {
 import type { WildsQualityProfile } from "./wilds-quality-profile";
 import { WildsAtlasCanvas } from "./WildsAtlasCanvas";
 import { describeWildsPoint } from "./wilds-world-geography";
+import type { WildsWorldProjection } from "./wilds-world-state";
 
 const zoomLevels: readonly WildsAtlasZoom[] = ["world", "region", "landmark"];
 
@@ -29,6 +30,7 @@ export function WildsWorldMap({
   qualityProfile,
   reducedMotion,
   landmarkProgress,
+  livingWorld,
   onClose,
   onRift
 }: {
@@ -42,6 +44,7 @@ export function WildsWorldMap({
   qualityProfile: WildsQualityProfile;
   reducedMotion: boolean;
   landmarkProgress: WildsLandmarkProgress;
+  livingWorld?: WildsWorldProjection | null;
   onClose: () => void;
   onRift: (destination: { x: number; z: number }) => void | Promise<void>;
 }) {
@@ -64,8 +67,9 @@ export function WildsWorldMap({
     worldMastery,
     discoveredLandmarkIds,
     selfId: "self",
-    players: remotePlayers
-  }), [currentPosition, discoveredLandmarkIds, missionProgress, remotePlayers, worldMastery, zoom]);
+    players: remotePlayers,
+    dynamicSites: Object.values(livingWorld?.sites ?? {})
+  }), [currentPosition, discoveredLandmarkIds, livingWorld?.sites, missionProgress, remotePlayers, worldMastery, zoom]);
   const projection = useMemo(() => atlasPresence.loaded ? {
     ...localProjection,
     exactPlayers: atlasPresence.players,
@@ -194,6 +198,21 @@ export function WildsWorldMap({
 
         <aside className="wilds-atlas-destinations" aria-label="World destinations">
           <div className="wilds-atlas-fallback">
+            {projection.dynamicSites.map((site) => (
+              <button
+                aria-label={`Travel near ${site.name}`}
+                key={site.id}
+                onClick={() => {
+                  setSelectedId(null);
+                  setFreeDrop({ x: site.position.x + site.radius + 3, z: site.position.z + site.radius + 3 });
+                }}
+                type="button"
+              >
+                <span style={{ background: site.visibility === "memorial" ? "#9ed8ff" : "#b77cff" }} />
+                <strong>{site.visibility === "signal" ? "Unstable signal" : site.name}</strong>
+                <small>{site.visibility === "memorial" ? "A world victory remembered here" : "Rift nearby, then approach on foot"}</small>
+              </button>
+            ))}
             {WILDS_FLAGSHIP_LANDMARKS.map((landmark) => (
               <button
                 aria-pressed={selectedId === landmark.id}

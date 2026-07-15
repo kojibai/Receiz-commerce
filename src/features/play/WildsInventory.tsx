@@ -10,15 +10,20 @@ import type { PlayState, WildsInput } from "./game-state";
 import { WildsCardScene } from "./WildsCardScene";
 import { WildsGrowthPanel } from "./WildsGrowthPanel";
 import { clampInventoryPage, inventoryPageSize } from "./inventory-pagination";
+import type { WildsPlayerVaultPayload } from "./wilds-player-vault";
 
 export function WildsInventory({
   state,
   onInput,
-  onListAsset
+  onListAsset,
+  createVaultPlayer,
+  onRestorePlayerVault
 }: {
   state: PlayState;
   onInput: (input: WildsInput) => void;
   onListAsset?: (asset: PlayState["inventory"][number], priceCents: number) => Promise<PlayState["inventory"][number] | null>;
+  createVaultPlayer?: () => WildsPlayerVaultPayload;
+  onRestorePlayerVault?: (player: WildsPlayerVaultPayload) => void;
 }) {
   const [query, setQuery] = useState("");
   const [rarity, setRarity] = useState("all");
@@ -113,8 +118,8 @@ export function WildsInventory({
             onClick={async () => {
               setVaultMessage("Preparing portable vault image…");
               try {
-                await downloadPortableVault(state.inventory);
-                setVaultMessage("Vault image saved with every verified card sealed inside.");
+                await downloadPortableVault(state.inventory, createVaultPlayer?.());
+                setVaultMessage("Vault image saved with every verified card and your complete player history sealed inside.");
               } catch (error) {
                 setVaultMessage(error instanceof Error ? `Vault save failed: ${error.message}` : "Vault save failed. Try again from this browser.");
               }
@@ -146,6 +151,7 @@ export function WildsInventory({
               const assets = verifiedCard.ok && verifiedCard.asset ? [verifiedCard.asset] : verifiedVault?.ok ? verifiedVault.assets : [];
               if (!assets.length) { rejected += 1; continue; }
               assets.forEach((asset) => onInput({ type: "import-card", asset }));
+              if (verifiedVault?.ok && verifiedVault.player) onRestorePlayerVault?.(verifiedVault.player);
               setSelectedId(assets.at(-1)!.id);
               imported += assets.length;
             }

@@ -2780,6 +2780,24 @@ a {
 .wilds-control-flank:focus-visible { border-color: rgba(247, 201, 72, 0.72); color: #fff2a8; transform: translateY(-1px); }
 .wilds-control-flank:focus-visible { outline: 3px solid rgba(255, 242, 168, 0.82); outline-offset: 2px; }
 .wilds-control-flank:active { transform: translateY(1px) scale(0.96); }
+.wilds-living-world-hud { position: absolute; z-index: 25; top: 76px; right: 12px; display: flex; max-width: calc(100% - 108px); gap: 6px; }
+.wilds-live-pill { display: flex; min-height: 34px; align-items: center; gap: 7px; padding: 0 10px; border: 1px solid rgba(113,232,195,.32); border-radius: 999px; color: #effff9; background: rgba(7,25,31,.84); box-shadow: 0 10px 24px rgba(0,0,0,.24); backdrop-filter: blur(16px); font-size: 10px; font-weight: 850; }
+.wilds-live-pill i { width: 7px; height: 7px; border-radius: 50%; background: #f7c948; box-shadow: 0 0 12px currentColor; }
+.wilds-live-pill.mode-receiz_live i { background: #71e8c3; }
+.wilds-live-pill.event { color: #eadcff; border-color: rgba(183,124,255,.42); }
+.wilds-live-pill b { color: #fff2a8; }
+.wilds-living-world-sheet { position: absolute; top: calc(100% + 8px); right: 0; display: grid; width: min(330px, calc(100vw - 24px)); gap: 10px; padding: 16px; border: 1px solid rgba(183,124,255,.35); border-radius: 18px; color: #fff; background: rgba(7,19,28,.96); box-shadow: 0 22px 58px rgba(0,0,0,.44); backdrop-filter: blur(22px); }
+.wilds-living-world-close { position: absolute; top: 8px; right: 8px; display: grid; width: 44px; min-height: 44px; place-items: center; border: 0; color: #fff; background: transparent; font-size: 25px; }
+.wilds-living-world-sheet small { padding-right: 40px; color: #9bb9c2; font-size: 9px; font-weight: 850; letter-spacing: .1em; text-transform: uppercase; }
+.wilds-living-world-sheet strong { padding-right: 32px; font-size: 16px; }
+.wilds-living-world-sheet > button:not(.wilds-living-world-close), .wilds-living-world-sheet form button { min-height: 44px; border: 0; border-radius: 12px; color: #071a1e; background: linear-gradient(145deg,#f7d25b,#6fe6bd); font-weight: 900; }
+.wilds-live-boss-meter { position: relative; height: 18px; overflow: hidden; border-radius: 999px; background: rgba(255,255,255,.1); }
+.wilds-live-boss-meter span { display: block; height: 100%; background: linear-gradient(90deg,#b77cff,#ff6bad); }
+.wilds-live-boss-meter b { position: absolute; inset: 0; display: grid; place-items: center; color: #fff; font-size: 9px; }
+.wilds-living-world-sheet p, .wilds-living-world-sheet em { margin: 0; color: #afc5cc; font-size: 10px; font-style: normal; }
+.wilds-living-world-sheet form { display: grid; grid-template-columns: minmax(0,1fr) 76px; gap: 7px; }
+.wilds-living-world-sheet input { min-width: 0; min-height: 44px; padding: 0 11px; border: 1px solid rgba(255,255,255,.16); border-radius: 12px; color: #fff; background: rgba(255,255,255,.07); }
+.wilds-world-boss-label { display: block; padding: 5px 8px; border: 1px solid rgba(255,255,255,.24); border-radius: 999px; color: #fff; background: rgba(20,8,34,.84); font-size: 8px; font-weight: 900; white-space: nowrap; }
 .wilds-movement-mode.active { color: #071a1e; background: linear-gradient(145deg, #f7d25b, #6fe6bd); }
 .wilds-pulse-action { color: #f7d25b; box-shadow: 0 0 0 1px rgba(247, 201, 72, 0.08), 0 10px 26px rgba(45, 218, 175, 0.16); }
 .wilds-pulse-action::after { position: absolute; width: 22px; height: 22px; border: 1px solid currentColor; border-radius: 50%; opacity: 0.32; content: ""; animation: wilds-pulse-ring 2.2s ease-out infinite; }
@@ -11560,6 +11578,13 @@ button.product-purchase-secondary-link {
   .mobile-play-wrap .wilds-screen-controls { --wilds-pad-size: 64px; gap: 4px; height: 94px; }
   .mobile-play-wrap .wilds-trackpad { width: 64px; height: 64px; }
   .mobile-play-wrap .wilds-control-rail { gap: 2px; }
+}
+
+@media (max-width: 560px) {
+  .mobile-play-wrap .wilds-living-world-hud { top: 8px; right: 8px; max-width: calc(100% - 92px); justify-content: flex-end; }
+  .mobile-play-wrap .wilds-live-pill { min-height: 34px; max-width: 142px; padding: 0 8px; }
+  .mobile-play-wrap .wilds-live-pill span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .mobile-play-wrap .wilds-living-world-sheet { top: 42px; right: 0; width: min(310px, calc(100vw - 20px)); max-height: calc(100dvh - 230px); overflow: auto; overscroll-behavior: contain; }
 }
 
 @media (prefers-reduced-motion: reduce) {

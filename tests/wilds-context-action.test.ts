@@ -48,6 +48,11 @@ describe("Wilds contextual world actions", () => {
       label: "Join Resonance Run",
       activityId: "run-1"
     });
+    assert.equal(resolveWildsContextAction({
+      ...emptyContext,
+      selectedPlayer: { playerId: "player-2", handle: "Nova" },
+      joinableActivity: { id: "boss-1", name: "shared boss raid" }
+    }).kind, "join");
     assert.deepEqual(resolveWildsContextAction(emptyContext), {
       kind: "scan",
       label: "Pulse the world"

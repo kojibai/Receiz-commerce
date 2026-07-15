@@ -23,6 +23,7 @@ import { WildsTransformation } from "@/features/play/WildsTransformation";
 import { WildsChildCeremony } from "@/features/play/WildsChildCeremony";
 import { WildsMultiplayer } from "@/features/play/WildsMultiplayer";
 import { useWildsMultiplayer } from "@/features/play/use-wilds-multiplayer";
+import { useWildsWorld } from "@/features/play/use-wilds-world";
 import { WildsAudioSettings } from "@/features/play/WildsAudioSettings";
 import { useWildsPresentation } from "@/features/play/use-wilds-presentation";
 import { selectWildsQualityProfile } from "@/features/play/wilds-quality-profile";
@@ -36,6 +37,10 @@ import { resolveWildsContextAction } from "@/features/play/wilds-context-action"
 import { landmarkAtPosition, WILDS_FLAGSHIP_LANDMARKS, type WildsLandmarkId } from "@/features/play/wilds-landmarks";
 import { evaluateLandmarkAccess, type WildsLandmarkProgress } from "@/features/play/wilds-landmark-access";
 import type { RiftTravelGrant } from "@/features/play/wilds-rift-travel";
+import { createWildsPlayerVault, reconcileWildsPlayerVault } from "@/features/play/wilds-player-vault";
+import { initialWildsWorldProjection } from "@/features/play/wilds-world-state";
+import { normalizeWildsAudioSettings } from "@/features/play/wilds-audio";
+import { WildsLivingWorldHud } from "@/features/play/WildsLivingWorldHud";
 
 const WILDS_SAVE_KEY = "receiz:wilds:save:v2";
 const WILDS_AVATAR_KEY = "receiz:wilds:explorer:v1";
@@ -100,6 +105,11 @@ export function PlayCampaign({
     position: state.player,
     activeCard: activeAsset
   });
+  const livingWorld = useWildsWorld({
+    enabled: enabled && Boolean(avatarStyle),
+    guestId: multiplayer.guestId,
+    activeCard: activeAsset
+  });
   const presentation = useWildsPresentation({
     encounter: {
       phase: state.encounter.phase,
@@ -107,6 +117,22 @@ export function PlayCampaign({
     },
     enabled: enabled && Boolean(avatarStyle)
   });
+  const createVaultPlayer = () => {
+    const exportedAt = new Date().toISOString();
+    return createWildsPlayerVault({
+      playerId: ownerReceizId,
+      exportedAt,
+      playState: state,
+      settings: { avatarStyle, movementMode, audio: { ...presentation.audioSettings } },
+      personalEvents: state.achievements.map((id) => ({ eventId: `achievement:${id}`, kind: "achievement.earned", occurredAt: exportedAt })),
+      canonicalCursor: {
+        worldId: "wilds:global:v3",
+        revision: livingWorld.snapshot?.revision ?? 0,
+        eventId: livingWorld.snapshot?.cursor?.eventId ?? null
+      },
+      receipts: state.inventory.map((asset) => ({ eventId: asset.id, digest: asset.proof.digest }))
+    });
+  };
 
   useEffect(() => {
     const preference = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -244,6 +270,11 @@ export function PlayCampaign({
     partySize: multiplayer.remotePlayers.length + 1
   };
   const currentLandmarkAccess = currentLandmark ? evaluateLandmarkAccess(currentLandmark, landmarkProgress) : null;
+  const nearbyLivingSite = Object.values(livingWorld.snapshot?.sites ?? {})
+    .map((site) => ({ site, distance: Math.hypot(site.position.x - state.player.x, site.position.z - state.player.z) }))
+    .filter(({ site, distance }) => Boolean(site.bossId) && site.phase !== "memorialized" && site.phase !== "expired" && distance <= site.radius + 8)
+    .sort((left, right) => left.distance - right.distance)[0] ?? null;
+  const nearbyLivingBoss = nearbyLivingSite?.site.bossId ? livingWorld.snapshot?.bosses[nearbyLivingSite.site.bossId] : null;
   const pulse = resolveWildsContextAction({
     pendingReward: Boolean(rewardAsset),
     landmark: currentLandmark,
@@ -251,7 +282,7 @@ export function PlayCampaign({
     selectedPlayer: multiplayer.selectedPlayer
       ? { playerId: multiplayer.selectedPlayer.playerId, handle: multiplayer.selectedPlayer.handle }
       : null,
-    joinableActivity: null
+    joinableActivity: nearbyLivingBoss && nearbyLivingBoss.phase !== "defeated" ? { id: nearbyLivingBoss.id, name: "shared boss raid" } : null
   });
   const visiblePulse = pulse.kind === "enter" && currentLandmarkAccess && !currentLandmarkAccess.allowed
     ? { ...pulse, label: `Inspect sealed ${currentLandmark?.name ?? "landmark"}` }
@@ -261,7 +292,11 @@ export function PlayCampaign({
       setActiveLandmarkId(pulse.landmarkId);
       return;
     }
-    if (pulse.kind === "collect" || pulse.kind === "greet" || pulse.kind === "join") return;
+    if (pulse.kind === "join") {
+      void livingWorld.joinRaid(pulse.activityId).catch((error) => setRiftError(error instanceof Error ? error.message : "wilds_raid_join_failed"));
+      return;
+    }
+    if (pulse.kind === "collect" || pulse.kind === "greet") return;
     dispatch({
       type: "search-point",
       x: state.player.x,
@@ -397,7 +432,29 @@ export function PlayCampaign({
       content: (
         <div className="wilds-command-content wilds-vault-command-content">
           <div className="wilds-vault-sheet-heading"><small>Portable card vault</small><strong>{state.inventory.length} sealed {state.inventory.length === 1 ? "card" : "cards"}</strong></div>
-          <WildsInventory state={state} onInput={dispatch} onListAsset={onListAsset} />
+          <WildsInventory
+            state={state}
+            onInput={dispatch}
+            onListAsset={onListAsset}
+            createVaultPlayer={createVaultPlayer}
+            onRestorePlayerVault={(player) => {
+              try {
+                const restored = reconcileWildsPlayerVault({
+                  local: state,
+                  restored: player,
+                  canonical: livingWorld.snapshot ?? initialWildsWorldProjection(),
+                  actorId: ownerReceizId
+                });
+                setState(restored.state);
+                setAvatarStyle(player.settings.avatarStyle);
+                setMovementMode(player.settings.movementMode);
+                presentation.setAudioSettings(normalizeWildsAudioSettings(player.settings.audio));
+                setRiftError(restored.warnings.length ? "Vault restored. Live world facts were reconciled." : "Vault and player history restored.");
+              } catch (error) {
+                setRiftError(error instanceof Error ? error.message : "wilds_player_vault_restore_failed");
+              }
+            }}
+          />
         </div>
       )
     }
@@ -431,6 +488,7 @@ export function PlayCampaign({
               remotePlayers={multiplayer.remotePlayers}
               qualityProfile={qualityProfile}
               searchEnabled={discoveryActive && Boolean(avatarStyle)}
+              livingWorld={livingWorld.snapshot}
               onCameraHeadingChange={setCameraHeading}
               onSelectPlayer={multiplayer.selectPlayer}
               onSearchPoint={(point) => {
@@ -439,6 +497,7 @@ export function PlayCampaign({
             />
 
             {avatarStyle ? <WildsMultiplayer multiplayer={multiplayer} position={state.player} /> : null}
+            {avatarStyle ? <WildsLivingWorldHud player={state.player} world={livingWorld} /> : null}
             <div className="wilds-utility-cluster">
               <WildsAudioSettings
                 onChange={presentation.setAudioSettings}
@@ -556,6 +615,7 @@ export function PlayCampaign({
         remotePlayers={multiplayer.remotePlayers}
         worldMastery={state.worldMastery}
         landmarkProgress={landmarkProgress}
+        livingWorld={livingWorld.snapshot}
       />
       <WildsLandmarkExperience
         access={activeLandmarkId ? evaluateLandmarkAccess(WILDS_FLAGSHIP_LANDMARKS.find((item) => item.id === activeLandmarkId)!, landmarkProgress) : null}

@@ -114,4 +114,29 @@ describe("Wilds world atlas", () => {
     assert.equal(atlas.exactPlayers.length, 0);
     assert.equal(atlas.playerClusters.length, 0);
   });
+
+  it("projects living sites at the same exact world coordinate and hides expired sites", () => {
+    const site = {
+      id: "site:crystal-burrow:atlas",
+      familyId: "crystal-burrow",
+      name: "Crystal Burrow",
+      position: { x: 188, z: 142 },
+      radius: 9,
+      phase: "emerged" as const,
+      spawnedAt: "2026-07-15T12:00:00.000Z",
+      expiresAt: "2026-07-18T12:00:00.000Z",
+      bossId: "boss:crystal-burrower:atlas",
+      seedDigest: `sha256:${"a".repeat(64)}`
+    };
+    const input = {
+      center: { x: 0, z: 0 }, zoom: "world" as const, missionProgress: 0, worldMastery: 0,
+      discoveredLandmarkIds: [], selfId: "self", players: [] as WildsPresence[], dynamicSites: [site]
+    };
+    const atlas = projectWildsAtlas(input);
+    const expired = projectWildsAtlas({ ...input, dynamicSites: [{ ...site, phase: "expired" as const }] });
+
+    assert.deepEqual(atlas.dynamicSites[0]?.position, site.position);
+    assert.equal(atlas.dynamicSites[0]?.visibility, "exact");
+    assert.equal(expired.dynamicSites.length, 0);
+  });
 });
