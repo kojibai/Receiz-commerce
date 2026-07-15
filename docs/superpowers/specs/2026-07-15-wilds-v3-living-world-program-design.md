@@ -1,7 +1,7 @@
 # Receiz Wilds V3 Living World Program Design
 
 Date: 2026-07-15  
-Status: Approved program design; Slices 1–2 complete and release-qualified
+Status: Approved program design; Slices 1–3 complete and release-qualified
 Target: Build one canonical, persistent, socially alive Wilds where exploration, card mastery, and multiplayer civilization form one seamless game.
 
 ## 1. Product outcome
@@ -575,8 +575,13 @@ Every behavior change follows red-green-refactor.
 
 ### Slice 3 — Dynamic world ecology
 
-- all dynamic-site families;
-- migrations, markets, festivals, portals, ruins, disasters, threat propagation, rumor discovery, and atlas lifecycle presentation.
+**Status: Slice 3 · qualified (2026-07-15).** The shipped boundary and verification record are captured in `docs/superpowers/evidence/2026-07-15-wilds-v3-slice-3.md`. This status covers the deterministic dynamic-ecology vertical slice and does not imply that boss ecology, global raids, mature leagues, full card civilization, narrative scale, or final V3 qualification in Slices 4–8 are built.
+
+- eight deterministic site families: wandering market, echo ruin, unstable portal, convergence festival, creature migration, resource bloom, stormfront, and settlement distress;
+- bounded canonical spawning, lifecycle, causal children, discovery, contributions, resolution, aftermath, history, Pulse/Kai-Klok ordering, and Receiz publication;
+- player-specific rumor privacy, physical discovery, exact atlas memory, safe near-Rift projection, and unchanged world-return coordinates;
+- eight reusable playable activity modules, local procedural 3D kits, local synthesized motifs, and responsive focus-safe presentation;
+- Save V7 personal ecology receipts, V2–V6 migration, V3 vault and PNG recovery, and canonical reconciliation.
 
 ### Slice 4 — Boss ecology and global raids
 
