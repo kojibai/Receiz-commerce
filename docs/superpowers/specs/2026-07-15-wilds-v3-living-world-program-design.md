@@ -1,7 +1,7 @@
 # Receiz Wilds V3 Living World Program Design
 
 Date: 2026-07-15  
-Status: Approved program design; Slice 1 Living World Kernel complete and release-qualified
+Status: Approved program design; Slices 1–2 complete and release-qualified
 Target: Build one canonical, persistent, socially alive Wilds where exploration, card mastery, and multiplayer civilization form one seamless game.
 
 ## 1. Product outcome
@@ -566,6 +566,8 @@ Every behavior change follows red-green-refactor.
 - mobile, recovery, and authority qualification.
 
 ### Slice 2 — Landmark civilization
+
+**Status: Complete (2026-07-15).** The shipped boundary and verification record are captured in `docs/superpowers/evidence/2026-07-15-wilds-v3-slice-2.md`. This status covers the permanent-landmark civilization vertical slice and does not imply that the dynamic ecology and wider content families in Slices 3–8 are built.
 
 - permanent landmark and settlement expansion;
 - reusable landmark-activity framework;
