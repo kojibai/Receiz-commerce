@@ -14,7 +14,7 @@ import {
   type PlayState,
   type WildsInput
 } from "@/features/play/game-state";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { PortableCardAsset } from "@/features/play/portable-card";
 import { WildsCaptureReward } from "@/features/play/WildsCaptureReward";
 import { WildsInventory } from "@/features/play/WildsInventory";
@@ -115,9 +115,9 @@ export function PlayCampaign({
   const activeAsset = selectedAsset(state);
   const deckCards = state.inventory;
   const activeProgress = state.companionProgress[activeCard.id] ?? { level: 1, xp: 0, bond: 0 };
-  const activeMastery = activeAsset ? projectWildsCardMastery(activeAsset) : null;
-  const loadoutSynergy = deriveLoadoutSynergy(deckCards, worldProgression.chapter.name);
-  const activeLineage = activeAsset ? lineageSummary(activeAsset.manifest.lineage) : null;
+  const activeMastery = useMemo(() => activeAsset ? projectWildsCardMastery(activeAsset) : null, [activeAsset]);
+  const loadoutSynergy = useMemo(() => deriveLoadoutSynergy(deckCards, worldProgression.chapter.name), [deckCards, worldProgression.chapter.name]);
+  const activeLineage = useMemo(() => activeAsset ? lineageSummary(activeAsset.manifest.lineage) : null, [activeAsset]);
   const regionalStory = projectRegionalStory({ regionId: "crystal-coast", seasonSeed: `season:${worldProgression.cycle}` });
   const returnContinuity = projectReturnContinuity({ playerName: "Explorer", regionId: regionalStory.regionId, memories: state.achievements.map((title) => ({ title, occurredAt: new Date().toISOString() })) });
   const multiplayer = useWildsMultiplayer({
@@ -512,7 +512,7 @@ export function PlayCampaign({
             <b>{deckCards.length}/∞</b>
           </div>
           <div className="wilds-squad-list" aria-label="Collected companion cards">
-            {deckCards.map((card) => (
+            {deckCards.slice(0, 24).map((card) => (
               <button
                 aria-pressed={state.selectedAssetId === card.id}
                 className="wilds-squad-card"

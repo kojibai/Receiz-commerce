@@ -396,6 +396,12 @@ describe("Receiz Wilds rendering contract", () => {
     assert.doesNotMatch(world, /camera\.position\.lerp\(target/);
   });
 
+  it("keeps restored vault size out of the movement render loop", async () => {
+    const campaign = await readFile("src/features/play/PlayCampaign.tsx", "utf8");
+    assert.match(campaign, /useMemo/);
+    assert.match(campaign, /deckCards\.slice\(0, 24\)/);
+  });
+
   it("prevents accidental selection and long-press callouts across the gameplay surface", async () => {
     const css = await readFile("app/globals.css", "utf8");
 

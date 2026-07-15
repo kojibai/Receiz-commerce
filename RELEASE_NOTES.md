@@ -62,7 +62,7 @@ Valid V2 cards, vaults, saves, landmarks, and proof history remain interpretable
 The complete release gate passed on July 15, 2026:
 
 - 605 tracked files secret-scanned with no findings;
-- 551 automated tests passing;
+- 552 automated tests passing;
 - TypeScript and ESLint passing;
 - production build passing;
 - Receiz SDK doctor passing with configured capabilities available;
