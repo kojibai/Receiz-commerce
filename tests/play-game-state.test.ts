@@ -13,6 +13,7 @@ import { nextGrowthRequirements } from "../src/features/play/growth-engine.js";
 import { evolvePortableCard, sealCollectedCard, verifyAnyWildsCard, verifyPortableCard } from "../src/features/play/portable-card.js";
 import { nearbyHiddenHotspots } from "../src/features/play/hidden-hotspots.js";
 import { isLivingCardAsset } from "../src/features/play/living-card-types.js";
+import { createWildsCivicEvent } from "../src/features/play/wilds-civic-history.js";
 
 describe("Receiz Wilds game state", () => {
   it("records each gameplay growth event once and awards earned catalysts", () => {
@@ -357,6 +358,49 @@ describe("Receiz Wilds game state", () => {
     assert.equal(migrated.inventory.every((asset) => isLivingCardAsset(asset)), true);
     assert.deepEqual(restorePlayState(serializePlayState(migrated)), migrated);
     assert.deepEqual(restorePlayState("not-json"), initialPlayState);
+  });
+
+  it("records verified civic history once and derives regional reputation", () => {
+    const event = createWildsCivicEvent({
+      settlementId: "wayfinder-hollow",
+      actorId: "wilds.player.receiz.id",
+      kind: "service.completed",
+      sourceId: "orientation",
+      occurredAt: "2026-07-15T18:00:00.000Z",
+      cardProofDigest: null,
+      reputation: 5
+    });
+    const once = applyWildsInput(initialPlayState, { type: "record-civic-event", event });
+    const replay = applyWildsInput(once, { type: "record-civic-event", event });
+    const tampered = applyWildsInput(once, { type: "record-civic-event", event: { ...event, reputation: 99 } });
+
+    assert.deepEqual(once.civicEvents, [event]);
+    assert.equal(once.regionalReputation["wayfinder-hollow"], 5);
+    assert.deepEqual(replay, once);
+    assert.deepEqual(tampered, once);
+  });
+
+  it("persists civic history in v6 and safely migrates v5 saves", () => {
+    const event = createWildsCivicEvent({
+      settlementId: "wayfinder-hollow",
+      actorId: "wilds.player.receiz.id",
+      kind: "puzzle.completed",
+      sourceId: "route-memory:2026-07-15",
+      occurredAt: "2026-07-15T18:05:00.000Z",
+      cardProofDigest: null,
+      reputation: 5
+    });
+    const progressed = applyWildsInput(initialPlayState, { type: "record-civic-event", event });
+    const serialized = serializePlayState(progressed);
+    const envelope = JSON.parse(serialized);
+    const legacyState = { ...initialPlayState } as Partial<PlayState> & Record<string, unknown>;
+    delete legacyState.civicEvents;
+    delete legacyState.regionalReputation;
+
+    assert.equal(envelope.schema, "receiz.wilds.save.v6");
+    assert.deepEqual(restorePlayState(serialized).civicEvents, [event]);
+    assert.equal(restorePlayState(serialized).regionalReputation["wayfinder-hollow"], 5);
+    assert.deepEqual(restorePlayState(JSON.stringify({ schema: "receiz.wilds.save.v5", state: legacyState })).civicEvents, []);
   });
 
   it("defaults proximity fields when restoring an older active encounter", () => {

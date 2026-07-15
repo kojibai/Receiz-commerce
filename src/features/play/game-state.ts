@@ -18,6 +18,7 @@ import { createLivingChildTransaction, lineageEligibility } from "./living-linea
 import { worldMasteryAward, type WorldMasteryVerb } from "./world-progression";
 import { validateRiftGrant, type RiftTravelGrant } from "./wilds-rift-travel";
 import { movementScale, type WildsMovementMode } from "./wilds-movement";
+import { projectWildsCivicHistory, type WildsCivicEvent } from "./wilds-civic-history";
 
 export type GameAction = "explore" | "train" | "mission";
 export type MoveDirection = "north" | "south" | "west" | "east";
@@ -38,6 +39,7 @@ export type WildsInput =
   | { type: "fuse-cards"; parentAId: string; parentBId: string; inheritance: FusionInheritance; fusedAt: string }
   | { type: "evolve"; assetId: string; evolvedAt: string }
   | { type: "record-growth"; assetId: string; event: GrowthEvent }
+  | { type: "record-civic-event"; event: WildsCivicEvent }
   | { type: "ascend-card"; assetId: string; at: string }
   | { type: "finish-transformation" }
   | { type: "finish-lineage-reveal" }
@@ -132,6 +134,8 @@ export type PlayState = {
   };
   worldRank: "Grove scout" | "Trail keeper" | "Wilds ranger" | "Titan challenger";
   worldMastery: number;
+  civicEvents: WildsCivicEvent[];
+  regionalReputation: Record<string, number>;
 };
 
 export const worldBounds = {
@@ -268,11 +272,13 @@ export const initialPlayState: PlayState = {
   transformation: null,
   lineageReveal: null,
   worldRank: "Grove scout",
-  worldMastery: 38
+  worldMastery: 38,
+  civicEvents: [],
+  regionalReputation: {}
 };
 
-const PLAY_SAVE_SCHEMA = "receiz.wilds.save.v5";
-const LEGACY_PLAY_SAVE_SCHEMAS = new Set(["receiz.wilds.save.v2", "receiz.wilds.save.v3", "receiz.wilds.save.v4"]);
+const PLAY_SAVE_SCHEMA = "receiz.wilds.save.v6";
+const LEGACY_PLAY_SAVE_SCHEMAS = new Set(["receiz.wilds.save.v2", "receiz.wilds.save.v3", "receiz.wilds.save.v4", "receiz.wilds.save.v5"]);
 
 export function serializePlayState(state: PlayState) {
   return JSON.stringify({ schema: PLAY_SAVE_SCHEMA, state });
@@ -322,6 +328,7 @@ export function restorePlayState(value: string | null | undefined): PlayState {
       return [...assets, sealed];
     }, restoredInventory);
     const migratedInventory = admitAndMergeInventory(inventoryWithMigrations);
+    const civicProjection = projectWildsCivicHistory(Array.isArray(saved.civicEvents) ? saved.civicEvents.slice(-2_048) : []);
     const restoredEncounter = restoreEncounter(saved.encounter);
     const restoredSelectedAssetId = typeof saved.selectedAssetId === "string" && migratedInventory.some((asset) => asset.id === saved.selectedAssetId)
       ? saved.selectedAssetId
@@ -361,7 +368,9 @@ export function restorePlayState(value: string | null | undefined): PlayState {
       bondCooldowns: saved.bondCooldowns && typeof saved.bondCooldowns === "object" ? saved.bondCooldowns : {},
       transformation: saved.transformation ?? null,
       lineageReveal: saved.lineageReveal ?? null,
-      worldMastery: typeof saved.worldMastery === "number" && Number.isFinite(saved.worldMastery) ? Math.max(0, Math.floor(saved.worldMastery)) : initialPlayState.worldMastery
+      worldMastery: typeof saved.worldMastery === "number" && Number.isFinite(saved.worldMastery) ? Math.max(0, Math.floor(saved.worldMastery)) : initialPlayState.worldMastery,
+      civicEvents: civicProjection.events,
+      regionalReputation: civicProjection.reputation > 0 ? { "wayfinder-hollow": civicProjection.reputation } : {}
     });
   } catch {
     return initialPlayState;
@@ -453,6 +462,17 @@ function awardWorldMastery(state: PlayState, verb: WorldMasteryVerb) {
 
 export function applyWildsInput(state: PlayState, input: WildsInput): PlayState {
   if (input.type === "reset") return initialPlayState;
+
+  if (input.type === "record-civic-event") {
+    const projection = projectWildsCivicHistory([...state.civicEvents, input.event].slice(-2_048));
+    if (projection.events.length === state.civicEvents.length) return state;
+    return {
+      ...state,
+      civicEvents: projection.events,
+      regionalReputation: { ...state.regionalReputation, "wayfinder-hollow": projection.reputation },
+      lastEvent: `Wayfinder Hollow remembers this moment. Reputation ${projection.reputation}.`
+    };
+  }
 
   if (input.type === "finish-transformation") return state.transformation ? { ...state, transformation: null } : state;
   if (input.type === "finish-lineage-reveal") return state.lineageReveal ? { ...state, lineageReveal: null } : state;

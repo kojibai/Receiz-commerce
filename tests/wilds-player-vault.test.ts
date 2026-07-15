@@ -8,14 +8,25 @@ import {
 } from "../src/features/play/wilds-player-vault.js";
 import { initialWildsWorldProjection } from "../src/features/play/wilds-world-state.js";
 import { embedPortableVaultInPng, readPortableVaultFromPng, verifyPortableVaultPng } from "../src/features/play/card-export.js";
+import { createWildsCivicEvent } from "../src/features/play/wilds-civic-history.js";
 
 const sourcePng = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=", "base64");
+
+const civicEvent = createWildsCivicEvent({
+  settlementId: "wayfinder-hollow",
+  actorId: "wilds.player.receiz.id",
+  kind: "resident.met",
+  sourceId: "mira-vale",
+  occurredAt: "2026-07-15T14:30:00.000Z",
+  cardProofDigest: null,
+  reputation: 3
+});
 
 function playerVault() {
   return createWildsPlayerVault({
     playerId: "wilds.player.receiz.id",
     exportedAt: "2026-07-15T15:00:00.000Z",
-    playState: { ...initialPlayState, player: { x: 144, z: 96 }, worldMastery: 84 },
+    playState: { ...initialPlayState, player: { x: 144, z: 96 }, worldMastery: 84, civicEvents: [civicEvent], regionalReputation: { "wayfinder-hollow": 3 } },
     settings: { avatarStyle: "female", movementMode: "run", audio: { muted: false, music: 0.7 } },
     personalEvents: [
       { eventId: "personal:first", kind: "card.captured", occurredAt: "2026-07-15T14:00:00.000Z" },
@@ -47,6 +58,8 @@ describe("Wilds V3 player vault", () => {
     assert.equal(decoded.player?.payloadDigest, player.payloadDigest);
     assert.equal(verified.ok, true);
     assert.equal(verified.player?.playState.worldMastery, 84);
+    assert.deepEqual(verified.player?.playState.civicEvents, [civicEvent]);
+    assert.equal(verified.player?.playState.regionalReputation["wayfinder-hollow"], 3);
     assert.equal(verified.assets.length, initialPlayState.inventory.length);
   });
 
