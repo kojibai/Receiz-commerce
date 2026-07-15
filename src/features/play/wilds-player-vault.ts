@@ -65,6 +65,11 @@ function basis(input: NormalizedPlayerVaultInput) {
   return { schema: "receiz.wilds_player_vault.v3" as const, ...input };
 }
 
+function legacyBasis(input: NormalizedPlayerVaultInput) {
+  const { continuity: _continuity, ...withoutContinuity } = input;
+  return { schema: "receiz.wilds_player_vault.v3" as const, ...withoutContinuity };
+}
+
 export function createWildsPlayerVault(input: PlayerVaultInput): WildsPlayerVaultPayload {
   const normalized = normalizedInput(input);
   return { ...basis(normalized), payloadDigest: sha256PortableBasis(canonicalPortableCardJson(basis(normalized))) };
@@ -73,6 +78,23 @@ export function createWildsPlayerVault(input: PlayerVaultInput): WildsPlayerVaul
 export function verifyWildsPlayerVault(value: WildsPlayerVaultPayload) {
   const errors: string[] = [];
   try {
+    // V3 vaults created before the continuity envelope remain portable. Their
+    // original digest is checked against the pre-envelope basis, then the
+    // restore path derives the canonical envelope without rewriting history.
+    if (!value.continuity) {
+      const normalized = normalizedInput({
+        playerId: value.playerId,
+        exportedAt: value.exportedAt,
+        playState: value.playState,
+        settings: value.settings,
+        personalEvents: value.personalEvents,
+        canonicalCursor: value.canonicalCursor,
+        receipts: value.receipts
+      });
+      const expectedLegacyDigest = sha256PortableBasis(canonicalPortableCardJson(legacyBasis(normalized)));
+      if (value.schema !== "receiz.wilds_player_vault.v3" || value.payloadDigest !== expectedLegacyDigest) errors.push("wilds_player_vault_digest_invalid");
+      return { ok: errors.length === 0, errors };
+    }
     const rebuilt = createWildsPlayerVault({
       playerId: value.playerId,
       continuity: value.continuity,
@@ -97,7 +119,7 @@ export function reconcileWildsPlayerVault(input: {
   actorId: string;
 }) {
   if (input.restored.playerId !== input.actorId) throw new Error("wilds_player_vault_owner_invalid");
-  assertContinuityEnvelope(input.restored.continuity, input.actorId);
+  if (input.restored.continuity) assertContinuityEnvelope(input.restored.continuity, input.actorId);
   const verified = verifyWildsPlayerVault(input.restored);
   if (!verified.ok) throw new Error(verified.errors[0] ?? "wilds_player_vault_invalid");
   const state = restorePlayState(serializePlayState({

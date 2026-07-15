@@ -44,10 +44,11 @@ describe("Receiz cross-platform continuity", () => {
 
   it("rejects clone-local issuer, namespace, world, and owner envelopes", () => {
     const valid = continuityEnvelopeForOwner("wilds.player.receiz.id");
+    assert.doesNotThrow(() => assertContinuityEnvelope({ ...valid, issuer: "https://receiz.app" } as never));
     assert.throws(() => assertContinuityEnvelope({ ...valid, issuer: "https://clone.example" } as never), /issuer_invalid/);
     assert.throws(() => assertContinuityEnvelope({ ...valid, namespace: "clone:continuity:v1" } as never), /namespace_invalid/);
     assert.throws(() => assertContinuityEnvelope({ ...valid, worldId: "clone:world" } as never), /world_invalid/);
     assert.throws(() => assertContinuityEnvelope(valid, "wilds.player.other"), /owner_invalid/);
-    assert.equal(RECEIZ_CANONICAL_ISSUER, "https://receiz.app");
+    assert.equal(RECEIZ_CANONICAL_ISSUER, "https://receiz.com");
   });
 });

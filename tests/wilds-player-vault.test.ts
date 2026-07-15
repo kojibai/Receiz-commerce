@@ -9,6 +9,7 @@ import {
 import { initialWildsWorldProjection } from "../src/features/play/wilds-world-state.js";
 import { embedPortableVaultInPng, readPortableVaultFromPng, verifyPortableVaultPng } from "../src/features/play/card-export.js";
 import { createWildsCivicEvent } from "../src/features/play/wilds-civic-history.js";
+import { canonicalPortableCardJson, sha256PortableBasis } from "../src/features/play/portable-card.js";
 
 const sourcePng = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=", "base64");
 
@@ -71,5 +72,23 @@ describe("Wilds V3 player vault", () => {
     const reconciled = reconcileWildsPlayerVault({ local: initialPlayState, restored, canonical, actorId: restored.playerId });
     assert.deepEqual(reconciled.state.player, { x: 144, z: 96 });
     assert.equal(reconciled.warnings.includes("wilds_player_vault_canonical_cursor_stale"), true);
+  });
+
+  it("restores a pre-continuity V3 vault without dropping its cards", () => {
+    const current = playerVault();
+    const { schema: _schema, continuity: _continuity, payloadDigest: _digest, ...legacyInput } = current;
+    const legacy = {
+      schema: "receiz.wilds_player_vault.v3" as const,
+      ...legacyInput,
+      payloadDigest: sha256PortableBasis(canonicalPortableCardJson({ schema: "receiz.wilds_player_vault.v3", ...legacyInput }))
+    };
+    assert.deepEqual(verifyWildsPlayerVault(legacy as typeof current), { ok: true, errors: [] });
+    const reconciled = reconcileWildsPlayerVault({
+      local: initialPlayState,
+      restored: legacy as typeof current,
+      canonical: initialWildsWorldProjection(),
+      actorId: current.playerId
+    });
+    assert.deepEqual(reconciled.state.player, current.playState.player);
   });
 });

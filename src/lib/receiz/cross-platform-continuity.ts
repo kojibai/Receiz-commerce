@@ -7,12 +7,14 @@ import { WILDS_WORLD_ID } from "../../features/play/wilds-world-event";
  */
 export const RECEIZ_CONTINUITY_SCHEMA = "receiz.cross_platform_continuity.v1" as const;
 export const RECEIZ_CONTINUITY_NAMESPACE = "receiz:continuity:v1" as const;
-export const RECEIZ_CANONICAL_ISSUER = "https://receiz.app" as const;
+/** Receiz's proof issuer is the backend authority, not the storefront host. */
+export const RECEIZ_CANONICAL_ISSUER = "https://receiz.com" as const;
+const HISTORICAL_RECEIZ_ISSUERS = new Set([RECEIZ_CANONICAL_ISSUER, "https://receiz.app"]);
 
 export type ReceizContinuityEnvelope = {
   schema: typeof RECEIZ_CONTINUITY_SCHEMA;
   namespace: typeof RECEIZ_CONTINUITY_NAMESPACE;
-  issuer: typeof RECEIZ_CANONICAL_ISSUER;
+  issuer: string;
   ownerId: string;
   worldId: typeof WILDS_WORLD_ID;
 };
@@ -40,7 +42,7 @@ export function createContinuityEnvelope(ownerId: string): ReceizContinuityEnvel
 export function assertContinuityEnvelope(value: ReceizContinuityEnvelope, ownerId?: string) {
   if (value.schema !== RECEIZ_CONTINUITY_SCHEMA) throw new Error("receiz_continuity_schema_invalid");
   if (value.namespace !== RECEIZ_CONTINUITY_NAMESPACE) throw new Error("receiz_continuity_namespace_invalid");
-  if (value.issuer !== RECEIZ_CANONICAL_ISSUER) throw new Error("receiz_continuity_issuer_invalid");
+  if (!HISTORICAL_RECEIZ_ISSUERS.has(value.issuer)) throw new Error("receiz_continuity_issuer_invalid");
   if (value.worldId !== WILDS_WORLD_ID) throw new Error("receiz_continuity_world_invalid");
   if (!validIdentity(value.ownerId) || (ownerId !== undefined && value.ownerId !== ownerId)) {
     throw new Error("receiz_continuity_owner_invalid");
