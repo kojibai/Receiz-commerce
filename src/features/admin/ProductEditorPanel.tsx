@@ -9,6 +9,8 @@ import { ImageUploadField } from "@/features/admin/ImageUploadField";
 import { verifyPortableCardPng, verifyPortableVaultPng } from "@/features/play/card-export";
 import { registerPublicWildsCard } from "@/features/play/public-card-registry";
 import { wildsStoreProduct } from "@/features/play/wilds-store-product";
+import { safeGetLocalStorage } from "@/lib/storage/browser-storage";
+import { BROWSER_RECEIZ_ID_SESSION_KEY, parseBrowserReceizIdSession } from "@/lib/storefront/tenant-customer-session";
 import type { BrandConfig, Collection, Product, ProductType } from "@/types/domain";
 
 const productTypes: ProductType[] = ["physical", "digital", "access", "benefit", "experience", "receized_asset"];
@@ -112,8 +114,17 @@ export function ProductEditorPanel({
   const importWildsProducts = async (files: File[]) => {
     setWildsImporting(true);
     setWildsImportMessage("Verifying and publishing card links…");
+    const browserIdentity = parseBrowserReceizIdSession(
+      safeGetLocalStorage(window.localStorage, BROWSER_RECEIZ_ID_SESSION_KEY)
+    );
+    const registrationOptions = browserIdentity?.keyFile
+      ? { identityProof: { keyFile: browserIdentity.keyFile } }
+      : {};
     let added = 0;
-    let rejected = 0;
+    let invalidFiles = 0;
+    let publicationFailures = 0;
+    let alreadyPresent = 0;
+    let publicationError = "";
 
     for (const file of files) {
       const bytes = new Uint8Array(await file.arrayBuffer());
@@ -121,27 +132,44 @@ export function ProductEditorPanel({
       const vault = card.ok ? null : verifyPortableVaultPng(bytes);
       const assets = card.ok && card.asset ? [card.asset] : vault?.ok ? vault.assets : [];
       if (!assets.length) {
-        rejected += 1;
+        invalidFiles += 1;
         continue;
       }
       for (const asset of assets) {
-        if (products.some((product) => product.wildsAsset?.assetId === asset.id)) continue;
+        if (products.some((product) => product.wildsAsset?.assetId === asset.id)) {
+          alreadyPresent += 1;
+          continue;
+        }
         try {
-          await registerPublicWildsCard(asset);
+          await registerPublicWildsCard(asset, registrationOptions);
           const product = wildsStoreProduct(asset, wildsPrice, merchantReceizId);
           onAddProduct(product);
           setActiveProductId(product.id);
           added += 1;
-        } catch {
-          rejected += 1;
+        } catch (error) {
+          publicationFailures += 1;
+          publicationError = error instanceof Error ? error.message : "wilds_public_card_publication_failed";
         }
       }
     }
 
     setWildsImporting(false);
-    setWildsImportMessage(added
-      ? `${added} verified card${added === 1 ? "" : "s"} added as one-of-one shop products${rejected ? ` · ${rejected} rejected` : ""}. Set individual prices below, then publish changes.`
-      : "No products were added. Upload an untampered verified card or vault PNG. Cards already in this store are skipped.");
+    if (added) {
+      const details = [
+        invalidFiles ? `${invalidFiles} file${invalidFiles === 1 ? "" : "s"} could not be verified` : "",
+        publicationFailures ? `${publicationFailures} publication failed` : "",
+        alreadyPresent ? `${alreadyPresent} already in this store` : ""
+      ].filter(Boolean);
+      setWildsImportMessage(`${added} verified card${added === 1 ? "" : "s"} added as one-of-one shop products${details.length ? ` · ${details.join(" · ")}` : ""}. Set individual prices below, then publish changes.`);
+    } else if (publicationFailures) {
+      setWildsImportMessage(publicationError === "wilds_public_card_authority_required"
+        ? "Card verified, but this merchant’s Receiz publication proof is unavailable. Sign in with the merchant’s Receiz ID or restore its Identity Seal, then try again."
+        : "Card verified, but Receiz could not publish its public card record. Try again, or reconnect the merchant’s Receiz ID if the problem continues.");
+    } else if (alreadyPresent) {
+      setWildsImportMessage("Every verified card in this import is already in this store.");
+    } else {
+      setWildsImportMessage("No products were added. The selected file does not contain a valid Receiz card or vault proof.");
+    }
   };
   const toggleCollectionProduct = (collection: Collection, productId: string) => {
     const productIds = collection.productIds.includes(productId)

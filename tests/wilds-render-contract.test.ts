@@ -401,10 +401,17 @@ describe("Receiz Wilds rendering contract", () => {
 
     assert.match(products, /verifyPortableCardPng/);
     assert.match(products, /verifyPortableVaultPng/);
+    assert.match(products, /BROWSER_RECEIZ_ID_SESSION_KEY/);
+    assert.match(products, /parseBrowserReceizIdSession/);
+    assert.match(products, /safeGetLocalStorage/);
     assert.match(products, /wildsStoreProduct/);
     assert.match(products, /merchantReceizId/);
+    assert.match(products, /registerPublicWildsCard\(asset,\s*registrationOptions\)/);
     assert.match(products, /Import card or vault/);
     assert.match(products, /one product per verified card/i);
+    assert.match(products, /Card verified, but Receiz could not publish/i);
+    assert.match(products, /already in this store/i);
+    assert.doesNotMatch(products, /No products were added\. Upload an untampered verified card or vault PNG/);
     assert.doesNotMatch(products, /Connect the owner.s Receiz ID/);
   });
 
