@@ -79,6 +79,17 @@ describe("mobile storefront layout CSS", () => {
     assert.match(css, /\.mobile-play-wrap \.wilds-live-event-compact \{[^}]*display: inline;/s);
   });
 
+  it("keeps every Wayfinder Hollow district and exit reachable at 320px", () => {
+    assert.match(css, /\.wilds-settlement-experience\s*\{[^}]*position:\s*fixed;[^}]*height:\s*100dvh;[^}]*overflow:\s*hidden/s);
+    assert.match(css, /\.wilds-settlement-close\s*\{[^}]*min-width:\s*44px;[^}]*min-height:\s*44px/s);
+    assert.match(css, /\.wilds-settlement-districts\s*\{[^}]*overflow-x:\s*auto;[^}]*scroll-snap-type:\s*x mandatory/s);
+    assert.match(css, /\.wilds-settlement-panel\s*\{[^}]*overflow-y:\s*auto/s);
+    assert.match(css, /\.wilds-settlement-footer button\s*\{[^}]*min-height:\s*44px/s);
+    assert.match(css, /\.wilds-settlement-experience\s*\{[^}]*padding-top:\s*env\(safe-area-inset-top\);[^}]*padding-bottom:\s*env\(safe-area-inset-bottom\)/s);
+    assert.match(css, /@media \(max-width:\s*360px\)[\s\S]*\.wilds-settlement-districts button\s*\{[^}]*white-space:\s*normal/s);
+    assert.doesNotMatch(css, /\.wilds-settlement-(?:districts|panel|footer)[^{]*\{[^}]*text-overflow:\s*ellipsis/s);
+  });
+
   it("uses customer ownership language on the mobile assets page", () => {
     assert.match(storefront, /Purchased products, benefits, and access can become Receized assets\./);
     assert.doesNotMatch(storefront, /Sold products, benefits, and access can become Receized assets\./);

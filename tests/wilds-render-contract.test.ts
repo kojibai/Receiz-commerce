@@ -151,6 +151,33 @@ describe("Receiz Wilds rendering contract", () => {
     assert.match(world, /worldMode/);
   });
 
+  it("opens the complete Wayfinder Hollow civic experience", async () => {
+    const experience = await readFile("src/features/play/WildsSettlementExperience.tsx", "utf8");
+    const settlement = await readFile("src/features/play/wilds-settlements.ts", "utf8");
+
+    assert.match(experience, /role="dialog"/);
+    assert.match(experience, /createPortal/);
+    assert.match(experience, /aria-label="Return to world"/);
+    assert.match(experience, /item\.id/);
+    assert.match(settlement, /Trail Gate/);
+    assert.match(settlement, /Dawn Commons/);
+    assert.match(settlement, /Mosslight Atelier/);
+    assert.match(settlement, /Cartographer House/);
+    assert.match(settlement, /Monument Walk/);
+    assert.match(experience, /Mira Vale/);
+    assert.match(experience, /Oren Moss/);
+    assert.match(experience, /Sola Reed/);
+    assert.match(experience, /card\.proof\.digest/);
+    assert.match(experience, /verifyAnyWildsCard/);
+    assert.match(experience, /applyWildsRouteIntent/);
+    assert.match(experience, /remotePlayers/);
+    assert.match(experience, /defeatedBossIds/);
+    assert.match(experience, /Canonical world memory/);
+    assert.match(experience, /Practice memory/);
+    assert.match(experience, /event\.key === "Escape"/);
+    assert.match(experience, /previousFocus/);
+  });
+
   it("builds the explorer from articulated anatomy and secondary motion", async () => {
     const explorer = await readFile("src/features/play/WildsExplorer.tsx", "utf8");
     const world = await readFile("src/features/play/WildsWorldCanvas.tsx", "utf8");
