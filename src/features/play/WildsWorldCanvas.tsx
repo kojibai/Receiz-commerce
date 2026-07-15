@@ -35,7 +35,6 @@ export function WildsWorldCanvas({
   onCameraHeadingChange,
   onSelectPlayer,
   onSearchPoint,
-  onCollectEnergy,
   livingWorld,
   worldMode
 }: {
@@ -47,7 +46,6 @@ export function WildsWorldCanvas({
   onCameraHeadingChange: (heading: number) => void;
   onSelectPlayer: (player: WildsPresence | null) => void;
   onSearchPoint: (point: { x: number; z: number }) => void;
-  onCollectEnergy: (crystalId: string) => void;
   livingWorld?: WildsWorldProjection | null;
   worldMode: WildsSettlementWorldMode;
 }) {
@@ -72,7 +70,7 @@ export function WildsWorldCanvas({
         shadows={{ type: THREE.PCFShadowMap }}
       >
         <Suspense fallback={null}>
-          <WildsScene state={state} avatarStyle={avatarStyle} remotePlayers={remotePlayers} qualityProfile={qualityProfile} searchEnabled={searchEnabled} onCameraHeadingChange={onCameraHeadingChange} onSelectPlayer={onSelectPlayer} onSearchPoint={onSearchPoint} onCollectEnergy={onCollectEnergy} livingWorld={livingWorld} worldMode={worldMode} />
+          <WildsScene state={state} avatarStyle={avatarStyle} remotePlayers={remotePlayers} qualityProfile={qualityProfile} searchEnabled={searchEnabled} onCameraHeadingChange={onCameraHeadingChange} onSelectPlayer={onSelectPlayer} onSearchPoint={onSearchPoint} livingWorld={livingWorld} worldMode={worldMode} />
         </Suspense>
       </Canvas>
     </div>
@@ -88,7 +86,6 @@ function WildsScene({
   onCameraHeadingChange,
   onSelectPlayer,
   onSearchPoint,
-  onCollectEnergy,
   livingWorld,
   worldMode
 }: {
@@ -100,7 +97,6 @@ function WildsScene({
   onCameraHeadingChange: (heading: number) => void;
   onSelectPlayer: (player: WildsPresence | null) => void;
   onSearchPoint: (point: { x: number; z: number }) => void;
-  onCollectEnergy: (crystalId: string) => void;
   livingWorld?: WildsWorldProjection | null;
   worldMode: WildsSettlementWorldMode;
 }) {
@@ -117,7 +113,6 @@ function WildsScene({
         enabled={searchEnabled}
         missionProgress={state.missionProgress}
         onSearchPoint={onSearchPoint}
-        onCollectEnergy={onCollectEnergy}
         player={state.player}
         qualityProfile={qualityProfile}
         worldMastery={state.worldMastery}
@@ -126,7 +121,7 @@ function WildsScene({
       />
       <WildsEcologyEnvironment livingWorld={livingWorld} player={state.player} worldMode={worldMode} />
       <WildsBossEnvironment livingWorld={livingWorld} player={state.player} qualityProfile={qualityProfile} />
-      <EncounterSequence state={state} onCollectEnergy={onCollectEnergy} onSearchPoint={onSearchPoint} />
+      <EncounterSequence state={state} onSearchPoint={onSearchPoint} />
       {remotePlayers.map((player) => <RemoteExplorer key={player.playerId} player={player} localPlayer={state.player} onSelect={onSelectPlayer} />)}
       <WildsExplorer style={avatarStyle} worldPosition={state.player} />
       <Sparkles count={Math.round(54 * qualityProfile.particles)} scale={[8, 2.4, 8]} size={2.1} speed={0.22} color="#fff5b6" />
@@ -207,7 +202,6 @@ function SearchableTerrain({
   qualityProfile,
   worldMastery,
   onSearchPoint,
-  onCollectEnergy,
   livingWorld,
   worldMode
 }: {
@@ -218,7 +212,6 @@ function SearchableTerrain({
   qualityProfile: WildsQualityProfile;
   worldMastery: number;
   onSearchPoint: (point: { x: number; z: number }) => void;
-  onCollectEnergy: (crystalId: string) => void;
   livingWorld?: WildsWorldProjection | null;
   worldMode: WildsSettlementWorldMode;
 }) {
@@ -231,20 +224,16 @@ function SearchableTerrain({
       }}
     >
       <StreamedTerrain missionProgress={missionProgress} player={player} qualityProfile={qualityProfile} worldMastery={worldMastery} livingWorld={livingWorld} worldMode={worldMode} />
-      <EnergyCrystalField player={player} collectedIds={collectedEnergyCrystalIds} onCollect={onCollectEnergy} />
+      <EnergyCrystalField player={player} collectedIds={collectedEnergyCrystalIds} />
     </group>
   );
 }
 
-function EnergyCrystalField({ player, collectedIds, onCollect }: { player: PlayState["player"]; collectedIds: readonly string[]; onCollect: (crystalId: string) => void }) {
+function EnergyCrystalField({ player, collectedIds }: { player: PlayState["player"]; collectedIds: readonly string[] }) {
   const crystals = nearbyHiddenHotspots(player).filter((hotspot) => hotspot.cover === "energy" && !collectedIds.includes(hotspot.id));
   return <group name="wilds-energy-crystals">
     {crystals.map((crystal) => (
-      <group
-        key={crystal.id}
-        onClick={(event) => { event.stopPropagation(); onCollect(crystal.id); }}
-        position={[crystal.position.x - player.x, 0.32, crystal.position.z - player.z]}
-      >
+      <group key={crystal.id} position={[crystal.position.x - player.x, 0.32, crystal.position.z - player.z]}>
         <mesh castShadow rotation={[0.2, 0.45, 0.18]}>
           <octahedronGeometry args={[0.24, 0]} />
           <meshStandardMaterial color="#f7c948" emissive="#fff0a6" emissiveIntensity={1.8} metalness={0.25} roughness={0.24} />
@@ -307,7 +296,7 @@ function Creature({ card, formId = `${card.id}-1`, pose = "idle" }: { card: Crea
   );
 }
 
-function EncounterSequence({ state, onCollectEnergy, onSearchPoint }: { state: PlayState; onCollectEnergy: (crystalId: string) => void; onSearchPoint: (point: { x: number; z: number }) => void }) {
+function EncounterSequence({ state, onSearchPoint }: { state: PlayState; onSearchPoint: (point: { x: number; z: number }) => void }) {
   const encounter = state.encounter;
   if (encounter.phase === "idle") return null;
   const position: [number, number, number] = [
@@ -322,7 +311,7 @@ function EncounterSequence({ state, onCollectEnergy, onSearchPoint }: { state: P
     return (
       <>
         <SearchPulse hint position={position} />
-        <RustlingClue encounter={encounter} player={state.player} onCollectEnergy={onCollectEnergy} onSearchPoint={onSearchPoint} />
+        <RustlingClue encounter={encounter} player={state.player} onSearchPoint={onSearchPoint} />
       </>
     );
   }
@@ -337,7 +326,7 @@ function EncounterSequence({ state, onCollectEnergy, onSearchPoint }: { state: P
         : encounter.phase === "battle_intro" ? "curious"
           : "idle";
   return (
-    <group position={position} onClick={(event) => { event.stopPropagation(); if (encounter.hotspotId && encounter.cover === "energy") onCollectEnergy(encounter.hotspotId); }}>
+    <group position={position}>
       <SearchPulse hint position={[0, 0, 0]} />
       <HabitatCover cover={encounter.cover} open={encounter.phase !== "emerging"} />
       <group scale={encounter.phase === "capsule" ? 0.68 : encounter.phase === "sealed" || encounter.phase === "revealed" ? 0.01 : 1}>
@@ -353,12 +342,10 @@ function EncounterSequence({ state, onCollectEnergy, onSearchPoint }: { state: P
 function RustlingClue({
   encounter,
   player,
-  onCollectEnergy,
   onSearchPoint
 }: {
   encounter: Exclude<PlayState["encounter"], { phase: "idle" }>;
   player: PlayState["player"];
-  onCollectEnergy: (crystalId: string) => void;
   onSearchPoint: (point: { x: number; z: number }) => void;
 }) {
   const ref = useRef<THREE.Group>(null);
@@ -389,11 +376,6 @@ function RustlingClue({
       onClick={(event) => {
         // Energy clues are directly collectible. Other warm clues must bubble
         // to the terrain search handler so the creature reveal can advance.
-        if (encounter.hotspotId && encounter.cover === "energy") {
-          event.stopPropagation();
-          onCollectEnergy(encounter.hotspotId);
-          return;
-        }
         event.stopPropagation();
         const direction = encounter.direction ?? { x: 0, z: 0 };
         const distance = encounter.distance ?? 0;

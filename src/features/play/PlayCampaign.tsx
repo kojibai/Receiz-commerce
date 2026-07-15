@@ -627,7 +627,6 @@ export function PlayCampaign({
               onSearchPoint={(point) => {
                 dispatch({ type: "search-point", ...point, searchedAt: new Date().toISOString(), ownerReceizId });
               }}
-              onCollectEnergy={(crystalId) => dispatch({ type: "collect-energy", crystalId })}
             />
 
             {avatarStyle ? <WildsMultiplayer multiplayer={multiplayer} position={state.player} /> : null}
