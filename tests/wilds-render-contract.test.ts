@@ -63,6 +63,11 @@ describe("Receiz Wilds rendering contract", () => {
     assert.match(experience, /createPrismRun/);
     assert.match(experience, /Arena of Echoes duel/);
     assert.match(experience, /Prism Arcade cooperative run/);
+    assert.match(experience, /wilds-landmark-gate/);
+    assert.match(experience, /access\?\.summary/);
+    assert.match(campaign, /WILDS_ACHIEVEMENTS_KEY/);
+    assert.match(campaign, /evaluateLandmarkAccess/);
+    assert.match(campaign, /Inspect sealed/);
     assert.match(experience, /card\.proof\.digest/);
     assert.match(css, /\.wilds-landmark-experience\s*\{[^}]*position:\s*fixed;[^}]*height:\s*100dvh;[^}]*overflow:\s*hidden/s);
     assert.match(css, /\.wilds-arena-world/);

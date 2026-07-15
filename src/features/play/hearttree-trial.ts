@@ -15,7 +15,7 @@ export type HearttreeTrialState = {
   masterPower: number;
   masterHealth: number;
   events: HearttreeTrialEvent[];
-  reward: { id: string; kind: "achievement"; label: string } | null;
+  reward: { id: string; unlockId: "hearttree-awakened"; kind: "achievement"; label: string } | null;
 };
 
 function boundedSeed(seed: string, proofDigest: string) {
@@ -66,7 +66,7 @@ export function applyHearttreeIntent(state: HearttreeTrialState, intent: Hearttr
       ...state,
       masterHealth: 0,
       phase: "result",
-      reward: { id: `hearttree:${state.admittedProofDigest.slice(7, 23)}`, kind: "achievement", label: "Hearttree Awakened" }
+      reward: { id: `hearttree:${state.admittedProofDigest.slice(7, 23)}`, unlockId: "hearttree-awakened", kind: "achievement", label: "Hearttree Awakened" }
     };
     message = "The Root Master bows. Your lineage has awakened.";
   }

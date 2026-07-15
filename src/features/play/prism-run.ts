@@ -11,7 +11,7 @@ export type PrismRunState = {
   rightGate: boolean;
   worldName: string;
   events: Array<{ id: string; intent: PrismIntent; message: string }>;
-  reward: { id: string; kind: "cosmetic"; label: string } | null;
+  reward: { id: string; unlockId: "prism-trail"; kind: "cosmetic"; label: string } | null;
 };
 
 export function createPrismRun(seed: string, card: PortableCardAsset): PrismRunState {
@@ -51,7 +51,7 @@ export function applyPrismIntent(state: PrismRunState, intent: PrismIntent): Pri
       ...state,
       harmony: 4,
       phase: "result",
-      reward: { id: `prism:${state.admittedProofDigest.slice(7, 23)}`, kind: "cosmetic", label: "Prism Trail" }
+      reward: { id: `prism:${state.admittedProofDigest.slice(7, 23)}`, unlockId: "prism-trail", kind: "cosmetic", label: "Prism Trail" }
     };
     message = "Harmony burst! A permanent light trail joins your explorer.";
   }

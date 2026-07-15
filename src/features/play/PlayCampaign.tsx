@@ -33,11 +33,13 @@ import { WildsWorldControls } from "@/features/play/WildsWorldControls";
 import { WildsLandmarkExperience } from "@/features/play/WildsLandmarkExperience";
 import { normalizeWildsMovementMode, WILDS_MOVEMENT_MODE_KEY, type WildsMovementMode } from "@/features/play/wilds-movement";
 import { resolveWildsContextAction } from "@/features/play/wilds-context-action";
-import { landmarkAtPosition, type WildsLandmarkId } from "@/features/play/wilds-landmarks";
+import { landmarkAtPosition, WILDS_FLAGSHIP_LANDMARKS, type WildsLandmarkId } from "@/features/play/wilds-landmarks";
+import { evaluateLandmarkAccess, type WildsLandmarkProgress } from "@/features/play/wilds-landmark-access";
 import type { RiftTravelGrant } from "@/features/play/wilds-rift-travel";
 
 const WILDS_SAVE_KEY = "receiz:wilds:save:v2";
 const WILDS_AVATAR_KEY = "receiz:wilds:explorer:v1";
+const WILDS_ACHIEVEMENTS_KEY = "receiz:wilds:landmark-unlocks:v1";
 
 function currentWildsQualityProfile() {
   if (typeof window === "undefined") {
@@ -83,6 +85,7 @@ export function PlayCampaign({
   const [mapOpen, setMapOpen] = useState(false);
   const [movementMode, setMovementMode] = useState<WildsMovementMode>("walk");
   const [activeLandmarkId, setActiveLandmarkId] = useState<WildsLandmarkId | null>(null);
+  const [landmarkUnlocks, setLandmarkUnlocks] = useState<string[]>([]);
   const [riftError, setRiftError] = useState("");
   const activeMission = missionCards[state.completedMissionIds.length % missionCards.length];
   const worldProgression = projectWorldProgression(state.worldMastery);
@@ -130,6 +133,12 @@ export function PlayCampaign({
       : restored);
     const savedAvatar = window.localStorage.getItem(WILDS_AVATAR_KEY);
     if (savedAvatar === "female" || savedAvatar === "male") setAvatarStyle(savedAvatar);
+    try {
+      const savedUnlocks = JSON.parse(window.localStorage.getItem(WILDS_ACHIEVEMENTS_KEY) ?? "[]");
+      if (Array.isArray(savedUnlocks)) setLandmarkUnlocks(savedUnlocks.filter((item): item is string => typeof item === "string").slice(0, 64));
+    } catch {
+      // Landmark progression starts clean when local storage is malformed.
+    }
     setMovementMode(normalizeWildsMovementMode(window.localStorage.getItem(WILDS_MOVEMENT_MODE_KEY)));
     setSaveRestored(true);
   }, []);
@@ -227,6 +236,13 @@ export function PlayCampaign({
     ? "Tap terrain to scan"
     : `${activeProximity}${state.encounter.trend ? ` · ${state.encounter.trend}` : ""}`;
   const currentLandmark = landmarkAtPosition(state.player);
+  const landmarkProgress: WildsLandmarkProgress = {
+    verifiedCardCount: state.inventory.length,
+    activeCardLevel: activeProgress.level,
+    achievementIds: landmarkUnlocks,
+    partySize: multiplayer.remotePlayers.length + 1
+  };
+  const currentLandmarkAccess = currentLandmark ? evaluateLandmarkAccess(currentLandmark, landmarkProgress) : null;
   const pulse = resolveWildsContextAction({
     pendingReward: Boolean(rewardAsset),
     landmark: currentLandmark,
@@ -236,6 +252,9 @@ export function PlayCampaign({
       : null,
     joinableActivity: null
   });
+  const visiblePulse = pulse.kind === "enter" && currentLandmarkAccess && !currentLandmarkAccess.allowed
+    ? { ...pulse, label: `Inspect sealed ${currentLandmark?.name ?? "landmark"}` }
+    : pulse;
   const activatePulse = () => {
     if (pulse.kind === "enter") {
       setActiveLandmarkId(pulse.landmarkId);
@@ -518,7 +537,7 @@ export function PlayCampaign({
             onPulse={activatePulse}
             onRest={() => dispatch({ type: "rest" })}
             onTrain={() => dispatch({ type: "train", at: new Date().toISOString() })}
-            pulse={pulse}
+            pulse={visiblePulse}
           />
         </div>
 
@@ -536,11 +555,18 @@ export function PlayCampaign({
         reducedMotion={reducedMotion}
         remotePlayers={multiplayer.remotePlayers}
         worldMastery={state.worldMastery}
+        landmarkProgress={landmarkProgress}
       />
       <WildsLandmarkExperience
+        access={activeLandmarkId ? evaluateLandmarkAccess(WILDS_FLAGSHIP_LANDMARKS.find((item) => item.id === activeLandmarkId)!, landmarkProgress) : null}
         card={activeAsset}
         landmarkId={activeLandmarkId}
         onExit={() => setActiveLandmarkId(null)}
+        onUnlock={(unlockId) => setLandmarkUnlocks((current) => {
+          const next = Array.from(new Set([...current, unlockId])).slice(0, 64);
+          try { window.localStorage.setItem(WILDS_ACHIEVEMENTS_KEY, JSON.stringify(next)); } catch { /* progression remains active for this session */ }
+          return next;
+        })}
       />
       <WildsCaptureReward asset={rewardAsset} onClose={() => {
         setRewardAsset(null);

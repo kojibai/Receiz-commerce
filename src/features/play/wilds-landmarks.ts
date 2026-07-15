@@ -1,5 +1,11 @@
 export type WildsLandmarkId = "hearttree-sanctum" | "arena-of-echoes" | "prism-arcade";
 
+export type WildsLandmarkAccessRequirement =
+  | { kind: "cards"; minimum: number; label: string }
+  | { kind: "level"; minimum: number; label: string }
+  | { kind: "achievement"; id: string; label: string }
+  | { kind: "party"; minimum: number; label: string };
+
 export type WildsLandmarkDefinition = {
   id: WildsLandmarkId;
   name: string;
@@ -11,6 +17,7 @@ export type WildsLandmarkDefinition = {
   icon: "tree" | "trophy" | "sparkles";
   occupancy: "solo" | "public" | "matchmade";
   cardRequired: boolean;
+  access: { mode: "public" | "any" | "all"; requirements: readonly WildsLandmarkAccessRequirement[] };
 };
 
 export const WILDS_FLAGSHIP_LANDMARKS: readonly WildsLandmarkDefinition[] = [
@@ -24,7 +31,8 @@ export const WILDS_FLAGSHIP_LANDMARKS: readonly WildsLandmarkDefinition[] = [
     accent: "#71e8c3",
     icon: "tree",
     occupancy: "solo",
-    cardRequired: true
+    cardRequired: true,
+    access: { mode: "public", requirements: [] }
   },
   {
     id: "arena-of-echoes",
@@ -36,7 +44,14 @@ export const WILDS_FLAGSHIP_LANDMARKS: readonly WildsLandmarkDefinition[] = [
     accent: "#f7c948",
     icon: "trophy",
     occupancy: "matchmade",
-    cardRequired: true
+    cardRequired: true,
+    access: {
+      mode: "any",
+      requirements: [
+        { kind: "level", minimum: 2, label: "Lead with a level 2 companion" },
+        { kind: "achievement", id: "hearttree-awakened", label: "Awaken the Hearttree" }
+      ]
+    }
   },
   {
     id: "prism-arcade",
@@ -48,7 +63,14 @@ export const WILDS_FLAGSHIP_LANDMARKS: readonly WildsLandmarkDefinition[] = [
     accent: "#ff72bf",
     icon: "sparkles",
     occupancy: "public",
-    cardRequired: true
+    cardRequired: true,
+    access: {
+      mode: "any",
+      requirements: [
+        { kind: "cards", minimum: 3, label: "Collect 3 verified cards" },
+        { kind: "achievement", id: "echo-victor", label: "Become an Echo Victor" }
+      ]
+    }
   }
 ] as const;
 

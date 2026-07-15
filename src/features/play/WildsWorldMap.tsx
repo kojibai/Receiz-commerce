@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { Icons } from "@/components/icons";
 import type { WildsPresence } from "./multiplayer-core";
 import { landmarkApproachPoint, WILDS_FLAGSHIP_LANDMARKS, type WildsLandmarkId } from "./wilds-landmarks";
+import { evaluateLandmarkAccess, type WildsLandmarkProgress } from "./wilds-landmark-access";
 import {
   projectWildsAtlas,
   type WildsAtlasExactPlayer,
@@ -26,6 +27,7 @@ export function WildsWorldMap({
   discoveredLandmarkIds,
   qualityProfile,
   reducedMotion,
+  landmarkProgress,
   onClose,
   onRift
 }: {
@@ -38,6 +40,7 @@ export function WildsWorldMap({
   discoveredLandmarkIds: readonly WildsLandmarkId[];
   qualityProfile: WildsQualityProfile;
   reducedMotion: boolean;
+  landmarkProgress: WildsLandmarkProgress;
   onClose: () => void;
   onRift: (destination: { x: number; z: number }) => void | Promise<void>;
 }) {
@@ -67,6 +70,7 @@ export function WildsWorldMap({
     playerClusters: atlasPresence.clusters
   } : localProjection, [atlasPresence, localProjection]);
   const selected = projection.landmarks.find((landmark) => landmark.id === selectedId) ?? null;
+  const selectedAccess = selected ? evaluateLandmarkAccess(selected, landmarkProgress) : null;
 
   useEffect(() => {
     if (!open) return;
@@ -198,8 +202,9 @@ export function WildsWorldMap({
               <div className="wilds-atlas-destination-meta">
                 <span>{selected.kind}</span>
                 <span>{selected.occupancy}</span>
-                <span>{selected.cardRequired ? "Verified card" : "Open entry"}</span>
+                <span>{selectedAccess?.allowed ? "Entrance ready" : "Sealed entrance"}</span>
               </div>
+              <p className="wilds-atlas-access-summary">{selectedAccess?.summary}</p>
               <button
                 aria-label="Hold to Rift Drop"
                 className={`wilds-rift-button${holding ? " is-holding" : ""}`}

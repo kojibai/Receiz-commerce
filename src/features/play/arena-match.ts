@@ -12,7 +12,7 @@ export type ArenaMatchState = {
   rivalName: string;
   streak: number;
   events: Array<{ id: string; intent: ArenaIntent; message: string }>;
-  reward: { id: string; kind: "achievement"; label: string } | null;
+  reward: { id: string; unlockId: "echo-victor"; kind: "achievement"; label: string } | null;
 };
 
 export function createArenaMatch(seed: string, card: PortableCardAsset): ArenaMatchState {
@@ -52,7 +52,7 @@ export function applyArenaIntent(state: ArenaMatchState, intent: ArenaIntent): A
       rivalHealth,
       phase: "result",
       streak: state.streak + 1,
-      reward: { id: `arena:${state.admittedProofDigest.slice(7, 23)}`, kind: "achievement", label: "Echo Victor" }
+      reward: { id: `arena:${state.admittedProofDigest.slice(7, 23)}`, unlockId: "echo-victor", kind: "achievement", label: "Echo Victor" }
     } : { ...state, rivalHealth, streak: state.streak + 1 };
     message = rivalHealth === 0 ? `${state.rivalName} yields. Your victory is sealed.` : "A clean strike rings through every tier.";
   }

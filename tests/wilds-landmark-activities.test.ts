@@ -12,6 +12,8 @@ import { sealCollectedCard } from "../src/features/play/portable-card";
 import { applyHearttreeIntent, createHearttreeTrial } from "../src/features/play/hearttree-trial";
 import { applyArenaIntent, createArenaMatch } from "../src/features/play/arena-match";
 import { applyPrismIntent, createPrismRun } from "../src/features/play/prism-run";
+import { evaluateLandmarkAccess } from "../src/features/play/wilds-landmark-access";
+import { WILDS_FLAGSHIP_LANDMARKS } from "../src/features/play/wilds-landmarks";
 
 const now = "2026-07-15T12:00:00.000Z";
 const card = sealCollectedCard({
@@ -22,6 +24,20 @@ const card = sealCollectedCard({
 });
 
 describe("Wilds landmark activity lifecycle", () => {
+  it("keeps public places open and makes progression gates explainable", () => {
+    const hearttree = WILDS_FLAGSHIP_LANDMARKS.find((item) => item.id === "hearttree-sanctum")!;
+    const arena = WILDS_FLAGSHIP_LANDMARKS.find((item) => item.id === "arena-of-echoes")!;
+    const prism = WILDS_FLAGSHIP_LANDMARKS.find((item) => item.id === "prism-arcade")!;
+    const newcomer = { verifiedCardCount: 1, activeCardLevel: 1, achievementIds: [] as string[], partySize: 1 };
+
+    assert.equal(evaluateLandmarkAccess(hearttree, newcomer).allowed, true);
+    assert.equal(evaluateLandmarkAccess(arena, newcomer).allowed, false);
+    assert.match(evaluateLandmarkAccess(arena, newcomer).summary, /level 2|Hearttree/i);
+    assert.equal(evaluateLandmarkAccess(arena, { ...newcomer, activeCardLevel: 2 }).allowed, true);
+    assert.equal(evaluateLandmarkAccess(prism, { ...newcomer, verifiedCardCount: 3 }).allowed, true);
+    assert.equal(evaluateLandmarkAccess(prism, { ...newcomer, achievementIds: ["echo-victor"] }).allowed, true);
+  });
+
   it("admits one exact verified card and advances append-only", () => {
     const lobby = createLandmarkSession({
       actorIds: ["player-1"],
@@ -69,6 +85,7 @@ describe("Wilds landmark activity lifecycle", () => {
     assert.deepEqual(replay, first);
     assert.equal(first.phase, "result");
     assert.equal(first.reward?.kind, "achievement");
+    assert.equal(first.reward?.unlockId, "hearttree-awakened");
     assert.equal(new Set(first.events.map((event) => event.id)).size, first.events.length);
     assert.equal(first.admittedProofDigest, card.proof.digest);
   });
@@ -81,6 +98,7 @@ describe("Wilds landmark activity lifecycle", () => {
     assert.deepEqual(replay, first);
     assert.equal(first.phase, "result");
     assert.equal(first.reward?.kind, "achievement");
+    assert.equal(first.reward?.unlockId, "echo-victor");
     assert.equal(first.admittedProofDigest, card.proof.digest);
     assert.equal(new Set(first.events.map((event) => event.id)).size, first.events.length);
   });
@@ -93,6 +111,7 @@ describe("Wilds landmark activity lifecycle", () => {
     assert.deepEqual(replay, first);
     assert.equal(first.phase, "result");
     assert.equal(first.reward?.kind, "cosmetic");
+    assert.equal(first.reward?.unlockId, "prism-trail");
     assert.equal(first.admittedProofDigest, card.proof.digest);
     assert.equal(new Set(first.events.map((event) => event.id)).size, first.events.length);
   });
