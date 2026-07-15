@@ -1,5 +1,7 @@
 import { sha256PortableBasis } from "./portable-card";
 import type { WildsDynamicSite } from "./wilds-dynamic-sites";
+export { WILDS_BOSS_FAMILIES, deriveWildsBossSuccessor, generateWildsBoss, validateWildsBossModules } from "./wilds-boss-ecology";
+export type { WildsBossDefinition, WildsBossFamilyId, WildsBossModuleSet, WildsBossPhase } from "./wilds-boss-ecology";
 
 export type CrystalBurrowerAnatomy = {
   core: "prism-heart";

@@ -37,7 +37,7 @@
 - Consumes: `sha256PortableBasis`, `WildsDynamicSite`, ecology/region clearance, existing Crystal Burrower definition.
 - Produces: `WILDS_BOSS_FAMILIES`, `WildsBossFamilyId`, `WildsBossPhase`, `WildsBossDefinition`, `WildsBossModuleSet`, `generateWildsBoss(input)`, `validateWildsBossModules(boss)`, `deriveWildsBossSuccessor(input)`, and a compatible `generateCrystalBurrower` wrapper.
 
-- [ ] **Step 1: Write failing family and successor tests**
+- [x] **Step 1: Write failing family and successor tests**
 
 ```ts
 it("generates every boss family deterministically with compatible authored modules", () => {
@@ -56,16 +56,16 @@ it("derives one new successor identity without respawning its parent", () => {
 });
 ```
 
-- [ ] **Step 2: Verify RED**
+- [x] **Step 2: Verify RED**
 
 Run: `node scripts/clean-test-build.mjs && pnpm exec tsc -p tsconfig.test.json`  
 Expected: FAIL because `wilds-boss-ecology.ts` and its exports do not exist.
 
-- [ ] **Step 3: Implement the deterministic grammar**
+- [x] **Step 3: Implement the deterministic grammar**
 
 Define all eight family tables with names, silhouettes, territories, anatomy, openers, escalations, finales, hazards, weaknesses, support objectives, transformations, aftermath, compatible successor families, and normalized health ranges. Probe at most 128 deterministic safe territories, reject density/region/settlement-assault violations, and keep the Crystal wrapper output compatible with existing tests.
 
-- [ ] **Step 4: Verify GREEN and legacy compatibility**
+- [x] **Step 4: Verify GREEN and legacy compatibility**
 
 Run: `node scripts/clean-test-build.mjs && pnpm exec tsc -p tsconfig.test.json && node scripts/patch-test-imports.mjs && node --test .test-build/tests/wilds-boss-ecology.test.js .test-build/tests/wilds-boss-generator.test.js .test-build/tests/wilds-dynamic-sites.test.js`  
 Expected: PASS.
