@@ -114,6 +114,11 @@ describe("Receiz Wilds rendering contract", () => {
     assert.match(environment, /name="world-layer-mid"/);
     assert.match(environment, /name="world-layer-far"/);
     assert.match(environment, /function HearttreeSanctum/);
+    assert.match(environment, /function FlagshipLandmarkEntrances/);
+    assert.match(environment, /function ArenaOfEchoes/);
+    assert.match(environment, /function PrismArcade/);
+    assert.match(environment, /name="world-flagship-landmarks"/);
+    assert.match(environment, /projectVisibleLandmarkEntrances\(player\)/);
     assert.match(environment, /function RootArch/);
     assert.match(environment, /<mesh position=\{\[0, 1\.14, 0\]\}>/);
     assert.match(environment, /function SpringLandmark/);
@@ -270,6 +275,20 @@ describe("Receiz Wilds rendering contract", () => {
     assert.match(controls, /move-vector/);
     assert.match(world, /function StreamedTerrain/);
     assert.match(environment, /WILDS_TILE_SIZE/);
+  });
+
+  it("lets mobile players orbit and pinch the gameplay camera without changing movement", async () => {
+    const world = await readFile("src/features/play/WildsWorldCanvas.tsx", "utf8");
+
+    assert.match(world, /OrbitControls/);
+    assert.match(world, /enableDamping/);
+    assert.match(world, /enablePan=\{false\}/);
+    assert.match(world, /minDistance=\{4\.8\}/);
+    assert.match(world, /maxDistance=\{13\.5\}/);
+    assert.match(world, /minPolarAngle=\{(?:0)?\.38\}/);
+    assert.match(world, /maxPolarAngle=\{Math\.PI \/ 2\.15\}/);
+    assert.match(world, /touches=\{\{ ONE: THREE\.TOUCH\.ROTATE, TWO: THREE\.TOUCH\.DOLLY_ROTATE \}\}/);
+    assert.doesNotMatch(world, /camera\.position\.lerp\(target/);
   });
 
   it("renders an accessible Receiz Capsule reward and bounded card inventory", async () => {

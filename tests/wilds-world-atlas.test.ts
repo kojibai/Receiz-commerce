@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { WILDS_FLAGSHIP_LANDMARKS, landmarkAtPosition } from "../src/features/play/wilds-landmarks";
+import { WILDS_FLAGSHIP_LANDMARKS, landmarkAtPosition, landmarkApproachPoint, projectVisibleLandmarkEntrances } from "../src/features/play/wilds-landmarks";
 import { projectWildsAtlas } from "../src/features/play/wilds-world-atlas";
 import type { WildsPresence } from "../src/features/play/multiplayer-core";
 
@@ -36,6 +36,19 @@ describe("Wilds world atlas", () => {
     assert.equal(landmarkAtPosition({ x: 0, z: 0 })?.id, "hearttree-sanctum");
     assert.equal(landmarkAtPosition({ x: 144, z: -96 })?.id, "arena-of-echoes");
     assert.equal(landmarkAtPosition({ x: -144, z: 96 })?.id, "prism-arcade");
+  });
+
+  it("projects every flagship building directly ahead of its Rift approach", () => {
+    for (const landmark of WILDS_FLAGSHIP_LANDMARKS) {
+      const approach = landmarkApproachPoint(landmark);
+      const visible = projectVisibleLandmarkEntrances(approach);
+      const entrance = visible.find((item) => item.landmark.id === landmark.id);
+      assert.ok(entrance, `${landmark.name} should render from its approach`);
+      assert.ok(entrance.relative.x < 0);
+      assert.ok(entrance.relative.z < 0);
+      assert.ok(Math.abs(entrance.relative.x - entrance.relative.z) < 0.001);
+      assert.ok(entrance.distance <= 16);
+    }
   });
 
   it("projects stable bounded detail for every atlas zoom", () => {

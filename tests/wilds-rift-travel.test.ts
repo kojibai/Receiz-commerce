@@ -27,7 +27,8 @@ describe("Wilds Rift travel", () => {
       assert.ok(Math.hypot(approach.x - landmark.position.x, approach.z - landmark.position.z) <= landmark.radius + 6);
       let walked = { ...initialPlayState, player: approach };
       for (let step = 0; step < 4; step += 1) {
-        walked = applyWildsInput(walked, { type: "move", direction: "east" });
+        walked = applyWildsInput(walked, { type: "move", direction: "west" });
+        walked = applyWildsInput(walked, { type: "move", direction: "north" });
       }
       assert.equal(landmarkAtPosition(walked.player)?.id, landmark.id);
     }

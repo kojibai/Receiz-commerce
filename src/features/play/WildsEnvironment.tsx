@@ -1,11 +1,13 @@
 "use client";
 
 import { useLayoutEffect, useMemo, useRef } from "react";
+import { Html } from "@react-three/drei";
 import * as THREE from "three";
 import type { PlayState } from "@/features/play/game-state";
 import { projectWildsBiome, type WildsBiomeTile } from "@/features/play/wilds-biome";
 import type { WildsQualityProfile } from "@/features/play/wilds-quality-profile";
 import { WILDS_MAJOR_ROUTES } from "@/features/play/wilds-world-geography";
+import { projectVisibleLandmarkEntrances, type WildsLandmarkDefinition } from "@/features/play/wilds-landmarks";
 
 export const WILDS_TILE_SIZE = 12;
 const STREAM_RADIUS = 2;
@@ -91,7 +93,8 @@ export function WildsEnvironment({
       </group>
       <group name="world-layer-mid">
         <EcologyInstances bushes={bushes} flowers={flowers} palette={tiles[12]?.canopy} player={player} rocks={rocks} trees={trees} />
-        {tiles.filter((tile) => tile.landmark.kind !== "none").map((tile) => (
+        <FlagshipLandmarkEntrances player={player} />
+        {tiles.filter((tile) => tile.landmark.kind !== "none" && tile.landmark.kind !== "hearttree-sanctum").map((tile) => (
           <Landmark key={`landmark:${tile.key}`} player={player} tile={tile} />
         ))}
       </group>
@@ -100,6 +103,40 @@ export function WildsEnvironment({
       </group>
     </group>
   );
+}
+
+function FlagshipLandmarkEntrances({ player }: { player: PlayState["player"] }) {
+  const entrances = projectVisibleLandmarkEntrances(player);
+  return <group name="world-flagship-landmarks">
+    {entrances.map(({ landmark, relative, distance }) => (
+      <group key={landmark.id} name={`world-entrance-${landmark.id}`} position={[relative.x, 0, relative.z]}>
+        {landmark.id === "hearttree-sanctum" ? <HearttreeSanctum /> : null}
+        {landmark.id === "arena-of-echoes" ? <ArenaOfEchoes /> : null}
+        {landmark.id === "prism-arcade" ? <PrismArcade /> : null}
+        <LandmarkEntranceBeacon distance={distance} landmark={landmark} />
+      </group>
+    ))}
+  </group>;
+}
+
+function LandmarkEntranceBeacon({ landmark, distance }: { landmark: WildsLandmarkDefinition; distance: number }) {
+  return <group name={`entrance-beacon-${landmark.id}`}>
+    <mesh position={[0, .035, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+      <torusGeometry args={[landmark.radius * .7, .08, 8, 64]} />
+      <meshStandardMaterial color={landmark.accent} emissive={landmark.accent} emissiveIntensity={1.3} transparent opacity={.82} />
+    </mesh>
+    <mesh position={[0, 4.3, 0]}>
+      <cylinderGeometry args={[.035, .16, 8.4, 10]} />
+      <meshBasicMaterial color={landmark.accent} transparent opacity={.34} />
+    </mesh>
+    <Html center distanceFactor={9} position={[0, 6.15, 0]} zIndexRange={[14, 1]}>
+      <div className="wilds-landmark-wayfinder" style={{ "--landmark-accent": landmark.accent } as React.CSSProperties}>
+        <span>{Math.max(0, Math.round(distance - landmark.radius))}m</span>
+        <strong>{landmark.name}</strong>
+        <small>Entrance ahead</small>
+      </div>
+    </Html>
+  </group>;
 }
 
 function MajorWorldRoutes({ player, palette }: { player: PlayState["player"]; palette: WildsBiomeTile["trail"] }) {
@@ -257,6 +294,41 @@ function HearttreeSanctum() {
       <pointLight color="#8ef2a7" distance={4.2} intensity={0.45} position={[0, 1.4, 0.52]} />
     </group>
   );
+}
+
+function ArenaOfEchoes() {
+  return <group name="arena-of-echoes-building">
+    <mesh receiveShadow position={[0, .32, 0]}><cylinderGeometry args={[4.5, 4.8, .64, 48]} /><meshStandardMaterial color="#665b46" roughness={.9} /></mesh>
+    {[0, 1].map((level) => <mesh key={level} position={[0, .8 + level * .72, 0]} rotation={[Math.PI / 2, 0, 0]}>
+      <torusGeometry args={[3.65 - level * .32, .32, 10, 56]} />
+      <meshStandardMaterial color={level ? "#e8d178" : "#9c8650"} emissive="#f7c948" emissiveIntensity={level ? .28 : .12} roughness={.66} />
+    </mesh>)}
+    {Array.from({ length: 12 }, (_, index) => {
+      const angle = index / 12 * Math.PI * 2;
+      return <mesh key={index} position={[Math.cos(angle) * 3.7, 1.25, Math.sin(angle) * 3.7]}>
+        <cylinderGeometry args={[.17, .24, 2.25, 8]} />
+        <meshStandardMaterial color="#d7c58a" roughness={.72} />
+      </mesh>;
+    })}
+    <mesh position={[-2.7, 1.55, -2.7]} rotation={[0, Math.PI / 4, 0]}><boxGeometry args={[1.35, 3.1, .6]} /><meshStandardMaterial color="#4d4539" emissive="#f7c948" emissiveIntensity={.18} /></mesh>
+    <pointLight color="#f7c948" distance={13} intensity={4.5} position={[0, 3.2, 0]} />
+  </group>;
+}
+
+function PrismArcade() {
+  return <group name="prism-arcade-building">
+    <mesh receiveShadow position={[0, .22, 0]}><cylinderGeometry args={[4.2, 4.6, .44, 8]} /><meshStandardMaterial color="#26384c" metalness={.28} roughness={.52} /></mesh>
+    {([-1.8, 0, 1.8] as const).map((x, index) => <group key={x} position={[x, 0, index === 1 ? 0 : .45]}>
+      <mesh position={[0, 2.25 + (index === 1 ? .8 : 0), 0]} rotation={[0, index * .45, 0]}>
+        <octahedronGeometry args={[index === 1 ? 1.15 : .88, 1]} />
+        <meshPhysicalMaterial color={index === 1 ? "#ff72bf" : "#72dfff"} emissive={index === 1 ? "#ff72bf" : "#72dfff"} emissiveIntensity={1.15} metalness={.18} roughness={.22} transmission={.08} />
+      </mesh>
+      <mesh position={[0, 1.05, 0]}><cylinderGeometry args={[.3, .48, 2.1, 8]} /><meshStandardMaterial color="#1d2637" emissive="#7b4fc4" emissiveIntensity={.34} /></mesh>
+    </group>)}
+    <mesh position={[-2.55, 1.65, -2.55]} rotation={[0, Math.PI / 4, 0]}><torusGeometry args={[1.25, .2, 10, 38]} /><meshStandardMaterial color="#ff72bf" emissive="#ff72bf" emissiveIntensity={1.4} metalness={.35} roughness={.25} /></mesh>
+    <pointLight color="#ff72bf" distance={14} intensity={6} position={[0, 3.8, 0]} />
+    <pointLight color="#72dfff" distance={10} intensity={4} position={[-2.5, 2, -2.5]} />
+  </group>;
 }
 
 function RootArch() {

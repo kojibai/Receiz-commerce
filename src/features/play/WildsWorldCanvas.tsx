@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useMemo, useRef } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { Html, Sparkles } from "@react-three/drei";
+import { Html, OrbitControls, Sparkles } from "@react-three/drei";
 import * as THREE from "three";
 import {
   creatureCards,
@@ -84,7 +84,7 @@ function WildsScene({
       <color attach="background" args={[world.chapter.palette.fog]} />
       <fog attach="fog" args={[world.chapter.palette.fog, 10, 24]} />
       <WildsAtmosphere encounter={state.encounter} missionProgress={state.missionProgress} player={state.player} qualityProfile={qualityProfile} />
-      <CameraRig encounter={state.encounter} />
+      <CameraRig />
       <WildsDiagnostics qualityProfile={qualityProfile} state={state} />
       <SearchableTerrain
         enabled={searchEnabled}
@@ -140,21 +140,20 @@ function RemoteExplorer({
   );
 }
 
-function CameraRig({ encounter }: { encounter: PlayState["encounter"] }) {
-  const target = useMemo(() => new THREE.Vector3(), []);
-  const lookAt = useMemo(() => new THREE.Vector3(), []);
-
-  useFrame(({ camera }) => {
-    const elapsed = frameSeconds();
-    const hot = encounter.phase === "hint" && encounter.proximity === "hot";
-    const tremor = hot ? Math.sin(elapsed * 13) * 0.025 : 0;
-    target.set(4.6 + tremor, 5.4 + Math.abs(tremor) * 0.45, 6.6);
-    lookAt.set(0, 0.35, 0);
-    camera.position.lerp(target, 0.08);
-    camera.lookAt(lookAt);
-  });
-
-  return null;
+function CameraRig() {
+  return <OrbitControls
+    dampingFactor={.08}
+    enableDamping
+    enablePan={false}
+    maxDistance={13.5}
+    maxPolarAngle={Math.PI / 2.15}
+    minDistance={4.8}
+    minPolarAngle={.38}
+    rotateSpeed={.62}
+    target={[0, .55, 0]}
+    touches={{ ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_ROTATE }}
+    zoomSpeed={.82}
+  />;
 }
 
 function frameSeconds() {

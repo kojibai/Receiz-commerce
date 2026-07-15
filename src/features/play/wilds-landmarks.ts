@@ -75,12 +75,21 @@ export const WILDS_FLAGSHIP_LANDMARKS: readonly WildsLandmarkDefinition[] = [
 ] as const;
 
 const WILDS_LANDMARK_APPROACH_GAP = 4;
+const WILDS_LANDMARK_RENDER_DISTANCE = 42;
 
 export function landmarkApproachPoint(landmark: WildsLandmarkDefinition) {
+  const diagonal = (landmark.radius + WILDS_LANDMARK_APPROACH_GAP) / Math.sqrt(2);
   return {
-    x: landmark.position.x - landmark.radius - WILDS_LANDMARK_APPROACH_GAP,
-    z: landmark.position.z
+    x: landmark.position.x + diagonal,
+    z: landmark.position.z + diagonal
   };
+}
+
+export function projectVisibleLandmarkEntrances(player: { x: number; z: number }, renderDistance = WILDS_LANDMARK_RENDER_DISTANCE) {
+  return WILDS_FLAGSHIP_LANDMARKS.map((landmark) => {
+    const relative = { x: landmark.position.x - player.x, z: landmark.position.z - player.z };
+    return { landmark, relative, distance: Math.hypot(relative.x, relative.z) };
+  }).filter((entrance) => entrance.distance <= renderDistance);
 }
 
 export function landmarkAtPosition(position: { x: number; z: number }) {
