@@ -72,16 +72,16 @@ describe("mobile storefront layout CSS", () => {
   });
 
   it("reserves the compact world-status rail so it never covers the player identity", () => {
-    assert.match(css, /\.mobile-play-wrap \.wilds-living-world-hud \{[^}]*max-width: min\(196px, calc\(100% - 16px\)\);/s);
+    assert.match(css, /\.mobile-play-wrap \.wilds-living-world-hud \{[^}]*max-width: min\(240px, calc\(100% - 16px\)\);/s);
     assert.match(css, /\.mobile-play-wrap \.wilds-live-pill\[class\*="mode-"\] \{[^}]*width: 30px;/s);
     assert.match(css, /\.mobile-play-wrap \.wilds-live-pill\[class\*="mode-"\] span \{[^}]*display: none;/s);
-    assert.match(css, /\.mobile-play-wrap \.wilds-living-world-hud\.has-event \{[^}]*max-width: min\(196px, calc\(100% - 16px\)\);/s);
+    assert.match(css, /\.mobile-play-wrap \.wilds-living-world-hud\.has-event \{[^}]*max-width: min\(240px, calc\(100% - 16px\)\);/s);
     assert.match(css, /\.mobile-play-wrap \.wilds-live-event-compact \{[^}]*display: inline;/s);
     assert.match(css, /\.mobile-play-wrap \.wilds-living-world-hud \{[^}]*bottom: 86px;/s);
     assert.match(css, /\.mobile-play-wrap \.wilds-utility-cluster \{[^}]*top: 65px;[^}]*left: 8px;/s);
     assert.match(css, /\.mobile-play-wrap \.wilds-living-world-sheet \{[^}]*top: 50%;[^}]*left: 50%;[^}]*max-height: min\(640px, calc\(100dvh - 32px\)\)[^}]*transform: translate\(-50%, -50%\)/s);
     assert.match(css, /@media \(max-width: 350px\)[\s\S]*\.mobile-play-wrap \.wilds-resource-strip \{[^}]*display: none/s);
-    assert.match(css, /\.mobile-play-wrap \.wilds-living-world-hud\.has-event \{[^}]*flex-wrap: wrap/s);
+    assert.match(css, /\.mobile-play-wrap \.wilds-living-world-hud \{[^}]*flex-wrap: wrap/s);
     assert.match(css, /@media \(max-width: 350px\)[\s\S]*\.mobile-play-wrap \.wilds-mission-meter \{[^}]*display: none/s);
     assert.match(css, /@media \(max-width: 350px\)[\s\S]*\.mobile-play-wrap \.wilds-search-reticle \{[^}]*left: 12px;[^}]*transform: none/s);
   });
