@@ -291,6 +291,19 @@ function downloadBlob(blob: Blob, filename: string) {
   window.setTimeout(() => URL.revokeObjectURL(url), 0);
 }
 
+export async function sealPortableArtifact(artifact: Blob, filename: string) {
+  const form = new FormData();
+  form.set("file", artifact, filename);
+  const response = await fetch("/api/receiz/seal", { method: "POST", body: form });
+  if (!response.ok) {
+    const payload = await response.json().catch(() => null) as { error?: string } | null;
+    throw new Error(payload?.error || "receiz_seal_failed");
+  }
+  const sealed = await response.blob();
+  if (!sealed.size) throw new Error("receiz_seal_empty");
+  return sealed;
+}
+
 async function svgPngBlob(svg: string, width = 750, height = 1050) {
   const source = URL.createObjectURL(new Blob([svg], { type: "image/svg+xml" }));
   try {
@@ -314,7 +327,7 @@ export async function downloadPortableCard(asset: PortableCardAsset) {
   if (typeof document === "undefined") throw new Error("wilds_card_download_browser_required");
   const filename = asset.manifest.formId;
   const publication = await attemptCardPublication(asset);
-  downloadBlob(await renderPortableCardPngBlob(asset), `${filename}.png`);
+  downloadBlob(await renderPortableCardPngBlob(asset), `${filename}.receized.png`);
   return { published: publication.published };
 }
 
@@ -332,18 +345,18 @@ function attemptCardPublication(asset: PortableCardAsset) {
 async function renderPortableCardPngBlob(asset: PortableCardAsset) {
   const rendered = await svgPngBlob(renderWildsCardSvg(asset, { origin: window.location.origin }));
   const portable = embedPortableCardInPng(new Uint8Array(await rendered.arrayBuffer()), asset);
-  return new Blob([portable.slice().buffer], { type: "image/png" });
+  return sealPortableArtifact(new Blob([portable.slice().buffer], { type: "image/png" }), `${asset.manifest.formId}.png`);
 }
 
 export async function portableVaultPngBlob(assets: PortableCardAsset[]) {
   if (typeof document === "undefined") throw new Error("wilds_vault_png_browser_required");
   const rendered = await svgPngBlob(renderWildsVaultSvg(assets), 1200, 900);
   const portable = embedPortableVaultInPng(new Uint8Array(await rendered.arrayBuffer()), assets);
-  return new Blob([portable.slice().buffer], { type: "image/png" });
+  return sealPortableArtifact(new Blob([portable.slice().buffer], { type: "image/png" }), "wilds-vault.png");
 }
 
 export async function downloadPortableVault(assets: PortableCardAsset[]) {
   if (!assets.length) throw new Error("wilds_vault_empty");
   const digest = sha256PortableBasis(canonicalPortableCardJson(assets.map((asset) => asset.id))).slice(7, 19);
-  downloadBlob(await portableVaultPngBlob(assets), `wilds-vault-${digest}.png`);
+  downloadBlob(await portableVaultPngBlob(assets), `wilds-vault-${digest}.receized.png`);
 }

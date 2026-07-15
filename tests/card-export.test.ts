@@ -7,6 +7,7 @@ import {
   readPortableVaultFromPng,
   renderWildsCardSvg,
   renderWildsVaultSvg,
+  sealPortableArtifact,
   standaloneCardUrl,
   verifyPortableCardPng,
   verifyPortableVaultPng
@@ -107,5 +108,46 @@ describe("Wilds card export", () => {
     assert.equal(decoded.assets.length, 2);
     assert.equal(verified.ok, true);
     assert.deepEqual(verified.assets.map((asset) => asset.id), [card.id, second.id]);
+  });
+
+  it("sends saved portable images through the canonical Receiz document sealer and preserves returned bytes", async () => {
+    const originalFetch = globalThis.fetch;
+    const issuedBytes = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10, 82, 69, 67, 69, 73, 90]);
+    let submittedFile: File | null = null;
+    try {
+      globalThis.fetch = (async (input, init) => {
+        assert.equal(input, "/api/receiz/seal");
+        assert.equal(init?.method, "POST");
+        assert.ok(init?.body instanceof FormData);
+        submittedFile = init.body.get("file") as File;
+        assert.equal(submittedFile.name, "voltray-1.png");
+        assert.equal(submittedFile.type, "image/png");
+        return new Response(issuedBytes, { status: 200, headers: { "content-type": "image/png" } });
+      }) as typeof fetch;
+
+      const sealed = await sealPortableArtifact(new Blob([new Uint8Array([1, 2, 3])], { type: "image/png" }), "voltray-1.png");
+
+      assert.deepEqual(new Uint8Array(await sealed.arrayBuffer()), issuedBytes);
+      assert.equal(sealed.type, "image/png");
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
+  it("refuses to save an unsealed fallback when canonical Receiz issuance fails", async () => {
+    const originalFetch = globalThis.fetch;
+    try {
+      globalThis.fetch = (async () => new Response(JSON.stringify({ error: "receiz_seal_failed" }), {
+        status: 502,
+        headers: { "content-type": "application/json" }
+      })) as typeof fetch;
+
+      await assert.rejects(
+        sealPortableArtifact(new Blob([new Uint8Array([1, 2, 3])], { type: "image/png" }), "vault.png"),
+        /receiz_seal_failed/
+      );
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
   });
 });
