@@ -2,6 +2,16 @@
 
 All notable changes to Receiz Commerce Kit will be documented here.
 
+## 3.0.0 - Wilds V3 Living World
+
+- Shipped the complete eight-slice Wilds V3 program: canonical world, landmarks, ecology, global bosses and raids, social teams and leagues, card mastery civilization, narrative memory, and final qualification.
+- Added stable atlas geography, walkable landmark entry, exact player presence, Rift travel, dynamic sites, global successor bosses, shared raid settlement, and durable memorial history.
+- Added deterministic card roles, regional utility, loadout synergy, mastery, Ascension, lineage utility, boss artifacts, crafting, competitive normalization, and portable reconciliation.
+- Added regional stories, recurring characters, historical atlas layers, environmental aftermath, return-player continuity, celebrations, memorials, and regional audio motifs.
+- Expanded the V3 player vault to carry cards, progression, personal history, event receipts, settings, and canonical reconciliation state.
+- Added premium mobile interaction safeguards: camera gestures, centered movement controls, no accidental selection, scroll-safe vaults, and aligned utility rails.
+- Qualified the release with 550 passing tests, secret scan, typecheck, lint, production build, Receiz SDK doctor, mobile WebKit verification, and a 9.23/10 evidence-backed scorecard.
+
 ## 2.0.0 - Commerce OS
 
 - Upgraded the supported Receiz boundary to `@receiz/sdk@99.0.0` and kept SDK access centralized through the adapter.

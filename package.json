@@ -1,6 +1,6 @@
 {
   "name": "receiz-commerce-kit",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "description": "Open-source Receiz SDK commerce SaaS template for proof-sealed storefronts, rewards, checkout, domains, and admin builders.",
   "license": "MIT",
   "private": true,

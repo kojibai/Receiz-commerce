@@ -5,10 +5,9 @@ import { Icons } from "@/components/icons";
 import { cx } from "@/lib/utils";
 import type { GameAction, WildsInput } from "./game-state";
 import type { WildsContextAction } from "./wilds-context-action";
-import { cameraRelativeMovement, type WildsMovementMode } from "./wilds-movement";
+import type { WildsMovementMode } from "./wilds-movement";
 
 export function WildsWorldControls({
-  cameraHeading,
   movementMode,
   pulse,
   activeAction,
@@ -20,7 +19,6 @@ export function WildsWorldControls({
   onTrain,
   onMission
 }: {
-  cameraHeading: number;
   movementMode: WildsMovementMode;
   pulse: WildsContextAction;
   activeAction: GameAction;
@@ -59,7 +57,7 @@ export function WildsWorldControls({
         </button>
       </div>
 
-      <WildsTrackpad cameraHeading={cameraHeading} movementMode={movementMode} onInput={onInput} />
+      <WildsTrackpad movementMode={movementMode} onInput={onInput} />
 
       <div className="wilds-control-rail wilds-control-rail-right" aria-label="Progression actions">
         <button
@@ -95,11 +93,9 @@ export function WildsWorldControls({
 }
 
 function WildsTrackpad({
-  cameraHeading,
   movementMode,
   onInput
 }: {
-  cameraHeading: number;
   movementMode: WildsMovementMode;
   onInput: (input: WildsInput) => void;
 }) {
@@ -112,12 +108,11 @@ function WildsTrackpad({
     const timer = window.setInterval(() => {
       const vector = vectorRef.current;
       if (Math.hypot(vector.x, vector.z) >= 0.08) {
-        const relative = cameraRelativeMovement(vector, cameraHeading);
-        onInput({ type: "move-vector", x: relative.x, z: relative.z, mode: movementMode });
+        onInput({ type: "move-vector", x: vector.x, z: vector.z, mode: movementMode });
       }
     }, 45);
     return () => window.clearInterval(timer);
-  }, [active, cameraHeading, movementMode, onInput]);
+  }, [active, movementMode, onInput]);
 
   const updateVector = (event: ReactPointerEvent<HTMLButtonElement>) => {
     const rect = event.currentTarget.getBoundingClientRect();

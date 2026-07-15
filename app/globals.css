@@ -2578,7 +2578,7 @@ a {
   position: absolute;
   z-index: 24;
   top: 76px;
-  right: 12px;
+  left: 12px;
   display: flex;
   align-items: flex-start;
   gap: 6px;
@@ -2605,8 +2605,7 @@ a {
 .wilds-map-trigger:focus-visible { outline: 3px solid rgba(255, 242, 168, 0.92); outline-offset: 2px; }
 .wilds-utility-cluster .wilds-audio-sheet { top: calc(100% + 8px); bottom: auto; left: 0; }
 
-/* Keep utility actions on the same outer rail as share, so the playfield
-   reads as one coherent control row on small screens. */
+/* Keep the original left-side utility rail clear of the scout/status stack. */
 
 .wilds-audio-overlay .wilds-audio-settings > summary {
   width: 30px;

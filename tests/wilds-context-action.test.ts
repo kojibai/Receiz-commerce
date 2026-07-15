@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { applyWildsInput, initialPlayState, worldBounds } from "../src/features/play/game-state";
 import { resolveWildsContextAction } from "../src/features/play/wilds-context-action";
-import { cameraRelativeMovement, movementScale, normalizeWildsMovementMode } from "../src/features/play/wilds-movement";
+import { movementScale, normalizeWildsMovementMode } from "../src/features/play/wilds-movement";
 import { WILDS_FLAGSHIP_LANDMARKS } from "../src/features/play/wilds-landmarks";
 
 const emptyContext = {
@@ -71,15 +71,5 @@ describe("Wilds contextual world actions", () => {
     const walkDistance = walking.player.x - initialPlayState.player.x;
     const runDistance = running.player.x - initialPlayState.player.x;
     assert.ok(Math.abs(runDistance / walkDistance - 1.25) < 0.001);
-  });
-
-  it("keeps trackpad forward aligned with the orbiting camera", () => {
-    assert.deepEqual(cameraRelativeMovement({ x: 0, z: -1 }, 0), { x: 0, z: -1 });
-    const cameraOnRight = cameraRelativeMovement({ x: 0, z: -1 }, Math.PI / 2);
-    assert.ok(Math.abs(cameraOnRight.x + 1) < 0.0001);
-    assert.ok(Math.abs(cameraOnRight.z) < 0.0001);
-    const cameraBehind = cameraRelativeMovement({ x: 0, z: -1 }, Math.PI);
-    assert.ok(Math.abs(cameraBehind.x) < 0.0001);
-    assert.ok(Math.abs(cameraBehind.z - 1) < 0.0001);
   });
 });

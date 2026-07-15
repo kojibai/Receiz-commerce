@@ -1,3 +1,92 @@
+# Receiz Commerce Kit v3.0.0 — Wilds V3 Living World
+
+Release date: July 15, 2026
+
+Status: General Availability · repository release
+
+Release unit: Repository release, not an npm package
+
+SDK target: `@receiz/sdk@100.0.0`
+
+## The release
+
+Receiz Commerce Kit v3.0.0 is the release in which the product becomes a living, proof-sealed world.
+
+This is not a game bolted onto commerce and it is not a collection of disconnected demos. One canonical Receiz foundation now carries the storefront, merchant operations, portable cards, player vault, shared world, landmarks, ecology, bosses, raids, teams, leagues, mastery, crafting, lineage, narrative memory, and return-player continuity. Exploration reveals card strategy; card strategy changes shared events; shared events reshape the places players return to.
+
+The result is one coherent product system: a merchant can publish proof-sealed commerce, a player can carry a verified card and their history into the Wilds, and the world can remember what everyone did without splitting into private realities or surrendering authority to the client.
+
+## What is new in V3
+
+### A world that is shared, persistent, and learnable
+
+- One canonical world for every player, ordered by Pulse and Kai-Klok.
+- A full organic atlas with stable geography, permanent landmarks, exact player positions, Rift travel, and walkable entrances.
+- Dynamic markets, ruins, portals, festivals, migrations, blooms, stormfronts, settlement distress, and global bosses.
+- Global raids with bounded participation, shared defeat, successor consequences, memorials, and proof-bound receipts.
+- Social teams, roles, leagues, public records, event scheduling, squad assembly, and abuse controls.
+
+### Cards that matter everywhere
+
+- Deterministic card role taxonomy, regional resonance, loadout synergy, mastery, Ascension, lineage utility, boss artifacts, crafting, and competitive normalization.
+- Cards remain portable, offline-verifiable Receiz objects rather than mutable client records.
+- Player history, events, progression, cards, and recovery state travel together in the V3 player vault.
+
+### Emotional continuity
+
+- Regional stories with authored chapters and recurring characters.
+- Return-player continuity that remembers prior discoveries and points toward the next meaningful thread.
+- Historical atlas layers, environmental aftermath, regional audio identities, celebrations, and memorials.
+- The world preserves consequences without using manipulative timers, financial stakes, or unconstrained generation.
+
+### Premium mobile play
+
+- Camera orbit, pinch zoom, centered D-pad, balanced action rails, and touch-safe gameplay surfaces.
+- No accidental text selection or long-press callouts on the world surface.
+- Scrollable vault and card experiences with full save, restore, import, export, flip, lineage, and store-listing controls.
+- Boss/event overlays occupy a safe lower-left mobile zone; audio, globe, and share controls share one coherent utility rail.
+
+## Trust and authority model
+
+V3 keeps the hierarchy explicit:
+
+1. Receiz proof objects and canonical world events are authority.
+2. Pulse proposes/advances shared work and Kai-Klok orders it deterministically.
+3. The server admits ownership, rewards, raids, teams, publication, and recovery.
+4. The client renders projections and submits intents; it cannot mint shared truth.
+
+Valid V2 cards, vaults, saves, landmarks, and proof history remain interpretable. Practice mode is visibly isolated from canonical multiplayer truth. No private boss instances, cash wagering, pooled financial stakes, or silent local fallbacks are introduced.
+
+## Release qualification
+
+The complete release gate passed on July 15, 2026:
+
+- 605 tracked files secret-scanned with no findings;
+- 550 automated tests passing;
+- TypeScript and ESLint passing;
+- production build passing;
+- Receiz SDK doctor passing with configured capabilities available;
+- mobile WebKit browser qualification completed;
+- overall evidence-backed scorecard: **9.23/10**;
+- lowest scored category: **9.0/10**;
+- no critical category below the 8.5 threshold.
+
+Full evidence is recorded in [`docs/superpowers/evidence/2026-07-15-wilds-v3-slice-8.md`](docs/superpowers/evidence/2026-07-15-wilds-v3-slice-8.md).
+
+## Upgrade and operations
+
+V3 is a repository release. Before promoting it to a public deployment:
+
+- run `pnpm release:check` in the target environment;
+- verify the Receiz tenant, callback, delegated access, and required scopes with `pnpm receiz:doctor`;
+- preserve the existing platform and tenant storage keys;
+- publish only through proof-authorized release paths;
+- retain the previous deployment as the rollback target until the first production smoke window closes.
+
+The release is designed to be operated with evidence: every launch decision should be traceable to the qualification record, not to an unverified screenshot or client-local state.
+
+---
+
 # Receiz Commerce Kit v2.0.0
 
 Release date: July 13, 2026

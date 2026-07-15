@@ -7,8 +7,8 @@ Status: qualified
 
 `pnpm release:check` passed end to end:
 
-- secret scan: 604 tracked files, no findings;
-- test suite: 551 passing, 0 failing;
+- secret scan: 605 tracked files, no findings;
+- test suite: 550 passing, 0 failing;
 - TypeScript typecheck: passed;
 - ESLint: passed;
 - Next production build: passed;
