@@ -1,4 +1,5 @@
 import type { ProofEventType } from "@/types/domain";
+import type { ReceizKeyFileV1 } from "@receiz/sdk";
 
 export type MerchantAuthorityAction =
   | "account"
@@ -80,6 +81,30 @@ function proofKeyFileFrom(value: Record<string, unknown>, receizId: Record<strin
   return keyFile;
 }
 
+function isReceizKeyFile(value: unknown): value is ReceizKeyFileV1 {
+  if (!isRecord(value) || !isRecord(value.owner) || !isRecord(value.crypto)) return false;
+  const kdf = isRecord(value.crypto.kdf) ? value.crypto.kdf : {};
+  const cipher = isRecord(value.crypto.cipher) ? value.crypto.cipher : {};
+
+  return (
+    value.schema === "receiz.key.v1" &&
+    value.name === "Receiz Key" &&
+    value.version === 1 &&
+    typeof value.issuedAt === "string" &&
+    typeof value.keyId === "string" &&
+    (value.alg === "Ed25519" || value.alg === "P-256") &&
+    typeof value.owner.uid === "string" &&
+    typeof value.crypto.publicKeyRawB64u === "string" &&
+    typeof value.crypto.privateKeyPkcs8CiphertextB64u === "string" &&
+    kdf.name === "PBKDF2-SHA256" &&
+    typeof kdf.iterations === "number" &&
+    typeof kdf.saltB64u === "string" &&
+    cipher.name === "AES-GCM-256" &&
+    typeof cipher.ivB64u === "string" &&
+    typeof cipher.aad === "string"
+  );
+}
+
 export function merchantLocalProofObjectFromState(value: unknown) {
   const state = isRecord(value) ? value : {};
   const auth = isRecord(state.auth) ? state.auth : {};
@@ -97,6 +122,22 @@ export function merchantLocalProofObjectFromState(value: unknown) {
         : typeof receizId.passphrase === "string"
           ? receizId.passphrase
           : undefined
+  };
+}
+
+export function merchantSignedPublishProofFromState(value: unknown) {
+  const proof = merchantLocalProofObjectFromState(value);
+  if (!isReceizKeyFile(proof.keyFile)) return null;
+
+  const ownerUsername = normalizedHandle(proof.keyFile.owner?.username);
+  const handle = ownerUsername ? (ownerUsername.includes(".") ? ownerUsername : `${ownerUsername}.receiz.id`) : proof.handle;
+  if (!handle) return null;
+
+  return {
+    displayName: proof.displayName || normalizedHandle(proof.keyFile.owner?.displayName),
+    handle,
+    keyFile: proof.keyFile,
+    passphrase: proof.passphrase
   };
 }
 

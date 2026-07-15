@@ -2,7 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { mockHosting } from "@/lib/hosting/mock-hosting";
 import { normalizeCustomDomain, normalizeTenantSlug, subdomainForSlug } from "@/lib/hosting/domain-utils";
 import { hostContextFromHost } from "@/lib/hosting/host-context";
-import type { MerchantAuthorityAction } from "@/lib/hosting/merchant-proof-authority";
+import {
+  merchantSignedPublishProofFromState,
+  type MerchantAuthorityAction
+} from "@/lib/hosting/merchant-proof-authority";
 import {
   VercelDomainError,
   addProjectDomain,
@@ -90,16 +93,29 @@ async function loadPublishOwner(accessToken: string | undefined) {
 
 async function requireMerchantAuthority(
   accessToken: string | undefined,
-  _action: MerchantAuthorityAction,
-  returnTo: string
+  action: MerchantAuthorityAction,
+  returnTo: string,
+  localIdentityState?: unknown
 ) {
   const profile = await loadPublishOwner(accessToken);
+  const localIdentity = action === "publish" ? merchantSignedPublishProofFromState(localIdentityState) : null;
   if (profile?.handle) {
     return {
       ok: true as const,
       profile,
       handle: profile.handle,
-      source: "delegated_permission" as const
+      source: "delegated_permission" as const,
+      localIdentity
+    };
+  }
+
+  if (localIdentity) {
+    return {
+      ok: true as const,
+      profile: null,
+      handle: localIdentity.handle,
+      source: "proof_object" as const,
+      localIdentity
     };
   }
 
@@ -348,7 +364,8 @@ async function syncPublishedStoreStateForHosting(input: {
   merchantAuthority: {
     profile: Awaited<ReturnType<typeof loadPublishOwner>>;
     handle: string;
-    source: "delegated_permission";
+    source: "delegated_permission" | "proof_object";
+    localIdentity: ReturnType<typeof merchantSignedPublishProofFromState>;
   };
 }) {
   const state = buildPublishedStateForHostingSync(mockStorage.getState(), input.submittedState, input.hosting, {
@@ -400,7 +417,11 @@ async function syncPublishedStoreStateForHosting(input: {
   const storeStateReceizRecord = await publishAndAdmitReceizStoreState({
     accessToken: input.accessToken,
     record: storeStateRecord,
-    proofStore
+    proofStore,
+    proof: {
+      keyFile: input.merchantAuthority.localIdentity?.keyFile,
+      passphrase: input.merchantAuthority.localIdentity?.passphrase
+    }
   });
   const storeStateSyncOk = receizStoreStateWriteSucceeded(storeStateReceizRecord);
   const storeStateSynced = receizStoreStateSyncCompleted(storeStateReceizRecord);
@@ -466,7 +487,8 @@ export async function POST(request: NextRequest) {
   const origin = getRequestOrigin(request);
   const requestHost = request.headers.get("x-forwarded-host") ?? request.headers.get("host") ?? platform.domain;
   const hostContext = hostContextFromHost(requestHost);
-  if (!payerAccessToken || requestSession.sessionScope !== hostContext.storageKey) {
+  const hasScopedMerchantSession = Boolean(payerAccessToken && requestSession.sessionScope === hostContext.storageKey);
+  if (action !== "publish" && (!payerAccessToken || requestSession.sessionScope !== hostContext.storageKey)) {
     return NextResponse.json(
       {
         ...receizAuthorityRequired(returnTo),
@@ -475,7 +497,7 @@ export async function POST(request: NextRequest) {
       { status: 401 }
     );
   }
-  const accessToken = payerAccessToken;
+  const accessToken = hasScopedMerchantSession ? payerAccessToken : undefined;
 
   if (action === "plan") {
     const plan = String(body.plan ?? "pro") as HostingConfig["plan"];
@@ -698,7 +720,8 @@ export async function POST(request: NextRequest) {
     const merchantAuthority = await requireMerchantAuthority(
       accessToken,
       "publish",
-      returnTo
+      returnTo,
+      isRecord(body) ? body.merchantProof ?? body.merchantSession ?? body.state : null
     );
     if (!merchantAuthority.ok) return merchantAuthority.response;
     const publishOwner = merchantAuthority.profile;
@@ -712,7 +735,7 @@ export async function POST(request: NextRequest) {
       hosting: submittedHosting
     }, {
       customDomain: publishOwner?.customDomain,
-      displayName: publishOwner?.name,
+      displayName: publishOwner?.name ?? merchantAuthority.localIdentity?.displayName,
       merchantReceizId: merchantAuthority.handle,
       tenantSlug: publishOwner?.subdomain
     });
@@ -753,7 +776,11 @@ export async function POST(request: NextRequest) {
     const storeStateReceizRecord = await publishAndAdmitReceizStoreState({
       accessToken,
       record: storeStateRecord,
-      proofStore
+      proofStore,
+      proof: {
+        keyFile: merchantAuthority.localIdentity?.keyFile,
+        passphrase: merchantAuthority.localIdentity?.passphrase
+      }
     });
     const storeStateSyncOk = receizStoreStateWriteSucceeded(storeStateReceizRecord);
     const storeStateSynced = receizStoreStateSyncCompleted(storeStateReceizRecord);

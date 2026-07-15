@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   merchantLocalProofObjectFromState,
+  merchantSignedPublishProofFromState,
   merchantProofAuthorityRequirement,
   type MerchantAuthorityAction
 } from "../src/lib/hosting/merchant-proof-authority.js";
@@ -92,6 +93,119 @@ describe("merchant proof authority gate", () => {
     assert.equal(proof.localProofVerified, true);
     assert.equal(proof.handle, "local-only.receiz.id");
     assert.deepEqual(proof.keyFile, keyFile);
+  });
+
+  it("accepts a complete verified Receiz Key as signed publish authority", () => {
+    const keyFile = {
+      schema: "receiz.key.v1",
+      name: "Receiz Key",
+      version: 1,
+      issuedAt: "2026-07-14T12:00:00.000Z",
+      keyId: "key-1",
+      alg: "Ed25519",
+      owner: {
+        uid: "merchant-1",
+        email: null,
+        username: "merchant",
+        displayName: "Merchant"
+      },
+      crypto: {
+        publicKeyRawB64u: "public-key",
+        privateKeyPkcs8CiphertextB64u: "encrypted-private-key",
+        kdf: {
+          name: "PBKDF2-SHA256",
+          iterations: 210000,
+          saltB64u: "salt"
+        },
+        cipher: {
+          name: "AES-GCM-256",
+          ivB64u: "iv",
+          aad: "receiz-key"
+        }
+      },
+      attestation: null,
+      portableState: null
+    };
+
+    const authority = merchantSignedPublishProofFromState({
+      keyFile,
+      auth: {
+        receizId: {
+          connected: true,
+          displayName: "Merchant",
+          handle: "merchant.receiz.id",
+          localProofVerified: true
+        }
+      }
+    });
+
+    assert.deepEqual(authority, {
+      displayName: "Merchant",
+      handle: "merchant.receiz.id",
+      keyFile,
+      passphrase: undefined
+    });
+  });
+
+  it("uses the signed key owner when hydrated browser identity flags are stale", () => {
+    const keyFile = {
+      schema: "receiz.key.v1",
+      name: "Receiz Key",
+      version: 1,
+      issuedAt: "2026-07-14T12:00:00.000Z",
+      keyId: "key-1",
+      alg: "Ed25519",
+      owner: {
+        uid: "merchant-1",
+        email: null,
+        username: "merchant",
+        displayName: "Merchant"
+      },
+      crypto: {
+        publicKeyRawB64u: "public-key",
+        privateKeyPkcs8CiphertextB64u: "encrypted-private-key",
+        kdf: {
+          name: "PBKDF2-SHA256",
+          iterations: 210000,
+          saltB64u: "salt"
+        },
+        cipher: {
+          name: "AES-GCM-256",
+          ivB64u: "iv",
+          aad: "receiz-key"
+        }
+      },
+      attestation: null,
+      portableState: null
+    };
+
+    const authority = merchantSignedPublishProofFromState({
+      keyFile,
+      auth: {
+        receizId: {
+          connected: false,
+          displayName: "Stale Workspace",
+          handle: "stale.receiz.id",
+          localProofVerified: false
+        }
+      }
+    });
+
+    assert.equal(authority?.handle, "merchant.receiz.id");
+    assert.equal(authority?.keyFile, keyFile);
+  });
+
+  it("rejects publish claims that do not carry a real Receiz Key", () => {
+    assert.equal(merchantSignedPublishProofFromState({
+      keyFile: { schema: "receiz.key.v1", name: "Receiz Key", version: 1 },
+      auth: {
+        receizId: {
+          connected: true,
+          handle: "merchant.receiz.id",
+          localProofVerified: true
+        }
+      }
+    }), null);
   });
 
   it("does not accept an unverified local proof object as authority", () => {
