@@ -52,6 +52,15 @@ export const WILDS_FLAGSHIP_LANDMARKS: readonly WildsLandmarkDefinition[] = [
   }
 ] as const;
 
+const WILDS_LANDMARK_APPROACH_GAP = 4;
+
+export function landmarkApproachPoint(landmark: WildsLandmarkDefinition) {
+  return {
+    x: landmark.position.x - landmark.radius - WILDS_LANDMARK_APPROACH_GAP,
+    z: landmark.position.z
+  };
+}
+
 export function landmarkAtPosition(position: { x: number; z: number }) {
   return WILDS_FLAGSHIP_LANDMARKS.find((landmark) => (
     Math.hypot(landmark.position.x - position.x, landmark.position.z - position.z) <= landmark.radius

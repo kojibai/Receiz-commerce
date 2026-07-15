@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Icons } from "@/components/icons";
 import type { WildsPresence } from "./multiplayer-core";
-import { WILDS_FLAGSHIP_LANDMARKS, type WildsLandmarkId } from "./wilds-landmarks";
+import { landmarkApproachPoint, WILDS_FLAGSHIP_LANDMARKS, type WildsLandmarkId } from "./wilds-landmarks";
 import {
   projectWildsAtlas,
   type WildsAtlasExactPlayer,
@@ -131,7 +131,7 @@ export function WildsWorldMap({
     holdTimer.current = window.setTimeout(() => {
       holdTimer.current = null;
       setHolding(false);
-      void onRift(selected.position);
+      void onRift(landmarkApproachPoint(selected));
     }, 700);
   };
 
@@ -214,7 +214,7 @@ export function WildsWorldMap({
                 type="button"
               >
                 <Icons.globe aria-hidden="true" size={20} />
-                <span><strong>{holding ? "Opening Rift…" : "Hold to Rift Drop"}</strong><small>Arrive at a safe point beside this landmark</small></span>
+                <span><strong>{holding ? "Opening Rift…" : "Hold to Rift Drop"}</strong><small>Land nearby, then walk to the physical entrance</small></span>
                 <i aria-hidden="true" />
               </button>
             </section>

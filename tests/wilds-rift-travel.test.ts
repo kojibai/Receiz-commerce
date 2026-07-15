@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import { describe, it } from "node:test";
 import { applyWildsInput, initialPlayState } from "../src/features/play/game-state";
 import { validatePresenceMove } from "../src/features/play/multiplayer-core";
+import { landmarkApproachPoint, landmarkAtPosition, WILDS_FLAGSHIP_LANDMARKS } from "../src/features/play/wilds-landmarks";
 import {
   authorizeRiftTravel,
   validateRiftGrant,
@@ -20,6 +21,20 @@ const validRequest: RiftTravelRequest = {
 };
 
 describe("Wilds Rift travel", () => {
+  it("lands outside every landmark so the explorer must walk to its entrance", () => {
+    for (const landmark of WILDS_FLAGSHIP_LANDMARKS) {
+      const approach = landmarkApproachPoint(landmark);
+      assert.equal(landmarkAtPosition(approach), null);
+      assert.ok(Math.hypot(approach.x - landmark.position.x, approach.z - landmark.position.z) > landmark.radius);
+      assert.ok(Math.hypot(approach.x - landmark.position.x, approach.z - landmark.position.z) <= landmark.radius + 6);
+      let walked = { ...initialPlayState, player: approach };
+      for (let step = 0; step < 4; step += 1) {
+        walked = applyWildsInput(walked, { type: "move", direction: "east" });
+      }
+      assert.equal(landmarkAtPosition(walked.player)?.id, landmark.id);
+    }
+  });
+
   it("authorizes a bounded safe Rift without weakening ordinary movement", () => {
     const result = authorizeRiftTravel(validRequest, {
       playerId: "player-1",
@@ -88,7 +103,7 @@ describe("Wilds Rift travel", () => {
       appliedAt: "2026-07-15T12:00:01.000Z"
     });
     assert.deepEqual(moved.player, { x: 144, z: -96 });
-    assert.match(moved.lastEvent, /Rift complete/);
+    assert.match(moved.lastEvent, /Rift complete.*Walk.*landmark entrance/);
 
     const expired = applyWildsInput(initialPlayState, {
       type: "apply-rift-grant",

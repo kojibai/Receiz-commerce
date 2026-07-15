@@ -12,6 +12,8 @@ describe("Receiz Wilds rendering contract", () => {
     assert.match(map, /aria-modal="true"/);
     assert.match(map, /aria-label="Close world map"/);
     assert.match(map, /aria-label="Hold to Rift Drop"/);
+    assert.match(map, /landmarkApproachPoint\(selected\)/);
+    assert.match(map, /walk to the physical entrance/);
     assert.match(map, /wilds-atlas-fallback/);
     assert.match(map, /createPortal/);
     assert.match(map, /document\.body/);

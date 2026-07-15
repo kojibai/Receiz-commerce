@@ -781,7 +781,7 @@ export function applyWildsInput(state: PlayState, input: WildsInput): PlayState 
       ...state,
       activeAction: "explore",
       player: { ...input.grant.destination },
-      lastEvent: "Rift complete. A new region opens around you."
+      lastEvent: "Rift complete. Walk the surrounding world to reach the landmark entrance."
     };
   }
 
