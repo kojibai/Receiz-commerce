@@ -151,6 +151,7 @@ export function useWildsMultiplayer(input: {
   const incomingChallenge = snapshot?.challenges.find((challenge) => challenge.opponentId === selfId && challenge.state === "offered") ?? null;
 
   return {
+    guestId,
     roomKey,
     selfId,
     mode,

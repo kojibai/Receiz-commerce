@@ -20,6 +20,7 @@ import {
   submitPvpIntent,
   type PvpCard
 } from "../src/features/play/pvp-battle-engine.js";
+import { getWildsAtlasPresence, heartbeatWildsPresence } from "../src/features/play/multiplayer-ledger.js";
 
 const card = (id: string, speed = 44): PvpCard => ({
   assetId: id,
@@ -62,6 +63,25 @@ describe("Wilds live multiplayer core", () => {
     assert.throws(() => sanitizeWildsMessage("meet me at https://example.com"), /wilds_message_contact_blocked/);
     assert.throws(() => sanitizeWildsMessage("email me hero@example.com"), /wilds_message_contact_blocked/);
     assert.throws(() => sanitizeWildsMessage("x".repeat(281)), /wilds_message_too_long/);
+  });
+
+  it("projects exact nearby identity and anonymous distant atlas clusters", () => {
+    const now = "2026-07-15T12:00:00.000Z";
+    const base = { handle: "Atlas", style: "female" as const, heading: 0, practice: false, activeCard: card("atlas") };
+    heartbeatWildsPresence({ ...base, roomKey: "wilds:platform:1000:1000", playerId: "atlas-self", x: 48_000, z: 48_000, now });
+    heartbeatWildsPresence({ ...base, roomKey: "wilds:platform:1000:1000", playerId: "atlas-near", handle: "Nearby", x: 48_003, z: 48_004, now });
+    heartbeatWildsPresence({ ...base, roomKey: "wilds:platform:1002:1000", playerId: "atlas-far", handle: "Hidden", x: 48_100, z: 48_010, now });
+
+    const atlas = getWildsAtlasPresence({
+      actorId: "atlas-self",
+      center: { x: 48_000, z: 48_000 },
+      now: Date.parse(now),
+      maxClusters: 64
+    });
+    assert.deepEqual(atlas.nearby, [{ playerId: "atlas-near", handle: "Nearby", style: "female", x: 48_003, z: 48_004, status: "available" }]);
+    assert.equal(atlas.clusters.reduce((sum: number, cluster: { count: number }) => sum + cluster.count, 0), 1);
+    assert.equal(atlas.clusters.every((cluster: object) => !("handle" in cluster)), true);
+    assert.deepEqual(atlas.clusters[0]?.position, { x: 48_120, z: 48_024 });
   });
 });
 

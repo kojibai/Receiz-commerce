@@ -4,7 +4,12 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Icons } from "@/components/icons";
 import type { WildsPresence } from "./multiplayer-core";
 import { WILDS_FLAGSHIP_LANDMARKS, type WildsLandmarkId } from "./wilds-landmarks";
-import { projectWildsAtlas, type WildsAtlasZoom } from "./wilds-world-atlas";
+import {
+  projectWildsAtlas,
+  type WildsAtlasExactPlayer,
+  type WildsAtlasPlayerCluster,
+  type WildsAtlasZoom
+} from "./wilds-world-atlas";
 import type { WildsQualityProfile } from "./wilds-quality-profile";
 import { WildsAtlasCanvas } from "./WildsAtlasCanvas";
 
@@ -12,6 +17,7 @@ const zoomLevels: readonly WildsAtlasZoom[] = ["world", "region", "landmark"];
 
 export function WildsWorldMap({
   open,
+  guestId,
   currentPosition,
   remotePlayers,
   missionProgress,
@@ -23,6 +29,7 @@ export function WildsWorldMap({
   onRift
 }: {
   open: boolean;
+  guestId: string;
   currentPosition: { x: number; z: number };
   remotePlayers: WildsPresence[];
   missionProgress: number;
@@ -36,10 +43,15 @@ export function WildsWorldMap({
   const [zoom, setZoom] = useState<WildsAtlasZoom>("world");
   const [selectedId, setSelectedId] = useState<WildsLandmarkId | null>(null);
   const [holding, setHolding] = useState(false);
+  const [atlasPresence, setAtlasPresence] = useState<{
+    loaded: boolean;
+    nearby: WildsAtlasExactPlayer[];
+    clusters: WildsAtlasPlayerCluster[];
+  }>({ loaded: false, nearby: [], clusters: [] });
   const headingRef = useRef<HTMLHeadingElement>(null);
   const previousFocus = useRef<HTMLElement | null>(null);
   const holdTimer = useRef<number | null>(null);
-  const projection = useMemo(() => projectWildsAtlas({
+  const localProjection = useMemo(() => projectWildsAtlas({
     center: currentPosition,
     zoom,
     missionProgress,
@@ -48,6 +60,11 @@ export function WildsWorldMap({
     selfId: "self",
     players: remotePlayers
   }), [currentPosition, discoveredLandmarkIds, missionProgress, remotePlayers, worldMastery, zoom]);
+  const projection = useMemo(() => atlasPresence.loaded ? {
+    ...localProjection,
+    exactPlayers: atlasPresence.nearby,
+    playerClusters: atlasPresence.clusters
+  } : localProjection, [atlasPresence, localProjection]);
   const selected = projection.landmarks.find((landmark) => landmark.id === selectedId) ?? null;
 
   useEffect(() => {
@@ -68,6 +85,37 @@ export function WildsWorldMap({
   useEffect(() => () => {
     if (holdTimer.current !== null) window.clearTimeout(holdTimer.current);
   }, []);
+
+  useEffect(() => {
+    if (!open || !guestId) return;
+    let active = true;
+    const refresh = async () => {
+      const params = new URLSearchParams({
+        x: String(currentPosition.x),
+        z: String(currentPosition.z),
+        guestId
+      });
+      try {
+        const response = await fetch(`/api/wilds/atlas?${params.toString()}`, { cache: "no-store" });
+        const result = await response.json().catch(() => null) as {
+          ok?: boolean;
+          nearby?: WildsAtlasExactPlayer[];
+          clusters?: WildsAtlasPlayerCluster[];
+        } | null;
+        if (active && response.ok && result?.ok) {
+          setAtlasPresence({ loaded: true, nearby: result.nearby ?? [], clusters: result.clusters ?? [] });
+        }
+      } catch {
+        // The local nearby projection remains available while atlas presence reconnects.
+      }
+    };
+    void refresh();
+    const timer = window.setInterval(() => void refresh(), 4_000);
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+    };
+  }, [currentPosition.x, currentPosition.z, guestId, open]);
 
   if (!open) return null;
 

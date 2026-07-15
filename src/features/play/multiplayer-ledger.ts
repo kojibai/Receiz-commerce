@@ -7,8 +7,12 @@ import {
 } from "./multiplayer-challenge";
 import {
   expirePresence,
+  presenceDistance,
+  regionForPosition,
   sanitizeWildsMessage,
   validatePresenceMove,
+  WILDS_INTERACTION_DISTANCE,
+  WILDS_REGION_SIZE,
   type WildsPresence,
   type WildsRoomMessage
 } from "./multiplayer-core";
@@ -101,6 +105,70 @@ export function getWildsMultiplayerSnapshot(roomKey: string, now = new Date().to
   const current = cleanRoom(rooms().get(roomKey) ?? emptyRoom(roomKey, now), now);
   rooms().set(roomKey, current);
   return snapshot(current);
+}
+
+export function getWildsAtlasPresence(input: {
+  actorId: string;
+  center: { x: number; z: number };
+  now?: number;
+  maxClusters?: number;
+}) {
+  const now = input.now ?? Date.now();
+  const nowIso = new Date(now).toISOString();
+  const newestByPlayer = new Map<string, WildsPresence>();
+  for (const stored of rooms().values()) {
+    for (const player of cleanRoom(stored, nowIso).players) {
+      const current = newestByPlayer.get(player.playerId);
+      if (!current || Date.parse(player.lastSeenAt) > Date.parse(current.lastSeenAt)) {
+        newestByPlayer.set(player.playerId, player);
+      }
+    }
+  }
+  const players = [...newestByPlayer.values()]
+    .filter((player) => player.playerId !== input.actorId)
+    .sort((left, right) => presenceDistance(left, input.center) - presenceDistance(right, input.center));
+  const nearby = players
+    .filter((player) => player.status !== "private" && presenceDistance(player, input.center) <= WILDS_INTERACTION_DISTANCE)
+    .slice(0, 24)
+    .map(({ playerId, handle, style, x, z, status }) => ({ playerId, handle, style, x, z, status }));
+  const nearbyIds = new Set(nearby.map((player) => player.playerId));
+  const clusters = new Map<string, {
+    id: string;
+    regionX: number;
+    regionZ: number;
+    count: number;
+    position: { x: number; z: number };
+  }>();
+  for (const player of players) {
+    if (nearbyIds.has(player.playerId)) continue;
+    const region = regionForPosition(player);
+    const id = `cluster:${region.x}:${region.z}`;
+    const existing = clusters.get(id);
+    if (existing) {
+      existing.count += 1;
+    } else {
+      clusters.set(id, {
+        id,
+        regionX: region.x,
+        regionZ: region.z,
+        count: 1,
+        position: {
+          x: region.x * WILDS_REGION_SIZE + WILDS_REGION_SIZE / 2,
+          z: region.z * WILDS_REGION_SIZE + WILDS_REGION_SIZE / 2
+        }
+      });
+    }
+  }
+  const maxClusters = Math.max(1, Math.min(64, Math.floor(input.maxClusters ?? 64)));
+  return {
+    nearby,
+    clusters: [...clusters.values()]
+      .sort((left, right) => (
+        Math.hypot(left.position.x - input.center.x, left.position.z - input.center.z)
+        - Math.hypot(right.position.x - input.center.x, right.position.z - input.center.z)
+      ))
+      .slice(0, maxClusters)
+  };
 }
 
 export function heartbeatWildsPresence(input: {
@@ -233,4 +301,3 @@ export function submitWildsBattleIntent(input: {
   const saved = save({ ...room, battles, challenges, capabilities: undefined } as unknown as WildsMultiplayerRoom, now);
   return { battle, snapshot: snapshot(saved) };
 }
-

@@ -3,7 +3,6 @@
 import dynamic from "next/dynamic";
 import { Icons } from "@/components/icons";
 import { Button, StatusPill } from "@/components/ui";
-import { cx } from "@/lib/utils";
 import {
   applyWildsInput,
   initialPlayState,
@@ -15,7 +14,7 @@ import {
   type PlayState,
   type WildsInput
 } from "@/features/play/game-state";
-import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
+import { useEffect, useState } from "react";
 import type { PortableCardAsset } from "@/features/play/portable-card";
 import { WildsCaptureReward } from "@/features/play/WildsCaptureReward";
 import { WildsInventory } from "@/features/play/WildsInventory";
@@ -29,6 +28,12 @@ import { useWildsPresentation } from "@/features/play/use-wilds-presentation";
 import { selectWildsQualityProfile } from "@/features/play/wilds-quality-profile";
 import { projectWorldProgression } from "@/features/play/world-progression";
 import { WildsCommandDock, type WildsCommandItem } from "@/features/play/WildsCommandDock";
+import { WildsWorldMap } from "@/features/play/WildsWorldMap";
+import { WildsWorldControls } from "@/features/play/WildsWorldControls";
+import { normalizeWildsMovementMode, WILDS_MOVEMENT_MODE_KEY, type WildsMovementMode } from "@/features/play/wilds-movement";
+import { resolveWildsContextAction } from "@/features/play/wilds-context-action";
+import { landmarkAtPosition, type WildsLandmarkId } from "@/features/play/wilds-landmarks";
+import type { RiftTravelGrant } from "@/features/play/wilds-rift-travel";
 
 const WILDS_SAVE_KEY = "receiz:wilds:save:v2";
 const WILDS_AVATAR_KEY = "receiz:wilds:explorer:v1";
@@ -55,81 +60,6 @@ const WildsWorldCanvas = dynamic(
   }
 );
 
-function WildsTrackpad({ onInput }: { onInput: (input: WildsInput) => void }) {
-  const vectorRef = useRef({ x: 0, z: 0 });
-  const [active, setActive] = useState(false);
-  const [knob, setKnob] = useState({ x: 0, y: 0 });
-
-  useEffect(() => {
-    if (!active) return;
-    const timer = window.setInterval(() => {
-      const vector = vectorRef.current;
-      if (Math.hypot(vector.x, vector.z) >= 0.08) {
-        onInput({ type: "move-vector", x: vector.x, z: vector.z });
-      }
-    }, 45);
-    return () => window.clearInterval(timer);
-  }, [active, onInput]);
-
-  const updateVector = (event: ReactPointerEvent<HTMLButtonElement>) => {
-    const rect = event.currentTarget.getBoundingClientRect();
-    const radius = Math.max(1, Math.min(rect.width, rect.height) * 0.42);
-    const rawX = event.clientX - (rect.left + rect.width / 2);
-    const rawY = event.clientY - (rect.top + rect.height / 2);
-    const magnitude = Math.hypot(rawX, rawY);
-    const clampScale = magnitude > radius ? radius / magnitude : 1;
-    const x = rawX * clampScale;
-    const y = rawY * clampScale;
-    vectorRef.current = { x: x / radius, z: y / radius };
-    setKnob({ x, y });
-  };
-
-  const release = (event: ReactPointerEvent<HTMLButtonElement>) => {
-    try {
-      if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-        event.currentTarget.releasePointerCapture(event.pointerId);
-      }
-    } catch {
-      // Pointer capture is an enhancement; releasing still stops movement.
-    }
-    vectorRef.current = { x: 0, z: 0 };
-    setKnob({ x: 0, y: 0 });
-    setActive(false);
-  };
-
-  return (
-    <button
-      aria-label="Movement trackpad. Hold and drag in any direction to travel."
-      className={cx("wilds-trackpad", active && "active")}
-      onPointerCancel={release}
-      onPointerDown={(event) => {
-        updateVector(event);
-        setActive(true);
-        try {
-          event.currentTarget.setPointerCapture(event.pointerId);
-        } catch {
-          // Some embedded browsers do not expose pointer capture.
-        }
-      }}
-      onPointerMove={(event) => {
-        let captured = false;
-        try {
-          captured = event.currentTarget.hasPointerCapture(event.pointerId);
-        } catch {
-          captured = false;
-        }
-        if (active || captured) updateVector(event);
-      }}
-      onPointerUp={release}
-      title="Hold and drag to move"
-      type="button"
-    >
-      <span className="wilds-trackpad-ring" />
-      <span className="wilds-trackpad-knob" style={{ transform: `translate(${knob.x}px, ${knob.y}px)` }} />
-    </button>
-  );
-}
-
 export function PlayCampaign({
   campaignName = "Reward Challenge",
   enabled,
@@ -148,6 +78,11 @@ export function PlayCampaign({
   const [rewardAsset, setRewardAsset] = useState<PortableCardAsset | null>(null);
   const [avatarStyle, setAvatarStyle] = useState<"female" | "male" | null>(null);
   const [qualityProfile, setQualityProfile] = useState(currentWildsQualityProfile);
+  const [reducedMotion, setReducedMotion] = useState(false);
+  const [mapOpen, setMapOpen] = useState(false);
+  const [movementMode, setMovementMode] = useState<WildsMovementMode>("walk");
+  const [activeLandmarkId, setActiveLandmarkId] = useState<WildsLandmarkId | null>(null);
+  const [riftError, setRiftError] = useState("");
   const activeMission = missionCards[state.completedMissionIds.length % missionCards.length];
   const worldProgression = projectWorldProgression(state.worldMastery);
   const activeCard = selectedCard(state);
@@ -170,7 +105,11 @@ export function PlayCampaign({
 
   useEffect(() => {
     const preference = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const update = () => setQualityProfile(currentWildsQualityProfile());
+    const update = () => {
+      setQualityProfile(currentWildsQualityProfile());
+      setReducedMotion(preference.matches);
+    };
+    update();
     window.addEventListener("resize", update);
     preference.addEventListener("change", update);
     return () => {
@@ -190,8 +129,18 @@ export function PlayCampaign({
       : restored);
     const savedAvatar = window.localStorage.getItem(WILDS_AVATAR_KEY);
     if (savedAvatar === "female" || savedAvatar === "male") setAvatarStyle(savedAvatar);
+    setMovementMode(normalizeWildsMovementMode(window.localStorage.getItem(WILDS_MOVEMENT_MODE_KEY)));
     setSaveRestored(true);
   }, []);
+
+  useEffect(() => {
+    if (!saveRestored) return;
+    try {
+      window.localStorage.setItem(WILDS_MOVEMENT_MODE_KEY, movementMode);
+    } catch {
+      // Movement mode remains active for this session when storage is unavailable.
+    }
+  }, [movementMode, saveRestored]);
 
   useEffect(() => {
     if (!saveRestored) return;
@@ -276,6 +225,61 @@ export function PlayCampaign({
   const proximityLabel = state.encounter.phase === "idle"
     ? "Tap terrain to scan"
     : `${activeProximity}${state.encounter.trend ? ` · ${state.encounter.trend}` : ""}`;
+  const currentLandmark = landmarkAtPosition(state.player);
+  const pulse = resolveWildsContextAction({
+    pendingReward: Boolean(rewardAsset),
+    landmark: currentLandmark,
+    secretId: state.encounter.phase === "hint" ? state.encounter.hotspotId ?? null : null,
+    selectedPlayer: multiplayer.selectedPlayer
+      ? { playerId: multiplayer.selectedPlayer.playerId, handle: multiplayer.selectedPlayer.handle }
+      : null,
+    joinableActivity: null
+  });
+  const activatePulse = () => {
+    if (pulse.kind === "enter") {
+      setActiveLandmarkId(pulse.landmarkId);
+      return;
+    }
+    if (pulse.kind === "collect" || pulse.kind === "greet" || pulse.kind === "join") return;
+    dispatch({
+      type: "search-point",
+      x: state.player.x,
+      z: state.player.z,
+      searchedAt: new Date().toISOString(),
+      ownerReceizId
+    });
+  };
+  const riftTo = async (destination: { x: number; z: number }) => {
+    setRiftError("");
+    try {
+      const appliedAt = new Date().toISOString();
+      const response = await fetch("/api/wilds/rift", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          roomKey: multiplayer.roomKey,
+          guestId: multiplayer.guestId,
+          source: state.player,
+          destination,
+          requestedAt: appliedAt,
+          idempotencyKey: `rift:${crypto.randomUUID()}`
+        })
+      });
+      const result = await response.json().catch(() => null) as { ok?: boolean; grant?: RiftTravelGrant; error?: string } | null;
+      if (!response.ok || !result?.ok || !result.grant) throw new Error(result?.error ?? "wilds_rift_failed");
+      dispatch({
+        type: "apply-rift-grant",
+        grant: result.grant,
+        playerId: result.grant.playerId,
+        appliedAt
+      });
+      multiplayer.selectPlayer(null);
+      setActiveLandmarkId(null);
+      setMapOpen(false);
+    } catch (error) {
+      setRiftError(error instanceof Error ? error.message : "wilds_rift_failed");
+    }
+  };
   const commandItems: readonly WildsCommandItem[] = [
     {
       key: "mission",
@@ -416,7 +420,10 @@ export function PlayCampaign({
             />
 
             {avatarStyle ? <WildsMultiplayer multiplayer={multiplayer} position={state.player} /> : null}
-            <div className="wilds-audio-overlay">
+            <div className="wilds-utility-cluster">
+              <button aria-label="Open world map" className="wilds-map-trigger" onClick={() => setMapOpen(true)} title="Open world map" type="button">
+                <Icons.globe aria-hidden="true" size={20} />
+              </button>
               <WildsAudioSettings
                 onChange={presentation.setAudioSettings}
                 onUnlock={() => { void presentation.unlockAudio(); }}
@@ -496,59 +503,39 @@ export function PlayCampaign({
             {discoveryActive ? <div className={`wilds-search-reticle ${state.encounter.phase === "idle" ? "" : activeProximity}`} aria-live="polite">{proximityLabel}</div> : null}
 
             <div className="wilds-event-toast" aria-live="polite">
-              {state.lastEvent}
+              {riftError || (activeLandmarkId ? `${currentLandmark?.name ?? "Landmark"} entrance awakened.` : state.lastEvent)}
             </div>
           </div>
 
-          <div className="wilds-screen-controls" aria-label="World controls">
-            <div className="wilds-screen-actions" aria-label="Explore actions">
-              <button
-                aria-pressed="true"
-                className="wilds-action active ready"
-                aria-label="Discovery on. Tap terrain to search for a hidden creature"
-                title="Discovery is always on"
-                type="button"
-              >
-                <Icons.game size={20} />
-              </button>
-              <button
-                className="wilds-action"
-                onClick={() => dispatch({ type: "rest" })}
-                aria-label="Make camp and recover energy"
-                title="Camp: recover energy"
-                type="button"
-              >
-                <Icons.home size={20} />
-              </button>
-            </div>
-
-            <WildsTrackpad onInput={dispatch} />
-
-            <div className="wilds-screen-actions" aria-label="Progression actions">
-              <button
-                className={cx("wilds-action", state.activeAction === "train" && "active")}
-                onClick={() => dispatch({ type: "train", at: new Date().toISOString() })}
-                aria-label={`Train ${activeCard.name}`}
-                title={`Train ${activeCard.name}`}
-                type="button"
-              >
-                <Icons.sparkle size={20} />
-              </button>
-              <button
-                className={cx("wilds-action", state.activeAction === "mission" && "active")}
-                onClick={() => dispatch({ type: "mission" })}
-                aria-label="Run world mission"
-                title="Run world mission"
-                type="button"
-              >
-                <Icons.trophy size={20} />
-              </button>
-            </div>
-          </div>
+          <WildsWorldControls
+            activeAction={state.activeAction}
+            activeCardName={activeCard.name}
+            movementMode={movementMode}
+            onInput={dispatch}
+            onMission={() => dispatch({ type: "mission" })}
+            onMovementModeChange={setMovementMode}
+            onPulse={activatePulse}
+            onRest={() => dispatch({ type: "rest" })}
+            onTrain={() => dispatch({ type: "train", at: new Date().toISOString() })}
+            pulse={pulse}
+          />
         </div>
 
         <WildsCommandDock items={commandItems} />
       </div>
+      <WildsWorldMap
+        currentPosition={state.player}
+        discoveredLandmarkIds={["hearttree-sanctum"]}
+        guestId={multiplayer.guestId}
+        missionProgress={state.missionProgress}
+        onClose={() => setMapOpen(false)}
+        onRift={riftTo}
+        open={mapOpen}
+        qualityProfile={qualityProfile}
+        reducedMotion={reducedMotion}
+        remotePlayers={multiplayer.remotePlayers}
+        worldMastery={state.worldMastery}
+      />
       <WildsCaptureReward asset={rewardAsset} onClose={() => {
         setRewardAsset(null);
         dispatch({ type: "dismiss-reveal" });
