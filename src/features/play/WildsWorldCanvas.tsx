@@ -381,7 +381,18 @@ function RustlingClue({
 
   if (!encounter.cover) return null;
   return (
-    <group ref={ref} position={position} onClick={(event) => { event.stopPropagation(); if (encounter.hotspotId && encounter.cover === "energy") onCollectEnergy(encounter.hotspotId); }}>
+    <group
+      ref={ref}
+      position={position}
+      onClick={(event) => {
+        // Energy clues are directly collectible. Other warm clues must bubble
+        // to the terrain search handler so the creature reveal can advance.
+        if (encounter.hotspotId && encounter.cover === "energy") {
+          event.stopPropagation();
+          onCollectEnergy(encounter.hotspotId);
+        }
+      }}
+    >
       <HabitatCover cover={encounter.cover} open={false} />
       <Sparkles
         count={hot ? 18 : 9}
