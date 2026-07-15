@@ -2810,7 +2810,7 @@ a {
 .wilds-live-pill.event { color: #eadcff; border-color: rgba(183,124,255,.42); }
 .wilds-live-event-compact { display: none; }
 .wilds-live-pill b { color: #fff2a8; }
-.wilds-living-world-sheet { position: absolute; top: calc(100% + 8px); right: 0; display: grid; width: min(330px, calc(100vw - 24px)); gap: 10px; padding: 16px; border: 1px solid rgba(183,124,255,.35); border-radius: 18px; color: #fff; background: rgba(7,19,28,.96); box-shadow: 0 22px 58px rgba(0,0,0,.44); backdrop-filter: blur(22px); }
+.wilds-living-world-sheet { position: fixed; z-index: 100; top: 50%; left: 50%; display: grid; width: min(330px, calc(100vw - 24px)); max-height: min(640px, calc(100dvh - 32px)); gap: 10px; overflow: auto; padding: 16px; border: 1px solid rgba(183,124,255,.35); border-radius: 18px; color: #fff; background: rgba(7,19,28,.96); box-shadow: 0 22px 58px rgba(0,0,0,.44); backdrop-filter: blur(22px); transform: translate(-50%, -50%); overscroll-behavior: contain; }
 .wilds-living-world-close { position: absolute; top: 8px; right: 8px; display: grid; width: 44px; min-height: 44px; place-items: center; border: 0; color: #fff; background: transparent; font-size: 25px; }
 .wilds-living-world-sheet small { padding-right: 40px; color: #9bb9c2; font-size: 9px; font-weight: 850; letter-spacing: .1em; text-transform: uppercase; }
 .wilds-living-world-sheet strong { padding-right: 32px; font-size: 16px; }
@@ -10744,6 +10744,7 @@ button.product-purchase-secondary-link {
 @media (max-width: 640px) {
   .wilds-live-cluster { top: 65px; right: 8px; }
   .wilds-audio-overlay { top: 65px; left: 8px; }
+  .mobile-play-wrap .wilds-utility-cluster { top: 65px; left: 8px; }
   .wilds-live-roster { top: 108px; right: 8px; width: calc(100% - 16px); max-height: calc(100% - 116px); }
   .wilds-player-sheet { right: 8px; bottom: 8px; width: calc(100% - 16px); }
   .wilds-pvp-battle { inset: 5px; gap: 8px; padding: 11px; border-radius: 18px; }
@@ -11649,7 +11650,7 @@ button.product-purchase-secondary-link {
   .mobile-play-wrap .wilds-live-pill span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   /* The pills stay discoverable at the lower-left, but their expanded sheet
      is centered in the gameplay viewport so the dock can never consume it. */
-  .mobile-play-wrap .wilds-living-world-sheet { top: 50%; right: 50%; width: min(310px, calc(100vw - 20px)); max-height: calc(100% - 32px); overflow: auto; overscroll-behavior: contain; transform: translate(50%, -50%); }
+  .mobile-play-wrap .wilds-living-world-sheet { top: 50%; left: 50%; width: min(310px, calc(100vw - 20px)); max-height: min(640px, calc(100dvh - 32px)); transform: translate(-50%, -50%); }
 }
 
 @media (max-width: 350px) {
