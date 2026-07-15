@@ -680,4 +680,19 @@ describe("Receiz Wilds rendering contract", () => {
     const worldControls = campaign.slice(campaign.indexOf("<WildsWorldControls"));
     assert.doesNotMatch(worldControls, /<WildsAudioSettings/);
   });
+
+  it("renders one interest-managed procedural boss with local family kits", async () => {
+    const bossEnvironment = await readFile("src/features/play/WildsBossEnvironment.tsx", "utf8");
+    const worldCanvas = await readFile("src/features/play/WildsWorldCanvas.tsx", "utf8");
+
+    assert.match(bossEnvironment, /WILDS_BOSS_FAMILIES/);
+    assert.match(bossEnvironment, /slice\(0,\s*1\)/);
+    assert.match(bossEnvironment, /instancedMesh/);
+    assert.match(bossEnvironment, /crystal-burrower/);
+    assert.match(bossEnvironment, /skycoil-tempest/);
+    assert.match(bossEnvironment, /voidroot-devourer/);
+    assert.match(bossEnvironment, /transforming|vulnerable/);
+    assert.match(worldCanvas, /WildsBossEnvironment/);
+    assert.doesNotMatch(bossEnvironment, /<Canvas/);
+  });
 });

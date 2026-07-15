@@ -344,7 +344,7 @@ git commit -m "feat: track global bosses through the atlas"
 - Consumes: active boss projection, encounter phase, player position, quality profile, world mode.
 - Produces: one interest-managed detailed boss, eight recognizable family kits, pooled hazards/signals, three transformation poses, distant boss beacons, and diagnostic boss/fighter/support counts.
 
-- [ ] **Step 1: Add failing rendering-contract assertions**
+- [x] **Step 1: Add failing rendering-contract assertions**
 
 ```ts
 assert.match(bossEnvironment, /WILDS_BOSS_FAMILIES/);
@@ -355,16 +355,16 @@ assert.match(worldCanvas, /WildsBossEnvironment/);
 assert.doesNotMatch(bossEnvironment, /<Canvas/);
 ```
 
-- [ ] **Step 2: Verify RED**
+- [x] **Step 2: Verify RED**
 
 Run the render contract.  
 Expected: environment file is missing.
 
-- [ ] **Step 3: Implement eight local boss kits**
+- [x] **Step 3: Implement eight local boss kits**
 
 Build family-specific silhouettes from shared local geometry/material pools, instanced repeated parts, deterministic anatomy transforms, phase poses, telegraph markers, territory props, hazards, and support stations. Render one detailed boss, aggregate support, cap detailed fighters by quality tier, dispose owned resources, and expose counts/budgets through `__THREE_GAME_DIAGNOSTICS__`.
 
-- [ ] **Step 4: Verify GREEN and typecheck**
+- [x] **Step 4: Verify GREEN and typecheck**
 
 Run render contracts and `pnpm typecheck`.  
 Expected: PASS.

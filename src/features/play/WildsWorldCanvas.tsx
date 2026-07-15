@@ -24,6 +24,7 @@ import {
 import type { WildsWorldProjection } from "@/features/play/wilds-world-state";
 import type { WildsSettlementWorldMode } from "@/features/play/WildsSettlementEnvironment";
 import { WildsEcologyEnvironment } from "@/features/play/WildsEcologyEnvironment";
+import { WildsBossEnvironment } from "@/features/play/WildsBossEnvironment";
 
 export function WildsWorldCanvas({
   state,
@@ -112,6 +113,7 @@ function WildsScene({
         worldMode={worldMode}
       />
       <WildsEcologyEnvironment livingWorld={livingWorld} player={state.player} worldMode={worldMode} />
+      <WildsBossEnvironment livingWorld={livingWorld} player={state.player} qualityProfile={qualityProfile} />
       <EncounterSequence state={state} />
       {remotePlayers.map((player) => <RemoteExplorer key={player.playerId} player={player} localPlayer={state.player} onSelect={onSelectPlayer} />)}
       <WildsExplorer style={avatarStyle} worldPosition={state.player} />
@@ -532,7 +534,8 @@ function WildsDiagnostics({
     const sample = () => {
     const extra = {
       camera: { position: camera.position.toArray(), fov: camera instanceof THREE.PerspectiveCamera ? camera.fov : null },
-      scene: { children: scene.children.length }
+      scene: { children: scene.children.length },
+      boss: scene.getObjectByName("wilds-boss-environment")?.userData ?? { detailedBosses: 0, maxDetailedBosses: 1 }
     };
     publishWildsDiagnostics(gl, size, state, qualityProfile, extra);
     if (outputRef.current) {
