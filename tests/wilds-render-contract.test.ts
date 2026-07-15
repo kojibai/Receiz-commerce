@@ -695,4 +695,17 @@ describe("Receiz Wilds rendering contract", () => {
     assert.match(worldCanvas, /WildsBossEnvironment/);
     assert.doesNotMatch(bossEnvironment, /<Canvas/);
   });
+
+  it("opens a focus-safe one-viewport global raid experience", async () => {
+    const experience = await readFile("src/features/play/WildsRaidExperience.tsx", "utf8");
+    const actions = await readFile("src/features/play/WildsRaidActionDock.tsx", "utf8");
+    assert.match(experience, /aria-modal="true"/);
+    assert.match(experience, /previousFocus\.current\?\.focus/);
+    assert.match(experience, /WildsRaidActionDock/);
+    assert.match(experience, /global health/i);
+    assert.match(experience, /telegraph/i);
+    assert.match(actions, /strike/);
+    assert.match(actions, /stabilize/);
+    assert.match(actions, /rotate_request/);
+  });
 });

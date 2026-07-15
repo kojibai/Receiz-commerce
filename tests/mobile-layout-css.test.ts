@@ -99,6 +99,15 @@ describe("mobile storefront layout CSS", () => {
     assert.doesNotMatch(css, /\.wilds-ecology-(?:objectives|arena|footer)[^{]*\{[^}]*text-overflow:\s*ellipsis/s);
   });
 
+  it("keeps the global raid inside one safe mobile viewport", () => {
+    assert.match(css, /\.wilds-raid-experience\s*\{[^}]*height:\s*100dvh;[^}]*overflow:\s*hidden/s);
+    assert.match(css, /\.wilds-raid-close\s*\{[^}]*min-width:\s*44px;[^}]*min-height:\s*44px/s);
+    assert.match(css, /\.wilds-raid-action\s*\{[^}]*min-height:\s*44px/s);
+    assert.match(css, /\.wilds-raid-squads\s*\{[^}]*overflow-x:\s*auto/s);
+    assert.match(css, /\.wilds-raid-experience\s*\{[^}]*padding-top:\s*env\(safe-area-inset-top\);[^}]*padding-bottom:\s*env\(safe-area-inset-bottom\)/s);
+    assert.doesNotMatch(css, /\.wilds-raid-(?:squads|arena|action-dock)[^{]*\{[^}]*text-overflow:\s*ellipsis/s);
+  });
+
   it("uses customer ownership language on the mobile assets page", () => {
     assert.match(storefront, /Purchased products, benefits, and access can become Receized assets\./);
     assert.doesNotMatch(storefront, /Sold products, benefits, and access can become Receized assets\./);

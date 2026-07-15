@@ -389,7 +389,7 @@ git commit -m "feat: render the global boss ecology"
 - Consumes: boss, round, encounter, verified card/roles, world mode, semantic action callbacks, audio callbacks.
 - Produces: focus-safe raid dialog, global health/phase/telegraph, six-squad strip, support state, objective, timer, role/action dock, reconnect/retreat/error/result states, and exact return behavior.
 
-- [ ] **Step 1: Add failing source/CSS contracts**
+- [x] **Step 1: Add failing source/CSS contracts**
 
 ```ts
 assert.match(experience, /aria-modal="true"/);
@@ -399,16 +399,16 @@ assert.match(css, /\.wilds-raid-action\s*\{[^}]*min-height:\s*44px/s);
 assert.match(css, /\.wilds-raid-squads\s*\{[^}]*overflow-x:\s*auto/s);
 ```
 
-- [ ] **Step 2: Verify RED**
+- [x] **Step 2: Verify RED**
 
 Run mobile CSS and render contracts.  
 Expected: raid experience contracts fail.
 
-- [ ] **Step 3: Implement one-viewport encounter UI**
+- [x] **Step 3: Implement one-viewport encounter UI**
 
 Use game-HUD composition rather than dashboard cards: fixed global health, telegraph strip, world arena, compact player/card/role pin, objective signal, swipeable squad strip, stable action dock, 44px controls, safe areas, reduced motion, Escape/confirmation, body scroll lock, focus restore, reconnect, retreat, error/rebase, settled, defeat, and practice/canonical provenance.
 
-- [ ] **Step 4: Verify GREEN**
+- [x] **Step 4: Verify GREEN**
 
 Run the focused UI/CSS/render tests and typecheck.  
 Expected: PASS.
