@@ -43,6 +43,6 @@ test("the v3 release preserves v2 migration evidence and adds final qualificatio
   assert.match(envExample, /RECEIZ_OAUTH_STATE_SECRET=/);
   assert.match(changelog, /## 3\.0\.0 - Wilds V3 Living World/);
   assert.match(releaseNotes, /Receiz Commerce Kit v3\.0\.0/);
-  assert.match(v3Evidence, /550 passing/);
+  assert.match(v3Evidence, /551 passing/);
   assert.match(v3Evidence, /9\.23\/10/);
 });
