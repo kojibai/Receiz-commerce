@@ -14,7 +14,7 @@ import {
   type PlayState,
   type WildsInput
 } from "@/features/play/game-state";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import type { PortableCardAsset } from "@/features/play/portable-card";
 import { WildsCaptureReward } from "@/features/play/WildsCaptureReward";
 import { WildsInventory } from "@/features/play/WildsInventory";
@@ -100,7 +100,7 @@ export function PlayCampaign({
   const [qualityProfile, setQualityProfile] = useState(currentWildsQualityProfile);
   const [reducedMotion, setReducedMotion] = useState(false);
   const [mapOpen, setMapOpen] = useState(false);
-  const cameraHeadingRef = useRef(0);
+  const [cameraHeading, setCameraHeading] = useState(0);
   const [movementMode, setMovementMode] = useState<WildsMovementMode>("walk");
   const [activeLandmarkId, setActiveLandmarkId] = useState<WildsLandmarkId | null>(null);
   const [activeEcologySiteId, setActiveEcologySiteId] = useState<string | null>(null);
@@ -620,7 +620,7 @@ export function PlayCampaign({
               remotePlayers={multiplayer.remotePlayers}
               qualityProfile={qualityProfile}
               searchEnabled={discoveryActive && Boolean(avatarStyle)}
-              onCameraHeadingChange={(heading) => { cameraHeadingRef.current = heading; }}
+              onCameraHeadingChange={setCameraHeading}
               livingWorld={livingWorld.snapshot}
               worldMode={settlementWorldMode}
               onSelectPlayer={multiplayer.selectPlayer}
@@ -721,7 +721,7 @@ export function PlayCampaign({
           <WildsWorldControls
             activeAction={state.activeAction}
             activeCardName={activeCard.name}
-            cameraHeadingRef={cameraHeadingRef}
+            cameraHeading={cameraHeading}
             movementMode={movementMode}
             onInput={dispatch}
             onMission={() => dispatch({ type: "mission" })}

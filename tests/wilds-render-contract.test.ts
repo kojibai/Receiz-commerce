@@ -391,9 +391,8 @@ describe("Receiz Wilds rendering contract", () => {
     assert.match(world, /maxPolarAngle=\{Math\.PI \/ 2\.15\}/);
     assert.match(world, /touches=\{\{ ONE: THREE\.TOUCH\.ROTATE, TWO: THREE\.TOUCH\.DOLLY_ROTATE \}\}/);
     assert.match(world, /onCameraHeadingChange/);
-    assert.match(campaign, /cameraHeadingRef/);
-    assert.match(controls, /cameraRelativeMovement\(vector, cameraHeadingRef\.current\)/);
-    assert.doesNotMatch(campaign, /setCameraHeading\(/);
+    assert.match(campaign, /cameraHeading/);
+    assert.match(controls, /cameraRelativeMovement\(vector, cameraHeading\)/);
     assert.doesNotMatch(world, /camera\.position\.lerp\(target/);
   });
 
