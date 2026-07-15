@@ -14,12 +14,16 @@ export function WildsLivingWorldHud({ world, player }: { world: ReturnType<typeo
   const close = nearby && nearby.distance <= nearby.site.radius + 8;
   const modeLabel = world.mode === "receiz_live" ? "One shared world" : world.mode === "local_practice" ? "Local practice" : "World reconnecting";
 
-  return <div className="wilds-living-world-hud" aria-label="Living world status">
+  const compactSiteName = nearby?.site.name.split(/\s+/).at(-1) ?? "Event";
+
+  return <div className={`wilds-living-world-hud ${nearby ? "has-event" : ""}`} aria-label="Living world status">
     <button aria-label={modeLabel} className={`wilds-live-pill mode-${world.mode}`} onClick={() => setOpen((value) => !value)} title={modeLabel} type="button">
       <i aria-hidden="true" /><span>{modeLabel}</span>
     </button>
-    {nearby ? <button className="wilds-live-pill event" onClick={() => setOpen(true)} type="button">
-      <span>{nearby.site.phase === "memorialized" ? "Victory memorial" : nearby.site.name}</span><b>{Math.round(nearby.distance)}m</b>
+    {nearby ? <button aria-label={`${nearby.site.name} ${Math.round(nearby.distance)} meters away`} className="wilds-live-pill event" onClick={() => setOpen(true)} type="button">
+      <span className="wilds-live-event-full">{nearby.site.phase === "memorialized" ? "Victory memorial" : nearby.site.name}</span>
+      <span className="wilds-live-event-compact" aria-hidden="true">{nearby.site.phase === "memorialized" ? "Memorial" : compactSiteName}</span>
+      <b>{Math.round(nearby.distance)}m</b>
     </button> : null}
     {open ? <section className="wilds-living-world-sheet" aria-label="Shared world event details">
       <button aria-label="Close shared world details" className="wilds-living-world-close" onClick={() => setOpen(false)} type="button">×</button>

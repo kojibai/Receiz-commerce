@@ -2785,6 +2785,7 @@ a {
 .wilds-live-pill i { width: 7px; height: 7px; border-radius: 50%; background: #f7c948; box-shadow: 0 0 12px currentColor; }
 .wilds-live-pill.mode-receiz_live i { background: #71e8c3; }
 .wilds-live-pill.event { color: #eadcff; border-color: rgba(183,124,255,.42); }
+.wilds-live-event-compact { display: none; }
 .wilds-live-pill b { color: #fff2a8; }
 .wilds-living-world-sheet { position: absolute; top: calc(100% + 8px); right: 0; display: grid; width: min(330px, calc(100vw - 24px)); gap: 10px; padding: 16px; border: 1px solid rgba(183,124,255,.35); border-radius: 18px; color: #fff; background: rgba(7,19,28,.96); box-shadow: 0 22px 58px rgba(0,0,0,.44); backdrop-filter: blur(22px); }
 .wilds-living-world-close { position: absolute; top: 8px; right: 8px; display: grid; width: 44px; min-height: 44px; place-items: center; border: 0; color: #fff; background: transparent; font-size: 25px; }
@@ -11583,10 +11584,19 @@ button.product-purchase-secondary-link {
 @media (max-width: 560px) {
   .mobile-play-wrap .wilds-living-world-hud { top: 8px; right: 8px; width: 164px; max-width: 164px; justify-content: flex-end; }
   .mobile-play-wrap .wilds-live-pill { min-height: 30px; max-width: 124px; padding: 0 7px; }
+  .mobile-play-wrap .wilds-live-pill.event { gap: 4px; padding-inline: 6px; font-size: 9px; }
+  .mobile-play-wrap .wilds-live-pill.event b { font-size: 8px; }
   .mobile-play-wrap .wilds-live-pill[class*="mode-"] { flex: 0 0 30px; width: 30px; padding: 0; justify-content: center; }
   .mobile-play-wrap .wilds-live-pill[class*="mode-"] span { display: none; }
   .mobile-play-wrap .wilds-live-pill span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .mobile-play-wrap .wilds-living-world-sheet { top: 42px; right: 0; width: min(310px, calc(100vw - 20px)); max-height: calc(100dvh - 230px); overflow: auto; overscroll-behavior: contain; }
+}
+
+@media (max-width: 350px) {
+  .mobile-play-wrap .wilds-living-world-hud.has-event { width: 124px; max-width: 124px; }
+  .mobile-play-wrap .wilds-living-world-hud.has-event .wilds-live-pill[class*="mode-"] { display: none; }
+  .mobile-play-wrap .wilds-live-event-full { display: none; }
+  .mobile-play-wrap .wilds-live-event-compact { display: inline; }
 }
 
 @media (prefers-reduced-motion: reduce) {

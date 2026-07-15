@@ -75,6 +75,8 @@ describe("mobile storefront layout CSS", () => {
     assert.match(css, /\.mobile-play-wrap \.wilds-living-world-hud \{[^}]*max-width: 164px;/s);
     assert.match(css, /\.mobile-play-wrap \.wilds-live-pill\[class\*="mode-"\] \{[^}]*width: 30px;/s);
     assert.match(css, /\.mobile-play-wrap \.wilds-live-pill\[class\*="mode-"\] span \{[^}]*display: none;/s);
+    assert.match(css, /\.mobile-play-wrap \.wilds-living-world-hud\.has-event \{[^}]*max-width: 124px;/s);
+    assert.match(css, /\.mobile-play-wrap \.wilds-live-event-compact \{[^}]*display: inline;/s);
   });
 
   it("uses customer ownership language on the mobile assets page", () => {
