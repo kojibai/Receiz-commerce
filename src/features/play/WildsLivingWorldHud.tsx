@@ -32,7 +32,7 @@ export function WildsLivingWorldHud({ world, player }: { world: ReturnType<typeo
     {nearbyEcology && (!nearby || nearbyEcology.distance < nearby.distance) ? <button aria-label={`${nearbyEcology.site.name} ecology signal ${Math.round(nearbyEcology.distance)} meters away`} className="wilds-live-pill event ecology" onClick={() => setOpen(true)} type="button"><span className="wilds-live-event-full">{nearbyEcology.site.name}</span><span className="wilds-live-event-compact" aria-hidden="true">Ecology</span><b>{Math.round(nearbyEcology.distance)}m</b></button> : null}
     {open ? <section className="wilds-living-world-sheet" aria-label="Shared world event details">
       <button aria-label="Close shared world details" className="wilds-living-world-close" onClick={() => setOpen(false)} type="button">×</button>
-      <small>{modeLabel} · Pulse · Kai-Klok {world.snapshot?.cursor?.kaiKlok ?? 0}</small>
+      <small>{modeLabel} · shared world status</small>
       <strong>{boss?.phase === "defeated" ? `${boss.id} defeated for everyone` : boss ? "A shared boss has emerged" : "The living world is listening"}</strong>
       {nearbyEcology ? <p>{nearbyEcology.site.name} · {nearbyEcology.site.phase} · {Math.round(nearbyEcology.distance)}m from you</p> : null}
       {boss ? <div className="wilds-live-boss-meter"><span style={{ width: `${Math.max(0, Math.min(100, boss.health / boss.maxHealth * 100))}%` }} /><b>{Math.ceil(boss.health / boss.maxHealth * 100)}%</b></div> : null}
