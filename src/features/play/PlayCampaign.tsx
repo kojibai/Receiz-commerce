@@ -83,6 +83,7 @@ export function PlayCampaign({
   const [qualityProfile, setQualityProfile] = useState(currentWildsQualityProfile);
   const [reducedMotion, setReducedMotion] = useState(false);
   const [mapOpen, setMapOpen] = useState(false);
+  const [cameraHeading, setCameraHeading] = useState(0);
   const [movementMode, setMovementMode] = useState<WildsMovementMode>("walk");
   const [activeLandmarkId, setActiveLandmarkId] = useState<WildsLandmarkId | null>(null);
   const [landmarkUnlocks, setLandmarkUnlocks] = useState<string[]>([]);
@@ -430,6 +431,7 @@ export function PlayCampaign({
               remotePlayers={multiplayer.remotePlayers}
               qualityProfile={qualityProfile}
               searchEnabled={discoveryActive && Boolean(avatarStyle)}
+              onCameraHeadingChange={setCameraHeading}
               onSelectPlayer={multiplayer.selectPlayer}
               onSearchPoint={(point) => {
                 dispatch({ type: "search-point", ...point, searchedAt: new Date().toISOString(), ownerReceizId });
@@ -527,6 +529,7 @@ export function PlayCampaign({
           <WildsWorldControls
             activeAction={state.activeAction}
             activeCardName={activeCard.name}
+            cameraHeading={cameraHeading}
             movementMode={movementMode}
             onInput={dispatch}
             onMission={() => dispatch({ type: "mission" })}

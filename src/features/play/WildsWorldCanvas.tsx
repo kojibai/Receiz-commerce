@@ -28,6 +28,7 @@ export function WildsWorldCanvas({
   remotePlayers,
   qualityProfile,
   searchEnabled,
+  onCameraHeadingChange,
   onSelectPlayer,
   onSearchPoint
 }: {
@@ -36,6 +37,7 @@ export function WildsWorldCanvas({
   remotePlayers: WildsPresence[];
   qualityProfile: WildsQualityProfile;
   searchEnabled: boolean;
+  onCameraHeadingChange: (heading: number) => void;
   onSelectPlayer: (player: WildsPresence | null) => void;
   onSearchPoint: (point: { x: number; z: number }) => void;
 }) {
@@ -54,7 +56,7 @@ export function WildsWorldCanvas({
         shadows={{ type: THREE.PCFShadowMap }}
       >
         <Suspense fallback={null}>
-          <WildsScene state={state} avatarStyle={avatarStyle} remotePlayers={remotePlayers} qualityProfile={qualityProfile} searchEnabled={searchEnabled} onSelectPlayer={onSelectPlayer} onSearchPoint={onSearchPoint} />
+          <WildsScene state={state} avatarStyle={avatarStyle} remotePlayers={remotePlayers} qualityProfile={qualityProfile} searchEnabled={searchEnabled} onCameraHeadingChange={onCameraHeadingChange} onSelectPlayer={onSelectPlayer} onSearchPoint={onSearchPoint} />
         </Suspense>
       </Canvas>
     </div>
@@ -67,6 +69,7 @@ function WildsScene({
   remotePlayers,
   qualityProfile,
   searchEnabled,
+  onCameraHeadingChange,
   onSelectPlayer,
   onSearchPoint
 }: {
@@ -75,6 +78,7 @@ function WildsScene({
   remotePlayers: WildsPresence[];
   qualityProfile: WildsQualityProfile;
   searchEnabled: boolean;
+  onCameraHeadingChange: (heading: number) => void;
   onSelectPlayer: (player: WildsPresence | null) => void;
   onSearchPoint: (point: { x: number; z: number }) => void;
 }) {
@@ -84,7 +88,7 @@ function WildsScene({
       <color attach="background" args={[world.chapter.palette.fog]} />
       <fog attach="fog" args={[world.chapter.palette.fog, 10, 24]} />
       <WildsAtmosphere encounter={state.encounter} missionProgress={state.missionProgress} player={state.player} qualityProfile={qualityProfile} />
-      <CameraRig />
+      <CameraRig onCameraHeadingChange={onCameraHeadingChange} />
       <WildsDiagnostics qualityProfile={qualityProfile} state={state} />
       <SearchableTerrain
         enabled={searchEnabled}
@@ -140,20 +144,29 @@ function RemoteExplorer({
   );
 }
 
-function CameraRig() {
-  return <OrbitControls
-    dampingFactor={.08}
-    enableDamping
-    enablePan={false}
-    maxDistance={13.5}
-    maxPolarAngle={Math.PI / 2.15}
-    minDistance={4.8}
-    minPolarAngle={.38}
-    rotateSpeed={.62}
-    target={[0, .55, 0]}
-    touches={{ ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_ROTATE }}
-    zoomSpeed={.82}
-  />;
+function CameraRig({ onCameraHeadingChange }: { onCameraHeadingChange: (heading: number) => void }) {
+  const lastHeading = useRef(Number.NaN);
+  useFrame(({ camera }) => {
+    const heading = Math.atan2(camera.position.x, camera.position.z);
+    if (Number.isFinite(lastHeading.current) && Math.abs(heading - lastHeading.current) < .001) return;
+    lastHeading.current = heading;
+    onCameraHeadingChange(heading);
+  });
+  return (
+    <OrbitControls
+      dampingFactor={.08}
+      enableDamping
+      enablePan={false}
+      maxDistance={13.5}
+      maxPolarAngle={Math.PI / 2.15}
+      minDistance={4.8}
+      minPolarAngle={.38}
+      rotateSpeed={.62}
+      target={[0, .55, 0]}
+      touches={{ ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_ROTATE }}
+      zoomSpeed={.82}
+    />
+  );
 }
 
 function frameSeconds() {

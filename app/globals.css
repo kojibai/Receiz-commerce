@@ -1282,6 +1282,10 @@ a {
   --game-gold: #f7c948;
   --game-sky: #62c8ff;
   --game-lime: #c7ec5a;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
   overflow: hidden;
   border-color: rgba(23, 19, 17, 0.08);
   background:

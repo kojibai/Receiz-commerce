@@ -277,8 +277,10 @@ describe("Receiz Wilds rendering contract", () => {
     assert.match(environment, /WILDS_TILE_SIZE/);
   });
 
-  it("lets mobile players orbit and pinch the gameplay camera without changing movement", async () => {
+  it("keeps mobile movement aligned while players orbit and pinch the gameplay camera", async () => {
     const world = await readFile("src/features/play/WildsWorldCanvas.tsx", "utf8");
+    const campaign = await readFile("src/features/play/PlayCampaign.tsx", "utf8");
+    const controls = await readFile("src/features/play/WildsWorldControls.tsx", "utf8");
 
     assert.match(world, /OrbitControls/);
     assert.match(world, /enableDamping/);
@@ -288,7 +290,18 @@ describe("Receiz Wilds rendering contract", () => {
     assert.match(world, /minPolarAngle=\{(?:0)?\.38\}/);
     assert.match(world, /maxPolarAngle=\{Math\.PI \/ 2\.15\}/);
     assert.match(world, /touches=\{\{ ONE: THREE\.TOUCH\.ROTATE, TWO: THREE\.TOUCH\.DOLLY_ROTATE \}\}/);
+    assert.match(world, /onCameraHeadingChange/);
+    assert.match(campaign, /cameraHeading/);
+    assert.match(controls, /cameraRelativeMovement\(vector, cameraHeading\)/);
     assert.doesNotMatch(world, /camera\.position\.lerp\(target/);
+  });
+
+  it("prevents accidental selection and long-press callouts across the gameplay surface", async () => {
+    const css = await readFile("app/globals.css", "utf8");
+
+    assert.match(css, /\.wilds-play-panel[\s\S]*?-webkit-touch-callout:\s*none/);
+    assert.match(css, /\.wilds-play-panel[\s\S]*?-webkit-user-select:\s*none/);
+    assert.match(css, /\.wilds-play-panel[\s\S]*?user-select:\s*none/);
   });
 
   it("renders an accessible Receiz Capsule reward and bounded card inventory", async () => {
