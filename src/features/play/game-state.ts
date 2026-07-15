@@ -24,7 +24,7 @@ export type MoveDirection = "north" | "south" | "west" | "east";
 export type WildsInput =
   | { type: "move"; direction: MoveDirection }
   | { type: "move-vector"; x: number; z: number; mode?: WildsMovementMode }
-  | { type: "apply-rift-grant"; grant: RiftTravelGrant; playerId: string; appliedAt: string }
+  | { type: "apply-rift-grant"; grant: RiftTravelGrant; playerId: string }
   | { type: "discover" }
   | { type: "capture"; encounterId: string; capturedAt: string; ownerReceizId: string }
   | { type: "search-point"; x: number; z: number; searchedAt: string; ownerReceizId: string }
@@ -775,8 +775,7 @@ export function applyWildsInput(state: PlayState, input: WildsInput): PlayState 
   }
 
   if (input.type === "apply-rift-grant") {
-    const appliedAt = Date.parse(input.appliedAt);
-    if (!Number.isFinite(appliedAt) || !validateRiftGrant(input.grant, { playerId: input.playerId, now: appliedAt }).ok) return state;
+    if (!validateRiftGrant(input.grant, { playerId: input.playerId }).ok) return state;
     return {
       ...state,
       activeAction: "explore",

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getWildsMultiplayerSnapshot } from "@/features/play/multiplayer-ledger";
+import { applyAuthorizedRiftPresence, getWildsMultiplayerSnapshot } from "@/features/play/multiplayer-ledger";
 import { authorizeRiftTravel, type RiftTravelGrant } from "@/features/play/wilds-rift-travel";
 import {
   hydrateWildsRoomFromReceiz,
@@ -15,12 +15,11 @@ const riftLedgerKey = Symbol.for("receiz.wilds.rift-ledger.v1");
 
 type RiftLedger = {
   grants: Map<string, RiftTravelGrant>;
-  lastRiftByPlayer: Map<string, number>;
 };
 
 function riftLedger() {
   const root = globalThis as typeof globalThis & { [riftLedgerKey]?: RiftLedger };
-  return (root[riftLedgerKey] ??= { grants: new Map(), lastRiftByPlayer: new Map() });
+  return (root[riftLedgerKey] ??= { grants: new Map() });
 }
 
 function position(value: unknown) {
@@ -35,8 +34,7 @@ export async function POST(request: NextRequest) {
     const roomKey = parseWildsRoomKey(body?.roomKey);
     const actor = await resolveWildsMultiplayerActor(request, body?.guestId);
     await hydrateWildsRoomFromReceiz(request, roomKey);
-    const now = Date.now();
-    const snapshot = getWildsMultiplayerSnapshot(roomKey, new Date(now).toISOString());
+    const snapshot = getWildsMultiplayerSnapshot(roomKey);
     const currentPresence = snapshot.players.find((player) => player.playerId === actor.playerId);
     const submittedSource = position(body?.source);
     if (currentPresence && Math.hypot(currentPresence.x - submittedSource.x, currentPresence.z - submittedSource.z) > 3) {
@@ -54,7 +52,7 @@ export async function POST(request: NextRequest) {
     const cacheKey = `${actor.playerId}:${idempotencyKey}`;
     const ledger = riftLedger();
     const cached = ledger.grants.get(cacheKey);
-    if (cached && Date.parse(cached.expiresAt) >= now) {
+    if (cached) {
       return NextResponse.json({ ok: true, grant: cached, idempotent: true }, {
         headers: { "cache-control": "private, no-store" }
       });
@@ -62,17 +60,21 @@ export async function POST(request: NextRequest) {
     const result = authorizeRiftTravel({
       idempotencyKey,
       source,
-      destination: position(body?.destination),
-      requestedAt: typeof body?.requestedAt === "string" ? body.requestedAt : ""
+      destination: position(body?.destination)
     }, {
       playerId: actor.playerId,
-      now,
-      lastRiftAt: ledger.lastRiftByPlayer.get(actor.playerId) ?? null,
+      coordinationPulse: `${snapshot.revision + 1}`,
       locked
     });
     if (!result.ok) throw new Error(result.error);
+    applyAuthorizedRiftPresence({
+      roomKey,
+      playerId: actor.playerId,
+      destination: result.grant.destination,
+      kaiPulse: result.grant.kaiPulse
+    });
     ledger.grants.set(cacheKey, result.grant);
-    ledger.lastRiftByPlayer.set(actor.playerId, now);
+    if (ledger.grants.size > 512) ledger.grants.delete(ledger.grants.keys().next().value!);
     return NextResponse.json({ ok: true, grant: result.grant, idempotent: false }, {
       headers: { "cache-control": "private, no-store" }
     });

@@ -20,7 +20,7 @@ import {
   submitPvpIntent,
   type PvpCard
 } from "../src/features/play/pvp-battle-engine.js";
-import { getWildsAtlasPresence, heartbeatWildsPresence } from "../src/features/play/multiplayer-ledger.js";
+import { applyAuthorizedRiftPresence, getWildsAtlasPresence, heartbeatWildsPresence } from "../src/features/play/multiplayer-ledger.js";
 
 const card = (id: string, speed = 44): PvpCard => ({
   assetId: id,
@@ -65,7 +65,7 @@ describe("Wilds live multiplayer core", () => {
     assert.throws(() => sanitizeWildsMessage("x".repeat(281)), /wilds_message_too_long/);
   });
 
-  it("projects exact nearby identity and anonymous distant atlas clusters", () => {
+  it("projects every public player at their exact live atlas coordinate", () => {
     const now = "2026-07-15T12:00:00.000Z";
     const base = { handle: "Atlas", style: "female" as const, heading: 0, practice: false, activeCard: card("atlas") };
     heartbeatWildsPresence({ ...base, roomKey: "wilds:platform:1000:1000", playerId: "atlas-self", x: 48_000, z: 48_000, now });
@@ -78,10 +78,21 @@ describe("Wilds live multiplayer core", () => {
       now: Date.parse(now),
       maxClusters: 64
     });
-    assert.deepEqual(atlas.nearby, [{ playerId: "atlas-near", handle: "Nearby", style: "female", x: 48_003, z: 48_004, status: "available" }]);
-    assert.equal(atlas.clusters.reduce((sum: number, cluster: { count: number }) => sum + cluster.count, 0), 1);
-    assert.equal(atlas.clusters.every((cluster: object) => !("handle" in cluster)), true);
-    assert.deepEqual(atlas.clusters[0]?.position, { x: 48_120, z: 48_024 });
+    assert.deepEqual(atlas.players, [
+      { playerId: "atlas-near", handle: "Nearby", style: "female", x: 48_003, z: 48_004, status: "available" },
+      { playerId: "atlas-far", handle: "Hidden", style: "female", x: 48_100, z: 48_010, status: "available" }
+    ]);
+    assert.equal(atlas.clusters.length, 0);
+  });
+
+  it("applies an authorized Kai pulse before the next presence heartbeat", () => {
+    const roomKey = "wilds:platform:77:77";
+    const now = "2026-07-15T12:00:00.000Z";
+    const base = { handle: "Rifter", style: "female" as const, heading: 0, practice: false, activeCard: card("rift-presence") };
+    heartbeatWildsPresence({ ...base, roomKey, playerId: "rift-player", x: 0, z: 0, now });
+    const moved = applyAuthorizedRiftPresence({ roomKey, playerId: "rift-player", destination: { x: -33, z: -39 }, kaiPulse: "4242", now: "2026-07-15T12:00:01.000Z" });
+    assert.deepEqual(moved.players.find((player) => player.playerId === "rift-player") && { x: moved.players.find((player) => player.playerId === "rift-player")!.x, z: moved.players.find((player) => player.playerId === "rift-player")!.z }, { x: -33, z: -39 });
+    assert.doesNotThrow(() => heartbeatWildsPresence({ ...base, roomKey, playerId: "rift-player", x: -33, z: -39, now: "2026-07-15T12:00:01.250Z" }));
   });
 });
 

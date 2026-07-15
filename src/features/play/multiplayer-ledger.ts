@@ -127,11 +127,10 @@ export function getWildsAtlasPresence(input: {
   const players = [...newestByPlayer.values()]
     .filter((player) => player.playerId !== input.actorId)
     .sort((left, right) => presenceDistance(left, input.center) - presenceDistance(right, input.center));
-  const nearby = players
-    .filter((player) => player.status !== "private" && presenceDistance(player, input.center) <= WILDS_INTERACTION_DISTANCE)
-    .slice(0, 24)
+  const visiblePlayers = players
+    .filter((player) => player.status !== "private")
     .map(({ playerId, handle, style, x, z, status }) => ({ playerId, handle, style, x, z, status }));
-  const nearbyIds = new Set(nearby.map((player) => player.playerId));
+  const visibleIds = new Set(visiblePlayers.map((player) => player.playerId));
   const clusters = new Map<string, {
     id: string;
     regionX: number;
@@ -140,7 +139,7 @@ export function getWildsAtlasPresence(input: {
     position: { x: number; z: number };
   }>();
   for (const player of players) {
-    if (nearbyIds.has(player.playerId)) continue;
+    if (visibleIds.has(player.playerId)) continue;
     const region = regionForPosition(player);
     const id = `cluster:${region.x}:${region.z}`;
     const existing = clusters.get(id);
@@ -161,7 +160,7 @@ export function getWildsAtlasPresence(input: {
   }
   const maxClusters = Math.max(1, Math.min(64, Math.floor(input.maxClusters ?? 64)));
   return {
-    nearby,
+    players: visiblePlayers,
     clusters: [...clusters.values()]
       .sort((left, right) => (
         Math.hypot(left.position.x - input.center.x, left.position.z - input.center.z)
@@ -203,6 +202,27 @@ export function heartbeatWildsPresence(input: {
   const players = [...room.players.filter((player) => player.playerId !== input.playerId), presence];
   const saved = save({ ...room, players, capabilities: undefined } as unknown as WildsMultiplayerRoom, now);
   return { self: presence, snapshot: snapshot(saved) };
+}
+
+export function applyAuthorizedRiftPresence(input: {
+  roomKey: string;
+  playerId: string;
+  destination: { x: number; z: number };
+  kaiPulse: string;
+  now?: string;
+}) {
+  if (!/^\d{1,32}$/.test(input.kaiPulse)) throw new Error("wilds_rift_grant_invalid");
+  const now = input.now ?? new Date().toISOString();
+  const room = getWildsMultiplayerSnapshot(input.roomKey, now);
+  const current = room.players.find((player) => player.playerId === input.playerId);
+  if (!current) return room;
+  const players = room.players.map((player) => player.playerId === input.playerId ? {
+    ...player,
+    x: input.destination.x,
+    z: input.destination.z,
+    lastSeenAt: now
+  } : player);
+  return snapshot(save({ ...room, players, capabilities: undefined } as unknown as WildsMultiplayerRoom, now));
 }
 
 function roomOrThrow(roomKey: string) {

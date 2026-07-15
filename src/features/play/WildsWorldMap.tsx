@@ -14,6 +14,7 @@ import {
 } from "./wilds-world-atlas";
 import type { WildsQualityProfile } from "./wilds-quality-profile";
 import { WildsAtlasCanvas } from "./WildsAtlasCanvas";
+import { describeWildsPoint } from "./wilds-world-geography";
 
 const zoomLevels: readonly WildsAtlasZoom[] = ["world", "region", "landmark"];
 
@@ -46,12 +47,13 @@ export function WildsWorldMap({
 }) {
   const [zoom, setZoom] = useState<WildsAtlasZoom>("world");
   const [selectedId, setSelectedId] = useState<WildsLandmarkId | null>(null);
+  const [freeDrop, setFreeDrop] = useState<{ x: number; z: number } | null>(null);
   const [holding, setHolding] = useState(false);
   const [atlasPresence, setAtlasPresence] = useState<{
     loaded: boolean;
-    nearby: WildsAtlasExactPlayer[];
+    players: WildsAtlasExactPlayer[];
     clusters: WildsAtlasPlayerCluster[];
-  }>({ loaded: false, nearby: [], clusters: [] });
+  }>({ loaded: false, players: [], clusters: [] });
   const headingRef = useRef<HTMLHeadingElement>(null);
   const previousFocus = useRef<HTMLElement | null>(null);
   const holdTimer = useRef<number | null>(null);
@@ -66,11 +68,12 @@ export function WildsWorldMap({
   }), [currentPosition, discoveredLandmarkIds, missionProgress, remotePlayers, worldMastery, zoom]);
   const projection = useMemo(() => atlasPresence.loaded ? {
     ...localProjection,
-    exactPlayers: atlasPresence.nearby,
+    exactPlayers: atlasPresence.players,
     playerClusters: atlasPresence.clusters
   } : localProjection, [atlasPresence, localProjection]);
   const selected = projection.landmarks.find((landmark) => landmark.id === selectedId) ?? null;
   const selectedAccess = selected ? evaluateLandmarkAccess(selected, landmarkProgress) : null;
+  const freeDropRegion = freeDrop ? describeWildsPoint(freeDrop) : null;
 
   useEffect(() => {
     if (!open) return;
@@ -104,18 +107,18 @@ export function WildsWorldMap({
         const response = await fetch(`/api/wilds/atlas?${params.toString()}`, { cache: "no-store" });
         const result = await response.json().catch(() => null) as {
           ok?: boolean;
-          nearby?: WildsAtlasExactPlayer[];
+          players?: WildsAtlasExactPlayer[];
           clusters?: WildsAtlasPlayerCluster[];
         } | null;
         if (active && response.ok && result?.ok) {
-          setAtlasPresence({ loaded: true, nearby: result.nearby ?? [], clusters: result.clusters ?? [] });
+          setAtlasPresence({ loaded: true, players: result.players ?? [], clusters: result.clusters ?? [] });
         }
       } catch {
-        // The local nearby projection remains available while atlas presence reconnects.
+        // The local room projection remains available while global atlas presence reconnects.
       }
     };
     void refresh();
-    const timer = window.setInterval(() => void refresh(), 4_000);
+    const timer = window.setInterval(() => void refresh(), 1_000);
     return () => {
       active = false;
       window.clearInterval(timer);
@@ -159,10 +162,19 @@ export function WildsWorldMap({
       <div className="wilds-world-map-body">
         <div className="wilds-atlas-stage">
           <WildsAtlasCanvas
-            onSelect={(landmarkId) => setSelectedId(landmarkId as WildsLandmarkId)}
+            currentPosition={currentPosition}
+            onDrop={(position) => {
+              setSelectedId(null);
+              setFreeDrop(position);
+            }}
+            onSelect={(landmarkId) => {
+              setFreeDrop(null);
+              setSelectedId(landmarkId as WildsLandmarkId);
+            }}
             projection={projection}
             qualityProfile={qualityProfile}
             reducedMotion={reducedMotion}
+            selectedDrop={freeDrop}
             selectedId={selectedId}
           />
           <div aria-label="Atlas zoom level" className="wilds-atlas-zoom" role="group">
@@ -174,7 +186,9 @@ export function WildsWorldMap({
           </div>
           <div className="wilds-atlas-current" aria-label={`Current position X ${Math.round(currentPosition.x)}, Z ${Math.round(currentPosition.z)}`}>
             <Icons.home aria-hidden="true" size={15} />
-            <span>X {Math.round(currentPosition.x)} · Z {Math.round(currentPosition.z)}</span>
+            <span>You · X {Math.round(currentPosition.x)} · Z {Math.round(currentPosition.z)}</span>
+            <i aria-hidden="true" />
+            <span>{projection.exactPlayers.length + projection.playerClusters.reduce((sum, cluster) => sum + cluster.count, 0)} live</span>
           </div>
         </div>
 
@@ -184,7 +198,10 @@ export function WildsWorldMap({
               <button
                 aria-pressed={selectedId === landmark.id}
                 key={landmark.id}
-                onClick={() => setSelectedId(landmark.id)}
+                onClick={() => {
+                  setFreeDrop(null);
+                  setSelectedId(landmark.id);
+                }}
                 type="button"
               >
                 <span style={{ background: landmark.accent }} />
@@ -194,7 +211,29 @@ export function WildsWorldMap({
             ))}
           </div>
 
-          {selected ? (
+          {freeDrop ? (
+            <section className="wilds-atlas-destination-card wilds-atlas-free-drop" aria-live="polite">
+              <span className="eyebrow">Dropped pin · {freeDropRegion}</span>
+              <h3>Travel here?</h3>
+              <p>Rift to this exact terrain point, then explore nearby roads, buildings, and secrets on foot.</p>
+              <div className="wilds-atlas-destination-meta">
+                <span>X {Math.round(freeDrop.x)}</span>
+                <span>Z {Math.round(freeDrop.z)}</span>
+                <span>Open terrain</span>
+              </div>
+              <div className="wilds-atlas-confirm-actions">
+                <button onClick={() => setFreeDrop(null)} type="button">Cancel</button>
+                <button
+                  aria-label="Confirm Rift travel"
+                  onClick={() => void onRift(freeDrop)}
+                  type="button"
+                >
+                  <Icons.globe aria-hidden="true" size={18} />
+                  Accept Rift
+                </button>
+              </div>
+            </section>
+          ) : selected ? (
             <section className="wilds-atlas-destination-card" aria-live="polite">
               <span className="eyebrow">{selected.discovered ? "Discovered destination" : "Uncharted signal"}</span>
               <h3>{selected.name}</h3>
@@ -226,8 +265,8 @@ export function WildsWorldMap({
           ) : (
             <div className="wilds-atlas-empty">
               <Icons.globe aria-hidden="true" size={28} />
-              <strong>Choose a signal</strong>
-              <p>Every light is a place with its own people, rules, cards, and secrets.</p>
+              <strong>Drop anywhere. Learn everywhere.</strong>
+              <p>Tap terrain for an exact Rift, or choose a landmark to arrive nearby and discover its entrance on foot.</p>
             </div>
           )}
         </aside>

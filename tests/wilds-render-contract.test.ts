@@ -26,8 +26,37 @@ describe("Receiz Wilds rendering contract", () => {
     assert.match(canvas, /qualityProfile\.dpr/);
     assert.match(canvas, /instancedMesh/);
     assert.match(canvas, /function AtlasHorizon/);
-    assert.match(canvas, /gridHelper/);
+    assert.doesNotMatch(canvas, /gridHelper/);
     assert.match(css, /@media \(max-width: 760px\)[\s\S]*?\.wilds-world-map-header h2\s*\{[^}]*white-space:\s*normal/s);
+  });
+
+  it("renders an organic world map and lets explorers confirm any terrain coordinate", async () => {
+    const map = await readFile("src/features/play/WildsWorldMap.tsx", "utf8");
+    const canvas = await readFile("src/features/play/WildsAtlasCanvas.tsx", "utf8");
+
+    assert.match(canvas, /function OrganicWorldSurface/);
+    assert.match(canvas, /onDrop/);
+    assert.match(canvas, /DropPin/);
+    assert.match(canvas, /ExactPlayerLights/);
+    assert.match(canvas, /atlas-live-players/);
+    assert.doesNotMatch(canvas, /gridHelper/);
+    assert.match(map, /Travel here\?/);
+    assert.match(map, /onRift\(freeDrop\)/);
+    assert.match(map, /Confirm Rift travel/);
+  });
+
+  it("shares stable named geography between the atlas and walkable world", async () => {
+    const atlas = await readFile("src/features/play/WildsAtlasCanvas.tsx", "utf8");
+    const environment = await readFile("src/features/play/WildsEnvironment.tsx", "utf8");
+    const geography = await readFile("src/features/play/wilds-world-geography.ts", "utf8");
+
+    assert.match(atlas, /WILDS_MAJOR_ROUTES/);
+    assert.match(atlas, /WILDS_NAMED_REGIONS/);
+    assert.match(environment, /WILDS_MAJOR_ROUTES/);
+    assert.match(environment, /world-major-routes/);
+    assert.match(geography, /Verdant Heartlands/);
+    assert.match(geography, /Echo Highlands/);
+    assert.match(geography, /Prism Coast/);
   });
 
   it("connects the globe, Rift travel, Walk Run, and Pulse to the playable world", async () => {
@@ -41,6 +70,8 @@ describe("Receiz Wilds rendering contract", () => {
     assert.match(campaign, /<WildsWorldControls/);
     assert.match(campaign, /fetch\("\/api\/wilds\/rift"/);
     assert.match(campaign, /type: "apply-rift-grant"/);
+    assert.doesNotMatch(campaign, /requestedAt|appliedAt/);
+    assert.match(campaign, /grant: result\.grant,[\s\S]*?playerId: result\.grant\.playerId/);
     assert.match(controls, /aria-label=\{movementMode === "walk" \? "Switch to running" : "Switch to walking"\}/);
     assert.match(controls, /aria-label=\{pulse\.label\}/);
     assert.match(controls, /mode: movementMode/);
@@ -207,6 +238,17 @@ describe("Receiz Wilds rendering contract", () => {
     assert.match(controls, /Discovery on/);
     assert.doesNotMatch(source, /setSearchArmed\(false\)/);
     assert.match(source, /state\.encounter\.proximity/);
+  });
+
+  it("centers the movement pad between two perfectly balanced three-action rails", async () => {
+    const controls = await readFile("src/features/play/WildsWorldControls.tsx", "utf8");
+    const css = await readFile("app/globals.css", "utf8");
+
+    assert.match(controls, /wilds-control-rail wilds-control-rail-left/);
+    assert.match(controls, /wilds-control-rail wilds-control-rail-right/);
+    assert.match(controls, /<WildsTrackpad/);
+    assert.match(css, /\.wilds-screen-controls\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\)\s+var\(--wilds-pad-size\)\s+minmax\(0, 1fr\)/s);
+    assert.match(css, /\.wilds-control-rail\s*\{[^}]*grid-template-columns:\s*repeat\(3, minmax\(0, 1fr\)\)/s);
   });
 
   it("surfaces endless chapter equity and deterministic world events", async () => {

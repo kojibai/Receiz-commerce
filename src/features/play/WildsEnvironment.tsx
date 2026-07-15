@@ -5,6 +5,7 @@ import * as THREE from "three";
 import type { PlayState } from "@/features/play/game-state";
 import { projectWildsBiome, type WildsBiomeTile } from "@/features/play/wilds-biome";
 import type { WildsQualityProfile } from "@/features/play/wilds-quality-profile";
+import { WILDS_MAJOR_ROUTES } from "@/features/play/wilds-world-geography";
 
 export const WILDS_TILE_SIZE = 12;
 const STREAM_RADIUS = 2;
@@ -86,6 +87,7 @@ export function WildsEnvironment({
       <group name="world-layer-play">
         <GroundField centerX={centerX} centerZ={centerZ} color={tiles[12]?.ground.base ?? "#4f9254"} player={player} />
         <TrailNetwork player={player} palette={tiles[12]?.trail ?? { base: "#cbb778", edge: "#9b8b56" }} />
+        <MajorWorldRoutes player={player} palette={tiles[12]?.trail ?? { base: "#cbb778", edge: "#9b8b56" }} />
       </group>
       <group name="world-layer-mid">
         <EcologyInstances bushes={bushes} flowers={flowers} palette={tiles[12]?.canopy} player={player} rocks={rocks} trees={trees} />
@@ -98,6 +100,19 @@ export function WildsEnvironment({
       </group>
     </group>
   );
+}
+
+function MajorWorldRoutes({ player, palette }: { player: PlayState["player"]; palette: WildsBiomeTile["trail"] }) {
+  const routes = useMemo(() => WILDS_MAJOR_ROUTES.map((route) => ({
+    ...route,
+    curve: new THREE.CatmullRomCurve3(route.points.map((point) => new THREE.Vector3(point.x, .024, point.z)))
+  })), []);
+  return <group name="world-major-routes" position={[-player.x, 0, -player.z]}>
+    {routes.map((route, index) => <group key={route.id} name={`world-route-${route.id}`}>
+      <mesh><tubeGeometry args={[route.curve, 160, index ? .42 : .54, 7, false]} /><meshStandardMaterial color={palette.edge} roughness={.98} /></mesh>
+      <mesh><tubeGeometry args={[route.curve, 160, index ? .28 : .36, 7, false]} /><meshStandardMaterial color={palette.base} roughness={.91} /></mesh>
+    </group>)}
+  </group>;
 }
 
 function GroundField({ centerX, centerZ, color, player }: { centerX: number; centerZ: number; color: string; player: PlayState["player"] }) {

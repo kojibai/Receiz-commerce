@@ -7,19 +7,26 @@ import * as THREE from "three";
 import { WILDS_REGION_SIZE } from "./multiplayer-core";
 import type { WildsAtlasProjection } from "./wilds-world-atlas";
 import type { WildsQualityProfile } from "./wilds-quality-profile";
+import { WILDS_MAJOR_ROUTES, WILDS_NAMED_REGIONS } from "./wilds-world-geography";
 
 export function WildsAtlasCanvas({
   projection,
+  currentPosition,
   qualityProfile,
   selectedId,
+  selectedDrop,
   reducedMotion,
-  onSelect
+  onSelect,
+  onDrop
 }: {
   projection: WildsAtlasProjection;
+  currentPosition: { x: number; z: number };
   qualityProfile: WildsQualityProfile;
   selectedId: string | null;
+  selectedDrop: { x: number; z: number } | null;
   reducedMotion: boolean;
   onSelect: (landmarkId: string) => void;
+  onDrop: (position: { x: number; z: number }) => void;
 }) {
   return (
     <div aria-hidden="true" className="wilds-atlas-canvas">
@@ -38,10 +45,14 @@ export function WildsAtlasCanvas({
         <pointLight color="#71e8c3" intensity={24} position={[-5, 3, 2]} distance={16} />
         <pointLight color="#ff72bf" intensity={13} position={[6, 2, -5]} distance={13} />
         <AtlasHorizon />
-        <RegionField projection={projection} />
+        <OrganicWorldSurface onDrop={onDrop} projection={projection} />
+        <MapRoutes />
+        <RegionNames projection={projection} />
         <LandmarkBeacons projection={projection} selectedId={selectedId} onSelect={onSelect} />
+        <DropPin position={selectedDrop} projection={projection} />
+        <ExactPlayerLights projection={projection} />
         <PresenceLights projection={projection} />
-        <CurrentPositionBeam />
+        <CurrentPositionBeam position={currentPosition} projection={projection} />
         <Sparkles
           color="#b9fff0"
           count={reducedMotion ? 12 : Math.round(38 * qualityProfile.particles)}
@@ -71,52 +82,100 @@ export function WildsAtlasCanvas({
 function AtlasHorizon() {
   return (
     <group name="atlas-horizon">
-      <mesh position={[0, -0.28, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <circleGeometry args={[18, 64]} />
-        <meshBasicMaterial color="#0a3438" transparent opacity={0.78} />
+      <mesh position={[0, -0.42, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <circleGeometry args={[19, 96]} />
+        <meshStandardMaterial color="#082d3c" emissive="#061c27" emissiveIntensity={0.4} roughness={0.34} metalness={0.08} />
       </mesh>
-      <gridHelper args={[28, 20, "#278b79", "#123d3f"]} position={[0, -0.255, 0]} />
-      <mesh position={[0, -0.24, 0]} rotation={[Math.PI / 2, 0, 0]}>
-        <torusGeometry args={[7.6, 0.035, 8, 96]} />
-        <meshBasicMaterial color="#71e8c3" transparent opacity={0.28} />
-      </mesh>
-      <mesh position={[0, -0.23, 0]} rotation={[Math.PI / 2, 0, 0]}>
-        <torusGeometry args={[11.4, 0.025, 8, 96]} />
-        <meshBasicMaterial color="#ff72bf" transparent opacity={0.2} />
+      <mesh position={[0, -0.39, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <circleGeometry args={[15.8, 96]} />
+        <meshBasicMaterial color="#0d5260" transparent opacity={0.4} />
       </mesh>
     </group>
   );
 }
 
-function RegionField({ projection }: { projection: WildsAtlasProjection }) {
-  const mesh = useRef<THREE.InstancedMesh>(null);
-  const matrix = useMemo(() => new THREE.Matrix4(), []);
-  const color = useMemo(() => new THREE.Color(), []);
+function terrainNoise(x: number, z: number) {
+  return Math.sin(x * 0.72) * 0.11 + Math.cos(z * 0.57) * 0.09 + Math.sin((x + z) * 1.31) * 0.045;
+}
 
-  useLayoutEffect(() => {
-    if (!mesh.current) return;
-    projection.nodes.forEach((node, index) => {
-      const x = (node.regionX - projection.centerRegion.x) * 1.35;
-      const z = (node.regionZ - projection.centerRegion.z) * 1.35;
-      const height = 0.12 + node.biome.luminosity * 0.24;
-      matrix.compose(
-        new THREE.Vector3(x, height / 2 - 0.18, z),
-        new THREE.Quaternion(),
-        new THREE.Vector3(1.24, height, 1.24)
-      );
-      mesh.current!.setMatrixAt(index, matrix);
-      mesh.current!.setColorAt(index, color.set(node.biome.ground.base).offsetHSL(0, 0.12, 0.11));
-    });
-    mesh.current.instanceMatrix.needsUpdate = true;
-    if (mesh.current.instanceColor) mesh.current.instanceColor.needsUpdate = true;
-  }, [color, matrix, projection]);
-
+function OrganicWorldSurface({ projection, onDrop }: { projection: WildsAtlasProjection; onDrop: (position: { x: number; z: number }) => void }) {
+  const size = Math.max(7.2, Math.sqrt(projection.nodes.length) * 1.35);
+  const geometry = useMemo(() => {
+    const rings = 32;
+    const segments = 96;
+    const positions: number[] = [];
+    const colors: number[] = [];
+    const indices: number[] = [];
+    const nodes = new Map(projection.nodes.map((node) => [`${node.regionX}:${node.regionZ}`, node]));
+    const fallback = projection.nodes[Math.floor(projection.nodes.length / 2)]!;
+    const addVertex = (x: number, z: number, coast = 0) => {
+      const regionX = Math.round(projection.centerRegion.x + x / 1.35);
+      const regionZ = Math.round(projection.centerRegion.z + z / 1.35);
+      const node = nodes.get(`${regionX}:${regionZ}`) ?? fallback;
+      const height = (terrainNoise(x + regionX * 0.19, z + regionZ * 0.17) + node.biome.luminosity * 0.12) * (1 - coast * .62);
+      const color = new THREE.Color(node.biome.ground.base).offsetHSL(0, .12, .08 + height * .2 - coast * .035);
+      positions.push(x, height, z);
+      colors.push(color.r, color.g, color.b);
+    };
+    addVertex(0, 0);
+    for (let ring = 1; ring <= rings; ring += 1) {
+      const progress = ring / rings;
+      for (let segment = 0; segment < segments; segment += 1) {
+        const angle = segment / segments * Math.PI * 2;
+        const coast = Math.max(0, (progress - .82) / .18);
+        const boundary = size * (.455 + Math.sin(angle * 3 + .6) * .025 + Math.cos(angle * 5 - .4) * .018);
+        addVertex(Math.cos(angle) * boundary * progress * 1.06, Math.sin(angle) * boundary * progress, coast);
+      }
+    }
+    for (let segment = 0; segment < segments; segment += 1) indices.push(0, 1 + (segment + 1) % segments, 1 + segment);
+    for (let ring = 1; ring < rings; ring += 1) {
+      const innerStart = 1 + (ring - 1) * segments;
+      const outerStart = innerStart + segments;
+      for (let segment = 0; segment < segments; segment += 1) {
+        const next = (segment + 1) % segments;
+        indices.push(innerStart + segment, innerStart + next, outerStart + segment, innerStart + next, outerStart + next, outerStart + segment);
+      }
+    }
+    const next = new THREE.BufferGeometry();
+    next.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+    next.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
+    next.setIndex(indices);
+    next.computeVertexNormals();
+    return next;
+  }, [projection, size]);
   return (
-    <instancedMesh args={[undefined, undefined, projection.nodes.length]} ref={mesh}>
-      <boxGeometry args={[1, 1, 1]} />
-      <meshStandardMaterial emissive="#082f2b" emissiveIntensity={0.34} metalness={0.08} roughness={0.68} vertexColors />
-    </instancedMesh>
+    <mesh
+      geometry={geometry}
+      name="organic-world-surface"
+      onClick={(event) => {
+        event.stopPropagation();
+        onDrop({
+          x: Number(((projection.centerRegion.x + event.point.x / 1.35) * WILDS_REGION_SIZE).toFixed(2)),
+          z: Number(((projection.centerRegion.z + event.point.z / 1.35) * WILDS_REGION_SIZE).toFixed(2))
+        });
+      }}
+      receiveShadow
+    >
+      <meshStandardMaterial emissive="#123b32" emissiveIntensity={0.18} metalness={0.02} roughness={0.83} vertexColors />
+    </mesh>
   );
+}
+
+function MapRoutes() {
+  const routes = useMemo(() => WILDS_MAJOR_ROUTES.map((route) => new THREE.CatmullRomCurve3(
+    route.points.map((point) => new THREE.Vector3(point.x / WILDS_REGION_SIZE * 1.35, .2, point.z / WILDS_REGION_SIZE * 1.35))
+  )), []);
+  return <group name="atlas-routes">{routes.map((route, index) => <mesh key={index}><tubeGeometry args={[route, 64, index ? .035 : .055, 6, false]} /><meshStandardMaterial color={index ? "#7fcbd0" : "#e8d69a"} emissive={index ? "#246d78" : "#695f39"} emissiveIntensity={0.32} roughness={0.72} /></mesh>)}</group>;
+}
+
+function DropPin({ position, projection }: { position: { x: number; z: number } | null; projection: WildsAtlasProjection }) {
+  if (!position) return null;
+  const x = (position.x / WILDS_REGION_SIZE - projection.centerRegion.x) * 1.35;
+  const z = (position.z / WILDS_REGION_SIZE - projection.centerRegion.z) * 1.35;
+  return <group name="atlas-drop-pin" position={[x, .42, z]}>
+    <mesh position={[0, .22, 0]}><coneGeometry args={[.22, .5, 18]} /><meshStandardMaterial color="#fff3a0" emissive="#f7c948" emissiveIntensity={2.2} /></mesh>
+    <mesh rotation={[Math.PI / 2, 0, 0]}><torusGeometry args={[.38, .03, 8, 32]} /><meshBasicMaterial color="#fff3a0" /></mesh>
+  </group>;
 }
 
 function LandmarkBeacons({
@@ -145,6 +204,7 @@ function LandmarkBeacons({
         position={[x, 0.38, z]}
         scale={active ? 1.18 : 1}
       >
+        <LandmarkMiniature icon={landmark.icon} accent={landmark.accent} active={active} />
         <mesh>
           <octahedronGeometry args={[active ? 0.34 : 0.27, 0]} />
           <meshStandardMaterial
@@ -193,6 +253,25 @@ function LandmarkBeacons({
   });
 }
 
+function LandmarkMiniature({ icon, accent, active }: { icon: "tree" | "trophy" | "sparkles"; accent: string; active: boolean }) {
+  if (icon === "tree") return <group name="map-building-hearttree" position={[0, .2, 0]}>
+    <mesh position={[0, .2, 0]}><cylinderGeometry args={[.07, .11, .52, 10]} /><meshStandardMaterial color="#8a583e" roughness={.8} /></mesh>
+    <mesh position={[0, .56, 0]}><icosahedronGeometry args={[active ? .34 : .28, 1]} /><meshStandardMaterial color={accent} emissive={accent} emissiveIntensity={1.1} roughness={.68} /></mesh>
+  </group>;
+  if (icon === "trophy") return <group name="map-building-arena" position={[0, .2, 0]}>
+    <mesh rotation={[Math.PI / 2, 0, 0]}><torusGeometry args={[.34, .1, 9, 28]} /><meshStandardMaterial color="#c5a852" emissive={accent} emissiveIntensity={.55} roughness={.52} /></mesh>
+    {[0, 1, 2, 3].map((index) => <mesh key={index} position={[Math.cos(index * Math.PI / 2) * .29, .2, Math.sin(index * Math.PI / 2) * .29]}><cylinderGeometry args={[.035, .05, .42, 8]} /><meshStandardMaterial color="#e9d48b" /></mesh>)}
+  </group>;
+  return <group name="map-building-prism" position={[0, .26, 0]}>
+    {[-.18, 0, .18].map((x, index) => <mesh key={x} position={[x, index === 1 ? .28 : .16, 0]} rotation={[0, 0, index === 1 ? 0 : x]}><octahedronGeometry args={[index === 1 ? .2 : .14]} /><meshStandardMaterial color={accent} emissive={accent} emissiveIntensity={1.35} metalness={.22} roughness={.3} /></mesh>)}
+  </group>;
+}
+
+function RegionNames({ projection }: { projection: WildsAtlasProjection }) {
+  if (projection.zoom !== "world") return null;
+  return <group name="atlas-region-names">{WILDS_NAMED_REGIONS.map((region) => <Html center key={region.id} position={[region.position.x / WILDS_REGION_SIZE * 1.35, .28, region.position.z / WILDS_REGION_SIZE * 1.35]} zIndexRange={[1, 0]}><span className="wilds-atlas-region-name">{region.name}</span></Html>)}</group>;
+}
+
 function PresenceLights({ projection }: { projection: WildsAtlasProjection }) {
   const clusters = useRef<THREE.InstancedMesh>(null);
   const matrix = useMemo(() => new THREE.Matrix4(), []);
@@ -215,9 +294,42 @@ function PresenceLights({ projection }: { projection: WildsAtlasProjection }) {
   );
 }
 
-function CurrentPositionBeam() {
+function ExactPlayerLights({ projection }: { projection: WildsAtlasProjection }) {
+  const players = useRef<THREE.InstancedMesh>(null);
+  const halos = useRef<THREE.InstancedMesh>(null);
+  const matrix = useMemo(() => new THREE.Matrix4(), []);
+  useLayoutEffect(() => {
+    projection.exactPlayers.forEach((player, index) => {
+      const x = (player.x / WILDS_REGION_SIZE - projection.centerRegion.x) * 1.35;
+      const z = (player.z / WILDS_REGION_SIZE - projection.centerRegion.z) * 1.35;
+      matrix.compose(new THREE.Vector3(x, .48, z), new THREE.Quaternion(), new THREE.Vector3(.14, .14, .14));
+      players.current?.setMatrixAt(index, matrix);
+      matrix.compose(new THREE.Vector3(x, .32, z), new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.PI / 2, 0, 0)), new THREE.Vector3(.2, .2, .2));
+      halos.current?.setMatrixAt(index, matrix);
+    });
+    if (players.current) players.current.instanceMatrix.needsUpdate = true;
+    if (halos.current) halos.current.instanceMatrix.needsUpdate = true;
+  }, [matrix, projection]);
+  return <group name="atlas-live-players">
+    <instancedMesh args={[undefined, undefined, projection.exactPlayers.length]} ref={players}>
+      <capsuleGeometry args={[.42, .7, 4, 8]} />
+      <meshStandardMaterial color="#f5ffff" emissive="#72dfff" emissiveIntensity={1.8} roughness={.3} />
+    </instancedMesh>
+    <instancedMesh args={[undefined, undefined, projection.exactPlayers.length]} ref={halos}>
+      <torusGeometry args={[1, .12, 6, 20]} />
+      <meshBasicMaterial color="#72dfff" transparent opacity={.78} />
+    </instancedMesh>
+  </group>;
+}
+
+function CurrentPositionBeam({ position, projection }: { position: { x: number; z: number }; projection: WildsAtlasProjection }) {
+  const x = (position.x / WILDS_REGION_SIZE - projection.centerRegion.x) * 1.35;
+  const z = (position.z / WILDS_REGION_SIZE - projection.centerRegion.z) * 1.35;
   return (
-    <group name="atlas-current-position">
+    <group name="atlas-current-position" position={[x, 0, z]}>
+      <Html center position={[0, 1.9, 0]} zIndexRange={[3, 2]}>
+        <span className="wilds-atlas-you-are-here">You are here</span>
+      </Html>
       <mesh position={[0, 0.48, 0]}>
         <coneGeometry args={[0.16, 0.42, 12]} />
         <meshStandardMaterial color="#ffffff" emissive="#71e8c3" emissiveIntensity={2} />

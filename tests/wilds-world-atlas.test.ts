@@ -53,6 +53,7 @@ describe("Wilds world atlas", () => {
     const landmark = projectWildsAtlas({ ...input, zoom: "landmark" });
 
     assert.deepEqual(world, projectWildsAtlas({ ...input, zoom: "world" }));
+    assert.deepEqual(world.centerRegion, { x: 0, z: 0 });
     assert.equal(world.nodes.length, 81);
     assert.equal(region.nodes.length, 25);
     assert.equal(landmark.nodes.length, 9);
@@ -60,7 +61,7 @@ describe("Wilds world atlas", () => {
     assert.equal(world.landmarks.find((item: { id: string }) => item.id === "arena-of-echoes")?.discovered, false);
   });
 
-  it("shows exact nearby explorers but clusters distant strangers without handles", () => {
+  it("shows every public explorer at their exact live world coordinate", () => {
     const players = [
       presence(1, { x: 3, z: 4 }),
       ...Array.from({ length: 30 }, (_, index) => presence(index + 2, { x: 31 + index / 10, z: 29 }))
@@ -76,10 +77,9 @@ describe("Wilds world atlas", () => {
       now: Date.parse("2026-07-15T12:00:00.000Z")
     });
 
-    assert.deepEqual(atlas.exactPlayers.map((player: { handle: string }) => player.handle), ["Scout 1"]);
-    assert.equal(atlas.playerClusters.reduce((sum: number, cluster: { count: number }) => sum + cluster.count, 0), 23);
-    assert.equal(atlas.playerClusters.every((cluster: object) => !("handle" in cluster)), true);
-    assert.deepEqual(atlas.playerClusters[0]?.position, { x: 24, z: 24 });
+    assert.equal(atlas.exactPlayers.length, 24);
+    assert.deepEqual(atlas.exactPlayers.slice(0, 2).map((player: { handle: string }) => player.handle), ["Scout 1", "Scout 2"]);
+    assert.equal(atlas.playerClusters.length, 0);
   });
 
   it("expires stale presence and excludes the requesting player", () => {

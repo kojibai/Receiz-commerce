@@ -59,7 +59,8 @@ const radiusByZoom: Record<WildsAtlasZoom, number> = {
 };
 
 export function projectWildsAtlas(input: WildsAtlasInput): WildsAtlasProjection {
-  const centerRegion = regionForPosition(input.center);
+  // The world view is a stable, learnable atlas. Closer zooms follow the explorer.
+  const centerRegion = input.zoom === "world" ? { x: 0, z: 0 } : regionForPosition(input.center);
   const radius = radiusByZoom[input.zoom];
   const nodes: WildsAtlasNode[] = [];
   for (let regionZ = centerRegion.z - radius; regionZ <= centerRegion.z + radius; regionZ += 1) {
@@ -78,7 +79,7 @@ export function projectWildsAtlas(input: WildsAtlasInput): WildsAtlasProjection 
     .sort((left, right) => presenceDistance(left, input.center) - presenceDistance(right, input.center))
     .slice(0, 24);
   const exactPlayers = visiblePlayers
-    .filter((player) => presenceDistance(player, input.center) <= WILDS_INTERACTION_DISTANCE)
+    .filter((player) => player.status !== "private")
     .map(({ playerId, handle, style, x, z, status }) => ({ playerId, handle, style, x, z, status }));
   const exactIds = new Set(exactPlayers.map((player) => player.playerId));
   const clusters = new Map<string, WildsAtlasPlayerCluster>();

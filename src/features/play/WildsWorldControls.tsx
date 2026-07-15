@@ -32,7 +32,7 @@ export function WildsWorldControls({
 }) {
   return (
     <div className="wilds-screen-controls" aria-label="World controls">
-      <div className="wilds-screen-actions" aria-label="Explore actions">
+      <div className="wilds-control-rail wilds-control-rail-left" aria-label="Explore actions">
         <button
           aria-label="Discovery on. Tap terrain to search for a hidden creature"
           aria-pressed="true"
@@ -45,32 +45,30 @@ export function WildsWorldControls({
         <button className="wilds-action" onClick={onRest} aria-label="Make camp and recover energy" title="Camp: recover energy" type="button">
           <Icons.home size={20} />
         </button>
+        <button
+          aria-label={movementMode === "walk" ? "Switch to running" : "Switch to walking"}
+          aria-pressed={movementMode === "run"}
+          className={cx("wilds-action wilds-movement-mode", movementMode === "run" && "active")}
+          onClick={() => onMovementModeChange(movementMode === "walk" ? "run" : "walk")}
+          title={movementMode === "walk" ? "Walking · switch to run" : "Running · switch to walk"}
+          type="button"
+        >
+          {movementMode === "walk" ? <Icons.walk aria-hidden="true" size={22} /> : <Icons.run aria-hidden="true" size={22} />}
+        </button>
       </div>
-
-      <button
-        aria-label={movementMode === "walk" ? "Switch to running" : "Switch to walking"}
-        aria-pressed={movementMode === "run"}
-        className={cx("wilds-control-flank wilds-movement-mode", movementMode === "run" && "active")}
-        onClick={() => onMovementModeChange(movementMode === "walk" ? "run" : "walk")}
-        title={movementMode === "walk" ? "Walking · switch to run" : "Running · switch to walk"}
-        type="button"
-      >
-        {movementMode === "walk" ? <Icons.walk aria-hidden="true" size={22} /> : <Icons.run aria-hidden="true" size={22} />}
-      </button>
 
       <WildsTrackpad movementMode={movementMode} onInput={onInput} />
 
-      <button
-        aria-label={pulse.label}
-        className={`wilds-control-flank wilds-pulse-action pulse-${pulse.kind}`}
-        onClick={onPulse}
-        title={pulse.label}
-        type="button"
-      >
-        <Icons.pulse aria-hidden="true" size={23} />
-      </button>
-
-      <div className="wilds-screen-actions" aria-label="Progression actions">
+      <div className="wilds-control-rail wilds-control-rail-right" aria-label="Progression actions">
+        <button
+          aria-label={pulse.label}
+          className={`wilds-action wilds-pulse-action pulse-${pulse.kind}`}
+          onClick={onPulse}
+          title={pulse.label}
+          type="button"
+        >
+          <Icons.pulse aria-hidden="true" size={23} />
+        </button>
         <button
           className={cx("wilds-action", activeAction === "train" && "active")}
           onClick={onTrain}

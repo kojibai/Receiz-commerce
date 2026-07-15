@@ -272,7 +272,6 @@ export function PlayCampaign({
   const riftTo = async (destination: { x: number; z: number }) => {
     setRiftError("");
     try {
-      const appliedAt = new Date().toISOString();
       const response = await fetch("/api/wilds/rift", {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -281,7 +280,6 @@ export function PlayCampaign({
           guestId: multiplayer.guestId,
           source: state.player,
           destination,
-          requestedAt: appliedAt,
           idempotencyKey: `rift:${crypto.randomUUID()}`
         })
       });
@@ -290,8 +288,7 @@ export function PlayCampaign({
       dispatch({
         type: "apply-rift-grant",
         grant: result.grant,
-        playerId: result.grant.playerId,
-        appliedAt
+        playerId: result.grant.playerId
       });
       multiplayer.selectPlayer(null);
       setActiveLandmarkId(null);
@@ -441,15 +438,15 @@ export function PlayCampaign({
 
             {avatarStyle ? <WildsMultiplayer multiplayer={multiplayer} position={state.player} /> : null}
             <div className="wilds-utility-cluster">
-              <button aria-label="Open world map" className="wilds-map-trigger" onClick={() => setMapOpen(true)} title="Open world map" type="button">
-                <Icons.globe aria-hidden="true" size={20} />
-              </button>
               <WildsAudioSettings
                 onChange={presentation.setAudioSettings}
                 onUnlock={() => { void presentation.unlockAudio(); }}
                 ready={presentation.audioReady}
                 settings={presentation.audioSettings}
               />
+              <button aria-label="Open world map" className="wilds-map-trigger" onClick={() => setMapOpen(true)} title="Open world map" type="button">
+                <Icons.globe aria-hidden="true" size={20} />
+              </button>
             </div>
 
             {state.battle && ["player_turn", "capture_ready", "fled", "defeated"].includes(state.encounter.phase) ? (
