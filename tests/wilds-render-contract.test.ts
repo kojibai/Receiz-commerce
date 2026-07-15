@@ -178,6 +178,25 @@ describe("Receiz Wilds rendering contract", () => {
     assert.match(experience, /previousFocus/);
   });
 
+  it("connects physical Wayfinder entry, civic dispatch, atlas memory, and local audio", async () => {
+    const campaign = await readFile("src/features/play/PlayCampaign.tsx", "utf8");
+    const experience = await readFile("src/features/play/WildsSettlementExperience.tsx", "utf8");
+    const audio = await readFile("src/features/play/wilds-audio.ts", "utf8");
+
+    assert.match(campaign, /<WildsSettlementExperience/);
+    assert.match(campaign, /projectWildsCivicHistory\(state\.civicEvents\)/);
+    assert.match(campaign, /type: "record-civic-event"/);
+    assert.match(campaign, /pulse\.landmarkId === "wayfinder-hollow"/);
+    assert.match(campaign, /settlement\.discovered/);
+    assert.match(campaign, /livingWorld\.mode/);
+    assert.match(campaign, /wayfinder-hollow/);
+    assert.match(experience, /onAudioCue/);
+    assert.match(audio, /settlement-arrival/);
+    assert.match(audio, /settlement-service/);
+    assert.match(audio, /route-step/);
+    assert.match(audio, /route-complete/);
+  });
+
   it("builds the explorer from articulated anatomy and secondary motion", async () => {
     const explorer = await readFile("src/features/play/WildsExplorer.tsx", "utf8");
     const world = await readFile("src/features/play/WildsWorldCanvas.tsx", "utf8");

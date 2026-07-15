@@ -10,6 +10,7 @@ import { applyWildsRouteIntent, createWildsRouteMemory, type WildsRouteDirection
 import { WAYFINDER_HOLLOW, type WildsSettlementDistrictId } from "./wilds-settlements";
 import type { WildsSettlementWorldMode } from "./WildsSettlementEnvironment";
 import type { WildsWorldProjection } from "./wilds-world-state";
+import { settlementAudioCue, type WildsAudioCue } from "./wilds-audio";
 
 const districtIcons = {
   "trail-gate": Icons.walk,
@@ -26,6 +27,7 @@ export function WildsSettlementExperience({
   livingWorld,
   onCivicEvent,
   onExit,
+  onAudioCue,
   open,
   remotePlayers,
   worldMode
@@ -36,6 +38,7 @@ export function WildsSettlementExperience({
   livingWorld?: WildsWorldProjection | null;
   onCivicEvent: (event: WildsCivicEvent) => void;
   onExit: () => void;
+  onAudioCue: (cue: WildsAudioCue) => void;
   open: boolean;
   remotePlayers: WildsPresence[];
   worldMode: WildsSettlementWorldMode;
@@ -85,13 +88,15 @@ export function WildsSettlementExperience({
       cardProofDigest,
       reputation
     }));
-  }, [actorId, civic.completedSourceIds, onCivicEvent]);
+    if (kind !== "puzzle.completed") onAudioCue(settlementAudioCue("service"));
+  }, [actorId, civic.completedSourceIds, onAudioCue, onCivicEvent]);
 
   const routeInput = useCallback((direction: WildsRouteDirection | "begin") => {
     const next = applyWildsRouteIntent(route, direction);
     setRoute(next);
+    onAudioCue(settlementAudioCue(next.phase === "complete" ? "route-complete" : "route-step"));
     if (route.phase !== "complete" && next.phase === "complete") emit("puzzle.completed", `route-memory:${next.id}`, 5);
-  }, [emit, route]);
+  }, [emit, onAudioCue, route]);
 
   const panel = districtId === "trail-gate" ? <TrailGate civic={civic} emit={emit} />
     : districtId === "dawn-commons" ? <DawnCommons remotePlayers={remotePlayers} worldMode={worldMode} />

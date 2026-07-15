@@ -25,6 +25,11 @@ const KINDS = new Set<WildsCivicEventKind>(["settlement.discovered", "resident.m
 const SAFE_ID = /^[a-zA-Z0-9][a-zA-Z0-9:._-]{1,95}$/;
 const PROOF_DIGEST = /^sha256:[a-f0-9]{64}$/;
 
+export function normalizeWildsCivicActorId(value: string) {
+  const normalized = value.trim().replace(/[^a-zA-Z0-9:._-]+/g, "-").replace(/^[^a-zA-Z0-9]+/, "").slice(0, 96);
+  return normalized.length >= 2 ? normalized : "wilds.player";
+}
+
 function eventBasis(input: Omit<WildsCivicEvent, "eventId">) {
   return `civic:${sha256PortableBasis(canonicalPortableCardJson(input)).slice(7, 31)}`;
 }

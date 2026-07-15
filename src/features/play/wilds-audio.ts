@@ -21,6 +21,10 @@ export type WildsAudioCue =
   | "player-arrival"
   | "weather-pollen"
   | "landmark-near"
+  | "settlement-arrival"
+  | "settlement-service"
+  | "route-step"
+  | "route-complete"
   | "foliage-surge"
   | "confirm"
   | "error";
@@ -90,10 +94,21 @@ const CUE_VOICES: Readonly<Record<WildsAudioCue, CueVoice>> = {
   "player-arrival": { frequency: 490, endFrequency: 820, duration: 0.36, gain: 0.14, type: "sine" },
   "weather-pollen": { frequency: 310, endFrequency: 470, duration: 0.7, gain: 0.08, type: "sine" },
   "landmark-near": { frequency: 330, endFrequency: 880, duration: 0.72, gain: 0.14, type: "triangle" },
+  "settlement-arrival": { frequency: 294, endFrequency: 784, duration: 0.82, gain: 0.16, type: "triangle" },
+  "settlement-service": { frequency: 587, endFrequency: 988, duration: 0.42, gain: 0.13, type: "sine" },
+  "route-step": { frequency: 440, endFrequency: 554, duration: 0.16, gain: 0.1, type: "triangle" },
+  "route-complete": { frequency: 523, endFrequency: 1_176, duration: 0.72, gain: 0.17, type: "sine" },
   "foliage-surge": { frequency: 170, endFrequency: 390, duration: 0.34, gain: 0.11, type: "sawtooth" },
   confirm: { frequency: 540, endFrequency: 760, duration: 0.18, gain: 0.14, type: "sine" },
   error: { frequency: 210, endFrequency: 130, duration: 0.24, gain: 0.16, type: "square" }
 };
+
+export function settlementAudioCue(action: "arrival" | "service" | "route-step" | "route-complete"): WildsAudioCue {
+  return action === "arrival" ? "settlement-arrival"
+    : action === "service" ? "settlement-service"
+      : action === "route-step" ? "route-step"
+        : "route-complete";
+}
 
 function clampUnit(value: unknown, fallback: number) {
   return typeof value === "number" && Number.isFinite(value)

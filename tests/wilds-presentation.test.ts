@@ -12,7 +12,8 @@ import {
   DEFAULT_WILDS_AUDIO_SETTINGS,
   audioCuesForTransition,
   createWildsAudioRuntime,
-  normalizeWildsAudioSettings
+  normalizeWildsAudioSettings,
+  settlementAudioCue
 } from "../src/features/play/wilds-audio";
 import { readFileSync } from "node:fs";
 
@@ -115,6 +116,13 @@ describe("Wilds synthesized audio", () => {
       ),
       ["proximity-hot", "foliage-surge"]
     );
+  });
+
+  it("maps settlement arrival, services, and route play onto local synthesized cues", () => {
+    assert.equal(settlementAudioCue("arrival"), "settlement-arrival");
+    assert.equal(settlementAudioCue("service"), "settlement-service");
+    assert.equal(settlementAudioCue("route-step"), "route-step");
+    assert.equal(settlementAudioCue("route-complete"), "route-complete");
   });
 
   it("destroys every synthesized audio resource", async () => {

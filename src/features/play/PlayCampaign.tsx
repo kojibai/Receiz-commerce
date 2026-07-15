@@ -39,8 +39,10 @@ import { evaluateLandmarkAccess, type WildsLandmarkProgress } from "@/features/p
 import type { RiftTravelGrant } from "@/features/play/wilds-rift-travel";
 import { createWildsPlayerVault, reconcileWildsPlayerVault } from "@/features/play/wilds-player-vault";
 import { initialWildsWorldProjection } from "@/features/play/wilds-world-state";
-import { normalizeWildsAudioSettings } from "@/features/play/wilds-audio";
+import { normalizeWildsAudioSettings, settlementAudioCue } from "@/features/play/wilds-audio";
 import { WildsLivingWorldHud } from "@/features/play/WildsLivingWorldHud";
+import { WildsSettlementExperience } from "@/features/play/WildsSettlementExperience";
+import { createWildsCivicEvent, normalizeWildsCivicActorId, projectWildsCivicHistory } from "@/features/play/wilds-civic-history";
 
 const WILDS_SAVE_KEY = "receiz:wilds:save:v2";
 const WILDS_AVATAR_KEY = "receiz:wilds:explorer:v1";
@@ -263,6 +265,12 @@ export function PlayCampaign({
     ? "Tap terrain to scan"
     : `${activeProximity}${state.encounter.trend ? ` · ${state.encounter.trend}` : ""}`;
   const currentLandmark = landmarkAtPosition(state.player);
+  const civic = projectWildsCivicHistory(state.civicEvents);
+  const civicActorId = normalizeWildsCivicActorId(ownerReceizId);
+  const settlementWorldMode = livingWorld.mode === "receiz_live" ? "receiz_live" : livingWorld.mode === "local_practice" ? "local_practice" : "connecting";
+  const discoveredLandmarkIds: WildsLandmarkId[] = civic.completedSourceIds.includes("settlement:wayfinder-hollow")
+    ? ["hearttree-sanctum", "wayfinder-hollow"]
+    : ["hearttree-sanctum"];
   const landmarkProgress: WildsLandmarkProgress = {
     verifiedCardCount: state.inventory.length,
     activeCardLevel: activeProgress.level,
@@ -289,6 +297,23 @@ export function PlayCampaign({
     : pulse;
   const activatePulse = () => {
     if (pulse.kind === "enter") {
+      if (pulse.landmarkId === "wayfinder-hollow") {
+        if (!civic.completedSourceIds.includes("settlement:wayfinder-hollow")) {
+          dispatch({
+            type: "record-civic-event",
+            event: createWildsCivicEvent({
+              settlementId: "wayfinder-hollow",
+              actorId: civicActorId,
+              kind: "settlement.discovered",
+              sourceId: "settlement:wayfinder-hollow",
+              occurredAt: new Date().toISOString(),
+              cardProofDigest: null,
+              reputation: 3
+            })
+          });
+        }
+        presentation.playCue(settlementAudioCue("arrival"));
+      }
       setActiveLandmarkId(pulse.landmarkId);
       return;
     }
@@ -489,7 +514,7 @@ export function PlayCampaign({
               qualityProfile={qualityProfile}
               searchEnabled={discoveryActive && Boolean(avatarStyle)}
               livingWorld={livingWorld.snapshot}
-              worldMode={livingWorld.mode === "receiz_live" ? "receiz_live" : livingWorld.mode === "local_practice" ? "local_practice" : "connecting"}
+              worldMode={settlementWorldMode}
               onCameraHeadingChange={setCameraHeading}
               onSelectPlayer={multiplayer.selectPlayer}
               onSearchPoint={(point) => {
@@ -605,7 +630,7 @@ export function PlayCampaign({
       </div>
       <WildsWorldMap
         currentPosition={state.player}
-        discoveredLandmarkIds={["hearttree-sanctum"]}
+        discoveredLandmarkIds={discoveredLandmarkIds}
         guestId={multiplayer.guestId}
         missionProgress={state.missionProgress}
         onClose={() => setMapOpen(false)}
@@ -619,15 +644,27 @@ export function PlayCampaign({
         livingWorld={livingWorld.snapshot}
       />
       <WildsLandmarkExperience
-        access={activeLandmarkId ? evaluateLandmarkAccess(WILDS_FLAGSHIP_LANDMARKS.find((item) => item.id === activeLandmarkId)!, landmarkProgress) : null}
+        access={activeLandmarkId && activeLandmarkId !== "wayfinder-hollow" ? evaluateLandmarkAccess(WILDS_FLAGSHIP_LANDMARKS.find((item) => item.id === activeLandmarkId)!, landmarkProgress) : null}
         card={activeAsset}
-        landmarkId={activeLandmarkId}
+        landmarkId={activeLandmarkId === "wayfinder-hollow" ? null : activeLandmarkId}
         onExit={() => setActiveLandmarkId(null)}
         onUnlock={(unlockId) => setLandmarkUnlocks((current) => {
           const next = Array.from(new Set([...current, unlockId])).slice(0, 64);
           try { window.localStorage.setItem(WILDS_ACHIEVEMENTS_KEY, JSON.stringify(next)); } catch { /* progression remains active for this session */ }
           return next;
         })}
+      />
+      <WildsSettlementExperience
+        actorId={civicActorId}
+        card={activeAsset}
+        civic={civic}
+        livingWorld={livingWorld.snapshot}
+        onAudioCue={presentation.playCue}
+        onCivicEvent={(event) => dispatch({ type: "record-civic-event", event })}
+        onExit={() => setActiveLandmarkId(null)}
+        open={activeLandmarkId === "wayfinder-hollow"}
+        remotePlayers={multiplayer.remotePlayers}
+        worldMode={settlementWorldMode}
       />
       <WildsCaptureReward asset={rewardAsset} onClose={() => {
         setRewardAsset(null);

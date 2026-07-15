@@ -8,6 +8,7 @@ import {
   normalizeWildsAudioSettings,
   type WildsAudioContextLike,
   type WildsAudioSettings,
+  type WildsAudioCue,
   type WildsEncounterAudioState
 } from "@/features/play/wilds-audio";
 import {
@@ -130,11 +131,14 @@ export function useWildsPresentation({
     setAudioSettingsState(normalizeWildsAudioSettings(next));
   }, []);
 
+  const playCue = useCallback((cue: WildsAudioCue) => runtimeRef.current?.play(cue), []);
+
   return {
     audioSettings,
     setAudioSettings,
     audioReady,
     unlockAudio,
+    playCue,
     visualEvents
   };
 }
