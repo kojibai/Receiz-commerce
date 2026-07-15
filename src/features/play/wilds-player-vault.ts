@@ -52,6 +52,20 @@ function basis(input: PlayerVaultInput) {
   return { schema: "receiz.wilds_player_vault.v3" as const, ...input };
 }
 
+function recordKey(value: unknown) {
+  if (typeof value === "string") return value;
+  if (!value || typeof value !== "object") return JSON.stringify(value);
+  const item = value as Record<string, unknown>;
+  return String(item.eventId ?? item.id ?? item.sourceEventId ?? JSON.stringify(value));
+}
+
+function mergeRecords<T>(local: readonly T[] | undefined, restored: readonly T[] | undefined) {
+  const merged = new Map<string, T>();
+  for (const value of local ?? []) merged.set(recordKey(value), value);
+  for (const value of restored ?? []) merged.set(recordKey(value), value);
+  return [...merged.values()];
+}
+
 export function createWildsPlayerVault(input: PlayerVaultInput): WildsPlayerVaultPayload {
   const normalized = normalizedInput(input);
   return { ...basis(normalized), payloadDigest: sha256PortableBasis(canonicalPortableCardJson(basis(normalized))) };
@@ -93,10 +107,23 @@ export function reconcileWildsPlayerVault(input: {
   if (input.restored.playerId !== input.actorId) throw new Error("wilds_player_vault_owner_invalid");
   const verified = verifyWildsPlayerVault(input.restored);
   if (!verified.ok) throw new Error(verified.errors[0] ?? "wilds_player_vault_invalid");
-  const state = restorePlayState(serializePlayState({
-    ...input.restored.playState,
-    inventory: [...input.local.inventory, ...input.restored.playState.inventory]
-  }));
+  const restoredPlayState = input.restored.playState;
+  const mergedState: PlayState = {
+    ...input.local,
+    ...restoredPlayState,
+    inventory: mergeRecords(input.local.inventory, restoredPlayState.inventory),
+    achievements: mergeRecords(input.local.achievements, restoredPlayState.achievements),
+    completedMissionIds: mergeRecords(input.local.completedMissionIds, restoredPlayState.completedMissionIds),
+    discoveredCardIds: mergeRecords(input.local.discoveredCardIds, restoredPlayState.discoveredCardIds),
+    capturedHotspotIds: mergeRecords(input.local.capturedHotspotIds, restoredPlayState.capturedHotspotIds),
+    collectedEnergyCrystalIds: mergeRecords(input.local.collectedEnergyCrystalIds, restoredPlayState.collectedEnergyCrystalIds),
+    pendingSyncAssetIds: mergeRecords(input.local.pendingSyncAssetIds, restoredPlayState.pendingSyncAssetIds),
+    civicEvents: mergeRecords(input.local.civicEvents, restoredPlayState.civicEvents),
+    ecologyEvents: mergeRecords(input.local.ecologyEvents, restoredPlayState.ecologyEvents),
+    raidEvents: mergeRecords(input.local.raidEvents, restoredPlayState.raidEvents),
+    rewardCards: mergeRecords(input.local.rewardCards, restoredPlayState.rewardCards)
+  };
+  const state = restorePlayState(serializePlayState(mergedState));
   const warnings: string[] = [];
   if (input.restored.canonicalCursor.revision < input.canonical.revision) warnings.push("wilds_player_vault_canonical_cursor_stale");
   if (input.restored.canonicalCursor.revision > input.canonical.revision) warnings.push("wilds_player_vault_canonical_sync_pending");

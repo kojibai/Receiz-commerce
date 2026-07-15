@@ -85,4 +85,13 @@ describe("Wilds V3 player vault", () => {
     assert.deepEqual(reconciled.state.player, { x: 144, z: 96 });
     assert.equal(reconciled.warnings.includes("wilds_player_vault_canonical_cursor_stale"), true);
   });
+
+  it("merges newer local records instead of dropping them during restore", () => {
+    const restored = playerVault();
+    const local = { ...initialPlayState, achievements: ["new-local-achievement"], discoveredCardIds: ["mintcub", "voltray"] };
+    const reconciled = reconcileWildsPlayerVault({ local, restored, canonical: initialWildsWorldProjection(), actorId: restored.playerId });
+    assert.equal(reconciled.state.achievements.includes("new-local-achievement"), true);
+    assert.equal(reconciled.state.discoveredCardIds.includes("voltray"), true);
+    assert.equal(reconciled.state.player.x, restored.playState.player.x);
+  });
 });

@@ -336,7 +336,7 @@ describe("Receiz Wilds rendering contract", () => {
     assert.match(source, /Portable card vault/);
     assert.match(source, /type: "select-asset"/);
     assert.match(source, /<WildsInventory/);
-    assert.match(controls, /aria-label="Make camp and recover energy"/);
+    assert.match(controls, /aria-label="Discover the nearby companion"/);
     assert.match(controls, /aria-label="Run world mission"/);
     assert.match(css, /\.mobile-play-wrap \.wilds-stage\s*\{[^}]*min-height:\s*0/);
     assert.doesNotMatch(css, /\.mobile-play-wrap \.wilds-stage\s*\{[^}]*min-height: 286px/);
