@@ -16,12 +16,14 @@ import { deriveAscensionGenome } from "./heartbound-genome";
 import { isLivingCardAsset, type GrowthPath, type LivingGrowthSnapshot } from "./living-card-types";
 import { createLivingChildTransaction, lineageEligibility } from "./living-lineage";
 import { worldMasteryAward, type WorldMasteryVerb } from "./world-progression";
+import { validateRiftGrant, type RiftTravelGrant } from "./wilds-rift-travel";
 
 export type GameAction = "explore" | "train" | "mission";
 export type MoveDirection = "north" | "south" | "west" | "east";
 export type WildsInput =
   | { type: "move"; direction: MoveDirection }
   | { type: "move-vector"; x: number; z: number }
+  | { type: "apply-rift-grant"; grant: RiftTravelGrant; playerId: string; appliedAt: string }
   | { type: "discover" }
   | { type: "capture"; encounterId: string; capturedAt: string; ownerReceizId: string }
   | { type: "search-point"; x: number; z: number; searchedAt: string; ownerReceizId: string }
@@ -768,6 +770,17 @@ export function applyWildsInput(state: PlayState, input: WildsInput): PlayState 
       selectedAssetId: asset.id,
       selectedCardId: asset.manifest.familyId,
       lastEvent: `${asset.manifest.name} is now leading your active deck.`
+    };
+  }
+
+  if (input.type === "apply-rift-grant") {
+    const appliedAt = Date.parse(input.appliedAt);
+    if (!Number.isFinite(appliedAt) || !validateRiftGrant(input.grant, { playerId: input.playerId, now: appliedAt }).ok) return state;
+    return {
+      ...state,
+      activeAction: "explore",
+      player: { ...input.grant.destination },
+      lastEvent: "Rift complete. A new region opens around you."
     };
   }
 
