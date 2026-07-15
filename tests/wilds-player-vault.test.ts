@@ -9,6 +9,7 @@ import {
 import { initialWildsWorldProjection } from "../src/features/play/wilds-world-state.js";
 import { embedPortableVaultInPng, readPortableVaultFromPng, verifyPortableVaultPng } from "../src/features/play/card-export.js";
 import { createWildsCivicEvent } from "../src/features/play/wilds-civic-history.js";
+import { canonicalPortableCardJson, sha256PortableBasis } from "../src/features/play/portable-card.js";
 
 const sourcePng = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=", "base64");
 
@@ -46,6 +47,18 @@ describe("Wilds V3 player vault", () => {
     assert.equal(vault.personalEvents.length, 1);
     assert.deepEqual(verifyWildsPlayerVault(vault), { ok: true, errors: [] });
     assert.equal(verifyWildsPlayerVault({ ...vault, playState: { ...vault.playState, worldMastery: 999 } }).ok, false);
+  });
+
+  it("accepts a sealed payload from before newer PlayState fields were introduced", () => {
+    const current = playerVault();
+    const legacyPayload = { ...current, playState: { ...current.playState, legacyUnknownField: 42 } } as typeof current;
+    const { payloadDigest, ...withoutDigest } = legacyPayload;
+    const legacy = {
+      ...legacyPayload,
+      payloadDigest: sha256PortableBasis(canonicalPortableCardJson(withoutDigest))
+    };
+    assert.notEqual(payloadDigest, legacy.payloadDigest);
+    assert.deepEqual(verifyWildsPlayerVault(legacy), { ok: true, errors: [] });
   });
 
   it("embeds and verifies the complete player payload in a backward-compatible vault PNG", () => {

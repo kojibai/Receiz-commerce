@@ -60,7 +60,15 @@ export function createWildsPlayerVault(input: PlayerVaultInput): WildsPlayerVaul
 export function verifyWildsPlayerVault(value: WildsPlayerVaultPayload) {
   const errors: string[] = [];
   try {
-    const rebuilt = createWildsPlayerVault({
+    // Verify the exact serialized payload first. Normalizing PlayState can add
+    // fields introduced by later releases, which must not invalidate a vault
+    // that was correctly sealed before those fields existed.
+    const { payloadDigest, schema, ...payload } = value;
+    const expectedDigest = sha256PortableBasis(canonicalPortableCardJson({ schema, ...payload }));
+    if (schema !== "receiz.wilds_player_vault.v3" || payloadDigest !== expectedDigest) {
+      errors.push("wilds_player_vault_digest_invalid");
+    }
+    const normalized = normalizedInput({
       playerId: value.playerId,
       exportedAt: value.exportedAt,
       playState: value.playState,
@@ -69,7 +77,7 @@ export function verifyWildsPlayerVault(value: WildsPlayerVaultPayload) {
       canonicalCursor: value.canonicalCursor,
       receipts: value.receipts
     });
-    if (value.schema !== rebuilt.schema || value.payloadDigest !== rebuilt.payloadDigest) errors.push("wilds_player_vault_digest_invalid");
+    void normalized;
   } catch (error) {
     errors.push(error instanceof Error ? error.message : "wilds_player_vault_invalid");
   }
