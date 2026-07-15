@@ -3,6 +3,25 @@ import { readFile } from "node:fs/promises";
 import { describe, it } from "node:test";
 
 describe("Receiz Wilds rendering contract", () => {
+  it("opens a focus-safe 3D atlas with an accessible fallback", async () => {
+    const map = await readFile("src/features/play/WildsWorldMap.tsx", "utf8");
+    const canvas = await readFile("src/features/play/WildsAtlasCanvas.tsx", "utf8");
+
+    assert.match(map, /role="dialog"/);
+    assert.match(map, /aria-modal="true"/);
+    assert.match(map, /aria-label="Close world map"/);
+    assert.match(map, /aria-label="Hold to Rift Drop"/);
+    assert.match(map, /wilds-atlas-fallback/);
+    assert.match(map, /\.focus\(\)/);
+    assert.match(map, /event\.key === "Escape"/);
+    assert.match(map, /previousFocus/);
+    assert.match(canvas, /<Canvas/);
+    assert.match(canvas, /OrbitControls/);
+    assert.match(canvas, /maxDistance/);
+    assert.match(canvas, /qualityProfile\.dpr/);
+    assert.match(canvas, /instancedMesh/);
+  });
+
   it("layers an authored biome around meaningful landmarks", async () => {
     const environment = await readFile("src/features/play/WildsEnvironment.tsx", "utf8");
     const world = await readFile("src/features/play/WildsWorldCanvas.tsx", "utf8");
