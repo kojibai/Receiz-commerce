@@ -34,6 +34,15 @@ describe("Receiz Wilds game state", () => {
     assert.deepEqual(replay.ascensionCatalysts, once.ascensionCatalysts);
   });
 
+  it("collects a gold crystal by walking through it and records the pickup", () => {
+    const crystal = nearbyHiddenHotspots(initialPlayState.player).find((hotspot) => hotspot.cover === "energy");
+    assert.ok(crystal);
+    const walking = applyWildsInput({ ...initialPlayState, player: { x: crystal.position.x - 0.8, z: crystal.position.z } }, { type: "move-vector", x: 1, z: 0, mode: "walk" });
+    assert.equal(walking.collectedEnergyCrystalIds.includes(crystal.id), true);
+    assert.equal(walking.energy, Math.min(100, initialPlayState.energy - 1 + 18));
+    assert.match(walking.lastEvent, /Gold crystal collected/);
+  });
+
   it("appends an earned Ascension under the stable card id and consumes its catalyst once", () => {
     const legacy = sealCollectedCard({ formId: "mintcub-1", ownerReceizId: "wilds.player.receiz.id", encounterId: "ascension-game", capturedAt: "2026-07-10T15:00:00.000Z" });
     const birth = admitLegacyCard(legacy, "2026-07-10T15:00:00.000Z");

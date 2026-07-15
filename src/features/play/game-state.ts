@@ -881,11 +881,25 @@ export function applyWildsInput(state: PlayState, input: WildsInput): PlayState 
       lastEvent: nearbyText,
       player: nextPlayer
     };
+    const crystal = nearbyHiddenHotspots(nextPlayer)
+      .filter((hotspot) => hotspot.cover === "energy" && !state.collectedEnergyCrystalIds.includes(hotspot.id))
+      .map((hotspot) => ({ hotspot, distance: Math.hypot(hotspot.position.x - nextPlayer.x, hotspot.position.z - nextPlayer.z) }))
+      .sort((left, right) => left.distance - right.distance)[0];
+    const collected = crystal && crystal.distance <= 0.9
+      ? {
+          ...moved,
+          energy: Math.min(100, moved.energy + 18),
+          collectedEnergyCrystalIds: [...state.collectedEnergyCrystalIds, crystal.hotspot.id],
+          combo: state.combo + 1,
+          lastEvent: "Gold crystal collected. +18 energy.",
+          missionProgress: Math.min(100, state.missionProgress + 2)
+        }
+      : moved;
     const crossedMilestone = Math.floor(state.player.x / 8) !== Math.floor(nextPlayer.x / 8) || Math.floor(state.player.z / 8) !== Math.floor(nextPlayer.z / 8);
     const leader = selectedAsset(state);
-    if (!crossedMilestone || !leader) return moved;
+    if (!crossedMilestone || !leader) return collected;
     const milestoneId = `${Math.floor(nextPlayer.x / 8)}:${Math.floor(nextPlayer.z / 8)}`;
-    const progressed = applyRecordedGrowth(moved, leader, {
+    const progressed = applyRecordedGrowth(collected, leader, {
       eventId: `active_travel:${leader.id}:${milestoneId}`,
       kind: "active_travel",
       path: "bond",
