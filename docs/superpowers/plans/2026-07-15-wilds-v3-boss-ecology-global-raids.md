@@ -215,11 +215,11 @@ it("admits one winning event, closes the round, and rejects every later action",
 Run the new service test.  
 Expected: new commands/event kinds are absent.
 
-- [ ] **Step 3: Implement canonical reducers and protected operations**
+- [x] **Step 3: Implement canonical reducers and protected operations**
 
 Add exact payload validation, position/ownership/proof/phase/capacity/lease/cooldown checks, server-derived intent impact, persistent health across rounds, one active round per boss, scheduler density, movement clearance, one active assault, irreversible defeat, aftermath, memorial, and at most one deduplicated successor. Audit major outcomes and preserve existing Slice 1 event interpretation.
 
-- [ ] **Step 4: Verify GREEN and replay regression**
+- [x] **Step 4: Verify GREEN and replay regression**
 
 Run boss service, world event, replay, recovery, ecology service, and legacy world-service tests.  
 Expected: PASS.

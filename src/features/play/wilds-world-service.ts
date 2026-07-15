@@ -1,5 +1,5 @@
 import { generateCrystalBurrower, type WildsBoss } from "./wilds-boss-generator";
-import { generateWildsBoss, type WildsBossDefinition } from "./wilds-boss-ecology";
+import { deriveWildsBossSuccessor, generateWildsBoss, WILDS_BOSS_FAMILIES, type WildsBossDefinition } from "./wilds-boss-ecology";
 import { advanceDynamicSite, generateCrystalBurrow, type WildsDynamicSite } from "./wilds-dynamic-sites";
 import { deriveWildsEcologyChild, generateWildsEcologyEnsemble, type WildsEcologySite } from "./wilds-ecology";
 import { admitRaidPlayer, applyRaidContribution, createWildsRaid, type WildsRaid } from "./wilds-raid-core";
@@ -91,15 +91,56 @@ export class WildsWorldService {
     const causeId = `pulse:${input.pulse}`;
     if (this.eventTail.some((event) => event.causeId === causeId)) return { events: [], projection: this.projection };
     const authority = { actorId: input.systemActorId, pulse: input.pulse, occurredAt: input.occurredAt };
-    const activeSites = Object.values(this.projection.sites).filter((site): site is WildsDynamicSite => site.familyId === "crystal-burrow") as WildsDynamicSite[];
-    const site = generateCrystalBurrow({ pulse: input.pulse, ordinal: activeSites.length + 1, activeSites });
+    const existingBosses = Object.values(this.projection.bosses) as WildsBossDefinition[];
+    const undefeated = existingBosses.filter((boss) => !["defeated", "memorialized", "withdrawn"].includes(boss.phase));
+    if (undefeated.length >= 3) return { events: [], projection: this.projection };
     const events: WildsWorldEvent[] = [];
+
+    const defeatedParent = existingBosses.find((boss) => (boss.phase === "defeated" || boss.phase === "memorialized") && !existingBosses.some((candidate) => candidate.parentBossId === boss.id));
+    if (defeatedParent) {
+      const successor = deriveWildsBossSuccessor({
+        parent: defeatedParent,
+        causeEventId: `defeat:${defeatedParent.id}`,
+        pulse: input.pulse,
+        ordinal: existingBosses.length + 1,
+        existingBosses
+      });
+      if (successor && !undefeated.some((boss) => boss.regionId === successor.regionId)) {
+        const site: WildsDynamicSite = {
+          id: successor.siteId,
+          familyId: "crystal-burrow",
+          name: "Crystal Burrow",
+          position: { ...successor.position },
+          radius: 9,
+          phase: "emerged",
+          spawnedAt: successor.emergedAt,
+          expiresAt: new Date(Date.parse(successor.emergedAt) + 30 * 24 * 60 * 60 * 1_000).toISOString(),
+          bossId: null,
+          seedDigest: successor.seedDigest
+        };
+        events.push(this.append("site.spawned", { site }, authority, causeId));
+        const raid = createWildsRaidRound({ boss: successor, ordinal: 1, openedAt: input.occurredAt });
+        events.push(this.append("boss.emerged", { boss: successor, raid }, authority, causeId));
+        return { events, projection: this.projection };
+      }
+    }
+
+    const activeSites = Object.values(this.projection.sites).filter((site): site is WildsDynamicSite => site.familyId === "crystal-burrow") as WildsDynamicSite[];
+    const occupiedRegions = new Set(undefeated.map((boss) => boss.regionId));
+    let site: WildsDynamicSite | null = null;
+    for (let probe = 0; probe < 128; probe += 1) {
+      const candidate = generateCrystalBurrow({ pulse: input.pulse, ordinal: activeSites.length + probe + 1, activeSites });
+      const candidateRegion = `region:${Math.floor(candidate.position.x / 64)}:${Math.floor(candidate.position.z / 64)}`;
+      if (!occupiedRegions.has(candidateRegion)) { site = candidate; break; }
+    }
+    if (!site) return { events, projection: this.projection };
     events.push(this.append("site.spawned", { site }, authority, causeId));
     const tracked = advanceDynamicSite(site, "tracked");
     events.push(this.append("site.phase_changed", { siteId: site.id, phase: tracked.phase }, authority, causeId));
     const emerged = advanceDynamicSite(tracked, "emerged");
     events.push(this.append("site.phase_changed", { siteId: site.id, phase: emerged.phase }, authority, causeId));
-    const boss = generateWildsBoss({ familyId: "crystal-burrower", site: emerged, pulse: input.pulse, ordinal: 1, existingBosses: Object.values(this.projection.bosses) as WildsBossDefinition[] });
+    const familyId = WILDS_BOSS_FAMILIES[existingBosses.length % WILDS_BOSS_FAMILIES.length]!;
+    const boss = generateWildsBoss({ familyId, site: emerged, pulse: input.pulse, ordinal: existingBosses.filter((candidate) => candidate.familyId === familyId).length + 1, existingBosses });
     const raid = createWildsRaidRound({ boss, ordinal: 1, openedAt: input.occurredAt });
     events.push(this.append("boss.emerged", { boss, raid }, authority, causeId));
     return { events, projection: this.projection };
