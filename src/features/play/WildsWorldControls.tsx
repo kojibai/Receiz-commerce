@@ -15,8 +15,10 @@ export function WildsWorldControls({
   activeCardName,
   onInput,
   onMovementModeChange,
+  onDiscover,
   onPulse,
   onRest,
+  onCollectEnergy,
   onTrain,
   onMission
 }: {
@@ -27,8 +29,10 @@ export function WildsWorldControls({
   activeCardName: string;
   onInput: (input: WildsInput) => void;
   onMovementModeChange: (mode: WildsMovementMode) => void;
+  onDiscover: () => void;
   onPulse: () => void;
   onRest: () => void;
+  onCollectEnergy: () => void;
   onTrain: () => void;
   onMission: () => void;
 }) {
@@ -36,15 +40,15 @@ export function WildsWorldControls({
     <div className="wilds-screen-controls" aria-label="World controls">
       <div className="wilds-control-rail wilds-control-rail-left" aria-label="Explore actions">
         <button
-          aria-label="Discovery on. Tap terrain to search for a hidden creature"
-          aria-pressed="true"
+          aria-label="Discover the nearby companion"
           className="wilds-action active ready"
-          title="Discovery is always on"
+          onClick={onDiscover}
+          title="Discover a nearby companion"
           type="button"
         >
           <Icons.game size={20} />
         </button>
-        <button className="wilds-action" onClick={onRest} aria-label="Make camp and recover energy" title="Camp: recover energy" type="button">
+        <button className="wilds-action" onClick={onCollectEnergy} aria-label="Collect a nearby gold crystal" title="Collect nearby gold crystal for energy" type="button">
           <Icons.home size={20} />
         </button>
         <button
@@ -64,7 +68,7 @@ export function WildsWorldControls({
       <div className="wilds-control-rail wilds-control-rail-right" aria-label="Progression actions">
         <button
           aria-label={pulse.label}
-          className={`wilds-action wilds-pulse-action pulse-${pulse.kind}`}
+          className={cx("wilds-action wilds-pulse-action", `pulse-${pulse.kind}`, pulse.kind === "enter" && "is-nearby")}
           onClick={onPulse}
           title={pulse.label}
           type="button"

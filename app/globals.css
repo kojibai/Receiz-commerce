@@ -2828,12 +2828,14 @@ a {
 .wilds-pulse-action.pulse-enter { color: #ff72bf; }
 .wilds-pulse-action.pulse-greet,
 .wilds-pulse-action.pulse-join { color: #72dfff; }
+.wilds-pulse-action.is-nearby { color: #fff2a8; border-color: rgba(247, 201, 72, 0.92); box-shadow: 0 0 0 4px rgba(247, 201, 72, 0.18), 0 0 28px rgba(247, 201, 72, 0.5), 0 10px 26px rgba(45, 218, 175, 0.2); animation: wilds-enter-ready 1.25s ease-in-out infinite; }
 .wilds-pulse-action.pulse-collect { color: #fff2a8; }
 
 @keyframes wilds-pulse-ring {
   0%, 35% { opacity: 0.4; transform: scale(0.65); }
   80%, 100% { opacity: 0; transform: scale(1.75); }
 }
+@keyframes wilds-enter-ready { 50% { transform: translateY(-2px) scale(1.06); filter: brightness(1.15); } }
 
 .wilds-screen-controls .wilds-dpad {
   grid-template-columns: repeat(3, 34px);

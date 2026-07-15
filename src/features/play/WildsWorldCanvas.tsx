@@ -10,7 +10,7 @@ import {
   type PlayState
 } from "@/features/play/game-state";
 import { creatureForm } from "@/features/play/creature-catalog";
-import type { HotspotCover } from "@/features/play/hidden-hotspots";
+import { nearbyHiddenHotspots, type HotspotCover } from "@/features/play/hidden-hotspots";
 import type { WildsPresence } from "@/features/play/multiplayer-core";
 import { WildsEnvironment } from "@/features/play/WildsEnvironment";
 import { WildsExplorer } from "@/features/play/WildsExplorer";
@@ -35,6 +35,7 @@ export function WildsWorldCanvas({
   onCameraHeadingChange,
   onSelectPlayer,
   onSearchPoint,
+  onCollectEnergy,
   livingWorld,
   worldMode
 }: {
@@ -46,6 +47,7 @@ export function WildsWorldCanvas({
   onCameraHeadingChange: (heading: number) => void;
   onSelectPlayer: (player: WildsPresence | null) => void;
   onSearchPoint: (point: { x: number; z: number }) => void;
+  onCollectEnergy: (crystalId: string) => void;
   livingWorld?: WildsWorldProjection | null;
   worldMode: WildsSettlementWorldMode;
 }) {
@@ -70,7 +72,7 @@ export function WildsWorldCanvas({
         shadows={{ type: THREE.PCFShadowMap }}
       >
         <Suspense fallback={null}>
-          <WildsScene state={state} avatarStyle={avatarStyle} remotePlayers={remotePlayers} qualityProfile={qualityProfile} searchEnabled={searchEnabled} onCameraHeadingChange={onCameraHeadingChange} onSelectPlayer={onSelectPlayer} onSearchPoint={onSearchPoint} livingWorld={livingWorld} worldMode={worldMode} />
+          <WildsScene state={state} avatarStyle={avatarStyle} remotePlayers={remotePlayers} qualityProfile={qualityProfile} searchEnabled={searchEnabled} onCameraHeadingChange={onCameraHeadingChange} onSelectPlayer={onSelectPlayer} onSearchPoint={onSearchPoint} onCollectEnergy={onCollectEnergy} livingWorld={livingWorld} worldMode={worldMode} />
         </Suspense>
       </Canvas>
     </div>
@@ -86,6 +88,7 @@ function WildsScene({
   onCameraHeadingChange,
   onSelectPlayer,
   onSearchPoint,
+  onCollectEnergy,
   livingWorld,
   worldMode
 }: {
@@ -97,6 +100,7 @@ function WildsScene({
   onCameraHeadingChange: (heading: number) => void;
   onSelectPlayer: (player: WildsPresence | null) => void;
   onSearchPoint: (point: { x: number; z: number }) => void;
+  onCollectEnergy: (crystalId: string) => void;
   livingWorld?: WildsWorldProjection | null;
   worldMode: WildsSettlementWorldMode;
 }) {
@@ -109,9 +113,11 @@ function WildsScene({
       <CameraRig onCameraHeadingChange={onCameraHeadingChange} />
       <WildsDiagnostics qualityProfile={qualityProfile} state={state} />
       <SearchableTerrain
+        collectedEnergyCrystalIds={state.collectedEnergyCrystalIds}
         enabled={searchEnabled}
         missionProgress={state.missionProgress}
         onSearchPoint={onSearchPoint}
+        onCollectEnergy={onCollectEnergy}
         player={state.player}
         qualityProfile={qualityProfile}
         worldMastery={state.worldMastery}
@@ -194,21 +200,25 @@ function frameSeconds() {
 }
 
 function SearchableTerrain({
+  collectedEnergyCrystalIds,
   player,
   enabled,
   missionProgress,
   qualityProfile,
   worldMastery,
   onSearchPoint,
+  onCollectEnergy,
   livingWorld,
   worldMode
 }: {
+  collectedEnergyCrystalIds: readonly string[];
   player: PlayState["player"];
   enabled: boolean;
   missionProgress: number;
   qualityProfile: WildsQualityProfile;
   worldMastery: number;
   onSearchPoint: (point: { x: number; z: number }) => void;
+  onCollectEnergy: (crystalId: string) => void;
   livingWorld?: WildsWorldProjection | null;
   worldMode: WildsSettlementWorldMode;
 }) {
@@ -221,8 +231,32 @@ function SearchableTerrain({
       }}
     >
       <StreamedTerrain missionProgress={missionProgress} player={player} qualityProfile={qualityProfile} worldMastery={worldMastery} livingWorld={livingWorld} worldMode={worldMode} />
+      <EnergyCrystalField player={player} collectedIds={collectedEnergyCrystalIds} onCollect={onCollectEnergy} />
     </group>
   );
+}
+
+function EnergyCrystalField({ player, collectedIds, onCollect }: { player: PlayState["player"]; collectedIds: readonly string[]; onCollect: (crystalId: string) => void }) {
+  const crystals = nearbyHiddenHotspots(player).filter((hotspot) => hotspot.cover === "energy" && !collectedIds.includes(hotspot.id));
+  return <group name="wilds-energy-crystals">
+    {crystals.map((crystal) => (
+      <group
+        key={crystal.id}
+        onClick={(event) => { event.stopPropagation(); onCollect(crystal.id); }}
+        position={[crystal.position.x - player.x, 0.32, crystal.position.z - player.z]}
+      >
+        <mesh castShadow rotation={[0.2, 0.45, 0.18]}>
+          <octahedronGeometry args={[0.24, 0]} />
+          <meshStandardMaterial color="#f7c948" emissive="#fff0a6" emissiveIntensity={1.8} metalness={0.25} roughness={0.24} />
+        </mesh>
+        <mesh rotation={[Math.PI / 2, 0, 0]}>
+          <torusGeometry args={[0.42, 0.018, 8, 32]} />
+          <meshBasicMaterial color="#fff0a6" transparent opacity={0.68} />
+        </mesh>
+        <pointLight color="#f7c948" intensity={0.45} distance={2.4} />
+      </group>
+    ))}
+  </group>;
 }
 
 function StreamedTerrain({

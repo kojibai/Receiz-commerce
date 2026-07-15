@@ -52,6 +52,7 @@ export type WildsInput =
   | { type: "train"; cardId?: string; at?: string }
   | { type: "mission" }
   | { type: "rest" }
+  | { type: "collect-energy"; crystalId?: string }
   | { type: "select-card"; cardId: string }
   | { type: "select-asset"; assetId: string }
   | { type: "reset" };
@@ -104,6 +105,7 @@ export type PlayState = {
   capturedHotspotIds: string[];
   discoveredCardIds: string[];
   energy: number;
+  collectedEnergyCrystalIds: string[];
   encounter: EncounterState;
   inventory: PortableCardAsset[];
   lastEvent: string;
@@ -259,6 +261,7 @@ export const initialPlayState: PlayState = {
   capturedHotspotIds: [],
   discoveredCardIds: ["mintcub"],
   energy: 84,
+  collectedEnergyCrystalIds: [],
   encounter: idleEncounterState,
   inventory: [{ ...starterCardAsset, status: "verified", synchronizedAt: "2026-06-29T12:00:00.000Z" }],
   lastEvent: "SealCub joined your deck. Walk near another wild companion.",
@@ -367,6 +370,9 @@ export function restorePlayState(value: string | null | undefined): PlayState {
       selectedAssetId: restoredSelectedAssetId,
       capturedHotspotIds: Array.isArray(saved.capturedHotspotIds)
         ? saved.capturedHotspotIds.filter((id): id is string => typeof id === "string")
+        : [],
+      collectedEnergyCrystalIds: Array.isArray(saved.collectedEnergyCrystalIds)
+        ? saved.collectedEnergyCrystalIds.filter((id): id is string => typeof id === "string")
         : [],
       encounter: restoredEncounter.phase === "sealed" ? { ...restoredEncounter, phase: "revealed" } : restoredEncounter,
       lastSearchPoint: saved.lastSearchPoint && typeof saved.lastSearchPoint.x === "number" && typeof saved.lastSearchPoint.z === "number"
@@ -896,6 +902,23 @@ export function applyWildsInput(state: PlayState, input: WildsInput): PlayState 
       combo: 0,
       energy: Math.min(100, state.energy + 35),
       lastEvent: "Camp restored 35 energy. Your expedition combo reset."
+    };
+  }
+
+  if (input.type === "collect-energy") {
+    const crystals = nearbyHiddenHotspots(state.player).filter((hotspot) => hotspot.cover === "energy" && !state.collectedEnergyCrystalIds.includes(hotspot.id));
+    const crystal = (input.crystalId ? crystals.find((candidate) => candidate.id === input.crystalId) : crystals[0]);
+    if (!crystal || Math.hypot(crystal.position.x - state.player.x, crystal.position.z - state.player.z) > 2.2) {
+      return { ...state, lastEvent: "Find a gold crystal nearby to collect its energy." };
+    }
+    return {
+      ...state,
+      activeAction: "explore",
+      energy: Math.min(100, state.energy + 18),
+      collectedEnergyCrystalIds: [...state.collectedEnergyCrystalIds, crystal.id],
+      combo: state.combo + 1,
+      lastEvent: "Gold crystal collected. +18 energy.",
+      missionProgress: Math.min(100, state.missionProgress + 2)
     };
   }
 
