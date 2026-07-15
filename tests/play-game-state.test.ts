@@ -230,7 +230,7 @@ describe("Receiz Wilds game state", () => {
       searchedAt: "2026-07-13T15:01:00.000Z",
       ownerReceizId: "player.receiz.id"
     });
-    assert.equal(searchedAgain.encounter.phase, "hint");
+    assert.equal(searchedAgain.encounter.phase, "idle");
     assert.equal(searchedAgain.inventory.length, sealed.inventory.length);
   });
 

@@ -728,13 +728,15 @@ export function applyWildsInput(state: PlayState, input: WildsInput): PlayState 
       z: clamp(input.z, worldBounds.min, worldBounds.max)
     };
     const result = searchHiddenHotspots(nearbyHiddenHotspots(point), point, state.capturedHotspotIds);
-    const encounter = encounterFromSearch(result, point, input.searchedAt, input.ownerReceizId.trim(), state.encounter);
-    const lastEvent = result.kind === "hit"
+    const encounter = result.kind === "captured"
+      ? idleEncounterState
+      : encounterFromSearch(result, point, input.searchedAt, input.ownerReceizId.trim(), state.encounter);
+    const lastEvent = result.kind === "captured"
+      ? "This hotspot is quiet now. Its sealed card is already in your inventory."
+      : result.kind === "hit"
       ? `Something is moving beneath the ${result.hotspot.cover}. Keep watching.`
       : result.kind === "near_miss"
-        ? `Signal ${encounter.proximity}${encounter.trend ? ` · ${encounter.trend}` : ""}. Follow the search clue.`
-        : result.kind === "captured"
-          ? "This hotspot is quiet now. Its sealed card is already in your inventory."
+        ? `Signal ${encounter.phase === "idle" ? "cold" : encounter.proximity}${encounter.phase !== "idle" && encounter.trend ? ` · ${encounter.trend}` : ""}. Follow the search clue.`
           : "Signal cold. Try another point and keep moving.";
     const searched = { ...state, activeAction: "explore" as const, encounter, lastEvent, lastSearchPoint: point };
     const leader = selectedAsset(state);
