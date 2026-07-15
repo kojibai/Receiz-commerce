@@ -2,10 +2,16 @@ import { canonicalPortableCardJson, sha256PortableBasis } from "./portable-card"
 import { restorePlayState, serializePlayState, type PlayState } from "./game-state";
 import { WILDS_WORLD_ID } from "./wilds-world-event";
 import type { WildsWorldProjection } from "./wilds-world-state";
+import {
+  assertContinuityEnvelope,
+  continuityEnvelopeForOwner,
+  type ReceizContinuityEnvelope
+} from "../../lib/receiz/cross-platform-continuity";
 
 export type WildsPlayerVaultPayload = {
   schema: "receiz.wilds_player_vault.v3";
   playerId: string;
+  continuity: ReceizContinuityEnvelope;
   exportedAt: string;
   playState: PlayState;
   settings: {
@@ -19,14 +25,20 @@ export type WildsPlayerVaultPayload = {
   payloadDigest: string;
 };
 
-type PlayerVaultInput = Omit<WildsPlayerVaultPayload, "schema" | "payloadDigest">;
+type PlayerVaultInput = Omit<WildsPlayerVaultPayload, "schema" | "payloadDigest" | "continuity"> & {
+  /** Optional for callers created before the continuity envelope was introduced. */
+  continuity?: ReceizContinuityEnvelope;
+};
 
 function identityValid(value: string) {
   return value.length >= 3 && value.length <= 180 && /^[a-z0-9][a-z0-9:._-]*$/i.test(value);
 }
 
-function normalizedInput(input: PlayerVaultInput): PlayerVaultInput {
+type NormalizedPlayerVaultInput = Omit<PlayerVaultInput, "continuity"> & { continuity: ReceizContinuityEnvelope };
+
+function normalizedInput(input: PlayerVaultInput): NormalizedPlayerVaultInput {
   if (!identityValid(input.playerId)) throw new Error("wilds_player_vault_owner_invalid");
+  const continuity = assertContinuityEnvelope(input.continuity ?? continuityEnvelopeForOwner(input.playerId), input.playerId);
   if (!Number.isFinite(Date.parse(input.exportedAt))) throw new Error("wilds_player_vault_time_invalid");
   if (input.canonicalCursor.worldId !== WILDS_WORLD_ID || !Number.isSafeInteger(input.canonicalCursor.revision) || input.canonicalCursor.revision < 0) throw new Error("wilds_player_vault_cursor_invalid");
   const events = new Map<string, PlayerVaultInput["personalEvents"][number]>();
@@ -41,6 +53,7 @@ function normalizedInput(input: PlayerVaultInput): PlayerVaultInput {
   }
   return {
     ...input,
+    continuity,
     exportedAt: new Date(Date.parse(input.exportedAt)).toISOString(),
     playState: restorePlayState(serializePlayState(input.playState)),
     personalEvents: [...events.values()].sort((left, right) => left.occurredAt.localeCompare(right.occurredAt) || left.eventId.localeCompare(right.eventId)).slice(-2_048),
@@ -48,7 +61,7 @@ function normalizedInput(input: PlayerVaultInput): PlayerVaultInput {
   };
 }
 
-function basis(input: PlayerVaultInput) {
+function basis(input: NormalizedPlayerVaultInput) {
   return { schema: "receiz.wilds_player_vault.v3" as const, ...input };
 }
 
@@ -62,6 +75,7 @@ export function verifyWildsPlayerVault(value: WildsPlayerVaultPayload) {
   try {
     const rebuilt = createWildsPlayerVault({
       playerId: value.playerId,
+      continuity: value.continuity,
       exportedAt: value.exportedAt,
       playState: value.playState,
       settings: value.settings,
@@ -83,6 +97,7 @@ export function reconcileWildsPlayerVault(input: {
   actorId: string;
 }) {
   if (input.restored.playerId !== input.actorId) throw new Error("wilds_player_vault_owner_invalid");
+  assertContinuityEnvelope(input.restored.continuity, input.actorId);
   const verified = verifyWildsPlayerVault(input.restored);
   if (!verified.ok) throw new Error(verified.errors[0] ?? "wilds_player_vault_invalid");
   const state = restorePlayState(serializePlayState({
