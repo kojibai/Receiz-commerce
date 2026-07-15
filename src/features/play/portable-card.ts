@@ -264,6 +264,24 @@ export function verifyAnyWildsCard(asset: PortableCardAsset): PortableCardVerifi
   return isLivingCardAsset(asset) ? verifyLivingCard(asset) : verifyPortableCard(asset);
 }
 
+export type VerifiedPortableCardPin = {
+  assetId: string;
+  proofDigest: string;
+  ownerReceizId: string;
+  formId: string;
+};
+
+/** Pins the exact proof admitted to an authoritative activity without retaining mutable card data. */
+export function verifiedPortableCardPin(asset: PortableCardAsset): VerifiedPortableCardPin {
+  if (!verifyAnyWildsCard(asset).ok) throw new Error("wilds_activity_card_verification_failed");
+  return {
+    assetId: asset.id,
+    proofDigest: asset.proof.digest,
+    ownerReceizId: asset.manifest.ownerReceizId,
+    formId: asset.manifest.formId
+  };
+}
+
 export function evolvePortableCard(input: {
   previous: PortableCardAsset;
   nextFormId: string;
