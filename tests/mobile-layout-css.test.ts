@@ -58,7 +58,10 @@ describe("mobile storefront layout CSS", () => {
   });
 
   it("keeps the atlas and new flank controls reachable on small screens", () => {
-    assert.match(css, /\.wilds-screen-controls\s*\{[^}]*grid-template-columns:\s*minmax\(84px,\s*1fr\) 44px minmax\(68px,\s*108px\) 44px minmax\(84px,\s*1fr\)/s);
+    assert.match(css, /\.wilds-screen-controls\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\) var\(--wilds-pad-size\) minmax\(0,\s*1fr\)/s);
+    assert.match(css, /\.wilds-control-rail\s*\{[^}]*grid-template-columns:\s*repeat\(3,\s*minmax\(0,\s*1fr\)\)/s);
+    assert.match(css, /\.wilds-control-rail-left\s*\{[^}]*justify-self:\s*end/s);
+    assert.match(css, /\.wilds-control-rail-right\s*\{[^}]*justify-self:\s*start/s);
     assert.match(css, /\.wilds-control-flank\s*\{[^}]*min-height:\s*44px/s);
     assert.match(css, /\.wilds-world-map\s*\{[^}]*position:\s*fixed;[^}]*inset:\s*0;[^}]*z-index:\s*6000/s);
     assert.match(css, /\.wilds-world-map-close\s*\{[^}]*top:\s*max\(12px,\s*env\(safe-area-inset-top\)\)/s);
