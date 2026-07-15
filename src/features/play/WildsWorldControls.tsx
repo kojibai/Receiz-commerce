@@ -15,7 +15,6 @@ export function WildsWorldControls({
   activeCardName,
   onInput,
   onMovementModeChange,
-  onDiscover,
   onDash,
   onPulse,
   onRest,
@@ -29,7 +28,6 @@ export function WildsWorldControls({
   activeCardName: string;
   onInput: (input: WildsInput) => void;
   onMovementModeChange: (mode: WildsMovementMode) => void;
-  onDiscover: () => void;
   onDash: () => void;
   onPulse: () => void;
   onRest: () => void;
@@ -40,16 +38,16 @@ export function WildsWorldControls({
     <div className="wilds-screen-controls" aria-label="World controls">
       <div className="wilds-control-rail wilds-control-rail-left" aria-label="Explore actions">
         <button
-          aria-label="Discover the nearby companion"
-          className="wilds-action active ready"
-          onClick={onDiscover}
-          title="Discover a nearby companion"
+          aria-label="Quick dash forward"
+          className="wilds-action active ready wilds-dash-action"
+          onClick={onDash}
+          title="Quick dash forward · costs 3 energy"
           type="button"
         >
-          <Icons.game aria-hidden="true" size={20} />
-        </button>
-        <button className="wilds-action wilds-dash-action" onClick={onDash} aria-label="Quick dash forward" title="Quick dash forward · costs 3 energy" type="button">
           <Icons.run aria-hidden="true" size={20} />
+        </button>
+        <button className="wilds-action" onClick={onRest} aria-label="Make camp and recover energy" title="Camp: recover energy" type="button">
+          <Icons.home size={20} />
         </button>
         <button
           aria-label={movementMode === "walk" ? "Switch to running" : "Switch to walking"}
