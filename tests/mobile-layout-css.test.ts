@@ -71,6 +71,12 @@ describe("mobile storefront layout CSS", () => {
     assert.match(css, /@media \(max-width:\s*560px\)[\s\S]*\.wilds-atlas-destinations\s*\{[^}]*right:\s*10px;[^}]*bottom:\s*max\(10px,\s*env\(safe-area-inset-bottom\)\);[^}]*left:\s*10px/s);
   });
 
+  it("reserves the compact world-status rail so it never covers the player identity", () => {
+    assert.match(css, /\.mobile-play-wrap \.wilds-living-world-hud \{[^}]*max-width: 164px;/s);
+    assert.match(css, /\.mobile-play-wrap \.wilds-live-pill\[class\*="mode-"\] \{[^}]*width: 30px;/s);
+    assert.match(css, /\.mobile-play-wrap \.wilds-live-pill\[class\*="mode-"\] span \{[^}]*display: none;/s);
+  });
+
   it("uses customer ownership language on the mobile assets page", () => {
     assert.match(storefront, /Purchased products, benefits, and access can become Receized assets\./);
     assert.doesNotMatch(storefront, /Sold products, benefits, and access can become Receized assets\./);

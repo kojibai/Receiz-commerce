@@ -12,17 +12,18 @@ export function WildsLivingWorldHud({ world, player }: { world: ReturnType<typeo
   const boss = nearby?.site.bossId ? world.snapshot?.bosses[nearby.site.bossId] : null;
   const raid = boss ? Object.values(world.snapshot?.raids ?? {}).find((item) => item.bossId === boss.id) : null;
   const close = nearby && nearby.distance <= nearby.site.radius + 8;
+  const modeLabel = world.mode === "receiz_live" ? "One shared world" : world.mode === "local_practice" ? "Local practice" : "World reconnecting";
 
   return <div className="wilds-living-world-hud" aria-label="Living world status">
-    <button className={`wilds-live-pill mode-${world.mode}`} onClick={() => setOpen((value) => !value)} type="button">
-      <i aria-hidden="true" /><span>{world.mode === "receiz_live" ? "One shared world" : world.mode === "local_practice" ? "Local practice" : "World reconnecting"}</span>
+    <button aria-label={modeLabel} className={`wilds-live-pill mode-${world.mode}`} onClick={() => setOpen((value) => !value)} title={modeLabel} type="button">
+      <i aria-hidden="true" /><span>{modeLabel}</span>
     </button>
     {nearby ? <button className="wilds-live-pill event" onClick={() => setOpen(true)} type="button">
       <span>{nearby.site.phase === "memorialized" ? "Victory memorial" : nearby.site.name}</span><b>{Math.round(nearby.distance)}m</b>
     </button> : null}
     {open ? <section className="wilds-living-world-sheet" aria-label="Shared world event details">
       <button aria-label="Close shared world details" className="wilds-living-world-close" onClick={() => setOpen(false)} type="button">×</button>
-      <small>Pulse · Kai-Klok {world.snapshot?.cursor?.kaiKlok ?? 0}</small>
+      <small>{modeLabel} · Pulse · Kai-Klok {world.snapshot?.cursor?.kaiKlok ?? 0}</small>
       <strong>{boss?.phase === "defeated" ? `${boss.id} defeated for everyone` : boss ? "A shared boss has emerged" : "The living world is listening"}</strong>
       {boss ? <div className="wilds-live-boss-meter"><span style={{ width: `${Math.max(0, Math.min(100, boss.health / boss.maxHealth * 100))}%` }} /><b>{Math.ceil(boss.health / boss.maxHealth * 100)}%</b></div> : null}
       {boss && raid && close && raid.phase !== "settled" ? <button disabled={Boolean(world.pendingCommand)} onClick={() => void world.joinRaid(boss.id)} type="button">Join shared raid</button> : null}
