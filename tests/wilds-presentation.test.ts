@@ -12,6 +12,7 @@ import {
   DEFAULT_WILDS_AUDIO_SETTINGS,
   audioCuesForTransition,
   createWildsAudioRuntime,
+  ecologyAudioCue,
   normalizeWildsAudioSettings,
   settlementAudioCue
 } from "../src/features/play/wilds-audio";
@@ -123,6 +124,14 @@ describe("Wilds synthesized audio", () => {
     assert.equal(settlementAudioCue("service"), "settlement-service");
     assert.equal(settlementAudioCue("route-step"), "route-step");
     assert.equal(settlementAudioCue("route-complete"), "route-complete");
+  });
+
+  it("maps living ecology discovery and resolution onto local family motifs", () => {
+    assert.equal(ecologyAudioCue("rumor", "echo-ruin"), "ecology-rumor");
+    assert.equal(ecologyAudioCue("discovered", "wandering-market"), "ecology-market");
+    assert.equal(ecologyAudioCue("discovered", "stormfront"), "ecology-storm");
+    assert.equal(ecologyAudioCue("step", "resource-bloom"), "ecology-step");
+    assert.equal(ecologyAudioCue("resolved", "unstable-portal"), "ecology-resolved");
   });
 
   it("destroys every synthesized audio resource", async () => {

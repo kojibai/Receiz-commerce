@@ -107,6 +107,11 @@ export function useWildsWorld(input: { enabled: boolean; guestId: string; active
     error,
     pendingCommand,
     refresh,
+    discoverEcology: (siteId: string, position: { x: number; z: number }) => post({ type: "ecology.discover", siteId, position, commandId: commandId("command:ecology:discover") }),
+    contributeEcology: (siteId: string, position: { x: number; z: number }, amount: number) => {
+      if (!input.activeCard) throw new Error("wilds_world_active_card_required");
+      return post({ type: "ecology.contribute", siteId, position, amount, cardProofDigest: input.activeCard.proof.digest, commandId: commandId("command:ecology:contribute") });
+    },
     joinRaid: (bossId: string, preferredSquad?: number) => post({ type: "raid.join", bossId, preferredSquad, commandId: commandId("command:raid:join") }),
     contribute: (bossId: string, damage: number, support: number) => {
       if (!input.activeCard) throw new Error("wilds_world_active_card_required");

@@ -39,10 +39,12 @@ import { evaluateLandmarkAccess, type WildsLandmarkProgress } from "@/features/p
 import type { RiftTravelGrant } from "@/features/play/wilds-rift-travel";
 import { createWildsPlayerVault, reconcileWildsPlayerVault } from "@/features/play/wilds-player-vault";
 import { initialWildsWorldProjection } from "@/features/play/wilds-world-state";
-import { normalizeWildsAudioSettings, settlementAudioCue } from "@/features/play/wilds-audio";
+import { ecologyAudioCue, normalizeWildsAudioSettings, settlementAudioCue } from "@/features/play/wilds-audio";
 import { WildsLivingWorldHud } from "@/features/play/WildsLivingWorldHud";
 import { WildsSettlementExperience } from "@/features/play/WildsSettlementExperience";
 import { createWildsCivicEvent, normalizeWildsCivicActorId, projectWildsCivicHistory } from "@/features/play/wilds-civic-history";
+import { WildsEcologyExperience } from "@/features/play/WildsEcologyExperience";
+import { createWildsEcologyReceipt } from "@/features/play/wilds-ecology-history";
 
 const WILDS_SAVE_KEY = "receiz:wilds:save:v2";
 const WILDS_AVATAR_KEY = "receiz:wilds:explorer:v1";
@@ -93,6 +95,7 @@ export function PlayCampaign({
   const [cameraHeading, setCameraHeading] = useState(0);
   const [movementMode, setMovementMode] = useState<WildsMovementMode>("walk");
   const [activeLandmarkId, setActiveLandmarkId] = useState<WildsLandmarkId | null>(null);
+  const [activeEcologySiteId, setActiveEcologySiteId] = useState<string | null>(null);
   const [landmarkUnlocks, setLandmarkUnlocks] = useState<string[]>([]);
   const [riftError, setRiftError] = useState("");
   const activeMission = missionCards[state.completedMissionIds.length % missionCards.length];
@@ -283,7 +286,12 @@ export function PlayCampaign({
     .filter(({ site, distance }) => Boolean(site.bossId) && site.phase !== "memorialized" && site.phase !== "expired" && distance <= site.radius + 8)
     .sort((left, right) => left.distance - right.distance)[0] ?? null;
   const nearbyLivingBoss = nearbyLivingSite?.site.bossId ? livingWorld.snapshot?.bosses[nearbyLivingSite.site.bossId] : null;
-  const pulse = resolveWildsContextAction({
+  const nearbyEcology = Object.values(livingWorld.snapshot?.ecologySites ?? {})
+    .map((site) => ({ site, distance: Math.hypot(site.position.x - state.player.x, site.position.z - state.player.z) }))
+    .filter(({ site, distance }) => (site.phase === "foreshadowed" || site.phase === "discovered" || site.phase === "active") && distance <= site.radius)
+    .sort((left, right) => left.distance - right.distance)[0] ?? null;
+  const activeEcologySite = activeEcologySiteId ? livingWorld.snapshot?.ecologySites[activeEcologySiteId] ?? null : null;
+  const basePulse = resolveWildsContextAction({
     pendingReward: Boolean(rewardAsset),
     landmark: currentLandmark,
     secretId: state.encounter.phase === "hint" ? state.encounter.hotspotId ?? null : null,
@@ -292,6 +300,9 @@ export function PlayCampaign({
       : null,
     joinableActivity: nearbyLivingBoss && nearbyLivingBoss.phase !== "defeated" ? { id: nearbyLivingBoss.id, name: "shared boss raid" } : null
   });
+  const pulse = nearbyEcology && (basePulse.kind === "scan" || basePulse.kind === "greet")
+    ? { kind: "join" as const, label: `${nearbyEcology.site.phase === "foreshadowed" ? "Discover" : "Enter"} ${nearbyEcology.site.name}`, activityId: nearbyEcology.site.id }
+    : basePulse;
   const visiblePulse = pulse.kind === "enter" && currentLandmarkAccess && !currentLandmarkAccess.allowed
     ? { ...pulse, label: `Inspect sealed ${currentLandmark?.name ?? "landmark"}` }
     : pulse;
@@ -318,6 +329,37 @@ export function PlayCampaign({
       return;
     }
     if (pulse.kind === "join") {
+      if (pulse.activityId.startsWith("ecology:")) {
+        const ecology = livingWorld.snapshot?.ecologySites[pulse.activityId];
+        if (!ecology || !nearbyEcology || nearbyEcology.site.id !== ecology.id) return;
+        if (ecology.phase !== "foreshadowed") {
+          presentation.playCue(ecologyAudioCue("discovered", ecology.familyId));
+          setActiveEcologySiteId(ecology.id);
+          return;
+        }
+        void livingWorld.discoverEcology(ecology.id, state.player).then((projection) => {
+          const admitted = projection.ecologySites[ecology.id];
+          const cursor = projection.cursor;
+          if (!admitted || !cursor) throw new Error("wilds_ecology_discovery_receipt_missing");
+          dispatch({
+            type: "record-ecology-event",
+            event: createWildsEcologyReceipt({
+              actorId: civicActorId,
+              siteId: admitted.id,
+              familyId: admitted.familyId,
+              kind: "site.discovered",
+              sourceEventId: cursor.eventId,
+              occurredAt: cursor.pulse,
+              canonicalRevision: projection.revision,
+              mastery: 1,
+              cardProofDigest: null
+            })
+          });
+          presentation.playCue(ecologyAudioCue("discovered", admitted.familyId));
+          setActiveEcologySiteId(admitted.id);
+        }).catch((error) => setRiftError(error instanceof Error ? error.message : "wilds_ecology_discovery_failed"));
+        return;
+      }
       void livingWorld.joinRaid(pulse.activityId).catch((error) => setRiftError(error instanceof Error ? error.message : "wilds_raid_join_failed"));
       return;
     }
@@ -642,6 +684,7 @@ export function PlayCampaign({
         worldMastery={state.worldMastery}
         landmarkProgress={landmarkProgress}
         livingWorld={livingWorld.snapshot}
+        ecologyKnowledge={state.ecologyKnowledge}
       />
       <WildsLandmarkExperience
         access={activeLandmarkId && activeLandmarkId !== "wayfinder-hollow" ? evaluateLandmarkAccess(WILDS_FLAGSHIP_LANDMARKS.find((item) => item.id === activeLandmarkId)!, landmarkProgress) : null}
@@ -664,6 +707,35 @@ export function PlayCampaign({
         onExit={() => setActiveLandmarkId(null)}
         open={activeLandmarkId === "wayfinder-hollow"}
         remotePlayers={multiplayer.remotePlayers}
+        worldMode={settlementWorldMode}
+      />
+      <WildsEcologyExperience
+        card={activeAsset}
+        onExit={() => setActiveEcologySiteId(null)}
+        onSubmit={async ({ siteId, amount }) => {
+          const projection = await livingWorld.contributeEcology(siteId, state.player, amount);
+          const admitted = projection.ecologySites[siteId];
+          const cursor = projection.cursor;
+          if (!admitted || !cursor || !activeAsset) throw new Error("wilds_ecology_contribution_receipt_missing");
+          dispatch({
+            type: "record-ecology-event",
+            event: createWildsEcologyReceipt({
+              actorId: civicActorId,
+              siteId: admitted.id,
+              familyId: admitted.familyId,
+              kind: "activity.accepted",
+              sourceEventId: cursor.eventId,
+              occurredAt: cursor.pulse,
+              canonicalRevision: projection.revision,
+              mastery: amount,
+              cardProofDigest: activeAsset.proof.digest
+            })
+          });
+          presentation.playCue(ecologyAudioCue(admitted.phase === "aftermath" ? "resolved" : "step", admitted.familyId));
+        }}
+        open={Boolean(activeEcologySite)}
+        participantCount={(activeEcologySite?.participantIds.length ?? 0) + 1}
+        site={activeEcologySite}
         worldMode={settlementWorldMode}
       />
       <WildsCaptureReward asset={rewardAsset} onClose={() => {

@@ -170,6 +170,19 @@ describe("Receiz Wilds rendering contract", () => {
     assert.match(world, /<WildsEcologyEnvironment/);
   });
 
+  it("connects physical ecology discovery, activity, receipts, and atlas memory", async () => {
+    const campaign = await readFile("src/features/play/PlayCampaign.tsx", "utf8");
+    const worldHook = await readFile("src/features/play/use-wilds-world.ts", "utf8");
+    const experience = await readFile("src/features/play/WildsEcologyExperience.tsx", "utf8");
+    assert.match(campaign, /discoverEcology/);
+    assert.match(campaign, /WildsEcologyExperience/);
+    assert.match(campaign, /record-ecology-event/);
+    assert.match(campaign, /ecologyKnowledge=\{state\.ecologyKnowledge\}/);
+    assert.match(worldHook, /type:\s*"ecology\.discover"/);
+    assert.match(worldHook, /type:\s*"ecology\.contribute"/);
+    assert.match(experience, /previousFocus\.current\?\.focus\(\)/);
+  });
+
   it("opens the complete Wayfinder Hollow civic experience", async () => {
     const experience = await readFile("src/features/play/WildsSettlementExperience.tsx", "utf8");
     const settlement = await readFile("src/features/play/wilds-settlements.ts", "utf8");

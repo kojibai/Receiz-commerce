@@ -1,3 +1,5 @@
+import type { WildsEcologyFamilyId } from "./wilds-ecology";
+
 export type WildsAudioSettings = {
   master: number;
   effects: number;
@@ -26,6 +28,17 @@ export type WildsAudioCue =
   | "route-step"
   | "route-complete"
   | "foliage-surge"
+  | "ecology-rumor"
+  | "ecology-step"
+  | "ecology-resolved"
+  | "ecology-market"
+  | "ecology-ruin"
+  | "ecology-portal"
+  | "ecology-festival"
+  | "ecology-migration"
+  | "ecology-bloom"
+  | "ecology-storm"
+  | "ecology-distress"
   | "confirm"
   | "error";
 
@@ -99,6 +112,17 @@ const CUE_VOICES: Readonly<Record<WildsAudioCue, CueVoice>> = {
   "route-step": { frequency: 440, endFrequency: 554, duration: 0.16, gain: 0.1, type: "triangle" },
   "route-complete": { frequency: 523, endFrequency: 1_176, duration: 0.72, gain: 0.17, type: "sine" },
   "foliage-surge": { frequency: 170, endFrequency: 390, duration: 0.34, gain: 0.11, type: "sawtooth" },
+  "ecology-rumor": { frequency: 196, endFrequency: 294, duration: 0.55, gain: 0.09, type: "sine" },
+  "ecology-step": { frequency: 392, endFrequency: 523, duration: 0.22, gain: 0.11, type: "triangle" },
+  "ecology-resolved": { frequency: 523, endFrequency: 1_318, duration: 0.92, gain: 0.17, type: "sine" },
+  "ecology-market": { frequency: 330, endFrequency: 659, duration: 0.58, gain: 0.13, type: "triangle" },
+  "ecology-ruin": { frequency: 174, endFrequency: 349, duration: 0.78, gain: 0.12, type: "sine" },
+  "ecology-portal": { frequency: 277, endFrequency: 1_109, duration: 0.7, gain: 0.14, type: "sawtooth" },
+  "ecology-festival": { frequency: 440, endFrequency: 880, duration: 0.68, gain: 0.13, type: "triangle" },
+  "ecology-migration": { frequency: 220, endFrequency: 440, duration: 0.64, gain: 0.12, type: "triangle" },
+  "ecology-bloom": { frequency: 349, endFrequency: 988, duration: 0.72, gain: 0.12, type: "sine" },
+  "ecology-storm": { frequency: 123, endFrequency: 247, duration: 0.66, gain: 0.15, type: "sawtooth" },
+  "ecology-distress": { frequency: 262, endFrequency: 196, duration: 0.48, gain: 0.14, type: "square" },
   confirm: { frequency: 540, endFrequency: 760, duration: 0.18, gain: 0.14, type: "sine" },
   error: { frequency: 210, endFrequency: 130, duration: 0.24, gain: 0.16, type: "square" }
 };
@@ -108,6 +132,24 @@ export function settlementAudioCue(action: "arrival" | "service" | "route-step" 
     : action === "service" ? "settlement-service"
       : action === "route-step" ? "route-step"
         : "route-complete";
+}
+
+const ECOLOGY_FAMILY_CUES: Record<WildsEcologyFamilyId, WildsAudioCue> = {
+  "wandering-market": "ecology-market",
+  "echo-ruin": "ecology-ruin",
+  "unstable-portal": "ecology-portal",
+  "convergence-festival": "ecology-festival",
+  "creature-migration": "ecology-migration",
+  "resource-bloom": "ecology-bloom",
+  stormfront: "ecology-storm",
+  "settlement-distress": "ecology-distress"
+};
+
+export function ecologyAudioCue(action: "rumor" | "discovered" | "step" | "resolved", familyId: WildsEcologyFamilyId): WildsAudioCue {
+  return action === "rumor" ? "ecology-rumor"
+    : action === "step" ? "ecology-step"
+      : action === "resolved" ? "ecology-resolved"
+        : ECOLOGY_FAMILY_CUES[familyId];
 }
 
 function clampUnit(value: unknown, fallback: number) {
