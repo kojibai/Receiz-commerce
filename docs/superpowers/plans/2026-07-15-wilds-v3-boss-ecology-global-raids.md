@@ -140,7 +140,7 @@ git commit -m "feat: bound global raid rounds"
 - Consumes: verified `PortableCardAsset`, boss modules, `WildsRaidRound`, canonical event order.
 - Produces: `WildsRaidRole`, `WildsRaidIntent`, `WildsRaidEncounterState`, `projectWildsRaidRoles(card)`, `createWildsRaidEncounter(input)`, `applyWildsRaidIntent(state, intent, authority)`, and `projectWildsRaidTelegraph(state)`.
 
-- [ ] **Step 1: Write failing semantic-action tests**
+- [x] **Step 1: Write failing semantic-action tests**
 
 ```ts
 it("derives role and impact from the verified card instead of client damage", () => {
@@ -158,16 +158,16 @@ it("uses support objectives, telegraphs, guard, cooldowns, and vulnerability det
 });
 ```
 
-- [ ] **Step 2: Verify RED**
+- [x] **Step 2: Verify RED**
 
 Run test-build compilation.  
 Expected: missing role and encounter modules.
 
-- [ ] **Step 3: Implement six roles and semantic intents**
+- [x] **Step 3: Implement six roles and semantic intents**
 
 Map sealed traits deterministically to Vanguard, Striker, Warden, Resonator, Wayfinder, and Steward. Implement fighter intents `strike | guard | focus | interrupt | ability | revive | retreat` and support intents `stabilize | scout | supply | rescue | ward | rotate_request`. Derive normalized impact, cooldown, guard, hazard, combo, objective, transformation, and vulnerability entirely from canonical state and verified card facts.
 
-- [ ] **Step 4: Verify GREEN**
+- [x] **Step 4: Verify GREEN**
 
 Run role/encounter tests plus portable-card and living-card proof regressions.  
 Expected: PASS.
