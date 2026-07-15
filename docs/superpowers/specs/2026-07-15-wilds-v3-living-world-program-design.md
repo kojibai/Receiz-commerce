@@ -1,7 +1,7 @@
 # Receiz Wilds V3 Living World Program Design
 
 Date: 2026-07-15  
-Status: Approved design; written-spec review required before implementation planning  
+Status: Approved program design; Slice 1 Living World Kernel complete and release-qualified
 Target: Build one canonical, persistent, socially alive Wilds where exploration, card mastery, and multiplayer civilization form one seamless game.
 
 ## 1. Product outcome
@@ -550,6 +550,8 @@ Every behavior change follows red-green-refactor.
 
 ### Slice 1 — Living World Kernel vertical slice
 
+**Status: Complete (2026-07-15).** The shipped boundary and verification record are captured in `docs/superpowers/evidence/2026-07-15-wilds-v3-slice-1.md`. This status does not imply that the wider content families in Slices 2–8 are built.
+
 - canonical event stream, reducers, and checkpoints;
 - Pulse/Kai-Klok authority;
 - global, regional, atlas, raid, team, league, player, and history projections;
@@ -614,4 +616,3 @@ Every behavior change follows red-green-refactor.
 ## 19. Definition of done
 
 V3 is done only when all eight slices are integrated and the release qualification passes. A partially implemented slice may be playable, but it is not the V3 release and cannot lower the final standard.
-
