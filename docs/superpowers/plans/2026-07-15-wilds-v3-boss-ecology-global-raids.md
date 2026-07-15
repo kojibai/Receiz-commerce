@@ -237,17 +237,17 @@ git commit -m "feat: admit global boss ecology events"
 - Create: `src/features/play/wilds-raid-history.ts`
 - Modify: `src/features/play/game-state.ts`
 - Modify: `src/features/play/wilds-player-vault.ts`
-- Modify: `src/features/play/wilds-save-png.ts`
+- Verify existing PNG transport: `src/features/play/card-export.ts`
 - Create: `tests/wilds-raid-history.test.ts`
-- Modify: `tests/game-state.test.ts`
+- Modify: `tests/play-game-state.test.ts`
 - Modify: `tests/wilds-player-vault.test.ts`
-- Modify: `tests/wilds-save-png.test.ts`
+- Verify existing PNG transport: `tests/wilds-player-vault.test.ts`
 
 **Interfaces:**
 - Consumes: canonical boss/round/action event IDs, card proof digests, canonical cursor, existing Save V7 and V3 vault merge.
 - Produces: `WildsRaidReceipt`, `WildsBossKnowledge`, `projectWildsRaidHistory(events)`, PlayState fields `raidEvents`, `bossKnowledge`, `bossMastery`, `raidAchievements`, and `receiz.wilds.save.v8` accepting V2–V7.
 
-- [ ] **Step 1: Write failing receipt and migration tests**
+- [x] **Step 1: Write failing receipt and migration tests**
 
 ```ts
 it("accepts proof-bound participation once and rejects a forged winning receipt", () => {
@@ -262,16 +262,16 @@ it("migrates V7 and restores V8 raid history through PNG and player vault", () =
 });
 ```
 
-- [ ] **Step 2: Verify RED**
+- [x] **Step 2: Verify RED**
 
 Run the raid-history, game-state, vault, and PNG tests.  
 Expected: Save V8 fields and receipt module are absent.
 
-- [ ] **Step 3: Implement bounded append-only history**
+- [x] **Step 3: Implement bounded append-only history**
 
 Verify schema, actor, boss/family/round/action/source event, role, squad/support placement, contribution band, result, revision, time, proof digest, and receipt digest. Bound history to 4,096 events, deduplicate source/kind identity, derive personal knowledge/mastery/achievements, migrate V2–V7 safely, and reconcile without changing canonical health, phase, winner, monument, successor, league, or lease.
 
-- [ ] **Step 4: Verify GREEN**
+- [x] **Step 4: Verify GREEN**
 
 Run the focused persistence tests and full game-state regressions.  
 Expected: PASS.

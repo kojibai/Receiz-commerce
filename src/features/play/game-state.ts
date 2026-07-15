@@ -21,6 +21,8 @@ import { movementScale, type WildsMovementMode } from "./wilds-movement";
 import { projectWildsCivicHistory, type WildsCivicEvent } from "./wilds-civic-history";
 import { projectWildsEcologyHistory, type WildsEcologyKnowledge, type WildsEcologyReceipt } from "./wilds-ecology-history";
 import type { WildsEcologyFamilyId } from "./wilds-ecology";
+import { projectWildsRaidHistory, type WildsBossKnowledge, type WildsRaidReceipt } from "./wilds-raid-history";
+import type { WildsBossFamilyId } from "./wilds-boss-ecology";
 
 export type GameAction = "explore" | "train" | "mission";
 export type MoveDirection = "north" | "south" | "west" | "east";
@@ -43,6 +45,7 @@ export type WildsInput =
   | { type: "record-growth"; assetId: string; event: GrowthEvent }
   | { type: "record-civic-event"; event: WildsCivicEvent }
   | { type: "record-ecology-event"; event: WildsEcologyReceipt }
+  | { type: "record-raid-event"; event: WildsRaidReceipt }
   | { type: "ascend-card"; assetId: string; at: string }
   | { type: "finish-transformation" }
   | { type: "finish-lineage-reveal" }
@@ -142,6 +145,10 @@ export type PlayState = {
   ecologyEvents: WildsEcologyReceipt[];
   ecologyKnowledge: Record<string, WildsEcologyKnowledge>;
   ecologyMastery: Record<WildsEcologyFamilyId, number>;
+  raidEvents: WildsRaidReceipt[];
+  bossKnowledge: Record<string, WildsBossKnowledge>;
+  bossMastery: Record<WildsBossFamilyId, number>;
+  raidAchievements: string[];
 };
 
 export const worldBounds = {
@@ -283,11 +290,15 @@ export const initialPlayState: PlayState = {
   regionalReputation: {},
   ecologyEvents: [],
   ecologyKnowledge: {},
-  ecologyMastery: projectWildsEcologyHistory([]).mastery
+  ecologyMastery: projectWildsEcologyHistory([]).mastery,
+  raidEvents: [],
+  bossKnowledge: {},
+  bossMastery: projectWildsRaidHistory([]).mastery,
+  raidAchievements: []
 };
 
-const PLAY_SAVE_SCHEMA = "receiz.wilds.save.v7";
-const LEGACY_PLAY_SAVE_SCHEMAS = new Set(["receiz.wilds.save.v2", "receiz.wilds.save.v3", "receiz.wilds.save.v4", "receiz.wilds.save.v5", "receiz.wilds.save.v6"]);
+const PLAY_SAVE_SCHEMA = "receiz.wilds.save.v8";
+const LEGACY_PLAY_SAVE_SCHEMAS = new Set(["receiz.wilds.save.v2", "receiz.wilds.save.v3", "receiz.wilds.save.v4", "receiz.wilds.save.v5", "receiz.wilds.save.v6", "receiz.wilds.save.v7"]);
 
 export function serializePlayState(state: PlayState) {
   return JSON.stringify({ schema: PLAY_SAVE_SCHEMA, state });
@@ -339,6 +350,7 @@ export function restorePlayState(value: string | null | undefined): PlayState {
     const migratedInventory = admitAndMergeInventory(inventoryWithMigrations);
     const civicProjection = projectWildsCivicHistory(Array.isArray(saved.civicEvents) ? saved.civicEvents.slice(-2_048) : []);
     const ecologyProjection = projectWildsEcologyHistory(Array.isArray(saved.ecologyEvents) ? saved.ecologyEvents.slice(-2_048) : []);
+    const raidProjection = projectWildsRaidHistory(Array.isArray(saved.raidEvents) ? saved.raidEvents.slice(-4_096) : []);
     const restoredEncounter = restoreEncounter(saved.encounter);
     const restoredSelectedAssetId = typeof saved.selectedAssetId === "string" && migratedInventory.some((asset) => asset.id === saved.selectedAssetId)
       ? saved.selectedAssetId
@@ -383,7 +395,11 @@ export function restorePlayState(value: string | null | undefined): PlayState {
       regionalReputation: civicProjection.reputation > 0 ? { "wayfinder-hollow": civicProjection.reputation } : {},
       ecologyEvents: ecologyProjection.events,
       ecologyKnowledge: ecologyProjection.knowledge,
-      ecologyMastery: ecologyProjection.mastery
+      ecologyMastery: ecologyProjection.mastery,
+      raidEvents: raidProjection.events,
+      bossKnowledge: raidProjection.knowledge,
+      bossMastery: raidProjection.mastery,
+      raidAchievements: raidProjection.achievements
     });
   } catch {
     return initialPlayState;
@@ -496,6 +512,19 @@ export function applyWildsInput(state: PlayState, input: WildsInput): PlayState 
       ecologyKnowledge: projection.knowledge,
       ecologyMastery: projection.mastery,
       lastEvent: `${input.event.familyId.replaceAll("-", " ")} remembered. Ecology mastery ${projection.mastery[input.event.familyId]}.`
+    };
+  }
+
+  if (input.type === "record-raid-event") {
+    const projection = projectWildsRaidHistory([...state.raidEvents, input.event].slice(-4_096));
+    if (projection.events.length === state.raidEvents.length) return state;
+    return {
+      ...state,
+      raidEvents: projection.events,
+      bossKnowledge: projection.knowledge,
+      bossMastery: projection.mastery,
+      raidAchievements: projection.achievements,
+      lastEvent: `${input.event.familyId.replaceAll("-", " ")} raid remembered. Mastery ${projection.mastery[input.event.familyId]}.`
     };
   }
 
