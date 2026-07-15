@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
+  activeStorefrontProducts,
   normalizeRoutePath,
   resolveBlogPostBySlug,
   resolvePageBySlug,
@@ -35,6 +36,13 @@ describe("storefront content routing", () => {
 
     assert.equal(resolveProductBySlug(state, "house-blend")?.id, "coffee-pack");
     assert.equal(resolveProductBySlug(state, "coffee-pack")?.id, "coffee-pack");
+  });
+
+  it("excludes draft products from every public storefront collection", () => {
+    const active = { ...baseState().products[0]!, id: "live", status: "active" as const };
+    const draft = { ...baseState().products[0]!, id: "hidden", status: "draft" as const };
+
+    assert.deepEqual(activeStorefrontProducts([draft, active]).map((product) => product.id), ["live"]);
   });
 
   it("resolves only published blog posts and pages", () => {

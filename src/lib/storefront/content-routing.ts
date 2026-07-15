@@ -63,6 +63,10 @@ function pageRouteCandidates(page: SitePage) {
   };
 }
 
+export function activeStorefrontProducts(products: Product[]) {
+  return products.filter((product) => product.status === "active");
+}
+
 export function resolveProductBySlug(state: CommerceState, slug: string): Product | null {
   const normalized = slugifyRouteSegment(slug);
   return state.products.find((product) => product.status === "active" && productRouteCandidates(product).has(normalized)) ?? null;

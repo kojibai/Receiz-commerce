@@ -24,7 +24,7 @@ import {
   type ExchangeTradeSide
 } from "@/lib/storefront/proof-exchange";
 import { buildProductPurchaseModel, productRoutePath } from "@/lib/storefront/product-purchase";
-import { resolveProductBySlug } from "@/lib/storefront/content-routing";
+import { activeStorefrontProducts, resolveProductBySlug } from "@/lib/storefront/content-routing";
 import { customerForAccountSurface, customerReceizHandle } from "@/lib/storefront/customer-session";
 import {
   accountRouteActiveFromMobileView,
@@ -108,6 +108,7 @@ export function PublicStorefront({
   const campaignName = state.campaigns[0]?.name ?? "Reward Challenge";
   const homepageMode = state.storefront.homepageMode ?? "store";
   const gameEnabled = state.game.enabled || homepageMode === "game";
+  const storefrontProducts = activeStorefrontProducts(state.products);
   const cartSummary = buildCartSummary(state);
   const selectedProduct = selectedProductSlug ? resolveProductBySlug(state, selectedProductSlug) : null;
   const identityActionsReady = hydrated && !receizSessionPending;
@@ -370,7 +371,7 @@ export function PublicStorefront({
                   addedProductId={cartPulseProductId}
                   brandImageUrl={state.brand.logoImageUrl}
                   brandLabel={state.brand.logoText}
-                  products={state.products}
+                  products={storefrontProducts}
                   onAddToCart={addToCart}
                   onProductOpen={openProductOverlay}
                   showAdminActions={!tenantSurface}
@@ -393,7 +394,7 @@ export function PublicStorefront({
                   addedProductId={cartPulseProductId}
                   brandImageUrl={state.brand.logoImageUrl}
                   brandLabel={state.brand.logoText}
-                  products={state.products}
+                  products={storefrontProducts}
                   onAddToCart={addToCart}
                   onProductOpen={openProductOverlay}
                   showAdminActions={!tenantSurface}
@@ -408,7 +409,7 @@ export function PublicStorefront({
                   addedProductId={cartPulseProductId}
                   brandImageUrl={state.brand.logoImageUrl}
                   brandLabel={state.brand.logoText}
-                  products={state.products}
+                  products={storefrontProducts}
                   onAddToCart={addToCart}
                   onProductOpen={openProductOverlay}
                   showAdminActions={!tenantSurface}
@@ -460,7 +461,7 @@ export function PublicStorefront({
                   addedProductId={cartPulseProductId}
                   brandImageUrl={state.brand.logoImageUrl}
                   brandLabel={state.brand.logoText}
-                  products={state.products}
+                  products={storefrontProducts}
                   onAddToCart={addToCart}
                   onProductOpen={openProductOverlay}
                   showAdminActions={!tenantSurface}
@@ -550,6 +551,7 @@ export function PublicStorefront({
           tenantSurface={tenantSurface}
           mobileCampaign={compactLayout ? campaign : null}
           reward={reward}
+          products={storefrontProducts}
           state={state}
         />
         {selectedProduct ? (
@@ -930,6 +932,7 @@ function MobileStage({
   onSeal,
   onShippingSave,
   reward,
+  products,
   showIdentityEntry,
   showIdentityUpload,
   state,
@@ -961,6 +964,7 @@ function MobileStage({
   onSeal: () => void;
   onShippingSave: (orderId: string, shipping: NonNullable<Order["shipping"]>) => void;
   reward: Reward | null;
+  products: Product[];
   showIdentityEntry: boolean;
   showIdentityUpload: boolean;
   state: CommerceState;
@@ -977,7 +981,7 @@ function MobileStage({
         onCheckout={onCheckout}
         onProductOpen={onProductOpen}
         onSeal={onSeal}
-        products={state.products}
+        products={products}
         state={state}
         tenantSurface={tenantSurface}
       />
