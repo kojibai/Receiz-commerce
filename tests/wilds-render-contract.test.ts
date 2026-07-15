@@ -129,6 +129,28 @@ describe("Receiz Wilds rendering contract", () => {
     assert.match(world, /<WildsEnvironment/);
   });
 
+  it("builds Wayfinder Hollow inside the shared canvas from canonical world truth", async () => {
+    const settlement = await readFile("src/features/play/WildsSettlementEnvironment.tsx", "utf8");
+    const environment = await readFile("src/features/play/WildsEnvironment.tsx", "utf8");
+    const world = await readFile("src/features/play/WildsWorldCanvas.tsx", "utf8");
+
+    assert.match(settlement, /name="wayfinder-hollow-settlement"/);
+    assert.match(settlement, /name="district-trail-gate"/);
+    assert.match(settlement, /name="district-dawn-commons"/);
+    assert.match(settlement, /name="district-mosslight-atelier"/);
+    assert.match(settlement, /name="district-cartographer-house"/);
+    assert.match(settlement, /name="district-monument-walk"/);
+    assert.match(settlement, /useMemo/);
+    assert.match(settlement, /instancedMesh/);
+    assert.match(settlement, /defeatedBossIds/);
+    assert.match(settlement, /Canonical world memory/);
+    assert.match(settlement, /Practice memory/);
+    assert.doesNotMatch(settlement, /<Canvas/);
+    assert.match(environment, /<WildsSettlementEnvironment/);
+    assert.match(environment, /landmark\.id === "wayfinder-hollow"/);
+    assert.match(world, /worldMode/);
+  });
+
   it("builds the explorer from articulated anatomy and secondary motion", async () => {
     const explorer = await readFile("src/features/play/WildsExplorer.tsx", "utf8");
     const world = await readFile("src/features/play/WildsWorldCanvas.tsx", "utf8");

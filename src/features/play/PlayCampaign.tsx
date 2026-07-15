@@ -489,6 +489,7 @@ export function PlayCampaign({
               qualityProfile={qualityProfile}
               searchEnabled={discoveryActive && Boolean(avatarStyle)}
               livingWorld={livingWorld.snapshot}
+              worldMode={livingWorld.mode === "receiz_live" ? "receiz_live" : livingWorld.mode === "local_practice" ? "local_practice" : "connecting"}
               onCameraHeadingChange={setCameraHeading}
               onSelectPlayer={multiplayer.selectPlayer}
               onSearchPoint={(point) => {

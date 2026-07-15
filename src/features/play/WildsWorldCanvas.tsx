@@ -22,6 +22,7 @@ import {
   type WildsQualityProfile
 } from "@/features/play/wilds-quality-profile";
 import type { WildsWorldProjection } from "@/features/play/wilds-world-state";
+import type { WildsSettlementWorldMode } from "@/features/play/WildsSettlementEnvironment";
 
 export function WildsWorldCanvas({
   state,
@@ -32,7 +33,8 @@ export function WildsWorldCanvas({
   onCameraHeadingChange,
   onSelectPlayer,
   onSearchPoint,
-  livingWorld
+  livingWorld,
+  worldMode
 }: {
   state: PlayState;
   avatarStyle: "female" | "male";
@@ -43,6 +45,7 @@ export function WildsWorldCanvas({
   onSelectPlayer: (player: WildsPresence | null) => void;
   onSearchPoint: (point: { x: number; z: number }) => void;
   livingWorld?: WildsWorldProjection | null;
+  worldMode: WildsSettlementWorldMode;
 }) {
   return (
     <div className={`wilds-canvas-wrap${searchEnabled ? " search-armed" : ""}`}>
@@ -59,7 +62,7 @@ export function WildsWorldCanvas({
         shadows={{ type: THREE.PCFShadowMap }}
       >
         <Suspense fallback={null}>
-          <WildsScene state={state} avatarStyle={avatarStyle} remotePlayers={remotePlayers} qualityProfile={qualityProfile} searchEnabled={searchEnabled} onCameraHeadingChange={onCameraHeadingChange} onSelectPlayer={onSelectPlayer} onSearchPoint={onSearchPoint} livingWorld={livingWorld} />
+          <WildsScene state={state} avatarStyle={avatarStyle} remotePlayers={remotePlayers} qualityProfile={qualityProfile} searchEnabled={searchEnabled} onCameraHeadingChange={onCameraHeadingChange} onSelectPlayer={onSelectPlayer} onSearchPoint={onSearchPoint} livingWorld={livingWorld} worldMode={worldMode} />
         </Suspense>
       </Canvas>
     </div>
@@ -75,7 +78,8 @@ function WildsScene({
   onCameraHeadingChange,
   onSelectPlayer,
   onSearchPoint,
-  livingWorld
+  livingWorld,
+  worldMode
 }: {
   state: PlayState;
   avatarStyle: "female" | "male";
@@ -86,6 +90,7 @@ function WildsScene({
   onSelectPlayer: (player: WildsPresence | null) => void;
   onSearchPoint: (point: { x: number; z: number }) => void;
   livingWorld?: WildsWorldProjection | null;
+  worldMode: WildsSettlementWorldMode;
 }) {
   const world = projectWorldProgression(state.worldMastery);
   return (
@@ -103,6 +108,7 @@ function WildsScene({
         qualityProfile={qualityProfile}
         worldMastery={state.worldMastery}
         livingWorld={livingWorld}
+        worldMode={worldMode}
       />
       <EncounterSequence state={state} />
       {remotePlayers.map((player) => <RemoteExplorer key={player.playerId} player={player} localPlayer={state.player} onSelect={onSelectPlayer} />)}
@@ -186,7 +192,8 @@ function SearchableTerrain({
   qualityProfile,
   worldMastery,
   onSearchPoint,
-  livingWorld
+  livingWorld,
+  worldMode
 }: {
   player: PlayState["player"];
   enabled: boolean;
@@ -195,6 +202,7 @@ function SearchableTerrain({
   worldMastery: number;
   onSearchPoint: (point: { x: number; z: number }) => void;
   livingWorld?: WildsWorldProjection | null;
+  worldMode: WildsSettlementWorldMode;
 }) {
   return (
     <group
@@ -204,7 +212,7 @@ function SearchableTerrain({
         onSearchPoint({ x: player.x + event.point.x, z: player.z + event.point.z });
       }}
     >
-      <StreamedTerrain missionProgress={missionProgress} player={player} qualityProfile={qualityProfile} worldMastery={worldMastery} livingWorld={livingWorld} />
+      <StreamedTerrain missionProgress={missionProgress} player={player} qualityProfile={qualityProfile} worldMastery={worldMastery} livingWorld={livingWorld} worldMode={worldMode} />
     </group>
   );
 }
@@ -214,15 +222,17 @@ function StreamedTerrain({
   player,
   qualityProfile,
   worldMastery,
-  livingWorld
+  livingWorld,
+  worldMode
 }: {
   missionProgress: number;
   player: PlayState["player"];
   qualityProfile: WildsQualityProfile;
   worldMastery: number;
   livingWorld?: WildsWorldProjection | null;
+  worldMode: WildsSettlementWorldMode;
 }) {
-  return <WildsEnvironment missionProgress={missionProgress} player={player} qualityProfile={qualityProfile} worldMastery={worldMastery} livingWorld={livingWorld} />;
+  return <WildsEnvironment missionProgress={missionProgress} player={player} qualityProfile={qualityProfile} worldMastery={worldMastery} livingWorld={livingWorld} worldMode={worldMode} />;
 }
 
 function Creature({ card, formId = `${card.id}-1`, pose = "idle" }: { card: CreatureCard; formId?: string; pose?: WildsCreaturePose }) {
