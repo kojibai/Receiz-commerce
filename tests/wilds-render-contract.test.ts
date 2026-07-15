@@ -47,6 +47,20 @@ describe("Receiz Wilds rendering contract", () => {
     assert.doesNotMatch(route, /activeCard/);
   });
 
+  it("opens Hearttree as a full-screen proof-pinned landmark experience", async () => {
+    const campaign = await readFile("src/features/play/PlayCampaign.tsx", "utf8");
+    const experience = await readFile("src/features/play/WildsLandmarkExperience.tsx", "utf8");
+    const css = await readFile("app/globals.css", "utf8");
+
+    assert.match(campaign, /<WildsLandmarkExperience/);
+    assert.match(experience, /role="dialog"/);
+    assert.match(experience, /createPortal/);
+    assert.match(experience, /aria-label="Return to world"/);
+    assert.match(experience, /createHearttreeTrial/);
+    assert.match(experience, /card\.proof\.digest/);
+    assert.match(css, /\.wilds-landmark-experience\s*\{[^}]*position:\s*fixed;[^}]*height:\s*100dvh;[^}]*overflow:\s*hidden/s);
+  });
+
   it("layers an authored biome around meaningful landmarks", async () => {
     const environment = await readFile("src/features/play/WildsEnvironment.tsx", "utf8");
     const world = await readFile("src/features/play/WildsWorldCanvas.tsx", "utf8");

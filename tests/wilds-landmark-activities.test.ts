@@ -9,6 +9,7 @@ import {
   resolveActivityResult
 } from "../src/features/play/wilds-activity-core";
 import { sealCollectedCard } from "../src/features/play/portable-card";
+import { applyHearttreeIntent, createHearttreeTrial } from "../src/features/play/hearttree-trial";
 
 const now = "2026-07-15T12:00:00.000Z";
 const card = sealCollectedCard({
@@ -56,5 +57,17 @@ describe("Wilds landmark activity lifecycle", () => {
     const exited = exitActivity(rewarded, "player-1", "exit");
     assert.equal(exited.phase, "exited");
     assert.deepEqual(exited.returnCoordinate, { x: 7, z: -4 });
+  });
+
+  it("replays a Hearttree trial and grants one bounded mastery reward", () => {
+    const intents = ["pulse", "north", "guard", "ability:0"] as const;
+    const first = intents.reduce(applyHearttreeIntent, createHearttreeTrial("hearttree-seed", card));
+    const replay = intents.reduce(applyHearttreeIntent, createHearttreeTrial("hearttree-seed", card));
+
+    assert.deepEqual(replay, first);
+    assert.equal(first.phase, "result");
+    assert.equal(first.reward?.kind, "achievement");
+    assert.equal(new Set(first.events.map((event) => event.id)).size, first.events.length);
+    assert.equal(first.admittedProofDigest, card.proof.digest);
   });
 });

@@ -30,6 +30,7 @@ import { projectWorldProgression } from "@/features/play/world-progression";
 import { WildsCommandDock, type WildsCommandItem } from "@/features/play/WildsCommandDock";
 import { WildsWorldMap } from "@/features/play/WildsWorldMap";
 import { WildsWorldControls } from "@/features/play/WildsWorldControls";
+import { WildsLandmarkExperience } from "@/features/play/WildsLandmarkExperience";
 import { normalizeWildsMovementMode, WILDS_MOVEMENT_MODE_KEY, type WildsMovementMode } from "@/features/play/wilds-movement";
 import { resolveWildsContextAction } from "@/features/play/wilds-context-action";
 import { landmarkAtPosition, type WildsLandmarkId } from "@/features/play/wilds-landmarks";
@@ -535,6 +536,11 @@ export function PlayCampaign({
         reducedMotion={reducedMotion}
         remotePlayers={multiplayer.remotePlayers}
         worldMastery={state.worldMastery}
+      />
+      <WildsLandmarkExperience
+        card={activeAsset}
+        landmarkId={activeLandmarkId}
+        onExit={() => setActiveLandmarkId(null)}
       />
       <WildsCaptureReward asset={rewardAsset} onClose={() => {
         setRewardAsset(null);

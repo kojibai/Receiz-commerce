@@ -11531,6 +11531,85 @@ button.product-purchase-secondary-link {
   .wilds-control-flank { transition: none; }
 }
 
+/* Enterable Wilds landmarks */
+.wilds-landmark-experience {
+  position: fixed;
+  inset: 0;
+  z-index: 6100;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  min-width: 0;
+  height: 100dvh;
+  overflow: hidden;
+  color: #effff8;
+  background: #061613;
+  isolation: isolate;
+}
+.wilds-landmark-header {
+  z-index: 4;
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: max(12px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) 10px max(14px, env(safe-area-inset-left));
+  background: linear-gradient(180deg, rgb(3 18 15 / 92%), rgb(3 18 15 / 35%));
+}
+.wilds-landmark-header h2 { margin: 2px 0 0; font-size: clamp(20px, 3vw, 32px); line-height: 1; }
+.wilds-landmark-header .eyebrow { color: #7cf0be; }
+.wilds-landmark-header > button { display: grid; flex: 0 0 44px; width: 44px; height: 44px; place-items: center; color: #eafff8; border: 1px solid rgb(126 240 190 / 25%); border-radius: 15px; background: rgb(6 35 28 / 78%); backdrop-filter: blur(18px); }
+.wilds-hearttree-world {
+  position: relative;
+  min-height: 0;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 48%, rgb(115 255 184 / 24%), transparent 24%),
+    radial-gradient(circle at 18% 22%, rgb(88 211 255 / 13%), transparent 30%),
+    linear-gradient(180deg, #071b18, #0b3023 64%, #061611);
+  perspective: 900px;
+}
+.wilds-hearttree-world::before { position: absolute; inset: 0; opacity: .34; background-image: radial-gradient(circle, #a6ffe0 0 1px, transparent 1.5px); background-size: 42px 42px; mask-image: linear-gradient(#000, transparent 85%); content: ""; }
+.wilds-hearttree-aurora { position: absolute; top: 5%; left: 50%; width: min(82vw, 740px); height: 54%; border: 2px solid rgb(121 255 193 / 18%); border-radius: 50%; filter: drop-shadow(0 0 36px rgb(93 255 186 / 28%)); transform: translateX(-50%) rotateX(62deg); }
+.wilds-hearttree-trunk { position: absolute; bottom: 6%; left: 50%; width: clamp(110px, 24vw, 220px); height: 72%; border-radius: 48% 48% 20% 20%; background: linear-gradient(90deg, #173d27, #8bd168 48%, #204b2c); box-shadow: 0 0 90px rgb(100 255 180 / 22%), inset 0 0 34px rgb(6 29 19 / 65%); clip-path: polygon(38% 100%, 46% 48%, 18% 35%, 42% 35%, 49% 0, 56% 35%, 84% 22%, 60% 49%, 68% 100%); transform: translateX(-50%); }
+.wilds-hearttree-trunk i { position: absolute; width: 16px; height: 16px; border: 2px solid #eaffb6; border-radius: 50%; background: #7bf0bd; box-shadow: 0 0 24px #7bf0bd; }
+.wilds-hearttree-trunk i:nth-child(1) { top: 32%; left: 42%; }
+.wilds-hearttree-trunk i:nth-child(2) { top: 53%; left: 54%; }
+.wilds-hearttree-trunk i:nth-child(3) { top: 69%; left: 43%; }
+.wilds-hearttree-orbit { position: absolute; top: 12%; left: 50%; width: min(68vw, 520px); aspect-ratio: 1; border: 1px solid rgb(124 240 190 / 22%); border-radius: 50%; transform: translateX(-50%) rotateX(66deg); }
+.wilds-hearttree-orbit i { position: absolute; width: 10px; height: 10px; border-radius: 50%; background: #f7d25b; box-shadow: 0 0 18px #f7d25b; }
+.wilds-hearttree-orbit i:nth-child(1) { top: 10%; left: 28%; }
+.wilds-hearttree-orbit i:nth-child(2) { top: 54%; right: -5px; background: #72dfff; box-shadow: 0 0 18px #72dfff; }
+.wilds-hearttree-orbit i:nth-child(3) { bottom: 4%; left: 23%; background: #ff72bf; box-shadow: 0 0 18px #ff72bf; }
+.wilds-hearttree-status { position: absolute; top: 14px; left: max(14px, env(safe-area-inset-left)); display: grid; max-width: min(360px, calc(100% - 28px)); gap: 4px; padding: 13px 15px; border: 1px solid rgb(121 255 193 / 20%); border-radius: 19px; background: rgb(4 27 22 / 78%); box-shadow: 0 18px 46px rgb(0 0 0 / 25%); backdrop-filter: blur(18px); }
+.wilds-hearttree-status span { color: #7cf0be; font-size: 9px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
+.wilds-hearttree-status strong { font-size: 19px; }
+.wilds-hearttree-status p { margin: 2px 0 0; color: #a9c8be; font-size: 11px; line-height: 1.35; }
+.wilds-hearttree-card-pin { position: absolute; right: max(14px, env(safe-area-inset-right)); bottom: 14px; display: flex; max-width: calc(100% - 28px); align-items: center; gap: 10px; padding: 9px 12px; border: 1px solid rgb(247 210 91 / 24%); border-radius: 17px; background: rgb(5 25 22 / 80%); box-shadow: 0 16px 42px rgb(0 0 0 / 28%); backdrop-filter: blur(18px); }
+.wilds-hearttree-card-pin > span { display: grid; width: 38px; height: 38px; place-items: center; border-radius: 13px; color: white; font-size: 11px; font-weight: 950; }
+.wilds-hearttree-card-pin > div { display: grid; min-width: 0; }
+.wilds-hearttree-card-pin small { color: #7cf0be; font-size: 8px; text-transform: uppercase; }
+.wilds-hearttree-card-pin strong { font-size: 12px; }
+.wilds-hearttree-card-pin code { color: #789b90; font-size: 8px; }
+.wilds-landmark-actions { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 7px; padding: 8px max(10px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left)); background: #061a15; }
+.wilds-landmark-actions > button { display: flex; min-width: 0; min-height: 58px; align-items: center; justify-content: center; gap: 8px; padding: 7px; color: #dffff3; border: 1px solid rgb(121 255 193 / 17%); border-radius: 16px; background: rgb(255 255 255 / 6%); }
+.wilds-landmark-actions > button:disabled { opacity: .3; }
+.wilds-landmark-actions > button span { display: grid; min-width: 0; text-align: left; }
+.wilds-landmark-actions > button strong { font-size: 11px; }
+.wilds-landmark-actions > button small { color: #789b90; font-size: 8px; }
+.wilds-landmark-actions > .wilds-landmark-primary { grid-column: 1 / -1; color: #062118; background: linear-gradient(135deg, #f7d25b, #71e8c3); }
+.wilds-landmark-actions > .wilds-landmark-primary small { color: rgb(6 33 24 / 64%); }
+@media (max-width: 430px) {
+  .wilds-hearttree-status { top: 8px; right: 10px; left: 10px; max-width: none; padding: 10px 12px; }
+  .wilds-hearttree-status strong { font-size: 16px; }
+  .wilds-hearttree-card-pin { right: 10px; bottom: 8px; }
+  .wilds-landmark-actions { gap: 4px; padding-right: 7px; padding-left: 7px; }
+  .wilds-landmark-actions > button { min-height: 56px; gap: 4px; padding: 5px 3px; }
+  .wilds-landmark-actions > button svg { width: 16px; }
+  .wilds-landmark-actions > button strong { font-size: 9px; }
+  .wilds-landmark-actions > button small { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { .wilds-hearttree-aurora, .wilds-hearttree-orbit { animation: none; } }
+
 .wilds-collectible-card {
   --card-primary: #38d989;
   --card-accent: #f5d36c;
