@@ -2823,6 +2823,7 @@ a {
 .wilds-living-world-sheet input { min-width: 0; min-height: 44px; padding: 0 11px; border: 1px solid rgba(255,255,255,.16); border-radius: 12px; color: #fff; background: rgba(255,255,255,.07); }
 .wilds-world-boss-label { display: block; padding: 5px 8px; border: 1px solid rgba(255,255,255,.24); border-radius: 999px; color: #fff; background: rgba(20,8,34,.84); font-size: 8px; font-weight: 900; white-space: nowrap; }
 .wilds-movement-mode.active { color: #071a1e; background: linear-gradient(145deg, #f7d25b, #6fe6bd); }
+.wilds-dash-action { color: #fff2a8; border-color: rgba(247, 201, 72, 0.5); }
 .wilds-pulse-action { color: #f7d25b; box-shadow: 0 0 0 1px rgba(247, 201, 72, 0.08), 0 10px 26px rgba(45, 218, 175, 0.16); }
 .wilds-pulse-action::after { position: absolute; width: 22px; height: 22px; border: 1px solid currentColor; border-radius: 50%; opacity: 0.32; content: ""; animation: wilds-pulse-ring 2.2s ease-out infinite; }
 .wilds-pulse-action.pulse-enter { color: #ff72bf; }

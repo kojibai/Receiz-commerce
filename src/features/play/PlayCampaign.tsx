@@ -727,10 +727,9 @@ export function PlayCampaign({
             onInput={dispatch}
             onMission={() => dispatch({ type: "mission" })}
             onMovementModeChange={setMovementMode}
-            onDiscover={() => dispatch({ type: "discover" })}
+            onDash={() => dispatch({ type: "dash", heading: cameraHeading })}
             onPulse={activatePulse}
             onRest={() => dispatch({ type: "rest" })}
-            onCollectEnergy={() => dispatch({ type: "collect-energy" })}
             onTrain={() => dispatch({ type: "train", at: new Date().toISOString() })}
             pulse={visiblePulse}
           />

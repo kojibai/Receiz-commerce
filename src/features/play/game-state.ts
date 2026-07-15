@@ -29,6 +29,7 @@ export type MoveDirection = "north" | "south" | "west" | "east";
 export type WildsInput =
   | { type: "move"; direction: MoveDirection }
   | { type: "move-vector"; x: number; z: number; mode?: WildsMovementMode }
+  | { type: "dash"; heading: number }
   | { type: "apply-rift-grant"; grant: RiftTravelGrant; playerId: string }
   | { type: "discover" }
   | { type: "capture"; encounterId: string; capturedAt: string; ownerReceizId: string }
@@ -907,6 +908,22 @@ export function applyWildsInput(state: PlayState, input: WildsInput): PlayState 
       occurredAt: new Date(Date.UTC(2026, 6, 13, 12, Math.abs(Math.floor(nextPlayer.x / 8)) % 60, Math.abs(Math.floor(nextPlayer.z / 8)) % 60)).toISOString()
     });
     return awardWorldMastery({ ...progressed, lastEvent: nearbyText }, "travel");
+  }
+
+  if (input.type === "dash") {
+    if (!Number.isFinite(input.heading)) return state;
+    if (state.energy < 3) return { ...state, lastEvent: "Not enough energy to dash. Find a gold crystal or make camp." };
+    const heading = input.heading;
+    const nextPlayer = movePlayerVector(state.player, Math.sin(heading), Math.cos(heading), 6);
+    return {
+      ...state,
+      activeAction: "explore",
+      player: nextPlayer,
+      energy: state.energy - 3,
+      combo: state.combo + 1,
+      lastEvent: "Quick dash complete. Keep exploring.",
+      missionProgress: Math.min(100, state.missionProgress + 1)
+    };
   }
 
   if (input.type === "rest") {

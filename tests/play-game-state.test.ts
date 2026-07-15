@@ -43,6 +43,13 @@ describe("Receiz Wilds game state", () => {
     assert.match(walking.lastEvent, /Gold crystal collected/);
   });
 
+  it("uses a camera-facing quick dash as a real exploration action", () => {
+    const dashed = applyWildsInput(initialPlayState, { type: "dash", heading: 0 });
+    assert.equal(dashed.player.z > initialPlayState.player.z, true);
+    assert.equal(dashed.energy, initialPlayState.energy - 3);
+    assert.match(dashed.lastEvent, /Quick dash/);
+  });
+
   it("appends an earned Ascension under the stable card id and consumes its catalyst once", () => {
     const legacy = sealCollectedCard({ formId: "mintcub-1", ownerReceizId: "wilds.player.receiz.id", encounterId: "ascension-game", capturedAt: "2026-07-10T15:00:00.000Z" });
     const birth = admitLegacyCard(legacy, "2026-07-10T15:00:00.000Z");
