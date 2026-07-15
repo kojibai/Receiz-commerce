@@ -126,7 +126,7 @@ function WildsScene({
       />
       <WildsEcologyEnvironment livingWorld={livingWorld} player={state.player} worldMode={worldMode} />
       <WildsBossEnvironment livingWorld={livingWorld} player={state.player} qualityProfile={qualityProfile} />
-      <EncounterSequence state={state} />
+      <EncounterSequence state={state} onCollectEnergy={onCollectEnergy} />
       {remotePlayers.map((player) => <RemoteExplorer key={player.playerId} player={player} localPlayer={state.player} onSelect={onSelectPlayer} />)}
       <WildsExplorer style={avatarStyle} worldPosition={state.player} />
       <Sparkles count={Math.round(54 * qualityProfile.particles)} scale={[8, 2.4, 8]} size={2.1} speed={0.22} color="#fff5b6" />
@@ -307,7 +307,7 @@ function Creature({ card, formId = `${card.id}-1`, pose = "idle" }: { card: Crea
   );
 }
 
-function EncounterSequence({ state }: { state: PlayState }) {
+function EncounterSequence({ state, onCollectEnergy }: { state: PlayState; onCollectEnergy: (crystalId: string) => void }) {
   const encounter = state.encounter;
   if (encounter.phase === "idle") return null;
   const position: [number, number, number] = [
@@ -322,7 +322,7 @@ function EncounterSequence({ state }: { state: PlayState }) {
     return (
       <>
         <SearchPulse hint position={position} />
-        <RustlingClue encounter={encounter} player={state.player} />
+        <RustlingClue encounter={encounter} player={state.player} onCollectEnergy={onCollectEnergy} />
       </>
     );
   }
@@ -337,7 +337,7 @@ function EncounterSequence({ state }: { state: PlayState }) {
         : encounter.phase === "battle_intro" ? "curious"
           : "idle";
   return (
-    <group position={position}>
+    <group position={position} onClick={(event) => { event.stopPropagation(); if (encounter.hotspotId && encounter.cover === "energy") onCollectEnergy(encounter.hotspotId); }}>
       <SearchPulse hint position={[0, 0, 0]} />
       <HabitatCover cover={encounter.cover} open={encounter.phase !== "emerging"} />
       <group scale={encounter.phase === "capsule" ? 0.68 : encounter.phase === "sealed" || encounter.phase === "revealed" ? 0.01 : 1}>
@@ -352,10 +352,12 @@ function EncounterSequence({ state }: { state: PlayState }) {
 
 function RustlingClue({
   encounter,
-  player
+  player,
+  onCollectEnergy
 }: {
   encounter: Exclude<PlayState["encounter"], { phase: "idle" }>;
   player: PlayState["player"];
+  onCollectEnergy: (crystalId: string) => void;
 }) {
   const ref = useRef<THREE.Group>(null);
   const hot = encounter.proximity === "hot";
@@ -379,7 +381,7 @@ function RustlingClue({
 
   if (!encounter.cover) return null;
   return (
-    <group ref={ref} position={position}>
+    <group ref={ref} position={position} onClick={(event) => { event.stopPropagation(); if (encounter.hotspotId && encounter.cover === "energy") onCollectEnergy(encounter.hotspotId); }}>
       <HabitatCover cover={encounter.cover} open={false} />
       <Sparkles
         count={hot ? 18 : 9}
