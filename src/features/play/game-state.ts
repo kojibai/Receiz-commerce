@@ -17,12 +17,13 @@ import { isLivingCardAsset, type GrowthPath, type LivingGrowthSnapshot } from ".
 import { createLivingChildTransaction, lineageEligibility } from "./living-lineage";
 import { worldMasteryAward, type WorldMasteryVerb } from "./world-progression";
 import { validateRiftGrant, type RiftTravelGrant } from "./wilds-rift-travel";
+import { movementScale, type WildsMovementMode } from "./wilds-movement";
 
 export type GameAction = "explore" | "train" | "mission";
 export type MoveDirection = "north" | "south" | "west" | "east";
 export type WildsInput =
   | { type: "move"; direction: MoveDirection }
-  | { type: "move-vector"; x: number; z: number }
+  | { type: "move-vector"; x: number; z: number; mode?: WildsMovementMode }
   | { type: "apply-rift-grant"; grant: RiftTravelGrant; playerId: string; appliedAt: string }
   | { type: "discover" }
   | { type: "capture"; encounterId: string; capturedAt: string; ownerReceizId: string }
@@ -787,7 +788,7 @@ export function applyWildsInput(state: PlayState, input: WildsInput): PlayState 
   if (input.type === "move" || input.type === "move-vector") {
     const nextPlayer = input.type === "move"
       ? movePlayer(state.player, input.direction)
-      : movePlayerVector(state.player, input.x, input.z);
+      : movePlayerVector(state.player, input.x, input.z, movementScale(input.mode ?? "walk"));
     const nearest = nearestCreature({ player: nextPlayer });
     const nearbyText =
       nearest.distance <= 1.25
@@ -1009,12 +1010,12 @@ function movePlayer(player: PlayState["player"], direction: MoveDirection) {
   };
 }
 
-function movePlayerVector(player: PlayState["player"], x: number, z: number) {
+function movePlayerVector(player: PlayState["player"], x: number, z: number, movementMultiplier: number) {
   const safeX = Number.isFinite(x) ? x : 0;
   const safeZ = Number.isFinite(z) ? z : 0;
   const magnitude = Math.hypot(safeX, safeZ);
   if (magnitude < 0.08) return player;
-  const scale = worldBounds.analogStep / Math.max(1, magnitude);
+  const scale = worldBounds.analogStep * movementMultiplier / Math.max(1, magnitude);
   return {
     x: clamp(player.x + safeX * scale, worldBounds.min, worldBounds.max),
     z: clamp(player.z + safeZ * scale, worldBounds.min, worldBounds.max)
