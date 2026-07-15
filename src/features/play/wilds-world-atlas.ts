@@ -9,6 +9,8 @@ import {
 } from "./multiplayer-core";
 import { WILDS_FLAGSHIP_LANDMARKS, type WildsLandmarkDefinition, type WildsLandmarkId } from "./wilds-landmarks";
 import type { WildsWorldSiteProjection } from "./wilds-world-state";
+import type { WildsWorldEcologyProjection } from "./wilds-world-state";
+import type { WildsEcologyKnowledge, WildsEcologyKnowledgeVisibility } from "./wilds-ecology-history";
 
 export type WildsAtlasZoom = "world" | "region" | "landmark";
 
@@ -41,7 +43,17 @@ export type WildsAtlasProjection = {
   exactPlayers: WildsAtlasExactPlayer[];
   playerClusters: WildsAtlasPlayerCluster[];
   dynamicSites: (WildsWorldSiteProjection & { visibility: "signal" | "exact" | "memorial" })[];
+  ecologySites: WildsAtlasEcologySite[];
 };
+
+type WildsAtlasEcologyCommon = Pick<WildsWorldEcologyProjection, "id" | "familyId" | "name" | "phase" | "intensity" | "region" | "radius" | "activityId" | "audioMotif" | "aftermathModule" | "parentSiteId"> & {
+  uncertaintyRadius: number;
+};
+
+export type WildsAtlasEcologySite = WildsAtlasEcologyCommon & (
+  | { visibility: "rumor" | "approximate" }
+  | { visibility: "exact" | "aftermath" | "historical"; position: { x: number; z: number } }
+);
 
 export type WildsAtlasInput = {
   center: { x: number; z: number };
@@ -52,6 +64,8 @@ export type WildsAtlasInput = {
   selfId: string;
   players: WildsPresence[];
   dynamicSites?: readonly WildsWorldSiteProjection[];
+  ecologySites?: readonly WildsWorldEcologyProjection[];
+  ecologyKnowledge?: Record<string, WildsEcologyKnowledge>;
   now?: number;
 };
 
@@ -120,6 +134,34 @@ export function projectWildsAtlas(input: WildsAtlasInput): WildsAtlasProjection 
       .map((site) => ({
         ...site,
         visibility: site.phase === "rumored" ? "signal" as const : site.phase === "memorialized" ? "memorial" as const : "exact" as const
-      }))
+      })),
+    ecologySites: (input.ecologySites ?? [])
+      .filter((site) => site.phase !== "expired")
+      .map((site) => projectEcologySite(site, input.ecologyKnowledge?.[site.id]))
   };
+}
+
+function projectEcologySite(site: WildsWorldEcologyProjection, knowledge?: WildsEcologyKnowledge): WildsAtlasEcologySite {
+  const common: WildsAtlasEcologyCommon = {
+    id: site.id,
+    familyId: site.familyId,
+    name: site.name,
+    phase: site.phase,
+    intensity: site.intensity,
+    region: site.region,
+    radius: site.radius,
+    activityId: site.activityId,
+    audioMotif: site.audioMotif,
+    aftermathModule: site.aftermathModule,
+    parentSiteId: site.parentSiteId,
+    uncertaintyRadius: 0
+  };
+  if (site.phase === "historical") return { ...common, visibility: "historical", position: { ...site.position } };
+  if (site.phase === "aftermath") return { ...common, visibility: "aftermath", position: { ...site.position } };
+  const known = knowledge?.visibility ?? "rumor";
+  if (known === "exact" || known === "aftermath" || known === "historical") {
+    return { ...common, visibility: "exact", position: { ...site.position } };
+  }
+  const visibility: Extract<WildsEcologyKnowledgeVisibility, "rumor" | "approximate"> = known === "approximate" ? "approximate" : "rumor";
+  return { ...common, visibility, uncertaintyRadius: visibility === "rumor" ? WILDS_REGION_SIZE * 0.8 : WILDS_REGION_SIZE * 0.35 };
 }

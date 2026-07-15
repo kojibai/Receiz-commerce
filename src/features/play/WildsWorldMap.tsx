@@ -16,6 +16,7 @@ import type { WildsQualityProfile } from "./wilds-quality-profile";
 import { WildsAtlasCanvas } from "./WildsAtlasCanvas";
 import { describeWildsPoint } from "./wilds-world-geography";
 import type { WildsWorldProjection } from "./wilds-world-state";
+import type { WildsEcologyKnowledge } from "./wilds-ecology-history";
 
 const zoomLevels: readonly WildsAtlasZoom[] = ["world", "region", "landmark"];
 
@@ -31,6 +32,7 @@ export function WildsWorldMap({
   reducedMotion,
   landmarkProgress,
   livingWorld,
+  ecologyKnowledge,
   onClose,
   onRift
 }: {
@@ -45,11 +47,12 @@ export function WildsWorldMap({
   reducedMotion: boolean;
   landmarkProgress: WildsLandmarkProgress;
   livingWorld?: WildsWorldProjection | null;
+  ecologyKnowledge?: Record<string, WildsEcologyKnowledge>;
   onClose: () => void;
   onRift: (destination: { x: number; z: number }) => void | Promise<void>;
 }) {
   const [zoom, setZoom] = useState<WildsAtlasZoom>("world");
-  const [selectedId, setSelectedId] = useState<WildsLandmarkId | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [freeDrop, setFreeDrop] = useState<{ x: number; z: number } | null>(null);
   const [holding, setHolding] = useState(false);
   const [atlasPresence, setAtlasPresence] = useState<{
@@ -68,14 +71,17 @@ export function WildsWorldMap({
     discoveredLandmarkIds,
     selfId: "self",
     players: remotePlayers,
-    dynamicSites: Object.values(livingWorld?.sites ?? {})
-  }), [currentPosition, discoveredLandmarkIds, livingWorld?.sites, missionProgress, remotePlayers, worldMastery, zoom]);
+    dynamicSites: Object.values(livingWorld?.sites ?? {}),
+    ecologySites: Object.values(livingWorld?.ecologySites ?? {}),
+    ecologyKnowledge
+  }), [currentPosition, discoveredLandmarkIds, ecologyKnowledge, livingWorld?.ecologySites, livingWorld?.sites, missionProgress, remotePlayers, worldMastery, zoom]);
   const projection = useMemo(() => atlasPresence.loaded ? {
     ...localProjection,
     exactPlayers: atlasPresence.players,
     playerClusters: atlasPresence.clusters
   } : localProjection, [atlasPresence, localProjection]);
   const selected = projection.landmarks.find((landmark) => landmark.id === selectedId) ?? null;
+  const selectedEcology = projection.ecologySites.find((site) => site.id === selectedId) ?? null;
   const selectedAccess = selected ? evaluateLandmarkAccess(selected, landmarkProgress) : null;
   const freeDropRegion = freeDrop ? describeWildsPoint(freeDrop) : null;
 
@@ -137,12 +143,15 @@ export function WildsWorldMap({
     setHolding(false);
   };
   const startRiftHold = () => {
-    if (!selected || holdTimer.current !== null) return;
+    if ((!selected && !selectedEcology) || holdTimer.current !== null) return;
     setHolding(true);
     holdTimer.current = window.setTimeout(() => {
       holdTimer.current = null;
       setHolding(false);
-      void onRift(landmarkApproachPoint(selected));
+      if (selected) void onRift(landmarkApproachPoint(selected));
+      else if (selectedEcology && "position" in selectedEcology) {
+        void onRift({ x: selectedEcology.position.x + selectedEcology.radius + 4, z: selectedEcology.position.z + selectedEcology.radius + 4 });
+      }
     }, 700);
   };
 
@@ -198,6 +207,22 @@ export function WildsWorldMap({
 
         <aside className="wilds-atlas-destinations" aria-label="World destinations">
           <div className="wilds-atlas-fallback">
+            {projection.ecologySites.map((site) => (
+              <button
+                aria-label={`${site.visibility === "rumor" ? "Investigate" : "Travel near"} ${site.name}`}
+                aria-pressed={selectedId === site.id}
+                key={site.id}
+                onClick={() => {
+                  setFreeDrop(null);
+                  setSelectedId(site.id);
+                }}
+                type="button"
+              >
+                <span style={{ background: site.visibility === "aftermath" || site.visibility === "historical" ? "#9ed8ff" : site.intensity === "high" ? "#ff8c68" : "#7ce0b5" }} />
+                <strong>{site.visibility === "rumor" ? `${site.name} rumor` : site.name}</strong>
+                <small>{site.visibility === "rumor" ? `Region ${site.region.x}, ${site.region.z} · exact location hidden` : site.visibility === "approximate" ? "Signal narrowed · scout on foot" : site.visibility === "aftermath" ? "Canonical aftermath" : "Rift nearby, then discover on foot"}</small>
+              </button>
+            ))}
             {projection.dynamicSites.map((site) => (
               <button
                 aria-label={`Travel near ${site.name}`}
@@ -251,6 +276,36 @@ export function WildsWorldMap({
                   Accept Rift
                 </button>
               </div>
+            </section>
+          ) : selectedEcology ? (
+            <section className="wilds-atlas-destination-card" aria-live="polite">
+              <span className="eyebrow">{selectedEcology.visibility === "rumor" ? "Regional rumor" : selectedEcology.visibility === "approximate" ? "Narrowed signal" : selectedEcology.visibility === "aftermath" ? "World aftermath" : "Discovered ecology"}</span>
+              <h3>{selectedEcology.name}</h3>
+              <p>{selectedEcology.visibility === "rumor" ? `A ${selectedEcology.familyId.replaceAll("-", " ")} signal is moving through region ${selectedEcology.region.x}, ${selectedEcology.region.z}. Scout the region to reveal its exact location.` : `${selectedEcology.activityId.replaceAll("-", " ")} · ${selectedEcology.phase}`}</p>
+              <div className="wilds-atlas-destination-meta">
+                <span>{selectedEcology.familyId.replaceAll("-", " ")}</span>
+                <span>{selectedEcology.intensity}</span>
+                <span>{selectedEcology.visibility}</span>
+              </div>
+              {"position" in selectedEcology ? (
+                <button
+                  aria-label="Hold to Rift near ecology event"
+                  className={`wilds-rift-button${holding ? " is-holding" : ""}`}
+                  onKeyDown={(event) => {
+                    if ((event.key === "Enter" || event.key === " ") && !event.repeat) startRiftHold();
+                  }}
+                  onKeyUp={cancelRiftHold}
+                  onPointerCancel={cancelRiftHold}
+                  onPointerDown={startRiftHold}
+                  onPointerLeave={cancelRiftHold}
+                  onPointerUp={cancelRiftHold}
+                  type="button"
+                >
+                  <Icons.globe aria-hidden="true" size={20} />
+                  <span><strong>{holding ? "Opening Rift…" : "Hold to Rift nearby"}</strong><small>Arrive outside, then approach on foot</small></span>
+                  <i aria-hidden="true" />
+                </button>
+              ) : <p className="wilds-atlas-access-summary">Exact coordinates remain private until physical discovery.</p>}
             </section>
           ) : selected ? (
             <section className="wilds-atlas-destination-card" aria-live="polite">
