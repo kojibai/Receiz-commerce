@@ -2578,7 +2578,7 @@ a {
   position: absolute;
   z-index: 24;
   top: 76px;
-  left: 12px;
+  right: 12px;
   display: flex;
   align-items: flex-start;
   gap: 6px;
@@ -2604,6 +2604,9 @@ a {
 .wilds-map-trigger:focus-visible { border-color: rgba(113, 232, 195, 0.72); background: rgba(20, 63, 65, 0.92); }
 .wilds-map-trigger:focus-visible { outline: 3px solid rgba(255, 242, 168, 0.92); outline-offset: 2px; }
 .wilds-utility-cluster .wilds-audio-sheet { top: calc(100% + 8px); bottom: auto; left: 0; }
+
+/* Keep utility actions on the same outer rail as share, so the playfield
+   reads as one coherent control row on small screens. */
 
 .wilds-audio-overlay .wilds-audio-settings > summary {
   width: 30px;
@@ -11335,6 +11338,12 @@ button.product-purchase-secondary-link {
 .wilds-command-content-lead small { color: #7fa1aa; font-size: 9px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
 .wilds-command-content-lead strong { overflow: hidden; font-size: 14px; text-overflow: ellipsis; white-space: nowrap; }
 .wilds-command-content-lead > b { color: var(--game-gold); font-size: 15px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.wilds-mastery-civilization { display: grid; gap: 8px; padding-top: 2px; }
+.wilds-mastery-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.wilds-mastery-grid span { display: grid; min-width: 0; gap: 3px; padding: 9px; border: 1px solid rgb(131 235 207 / 15%); border-radius: 12px; background: rgb(255 255 255 / 5%); }
+.wilds-mastery-grid small, .wilds-mastery-affinity { color: #7fa1aa; font-size: 8px; font-weight: 850; letter-spacing: .05em; text-transform: uppercase; }
+.wilds-mastery-grid strong { color: #effff9; font-size: 13px; }
+.wilds-mastery-affinity { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .wilds-command-reward-label { color: #f7d25b; font-size: 12px; }
 .wilds-vault-sheet-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; padding-bottom: 2px; }
 .wilds-vault-sheet-heading small { color: #7fa1aa; font-size: 9px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
@@ -11622,7 +11631,9 @@ button.product-purchase-secondary-link {
 @media (max-width: 560px) {
   /* Keep the shared-boss status rail below the Wilds scout chip so its
      buttons and popover never compete with the player identity row. */
-  .mobile-play-wrap .wilds-living-world-hud { top: 58px; right: 8px; width: 164px; max-width: 164px; justify-content: flex-end; }
+  /* Boss/event overlays live in the lower-left safe zone, clear of the
+     scout chip, resource strip, and the right-side share utilities. */
+  .mobile-play-wrap .wilds-living-world-hud { top: auto; right: auto; bottom: 56px; left: 8px; width: min(196px, calc(100% - 16px)); max-width: min(196px, calc(100% - 16px)); justify-content: flex-start; }
   .mobile-play-wrap .wilds-live-pill { min-height: 30px; max-width: 124px; padding: 0 7px; }
   .mobile-play-wrap .wilds-live-pill.event { gap: 4px; padding-inline: 6px; font-size: 9px; }
   .mobile-play-wrap .wilds-live-pill.event b { font-size: 8px; }
@@ -11633,7 +11644,7 @@ button.product-purchase-secondary-link {
 }
 
 @media (max-width: 350px) {
-  .mobile-play-wrap .wilds-living-world-hud.has-event { flex-wrap: wrap; width: 124px; max-width: 124px; }
+  .mobile-play-wrap .wilds-living-world-hud.has-event { flex-wrap: wrap; width: min(196px, calc(100% - 16px)); max-width: min(196px, calc(100% - 16px)); }
   .mobile-play-wrap .wilds-living-world-hud.has-event .wilds-live-pill[class*="mode-"] { display: none; }
   .mobile-play-wrap .wilds-live-event-full { display: none; }
   .mobile-play-wrap .wilds-live-event-compact { display: inline; }

@@ -50,6 +50,8 @@ import { projectWildsRaidRoles } from "@/features/play/wilds-raid-roles";
 import { createWildsRaidReceipt } from "@/features/play/wilds-raid-history";
 import type { WildsRaidEncounterState, WildsRaidIntent } from "@/features/play/wilds-raid-encounter";
 import type { WildsBossFamilyId } from "@/features/play/wilds-boss-ecology";
+import { deriveLoadoutSynergy, projectWildsCardMastery } from "@/features/play/wilds-card-mastery";
+import { lineageSummary } from "@/features/play/wilds-lineage-utility";
 
 const WILDS_SAVE_KEY = "receiz:wilds:save:v2";
 const WILDS_AVATAR_KEY = "receiz:wilds:explorer:v1";
@@ -112,6 +114,9 @@ export function PlayCampaign({
   const activeAsset = selectedAsset(state);
   const deckCards = state.inventory;
   const activeProgress = state.companionProgress[activeCard.id] ?? { level: 1, xp: 0, bond: 0 };
+  const activeMastery = activeAsset ? projectWildsCardMastery(activeAsset) : null;
+  const loadoutSynergy = deriveLoadoutSynergy(deckCards, worldProgression.chapter.name);
+  const activeLineage = activeAsset ? lineageSummary(activeAsset.manifest.lineage) : null;
   const multiplayer = useWildsMultiplayer({
     enabled: enabled && Boolean(avatarStyle) && Boolean(activeAsset),
     style: avatarStyle ?? "female",
@@ -513,6 +518,11 @@ export function PlayCampaign({
               </button>
             ))}
           </div>
+          {activeMastery ? <div className="wilds-mastery-civilization" aria-label="Card mastery civilization">
+            <div className="wilds-command-content-lead"><span><small>Mastery identity</small><strong>{activeMastery.primary} · {activeMastery.secondary}</strong></span><b>L{activeProgress.level}</b></div>
+            <div className="wilds-mastery-grid"><span><small>Region resonance</small><strong>{loadoutSynergy.score}%</strong></span><span><small>Role coverage</small><strong>{loadoutSynergy.coverage}/8</strong></span><span><small>Lineage utility</small><strong>{activeLineage?.utility ?? 1}</strong></span></div>
+            <small className="wilds-mastery-affinity">{activeMastery.affinity} · portable mastery travels with this sealed card</small>
+          </div> : null}
         </div>
       )
     },
