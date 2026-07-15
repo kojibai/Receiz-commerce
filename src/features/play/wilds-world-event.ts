@@ -22,6 +22,12 @@ export type WildsWorldEventKind =
   | "ecology.historicized"
   | "team.created"
   | "team.joined"
+  | "team.invited"
+  | "team.invite_accepted"
+  | "team.role_changed"
+  | "team.event_scheduled"
+  | "team.squad_assembled"
+  | "social.abuse_reported"
   | "league.scored";
 
 export type WildsWorldEvent<T = unknown> = {
@@ -61,6 +67,12 @@ const eventKinds = new Set<WildsWorldEventKind>([
   "ecology.historicized",
   "team.created",
   "team.joined",
+  "team.invited",
+  "team.invite_accepted",
+  "team.role_changed",
+  "team.event_scheduled",
+  "team.squad_assembled",
+  "social.abuse_reported",
   "league.scored"
 ]);
 

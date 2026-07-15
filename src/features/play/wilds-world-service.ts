@@ -7,6 +7,7 @@ import { applyWildsRaidIntent, createWildsRaidEncounter, type WildsRaidIntent } 
 import { admitWildsRaidParticipant, createWildsRaidRound, renewWildsRaidLease, retreatWildsRaidParticipant, settleWildsRaidRound, type WildsRaidRound } from "./wilds-raid-round";
 import type { PortableCardAsset } from "./portable-card";
 import { createWildsTeam, joinWildsTeam, scoreWildsLeague } from "./wilds-team-league";
+import { acceptWildsInvite, assembleWildsSquad, changeWildsRole, inviteWildsPlayer, reportWildsAbuse, scheduleWildsTeamEvent, type WildsSocialTeam } from "./wilds-social-core";
 import { createWildsWorldEvent, type WildsWorldEvent, type WildsWorldEventKind } from "./wilds-world-event";
 import {
   checkpointWildsWorld,
@@ -28,6 +29,13 @@ export type WildsWorldCommand =
   | { type: "raid.contribute"; bossId: string; damage: number; support: number; cardProofDigest: string; commandId: string }
   | { type: "team.create"; name: string; commandId: string }
   | { type: "team.join"; teamId: string; commandId: string }
+  | { type: "team.invite"; teamId: string; inviteeId: string; expiresAt: string; inviteeAccountAgeDays?: number; commandId: string }
+  | { type: "team.invite.accept"; teamId: string; inviteId: string; commandId: string }
+  | { type: "team.role"; teamId: string; playerId: string; role: "captain" | "officer" | "member"; commandId: string }
+  | { type: "team.role.change"; teamId: string; playerId: string; role: "captain" | "officer" | "member"; commandId: string }
+  | { type: "team.event.schedule"; teamId: string; startsAt: string; endsAt: string; commandId: string }
+  | { type: "team.squad.assemble"; teamId: string; eventId: string; playerIds: string[]; commandId: string }
+  | { type: "social.report"; subjectId: string; reason: string; commandId: string }
   | { type: "ecology.discover"; siteId: string; position: { x: number; z: number }; commandId: string }
   | { type: "ecology.contribute"; siteId: string; position: { x: number; z: number }; amount: number; cardProofDigest: string; commandId: string };
 
@@ -292,6 +300,27 @@ export class WildsWorldService {
       const team = this.projection.teams[command.teamId];
       if (!team) throw new Error("wilds_team_missing");
       events.push(this.append("team.joined", { team: joinWildsTeam(team, authority.actorId) }, authority, command.commandId));
+    } else if (command.type === "team.invite" || command.type === "team.invite.accept" || command.type === "team.role" || command.type === "team.role.change" || command.type === "team.event.schedule" || command.type === "team.squad.assemble") {
+      const current = this.projection.teams[command.teamId];
+      if (!current) throw new Error("wilds_team_missing");
+      const social = socialTeam(current);
+      let next: WildsSocialTeam;
+      let kind: WildsWorldEventKind;
+      if (command.type === "team.invite") {
+        const result = inviteWildsPlayer({ team: social, inviterId: authority.actorId, inviteeId: command.inviteeId, occurredAt: authority.occurredAt, expiresAt: command.expiresAt, inviteeAccountAgeDays: command.inviteeAccountAgeDays }); next = result.team; kind = "team.invited";
+      } else if (command.type === "team.invite.accept") {
+        next = acceptWildsInvite({ team: social, inviteId: command.inviteId, playerId: authority.actorId, occurredAt: authority.occurredAt }).team; kind = "team.invite_accepted";
+      } else if (command.type === "team.role" || command.type === "team.role.change") {
+        next = changeWildsRole({ team: social, actorId: authority.actorId, playerId: command.playerId, role: command.role }).team; kind = "team.role_changed";
+      } else if (command.type === "team.event.schedule") {
+        next = scheduleWildsTeamEvent({ team: social, organizerId: authority.actorId, startsAt: command.startsAt, endsAt: command.endsAt, occurredAt: authority.occurredAt }).team; kind = "team.event_scheduled";
+      } else {
+        next = assembleWildsSquad({ team: social, eventId: command.eventId, playerIds: command.playerIds }).team; kind = "team.squad_assembled";
+      }
+      events.push(this.append(kind, { team: projectionTeam(next, current) }, authority, command.commandId));
+    } else if (command.type === "social.report") {
+      const report = reportWildsAbuse({ reporterId: authority.actorId, subjectId: command.subjectId, reason: command.reason, occurredAt: authority.occurredAt });
+      events.push(this.append("social.abuse_reported", { report }, authority, command.commandId));
     }
     return { events, projection: this.projection };
   }
@@ -310,4 +339,13 @@ function ecologyProjection(site: WildsEcologySite): WildsWorldEcologyProjection 
     participantIds: [],
     resolvedAt: null
   };
+}
+
+function socialTeam(team: import("./wilds-team-league").WildsTeam): WildsSocialTeam {
+  const members = team.members ?? team.memberIds.map((playerId) => ({ playerId, role: playerId === team.captainId ? "captain" as const : "member" as const, joinedAt: team.createdAt }));
+  return { id: team.id, name: team.name, captainId: team.captainId, members, invites: team.invites ?? [], events: team.events ?? [] };
+}
+
+function projectionTeam(team: WildsSocialTeam, previous: import("./wilds-team-league").WildsTeam) {
+  return { ...previous, captainId: team.captainId, memberIds: team.members.map((member) => member.playerId), members: team.members, invites: team.invites, events: team.events };
 }

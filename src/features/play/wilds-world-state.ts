@@ -53,6 +53,9 @@ export type WildsWorldTeamProjection = {
   captainId: string;
   memberIds: string[];
   createdAt: string;
+  members?: import("./wilds-social-core").WildsSocialMember[];
+  invites?: import("./wilds-social-core").WildsSocialInvite[];
+  events?: import("./wilds-social-core").WildsSocialEvent[];
 };
 
 export type WildsLeagueProjection = {
@@ -218,15 +221,24 @@ export function reduceWildsWorldEvent(state: WildsWorldProjection, event: WildsW
       });
     }
     case "team.created":
-    case "team.joined": {
+    case "team.joined":
+    case "team.invited":
+    case "team.invite_accepted":
+    case "team.role_changed":
+    case "team.event_scheduled":
+    case "team.squad_assembled": {
       const team = entity<WildsWorldTeamProjection>(payload.team, "team");
       return appendEvent(state, event, { teams: { ...state.teams, [team.id]: team } });
     }
+    case "social.abuse_reported":
+      return appendEvent(state, event, {});
     case "league.scored": {
       const league = recordPayload(payload.league) as WildsLeagueProjection;
       if (league.seasonId !== "v3-genesis") throw new Error("wilds_world_league_invalid");
       return appendEvent(state, event, { league });
     }
+    case "social.abuse_reported":
+      return appendEvent(state, event, {});
   }
 }
 

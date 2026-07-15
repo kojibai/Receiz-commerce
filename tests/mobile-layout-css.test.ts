@@ -77,7 +77,8 @@ describe("mobile storefront layout CSS", () => {
     assert.match(css, /\.mobile-play-wrap \.wilds-live-pill\[class\*="mode-"\] span \{[^}]*display: none;/s);
     assert.match(css, /\.mobile-play-wrap \.wilds-living-world-hud\.has-event \{[^}]*max-width: 124px;/s);
     assert.match(css, /\.mobile-play-wrap \.wilds-live-event-compact \{[^}]*display: inline;/s);
-    assert.match(css, /\.mobile-play-wrap \.wilds-living-world-sheet \{[^}]*top: 112px;[^}]*max-height: calc\(100dvh - 300px\)/s);
+    assert.match(css, /\.mobile-play-wrap \.wilds-living-world-hud \{[^}]*top: 58px;/s);
+    assert.match(css, /\.mobile-play-wrap \.wilds-living-world-sheet \{[^}]*top: 44px;[^}]*max-height: calc\(100dvh - 244px\)/s);
     assert.match(css, /@media \(max-width: 350px\)[\s\S]*\.mobile-play-wrap \.wilds-resource-strip \{[^}]*display: none/s);
     assert.match(css, /\.mobile-play-wrap \.wilds-living-world-hud\.has-event \{[^}]*flex-wrap: wrap/s);
     assert.match(css, /@media \(max-width: 350px\)[\s\S]*\.mobile-play-wrap \.wilds-mission-meter \{[^}]*display: none/s);

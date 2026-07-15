@@ -318,6 +318,9 @@ export function PlayCampaign({
   const visiblePulse = pulse.kind === "enter" && currentLandmarkAccess && !currentLandmarkAccess.allowed
     ? { ...pulse, label: `Inspect sealed ${currentLandmark?.name ?? "landmark"}` }
     : pulse;
+  const socialTeams = Object.values(livingWorld.snapshot?.teams ?? {});
+  const playerTeam = socialTeams.find((team) => team.memberIds.includes(multiplayer.guestId)) ?? null;
+  const socialStandings = livingWorld.snapshot?.league.standings ?? [];
   const activatePulse = () => {
     if (pulse.kind === "enter") {
       if (pulse.landmarkId === "wayfinder-hollow") {
@@ -544,6 +547,27 @@ export function PlayCampaign({
               }
             }}
           />
+        </div>
+      )
+    },
+    {
+      key: "social",
+      label: "Social World",
+      icon: <Icons.users size={21} />,
+      badge: playerTeam ? playerTeam.memberIds.length : socialStandings.length,
+      content: (
+        <div className="wilds-command-content wilds-social-content">
+          <div className="wilds-command-content-lead">
+            <span><small>Shared social world</small><strong>{playerTeam?.name ?? "Find your team"}</strong></span>
+            <b>{playerTeam ? `${playerTeam.memberIds.length}/24` : "Open"}</b>
+          </div>
+          <div className="wilds-social-grid" aria-label="Team and league summary">
+            <div><small>Role</small><strong>{playerTeam?.captainId === multiplayer.guestId ? "Captain" : playerTeam ? "Member" : "Explorer"}</strong></div>
+            <div><small>Squad size</small><strong>6 max</strong></div>
+            <div><small>League</small><strong>{socialStandings.length ? `${socialStandings[0]?.score ?? 0} pts` : "Genesis"}</strong></div>
+          </div>
+          <p>{playerTeam ? "Coordinate a six-player squad, share public records, and compete without locking anyone out of the world." : "Create or join a team from the shared-world panel. Public locations and raids remain open to every explorer."}</p>
+          {socialStandings.length ? <div className="wilds-social-records" aria-label="Public league records">{socialStandings.slice(0, 5).map((standing) => <div key={standing.teamId}><span>#{standing.rank}</span><strong>{standing.teamId}</strong><b>{standing.score}</b></div>)}</div> : <div className="wilds-social-empty">No public records yet. The first shared-world contribution starts the season.</div>}
         </div>
       )
     }
