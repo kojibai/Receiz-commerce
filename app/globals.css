@@ -2389,6 +2389,27 @@ a {
   height: 100%;
 }
 
+/* The gameplay surface owns the gesture stream.  OrbitControls uses one
+   finger to orbit and two fingers to dolly/orbit; without this declaration
+   mobile browsers may treat the same gesture as page scrolling/zooming (or
+   open a long-press selection callout) before Three.js can consume it. */
+.wilds-canvas-wrap,
+.wilds-canvas-wrap canvas {
+  touch-action: none;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.wilds-canvas-wrap canvas {
+  display: block;
+  cursor: grab;
+}
+
+.wilds-canvas-wrap canvas:active {
+  cursor: grabbing;
+}
+
 .wilds-canvas-wrap.search-armed canvas {
   cursor: crosshair;
 }
@@ -7412,7 +7433,7 @@ a {
   .mobile-play-wrap .wilds-screen-controls {
     --wilds-pad-size: 68px;
     gap: 5px;
-    width: calc(100% - 16px);
+    width: 100%;
     height: 68px;
   }
 
@@ -7445,7 +7466,7 @@ a {
   }
 
   .mobile-play-wrap .wilds-screen-controls .wilds-action {
-    min-height: 32px;
+    min-height: 44px;
     padding: 3px;
     border-radius: 11px;
   }
@@ -11575,10 +11596,13 @@ button.product-purchase-secondary-link {
 }
 
 @media (max-width: 350px) {
-  .mobile-play-wrap .wilds-world { grid-template-rows: minmax(0, 1fr) 94px; }
-  .mobile-play-wrap .wilds-screen-controls { --wilds-pad-size: 64px; gap: 4px; height: 94px; }
+  .mobile-play-wrap .wilds-world { grid-template-rows: minmax(0, 1fr) 140px; }
+  .mobile-play-wrap .wilds-screen-controls { --wilds-pad-size: 64px; gap: 4px; height: 140px; }
   .mobile-play-wrap .wilds-trackpad { width: 64px; height: 64px; }
-  .mobile-play-wrap .wilds-control-rail { gap: 2px; }
+  .mobile-play-wrap .wilds-control-rail { grid-template-columns: 44px; grid-template-rows: repeat(3, 44px); gap: 2px; width: 44px; }
+  .mobile-play-wrap .wilds-resource-strip { display: none; }
+  .mobile-play-wrap .wilds-mission-meter { display: none; }
+  .mobile-play-wrap .wilds-search-reticle { left: 12px; transform: none; }
 }
 
 @media (max-width: 560px) {
@@ -11589,11 +11613,11 @@ button.product-purchase-secondary-link {
   .mobile-play-wrap .wilds-live-pill[class*="mode-"] { flex: 0 0 30px; width: 30px; padding: 0; justify-content: center; }
   .mobile-play-wrap .wilds-live-pill[class*="mode-"] span { display: none; }
   .mobile-play-wrap .wilds-live-pill span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .mobile-play-wrap .wilds-living-world-sheet { top: 42px; right: 0; width: min(310px, calc(100vw - 20px)); max-height: calc(100dvh - 230px); overflow: auto; overscroll-behavior: contain; }
+  .mobile-play-wrap .wilds-living-world-sheet { top: 112px; right: 0; width: min(310px, calc(100vw - 20px)); max-height: calc(100dvh - 300px); overflow: auto; overscroll-behavior: contain; }
 }
 
 @media (max-width: 350px) {
-  .mobile-play-wrap .wilds-living-world-hud.has-event { width: 124px; max-width: 124px; }
+  .mobile-play-wrap .wilds-living-world-hud.has-event { flex-wrap: wrap; width: 124px; max-width: 124px; }
   .mobile-play-wrap .wilds-living-world-hud.has-event .wilds-live-pill[class*="mode-"] { display: none; }
   .mobile-play-wrap .wilds-live-event-full { display: none; }
   .mobile-play-wrap .wilds-live-event-compact { display: inline; }
@@ -12271,7 +12295,7 @@ button.product-purchase-secondary-link {
 @media (prefers-reduced-motion: reduce) { .wilds-ecology-experience *, .wilds-ecology-experience *::before, .wilds-ecology-experience *::after { animation: none !important; transition: none !important; } }
 
 /* Wilds global raid: one fixed gameplay viewport, no dashboard scroll. */
-.wilds-raid-experience { --raid-accent: #7cf2ca; position: fixed; inset: 0; z-index: 7200; display: grid; grid-template-rows: auto auto minmax(0, 1fr) auto auto; width: 100%; height: 100dvh; padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); overflow: hidden; color: #f4fff9; background: radial-gradient(circle at 50% 42%, rgb(27 78 71 / 92%), transparent 34%), linear-gradient(160deg, #071a19 0%, #06100f 52%, #120b12 100%); isolation: isolate; }
+.wilds-raid-experience { --raid-accent: #7cf2ca; position: fixed; inset: 0; z-index: 7200; display: grid; grid-template-rows: auto auto minmax(0, 1fr) auto auto; width: 100%; height: 100dvh; padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); overflow: hidden; color: #f4fff9; background: radial-gradient(circle at 50% 42%, rgb(27 78 71 / 92%), transparent 34%), linear-gradient(160deg, #071a19 0%, #06100f 52%, #120b12 100%); isolation: isolate; overscroll-behavior: none; touch-action: manipulation; user-select: none; -webkit-user-select: none; }
 .wilds-raid-experience::before { position: absolute; inset: 0; z-index: -1; content: ""; background: repeating-radial-gradient(circle at 50% 54%, transparent 0 42px, rgb(124 242 202 / 4%) 43px 44px); pointer-events: none; }
 .wilds-raid-experience.phase-transforming { --raid-accent: #ffd369; }
 .wilds-raid-experience.phase-vulnerable { --raid-accent: #ff8eae; }
@@ -12284,7 +12308,7 @@ button.product-purchase-secondary-link {
 .wilds-raid-health div { display: flex; justify-content: space-between; gap: 12px; font-size: 10px; font-weight: 850; text-transform: uppercase; }
 .wilds-raid-health i { display: block; height: 7px; overflow: hidden; border-radius: 999px; background: rgb(255 255 255 / 10%); }
 .wilds-raid-health i::after { display: block; width: var(--raid-health); height: 100%; border-radius: inherit; background: linear-gradient(90deg, #ff646c, var(--raid-accent)); box-shadow: 0 0 16px var(--raid-accent); content: ""; transition: width 240ms ease; }
-.wilds-raid-arena { position: relative; min-height: 0; overflow: hidden; }
+.wilds-raid-arena { position: relative; min-height: 0; overflow: hidden; touch-action: none; }
 .wilds-raid-telegraph, .wilds-raid-objective, .wilds-raid-card-pin { position: absolute; z-index: 2; display: grid; gap: 2px; max-width: min(42%, 300px); padding: 8px 10px; border: 1px solid rgb(124 242 202 / 16%); background: rgb(3 18 17 / 72%); backdrop-filter: blur(14px); }
 .wilds-raid-telegraph { top: 10px; left: max(10px, env(safe-area-inset-left)); border-radius: 16px 4px 16px 4px; }
 .wilds-raid-objective { right: max(10px, env(safe-area-inset-right)); bottom: 10px; border-radius: 4px 16px 4px 16px; text-align: right; }

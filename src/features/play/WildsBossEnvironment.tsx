@@ -28,7 +28,7 @@ export function WildsBossEnvironment({ livingWorld, player, qualityProfile }: {
     .map((boss) => ({ boss, distance: bossDistance(boss, player) }))
     .filter((entry) => entry.distance <= 42)
     .sort((left, right) => left.distance - right.distance)
-    .slice(0, 1), [livingWorld?.bosses, player.x, player.z]);
+    .slice(0, 1), [livingWorld?.bosses, player]);
   return (
     <group name="wilds-boss-environment" userData={{ detailedBosses: visibleBosses.length, bossFamilies: WILDS_BOSS_FAMILIES.length, maxDetailedBosses: 1 }}>
       {visibleBosses.map(({ boss }) => <BossActor boss={boss} key={boss.id} player={player} qualityProfile={qualityProfile} />)}

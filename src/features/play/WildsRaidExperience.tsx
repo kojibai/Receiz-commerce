@@ -60,7 +60,7 @@ export function WildsRaidExperience({ open, boss, raid, encounter, cardName, rol
         <button aria-label="Close raid" className="wilds-raid-close" onClick={onClose} type="button">×</button>
       </header>
 
-      <div aria-label={`Global health ${Math.round(healthPercent)} percent`} className="wilds-raid-health">
+      <div aria-label={`Global health ${Math.round(healthPercent)} percent`} aria-live="polite" className="wilds-raid-health" role="progressbar" aria-valuemin={0} aria-valuemax={maximum} aria-valuenow={Math.ceil(health)}>
         <div><span>Global health</span><strong>{Math.ceil(health).toLocaleString()} / {maximum.toLocaleString()}</strong></div>
         <i style={{ "--raid-health": `${healthPercent}%` } as React.CSSProperties} />
       </div>
@@ -70,7 +70,7 @@ export function WildsRaidExperience({ open, boss, raid, encounter, cardName, rol
           <span>Telegraph</span>
           <strong>{encounter?.hazard?.replaceAll("-", " ") ?? String(boss.modules && typeof boss.modules === "object" && "hazard" in boss.modules ? boss.modules.hazard : "Territory shift")}</strong>
         </div>
-        <div className="wilds-raid-boss-sigil" aria-hidden="true"><i /><i /><i /><b /></div>
+        <div aria-label={`${String(boss.name ?? "Global boss")} arena`} className="wilds-raid-boss-sigil" role="img"><i /><i /><i /><b /></div>
         <div className="wilds-raid-objective">
           <span>Support objective</span>
           <strong>{encounter?.supportObjective?.replaceAll("-", " ") ?? "Hold the formation"}</strong>

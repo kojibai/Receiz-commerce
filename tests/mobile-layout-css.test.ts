@@ -77,6 +77,17 @@ describe("mobile storefront layout CSS", () => {
     assert.match(css, /\.mobile-play-wrap \.wilds-live-pill\[class\*="mode-"\] span \{[^}]*display: none;/s);
     assert.match(css, /\.mobile-play-wrap \.wilds-living-world-hud\.has-event \{[^}]*max-width: 124px;/s);
     assert.match(css, /\.mobile-play-wrap \.wilds-live-event-compact \{[^}]*display: inline;/s);
+    assert.match(css, /\.mobile-play-wrap \.wilds-living-world-sheet \{[^}]*top: 112px;[^}]*max-height: calc\(100dvh - 300px\)/s);
+    assert.match(css, /@media \(max-width: 350px\)[\s\S]*\.mobile-play-wrap \.wilds-resource-strip \{[^}]*display: none/s);
+    assert.match(css, /\.mobile-play-wrap \.wilds-living-world-hud\.has-event \{[^}]*flex-wrap: wrap/s);
+    assert.match(css, /@media \(max-width: 350px\)[\s\S]*\.mobile-play-wrap \.wilds-mission-meter \{[^}]*display: none/s);
+    assert.match(css, /@media \(max-width: 350px\)[\s\S]*\.mobile-play-wrap \.wilds-search-reticle \{[^}]*left: 12px;[^}]*transform: none/s);
+  });
+
+  it("preserves 44px flank actions at the 320px release viewport", () => {
+    assert.match(css, /\.mobile-play-wrap \.wilds-screen-controls \.wilds-action \{[^}]*min-height: 44px/s);
+    assert.match(css, /@media \(max-width: 350px\)[\s\S]*\.mobile-play-wrap \.wilds-world \{[^}]*grid-template-rows: minmax\(0, 1fr\) 140px/s);
+    assert.match(css, /@media \(max-width: 350px\)[\s\S]*\.mobile-play-wrap \.wilds-control-rail \{[^}]*grid-template-columns: 44px;[^}]*grid-template-rows: repeat\(3, 44px\)/s);
   });
 
   it("keeps every Wayfinder Hollow district and exit reachable at 320px", () => {

@@ -99,7 +99,7 @@ export function useWildsWorld(input: { enabled: boolean; guestId: string; active
       commandPending.current = false;
       setPendingCommand(null);
     }
-  }, [input.guestId, request]);
+  }, [input.activeCard, input.guestId, request]);
 
   const commandId = (kind: string) => `${kind}:${crypto.randomUUID()}`;
   return {

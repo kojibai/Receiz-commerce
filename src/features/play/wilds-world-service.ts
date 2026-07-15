@@ -88,6 +88,13 @@ export class WildsWorldService {
 
   tick(input: { pulse: string; occurredAt: string; systemActorId: "receiz:pulse" }) {
     if (input.systemActorId !== "receiz:pulse") throw new Error("wilds_world_pulse_authority_invalid");
+    // A scheduler retry may arrive after a newer pulse has already been
+    // committed (for example after a process restart).  Reject that stale
+    // tick before generating any deterministic sites so it can never append
+    // an out-of-order event or accidentally fork the world timeline.
+    if (this.projection.cursor && input.pulse < this.projection.cursor.pulse) {
+      throw new Error("wilds_world_pulse_order_invalid");
+    }
     const causeId = `pulse:${input.pulse}`;
     if (this.eventTail.some((event) => event.causeId === causeId)) return { events: [], projection: this.projection };
     const authority = { actorId: input.systemActorId, pulse: input.pulse, occurredAt: input.occurredAt };
@@ -148,6 +155,9 @@ export class WildsWorldService {
 
   tickEcology(input: { pulse: string; occurredAt: string; systemActorId: "receiz:pulse" }) {
     if (input.systemActorId !== "receiz:pulse") throw new Error("wilds_world_pulse_authority_invalid");
+    if (this.projection.cursor && input.pulse < this.projection.cursor.pulse) {
+      throw new Error("wilds_world_pulse_order_invalid");
+    }
     const causeId = `ecology-pulse:${input.pulse}`;
     if (this.eventTail.some((event) => event.causeId === causeId)) return { events: [], projection: this.projection };
     const authority = { actorId: input.systemActorId, pulse: input.pulse, occurredAt: input.occurredAt };

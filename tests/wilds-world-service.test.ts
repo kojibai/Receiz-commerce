@@ -48,6 +48,16 @@ describe("Wilds living world service", () => {
     service.execute({ type: "raid.join", bossId, commandId: "command:join:1" }, { ...authority, pulse: "2026-07-15T12:01:00.000Z", occurredAt: "2026-07-15T12:01:00.000Z" });
     assert.throws(() => service.execute({ type: "raid.contribute", bossId, damage: 10, support: 0, cardProofDigest: "bad", commandId: "command:hit:1" }, { ...authority, pulse: "2026-07-15T12:02:00.000Z", occurredAt: "2026-07-15T12:02:00.000Z" }), /wilds_world_card_proof_invalid/);
   });
+
+  it("rejects stale scheduler pulses without mutating the world", () => {
+    const service = new WildsWorldService();
+    service.tick({ pulse: authority.pulse, occurredAt: authority.occurredAt, systemActorId: "receiz:pulse" });
+    service.tick({ pulse: "2026-07-15T12:01:00.000Z", occurredAt: "2026-07-15T12:01:00.000Z", systemActorId: "receiz:pulse" });
+    const before = service.checkpoint();
+    assert.throws(() => service.tick({ pulse: authority.pulse, occurredAt: authority.occurredAt, systemActorId: "receiz:pulse" }), /wilds_world_pulse_order_invalid/);
+    assert.throws(() => service.tickEcology({ pulse: "2026-07-15T11:59:00.000Z", occurredAt: "2026-07-15T11:59:00.000Z", systemActorId: "receiz:pulse" }), /wilds_world_pulse_order_invalid/);
+    assert.deepEqual(service.checkpoint(), before);
+  });
 });
 
 describe("Receiz Wilds world recovery", () => {

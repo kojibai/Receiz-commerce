@@ -50,7 +50,13 @@ export function WildsWorldCanvas({
   worldMode: WildsSettlementWorldMode;
 }) {
   return (
-    <div className={`wilds-canvas-wrap${searchEnabled ? " search-armed" : ""}`}>
+    <div
+      className={`wilds-canvas-wrap${searchEnabled ? " search-armed" : ""}`}
+      // The play surface is a gesture canvas. Prevent browser long-press
+      // menus/drag ghosts from stealing a camera gesture on mobile.
+      onContextMenu={(event) => event.preventDefault()}
+      onDragStart={(event) => event.preventDefault()}
+    >
       <Canvas
         camera={{ fov: 42, near: 0.1, far: 80, position: [4.6, 5.8, 7.2] }}
         dpr={qualityProfile.dpr}
