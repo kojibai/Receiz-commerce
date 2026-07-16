@@ -48,7 +48,7 @@ Offline verification is a Receiz primitive. It verifies artifact truth without r
 
 ## MCP Usage Rules
 
-Use `receiz_verify_offline_file` for local JSON manifest payloads and `receiz_verify_asset`, `receiz_inspect_proof_object`, or `receiz_asset_by_id` when public proof resolution is available. Treat MCP as a verification tool, not as proof authority. If MCP is unavailable, name the exact local SDK or file evidence still available.
+Use `receiz_inspect_offline_file` for local JSON manifest shape inspection and `receiz_inspect_proof_object` or `receiz_asset_by_id` when public proof resolution is available. MCP inspection is not verification. Use SDK `verification.verifyArtifact(file)` or the downloadable verifier for the same integrity-and-continuity verdict. If MCP is unavailable, name the exact local SDK or file evidence still available.
 
 ## SDK Usage Rules
 

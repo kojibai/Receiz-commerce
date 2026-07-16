@@ -10,8 +10,8 @@ MCP is not authority. It calls canonical Receiz SDK/API rails and reports the so
 
 | Need | Tool | Boundary |
 | --- | --- | --- |
-| Public proof by URL, ID, or creator | `receiz_verify_asset` | Resolves through SDK public proof rails. |
-| Local JSON manifest verification | `receiz_verify_offline_file` | Uses SDK manifest validators before network calls. |
+| Public proof by URL or ID | `receiz_asset_by_url`, `receiz_asset_by_id` | Resolves through SDK public proof rails; does not claim verification. |
+| Local JSON manifest inspection | `receiz_inspect_offline_file` | Uses SDK shape validators and always reports `verified: false`. |
 | Public asset by URL | `receiz_asset_by_url` | Public proof surface read. |
 | Public asset by ID | `receiz_asset_by_id` | Public proof surface read. |
 | Payload inspection | `receiz_inspect_proof_object` | Structural inspection, not final verifier authority. |

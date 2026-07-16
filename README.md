@@ -4,7 +4,7 @@
 
 Receiz Commerce Kit is a full working commerce product and a forkable SDK kernel for building proof-sealed applications with `@receiz/sdk` and Receiz MCP.
 
-Current release: `3.0.0` · SDK target: `@receiz/sdk@101.0.0`
+Current release: `3.0.0` · SDK target: `@receiz/sdk@102.0.0`
 
 It ships as a Next.js App Router application with a public storefront, customer account area, no-code merchant admin, Receiz ID, checkout, wallet projection, rewards, Receized assets, domain hosting, media upload, proof memory, publish recovery, webhook verification, release diagnostics, and an AI operator layer built around Receiz MCP, Twin, World, and SDK doctor workflows. You can run it as the Receiz.app Commerce Cloud product, or clone it and build your own commerce, rewards, marketplace, game, content, or agent-operated SaaS on top of the same primitives.
 
@@ -57,6 +57,8 @@ The result is not a toy demo. It is a reference architecture for building a comp
 pnpm install
 pnpm dev
 ```
+
+The v102 Receiz toolchain is pinned through pnpm as `@receiz/sdk@102.0.0`, `@receiz/mcp-server@102.0.0`, and `@receiz/ai-skills@102.0.0`. The local `ai-skills/` source is aligned with the published package and can be checked with `pnpm validate:ai-skills`.
 
 Open:
 
@@ -188,15 +190,15 @@ For MCP-capable agents such as Codex, add Receiz as an MCP server in the agent c
 
 ```toml
 [mcp_servers.receiz]
-command = "npx"
-args = ["-y", "@receiz/mcp-server@101.0.0"]
+command = "pnpm"
+args = ["exec", "receiz-mcp"]
 startup_timeout_sec = 120
 
 [mcp_servers.receiz.env]
 RECEIZ_BASE_URL = "https://receiz.com"
 ```
 
-Use `@receiz/mcp-server@101.0.0` for agent-side diagnostics and SDK/API rail calls. MCP never becomes the authority; it only helps inspect or invoke rails beneath proof objects.
+The local command resolves the pnpm-pinned `@receiz/mcp-server@102.0.0`. Use the matching `@receiz/ai-skills@102.0.0` doctrine from `node_modules/@receiz/ai-skills` or the aligned local `ai-skills/` directory. MCP never becomes the authority; it only helps inspect or invoke rails beneath proof objects. In v102, MCP inspection and public resolution are not artifact verification; use SDK `verification.verifyArtifact(file)` for the integrity-and-continuity verdict.
 
 Brand edits preview immediately in the merchant workspace. `Publish theme` uses the same signed publication transaction as `Publish changes`: success means the authoritative public-store revision was accepted and adopted by the workspace. A pending or failed publication remains visibly unresolved and is never presented as globally saved. Other open merchant tabs adopt the updated workspace through scoped storage synchronization, while storefront subdomains and custom domains continue to resolve from the published Receiz projection.
 

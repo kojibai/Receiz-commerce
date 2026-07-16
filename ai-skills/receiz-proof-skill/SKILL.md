@@ -34,7 +34,7 @@ Receiz proof inspection starts from the artifact, manifest, proof bundle, verifi
 
 1. Name the primitive: proof object, artifact system, ownership surface, settlement primitive, identity primitive, public proof surface, offline proof, or sports event proof.
 2. Name the strongest source of truth available.
-3. Verify or validate using SDK validators, MCP read tools, local manifest inspection, or artifact verification.
+3. Use MCP reads or local manifest validators only for resolution and inspection; use SDK `verification.verifyArtifact(file)` for artifact verification.
 4. Separate proven facts from absent or unverified facts.
 5. Use the standard output in [resources/output-templates.md](resources/output-templates.md).
 6. Keep projection language lower than artifact truth.
@@ -49,7 +49,7 @@ Receiz proof inspection starts from the artifact, manifest, proof bundle, verifi
 
 ## MCP Usage Rules
 
-Use MCP only when a live agent host has the Receiz MCP server available. Prefer read-only tools for verification. Use `receiz_verify_offline_file` for local JSON manifest payloads, `receiz_verify_asset` or `receiz_asset_by_url` for public proof URLs, `receiz_card_history` for Sports card memory, and `receiz_pitch_proof_by_witness_id` for pitch witnesses. If the MCP tool is unavailable, say what can be reasoned from available data and what still needs MCP or live verification. See [resources/mcp-tool-map.md](resources/mcp-tool-map.md).
+Use MCP only when a live agent host has the Receiz MCP server available. MCP resolution and inspection are not artifact verification. Use `receiz_inspect_offline_file` for local JSON shape inspection, `receiz_asset_by_url` for public proof resolution, `receiz_card_history` for Sports card memory, and `receiz_pitch_proof_by_witness_id` for pitch witnesses. Use SDK `verification.verifyArtifact(file)` for the integrity-and-continuity verdict. If the MCP tool is unavailable, say what can be reasoned from available data and what still needs live verification. See [resources/mcp-tool-map.md](resources/mcp-tool-map.md).
 
 ## SDK Usage Rules
 

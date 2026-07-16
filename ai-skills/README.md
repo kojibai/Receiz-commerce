@@ -2,12 +2,14 @@
 
 This package teaches AI agents how to understand, verify, build with, and operate Receiz from the existing repository surfaces.
 
+It is published as `@receiz/ai-skills` and is an exact-version dependency of both `@receiz/sdk` and `@receiz/mcp-server`. Installing either package places these eight skill directories under `node_modules/@receiz/ai-skills` for explicit loading by an agent host.
+
 Receiz is a proof-native artifact system. A Receiz object is not a database row. It is a proof-carrying artifact. The artifact's witnessed history is the truth boundary. Server state, database state, UI state, marketplace state, and model memory are projections only. Old witnessed truth is not stale. If a projection is wrong, rebuild it from object history. If truth is missing, append new truth. Never mutate witnessed truth.
 
 ## SDK, MCP, And Skills
 
 - SDK: `@receiz/sdk` is for building apps. It exposes validators, projections, proof memory, identity artifact helpers, public app-state, public store, commerce, wallet, sports, world, offline queues, webhooks, and sandbox helpers.
-- MCP: `@receiz/mcp-server` is for agent tool access. It exposes SDK-backed tools for diagnostics, public reads, offline verification, app-state/public-store actions, deterministic previews, and delegated writes.
+- MCP: `@receiz/mcp-server` is for agent tool access. It exposes SDK-backed tools for diagnostics, public reads, offline shape inspection, app-state/public-store actions, deterministic previews, and delegated writes. Artifact verification remains SDK `verification.verifyArtifact(file)` and requires continuity.
 - Skills: this package is operating doctrine. It tells an AI which Receiz primitive is active, which source of truth wins, which SDK or MCP rail to use, and what must never be assumed.
 
 Agents may acquire scoped delegated access through the official Receiz Connect/OIDC Authorization Code + PKCE flow or through the MCP delegated-agent setup path exposed by `receiz_mcp_login`. That acquired access is permission to call scoped SDK/MCP rails after user consent. It is not proof authority and must never outrank artifact truth.
@@ -20,7 +22,7 @@ Do not invent APIs. Use the SDK and MCP maps inside the skills, then inspect the
 
 ## Developer Install Or Reference
 
-Reference this directory directly from an agent host, or copy the individual skill folders into an agent skill directory. Keep the package together when possible because the router skill depends on the domain skills.
+Install `@receiz/sdk`, `@receiz/mcp-server`, or `@receiz/ai-skills` directly. Reference `node_modules/@receiz/ai-skills` from an agent host, or copy the individual skill folders into an agent skill directory. Keep the package together when possible because the router skill depends on the domain skills.
 
 When SDK or MCP changes:
 

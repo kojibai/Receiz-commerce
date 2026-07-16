@@ -1,6 +1,6 @@
 ---
 name: receiz-mcp-agent-skill
-description: Use when an agent has or needs Receiz MCP tool access for live verification, public reads, app-state actions, proof inspection, storefront operations, sports proof inspection, deterministic previews, or delegated writes.
+description: Use when an agent has or needs Receiz MCP tool access for verification routing, public reads, app-state actions, proof inspection, storefront operations, sports proof inspection, deterministic previews, or delegated writes.
 ---
 
 # receiz-mcp-agent-skill
@@ -22,8 +22,8 @@ Receiz MCP is an agent-callable tool layer beneath Receiz proof truth. It can ca
 ## Core Receiz Laws
 
 - MCP is not authority; it calls canonical Receiz SDK/API rails and reports source primitives.
-- If an MCP tool is unavailable, the agent must not pretend verification happened.
-- Read-only verification may be allowed without confirmation when it does not expose private data.
+- If SDK artifact verification is unavailable, the agent must not pretend verification happened.
+- Read-only MCP resolution and inspection may be allowed without confirmation when they do not expose private data; they are not verification.
 - Writes require explicit user confirmation.
 - Never treat a database, server, marketplace, UI, model response, or cache as final authority.
 - Never invent tools, inputs, outputs, ownership, witness IDs, rarity, transfer history, or verification status.
@@ -51,7 +51,7 @@ Read [resources/safe-tool-calling.md](resources/safe-tool-calling.md) before exe
 
 ## SDK Usage Rules
 
-MCP tools wrap SDK rails such as `doctor`, `capabilities`, `appState`, `publicStore`, `publicProof`, `identity`, `wallet`, `sports`, `world`, `proof`, and `sandbox`. Do not describe MCP as a separate SDK. If code is being generated, use SDK imports in the app and MCP only for agent-side inspection or operations.
+MCP tools wrap SDK rails such as `doctor`, `capabilities`, `appState`, `publicStore`, `publicProof`, `identity`, `wallet`, `sports`, `world`, `proof`, and `sandbox`. Do not describe MCP as a separate SDK. If code is being generated, use SDK imports in the app and MCP only for agent-side resolution, inspection, or operations. Use SDK `verification.verifyArtifact(file)` for the indivisible integrity-and-continuity verdict.
 
 ## Output Format
 

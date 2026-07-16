@@ -13,8 +13,7 @@ Usually safe after input validation:
 - `receiz_app_state_by_namespace`
 - `receiz_app_state_by_id`
 - `receiz_public_store_resolve`
-- `receiz_verify_asset`
-- `receiz_verify_offline_file`
+- `receiz_inspect_offline_file`
 - `receiz_asset_by_url`
 - `receiz_asset_by_id`
 - `receiz_inspect_proof_object`

@@ -38,6 +38,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "receiz:doctor": "node scripts/receiz-doctor.mjs",
+    "validate:ai-skills": "node --import tsx ai-skills/scripts/validate-skills.ts",
     "receiz:webhooks:create": "node scripts/receiz-create-webhooks.mjs",
     "secret:scan": "node scripts/release-secret-scan.mjs",
     "release:check": "node scripts/release-check.mjs"
@@ -45,7 +46,9 @@
   "dependencies": {
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.6.1",
-    "@receiz/sdk": "^101.0.0",
+    "@receiz/ai-skills": "^102.0.0",
+    "@receiz/mcp-server": "^102.0.0",
+    "@receiz/sdk": "^102.0.0",
     "lucide-react": "^0.468.0",
     "next": "^15.0.0",
     "qrcode": "^1.5.4",
@@ -62,6 +65,7 @@
     "@types/three": "^0.185.0",
     "eslint": "^9.0.0",
     "eslint-config-next": "^15.0.0",
+    "tsx": "^4.23.1",
     "typescript": "^5.6.0"
   },
   "pnpm": {

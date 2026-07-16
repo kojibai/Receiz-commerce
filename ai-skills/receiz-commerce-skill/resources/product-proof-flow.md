@@ -5,7 +5,7 @@ Use this order whenever a commerce task includes a product, storefront, order, r
 ## Read Flow
 
 1. Identify the public proof URL, artifact ID, product manifest, or storefront object ID.
-2. Verify the product proof with `receiz_verify_asset`, `receiz_asset_by_url`, `receiz_asset_by_id`, or `receiz_inspect_proof_object`.
+2. Resolve and inspect the product proof with `receiz_asset_by_url`, `receiz_asset_by_id`, or `receiz_inspect_proof_object`; use SDK `verification.verifyArtifact(file)` when a verified integrity-and-continuity verdict is required.
 3. Resolve storefront projection with `receiz_public_store_resolve` only after the proof boundary is named.
 4. Compare product proof, seller claim, price display, and receipt state.
 5. Report missing or conflicting evidence directly.

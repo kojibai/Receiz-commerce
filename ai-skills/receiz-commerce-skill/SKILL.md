@@ -48,7 +48,7 @@ Receiz commerce is proof-native commerce. A product page, storefront, order view
 
 ## MCP Usage Rules
 
-Use MCP read tools to resolve and verify product proof first: `receiz_asset_by_url`, `receiz_asset_by_id`, `receiz_inspect_proof_object`, `receiz_public_store_resolve`, and `receiz_verify_asset`. Use `receiz_public_store_publish`, `receiz_sandbox_seed_store`, or `receiz_sandbox_checkout` only when the user explicitly asks for a write or sandbox action and confirms the exact inputs. See [resources/product-proof-flow.md](resources/product-proof-flow.md).
+Use MCP read tools to resolve and inspect product proof first: `receiz_asset_by_url`, `receiz_asset_by_id`, `receiz_inspect_proof_object`, and `receiz_public_store_resolve`. Resolution and inspection are not verification. Use SDK `verification.verifyArtifact(file)` for the integrity-and-continuity verdict. Use `receiz_public_store_publish`, `receiz_sandbox_seed_store`, or `receiz_sandbox_checkout` only when the user explicitly asks for a write or sandbox action and confirms the exact inputs. See [resources/product-proof-flow.md](resources/product-proof-flow.md).
 
 ## SDK Usage Rules
 

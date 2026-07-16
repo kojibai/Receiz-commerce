@@ -1,3 +1,3 @@
 # Agent Verify Object
 
-For a public URL, call `receiz_verify_asset` with `url`. For a local manifest, call `receiz_verify_offline_file` with the manifest JSON. Report the returned primitive and source. If the tool is unavailable, state that live/tool verification was not performed.
+For a public URL, call `receiz_asset_by_url`. For a local manifest, call `receiz_inspect_offline_file` and report that `verified` remains false. Use SDK `verification.verifyArtifact(file)` when artifact bytes must receive the integrity-and-continuity verdict. If the tool is unavailable, state that live verification was not performed.

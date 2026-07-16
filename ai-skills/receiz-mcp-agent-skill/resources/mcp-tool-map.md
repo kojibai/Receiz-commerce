@@ -23,14 +23,15 @@ Source: `packages/receiz-mcp-server/src/index.ts`.
 - `receiz_public_store_publish`: publish typed public-store projection. Delegated write.
 - `receiz_public_store_resolve`: resolve public-store projection.
 
-## Verification And Proof
+## Resolution, Inspection, And Proof
 
-- `receiz_verify_asset`
-- `receiz_verify_offline_file`
+- `receiz_inspect_offline_file`: shape inspection only; never a verified artifact verdict.
 - `receiz_asset_by_url`
 - `receiz_asset_by_id`
 - `receiz_inspect_proof_object`
 - `receiz_proof_query`: delegated proof query projection.
+
+Use SDK `verification.verifyArtifact(file)` for verification; it requires enclosing integrity and ownership continuity.
 
 ## Sports, Wallet, World
 

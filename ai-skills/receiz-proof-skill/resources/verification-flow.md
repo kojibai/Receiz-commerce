@@ -17,8 +17,9 @@
 
 Use MCP when the agent host exposes Receiz MCP tools:
 
-- `receiz_verify_offline_file`: verify a local manifest or proof payload with SDK validators.
-- `receiz_verify_asset`: resolve a public proof URL, ID, or creator through public proof rails.
+- `receiz_inspect_offline_file`: inspect a local manifest or proof payload shape; always returns `verified: false`.
+- `receiz_asset_by_url` / `receiz_asset_by_id`: resolve public proof records; resolution is not artifact verification.
+- SDK `verification.verifyArtifact(file)`: verify enclosing integrity plus ownership continuity.
 - `receiz_asset_by_url` and `receiz_asset_by_id`: read public proof surfaces.
 - `receiz_inspect_proof_object`: inspect provided payload structure without claiming final verification.
 - `receiz_card_history`: resolve Sports card memory from local-first SDK rails.

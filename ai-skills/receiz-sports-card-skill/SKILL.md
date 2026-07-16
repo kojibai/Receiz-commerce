@@ -47,7 +47,7 @@ Receiz sports cards are living proof objects. Player identity, media, rarity, li
 
 ## MCP Usage Rules
 
-Use `receiz_card_history` for card memory, `receiz_pitch_proof_by_witness_id` for pitch witnesses, `receiz_sports_conformance` for sports conformance, `receiz_verify_asset` or `receiz_inspect_proof_object` for artifact proof, and `receiz_pack_open_preview` for pack-opening previews. Writes or live event appends require explicit confirmation and a scoped write rail.
+Use `receiz_card_history` for card memory, `receiz_pitch_proof_by_witness_id` for pitch witnesses, `receiz_sports_conformance` for sports conformance, `receiz_asset_by_url` or `receiz_inspect_proof_object` for proof resolution/inspection, SDK `verification.verifyArtifact(file)` for verification, and `receiz_pack_open_preview` for pack-opening previews. Writes or live event appends require explicit confirmation and a scoped write rail.
 
 ## SDK Usage Rules
 

@@ -48,7 +48,7 @@ Use this bundle as the top-level router. It does not replace the specialized ski
 
 ## MCP Usage Rules
 
-When MCP tools are needed, route to `receiz-mcp-agent-skill` and follow delegated authorization, read/write separation, and action confirmation rules. Use MCP read tools to verify or inspect. Use MCP write tools only after explicit confirmation and scoped delegated access.
+When MCP tools are needed, route to `receiz-mcp-agent-skill` and follow delegated authorization, read/write separation, and action confirmation rules. Use MCP read tools to resolve or inspect only; use SDK `verification.verifyArtifact(file)` for verification. Use MCP write tools only after explicit confirmation and scoped delegated access.
 
 ## SDK Usage Rules
 
