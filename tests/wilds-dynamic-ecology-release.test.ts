@@ -26,9 +26,9 @@ describe("Wilds V3 Slice 3 release contract", () => {
     if ("position" in exact) assert.deepEqual(exact.position, site.position);
   });
 
-  it("round-trips Save V9 while preserving ecology defaults", () => {
+  it("round-trips Save V10 while preserving ecology defaults", () => {
     const restored = restorePlayState(serializePlayState(initialPlayState));
-    assert.equal(JSON.parse(serializePlayState(restored)).schema, "receiz.wilds.save.v9");
+    assert.equal(JSON.parse(serializePlayState(restored)).schema, "receiz.wilds.save.v10");
     assert.deepEqual(restored.ecologyEvents, []);
     assert.deepEqual(restored.ecologyKnowledge, {});
   });

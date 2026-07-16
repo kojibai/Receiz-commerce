@@ -15,9 +15,9 @@ describe("Wilds V3 Slice 4 release contract", () => {
     assert.equal(WILDS_RAID_LEASE_MS, 90_000);
   });
 
-  it("ships Save V9 while accepting every earlier portable V3-era save", () => {
-    assert.match(serializePlayState(initialPlayState), /receiz\.wilds\.save\.v9/);
-    for (let version = 2; version <= 8; version += 1) {
+  it("ships Save V10 while accepting every earlier portable V3-era save", () => {
+    assert.match(serializePlayState(initialPlayState), /receiz\.wilds\.save\.v10/);
+    for (let version = 2; version <= 9; version += 1) {
       const restored = restorePlayState(JSON.stringify({ schema: `receiz.wilds.save.v${version}`, state: initialPlayState }));
       assert.deepEqual(restored.raidEvents, []);
     }

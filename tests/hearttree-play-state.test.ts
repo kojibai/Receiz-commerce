@@ -24,14 +24,14 @@ function receiptFixture() {
   return { card, receipt };
 }
 
-describe("Hearttree save v9 and dead-card guards", () => {
+describe("Hearttree Save V10 compatibility and dead-card guards", () => {
   it("migrates v8 inventory to alive conditions and a playable default squad", () => {
     const legacy = JSON.stringify({ schema: "receiz.wilds.save.v8", state: initialPlayState });
     const restored = restorePlayState(legacy);
     const id = restored.inventory[0]!.id;
     assert.equal(restored.hearttreeConditions[id]!.life, "alive");
     assert.deepEqual(restored.hearttreeSquadAssetIds, [id]);
-    assert.match(serializePlayState(restored), /receiz\.wilds\.save\.v9/);
+    assert.match(serializePlayState(restored), /receiz\.wilds\.save\.v10/);
   });
 
   it("adopts a verified receipt once and retains a dead card as memorial inventory", () => {
