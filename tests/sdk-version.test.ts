@@ -47,9 +47,14 @@ describe("Receiz v2 dependency contract", () => {
 
   it("keeps the v104 Node-only compiler outside browser bundles", () => {
     const nextConfig = readFileSync("next.config.mjs", "utf8");
+    const sdkPackage = JSON.parse(readFileSync("node_modules/@receiz/sdk/package.json", "utf8")) as {
+      exports?: Record<string, unknown>;
+    };
+    const sdkRuntime = readFileSync("node_modules/@receiz/sdk/dist/index.js", "utf8");
 
-    assert.match(nextConfig, /NormalModuleReplacementPlugin\(\/\^node:\//);
-    assert.match(nextConfig, /"fs\/promises": false/);
-    assert.match(nextConfig, /crypto: false/);
+    assert.ok(sdkPackage.exports?.["./compiler"]);
+    assert.ok(sdkPackage.exports?.["./testing"]);
+    assert.doesNotMatch(sdkRuntime, /projectInspection|projectApply|node:fs|node:path/);
+    assert.doesNotMatch(nextConfig, /NormalModuleReplacementPlugin|"fs\/promises": false/);
   });
 });

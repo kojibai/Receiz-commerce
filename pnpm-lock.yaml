@@ -596,12 +596,12 @@ packages:
     version: 104.0.0
 
   '@receiz/mcp-server@file:vendor/receiz-mcp-server-104.0.0.tgz':
-    resolution: {integrity: sha512-XYAllnHpyiIbycQsh4l5b7o2QUgknEbvN3MyZOVh+iiPx9jlDhA+oDe6L66BrQalB56xNescfZOZ7y3EtyJPlQ==, tarball: file:vendor/receiz-mcp-server-104.0.0.tgz}
+    resolution: {integrity: sha512-JnUMRRvCKBZD1Szh0HKBI5nsmDxHSwrlVh4wTQL5qg1eraquIdD1PNBJgJM++O9byu8jolqOMGof6lxYBZhCIw==, tarball: file:vendor/receiz-mcp-server-104.0.0.tgz}
     version: 104.0.0
     hasBin: true
 
   '@receiz/sdk@file:vendor/receiz-sdk-104.0.0.tgz':
-    resolution: {integrity: sha512-q5nCHxbFZd/7tnWY8Sbb3yYXBkUxEeefi+AirEOuUPZYpUzYY61/uP5zdewbUNrR8Xpuxwpuwr7W3ITEy5aCfg==, tarball: file:vendor/receiz-sdk-104.0.0.tgz}
+    resolution: {integrity: sha512-yhCFYV+sX/YZvyJL3E9eydqVgGTUXrmHYRZ/ASEt28VRZSlD9QUo7/hDzn1/IiF2uH1sPqORgZgLMqgeJ9W3wg==, tarball: file:vendor/receiz-sdk-104.0.0.tgz}
     version: 104.0.0
     hasBin: true
     peerDependencies:

@@ -60,7 +60,7 @@ pnpm dev
 
 The v104 Receiz toolchain is pinned as `@receiz/sdk@104.0.0`, `@receiz/mcp-server@104.0.0`, and `@receiz/ai-skills@104.0.0`. Until the coordinated packages reach the public registry, pnpm overrides resolve the exact official release tarballs committed under `vendor/`; the dependency contract remains `104.0.0` and is portable across clones. The local `ai-skills/` source is aligned with that package and can be checked with `pnpm validate:ai-skills`.
 
-`receiz.app.json` declares the complete application feature and authority contract. Run `pnpm receiz:check` to compile it and inspect the repository through the v104 integration checker; the full release gate runs this check automatically.
+`receiz.app.json` declares the complete application feature and authority contract. Run `pnpm receiz:check` to compile it and inspect the repository through the v104 integration checker; the full release gate runs this check automatically. Application code uses the browser-safe `@receiz/sdk` runtime, while Node-only contract and repository tooling is isolated behind the official `@receiz/sdk/compiler` export.
 
 Open:
 
@@ -200,7 +200,7 @@ startup_timeout_sec = 120
 RECEIZ_BASE_URL = "https://receiz.com"
 ```
 
-The local command resolves the pnpm-pinned `@receiz/mcp-server@104.0.0`. Use the matching `@receiz/ai-skills@104.0.0` doctrine from `node_modules/@receiz/ai-skills` or the aligned local `ai-skills/` directory. V104 adds the typed App Contract Compiler across SDK, CLI, MCP, and the app-builder skill. MCP never becomes the authority; it only helps inspect or invoke rails beneath proof objects. MCP inspection and public resolution are not artifact verification; use SDK `verification.verifyArtifact(file)` for the native integrity-and-continuity verdict. SDK proof-object creation resolves the authenticated Receiz ID, creates its native Record projection, then seals and verifies at the same coordinates.
+The local command resolves the pnpm-pinned `@receiz/mcp-server@104.0.0`. Use the matching `@receiz/ai-skills@104.0.0` doctrine from `node_modules/@receiz/ai-skills` or the aligned local `ai-skills/` directory. V104 adds the typed App Contract Compiler across SDK, CLI, MCP, and the app-builder skill; compiler APIs live at `@receiz/sdk/compiler` so the universal SDK and React entrypoints remain browser-safe. MCP never becomes the authority; it only helps inspect or invoke rails beneath proof objects. MCP inspection and public resolution are not artifact verification; use SDK `verification.verifyArtifact(file)` for the native integrity-and-continuity verdict. SDK proof-object creation resolves the authenticated Receiz ID, creates its native Record projection, then seals and verifies at the same coordinates.
 
 Brand edits preview immediately in the merchant workspace. `Publish theme` uses the same signed publication transaction as `Publish changes`: success means the authoritative public-store revision was accepted and adopted by the workspace. A pending or failed publication remains visibly unresolved and is never presented as globally saved. Other open merchant tabs adopt the updated workspace through scoped storage synchronization, while storefront subdomains and custom domains continue to resolve from the published Receiz projection.
 
