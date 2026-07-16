@@ -2,6 +2,7 @@ import { emptyAdventureCondition } from "../../src/features/play/adventure/card-
 import { projectMarketCard } from "../../src/features/play/market/card-role";
 import { generateMarketBoard, type MarketBoardInput } from "../../src/features/play/market/contract-director";
 import { createMarketNegotiation } from "../../src/features/play/market/negotiation-resolver";
+import { createMarketRuntime } from "../../src/features/play/market/runtime";
 import { sealCollectedCard } from "../../src/features/play/portable-card";
 import type { WildsEcologySite } from "../../src/features/play/wilds-ecology";
 
@@ -62,4 +63,15 @@ export function marketNegotiationFixture() {
   const cards = marketFixtureCards();
   const contract = generateMarketBoard(marketFixtureInput([cards.groveScout, cards.stoneCarrier])).contracts[0];
   return { ...cards, contract, state: createMarketNegotiation(contract) };
+}
+
+export function marketRuntimeFixture() {
+  const fixture = marketNegotiationFixture();
+  const terms = createMarketNegotiation(fixture.contract).terms;
+  return {
+    ...fixture,
+    terms,
+    squad: [fixture.groveScout, fixture.stoneCarrier] as const,
+    state: createMarketRuntime(fixture.contract, terms, [fixture.groveScout, fixture.stoneCarrier]),
+  };
 }
