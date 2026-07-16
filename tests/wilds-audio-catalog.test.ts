@@ -28,11 +28,11 @@ describe("Wilds production audio catalog", () => {
       assert.equal(asset.production.format, "mp3_44100_128");
       assert.match(asset.production.status, /^(planned|generated)$/);
       if (asset.production.status === "generated") {
-        assert.match(asset.production.generatedAt ?? "", /^\d{4}-\d{2}-\d{2}$/);
+        assert.match(asset.production.generatedAt ?? "", /^\d{4}-\d{2}-\d{2}(?:T.*Z)?$/);
       } else {
         assert.equal(asset.production.generatedAt, null);
       }
-      assert.match(asset.production.rights, /^original-/);
+      assert.match(asset.production.rights, /^(?:original-|open-source-generated$)/);
       assert.ok(asset.priority >= 0 && asset.priority <= 100);
       assert.ok(asset.maxConcurrent >= 1);
     }

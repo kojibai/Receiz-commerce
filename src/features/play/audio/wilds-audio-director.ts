@@ -40,10 +40,28 @@ export type WildsSemanticAudioEvent = Readonly<{
   maxDistance?: number;
 }>;
 
+export type HearttreeAudioSignal = Readonly<{
+  phase: "rootway" | "memory" | "master" | "choice" | "result" | "extracted" | "defeated";
+  eventKind?: "moved" | "hazard.hit" | "dodged" | "guarded" | "ability.succeeded" | "switched" | "objective.completed" | "extracted" | null;
+  element?: string | null;
+  squadElements?: readonly string[];
+  terminalReason?: "player-extracted" | "squad-defeated" | "completed" | null;
+  paused?: boolean;
+}>;
+
+export type HearttreeAudioRouting = Readonly<{
+  ambienceId: string;
+  musicId: string;
+  motifIds: readonly string[];
+  effectId: string | null;
+}>;
+
+type HearttreeSemanticAudioEvent = Readonly<{ type: "hearttree"; assetId: string }>;
+
 export type WildsAudioPlayRequest = Readonly<{
   asset: WildsAudioAsset;
   variantIndex: number;
-  event: WildsSemanticAudioEvent;
+  event: WildsSemanticAudioEvent | HearttreeSemanticAudioEvent;
   spatial: WildsSpatialProjection | null;
 }>;
 
@@ -60,6 +78,7 @@ export type WildsAudioDirectorHarness = Readonly<{
   preloadBank?: (bank: WildsAudioBankId) => void | Promise<void>;
   retainBanks?: (banks: ReadonlySet<WildsAudioBankId>) => void;
   setDialogueActive?: (active: boolean) => void;
+  setPaused?: (paused: boolean) => void | Promise<void>;
 }>;
 
 const REGION_IDENTITIES: Readonly<Record<WildsNamedRegionAudioBank, WildsAudioIdentity>> = {
@@ -90,6 +109,41 @@ function catalogMusicState(intensity: WildsMusicIntensity) {
   return intensity;
 }
 
+const HEARTTREE_EFFECTS: Readonly<Record<NonNullable<HearttreeAudioSignal["eventKind"]>, string>> = {
+  moved: "hearttree.movement.movement-leaves",
+  "hazard.hit": "hearttree.injury.injury-hit",
+  dodged: "hearttree.dodge.dodge-rush",
+  guarded: "hearttree.guard.guard-impact",
+  "ability.succeeded": "hearttree.ability.ability-grove",
+  switched: "hearttree.switch.switch-card",
+  "objective.completed": "hearttree.reward.reward-awaken",
+  extracted: "hearttree.extraction.extraction-open",
+};
+
+export function hearttreeAudioEvent(signal: HearttreeAudioSignal): HearttreeAudioRouting {
+  const defeated = signal.phase === "defeated" || signal.terminalReason === "squad-defeated";
+  const extracted = signal.phase === "extracted" || signal.terminalReason === "player-extracted";
+  const completed = signal.phase === "result" && signal.terminalReason === "completed";
+  const musicRole = defeated ? "memorial"
+    : extracted ? "extraction"
+      : completed ? "victory"
+        : signal.phase === "master" ? "boss"
+          : signal.phase === "choice" ? "mastery"
+            : signal.phase === "memory" ? "mystery" : "exploration";
+  const motifIds = [...new Set(signal.squadElements ?? [])]
+    .map((element) => `hearttree.motif.${element.toLowerCase()}`)
+    .filter((id) => ["hearttree.motif.grove", "hearttree.motif.spark", "hearttree.motif.tide", "hearttree.motif.stone"].includes(id));
+  let effectId = signal.eventKind ? HEARTTREE_EFFECTS[signal.eventKind] : null;
+  if (signal.eventKind === "ability.succeeded" && signal.element) effectId = `hearttree.ability.ability-${signal.element.toLowerCase()}`;
+  if (defeated) effectId = "hearttree.death.death-seal";
+  return {
+    ambienceId: signal.phase === "rootway" ? "hearttree.ambience.exterior" : "hearttree.ambience.interior",
+    musicId: `hearttree.music.${musicRole}`,
+    motifIds,
+    effectId,
+  };
+}
+
 export function createWildsAudioDirector(harness: WildsAudioDirectorHarness) {
   const assets = new Map((harness.assets ?? WILDS_AUDIO_ASSETS).map((asset) => [asset.id, asset] as const));
   const now = harness.now ?? Date.now;
@@ -100,6 +154,7 @@ export function createWildsAudioDirector(harness: WildsAudioDirectorHarness) {
   let currentAmbienceId: string | null = null;
   let currentMusicId: string | null = null;
   let worldState: WildsAudioWorldState | null = null;
+  let currentHearttreeMotifs = "";
   let disposed = false;
 
   const transition = async (id: string, current: "ambience" | "music") => {
@@ -110,6 +165,26 @@ export function createWildsAudioDirector(harness: WildsAudioDirectorHarness) {
     await harness.transitionStream?.({ asset, crossfadeMs: current === "music" ? 1_600 : 900 });
     if (current === "ambience") currentAmbienceId = id;
     else currentMusicId = id;
+  };
+
+  const playById = async (id: string) => {
+    const asset = assets.get(id);
+    if (!asset || disposed) return false;
+    const timestamp = now();
+    const lastPlayed = cooldowns.get(id);
+    if (lastPlayed !== undefined && timestamp - lastPlayed < asset.cooldownMs) return false;
+    const active = activeCounts.get(asset.id) ?? 0;
+    if (active >= asset.maxConcurrent) return false;
+    cooldowns.set(id, timestamp);
+    activeCounts.set(asset.id, active + 1);
+    try {
+      await harness.play({ asset, variantIndex: 0, event: { type: "hearttree", assetId: id }, spatial: null });
+      return true;
+    } finally {
+      const remaining = (activeCounts.get(asset.id) ?? 1) - 1;
+      if (remaining > 0) activeCounts.set(asset.id, remaining);
+      else activeCounts.delete(asset.id);
+    }
   };
 
   return {
@@ -161,6 +236,23 @@ export function createWildsAudioDirector(harness: WildsAudioDirectorHarness) {
       harness.setDialogueActive?.(next.dialogueActive ?? false);
       await transition(`ambience.${region}.day`, "ambience");
       await transition(`music.${region}.${catalogMusicState(next.intensity)}`, "music");
+    },
+    async updateHearttree(signal: HearttreeAudioSignal) {
+      if (disposed) return;
+      await harness.setPaused?.(signal.paused ?? false);
+      if (signal.paused) return;
+      harness.retainBanks?.(new Set<WildsAudioBankId>(["hearttree"]));
+      await harness.preloadBank?.("hearttree");
+      const routing = hearttreeAudioEvent(signal);
+      const motifKey = routing.motifIds.join(":");
+      const motifs = motifKey !== currentHearttreeMotifs ? routing.motifIds.map(playById) : [];
+      currentHearttreeMotifs = motifKey;
+      await Promise.allSettled([
+        transition(routing.ambienceId, "ambience"),
+        transition(routing.musicId, "music"),
+        ...motifs,
+        ...(routing.effectId ? [playById(routing.effectId)] : []),
+      ]);
     },
     snapshot() {
       return {

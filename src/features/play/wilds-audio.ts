@@ -4,6 +4,7 @@ import { createWildsAudioLoader, type WildsDecodedAudioBuffer } from "./audio/wi
 import { createWildsAudioMixer, type WildsGainNodeLike } from "./audio/wilds-audio-mixer";
 import {
   createWildsAudioDirector,
+  type HearttreeAudioSignal,
   type WildsAudioPlayRequest,
   type WildsAudioStreamTransition,
   type WildsAudioWorldState,
@@ -288,6 +289,14 @@ export function createWildsAudioRuntime(
     streamPool.clear();
   };
 
+  const setPaused = async (next: boolean) => {
+    if (next) {
+      for (const media of streamPool) media.pause();
+      return;
+    }
+    if (!settings.muted) await Promise.allSettled([...streamPool].map((media) => media.play()));
+  };
+
   return {
     async unlock() {
       if (destroyed) return;
@@ -305,6 +314,7 @@ export function createWildsAudioRuntime(
         preloadBank: (bank) => loader!.preloadBank(bank),
         retainBanks: (banks) => loader!.retainBanks(banks),
         setDialogueActive: (active) => mixer!.setDialogueActive(active),
+        setPaused,
       });
     },
     setSettings(next: WildsAudioSettings) {
@@ -324,6 +334,10 @@ export function createWildsAudioRuntime(
     updateWorld(next: WildsAudioWorldState) {
       worldState = next;
       if (director && !settings.muted) void director.updateWorld(next);
+    },
+    hearttree(signal: HearttreeAudioSignal) {
+      if (!director || destroyed || settings.muted) return;
+      void director.updateHearttree(signal);
     },
     stopAmbience: stopStreams,
     async destroy() {

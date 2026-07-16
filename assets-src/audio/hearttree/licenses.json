@@ -1,0 +1,102 @@
+{
+  "schema": "receiz.wilds.hearttree_audio_licenses.v1",
+  "downloadedAt": "2026-07-16",
+  "sources": [
+    {
+      "id": "freesound-331047",
+      "file": "source/kalimba-c-note-331047.mp3",
+      "title": "Kalimba (C-note)",
+      "author": "foochie_foochie",
+      "sourceUrl": "https://freesound.org/people/foochie_foochie/sounds/331047/",
+      "previewUrl": "https://cdn.freesound.org/previews/331/331047_2603667-hq.mp3",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "recording": "Rode NT1-A and Scarlett 2i2; performed kalimba C note",
+      "edits": "Noise-reduced by source author; locally trimmed, transposed, layered, filtered, crossfaded, and loudness-mastered."
+    },
+    {
+      "id": "freesound-687054",
+      "file": "source/forest-ambience-687054.mp3",
+      "title": "Forest Ambience 2",
+      "author": "deadrobotmusic",
+      "sourceUrl": "https://freesound.org/people/deadrobotmusic/sounds/687054/",
+      "previewUrl": "https://cdn.freesound.org/previews/687/687054_11532701-hq.mp3",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "recording": "Stereo forest field recording",
+      "edits": "Locally trimmed, filtered, layered, loop-crossfaded, and loudness-mastered."
+    },
+    {
+      "id": "freesound-191454",
+      "file": "source/leaves-rustling-191454.mp3",
+      "title": "Leaves rustling.wav",
+      "author": "leah15",
+      "sourceUrl": "https://freesound.org/people/leah15/sounds/191454/",
+      "previewUrl": "https://cdn.freesound.org/previews/191/191454_3052037-hq.mp3",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "recording": "Performed leaf rustling field recording in Rijeka, Croatia",
+      "edits": "Locally trimmed, filtered, accelerated, layered, and loudness-mastered."
+    },
+    {
+      "id": "freesound-269717",
+      "file": "source/wood-impact-269717.mp3",
+      "title": "Wood Impact",
+      "author": "michorvath",
+      "sourceUrl": "https://freesound.org/people/michorvath/sounds/269717/",
+      "previewUrl": "https://cdn.freesound.org/previews/269/269717_3094998-hq.mp3",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "recording": "Small pile of real logs set down",
+      "edits": "Locally trimmed, transposed, filtered, layered, and loudness-mastered."
+    },
+    {
+      "id": "freesound-381243",
+      "file": "source/water-splash-381243.mp3",
+      "title": "Water splash (.wav)",
+      "author": "zxin",
+      "sourceUrl": "https://freesound.org/people/zxin/sounds/381243/",
+      "previewUrl": "https://cdn.freesound.org/previews/381/381243_3104327-hq.mp3",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "recording": "Performed water-bottle splash",
+      "edits": "Locally trimmed, transposed, filtered, and loudness-mastered."
+    },
+    {
+      "id": "freesound-345629",
+      "file": "source/frame-drum-345629.mp3",
+      "title": "Frame drum_oneshot_RAW_11.wav",
+      "author": "cabled_mess",
+      "sourceUrl": "https://freesound.org/people/cabled_mess/sounds/345629/",
+      "previewUrl": "https://cdn.freesound.org/previews/345/345629_5450487-hq.mp3",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "recording": "Real frame drum captured with Rode NT5 and Zoom H5",
+      "edits": "Locally sequenced, layered, crossfaded, transposed, and loudness-mastered."
+    },
+    {
+      "id": "freesound-431019",
+      "file": "source/stone-hit-431019.mp3",
+      "title": "Stone hit",
+      "author": "CamoMano",
+      "sourceUrl": "https://freesound.org/people/CamoMano/sounds/431019/",
+      "previewUrl": "https://cdn.freesound.org/previews/431/431019_5635287-hq.mp3",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "recording": "Real rock struck with a hatchet",
+      "edits": "Locally trimmed, transposed, layered, filtered, and loudness-mastered."
+    },
+    {
+      "id": "freesound-424250",
+      "file": "source/wind-chimes-424250.mp3",
+      "title": "Wind Chimes Loop",
+      "author": "mogalini",
+      "sourceUrl": "https://freesound.org/people/mogalini/sounds/424250/",
+      "previewUrl": "https://cdn.freesound.org/previews/424/424250_8286669-hq.mp3",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "recording": "Performed musical wind chimes",
+      "edits": "Locally trimmed, transposed, layered, crossfaded, filtered, and loudness-mastered."
+    }
+  ]
+}

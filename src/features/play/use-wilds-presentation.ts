@@ -11,6 +11,7 @@ import {
   type WildsAudioCue,
   type WildsEncounterAudioState
 } from "@/features/play/wilds-audio";
+import type { HearttreeAudioSignal } from "@/features/play/audio/wilds-audio-director";
 import {
   activeWildsVisualEvents,
   appendWildsVisualEvent,
@@ -151,6 +152,7 @@ export function useWildsPresentation({
   }, []);
 
   const playCue = useCallback((cue: WildsAudioCue) => runtimeRef.current?.play(cue), []);
+  const playHearttree = useCallback((signal: HearttreeAudioSignal) => runtimeRef.current?.hearttree(signal), []);
 
   return {
     audioSettings,
@@ -158,6 +160,7 @@ export function useWildsPresentation({
     audioReady,
     unlockAudio,
     playCue,
+    playHearttree,
     visualEvents
   };
 }

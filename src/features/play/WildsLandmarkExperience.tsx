@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { Icons } from "@/components/icons";
 import { applyArenaIntent, createArenaMatch, type ArenaIntent } from "./arena-match";
+import type { HearttreeAudioSignal } from "./audio/wilds-audio-director";
 import type { HearttreeCardCondition } from "./hearttree/card-capability";
 import { HearttreeExpedition } from "./hearttree/HearttreeExpedition";
 import type { HearttreeReceipt } from "./hearttree/receipt";
@@ -21,7 +22,7 @@ function CardPin({ card, accent }: { card: PortableCardAsset | null; accent: str
   ) : <div className="wilds-hearttree-card-pin"><strong>A verified card is required</strong></div>;
 }
 
-export function WildsLandmarkExperience({ access, card, cards, conditions, guestId, hearttreeSquadAssetIds, landmarkId, onExit, onHearttreeReceipt, onHearttreeSquadChange, onUnlock, worldMode }: { access: WildsLandmarkAccess | null; card: PortableCardAsset | null; cards: readonly PortableCardAsset[]; conditions: Readonly<Record<string, HearttreeCardCondition>>; guestId: string; hearttreeSquadAssetIds: readonly string[]; landmarkId: WildsLandmarkId | null; onExit: () => void; onHearttreeReceipt: (receipt: HearttreeReceipt) => void; onHearttreeSquadChange: (assetIds: string[]) => void; onUnlock: (unlockId: string) => void; worldMode: "receiz_live" | "local_practice" | "connecting" }) {
+export function WildsLandmarkExperience({ access, card, cards, conditions, guestId, hearttreeSquadAssetIds, landmarkId, onAudioEvent, onExit, onHearttreeReceipt, onHearttreeSquadChange, onUnlock, worldMode }: { access: WildsLandmarkAccess | null; card: PortableCardAsset | null; cards: readonly PortableCardAsset[]; conditions: Readonly<Record<string, HearttreeCardCondition>>; guestId: string; hearttreeSquadAssetIds: readonly string[]; landmarkId: WildsLandmarkId | null; onAudioEvent: (signal: HearttreeAudioSignal) => void; onExit: () => void; onHearttreeReceipt: (receipt: HearttreeReceipt) => void; onHearttreeSquadChange: (assetIds: string[]) => void; onUnlock: (unlockId: string) => void; worldMode: "receiz_live" | "local_practice" | "connecting" }) {
   const landmark = WILDS_FLAGSHIP_LANDMARKS.find((item) => item.id === landmarkId) ?? null;
   const locked = Boolean(access && !access.allowed);
   const seed = useMemo(() => landmark && card ? `${landmark.id}:${card.proof.digest}` : "", [card, landmark]);
@@ -47,7 +48,7 @@ export function WildsLandmarkExperience({ access, card, cards, conditions, guest
 
   if (!landmark || typeof document === "undefined") return null;
   if (landmark.id === "hearttree-sanctum" && !locked) return createPortal(
-    <HearttreeExpedition cards={cards} conditions={conditions} guestId={guestId} initialSquadAssetIds={hearttreeSquadAssetIds} onExit={onExit} onReceipt={onHearttreeReceipt} onSquadChange={onHearttreeSquadChange} onUnlock={onUnlock} worldMode={worldMode} />,
+    <HearttreeExpedition cards={cards} conditions={conditions} guestId={guestId} initialSquadAssetIds={hearttreeSquadAssetIds} onAudioEvent={onAudioEvent} onExit={onExit} onReceipt={onHearttreeReceipt} onSquadChange={onHearttreeSquadChange} onUnlock={onUnlock} worldMode={worldMode} />,
     document.body
   );
   const result = activePhase === "result";

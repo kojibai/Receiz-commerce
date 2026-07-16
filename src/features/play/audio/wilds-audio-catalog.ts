@@ -1,5 +1,6 @@
 import { WILDS_BOSS_FAMILIES } from "../wilds-boss-ecology";
 import { WILDS_ECOLOGY_FAMILIES } from "../wilds-ecology";
+import hearttreeManifest from "../../../../public/audio/wilds/hearttree/manifest.json";
 import { plannedWildsAudioProduction, plannedWildsRecordedVoice } from "./wilds-audio-production";
 import type {
   WildsAudioAsset,
@@ -201,7 +202,40 @@ const voiceAssets = [{
   production: plannedWildsRecordedVoice(narratorArrival.production.prompt),
 }];
 
+export const HEARTTREE_AUDIO_ASSETS: readonly WildsAudioAsset[] = hearttreeManifest.assets.map((entry) => {
+  const bus: WildsAudioBus = entry.group === "music" || entry.group === "motif"
+    ? "music"
+    : entry.group === "ambience" ? "ambience" : "effects";
+  const stream = entry.group === "music" || entry.group === "ambience";
+  return {
+    id: entry.id,
+    bus,
+    bank: "hearttree",
+    priority: entry.group === "death" ? 100 : entry.group === "boss" ? 90 : stream ? 35 : 70,
+    cooldownMs: entry.group === "movement" ? 120 : entry.group === "motif" ? 8_000 : 80,
+    maxConcurrent: entry.group === "motif" ? 3 : stream ? 1 : 4,
+    stream,
+    spatial: false,
+    variants: [{
+      url: entry.file,
+      durationSeconds: entry.durationSeconds,
+      loop: stream,
+      gain: entry.group === "ambience" ? 0.72 : entry.group === "motif" ? 0.28 : 0.9,
+    }],
+    production: {
+      provider: "open-source-offline",
+      prompt: `Offline Hearttree ${entry.group} render from license-audited real recorded material. Sources: ${entry.source.join(", ")}.`,
+      format: "mp3_44100_128",
+      status: "generated",
+      generatedAt: hearttreeManifest.generatedAt,
+      sourceTool: "ffmpeg offline render pipeline",
+      rights: "open-source-generated",
+    },
+  };
+});
+
 export const WILDS_AUDIO_ASSETS: readonly WildsAudioAsset[] = [
+  ...HEARTTREE_AUDIO_ASSETS,
   ...effectAssets,
   ...regionalAssets,
   ...ecologyAssets,

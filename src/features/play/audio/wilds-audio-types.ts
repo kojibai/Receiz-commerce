@@ -11,6 +11,7 @@ export type WildsNamedRegionAudioBank =
 
 export type WildsAudioBankId =
   | "global"
+  | "hearttree"
   | WildsNamedRegionAudioBank
   | `ecology:${string}`
   | `boss:${string}`

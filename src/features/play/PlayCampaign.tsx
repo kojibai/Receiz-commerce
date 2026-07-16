@@ -763,6 +763,7 @@ export function PlayCampaign({
         guestId={multiplayer.guestId}
         hearttreeSquadAssetIds={state.hearttreeSquadAssetIds}
         landmarkId={activeLandmarkId === "wayfinder-hollow" ? null : activeLandmarkId}
+        onAudioEvent={presentation.playHearttree}
         onExit={() => setActiveLandmarkId(null)}
         onHearttreeReceipt={(receipt) => dispatch({ type: "hearttree-admit", receipt })}
         onHearttreeSquadChange={(assetIds) => dispatch({ type: "hearttree-select-squad", assetIds })}

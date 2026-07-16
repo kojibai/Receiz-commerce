@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { PortableCardAsset } from "../portable-card";
 import { emptyHearttreeCondition, projectHearttreeCard, type HearttreeCardCondition } from "./card-capability";
 import type { HearttreeMortalConsent } from "./consequences";
@@ -10,6 +10,7 @@ import { createHearttreeRuntime, stepHearttreeRuntime, type HearttreeInput, type
 import { hearttreeTranscript } from "./transcript";
 import { HearttreeControls } from "./HearttreeControls";
 import { HearttreeScene } from "./HearttreeScene";
+import type { HearttreeAudioSignal } from "../audio/wilds-audio-director";
 
 type InputIntent = HearttreeInput extends infer Value ? Value extends HearttreeInput ? Omit<Value, "sequence" | "tick"> : never : never;
 type WorldMode = "receiz_live" | "local_practice" | "connecting";
@@ -20,6 +21,7 @@ export function HearttreeExpedition({
   guestId,
   initialSquadAssetIds,
   onExit,
+  onAudioEvent,
   onReceipt,
   onSquadChange,
   onUnlock,
@@ -30,6 +32,7 @@ export function HearttreeExpedition({
   guestId: string;
   initialSquadAssetIds: readonly string[];
   onExit: () => void;
+  onAudioEvent: (signal: HearttreeAudioSignal) => void;
   onReceipt: (receipt: HearttreeReceipt) => void;
   onSquadChange: (assetIds: string[]) => void;
   onUnlock: (unlockId: string) => void;
@@ -45,6 +48,7 @@ export function HearttreeExpedition({
   const [paused, setPaused] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [publication, setPublication] = useState<"idle" | "canonical" | "practice" | "failed">("idle");
+  const lastAudioEventId = useRef<string | null>(null);
   const reducedMotion = useReducedMotion();
   const selectedCards = available.filter((card) => selectedIds.includes(card.id));
   const squad = useMemo(() => selectedCards.map((card) => projectHearttreeCard(card, conditions[card.id] ?? emptyHearttreeCondition(card.id))), [conditions, selectedCards]);
@@ -65,7 +69,9 @@ export function HearttreeExpedition({
       mortal
     });
     setDefinition(nextDefinition);
-    setRuntime(createHearttreeRuntime(nextDefinition, squad));
+    const nextRuntime = createHearttreeRuntime(nextDefinition, squad);
+    setRuntime(nextRuntime);
+    onAudioEvent({ phase: nextRuntime.phase, squadElements: squad.map((card) => card.element) });
     setCaption(`Entered ${nextDefinition.chambers[0]!.name}. Navigate to the living objective; timing and card choice determine the outcome.`);
   };
 
@@ -84,6 +90,25 @@ export function HearttreeExpedition({
       }
     });
   }, [paused]);
+
+  useEffect(() => {
+    const last = runtime?.events.at(-1);
+    if (!runtime || !last || last.id === lastAudioEventId.current) return;
+    lastAudioEventId.current = last.id;
+    const activeCapability = runtime.squad.find((card) => card.assetId === runtime.activeAssetId);
+    onAudioEvent({
+      phase: runtime.phase,
+      eventKind: last.kind,
+      element: activeCapability?.element ?? null,
+      squadElements: runtime.squad.map((card) => card.element),
+      terminalReason: runtime.terminalReason,
+    });
+  }, [onAudioEvent, runtime]);
+
+  const setExpeditionPaused = (next: boolean) => {
+    setPaused(next);
+    if (runtime) onAudioEvent({ phase: runtime.phase, squadElements: runtime.squad.map((card) => card.element), terminalReason: runtime.terminalReason, paused: next });
+  };
 
   useEffect(() => {
     if (!runtime || runtime.phase === "result" || runtime.phase === "extracted" || runtime.phase === "defeated") return;
@@ -171,11 +196,11 @@ export function HearttreeExpedition({
     <div className="hearttree-hud">
       <div className="hearttree-objective"><small>{runtime.phase} · chamber {runtime.chamberIndex + 1}/4</small><strong>{definition.chambers[runtime.chamberIndex]?.name ?? "Expedition result"}</strong><span>{runtime.objective.complete ? "Objective complete" : `Reach ${runtime.objective.id.split(":").at(-1)}`}</span></div>
       <div className="hearttree-vitals"><span><i style={{ width: `${active.health / active.maxHealth * 100}%` }} />Health {active.health}/{active.maxHealth}</span><span><i style={{ width: `${active.stamina}%` }} />Stamina {active.stamina}</span></div>
-      <button className="hearttree-pause" aria-label={paused ? "Resume expedition" : "Pause expedition"} onClick={() => setPaused((value) => !value)}>{paused ? "▶" : "Ⅱ"}</button>
+      <button className="hearttree-pause" aria-label={paused ? "Resume expedition" : "Pause expedition"} onClick={() => setExpeditionPaused(!paused)}>{paused ? "▶" : "Ⅱ"}</button>
     </div>
     <p className="hearttree-caption" aria-live="polite">{caption}</p>
     {!terminal && !paused ? <HearttreeControls cards={selectedCards} onIntent={onIntent} runtime={runtime} squad={squad} /> : null}
-    {paused ? <div className="hearttree-overlay"><strong>Expedition paused</strong><button onClick={() => setPaused(false)}>Resume</button><button onClick={onExit}>Return to world</button></div> : null}
+    {paused ? <div className="hearttree-overlay"><strong>Expedition paused</strong><button onClick={() => setExpeditionPaused(false)}>Resume</button><button onClick={onExit}>Return to world</button></div> : null}
     {terminal ? <div className="hearttree-overlay result"><small>{runtime.terminalReason}</small><strong>{runtime.phase === "defeated" ? "The squad fell" : runtime.phase === "extracted" ? "Extraction secured" : "The Heart remembers"}</strong><p>{publication === "canonical" ? "Canonical receipt adopted." : publication === "practice" ? "Practice result—no persistent consequences." : "Result is pending authoritative replay and publication."}</p><button disabled={publishing || publication === "canonical" || publication === "practice"} onClick={publish}>{publishing ? "Replaying…" : worldMode === "receiz_live" ? "Verify and seal result" : "Verify practice replay"}</button><button onClick={onExit}>Return to world</button></div> : null}
   </section>;
 }

@@ -42,6 +42,7 @@
     "receiz:conformance": "receiz conformance",
     "validate:ai-skills": "node --import tsx ai-skills/scripts/validate-skills.ts",
     "validate:audio:catalog": "node --import tsx scripts/validate-wilds-audio.mjs --catalog-only",
+    "validate:audio:hearttree": "node scripts/validate-hearttree-audio.mjs",
     "receiz:webhooks:create": "node scripts/receiz-create-webhooks.mjs",
     "secret:scan": "node scripts/release-secret-scan.mjs",
     "release:check": "node scripts/release-check.mjs"
