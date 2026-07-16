@@ -49,10 +49,12 @@ function eventKindForPhase(phase: string): WildsVisualEventKind | null {
 
 export function useWildsPresentation({
   encounter,
-  enabled
+  enabled,
+  position,
 }: {
   encounter: WildsEncounterAudioState;
   enabled: boolean;
+  position: { x: number; z: number };
 }) {
   const [audioSettings, setAudioSettingsState] = useState<WildsAudioSettings>(restoreAudioSettings);
   const [audioReady, setAudioReady] = useState(false);
@@ -104,6 +106,23 @@ export function useWildsPresentation({
       // Audio settings remain active for this session when persistence is blocked.
     }
   }, [audioReady, audioSettings]);
+
+  useEffect(() => {
+    const phase = encounter.phase;
+    const intensity = phase === "battle" || phase === "battle_intro"
+      ? "battle"
+      : phase === "emerging" || phase === "capsule"
+        ? "encounter"
+        : phase === "hint" || phase === "searching"
+          ? "tension"
+          : phase === "revealed" || phase === "sealed"
+            ? "aftermath"
+            : "exploration";
+    runtimeRef.current?.updateWorld({
+      position: { x: position.x, y: 1.6, z: position.z },
+      intensity,
+    });
+  }, [encounter.phase, position.x, position.z]);
 
   useEffect(() => {
     const previous = previousEncounter.current;

@@ -136,7 +136,8 @@ export function PlayCampaign({
       phase: state.encounter.phase,
       proximity: state.encounter.phase === "idle" ? "cold" : state.encounter.proximity
     },
-    enabled: enabled && Boolean(avatarStyle)
+    enabled: enabled && Boolean(avatarStyle),
+    position: state.player,
   });
   const createVaultPlayer = () => {
     const exportedAt = new Date().toISOString();

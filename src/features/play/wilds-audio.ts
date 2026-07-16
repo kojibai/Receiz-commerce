@@ -2,6 +2,12 @@ import type { WildsEcologyFamilyId } from "./wilds-ecology";
 import type { WildsBossFamilyId } from "./wilds-boss-ecology";
 import { createWildsAudioLoader, type WildsDecodedAudioBuffer } from "./audio/wilds-audio-loader";
 import { createWildsAudioMixer, type WildsGainNodeLike } from "./audio/wilds-audio-mixer";
+import {
+  createWildsAudioDirector,
+  type WildsAudioPlayRequest,
+  type WildsAudioStreamTransition,
+  type WildsAudioWorldState,
+} from "./audio/wilds-audio-director";
 
 export type WildsAudioSettings = {
   master: number;
@@ -184,39 +190,102 @@ export function createWildsAudioRuntime(
   let context: WildsAudioContextLike | null = null;
   let loader: ReturnType<typeof createWildsAudioLoader> | null = null;
   let mixer: ReturnType<typeof createWildsAudioMixer> | null = null;
+  let director: ReturnType<typeof createWildsAudioDirector> | null = null;
   let settings = { ...DEFAULT_WILDS_AUDIO_SETTINGS };
   let destroyed = false;
-  let ambience: WildsMediaLike | null = null;
   const activeSources = new Set<BufferSourceLike>();
+  const activeVoiceGains = new Map<BufferSourceLike, WildsGainNodeLike>();
+  const streams = new Map<"music" | "ambience", WildsMediaLike>();
+  const streamPool = new Set<WildsMediaLike>();
+  const fadeTimers = new Set<ReturnType<typeof setTimeout>>();
+  let worldState: WildsAudioWorldState = {
+    position: { x: 0, y: 0, z: 0 },
+    intensity: "exploration",
+  };
 
   const createMedia = options.createMedia ?? ((url: string) => {
     const media = new Audio(url);
     return media;
   });
 
-  const play = (cue: WildsAudioCue) => {
-    if (!context || !loader || !mixer || destroyed || settings.muted) return;
-    void loader.load(`effects.${cue}`).then((loaded) => {
-      if (!context || !mixer || !loaded.buffer || destroyed || settings.muted) return;
-      const source = context.createBufferSource();
-      source.buffer = loaded.buffer;
-      source.connect(mixer.input(loaded.asset.bus));
-      source.onended = () => {
-        activeSources.delete(source);
-        source.disconnect();
-      };
-      activeSources.add(source);
-      source.start(context.currentTime);
-    }).catch(() => {
-      // Missing production audio degrades to silence and remains visible in loader diagnostics.
-    });
+  const streamVolume = (bus: "music" | "ambience") => settings.muted
+    ? 0
+    : settings.master * settings[bus];
+
+  const fadeMedia = (media: WildsMediaLike, from: number, to: number, durationMs: number, onComplete?: () => void) => {
+    const steps = 8;
+    media.volume = from;
+    for (let step = 1; step <= steps; step += 1) {
+      const timer = setTimeout(() => {
+        fadeTimers.delete(timer);
+        if (destroyed) return;
+        media.volume = from + (to - from) * (step / steps);
+        if (step === steps) onComplete?.();
+      }, Math.round(durationMs * step / steps));
+      fadeTimers.add(timer);
+    }
   };
 
-  const stopAmbience = () => {
-    if (!ambience) return;
-    ambience.pause();
-    ambience.currentTime = 0;
-    ambience = null;
+  const playAsset = async ({ asset, spatial }: WildsAudioPlayRequest) => {
+    if (!context || !loader || !mixer || destroyed || settings.muted) return;
+    try {
+      const loaded = await loader.load(asset.id);
+      if (!context || !mixer || !loaded.buffer || destroyed || settings.muted) return;
+      await new Promise<void>((resolve) => {
+        const source = context!.createBufferSource();
+        const voiceGain = context!.createGain();
+        const attenuation = spatial ? Math.max(0, 1 - spatial.distance / 48) : 1;
+        voiceGain.gain.value = (asset.variants[0]?.gain ?? 1) * attenuation;
+        source.buffer = loaded.buffer;
+        source.connect(voiceGain);
+        voiceGain.connect(mixer!.input(loaded.asset.bus));
+        source.onended = () => {
+          activeSources.delete(source);
+          activeVoiceGains.delete(source);
+          source.disconnect();
+          voiceGain.disconnect();
+          resolve();
+        };
+        activeSources.add(source);
+        activeVoiceGains.set(source, voiceGain);
+        source.start(context!.currentTime);
+      });
+    } catch {
+      // Missing production audio degrades to silence and remains visible in loader diagnostics.
+    }
+  };
+
+  const transitionStream = async ({ asset, crossfadeMs }: WildsAudioStreamTransition) => {
+    if (!loader || destroyed || settings.muted || (asset.bus !== "music" && asset.bus !== "ambience")) return;
+    try {
+      const loaded = await loader.load(asset.id);
+      if (destroyed || settings.muted) return;
+      const bus = asset.bus;
+      const previous = streams.get(bus);
+      const media = createMedia(loaded.variantUrl);
+      streamPool.add(media);
+      media.loop = asset.variants[0]?.loop ?? true;
+      media.currentTime = 0;
+      streams.set(bus, media);
+      await media.play();
+      fadeMedia(media, 0, streamVolume(bus) * (asset.variants[0]?.gain ?? 1), crossfadeMs);
+      if (previous) fadeMedia(previous, previous.volume, 0, crossfadeMs, () => {
+        previous.pause();
+        previous.currentTime = 0;
+        streamPool.delete(previous);
+      });
+    } catch {
+      // A missing stream stays silent while diagnostics preserve the failed asset id.
+    }
+  };
+
+  const stopStreams = () => {
+    for (const media of streamPool) {
+      media.pause();
+      media.currentTime = 0;
+    }
+    streams.clear();
+    streamPool.clear();
   };
 
   return {
@@ -230,41 +299,52 @@ export function createWildsAudioRuntime(
         decode: (data) => context!.decodeAudioData(data),
       });
       mixer.setSettings({ ...settings, creatures: 0.72, dialogue: 0.9 });
+      director ??= createWildsAudioDirector({
+        play: playAsset,
+        transitionStream,
+        preloadBank: (bank) => loader!.preloadBank(bank),
+        retainBanks: (banks) => loader!.retainBanks(banks),
+        setDialogueActive: (active) => mixer!.setDialogueActive(active),
+      });
     },
     setSettings(next: WildsAudioSettings) {
       settings = normalizeWildsAudioSettings(next);
       mixer?.setSettings({ ...settings, creatures: 0.72, dialogue: 0.9 });
-      if (ambience) ambience.volume = settings.master * settings.ambience;
-      if (settings.muted) stopAmbience();
+      for (const [bus, media] of streams) media.volume = streamVolume(bus);
+      if (settings.muted) stopStreams();
     },
-    play,
+    play(cue: WildsAudioCue) {
+      if (!director || destroyed || settings.muted) return;
+      void director.emit({ type: "effect", cue });
+    },
     startAmbience() {
-      if (!context || !loader || destroyed || settings.muted || ambience) return;
-      void loader.load("ambience.verdant-heartlands.day").then((loaded) => {
-        if (ambience || destroyed || settings.muted) return;
-        const media = createMedia(loaded.variantUrl);
-        media.loop = true;
-        media.volume = settings.master * settings.ambience;
-        ambience = media;
-        return media.play();
-      }).catch(() => {
-        stopAmbience();
-      });
+      if (!director || destroyed || settings.muted) return;
+      void director.updateWorld(worldState);
     },
-    stopAmbience,
+    updateWorld(next: WildsAudioWorldState) {
+      worldState = next;
+      if (director && !settings.muted) void director.updateWorld(next);
+    },
+    stopAmbience: stopStreams,
     async destroy() {
       if (destroyed) return;
       destroyed = true;
-      stopAmbience();
+      for (const timer of fadeTimers) clearTimeout(timer);
+      fadeTimers.clear();
+      stopStreams();
       for (const source of activeSources) {
         try { source.stop(); } catch { /* The source may already have ended. */ }
         source.disconnect();
+        activeVoiceGains.get(source)?.disconnect();
       }
       activeSources.clear();
+      activeVoiceGains.clear();
+      director?.dispose();
       loader?.dispose();
       mixer?.dispose();
       loader = null;
       mixer = null;
+      director = null;
       const activeContext = context;
       context = null;
       if (activeContext) await activeContext.close();
