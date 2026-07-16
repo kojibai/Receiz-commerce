@@ -1,5 +1,6 @@
 import { emptyAdventureCondition } from "../../src/features/play/adventure/card-condition";
 import { projectMarketCard } from "../../src/features/play/market/card-role";
+import type { MarketBoardInput } from "../../src/features/play/market/contract-director";
 import { sealCollectedCard } from "../../src/features/play/portable-card";
 import type { WildsEcologySite } from "../../src/features/play/wilds-ecology";
 
@@ -43,5 +44,15 @@ export function marketFixtureSite(): WildsEcologySite {
     historicizesAt: "2026-07-18T20:00:00.000Z",
     expiresAt: "2026-07-18T08:00:00.000Z",
     parentSiteId: null,
+  };
+}
+
+export function marketFixtureInput(squad: MarketBoardInput["squad"], mortal = false): MarketBoardInput {
+  return {
+    site: marketFixtureSite(),
+    pulse: "2026-07-16T22:00:00.000Z",
+    squad,
+    history: [],
+    mortal,
   };
 }
