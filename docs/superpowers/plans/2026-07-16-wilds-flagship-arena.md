@@ -260,13 +260,13 @@ export function mergeArenaCausalBranches(input: ArenaMergeInput): ArenaMergeResu
 export interface ArenaOfflineStore { commit(transaction: ArenaOfflineTransaction): Promise<ArenaOfflineSnapshot>; restore(playerId: string): Promise<ArenaOfflineSnapshot | null>; }
 ```
 
-- [ ] Write Web Crypto tests for non-exportable P-256 private keys, public verification, tamper rejection, new-device identity, and content digest.
-- [ ] Write merge tests for causal order, independent XP/history, reward deduplication, cumulative valid spend/injury, insufficient-resource conflict, retirement dominance, stale living events, ownership conflict, and inspectable rejection.
-- [ ] Write atomic-store tests using the memory adapter: success updates receipt/cards/Vault together; injected failure changes none; duplicate transaction is idempotent.
-- [ ] Run the three suites; expect failure.
-- [ ] Implement native Web Crypto and IndexedDB stores without a dependency. Imported portable Vaults create a new device identity for future events while retaining old public identities and signed history.
-- [ ] Run focused suites; expect PASS.
-- [ ] Commit with `git commit -m "feat: commit offline Arena history atomically"`.
+- [x] Write Web Crypto tests for non-exportable P-256 private keys, public verification, tamper rejection, new-device identity, and content digest.
+- [x] Write merge tests for causal order, independent XP/history, reward deduplication, cumulative valid spend/injury, insufficient-resource conflict, retirement dominance, stale living events, ownership conflict, and inspectable rejection.
+- [x] Write atomic-store tests using the memory adapter: success updates receipt/cards/Vault together; injected failure changes none; duplicate transaction is idempotent.
+- [x] Run the three suites; expect failure.
+- [x] Implement native Web Crypto and IndexedDB stores without a dependency. Imported portable Vaults create a new device identity for future events while retaining old public identities and signed history.
+- [x] Run focused suites; expect PASS.
+- [x] Commit with `git commit -m "feat: commit offline Arena history atomically"`.
 
 ### Task 9: Portable card/Vault export and Save V10 integration
 
