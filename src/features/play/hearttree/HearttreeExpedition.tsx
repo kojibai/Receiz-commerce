@@ -82,7 +82,7 @@ export function HearttreeExpedition({
       try {
         const next = stepHearttreeRuntime(current, { ...intent, sequence: current.sequence + 1, tick: current.tick + 1 } as HearttreeInput);
         const last = next.events.at(-1);
-        setCaption(last?.detail ?? `${intent.kind} resolved from the active card's real capability.`);
+        setCaption(last ? readableEvent(last) : `${intent.kind} resolved from the active card's real capability.`);
         return next;
       } catch (error) {
         setCaption(error instanceof Error ? readableError(error.message) : "The Hearttree rejected that action.");
@@ -223,4 +223,15 @@ function readableError(error: string) {
   if (error.includes("stamina")) return "The active card needs stamina. Switch cards or create breathing room.";
   if (error.includes("master_active")) return "The Root Master still stands. Read its guard and use the right card ability.";
   return error.replaceAll("hearttree_", "").replaceAll("_", " ");
+}
+
+function readableEvent(event: HearttreeRuntimeState["events"][number]) {
+  if (event.kind === "moved") return "Advanced through the living chamber. Position and hazard timing are now committed.";
+  if (event.kind === "hazard.hit") return `Root surge struck for ${event.amount} damage. Guard, dodge, or change your approach.`;
+  if (event.kind === "dodged") return "Perfect evade—the active card crossed the threat window cleanly.";
+  if (event.kind === "guarded") return "Guard established. The active card converted timing into protection.";
+  if (event.kind === "ability.succeeded") return `Ability landed for ${event.amount} power. Element, stats, range, and timing all resolved.`;
+  if (event.kind === "switched") return event.amount ? "Tactical switch spent one charge under pressure." : "Squad lead changed at a safe moment.";
+  if (event.kind === "objective.completed") return "Chamber attuned. The Hearttree reshaped the next challenge around this squad.";
+  return "Extraction secured. The authoritative replay will determine persistent consequences.";
 }
