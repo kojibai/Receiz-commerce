@@ -206,12 +206,12 @@ export function generateArenaPath(input: ArenaPathInput): ArenaPath;
 export function validateArenaEncounterSolvability(encounter: ArenaEncounterDefinition, roster: readonly ArenaFighterDefinition[]): ArenaSolvabilityResult;
 ```
 
-- [ ] Write failing NPC tests proving no future/hidden input access, bounded reaction delay, legal cooldown/stamina, learner telegraphs, habit memory, champion counterplay, reproducibility, and different behavior by tier.
-- [ ] Write failing campaign tests for remembered checkpoint, teach-one-rule early encounters, three strategic rival levels, champion, multi-phase boss transformation, exact counter opportunities, roster-shaped recommendations, retreat-and-prepare, and solvability.
-- [ ] Run `node --import tsx --test tests/arena-opponent.test.ts tests/arena-campaign.test.ts`; expect failure.
-- [ ] Implement pure observation and policy modules. Boss phases may change stage hazards and legal actions only through sealed transition frames.
-- [ ] Run focused tests; expect PASS and no health-only difficulty scaling.
-- [ ] Commit with `git commit -m "feat: add fair Arena rivals and boss path"`.
+- [x] Write failing NPC tests proving no future/hidden input access, bounded reaction delay, legal cooldown/stamina, learner telegraphs, habit memory, champion counterplay, reproducibility, and different behavior by tier.
+- [x] Write failing campaign tests for remembered checkpoint, teach-one-rule early encounters, three strategic rival levels, champion, multi-phase boss transformation, exact counter opportunities, roster-shaped recommendations, retreat-and-prepare, and solvability.
+- [x] Run `node --import tsx --test tests/arena-opponent.test.ts tests/arena-campaign.test.ts`; expect failure.
+- [x] Implement pure observation and policy modules. Boss phases may change stage hazards and legal actions only through sealed transition frames.
+- [x] Run focused tests; expect PASS and no health-only difficulty scaling.
+- [x] Commit with `git commit -m "feat: add fair Arena rivals and boss path"`.
 
 ### Task 7: Transcript replay, consequences, mortality, and receipt
 
