@@ -181,12 +181,12 @@ export function createArenaMatch(definition: ArenaMatchDefinition): ArenaMatchSt
 export function advanceArenaMatch(state: ArenaMatchState, inputs: readonly ArenaInputFrame[]): ArenaMatchState;
 ```
 
-- [ ] Write failing tests for one-to-three-card admission, one active fighter, vulnerable tag windows, tag cancellation, retained condition, team rescue, healing/item spend, pickup, destructible mechanism, hazard, fall recovery, withdrawal, ordinary practice knockout, mortal zero, continued team play after death, and final terminal result.
-- [ ] Add structural rejection tests for bad sequence/frame/actor/vector/ability/tag/item/terminal input and for a dead or duplicate roster pin.
-- [ ] Run `node --import tsx --test tests/arena-runtime.test.ts`; expect failure.
-- [ ] Implement immutable frame reduction. The exact zero-Vitality frame emits one `fighter.retired` event in mortal mode; practice emits `fighter.knocked-out` and never changes persistent condition.
-- [ ] Run movement, combat, and runtime suites; expect PASS.
-- [ ] Commit with `git commit -m "feat: run mortal three-card Arena teams"`.
+- [x] Write failing tests for one-to-three-card admission, one active fighter, vulnerable tag windows, tag cancellation, retained condition, team rescue, healing/item spend, pickup, destructible mechanism, hazard, fall recovery, withdrawal, ordinary practice knockout, mortal zero, continued team play after death, and final terminal result.
+- [x] Add structural rejection tests for bad sequence/frame/actor/vector/ability/tag/item/terminal input and for a dead or duplicate roster pin.
+- [x] Run `node --import tsx --test tests/arena-runtime.test.ts`; expect failure.
+- [x] Implement immutable frame reduction. The exact zero-Vitality frame emits one `fighter.retired` event in mortal mode; practice emits `fighter.knocked-out` and never changes persistent condition.
+- [x] Run movement, combat, and runtime suites; expect PASS.
+- [x] Commit with `git commit -m "feat: run mortal three-card Arena teams"`.
 
 ### Task 6: Fair NPC tiers and multi-phase boss campaign
 
