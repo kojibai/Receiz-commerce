@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
 import { RECEIZ_DEFAULT_BASE_URL } from "@receiz/sdk";
+import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

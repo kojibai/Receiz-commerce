@@ -38,7 +38,8 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "receiz:doctor": "node scripts/receiz-doctor.mjs",
-    "receiz:check": "receiz app check --target 104.0.0 --json",
+    "receiz:check": "receiz app check --target 105.0.0 --json",
+    "receiz:conformance": "receiz conformance",
     "validate:ai-skills": "node --import tsx ai-skills/scripts/validate-skills.ts",
     "validate:audio:catalog": "node --import tsx scripts/validate-wilds-audio.mjs --catalog-only",
     "receiz:webhooks:create": "node scripts/receiz-create-webhooks.mjs",
@@ -48,9 +49,9 @@
   "dependencies": {
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.6.1",
-    "@receiz/ai-skills": "104.0.0",
-    "@receiz/mcp-server": "104.0.0",
-    "@receiz/sdk": "104.0.0",
+    "@receiz/ai-skills": "105.0.0",
+    "@receiz/mcp-server": "105.0.0",
+    "@receiz/sdk": "105.0.0",
     "lucide-react": "^0.468.0",
     "next": "^15.0.0",
     "qrcode": "^1.5.4",
@@ -72,9 +73,9 @@
   },
   "pnpm": {
     "overrides": {
-      "@receiz/ai-skills": "file:vendor/receiz-ai-skills-104.0.0.tgz",
-      "@receiz/mcp-server": "file:vendor/receiz-mcp-server-104.0.0.tgz",
-      "@receiz/sdk": "file:vendor/receiz-sdk-104.0.0.tgz",
+      "@receiz/ai-skills": "file:vendor/receiz-ai-skills-105.0.0.tgz",
+      "@receiz/mcp-server": "file:vendor/receiz-mcp-server-105.0.0.tgz",
+      "@receiz/sdk": "file:vendor/receiz-sdk-105.0.0.tgz",
       "postcss": ">=8.5.10"
     }
   }

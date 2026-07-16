@@ -2,17 +2,17 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 
-describe("Receiz v104 application contract", () => {
-  it("compiles the complete app contract through the v104 SDK", async () => {
+describe("Receiz v105 application contract", () => {
+  it("compiles the complete app contract through the v105 SDK", async () => {
     const compiler = await import("@receiz/sdk/compiler");
     assert.equal(typeof compiler.defineReceizApp, "function");
     assert.equal(typeof compiler.compileReceizAppContract, "function");
 
     const input = JSON.parse(readFileSync("receiz.app.json", "utf8"));
     const contract = compiler.defineReceizApp(input);
-    const plan = compiler.compileReceizAppContract(contract, { targetSdkVersion: "104.0.0" });
+    const plan = compiler.compileReceizAppContract(contract, { targetSdkVersion: "105.0.0" });
 
-    assert.equal(plan.targetSdkVersion, "104.0.0");
+    assert.equal(plan.targetSdkVersion, "105.0.0");
     assert.deepEqual(contract.features, [
       "identity",
       "proof",
@@ -28,7 +28,7 @@ describe("Receiz v104 application contract", () => {
     assert.ok(plan.verificationCommands.length > 0);
   });
 
-  it("passes the v104 integration check with verified production rails", async () => {
+  it("passes the v105 integration check with verified production rails", async () => {
     const compiler = await import("@receiz/sdk/compiler");
     const generated = JSON.parse(readFileSync("receiz.generated.json", "utf8"));
 
@@ -40,7 +40,7 @@ describe("Receiz v104 application contract", () => {
 
     const result = await compiler.checkReceizIntegration({
       root: process.cwd(),
-      targetSdkVersion: "104.0.0",
+      targetSdkVersion: "105.0.0",
     });
     assert.deepEqual(result.blockingFindings, []);
     assert.equal(result.ok, true);

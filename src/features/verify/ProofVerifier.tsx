@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import type { DocumentVerifyResponse } from "@receiz/sdk";
+import { useState } from "react";
 import { createReceizCommerceAdapter } from "@/lib/receiz/adapter";
 import { Button, Panel, StatusPill } from "@/components/ui";
 

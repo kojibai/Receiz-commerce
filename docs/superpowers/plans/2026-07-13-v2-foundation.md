@@ -47,10 +47,10 @@
 - [ ] **Step 1: Write the failing version test**
 
 ```ts
+import { RECEIZ_SDK_VERSION } from "@receiz/sdk";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
-import { RECEIZ_SDK_VERSION } from "@receiz/sdk";
 
 describe("Receiz v2 dependency contract", () => {
   it("pins the supported SDK and patched production dependency graph", () => {

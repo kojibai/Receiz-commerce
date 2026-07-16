@@ -1,7 +1,7 @@
+import { type JsonObject, type ReceizKeyFile } from "@receiz/sdk";
 import { platform } from "../platform";
 import { buildStoreStateConnectRecord, type StoreStateRecord } from "./proof-state";
 import type { ProofStateStore } from "./proof-state-store";
-import { type JsonObject, type ReceizKeyFile } from "@receiz/sdk";
 
 type StoreStatePublishProof = {
   keyFile?: unknown;

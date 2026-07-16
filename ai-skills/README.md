@@ -1,6 +1,6 @@
 # Receiz AI Skills
 
-`receiz-app-builder-skill` is the authoritative v104 workflow for starting,
+`receiz-app-builder-skill` is the authoritative v105 workflow for starting,
 integrating, upgrading, diagnosing, and repairing repositories through the typed
 Receiz app contract, shared SDK compiler, CLI, and MCP tools.
 
@@ -12,7 +12,7 @@ Receiz is a proof-native artifact system. A Receiz object is not a database row.
 
 ## SDK, MCP, And Skills
 
-- SDK: `@receiz/sdk` is for building apps. It exposes validators, projections, proof memory, identity artifact helpers, public app-state, public store, commerce, wallet, sports, world, offline queues, webhooks, and sandbox helpers.
+- SDK: `@receiz/sdk` is the universal runtime; `@receiz/sdk/react` is React-only; `@receiz/sdk/compiler` is Node-only; `@receiz/sdk/testing` is browser-safe sandbox and conformance support.
 - MCP: `@receiz/mcp-server` is for agent tool access. It exposes SDK-backed tools for diagnostics, public reads, offline shape inspection, app-state/public-store actions, deterministic previews, and delegated writes. Artifact verification remains SDK `verification.verifyArtifact(file)` and requires continuity.
 - Skills: this package is operating doctrine. It tells an AI which Receiz primitive is active, which source of truth wins, which SDK or MCP rail to use, and what must never be assumed.
 

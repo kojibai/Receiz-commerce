@@ -1,6 +1,6 @@
 # MCP Tool Map
 
-## v104 Application Compiler
+## v105 Application Compiler And Semantic Operations
 
 | Need | Tool | Mutation |
 |---|---|---|
@@ -11,6 +11,11 @@
 | Check conformance | `receiz_app_check` | Read-only |
 | Plan upgrade | `receiz_app_upgrade` | Read-only |
 | Explain finding | `receiz_app_explain` | Read-only |
+| Repair application | `receiz_app_repair` | Exact digest confirmation required |
+| Trace proof | `receiz_proof_trace` | Read-only; canonical bytes required for verified verdict |
+| Replay webhook | `receiz_webhook_replay` | Signature verification and exact confirmation required |
+| Explain scope | `receiz_scope_explain` | Read-only |
+| Qualify release | `receiz_release_qualify` | Read-only |
 
 Repository inspection is not verification. These tools never supply an artifact
 verification verdict or proof authority.
@@ -20,7 +25,7 @@ Source: `packages/receiz-mcp-server/src/index.ts`.
 ## Diagnostics And Setup
 
 - `receiz_doctor`: SDK doctor for app/tenant diagnostics.
-- `receiz_capabilities`: inspect SDK capability readiness.
+- `receiz_capabilities`: use `capabilities.describe` for deterministic support and probe mode for readiness.
 - `receiz_required_scopes`: return stable scope constants by rail.
 - `receiz_runtime_blueprint`: return app runtime blueprint.
 - `receiz_authorize_url`: build Connect/OIDC authorize URL.
@@ -47,6 +52,7 @@ Source: `packages/receiz-mcp-server/src/index.ts`.
 - `receiz_proof_query`: delegated proof query projection.
 
 Use SDK `verification.verifyArtifact(file)` for verification; it requires enclosing integrity and ownership continuity.
+Emulator output is labeled `sandboxVerified`; never translate it into Receiz verification.
 
 ## Sports, Wallet, World
 

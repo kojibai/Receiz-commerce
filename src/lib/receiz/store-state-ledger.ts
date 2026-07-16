@@ -1,3 +1,4 @@
+import { RECEIZ_PUBLIC_STORE_STATE_PROJECTION_SCHEMA } from "@receiz/sdk";
 import {
   STORE_STATE_SCHEMA,
   isStoreStateRecord,
@@ -5,7 +6,6 @@ import {
   type StoreStateRecord
 } from "./proof-state";
 import type { ProofStateStore } from "./proof-state-store";
-import { RECEIZ_PUBLIC_STORE_STATE_PROJECTION_SCHEMA } from "@receiz/sdk";
 
 const DEFAULT_LEDGER_LIMIT = 500;
 const DEFAULT_RECOVERY_TIMEOUT_MS = 1500;

@@ -1,9 +1,9 @@
+import type { JsonObject } from "@receiz/sdk";
 import { NextRequest, NextResponse } from "next/server";
 import { createTwinAssistDraft, type TwinAssistInput } from "@/lib/content/twin-assist";
 import { hostContextFromHost } from "@/lib/hosting/host-context";
 import { createReceizCommerceAdapter } from "@/lib/receiz/adapter";
 import { platform } from "@/lib/platform";
-import type { JsonObject } from "@receiz/sdk";
 
 export const runtime = "nodejs";
 

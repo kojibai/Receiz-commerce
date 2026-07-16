@@ -31,13 +31,15 @@ integration tooling beneath Receiz proof truth; inspection is not verification.
 
 ## Required Behavior
 
+Select the package boundary first: universal runtime from `@receiz/sdk`, React bindings from `@receiz/sdk/react`, Node-only app compiler APIs from `@receiz/sdk/compiler`, and sandbox/conformance support from `@receiz/sdk/testing`.
+
 1. Inspect the explicit repository root with `receiz_project_inspect` or `receiz app inspect`.
 2. Identify intended features and create or update the contract with `defineReceizApp` or `receiz_app_contract_create`.
 3. Compile a read-only plan with `compileReceizAppContract`, `receiz_app_plan`, or `receiz app plan`.
 4. Explain scopes, authority boundaries, findings, and every proposed file.
 5. Obtain explicit confirmation for the exact preview digest before mutation.
 6. Apply the smallest safe change set with `receiz_app_apply` or `receiz app apply`.
-7. Run generated conformance and repository tests.
+7. Run generated conformance, `receiz conformance`, and repository tests.
 8. Reinspect with `receiz_app_check` and report exact evidence.
 9. Use `receiz_app_upgrade` for version-aware upgrades and `receiz_app_explain` for findings.
 10. Report remaining manual work and blocked authority without claiming completion.
@@ -56,18 +58,19 @@ upgrade, diagnosis, and repair routes.
 
 ## MCP Usage Rules
 
-Use only the seven documented tools listed in
+Use the documented tools listed in
 [resources/workflow.md](resources/workflow.md). Inspection, contract proposals,
 planning, checking, upgrade planning, and explanation are read-only.
 `receiz_app_apply` returns a preview first and requires the exact digest as
 explicit confirmation. Every response must retain the MCP authority boundary.
+Use `receiz_app_repair` for confirmed deterministic repair, `receiz_scope_explain` for canonical scopes, `receiz_release_qualify` for read-only release evidence, `receiz_proof_trace` only with canonical artifact bytes for a verdict, and `receiz_webhook_replay` only after signature verification and exact confirmation.
 
 ## SDK Usage Rules
 
-Use `defineReceizApp`, `validateReceizAppContract`,
+Import `defineReceizApp`, `validateReceizAppContract`,
 `compileReceizAppContract`, `inspectReceizProject`,
 `planReceizIntegration`, `checkReceizIntegration`, `planReceizUpgrade`, and
-`explainReceizIntegrationFinding`. Artifact verification remains
+`explainReceizIntegrationFinding` from `@receiz/sdk/compiler`. Artifact verification remains
 `verification.verifyArtifact`; creation remains the SDK's authenticated native
 Record-before-Seal rail.
 
@@ -94,6 +97,7 @@ Read [resources/authority-boundaries.md](resources/authority-boundaries.md).
 Stop when a required delegated permission, identity proof, capability, or user
 decision is unavailable. Report the blocked boundary; do not fabricate it.
 Generated browser code may contain public origins but never server credentials.
+`receiz.extensions.ts` is developer-owned and create-once; regeneration must never overwrite it. Emulator evidence is `sandboxVerified`, never a production verified verdict.
 
 ## Examples
 

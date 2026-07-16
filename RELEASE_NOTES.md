@@ -6,11 +6,11 @@ Status: General Availability · repository release
 
 Release unit: Repository release, not an npm package
 
-SDK target: `@receiz/sdk@104.0.0`
+SDK target: `@receiz/sdk@105.0.0`
 
-SDK v104 alignment: July 16, 2026
+SDK v105 alignment: July 16, 2026
 
-The v3 release has been re-qualified against `@receiz/sdk@104.0.0`, `@receiz/mcp-server@104.0.0`, and `@receiz/ai-skills@104.0.0`. V104 adds the shared App Contract Compiler and repository integration checker across the SDK, CLI, MCP server, and authoritative app-builder skill. The completed package boundary keeps the universal and React runtimes browser-safe while exposing Node-only contract, inspection, and upgrade APIs through `@receiz/sdk/compiler` and test harness helpers through `@receiz/sdk/testing`; MCP consumes the compiler subpath directly. This repository declares every active Receiz feature and its artifact-first authority boundary in `receiz.app.json`; `receiz.generated.json` records the verified adapter, webhook, proof-memory, continuity, idempotency, and browser-secret rails already implemented by the application. The proof, vault, publish, commerce, world, and recovery rails remain behind the centralized Receiz adapter, while `pnpm receiz:check` is enforced by the release gate.
+The v3 release has been re-qualified against `@receiz/sdk@105.0.0`, `@receiz/mcp-server@105.0.0`, and `@receiz/ai-skills@105.0.0`. V105 adds canonical machine-readable capability discovery, stable sanitized error descriptors, a deterministic browser-safe emulator, expanded zero-network conformance, protected generated-code extension points, semantic MCP operations, and updated nine-skill agent doctrine. The app derives optional Twin and World availability from the SDK capability descriptor instead of probing client implementation details. `pnpm receiz:check` and `pnpm receiz:conformance` are enforced by the release gate while sealed proof objects and native continuity remain stronger truth.
 
 ## The release
 

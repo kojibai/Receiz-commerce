@@ -16,13 +16,13 @@ test("the repository identifies the shipped release as 3.0.0", async () => {
   const lockfile = await read("pnpm-lock.yaml");
 
   assert.equal(packageJson.version, "3.0.0");
-  assert.equal(packageJson.dependencies?.["@receiz/sdk"], "104.0.0");
-  assert.equal(packageJson.dependencies?.["@receiz/mcp-server"], "104.0.0");
-  assert.equal(packageJson.dependencies?.["@receiz/ai-skills"], "104.0.0");
-  assert.equal(packageJson.scripts?.["receiz:check"], "receiz app check --target 104.0.0 --json");
-  assert.match(lockfile, /'@receiz\/sdk':[\s\S]*?version: file:vendor\/receiz-sdk-104\.0\.0\.tgz/);
-  assert.match(lockfile, /'@receiz\/mcp-server':[\s\S]*?version: file:vendor\/receiz-mcp-server-104\.0\.0\.tgz/);
-  assert.match(lockfile, /'@receiz\/ai-skills':[\s\S]*?version: file:vendor\/receiz-ai-skills-104\.0\.0\.tgz/);
+  assert.equal(packageJson.dependencies?.["@receiz/sdk"], "105.0.0");
+  assert.equal(packageJson.dependencies?.["@receiz/mcp-server"], "105.0.0");
+  assert.equal(packageJson.dependencies?.["@receiz/ai-skills"], "105.0.0");
+  assert.equal(packageJson.scripts?.["receiz:check"], "receiz app check --target 105.0.0 --json");
+  assert.match(lockfile, /'@receiz\/sdk':[\s\S]*?version: file:vendor\/receiz-sdk-105\.0\.0\.tgz/);
+  assert.match(lockfile, /'@receiz\/mcp-server':[\s\S]*?version: file:vendor\/receiz-mcp-server-105\.0\.0\.tgz/);
+  assert.match(lockfile, /'@receiz\/ai-skills':[\s\S]*?version: file:vendor\/receiz-ai-skills-105\.0\.0\.tgz/);
 });
 
 test("the v3 release preserves v2 migration evidence and adds final qualification evidence", async () => {

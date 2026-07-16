@@ -102,7 +102,7 @@ SDK rails:
 - `merchants.profile`
 - `merchants.capabilities`
 
-These rails are exposed in `@receiz/sdk@104.0.0`. The app treats customer accounts as tenant-scoped storefront projections over Receiz proof. The same proof-bearing Receiz identity can be used across multiple stores, but orders, rewards, assets, and permissions are projected for the active subdomain or custom domain. SDK `doctor()` reports delegated-token, tenant, customer, merchant, commerce, media, domain, and public-store requirements directly.
+These rails are exposed in `@receiz/sdk@105.0.0`. The app treats customer accounts as tenant-scoped storefront projections over Receiz proof. The same proof-bearing Receiz identity can be used across multiple stores, but orders, rewards, assets, and permissions are projected for the active subdomain or custom domain. SDK `doctor()` reports delegated-token, tenant, customer, merchant, commerce, media, domain, and public-store requirements directly.
 
 ## Merchant Settlement
 
@@ -137,6 +137,8 @@ SDK rails:
 - `manifests.projectSportsCard`
 - `proofMemory.createRegister`
 - `proofMemory.createMemory`
+
+`assets.createProofObject` creates the authenticated owner's native Record projection before sealing and verifies continuity afterward.
 
 ## Public App State
 
@@ -244,4 +246,4 @@ Receiz Twin/World buttons are hidden unless both are true:
 - The relevant `NEXT_PUBLIC_RECEIZ_*_ENABLED` flag is set.
 - The installed `@receiz/sdk` client exposes the matching namespace.
 
-With `@receiz/sdk@104.0.0`, typed app-state, signed public-store publish, Twin, World, commerce runtime, domain, customer, merchant, media, portability, and release namespaces are exposed through the browser-safe universal runtime. The Node-only App Contract Compiler and repository inspection APIs are isolated at `@receiz/sdk/compiler`, with fixtures and harness helpers available from `@receiz/sdk/testing`. `receiz.app.json` is the typed declaration of the app's eight enabled feature groups, artifact-first authority mode, framework, environment, and deployment target. `pnpm receiz:check` compiles that contract, checks the coordinated SDK/MCP/AI-skills versions, and inspects the existing integration rails before release. Artifact verification accepts historical and current native Profile Composer, Record, and Seal bundles while still requiring integrity and authenticated ownership continuity together. Generic SDK sealing is intentionally unavailable; `assets.createProofObject` resolves the authenticated Receiz ID, creates its native Record projection before sealing, seals the source bytes at matching coordinates, and verifies the returned native claim and path. Developers do not supply owner, namespace, or parallel continuity authority. The publish path uploads inline merchant media with `media.upload()` when delegated media permission is available, then writes state through the signed public-store rail when the local Identity Seal key file is present, so published subdomains and custom domains render durable Receiz media URLs and the current proof object. `Publish theme` writes and adopts this same authoritative public-store revision; browser storage is only an offline workspace projection and cross-tab synchronization mechanism. The frontend still hides optional Twin/World buttons when the matching env flag is disabled.
+With `@receiz/sdk@105.0.0`, typed app-state, signed public-store publish, Twin, World, commerce runtime, domain, customer, merchant, media, portability, and release namespaces are exposed through the browser-safe universal runtime. Node-only compiler APIs remain at `@receiz/sdk/compiler`; deterministic emulator and conformance APIs live at `@receiz/sdk/testing`. `describeReceizCapabilities()` is the canonical source for rail availability, environments, stability, required scopes, entry points, and package compatibility. `receiz.app.json` declares the app's eight enabled feature groups and artifact-first authority mode. `pnpm receiz:check` inspects that integration, while `pnpm receiz:conformance` qualifies browser graphs, continuity, Record-before-Seal, webhooks, idempotency, proof-memory recovery, package/MCP parity, generated compilation, emulator determinism, and cold restoration without network or database authority. Artifact verification still requires integrity and authenticated ownership continuity together. The publish path uploads merchant media through `media.upload()` and writes signed public-store state with the local Identity Seal key file. `Publish theme` adopts the same authoritative public-store revision; browser storage remains only an offline workspace projection and cross-tab synchronization mechanism.
