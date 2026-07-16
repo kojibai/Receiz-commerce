@@ -5,6 +5,7 @@ import {
   WILDS_NAMED_AUDIO_BANKS,
   requiredWildsAudioCoverage,
 } from "../src/features/play/audio/wilds-audio-catalog";
+import { WILDS_AUDIO_PRODUCTION } from "../src/features/play/audio/wilds-audio-production";
 
 describe("Wilds production audio catalog", () => {
   it("covers every required semantic cue with local production assets", () => {
@@ -46,5 +47,17 @@ describe("Wilds production audio catalog", () => {
 
     assert.equal([...banks].filter((bank) => bank.startsWith("ecology:")).length, 8);
     assert.equal([...banks].filter((bank) => bank.startsWith("boss:")).length, 8);
+  });
+
+  it("uses no cloud sound provider or runtime audio dependency", () => {
+    const allowedProviders = new Set(["internal-authored", "open-source-offline", "recorded-original"]);
+    for (const asset of WILDS_AUDIO_ASSETS) {
+      assert.ok(allowedProviders.has(asset.production.provider), asset.id);
+      assert.doesNotMatch(JSON.stringify(asset.production), /elevenlabs|cloud|api[_-]?key/i);
+      if (asset.bus === "dialogue") assert.equal(asset.production.provider, "recorded-original");
+    }
+    assert.equal(WILDS_AUDIO_PRODUCTION.externalService, false);
+    assert.deepEqual(WILDS_AUDIO_PRODUCTION.runtimeAudioDependencies, []);
+    assert.equal(WILDS_AUDIO_PRODUCTION.credentialEnvironmentVariable, null);
   });
 });

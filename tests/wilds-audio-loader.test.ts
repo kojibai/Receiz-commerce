@@ -15,12 +15,12 @@ function audioAsset(id: string, bank: WildsAudioAsset["bank"], url: string): Wil
     spatial: false,
     variants: [{ url, durationSeconds: 1, loop: false, gain: 1 }],
     production: {
-      provider: "elevenlabs",
+      provider: "internal-authored",
       prompt: "Original test fixture sound with a clear transient and controlled tail.",
       format: "mp3_44100_128",
       status: "planned",
       generatedAt: null,
-      rights: "original-account-generation",
+      rights: "original-authored",
     },
   };
 }

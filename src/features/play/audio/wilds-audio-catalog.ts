@@ -1,6 +1,6 @@
 import { WILDS_BOSS_FAMILIES } from "../wilds-boss-ecology";
 import { WILDS_ECOLOGY_FAMILIES } from "../wilds-ecology";
-import { plannedWildsAudioProduction } from "./wilds-audio-production";
+import { plannedWildsAudioProduction, plannedWildsRecordedVoice } from "./wilds-audio-production";
 import type {
   WildsAudioAsset,
   WildsAudioAssetId,
@@ -183,7 +183,7 @@ const creatureAssets = CREATURE_BEHAVIORS.map((behavior) => asset({
   maxConcurrent: 3,
 }));
 
-const voiceAssets = [asset({
+const narratorArrival = asset({
   id: "voice.narrator.heartlands-arrival",
   bus: "dialogue",
   bank: "voice:narrator",
@@ -194,7 +194,12 @@ const voiceAssets = [asset({
   priority: 96,
   cooldownMs: 60_000,
   maxConcurrent: 1,
-})];
+});
+
+const voiceAssets = [{
+  ...narratorArrival,
+  production: plannedWildsRecordedVoice(narratorArrival.production.prompt),
+}];
 
 export const WILDS_AUDIO_ASSETS: readonly WildsAudioAsset[] = [
   ...effectAssets,

@@ -6,12 +6,13 @@
 
 **Architecture:** A typed asset manifest and semantic audio director sit behind the existing `wilds-audio.ts` compatibility boundary. Short assets decode into bounded Web Audio buffers; long music, ambience, and dialogue use managed media elements. Six mix buses, regional banks, priority/concurrency rules, dialogue ducking, spatial emitters, and lifecycle cleanup make the system responsive without unbounded memory or playback.
 
-**Tech Stack:** TypeScript, React 19, Web Audio API, HTMLMediaElement, Three.js positional context, Node test runner, ElevenLabs asset generation tooling, MP3 44.1 kHz runtime assets, JSON/TypeScript production manifests.
+**Tech Stack:** TypeScript, React 19, native Web Audio API, native HTMLMediaElement, Three.js positional context, Node test runner, internal or license-audited open-source offline production tooling, original human recordings, MP3 44.1 kHz runtime assets, JSON/TypeScript production manifests.
 
 ## Global Constraints
 
 - Work directly on `main` as explicitly authorized by the user.
-- Store runtime audio locally; no browser runtime generation service or third-party audio dependency.
+- Store runtime audio locally; no cloud sound provider, browser runtime generation service, or runtime audio dependency.
+- Human dialogue must use original recorded performances with documented consent and usage rights; browser speech synthesis and cloud voice APIs are forbidden.
 - Do not use browser speech synthesis or oscillator-tone fallback.
 - Use only original generated/recorded assets with per-file provenance and usage-rights metadata.
 - Preserve user-gesture unlock, mute, pause/resume, page visibility, route cleanup, and disposal behavior.
@@ -19,7 +20,7 @@
 - Use six buses: `master`, `music`, `ambience`, `effects`, `creatures`, and `dialogue`.
 - Use adaptive regional identities: organic mythic sci-fi for Verdant Heartlands/Amberweald, epic fantasy for Echo Highlands/Moonwater Reach, and futuristic electronic for Prism Coast.
 - Run TDD for runtime behavior and manifest contracts; observe each new test fail before implementation.
-- Generate files with the Three.js audio generator and record prompt, duration, loop flag, format, voice ID, and output path.
+- Generate or author non-dialogue files with internal or license-audited open-source offline tooling and record prompt/direction, duration, loop flag, format, source tool, license, and output path.
 - Do not commit API keys, bearer tokens, provider secrets, scratch recordings containing private speech, or unlicensed third-party material.
 
 ## File Structure
@@ -131,12 +132,12 @@ export type WildsAudioVariant = Readonly<{
 }>;
 
 export type WildsAudioProductionMetadata = Readonly<{
-  provider: "elevenlabs" | "recorded-original";
+  provider: "internal-authored" | "open-source-offline" | "recorded-original";
   prompt: string;
   format: "mp3_44100_128";
   generatedAt: string;
-  voiceId?: string;
-  rights: "original-account-generation" | "original-recording";
+  sourceTool?: string;
+  rights: "original-authored" | "open-source-generated" | "original-recording";
 }>;
 
 export type WildsAudioAsset = Readonly<{
@@ -358,38 +359,23 @@ git commit -m "feat: add adaptive Wilds audio director"
 
 **Interfaces:**
 - Produces final local assets for global UI/proof/gameplay, five regional music/ambience banks, and eight ecology banks.
-- Consumes the generation script at `/Users/bjklock/.codex/skills/threejs-audio-generator/scripts/threejs_audio_asset.py`.
+- Consumes only an audited internal authoring workflow or license-compatible open-source tool running fully offline; generated output is committed, while the tool is never a runtime dependency.
 
-- [ ] **Step 1: Probe credentials and record the literal result**
+- [ ] **Step 1: Audit the local production toolchain**
 
-Run: `bash /Users/bjklock/.codex/skills/threejs-game-director/scripts/probe_asset_credentials.sh`
-
-Expected: `ELEVENLABS_API_KEY=SET`. If missing, stop asset generation and report the credential blocker without weakening the design.
+Confirm that every selected audio authoring or generation tool runs offline, has a release-compatible open-source license, and is used only during production. Record tool name, version, license, model/source provenance, and output path. No provider credential or cloud sound API may be used.
 
 - [ ] **Step 2: Generate the global interaction pack**
 
 Generate at least three variants for frequent UI/movement/combat cues and one or two variants for rare cinematic cues. Example command:
 
-```bash
-python3 /Users/bjklock/.codex/skills/threejs-audio-generator/scripts/threejs_audio_asset.py sfx \
-  --prompt "short proof seal confirmation for premium mythic science-fiction adventure game, tactile crystal lock and warm paper-fiber snap, clear transient, luminous orchestral shimmer tail, no melody, no voice, readable under gameplay mix" \
-  --duration 1.2 \
-  --prompt-influence 0.72 \
-  --out public/audio/wilds/global/proof/seal-confirm-01.mp3
-```
+Production direction: "short proof seal confirmation for premium mythic science-fiction adventure game, tactile crystal lock and warm paper-fiber snap, clear transient, luminous orchestral shimmer tail, no melody, no voice, readable under a dense gameplay mix." Render 1.2 seconds to `public/audio/wilds/global/proof/seal-confirm-01.mp3` and record the audited offline tool and license in provenance.
 
 - [ ] **Step 3: Generate five regional ambience suites**
 
 Use 12–22 second seamless loops. Example:
 
-```bash
-python3 /Users/bjklock/.codex/skills/threejs-audio-generator/scripts/threejs_audio_asset.py sfx \
-  --prompt "seamless Verdant Heartlands ambience for organic mythic science-fiction world, living forest canopy, close leaves and distant creature breath, subtle resonant crystal technology, warm air, no melody, no voice, spacious but gameplay-readable" \
-  --duration 18 \
-  --loop \
-  --prompt-influence 0.46 \
-  --out public/audio/wilds/regions/verdant-heartlands/ambience-day-01.mp3
-```
+Production direction: "seamless Verdant Heartlands ambience for organic mythic science-fiction world, living forest canopy, close leaves and distant creature breath, subtle resonant crystal technology, warm air, no melody, no voice, spacious but gameplay-readable." Render an 18-second seamless loop to `public/audio/wilds/regions/verdant-heartlands/ambience-day-01.mp3` and record the audited offline tool and license in provenance.
 
 - [ ] **Step 4: Generate adaptive regional music stems**
 
@@ -513,20 +499,11 @@ it("rejects browser-generated voice and repeated bark spam", () => {
 
 - [ ] **Step 2: Verify RED and implement the cast/queue**
 
-Define stable fictional voice IDs for narrator, guides, merchants, rivals, recurring residents, story characters, and bosses. Every line requires rendered asset URL, subtitle, direction, priority, interruption class, cooldown, and trigger.
+Define stable fictional cast roles for narrator, guides, merchants, rivals, recurring residents, story characters, and bosses. Every line requires rendered asset URL, subtitle, performance direction, performer consent/rights reference, priority, interruption class, cooldown, and trigger.
 
 - [ ] **Step 3: Generate human-sounding voice assets**
 
-Use licensed provider voice IDs and exact scripts. Example:
-
-```bash
-python3 /Users/bjklock/.codex/skills/threejs-audio-generator/scripts/threejs_audio_asset.py tts \
-  --text "The Heartlands remember every step. Walk gently, and they will answer." \
-  --voice-id JBFqnCBsd6RMkjVDRZzb \
-  --out public/audio/wilds/voice/narrator/heartlands-arrival-01.mp3
-```
-
-Use `JBFqnCBsd6RMkjVDRZzb` for the narrator candidate shown above. Select every additional fictional cast voice from the account's available licensed voices, audition it against its authored line set, and record each selected concrete voice ID in `wilds-audio-production.ts` before generation.
+Record original consenting human performers against the exact scripts in a controlled local session. Clean and master those recordings with internal or license-compatible open-source offline tooling, then export local runtime files such as `public/audio/wilds/voice/narrator/heartlands-arrival-01.mp3`. Record the cast role, performer release reference, recording date, direction, and processing-tool license in `wilds-audio-production.ts`. Do not use cloned voices, cloud TTS, browser speech, provider voice IDs, or remote generation APIs.
 
 - [ ] **Step 4: Wire subtitles and dialogue settings**
 

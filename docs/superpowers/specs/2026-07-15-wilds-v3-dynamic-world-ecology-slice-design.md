@@ -196,7 +196,7 @@ The portable save PNG and V3 player vault carry this state. Restore merges appen
 
 The existing gesture-safe Web Audio synthesizer adds bounded motifs for rumor, discovery, activation, contribution accepted, resolution, migration movement, market arrival, portal instability, festival harmony, ruin resonance, bloom growth, storm warning, and rescue completion.
 
-Motifs are short deterministic oscillator/noise envelopes with pooled or promptly destroyed resources. Muted, reduced-motion, backgrounded, and disposed states stop or suppress work. No third-party audio API or downloaded audio asset is used.
+This slice's former oscillator motif is superseded by the production audio runtime. Ecology motifs use locally shipped authored assets through native Web Audio/HTML media, with bounded resources and no oscillator fallback, cloud sound provider, or runtime audio dependency. Muted, reduced-motion, backgrounded, and disposed states stop or suppress work.
 
 ## 12. Performance budgets
 

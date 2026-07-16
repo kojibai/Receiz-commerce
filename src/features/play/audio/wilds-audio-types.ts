@@ -25,13 +25,13 @@ export type WildsAudioVariant = Readonly<{
 }>;
 
 export type WildsAudioProductionMetadata = Readonly<{
-  provider: "elevenlabs" | "recorded-original";
+  provider: "internal-authored" | "open-source-offline" | "recorded-original";
   prompt: string;
   format: "mp3_44100_128";
   status: "planned" | "generated";
   generatedAt: string | null;
-  voiceId?: string;
-  rights: "original-account-generation" | "original-recording";
+  sourceTool?: string;
+  rights: "original-authored" | "original-recording" | "open-source-generated";
 }>;
 
 export type WildsAudioAsset = Readonly<{

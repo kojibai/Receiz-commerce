@@ -70,7 +70,7 @@ Creature card art keeps the deterministic Heartbound grammar. Its same genome dr
 
 ### 4.4 Audio system
 
-Audio is synthesized locally with Web Audio because ElevenLabs credentials are unavailable. It includes:
+This historical A+ slice originally used local Web Audio synthesis. That policy is superseded by the world-class production-audio design: the release runtime uses local authored samples only, with no oscillator fallback, cloud sound provider, or runtime audio dependency. It includes:
 
 - layered biome ambience;
 - soft exploration music pulse;
@@ -250,7 +250,7 @@ Run full automated and browser matrices, profile production builds, fix regressi
 
 ## 10. External asset plan
 
-Credential probe output currently returns blank values for `TRIPO_API_KEY`, `GEMINI_API_KEY`, and `ELEVENLABS_API_KEY`, treated as unavailable.
+External generation credentials are intentionally outside the audio production path. Sound is authored internally or with license-audited open-source offline tooling; human dialogue uses original recorded performances.
 
 - Hero/player: authored modular Three.js geometry now; GLB loader boundary retained for later generated or artist-provided replacement.
 - Creatures: deterministic Heartbound SVG/card art plus genome-driven encounter silhouettes.

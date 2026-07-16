@@ -5,6 +5,7 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
+  '@receiz/mcp-server@103.0.0>@receiz/sdk': 103.0.0
   postcss: '>=8.5.10'
 
 importers:
@@ -18,14 +19,14 @@ importers:
         specifier: ^9.6.1
         version: 9.6.1(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.182.0)
       '@receiz/ai-skills':
-        specifier: ^102.0.0
-        version: 102.0.0
+        specifier: ^103.0.0
+        version: 103.0.0
       '@receiz/mcp-server':
-        specifier: ^102.0.0
-        version: 102.0.0(react@19.2.7)
+        specifier: ^103.0.0
+        version: 103.0.0(react@19.2.7)
       '@receiz/sdk':
-        specifier: ^102.0.0
-        version: 102.0.0(react@19.2.7)
+        specifier: ^103.0.0
+        version: 103.0.0(react@19.2.7)
       lucide-react:
         specifier: ^0.468.0
         version: 0.468.0(react@19.2.7)
@@ -588,15 +589,15 @@ packages:
       react-native:
         optional: true
 
-  '@receiz/ai-skills@102.0.0':
-    resolution: {integrity: sha512-5wh/ECR8XFcv8UKsmfals2zCZ+KSoB4vdN1AURoRy187SVBu2jTBojbslQeZIN2DFzVePDI55ANur4xJv38m0A==}
+  '@receiz/ai-skills@103.0.0':
+    resolution: {integrity: sha512-o+QeDXYR9zJ+g6Ug2DuSBLOeUbiqmHebban5tsp4h2/MWIuTaueOniUF0RFH3G/ykn/4N2r1Qs/TCtvnIaxj1Q==}
 
-  '@receiz/mcp-server@102.0.0':
-    resolution: {integrity: sha512-QL+1nCvwwm7Yw7eGEyPhMYBG8tHS4xGGrwUPhrW6Uw9HwgT56q1Ntc+6c9DHVYfISIX1H/4BgrT9Nd3QTg/4Yg==}
+  '@receiz/mcp-server@103.0.0':
+    resolution: {integrity: sha512-HZ/Wkhe2LFs9f/s+dr0SdE40ZKhl4zjYylji8foRUp5MDbeBLXKm8MFuecn7aOXQB3xCQKUOaH1fYjVhhPKg5g==}
     hasBin: true
 
-  '@receiz/sdk@102.0.0':
-    resolution: {integrity: sha512-hAKzTFp7NC/rxpPuJItJEHfCbkOOn/2XTrB408quyuxlLHO3DHBhK1dsPypOtB4X4OwKotAi3dR1AOe/Do+eOg==}
+  '@receiz/sdk@103.0.0':
+    resolution: {integrity: sha512-XFKunD3CrWRxMEv3vxMNxU+GwW8soOpZdekg8gThAA4nWElNHTVozYBge/5657bqTy1+Y6kh5MzRHLyxjvmz4g==}
     hasBin: true
     peerDependencies:
       react: '>=18.0.0 <20.0.0'
@@ -2593,18 +2594,18 @@ snapshots:
       - '@types/react'
       - immer
 
-  '@receiz/ai-skills@102.0.0': {}
+  '@receiz/ai-skills@103.0.0': {}
 
-  '@receiz/mcp-server@102.0.0(react@19.2.7)':
+  '@receiz/mcp-server@103.0.0(react@19.2.7)':
     dependencies:
-      '@receiz/ai-skills': 102.0.0
-      '@receiz/sdk': 102.0.0(react@19.2.7)
+      '@receiz/ai-skills': 103.0.0
+      '@receiz/sdk': 103.0.0(react@19.2.7)
     transitivePeerDependencies:
       - react
 
-  '@receiz/sdk@102.0.0(react@19.2.7)':
+  '@receiz/sdk@103.0.0(react@19.2.7)':
     dependencies:
-      '@receiz/ai-skills': 102.0.0
+      '@receiz/ai-skills': 103.0.0
     optionalDependencies:
       react: 19.2.7
 

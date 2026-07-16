@@ -44,9 +44,9 @@ import {
   type ReceizOneClickCheckoutResponse,
   type ReceizPermissionCheckRequest,
   type ReceizPermissionGrantRequest,
-  type ReceizPortableAssetCreateOptions,
-  type ReceizPortableAssetCreateResult,
-  type ReceizPortableAssetInput,
+  type ReceizProofObjectCreateOptions,
+  type ReceizProofObjectCreateResult,
+  type ReceizProofObjectCreateInput,
   type ReceizPublicStoreAppendResult,
   type ReceizPublicStorePublishInput,
   type ReceizPublicStoreResolveInput,
@@ -137,9 +137,9 @@ export type ReceizCommerceAdapter = {
   ): ReceizProofMemoryAdditionsQuery;
   verifyArtifact(file: Blob): Promise<DocumentVerifyResponse>;
   createProofObject(
-    input: ReceizPortableAssetInput,
-    options: ReceizPortableAssetCreateOptions
-  ): Promise<ReceizPortableAssetCreateResult>;
+    input: ReceizProofObjectCreateInput,
+    options: ReceizProofObjectCreateOptions
+  ): Promise<ReceizProofObjectCreateResult>;
   observePublicProof(body: { url: string; externalCreatorId?: string; title?: string }): Promise<PublicProofRecord>;
   getPublicProofByUrl(url: string): Promise<PublicProofRecord>;
   getPublicProofById(id: string): Promise<PublicProofRecord>;

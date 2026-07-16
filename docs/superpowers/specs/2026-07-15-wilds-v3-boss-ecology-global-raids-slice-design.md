@@ -266,7 +266,7 @@ The existing gesture-safe Web Audio runtime adds locally synthesized cues for:
 - one distinct family motif per boss family;
 - restrained ambience layers for the currently detailed territory.
 
-Audio unlocks only after user gesture, respects master/effects/ambience/mute settings, stops on hidden or disposed state, and does not stack round ambience. No third-party audio API or downloaded audio asset is used.
+Audio unlocks only after user gesture, respects all six production buses and mute settings, stops on hidden or disposed state, and does not stack round ambience. Boss audio uses locally shipped authored assets through native browser audio only, with no oscillator fallback, cloud sound provider, or runtime audio dependency.
 
 ## 16. Performance budgets
 

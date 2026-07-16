@@ -6,11 +6,11 @@ Status: General Availability · repository release
 
 Release unit: Repository release, not an npm package
 
-SDK target: `@receiz/sdk@102.0.0`
+SDK target: `@receiz/sdk@103.0.0`
 
-SDK v102 alignment: July 15, 2026
+SDK v103 alignment: July 16, 2026
 
-The v3 release has been re-qualified against `@receiz/sdk@102.0.0`, `@receiz/mcp-server@102.0.0`, and `@receiz/ai-skills@102.0.0`. V102 removes generic artifact sealing from the SDK: proof-object creation now uses `assets.createProofObject`, while `verification.verifyArtifact(file)` requires integrity and authenticated ownership continuity together. The proof, vault, publish, commerce, world, and recovery rails remain behind the centralized Receiz adapter; the SDK doctor, AI-skills validator, and release gate are the authoritative checks for the installed capability surface.
+The v3 release has been re-qualified against `@receiz/sdk@103.0.0`, `@receiz/mcp-server@103.0.0`, and `@receiz/ai-skills@103.0.0`. V103 corrects the v102 portable-carrier regression: historical and current native Profile Composer, Record, and Seal proof bundles verify through the same proof-object architecture. `assets.createProofObject` now resolves the authenticated account's real Receiz ID, creates its native Record projection before sealing, seals the source bytes at the same coordinates, and verifies the returned native claim and path. Developers cannot submit owner, namespace, or parallel continuity authority. The proof, vault, publish, commerce, world, and recovery rails remain behind the centralized Receiz adapter; the SDK doctor, AI-skills validator, and release gate are the authoritative checks for the installed capability surface.
 
 ## The release
 

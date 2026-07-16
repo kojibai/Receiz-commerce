@@ -230,11 +230,11 @@ The typed manifest records:
 - priority, cooldown, and concurrency limit;
 - character, voice ID, script, and subtitle data when applicable;
 - generation or recording prompt/direction;
-- production date and tool/provider;
+- production date and internal or open-source offline tool;
 - usage-rights and account-plan assumptions;
 - content digest for release validation.
 
-All shipped audio is original and stored in the repository or its approved release asset channel. Provider credentials never enter browser code or committed files.
+All shipped audio is original or produced with a license-audited open-source offline tool and stored in the repository or its approved release asset channel. No cloud sound provider, provider credential, browser generation service, or runtime audio dependency is allowed. Human dialogue uses original recorded performances with documented performer consent and usage rights.
 
 ## 12. Formats and Mastering
 
