@@ -1,4 +1,9 @@
 import { creatureForm, type CreatureStats } from "../creature-catalog";
+import {
+  effectiveAdventureStats,
+  validateAdventureCondition,
+  type AdventureCardCondition,
+} from "../adventure/card-condition";
 import { currentLivingGenome, currentRevision } from "../living-card-proof";
 import { isLivingCardAsset } from "../living-card-types";
 import { verifyAnyWildsCard, type PortableCardAsset } from "../portable-card";
@@ -78,6 +83,33 @@ export function emptyHearttreeCondition(assetId: string): HearttreeCardCondition
   };
 }
 
+export function hearttreeConditionToAdventure(condition: HearttreeCardCondition): AdventureCardCondition {
+  const shared: AdventureCardCondition = {
+    assetId: condition.assetId,
+    life: condition.life,
+    fatigue: condition.fatigue,
+    injuries: condition.injuries.map((injury) => ({ ...injury })),
+    xp: { hearttree: condition.hearttreeXp },
+    mastery: { hearttree: condition.mastery },
+    upgradeIds: [...condition.upgradeIds],
+    receiptDigests: [],
+  };
+  return validateAdventureCondition(shared);
+}
+
+export function adventureConditionToHearttree(condition: AdventureCardCondition): HearttreeCardCondition {
+  validateAdventureCondition(condition);
+  return {
+    assetId: condition.assetId,
+    life: condition.life,
+    fatigue: condition.fatigue,
+    injuries: condition.injuries.map((injury) => ({ ...injury })),
+    hearttreeXp: condition.xp.hearttree ?? 0,
+    mastery: condition.mastery.hearttree ?? 0,
+    upgradeIds: [...condition.upgradeIds],
+  };
+}
+
 function validateCondition(condition: HearttreeCardCondition) {
   if (condition.life !== "alive" && condition.life !== "dead") throw new Error("hearttree_condition_life_invalid");
   boundedInteger(condition.fatigue, 0, 100, "hearttree_condition_fatigue_invalid");
@@ -91,23 +123,6 @@ function validateCondition(condition: HearttreeCardCondition) {
       throw new Error("hearttree_condition_injury_invalid");
     }
   }
-}
-
-function effectiveStats(base: CreatureStats, condition: HearttreeCardCondition): CreatureStats {
-  const penalty = { health: Math.round(condition.fatigue * 0.15), power: 0, guard: 0, speed: 0, bond: 0 };
-  for (const injury of condition.injuries) {
-    if (injury.kind === "limb") penalty.speed += injury.severity * 6;
-    if (injury.kind === "wing") penalty.speed += injury.severity * 8;
-    if (injury.kind === "guard") penalty.guard += injury.severity * 8;
-    if (injury.kind === "focus") penalty.bond += injury.severity * 7;
-  }
-  return {
-    health: Math.max(1, base.health - penalty.health),
-    power: Math.max(1, base.power - penalty.power),
-    guard: Math.max(1, base.guard - penalty.guard),
-    speed: Math.max(1, base.speed - penalty.speed),
-    bond: Math.max(1, base.bond - penalty.bond)
-  };
 }
 
 function locomotionFor(body: HearttreeCardCapability["anatomy"]["body"]): HearttreeLocomotion {
@@ -152,7 +167,7 @@ export function projectHearttreeCard(card: PortableCardAsset, condition: Hearttr
     formId,
     familyId: card.manifest.familyId,
     playable: condition.life === "alive",
-    stats: effectiveStats(baseStats, condition),
+    stats: effectiveAdventureStats(baseStats, hearttreeConditionToAdventure(condition)),
     baseStats,
     element: form.element,
     abilityNames: [...(revision?.abilityNames ?? card.manifest.abilityNames)] as [string, string],

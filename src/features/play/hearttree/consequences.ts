@@ -1,5 +1,6 @@
 import { canonicalPortableCardJson, sha256PortableBasis } from "../portable-card";
-import type { HearttreeCardCondition, HearttreeInjury, HearttreeInjuryKind, HearttreeLifeState } from "./card-capability";
+import { applyAdventureConditionDelta } from "../adventure/card-condition";
+import { adventureConditionToHearttree, hearttreeConditionToAdventure, type HearttreeCardCondition, type HearttreeInjury, type HearttreeInjuryKind, type HearttreeLifeState } from "./card-capability";
 import type { HearttreeExpeditionDefinition } from "./expedition-director";
 import { hearttreeRuntimeStateDigest, type HearttreeRuntimeEvent, type HearttreeRuntimeState } from "./runtime";
 
@@ -183,17 +184,17 @@ export function applyHearttreeConsequences(prior: HearttreeCardCondition, conseq
   if (!Number.isSafeInteger(consequence.fatigueDelta) || consequence.fatigueDelta < -100 || consequence.fatigueDelta > 25) throw new Error("hearttree_consequence_fatigue_invalid");
   const selected = consequence.selectedUpgradeId;
   if (selected && !consequence.upgradeOffers.some((offer) => offer.id === selected)) throw new Error("hearttree_upgrade_selection_invalid");
-  const injuries = [...prior.injuries];
-  for (const injury of consequence.injuriesAdded) if (!injuries.some((value) => value.id === injury.id)) injuries.push({ ...injury });
-  return {
-    ...prior,
-    life: consequence.lifeAfter,
-    fatigue: Math.max(0, Math.min(100, prior.fatigue + consequence.fatigueDelta)),
-    injuries,
-    hearttreeXp: Math.min(1_000_000, prior.hearttreeXp + consequence.xp),
-    mastery: Math.min(10_000, prior.mastery + consequence.mastery),
-    upgradeIds: selected && !prior.upgradeIds.includes(selected) ? [...prior.upgradeIds, selected] : [...prior.upgradeIds]
-  };
+  return adventureConditionToHearttree(applyAdventureConditionDelta(hearttreeConditionToAdventure(prior), {
+    assetId: consequence.assetId,
+    lifeBefore: consequence.lifeBefore,
+    lifeAfter: consequence.lifeAfter,
+    fatigueDelta: consequence.fatigueDelta,
+    injuriesAdded: consequence.injuriesAdded,
+    xp: { hearttree: consequence.xp },
+    mastery: { hearttree: consequence.mastery },
+    upgradeIdsAdded: selected ? [selected] : [],
+    receiptDigestsAdded: [],
+  }));
 }
 
 export function verifyHearttreeConsequenceSet(value: HearttreeConsequenceSet) {
