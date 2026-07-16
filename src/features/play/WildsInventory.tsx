@@ -6,7 +6,7 @@ import QRCode from "qrcode";
 import { Icons } from "@/components/icons";
 import { creatureForm } from "./creature-catalog";
 import { downloadPortableCard, downloadPortableVault, standaloneCardUrl, verifyPortableCardPng, verifyPortableVaultPng } from "./card-export";
-import type { PlayState, WildsInput } from "./game-state";
+import { canUseWildsAsset, isRetiredWildsAsset, playableInventory, type PlayState, type WildsInput } from "./game-state";
 import { WildsCardScene } from "./WildsCardScene";
 import { WildsGrowthPanel } from "./WildsGrowthPanel";
 import { clampInventoryPage, inventoryPageSize } from "./inventory-pagination";
@@ -55,6 +55,9 @@ export function WildsInventory({
   const visible = matches.slice(safePage * pageSize, safePage * pageSize + pageSize);
   const selected = state.inventory.find((asset) => asset.id === selectedId) ?? visible[0] ?? state.inventory[0];
   const selectedForm = selected ? creatureForm(selected.manifest.formId) : null;
+  const selectedRetired = selected ? isRetiredWildsAsset(state, selected.id) : false;
+  const selectedRevision = selected ? state.arenaLivingRevisions[selected.id] : null;
+  const selectedMemorials = selected ? state.arenaMemorials.filter((memorial) => memorial.assetId === selected.id) : [];
   const progress = selectedForm ? state.companionProgress[selectedForm.familyId] ?? { level: 1, xp: 0, bond: 0 } : null;
   const next = selectedForm && selectedForm.stage < 3 ? creatureForm(`${selectedForm.familyId}-${selectedForm.stage + 1}`) : null;
   const canEvolve = Boolean(next && progress && progress.level >= next.evolution.level && progress.bond >= next.evolution.bond);
@@ -130,7 +133,7 @@ export function WildsInventory({
             <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 6h16v13H4zM8 6V4h8v2m-4 3v6m0 0-3-3m3 3 3-3" /></svg>
             <span>Save vault image</span>
           </button>
-          <button aria-label="Fuse cards" className="wilds-import-card fusion" disabled={state.inventory.length < 2} onClick={() => setFusionOpen((value) => !value)} title="Fuse cards" type="button">
+          <button aria-label="Fuse cards" className="wilds-import-card fusion" disabled={playableInventory(state).length < 2} onClick={() => setFusionOpen((value) => !value)} title="Fuse cards" type="button">
             <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 7h5l2 3 2-3h5M5 17h5l2-3 2 3h5" /></svg>
             <span>Fuse cards</span>
           </button>
@@ -168,11 +171,11 @@ export function WildsInventory({
       {fusionOpen ? (
         <section className="wilds-fusion-sheet" aria-label="Create a fusion child">
           <div><span>Earned creation</span><strong>{state.fusionSparks} Fusion Spark{state.fusionSparks === 1 ? "" : "s"}</strong><p>Both parents stay in your vault. Each rests for 24 hours after creating a child.</p></div>
-          <label>Parent A<strong>{selected?.manifest.name ?? "Select a card below"}</strong></label>
-          <label>Parent B<select aria-label="Second fusion parent" onChange={(event) => setFusionParentB(event.target.value)} value={fusionParentB}><option value="">Choose a different card…</option>{state.inventory.filter((asset) => asset.id !== selected?.id).map((asset) => <option key={asset.id} value={asset.id}>{asset.manifest.name} · {asset.manifest.variant.traits.visualFingerprint}</option>)}</select></label>
+          <label>Parent A<strong>{selected && canUseWildsAsset(state, selected.id, "fusion") ? selected.manifest.name : "Select a living card below"}</strong></label>
+          <label>Parent B<select aria-label="Second fusion parent" onChange={(event) => setFusionParentB(event.target.value)} value={fusionParentB}><option value="">Choose a different living card…</option>{state.inventory.filter((asset) => asset.id !== selected?.id && canUseWildsAsset(state, asset.id, "fusion")).map((asset) => <option key={asset.id} value={asset.id}>{asset.manifest.name} · {asset.manifest.variant.traits.visualFingerprint}</option>)}</select></label>
           <button
             className="button button-primary"
-            disabled={!selected || !fusionParentB || state.fusionSparks < 1}
+            disabled={!selected || !canUseWildsAsset(state, selected.id, "fusion") || !fusionParentB || state.fusionSparks < 1}
             onClick={() => {
               if (!selected || !fusionParentB) return;
               onInput({ type: "fuse-cards", parentAId: selected.id, parentBId: fusionParentB, inheritance: "balanced", fusedAt: new Date().toISOString() });
@@ -210,7 +213,8 @@ export function WildsInventory({
         <div className="wilds-inventory-grid">
           {visible.map((asset) => {
             const form = creatureForm(asset.manifest.formId)!;
-            return <button aria-pressed={selected?.id === asset.id} key={asset.id} onClick={() => { if (suppressCardClick.current) { suppressCardClick.current = false; return; } setSelectedId(asset.id); }} type="button"><span style={{ background: asset.manifest.variant.traits.palette.primary }}>{asset.manifest.name.slice(0, 2).toUpperCase()}</span><strong>{asset.manifest.name}</strong><small>Stage {form.stage} · {form.rarity}</small><b>{asset.status === "sealed_local" ? "Offline sealed" : "Verified"}</b></button>;
+            const retired = isRetiredWildsAsset(state, asset.id);
+            return <button aria-pressed={selected?.id === asset.id} data-life-state={retired ? "retired" : "living"} key={asset.id} onClick={() => { if (suppressCardClick.current) { suppressCardClick.current = false; return; } setSelectedId(asset.id); }} type="button"><span style={{ background: asset.manifest.variant.traits.palette.primary }}>{asset.manifest.name.slice(0, 2).toUpperCase()}</span><strong>{asset.manifest.name}</strong><small>Stage {form.stage} · {form.rarity}</small><b>{retired ? "Memorial" : asset.status === "sealed_local" ? "Offline sealed" : "Verified"}</b></button>;
           })}
           {!visible.length ? <p className="wilds-inventory-empty">No collected cards match this search.</p> : null}
         </div>
@@ -226,7 +230,7 @@ export function WildsInventory({
           <aside className="wilds-inventory-detail">
             <WildsCardScene asset={selected} origin={origin} qr={qr} />
             <div className="wilds-inventory-actions">
-              <button className="button button-primary" disabled={state.selectedAssetId === selected.id} onClick={() => onInput({ type: "select-asset", assetId: selected.id })} type="button">{state.selectedAssetId === selected.id ? "Active deck leader" : "Set as active deck leader"}</button>
+              <button className="button button-primary" disabled={!canUseWildsAsset(state, selected.id, "active") || state.selectedAssetId === selected.id} onClick={() => onInput({ type: "select-asset", assetId: selected.id })} type="button">{selectedRetired ? "Retired · Memorial only" : state.selectedAssetId === selected.id ? "Active deck leader" : "Set as active deck leader"}</button>
               <Link className="button button-outline" href={`/cards/${encodeURIComponent(selected.id)}`}>Open standalone card page</Link>
               <button
                 className="button button-outline"
@@ -245,7 +249,7 @@ export function WildsInventory({
                 }}
                 type="button"
               >Save card image</button>
-              {onListAsset && selected.status !== "listed" ? (
+              {onListAsset && selected.status !== "listed" && canUseWildsAsset(state, selected.id, "listing") ? (
                 <div className="wilds-listing-control">
                   <label>List price <span>$</span><input aria-label="Wilds card listing price" inputMode="decimal" min="0.01" onChange={(event) => setPriceUsd(event.target.value)} step="0.01" type="number" value={priceUsd} /></label>
                   <button
@@ -267,17 +271,47 @@ export function WildsInventory({
                   >{listing ? "Verifying…" : "Verify + list on Exchange"}</button>
                 </div>
               ) : selected.status === "listed" ? <span className="wilds-apex-label">Listed on Exchange</span> : null}
-              {next ? <button className="button button-outline" disabled={!canEvolve} onClick={() => onInput({ type: "evolve", assetId: selected.id, evolvedAt: new Date().toISOString() })} type="button">{canEvolve ? `Evolve into ${next.name}` : `Needs L${next.evolution.level} · Bond ${next.evolution.bond}`}</button> : <span className="wilds-apex-label">Apex form reached</span>}
+              {!selectedRetired && next ? <button className="button button-outline" disabled={!canEvolve || !canUseWildsAsset(state, selected.id, "growth")} onClick={() => onInput({ type: "evolve", assetId: selected.id, evolvedAt: new Date().toISOString() })} type="button">{canEvolve ? `Evolve into ${next.name}` : `Needs L${next.evolution.level} · Bond ${next.evolution.bond}`}</button> : !selectedRetired ? <span className="wilds-apex-label">Apex form reached</span> : null}
               {downloadMessage ? <p aria-live="polite">{downloadMessage}</p> : null}
               {listingMessage ? <p aria-live="polite">{listingMessage}</p> : null}
             </div>
-            <WildsGrowthPanel
+            {selectedRetired ? (
+              <section className="wilds-memorial-card" aria-label={`${selected.manifest.name} memorial and life history`}>
+                <span>Memorial</span><h4>Life history</h4>
+                <p>Retired cards remain visible forever, but have no active battle, growth, trade, crafting, staking, training, squad, or fusion actions.</p>
+                {selectedMemorials.map((memorial) => <blockquote key={memorial.id}>{memorial.epitaph}</blockquote>)}
+                <dl>
+                  <div><dt>Living revisions</dt><dd>{selectedRevision?.revision ?? 0}</dd></div>
+                  <div><dt>Scars</dt><dd>{selectedRevision?.scarIds.length ?? 0}</dd></div>
+                  <div><dt>Relationships</dt><dd>{selectedRevision?.relationshipIds.length ?? 0}</dd></div>
+                  <div><dt>Achievements</dt><dd>{selectedRevision?.achievementIds.length ?? 0}</dd></div>
+                  <div><dt>Matches</dt><dd>{selectedRevision?.matchReceiptDigests.length ?? 0}</dd></div>
+                </dl>
+                {selectedRevision ? (
+                  <details>
+                    <summary>Inspect complete sealed history</summary>
+                    <p><strong>Revision digest</strong> <code>{selectedRevision.digest}</code></p>
+                    <p><strong>Parent digest</strong> <code>{selectedRevision.parentDigest ?? "Genesis"}</code></p>
+                    <p><strong>Last event</strong> {selectedRevision.eventId} · {selectedRevision.occurredAt}</p>
+                    <p><strong>Condition</strong> {selectedRevision.condition.life} · Fatigue {selectedRevision.condition.fatigue}</p>
+                    <ul>
+                      {selectedRevision.condition.injuries.map((injury) => <li key={injury.id}>Injury · {injury.kind} severity {injury.severity} · {injury.sourceEventId}</li>)}
+                      {selectedRevision.scarIds.map((id) => <li key={id}>Scar · {id}</li>)}
+                      {selectedRevision.relationshipIds.map((id) => <li key={id}>Relationship · {id}</li>)}
+                      {selectedRevision.achievementIds.map((id) => <li key={id}>Achievement · {id}</li>)}
+                      {selectedRevision.evolutionIds.map((id) => <li key={id}>Evolution · {id}</li>)}
+                      {selectedRevision.matchReceiptDigests.map((id) => <li key={id}>Match receipt · <code>{id}</code></li>)}
+                    </ul>
+                  </details>
+                ) : null}
+              </section>
+            ) : <WildsGrowthPanel
               asset={selected}
               catalystIds={state.ascensionCatalysts}
               now={new Date().toISOString()}
               onAscend={() => onInput({ type: "ascend-card", assetId: selected.id, at: new Date().toISOString() })}
               progress={state.livingProgress[selected.id] ?? null}
-            />
+            />}
           </aside>
         ) : null}
       </div>

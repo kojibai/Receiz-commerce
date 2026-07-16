@@ -56,7 +56,7 @@ function recordKey(value: unknown) {
   if (typeof value === "string") return value;
   if (!value || typeof value !== "object") return JSON.stringify(value);
   const item = value as Record<string, unknown>;
-  return String(item.eventId ?? item.id ?? item.sourceEventId ?? JSON.stringify(value));
+  return String(item.eventId ?? item.id ?? item.digest ?? item.sourceEventId ?? JSON.stringify(value));
 }
 
 function mergeRecords<T>(local: readonly T[] | undefined, restored: readonly T[] | undefined) {
@@ -108,6 +108,22 @@ export function reconcileWildsPlayerVault(input: {
   const verified = verifyWildsPlayerVault(input.restored);
   if (!verified.ok) throw new Error(verified.errors[0] ?? "wilds_player_vault_invalid");
   const restoredPlayState = input.restored.playState;
+  const arenaLivingRevisions = { ...input.local.arenaLivingRevisions };
+  for (const [assetId, revision] of Object.entries(restoredPlayState.arenaLivingRevisions)) {
+    const local = arenaLivingRevisions[assetId];
+    if (!local
+      || (local.lifeState !== "retired" && revision.lifeState === "retired")
+      || (local.lifeState !== "retired" && revision.lifeState !== "retired"
+        && (revision.revision > local.revision || (revision.revision === local.revision && revision.digest > local.digest)))) {
+      arenaLivingRevisions[assetId] = revision;
+    }
+  }
+  const adventureConditions = { ...input.local.adventureConditions, ...restoredPlayState.adventureConditions };
+  for (const [assetId, condition] of Object.entries(input.local.adventureConditions)) {
+    if (condition.life === "dead") adventureConditions[assetId] = condition;
+  }
+  const localPathProgress = input.local.arenaPath?.checkpoint.completedEncounterIds.length ?? -1;
+  const restoredPathProgress = restoredPlayState.arenaPath?.checkpoint.completedEncounterIds.length ?? -1;
   const mergedState: PlayState = {
     ...input.local,
     ...restoredPlayState,
@@ -121,7 +137,17 @@ export function reconcileWildsPlayerVault(input: {
     civicEvents: mergeRecords(input.local.civicEvents, restoredPlayState.civicEvents),
     ecologyEvents: mergeRecords(input.local.ecologyEvents, restoredPlayState.ecologyEvents),
     raidEvents: mergeRecords(input.local.raidEvents, restoredPlayState.raidEvents),
-    rewardCards: mergeRecords(input.local.rewardCards, restoredPlayState.rewardCards)
+    rewardCards: mergeRecords(input.local.rewardCards, restoredPlayState.rewardCards),
+    adventureConditions,
+    arenaPath: !input.local.arenaPath || input.local.arenaPath.id === restoredPlayState.arenaPath?.id && restoredPathProgress >= localPathProgress
+      ? restoredPlayState.arenaPath
+      : input.local.arenaPath,
+    arenaLivingRevisions,
+    arenaPendingReceiptTail: mergeRecords(input.local.arenaPendingReceiptTail, restoredPlayState.arenaPendingReceiptTail).slice(-512),
+    arenaReceiptTail: mergeRecords(input.local.arenaReceiptTail, restoredPlayState.arenaReceiptTail).slice(-512),
+    arenaConflictTail: mergeRecords(input.local.arenaConflictTail, restoredPlayState.arenaConflictTail).slice(-512),
+    arenaMemorials: mergeRecords(input.local.arenaMemorials, restoredPlayState.arenaMemorials).slice(-512),
+    arenaDeviceIdentities: mergeRecords(input.local.arenaDeviceIdentities, restoredPlayState.arenaDeviceIdentities).slice(-32),
   };
   const state = restorePlayState(serializePlayState(mergedState));
   const warnings: string[] = [];

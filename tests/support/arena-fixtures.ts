@@ -2,13 +2,13 @@ import { emptyAdventureCondition, type AdventureCardCondition } from "../../src/
 import { createArenaLivingRevision } from "../../src/features/play/arena/living-revision";
 import { advanceArenaMatch, createArenaMatch, type ArenaInputFrame, type ArenaMatchDefinition, type ArenaMatchState } from "../../src/features/play/arena/runtime";
 import { projectArenaFighter } from "../../src/features/play/arena/card-fighter";
-import { sealCollectedCard } from "../../src/features/play/portable-card";
+import { sealCollectedCard, type PortableCardAsset } from "../../src/features/play/portable-card";
 
 export function arenaFixtureCard(formId: string, suffix = formId) {
   return sealCollectedCard({ formId, ownerReceizId: "arena.player", encounterId: `arena-${suffix}`, capturedAt: "2026-07-16T21:00:00.000Z" });
 }
 
-export function arenaFixtureRevision(card: ReturnType<typeof arenaFixtureCard>, condition: AdventureCardCondition = emptyAdventureCondition(card.id)) {
+export function arenaFixtureRevision(card: PortableCardAsset, condition: AdventureCardCondition = emptyAdventureCondition(card.id)) {
   return createArenaLivingRevision({
     assetId: card.id, eventId: `arena:event:genesis:${card.manifest.formId}`, rulesetId: "wilds.arena.v1",
     occurredAt: "2026-07-16T21:01:00.000Z", condition,

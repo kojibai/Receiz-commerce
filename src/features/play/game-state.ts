@@ -1,7 +1,9 @@
 import { creatureFamilies, creatureForm, creatureForms, type CreatureRarity } from "./creature-catalog";
 import {
+  canonicalPortableCardJson,
   evolvePortableCard,
   sealCollectedCard,
+  sha256PortableBasis,
   verifyAnyWildsCard,
   verifyPortableCard,
   type PortableCardAsset
@@ -40,8 +42,15 @@ import {
 import { projectMarketCard } from "./market/card-role";
 import { applyMarketConsequences } from "./market/consequences";
 import { verifyMarketReceipt, type MarketReceipt } from "./market/receipt";
+import type { ArenaPath } from "./arena/campaign";
+import type { ArenaDeviceIdentity, ArenaPendingReceipt } from "./arena/device-signature";
+import { verifyArenaLivingRevisionContent, type ArenaLivingRevision } from "./arena/living-revision";
+import type { ArenaMergeRejection } from "./arena/offline-ledger";
+import { verifyArenaReceipt, type ArenaReceipt } from "./arena/receipt";
+import type { ArenaMemorial } from "./arena/consequences";
 
 export type GameAction = "explore" | "train" | "mission";
+export type WildsAssetUse = "battle" | "squad" | "training" | "growth" | "fusion" | "listing" | "staking" | "crafting" | "active";
 export type MoveDirection = "north" | "south" | "west" | "east";
 export type WildsInput =
   | { type: "move"; direction: MoveDirection }
@@ -181,6 +190,13 @@ export type PlayState = {
   marketSquadAssetIds: string[];
   marketReputation: number;
   marketResources: Record<string, number>;
+  arenaPath: ArenaPath | null;
+  arenaLivingRevisions: Record<string, ArenaLivingRevision>;
+  arenaPendingReceiptTail: ArenaPendingReceipt[];
+  arenaReceiptTail: ArenaReceipt[];
+  arenaConflictTail: ArenaMergeRejection[];
+  arenaMemorials: ArenaMemorial[];
+  arenaDeviceIdentities: ArenaDeviceIdentity[];
 };
 
 export const worldBounds = {
@@ -336,6 +352,13 @@ export const initialPlayState: PlayState = {
   marketSquadAssetIds: [starterCardAsset.id],
   marketReputation: 0,
   marketResources: {},
+  arenaPath: null,
+  arenaLivingRevisions: {},
+  arenaPendingReceiptTail: [],
+  arenaReceiptTail: [],
+  arenaConflictTail: [],
+  arenaMemorials: [],
+  arenaDeviceIdentities: [],
 };
 
 const PLAY_SAVE_SCHEMA = "receiz.wilds.save.v10";
@@ -371,6 +394,61 @@ function conditionFieldsForNewAsset(state: PlayState, assetId: string) {
     adventureConditions: { ...state.adventureConditions, [assetId]: condition },
     hearttreeConditions: { ...state.hearttreeConditions, [assetId]: adventureConditionToHearttree(condition) },
   };
+}
+
+const ARENA_HISTORY_LIMIT = 512;
+const ARENA_DEVICE_LIMIT = 32;
+const digestPattern = /^sha256:[a-f0-9]{64}$/;
+
+function verifiedArenaPath(value: unknown): ArenaPath | null {
+  if (!value || typeof value !== "object") return null;
+  try {
+    const path = value as ArenaPath;
+    if (path.schema !== "receiz.wilds.arena_path.v1" || !Array.isArray(path.encounters)) return null;
+    for (const encounter of path.encounters) {
+      const { digest, ...unsigned } = encounter;
+      if (sha256PortableBasis(canonicalPortableCardJson(unsigned)) !== digest) return null;
+    }
+    const { digest, ...unsigned } = path;
+    return sha256PortableBasis(canonicalPortableCardJson(unsigned)) === digest ? path : null;
+  } catch { return null; }
+}
+
+function verifiedPendingReceipt(value: unknown): value is ArenaPendingReceipt {
+  if (!value || typeof value !== "object") return false;
+  const pending = value as ArenaPendingReceipt;
+  return pending.schema === "receiz.wilds.arena_pending_receipt.v1"
+    && pending.basis?.schema === "receiz.wilds.arena_pending_basis.v1"
+    && sha256PortableBasis(canonicalPortableCardJson(pending.basis)) === pending.contentDigest
+    && pending.identity?.algorithm === "ECDSA-P256-SHA256"
+    && typeof pending.identity.id === "string"
+    && pending.identity.publicJwk?.kty === "EC"
+    && pending.identity.publicJwk?.crv === "P-256"
+    && typeof pending.signature === "string"
+    && pending.signature.length >= 32;
+}
+
+function verifiedArenaIdentity(value: unknown): value is ArenaDeviceIdentity {
+  if (!value || typeof value !== "object") return false;
+  const identity = value as ArenaDeviceIdentity;
+  return Boolean(identity.id && identity.algorithm === "ECDSA-P256-SHA256"
+    && identity.publicJwk?.kty === "EC" && identity.publicJwk?.crv === "P-256"
+    && typeof identity.publicJwk.x === "string" && typeof identity.publicJwk.y === "string"
+    && identity.publicJwk.d === undefined);
+}
+
+function verifiedArenaConflict(value: unknown): value is ArenaMergeRejection {
+  if (!value || typeof value !== "object") return false;
+  const conflict = value as ArenaMergeRejection;
+  return Boolean(conflict.eventId && digestPattern.test(conflict.digest)
+    && ["event_invalid", "causal_parent_missing", "insufficient_resource", "stale_living_after_retirement", "ownership_conflict", "owner_mismatch"].includes(conflict.reason));
+}
+
+function verifiedArenaMemorial(value: unknown): value is ArenaMemorial {
+  if (!value || typeof value !== "object") return false;
+  const memorial = value as ArenaMemorial;
+  return Boolean(memorial.id && memorial.assetId && memorial.matchId && memorial.finalEventId
+    && memorial.epitaph && memorial.epitaph.length <= 500 && typeof memorial.honoredByTeamVictory === "boolean");
 }
 
 export function restorePlayState(value: string | null | undefined): PlayState {
@@ -471,6 +549,26 @@ export function restorePlayState(value: string | null | undefined): PlayState {
     const hearttreeSquadAssetIds = [...new Set(requestedSquad)].filter((id): id is string => typeof id === "string" && livingInventory.some((asset) => asset.id === id)).slice(0, 3);
     const requestedMarketSquad = Array.isArray(saved.marketSquadAssetIds) ? saved.marketSquadAssetIds : [restoredSelectedAssetId];
     const marketSquadAssetIds = [...new Set(requestedMarketSquad)].filter((id): id is string => typeof id === "string" && livingInventory.some((asset) => asset.id === id)).slice(0, 3);
+    const arenaPath = verifiedArenaPath(saved.arenaPath);
+    const arenaLivingRevisions = saved.arenaLivingRevisions && typeof saved.arenaLivingRevisions === "object"
+      ? Object.fromEntries(Object.entries(saved.arenaLivingRevisions).filter(([assetId, revision]) => migratedInventory.some((asset) => asset.id === assetId)
+        && revision.assetId === assetId && verifyArenaLivingRevisionContent(revision)).slice(-ARENA_HISTORY_LIMIT))
+      : {};
+    const arenaPendingReceiptTail = Array.isArray(saved.arenaPendingReceiptTail)
+      ? saved.arenaPendingReceiptTail.filter(verifiedPendingReceipt).slice(-ARENA_HISTORY_LIMIT)
+      : [];
+    const arenaReceiptTail = Array.isArray(saved.arenaReceiptTail)
+      ? saved.arenaReceiptTail.filter((receipt): receipt is ArenaReceipt => Boolean(receipt) && verifyArenaReceipt(receipt as ArenaReceipt).ok).slice(-ARENA_HISTORY_LIMIT)
+      : [];
+    const arenaConflictTail = Array.isArray(saved.arenaConflictTail)
+      ? saved.arenaConflictTail.filter(verifiedArenaConflict).slice(-ARENA_HISTORY_LIMIT)
+      : [];
+    const arenaMemorials = Array.isArray(saved.arenaMemorials)
+      ? [...new Map(saved.arenaMemorials.filter(verifiedArenaMemorial).map((memorial) => [memorial.id, memorial])).values()].slice(-ARENA_HISTORY_LIMIT)
+      : [];
+    const arenaDeviceIdentities = Array.isArray(saved.arenaDeviceIdentities)
+      ? [...new Map(saved.arenaDeviceIdentities.filter(verifiedArenaIdentity).map((identity) => [identity.id, identity])).values()].slice(-ARENA_DEVICE_LIMIT)
+      : [];
     return withWorldProgress({
       ...initialPlayState,
       ...saved,
@@ -528,7 +626,14 @@ export function restorePlayState(value: string | null | undefined): PlayState {
       raidEvents: raidProjection.events,
       bossKnowledge: raidProjection.knowledge,
       bossMastery: raidProjection.mastery,
-      raidAchievements: raidProjection.achievements
+      raidAchievements: raidProjection.achievements,
+      arenaPath,
+      arenaLivingRevisions,
+      arenaPendingReceiptTail,
+      arenaReceiptTail,
+      arenaConflictTail,
+      arenaMemorials,
+      arenaDeviceIdentities,
     });
   } catch {
     return initialPlayState;
@@ -558,9 +663,21 @@ export function selectedAsset(state: PlayState) {
   return playable.find((asset) => asset.id === state.selectedAssetId) ?? playable.find((asset) => asset.manifest.familyId === state.selectedCardId) ?? playable[0];
 }
 
-export function isPlayableAsset(state: PlayState, assetId: string) {
+export function isRetiredWildsAsset(state: PlayState, assetId: string) {
+  return state.adventureConditions[assetId]?.life === "dead" || state.arenaLivingRevisions[assetId]?.lifeState === "retired";
+}
+
+export function canUseWildsAsset(state: PlayState, assetId: string, _purpose: WildsAssetUse) {
   const asset = state.inventory.find((candidate) => candidate.id === assetId);
-  return Boolean(asset && verifyAnyWildsCard(asset).ok && state.adventureConditions[assetId]?.life !== "dead");
+  return Boolean(asset
+    && asset.status !== "suspended"
+    && asset.status !== "revoked"
+    && verifyAnyWildsCard(asset).ok
+    && !isRetiredWildsAsset(state, assetId));
+}
+
+export function isPlayableAsset(state: PlayState, assetId: string) {
+  return canUseWildsAsset(state, assetId, "active");
 }
 
 export function playableInventory(state: PlayState) {

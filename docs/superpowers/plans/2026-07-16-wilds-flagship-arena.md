@@ -279,13 +279,13 @@ export interface ArenaOfflineStore { commit(transaction: ArenaOfflineTransaction
 - Test: `tests/card-export.test.ts`
 - Test: `tests/play-game-state.test.ts`
 
-- [ ] Write failing tests that Save V10 and Vault V3 default missing Arena fields, preserve pending events/revisions/receipts/conflicts/path/memorials, export and import them in the existing portable PNG, and reject digest mutation.
-- [ ] Add tests ensuring retired cards remain visible but are excluded from battle, squads, training, growth, fusion, listing, staking, crafting inputs, and every active selector.
-- [ ] Run the three suites; expect failure.
-- [ ] Extend compatibility payloads without changing their schema names: `arenaPath`, `arenaLivingRevisions`, `arenaPendingReceiptTail`, `arenaReceiptTail`, `arenaConflictTail`, `arenaMemorials`, and `arenaDeviceIdentities`; cap all histories.
-- [ ] Add a memorial card treatment and full life-history inspection to the existing Vault; never add an active action for retired cards.
-- [ ] Run the focused suites plus Hearttree/Market play-state tests; expect PASS.
-- [ ] Commit with `git commit -m "feat: carry Arena lives in portable Vaults"`.
+- [x] Write failing tests that Save V10 and Vault V3 default missing Arena fields, preserve pending events/revisions/receipts/conflicts/path/memorials, export and import them in the existing portable PNG, and reject digest mutation.
+- [x] Add tests ensuring retired cards remain visible but are excluded from battle, squads, training, growth, fusion, listing, staking, crafting inputs, and every active selector.
+- [x] Run the three suites; expect failure.
+- [x] Extend compatibility payloads without changing their schema names: `arenaPath`, `arenaLivingRevisions`, `arenaPendingReceiptTail`, `arenaReceiptTail`, `arenaConflictTail`, `arenaMemorials`, and `arenaDeviceIdentities`; cap all histories.
+- [x] Add a memorial card treatment and full life-history inspection to the existing Vault; never add an active action for retired cards.
+- [x] Run the focused suites plus Hearttree/Market play-state tests; expect PASS.
+- [x] Commit with `git commit -m "feat: carry Arena lives in portable Vaults"`.
 
 ### Task 10: Global replay and causal synchronization
 
