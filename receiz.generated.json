@@ -1,0 +1,14 @@
+{
+  "schema": "receiz.generated-files.v1",
+  "contract": "receiz.app.json",
+  "appName": "Receiz Commerce Kit and Wilds",
+  "framework": "nextjs-app-router",
+  "authority": "sealed-receiz-proof-object",
+  "adapterCreated": true,
+  "recordBeforeSeal": true,
+  "continuityVerification": true,
+  "proofMemoryPersistence": "durable",
+  "webhookVerification": true,
+  "idempotency": true,
+  "serverSecretsBrowserSafe": true
+}

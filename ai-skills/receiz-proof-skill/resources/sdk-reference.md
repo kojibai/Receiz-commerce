@@ -1,5 +1,10 @@
 # SDK Reference For Proof Work
 
+The v104 app compiler APIs (`defineReceizApp`, `compileReceizAppContract`, and
+repository planning/checking functions) inspect and integrate applications.
+They do not verify proof bytes. Continue to use `verification.verifyArtifact`
+for the indivisible integrity, owner, namespace, and continuity verdict.
+
 Source: `packages/receiz-sdk/src/index.ts`, `packages/receiz-sdk/src/identity.ts`, `packages/receiz-sdk/src/react.ts`, and SDK package docs.
 
 ## Core Constants And Schemas

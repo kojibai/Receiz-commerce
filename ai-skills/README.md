@@ -1,8 +1,12 @@
 # Receiz AI Skills
 
+`receiz-app-builder-skill` is the authoritative v104 workflow for starting,
+integrating, upgrading, diagnosing, and repairing repositories through the typed
+Receiz app contract, shared SDK compiler, CLI, and MCP tools.
+
 This package teaches AI agents how to understand, verify, build with, and operate Receiz from the existing repository surfaces.
 
-It is published as `@receiz/ai-skills` and is an exact-version dependency of both `@receiz/sdk` and `@receiz/mcp-server`. Installing either package places these eight skill directories under `node_modules/@receiz/ai-skills` for explicit loading by an agent host.
+It is published as `@receiz/ai-skills` and is an exact-version dependency of both `@receiz/sdk` and `@receiz/mcp-server`. Installing either package places these nine skill directories under `node_modules/@receiz/ai-skills` for explicit loading by an agent host.
 
 Receiz is a proof-native artifact system. A Receiz object is not a database row. It is a proof-carrying artifact. The artifact's witnessed history is the truth boundary. Server state, database state, UI state, marketplace state, and model memory are projections only. Old witnessed truth is not stale. If a projection is wrong, rebuild it from object history. If truth is missing, append new truth. Never mutate witnessed truth.
 

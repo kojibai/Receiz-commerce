@@ -1,5 +1,20 @@
 # MCP Tool Map
 
+## v104 Application Compiler
+
+| Need | Tool | Mutation |
+|---|---|---|
+| Inspect repository | `receiz_project_inspect` | Read-only |
+| Propose contract | `receiz_app_contract_create` | Read-only |
+| Compile plan | `receiz_app_plan` | Read-only |
+| Preview/apply | `receiz_app_apply` | Exact digest confirmation required |
+| Check conformance | `receiz_app_check` | Read-only |
+| Plan upgrade | `receiz_app_upgrade` | Read-only |
+| Explain finding | `receiz_app_explain` | Read-only |
+
+Repository inspection is not verification. These tools never supply an artifact
+verification verdict or proof authority.
+
 Source: `packages/receiz-mcp-server/src/index.ts`.
 
 ## Diagnostics And Setup

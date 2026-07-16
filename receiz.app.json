@@ -1,0 +1,22 @@
+{
+  "schema": "receiz.app.contract.v1",
+  "name": "Receiz Commerce Kit and Wilds",
+  "framework": "nextjs-app-router",
+  "features": [
+    "identity",
+    "proof",
+    "proofMemory",
+    "publicStore",
+    "commerce",
+    "media",
+    "webhooks",
+    "world"
+  ],
+  "authority": {
+    "mode": "artifact-first",
+    "allowDatabaseAuthority": false
+  },
+  "deployment": {
+    "target": "vercel"
+  }
+}

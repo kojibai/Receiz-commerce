@@ -12,6 +12,7 @@ Build Receiz apps from proof objects, durable public projections, proof memory, 
 - Use for no-db storefronts, product pages, marketplaces, pack opening apps, profile vaults, proof pages, claim flows, QR entry flows, custom domains, subdomains, and template apps.
 - Use when generating app code that imports `@receiz/sdk` or `@receiz/sdk/react`.
 - Use when an AI must choose SDK rails for public store, app state, checkout, media, identity, wallet, sports, or offline queues.
+- For contract-driven repository integration or upgrades, use `receiz-app-builder-skill` first and use this skill for the resulting application surfaces.
 
 ## When Not To Use This Skill
 

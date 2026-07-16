@@ -6,11 +6,11 @@ Status: General Availability · repository release
 
 Release unit: Repository release, not an npm package
 
-SDK target: `@receiz/sdk@103.0.0`
+SDK target: `@receiz/sdk@104.0.0`
 
-SDK v103 alignment: July 16, 2026
+SDK v104 alignment: July 16, 2026
 
-The v3 release has been re-qualified against `@receiz/sdk@103.0.0`, `@receiz/mcp-server@103.0.0`, and `@receiz/ai-skills@103.0.0`. V103 corrects the v102 portable-carrier regression: historical and current native Profile Composer, Record, and Seal proof bundles verify through the same proof-object architecture. `assets.createProofObject` now resolves the authenticated account's real Receiz ID, creates its native Record projection before sealing, seals the source bytes at the same coordinates, and verifies the returned native claim and path. Developers cannot submit owner, namespace, or parallel continuity authority. The proof, vault, publish, commerce, world, and recovery rails remain behind the centralized Receiz adapter; the SDK doctor, AI-skills validator, and release gate are the authoritative checks for the installed capability surface.
+The v3 release has been re-qualified against `@receiz/sdk@104.0.0`, `@receiz/mcp-server@104.0.0`, and `@receiz/ai-skills@104.0.0`. V104 adds the shared App Contract Compiler and repository integration checker across the SDK, CLI, MCP server, and authoritative app-builder skill. This repository now declares every active Receiz feature and its artifact-first authority boundary in `receiz.app.json`; `receiz.generated.json` records the verified adapter, webhook, proof-memory, continuity, idempotency, and browser-secret rails already implemented by the application. The proof, vault, publish, commerce, world, and recovery rails remain behind the centralized Receiz adapter, while `pnpm receiz:check` is now enforced by the release gate.
 
 ## The release
 

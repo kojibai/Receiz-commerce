@@ -5,6 +5,7 @@ const checks = [
   ["pnpm", ["secret:scan"]],
   ["pnpm", ["test"]],
   ["pnpm", ["typecheck"]],
+  ["pnpm", ["receiz:check"]],
   ["pnpm", ["lint"]],
   ["pnpm", ["build"]],
   ["pnpm", ["receiz:doctor"]]
