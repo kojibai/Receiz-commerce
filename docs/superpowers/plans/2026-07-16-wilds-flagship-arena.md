@@ -160,11 +160,11 @@ export function beginArenaAction(context: ArenaCombatContext, intent: ArenaComba
 export function resolveArenaHit(context: ArenaHitContext): ArenaHitResolution;
 ```
 
-- [ ] Write failing tests for directional light chains, heavy commitment, deterministic hit volumes, reach, mass, launches, guard reduction, Break depletion, parry windows, dodge invulnerability, focus, stamina, cooldowns, element soft counters, exact ability power/name, status, hit priority, and zero Vitality.
-- [ ] Run `node --import tsx --test tests/arena-combat.test.ts`; expect failure.
-- [ ] Implement frame-authored attack definitions derived from body family and exact catalog ability definitions. Random critical hits are excluded; every outcome follows visible state, timing, positioning, and sealed rules.
-- [ ] Run focused tests; expect PASS and no result derived from animation completion.
-- [ ] Commit with `git commit -m "feat: resolve skill-based Arena combat"`.
+- [x] Write failing tests for directional light chains, heavy commitment, deterministic hit volumes, reach, mass, launches, guard reduction, Break depletion, parry windows, dodge invulnerability, focus, stamina, cooldowns, element soft counters, exact ability power/name, status, hit priority, and zero Vitality.
+- [x] Run `node --import tsx --test tests/arena-combat.test.ts`; expect failure.
+- [x] Implement frame-authored attack definitions derived from body family and exact catalog ability definitions. Random critical hits are excluded; every outcome follows visible state, timing, positioning, and sealed rules.
+- [x] Run focused tests; expect PASS and no result derived from animation completion.
+- [x] Commit with `git commit -m "feat: resolve skill-based Arena combat"`.
 
 ### Task 5: Team runtime, tags, arena systems, withdrawal, and mortality
 
