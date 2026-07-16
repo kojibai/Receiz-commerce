@@ -115,11 +115,11 @@ export type ArenaFighterDefinition = Readonly<{
 export function projectArenaFighter(card: PortableCardAsset, revision: ArenaLivingRevision): ArenaFighterDefinition;
 ```
 
-- [ ] **Step 1: Write the failing projection tests** proving proof/revision pins, exact stats and abilities, anatomy/body family, wing/limb injuries, fatigue, retired rejection, collision bounds, and material differences between Mintcub, Voltray, Ledgerfox, and Titanseal.
-- [ ] **Step 2: Run** `node --import tsx --test tests/arena-card-fighter.test.ts`; expect module-not-found failure.
-- [ ] **Step 3: Implement** bounded constants and `projectArenaFighter` using `verifyAnyWildsCard`, `creatureForm`, `effectiveAdventureStats`, and the revision validator. Named abilities must match the catalog exactly.
-- [ ] **Step 4: Run** the focused test plus `tests/hearttree-card-capability.test.ts` and `tests/market-card-role.test.ts`; expect PASS.
-- [ ] **Step 5: Commit** with `git commit -m "feat: project cards into Arena fighters"`.
+- [x] **Step 1: Write the failing projection tests** proving proof/revision pins, exact stats and abilities, anatomy/body family, wing/limb injuries, fatigue, retired rejection, collision bounds, and material differences between Mintcub, Voltray, Ledgerfox, and Titanseal.
+- [x] **Step 2: Run** `node --import tsx --test tests/arena-card-fighter.test.ts`; expect module-not-found failure.
+- [x] **Step 3: Implement** bounded constants and `projectArenaFighter` using `verifyAnyWildsCard`, `creatureForm`, `effectiveAdventureStats`, and the revision validator. Named abilities must match the catalog exactly.
+- [x] **Step 4: Run** the focused test plus `tests/hearttree-card-capability.test.ts` and `tests/market-card-role.test.ts`; expect PASS.
+- [x] **Step 5: Commit** with `git commit -m "feat: project cards into Arena fighters"`.
 
 ### Task 3: Deterministic 3D movement and collision
 

@@ -153,6 +153,10 @@ function verifyArenaLivingRevisionBasis(revision: ArenaLivingRevision) {
   }
 }
 
+export function verifyArenaLivingRevisionContent(revision: ArenaLivingRevision) {
+  return verifyArenaLivingRevisionBasis(revision);
+}
+
 export function verifyArenaLivingRevision(revision: ArenaLivingRevision, parent?: ArenaLivingRevision): ArenaRevisionVerification {
   const errors: string[] = [];
   if (!verifyArenaLivingRevisionBasis(revision)) errors.push("arena_revision_digest_invalid");
