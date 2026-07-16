@@ -7,10 +7,19 @@ import { verifyAnyWildsCard, type PortableCardAsset } from "./portable-card";
 import { applyWildsEcologyActivityInput, createWildsEcologyActivity, type WildsEcologyActivityInput } from "./wilds-ecology-activity";
 import type { WildsWorldEcologyProjection } from "./wilds-world-state";
 import type { WildsSettlementWorldMode } from "./WildsSettlementEnvironment";
+import type { AdventureCardCondition } from "./adventure/card-condition";
+import type { MarketReceipt } from "./market/receipt";
+import { WayfarerMarketExperience } from "./market/WayfarerMarketExperience";
 
-export function WildsEcologyExperience({ card, onExit, onSubmit, open, participantCount, site, worldMode }: {
+export function WildsEcologyExperience({ card, cards, conditions, guestId, marketSquadAssetIds, onExit, onMarketReceipt, onMarketSquadChange, onSubmit, open, participantCount, site, worldMode }: {
   card: PortableCardAsset | null;
+  cards: readonly PortableCardAsset[];
+  conditions: Readonly<Record<string, AdventureCardCondition>>;
+  guestId: string | null;
+  marketSquadAssetIds: readonly string[];
   onExit: () => void;
+  onMarketReceipt: (receipt: MarketReceipt) => void;
+  onMarketSquadChange: (assetIds: string[]) => void;
   onSubmit: (input: { siteId: string; amount: number; cardProofDigest: string }) => Promise<void> | void;
   open: boolean;
   participantCount: number;
@@ -49,6 +58,18 @@ export function WildsEcologyExperience({ card, onExit, onSubmit, open, participa
   }, [open, requestExit]);
 
   if (!open || !site || !activity || typeof document === "undefined") return null;
+  if (site.familyId === "wandering-market") return <WayfarerMarketExperience
+    cards={cards}
+    conditions={conditions}
+    guestId={guestId}
+    marketSquadAssetIds={marketSquadAssetIds}
+    onExit={onExit}
+    onReceipt={onMarketReceipt}
+    onSquadChange={onMarketSquadChange}
+    participantCount={participantCount}
+    site={site}
+    worldMode={worldMode}
+  />;
   const act = (input: WildsEcologyActivityInput) => setActivity((current) => current ? applyWildsEcologyActivityInput(current, input) : current);
   const submit = async () => {
     if (!card || !verifiedCard || activity.phase !== "submitted") return;

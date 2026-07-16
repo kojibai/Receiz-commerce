@@ -788,7 +788,13 @@ export function PlayCampaign({
       />
       <WildsEcologyExperience
         card={activeAsset}
+        cards={playableInventory(state)}
+        conditions={state.adventureConditions}
+        guestId={multiplayer.guestId}
+        marketSquadAssetIds={state.marketSquadAssetIds}
         onExit={() => setActiveEcologySiteId(null)}
+        onMarketReceipt={(receipt) => dispatch({ type: "market-admit", receipt })}
+        onMarketSquadChange={(assetIds) => dispatch({ type: "market-select-squad", assetIds })}
         onSubmit={async ({ siteId, amount }) => {
           const projection = await livingWorld.contributeEcology(siteId, state.player, amount);
           const admitted = projection.ecologySites[siteId];
