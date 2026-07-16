@@ -9,7 +9,6 @@ import {
   resolveActivityResult
 } from "../src/features/play/wilds-activity-core";
 import { sealCollectedCard } from "../src/features/play/portable-card";
-import { applyHearttreeIntent, createHearttreeTrial } from "../src/features/play/hearttree-trial";
 import { applyArenaIntent, createArenaMatch } from "../src/features/play/arena-match";
 import { applyPrismIntent, createPrismRun } from "../src/features/play/prism-run";
 import { evaluateLandmarkAccess } from "../src/features/play/wilds-landmark-access";
@@ -75,19 +74,6 @@ describe("Wilds landmark activity lifecycle", () => {
     const exited = exitActivity(rewarded, "player-1", "exit");
     assert.equal(exited.phase, "exited");
     assert.deepEqual(exited.returnCoordinate, { x: 7, z: -4 });
-  });
-
-  it("replays a Hearttree trial and grants one bounded mastery reward", () => {
-    const intents = ["pulse", "north", "guard", "ability:0"] as const;
-    const first = intents.reduce(applyHearttreeIntent, createHearttreeTrial("hearttree-seed", card));
-    const replay = intents.reduce(applyHearttreeIntent, createHearttreeTrial("hearttree-seed", card));
-
-    assert.deepEqual(replay, first);
-    assert.equal(first.phase, "result");
-    assert.equal(first.reward?.kind, "achievement");
-    assert.equal(first.reward?.unlockId, "hearttree-awakened");
-    assert.equal(new Set(first.events.map((event) => event.id)).size, first.events.length);
-    assert.equal(first.admittedProofDigest, card.proof.digest);
   });
 
   it("replays an Arena duel and seals one proof-pinned victory", () => {

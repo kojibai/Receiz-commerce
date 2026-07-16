@@ -11777,6 +11777,71 @@ button.product-purchase-secondary-link {
 }
 @media (prefers-reduced-motion: reduce) { .wilds-hearttree-aurora, .wilds-hearttree-orbit { animation: none; } }
 
+/* Hearttree expedition — proof-pinned real-time game surface */
+.hearttree-expedition {
+  position: fixed;
+  inset: 0;
+  z-index: 6200;
+  display: grid;
+  width: 100%;
+  height: 100dvh;
+  overflow: hidden;
+  padding-top: env(safe-area-inset-top);
+  padding-right: env(safe-area-inset-right);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  color: #effff7;
+  background: #061712;
+  isolation: isolate;
+}
+.hearttree-canvas { position: absolute; inset: 0; }
+.hearttree-canvas canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+.hearttree-hud { position: relative; z-index: 4; display: grid; grid-template-columns: minmax(200px, 340px) minmax(180px, 280px) 48px; align-items: start; justify-content: space-between; gap: 12px; padding: 12px; pointer-events: none; }
+.hearttree-objective, .hearttree-vitals { display: grid; gap: 5px; padding: 12px 14px; border: 1px solid rgb(135 255 196 / 22%); border-radius: 8px 20px 8px 20px; background: rgb(3 24 18 / 82%); box-shadow: 0 18px 55px rgb(0 0 0 / 34%); backdrop-filter: blur(18px); }
+.hearttree-objective small { color: #7cebb6; font-size: 9px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; }
+.hearttree-objective strong { overflow-wrap: anywhere; font-size: clamp(15px, 2vw, 21px); line-height: 1.05; }
+.hearttree-objective span { color: #a8cabe; font-size: 10px; }
+.hearttree-vitals span { position: relative; display: flex; min-width: 0; height: 22px; align-items: center; padding: 0 8px; overflow: hidden; color: #f4fff9; border-radius: 4px; background: rgb(255 255 255 / 8%); font-size: 9px; font-variant-numeric: tabular-nums; }
+.hearttree-vitals i { position: absolute; z-index: -1; inset: 0 auto 0 0; background: linear-gradient(90deg, #176b48, #5edc96); transition: width .16s ease; }
+.hearttree-vitals span + span i { background: linear-gradient(90deg, #80641b, #e2c655); }
+.hearttree-pause { display: grid; width: 46px; height: 46px; place-items: center; color: #effff7; border: 1px solid rgb(135 255 196 / 24%); border-radius: 50%; background: rgb(3 24 18 / 82%); pointer-events: auto; }
+.hearttree-caption { position: absolute; z-index: 5; top: 100px; left: 50%; width: min(480px, calc(100% - 28px)); margin: 0; padding: 8px 14px; color: #dff7ea; text-align: center; border: 1px solid rgb(247 218 110 / 22%); border-radius: 99px; background: rgb(7 24 19 / 76%); font-size: 10px; line-height: 1.35; backdrop-filter: blur(12px); transform: translateX(-50%); pointer-events: none; }
+.hearttree-controls { position: absolute; z-index: 6; right: 12px; bottom: 12px; left: 12px; display: grid; grid-template-columns: 152px minmax(0, 1fr) auto; align-items: end; gap: 10px; pointer-events: none; }
+.hearttree-move-pad { display: grid; grid-template-columns: repeat(3, 48px); grid-template-rows: repeat(3, 48px); gap: 4px; pointer-events: auto; }
+.hearttree-move-pad .north { grid-area: 1 / 2; }.hearttree-move-pad .west { grid-area: 2 / 1; }.hearttree-move-pad .east { grid-area: 2 / 3; }.hearttree-move-pad .south { grid-area: 3 / 2; }
+.hearttree-action-wheel { display: flex; min-width: 0; justify-content: center; gap: 6px; pointer-events: auto; }
+.hearttree-switcher { display: grid; max-width: 150px; gap: 5px; pointer-events: auto; }
+.hearttree-touch-control { min-width: 44px; min-height: 44px; padding: 7px 10px; color: #eafff2; border: 1px solid rgb(126 238 183 / 22%); border-radius: 8px 16px 8px 16px; background: linear-gradient(145deg, rgb(20 65 46 / 92%), rgb(4 31 23 / 92%)); box-shadow: inset 0 1px rgb(255 255 255 / 8%), 0 10px 28px rgb(0 0 0 / 24%); touch-action: manipulation; }
+.hearttree-touch-control:active { transform: translateY(1px) scale(.98); }
+.hearttree-touch-control:disabled { opacity: .34; }
+.hearttree-touch-control strong, .hearttree-touch-control small { display: block; white-space: nowrap; }
+.hearttree-touch-control strong { font-size: 9px; }.hearttree-touch-control small { margin-top: 2px; color: #86aa9b; font-size: 7px; }
+.hearttree-touch-control.extract { border-color: rgb(247 218 110 / 36%); background: linear-gradient(145deg, #6b531b, #28200d); }
+.hearttree-overlay { position: absolute; z-index: 9; top: 50%; left: 50%; display: grid; width: min(390px, calc(100% - 28px)); justify-items: center; gap: 12px; padding: 26px; text-align: center; border: 1px solid rgb(126 238 183 / 28%); border-radius: 12px 34px 12px 34px; background: rgb(3 19 15 / 94%); box-shadow: 0 30px 100px rgb(0 0 0 / 62%); backdrop-filter: blur(24px); transform: translate(-50%, -50%); }
+.hearttree-overlay strong { font-size: 24px; }.hearttree-overlay p { margin: 0; color: #9bbdaf; font-size: 11px; line-height: 1.5; }.hearttree-overlay button { min-width: 180px; min-height: 44px; color: #092219; border: 0; border-radius: 10px; background: linear-gradient(135deg, #f0d772, #72e7ad); font-weight: 900; }
+.hearttree-squad-gate { grid-template-rows: auto minmax(0, 1fr) auto auto; gap: 12px; padding: max(12px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left)); background: radial-gradient(circle at 50% 15%, rgb(76 180 117 / 22%), transparent 35%), linear-gradient(155deg, #061712, #102f22); }
+.hearttree-squad-gate > header, .hearttree-squad-gate > footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.hearttree-squad-gate h3 { max-width: 780px; margin: 3px 0 0; font-size: clamp(22px, 4vw, 44px); line-height: .98; }.hearttree-squad-gate header small { color: #75e7ad; text-transform: uppercase; }.hearttree-squad-gate header > button { width: 44px; height: 44px; color: white; border: 1px solid rgb(255 255 255 / 14%); border-radius: 50%; background: rgb(255 255 255 / 6%); font-size: 22px; }
+.hearttree-squad-list { display: grid; min-height: 0; align-content: start; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; overflow-y: auto; }
+.hearttree-squad-list > button { display: grid; grid-template-columns: 52px minmax(0, 1fr) auto; align-items: center; gap: 11px; min-height: 90px; padding: 12px; color: #eafff2; text-align: left; border: 1px solid rgb(130 238 183 / 16%); border-radius: 10px 26px 10px 26px; background: rgb(255 255 255 / 5%); }
+.hearttree-squad-list > button.is-selected { border-color: #efd66b; background: linear-gradient(135deg, rgb(47 113 75 / 64%), rgb(64 52 17 / 48%)); box-shadow: 0 0 0 2px rgb(239 214 107 / 12%); }
+.hearttree-squad-list > button > span { display: grid; width: 52px; height: 52px; place-items: center; border-radius: 9px 18px 9px 18px; font-weight: 950; }.hearttree-squad-list > button > div { display: grid; min-width: 0; gap: 2px; }.hearttree-squad-list strong { font-size: 13px; }.hearttree-squad-list small, .hearttree-squad-list em, .hearttree-squad-list code { overflow-wrap: anywhere; color: #91b3a5; font-size: 8px; font-style: normal; }.hearttree-squad-list b { color: #e8d770; font-size: 8px; font-variant-numeric: tabular-nums; }
+.hearttree-risk-panel { display: grid; gap: 7px; padding: 11px 14px; border: 1px solid rgb(255 255 255 / 10%); border-radius: 8px 18px 8px 18px; background: rgb(0 0 0 / 18%); }.hearttree-risk-panel label { display: flex; align-items: center; gap: 9px; font-size: 11px; }.hearttree-risk-panel label.is-mortal { color: #ffb5a7; }.hearttree-risk-panel p { margin: 0; color: #92b2a5; font-size: 10px; }.hearttree-squad-gate > .hearttree-caption { position: static; width: auto; transform: none; }
+.hearttree-squad-gate footer > span { color: #91b3a5; font-size: 10px; }.hearttree-squad-gate footer > button { min-height: 48px; padding: 0 22px; color: #092219; border: 0; border-radius: 8px 18px 8px 18px; background: linear-gradient(135deg, #f0d772, #72e7ad); font-weight: 950; }.hearttree-squad-gate footer > button:disabled { opacity: .35; }
+@media (max-width: 430px) {
+  .hearttree-hud { grid-template-columns: minmax(0, 1fr) 44px; gap: 6px; padding: 7px; }
+  .hearttree-vitals { position: absolute; top: 66px; right: 7px; left: 7px; grid-template-columns: 1fr 1fr; padding: 6px; }
+  .hearttree-caption { top: 105px; font-size: 8px; }
+  .hearttree-controls { right: 7px; bottom: 7px; left: 7px; grid-template-columns: 132px minmax(0, 1fr); gap: 5px; }
+  .hearttree-move-pad { grid-template-columns: repeat(3, 42px); grid-template-rows: repeat(3, 42px); }.hearttree-move-pad .hearttree-touch-control { min-width: 42px; min-height: 42px; }
+  .hearttree-action-wheel { display: grid; grid-template-columns: repeat(3, minmax(44px, 1fr)); gap: 4px; }.hearttree-action-wheel .hearttree-touch-control { min-height: 44px; padding: 4px; }.hearttree-action-wheel small { display: none; }
+  .hearttree-switcher { position: absolute; right: 0; bottom: 138px; display: flex; max-width: calc(100vw - 14px); }.hearttree-switcher .hearttree-touch-control { padding: 4px 7px; }
+  .hearttree-squad-list { grid-template-columns: 1fr; }.hearttree-squad-list > button { min-height: 76px; }.hearttree-squad-gate h3 { font-size: 24px; }.hearttree-squad-gate footer { align-items: stretch; flex-direction: column; }.hearttree-risk-panel { max-height: 98px; overflow-y: auto; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hearttree-touch-control, .hearttree-vitals i, .hearttree-overlay { transition: none; animation: none; }
+}
+
 .wilds-collectible-card {
   --card-primary: #38d989;
   --card-accent: #f5d36c;

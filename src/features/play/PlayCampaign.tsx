@@ -7,6 +7,7 @@ import {
   applyWildsInput,
   initialPlayState,
   missionCards,
+  playableInventory,
   restorePlayState,
   serializePlayState,
   selectedAsset,
@@ -757,13 +758,20 @@ export function PlayCampaign({
       <WildsLandmarkExperience
         access={activeLandmarkId && activeLandmarkId !== "wayfinder-hollow" ? evaluateLandmarkAccess(WILDS_FLAGSHIP_LANDMARKS.find((item) => item.id === activeLandmarkId)!, landmarkProgress) : null}
         card={activeAsset}
+        cards={playableInventory(state)}
+        conditions={state.hearttreeConditions}
+        guestId={multiplayer.guestId}
+        hearttreeSquadAssetIds={state.hearttreeSquadAssetIds}
         landmarkId={activeLandmarkId === "wayfinder-hollow" ? null : activeLandmarkId}
         onExit={() => setActiveLandmarkId(null)}
+        onHearttreeReceipt={(receipt) => dispatch({ type: "hearttree-admit", receipt })}
+        onHearttreeSquadChange={(assetIds) => dispatch({ type: "hearttree-select-squad", assetIds })}
         onUnlock={(unlockId) => setLandmarkUnlocks((current) => {
           const next = Array.from(new Set([...current, unlockId])).slice(0, 64);
           try { window.localStorage.setItem(WILDS_ACHIEVEMENTS_KEY, JSON.stringify(next)); } catch { /* progression remains active for this session */ }
           return next;
         })}
+        worldMode={settlementWorldMode}
       />
       <WildsSettlementExperience
         actorId={civicActorId}
