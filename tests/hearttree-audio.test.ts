@@ -1,10 +1,25 @@
 import assert from "node:assert/strict";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, it } from "node:test";
-import manifest from "../public/audio/wilds/hearttree/manifest.json";
 import { HEARTTREE_AUDIO_ASSETS } from "../src/features/play/audio/wilds-audio-catalog";
 import { createWildsAudioDirector, hearttreeAudioEvent } from "../src/features/play/audio/wilds-audio-director";
+
+type HearttreeAudioManifest = {
+  assets: Array<{
+    id: string;
+    file: string;
+    archivalMaster: string;
+    status: string;
+    provider: string;
+    license: string;
+    truePeakDb: number;
+  }>;
+};
+
+const manifest = JSON.parse(
+  readFileSync(join(process.cwd(), "public/audio/wilds/hearttree/manifest.json"), "utf8"),
+) as HearttreeAudioManifest;
 
 describe("Hearttree production audio", () => {
   it("ships every declared runtime file and archival master with completed local provenance", () => {

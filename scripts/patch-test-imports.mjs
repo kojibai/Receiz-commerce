@@ -1,5 +1,5 @@
 import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, extname, join, resolve } from "node:path";
+import { dirname, extname, join, relative, resolve } from "node:path";
 
 const root = resolve(process.cwd(), ".test-build");
 
@@ -11,6 +11,13 @@ function files(dir) {
 }
 
 function patchSpecifier(file, specifier) {
+  if (specifier.startsWith("@/")) {
+    const target = resolve(root, "src", specifier.slice(2));
+    const candidate = `${target}.js`;
+    const resolvedTarget = existsSync(candidate) ? candidate : target;
+    const rewritten = relative(dirname(file), resolvedTarget).replaceAll("\\", "/");
+    return rewritten.startsWith(".") ? rewritten : `./${rewritten}`;
+  }
   if (!specifier.startsWith(".")) return specifier;
   if (extname(specifier)) return specifier;
 
@@ -22,15 +29,15 @@ for (const file of files(root)) {
   const original = readFileSync(file, "utf8");
   const patched = original
     .replace(
-      /(from\s+["'])(\.[^"']+)(["'])/g,
+      /(from\s+["'])(@\/[^"']+|\.[^"']+)(["'])/g,
       (_match, prefix, specifier, suffix) => `${prefix}${patchSpecifier(file, specifier)}${suffix}`
     )
     .replace(
-      /(import\s+["'])(\.[^"']+)(["'])/g,
+      /(import\s+["'])(@\/[^"']+|\.[^"']+)(["'])/g,
       (_match, prefix, specifier, suffix) => `${prefix}${patchSpecifier(file, specifier)}${suffix}`
     )
     .replace(
-      /(import\(\s*["'])(\.[^"']+)(["']\s*\))/g,
+      /(import\(\s*["'])(@\/[^"']+|\.[^"']+)(["']\s*\))/g,
       (_match, prefix, specifier, suffix) => `${prefix}${patchSpecifier(file, specifier)}${suffix}`
     );
 

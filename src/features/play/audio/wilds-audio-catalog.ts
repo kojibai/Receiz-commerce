@@ -1,6 +1,6 @@
 import { WILDS_BOSS_FAMILIES } from "../wilds-boss-ecology";
 import { WILDS_ECOLOGY_FAMILIES } from "../wilds-ecology";
-import hearttreeManifest from "../../../../public/audio/wilds/hearttree/manifest.json";
+import hearttreeManifest from "../../../../public/audio/wilds/hearttree/manifest.json" with { type: "json" };
 import { plannedWildsAudioProduction, plannedWildsRecordedVoice } from "./wilds-audio-production";
 import type {
   WildsAudioAsset,

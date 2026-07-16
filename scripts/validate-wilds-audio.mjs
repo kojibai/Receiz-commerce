@@ -33,7 +33,9 @@ for (const asset of WILDS_AUDIO_ASSETS) {
 
   if (asset.production.prompt.trim().length < 24) fail(`production prompt too short: ${asset.id}`);
   if (asset.production.format !== "mp3_44100_128") fail(`unsupported runtime format: ${asset.id}`);
-  if (!asset.production.rights.startsWith("original-")) fail(`missing original rights: ${asset.id}`);
+  if (!/^(?:original-authored|original-recording|open-source-generated)$/.test(asset.production.rights)) {
+    fail(`unsupported audio rights: ${asset.id}`);
+  }
 
   for (const variant of asset.variants) {
     if (!variant.url.startsWith("/audio/wilds/")) fail(`non-local audio URL: ${variant.url}`);
