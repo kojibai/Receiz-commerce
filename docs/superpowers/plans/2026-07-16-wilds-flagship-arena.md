@@ -135,11 +135,11 @@ export type ArenaKinematicState = Readonly<{ position: ArenaVec3; velocity: Aren
 export function stepArenaMovement(definition: ArenaFighterDefinition, arena: ArenaStageDefinition, prior: ArenaKinematicState, input: ArenaMovementInput): ArenaMovementResult;
 ```
 
-- [ ] Write failing tests for ground acceleration, diagonal normalization, jump edge, aerial control, wing recovery, heavy mass, slope/obstacle collision, ledge recovery, fall damage event, stage bounds, finite numbers, and byte-identical 3,600-frame replay.
-- [ ] Run `node --import tsx --test tests/arena-movement.test.ts`; expect failure.
-- [ ] Implement integer-frame integration with quantized millimeter positions and velocities; use analytic capsule/box/cylinder collisions defined by the stage, never rendered mesh collision.
-- [ ] Run the test twice and compare terminal digests; expect identical PASS.
-- [ ] Commit with `git commit -m "feat: add deterministic Arena movement"`.
+- [x] Write failing tests for ground acceleration, diagonal normalization, jump edge, aerial control, wing recovery, heavy mass, slope/obstacle collision, ledge recovery, fall damage event, stage bounds, finite numbers, and byte-identical 3,600-frame replay.
+- [x] Run `node --import tsx --test tests/arena-movement.test.ts`; expect failure.
+- [x] Implement integer-frame integration with quantized millimeter positions and velocities; use analytic capsule/box/cylinder collisions defined by the stage, never rendered mesh collision.
+- [x] Run the test twice and compare terminal digests; expect identical PASS.
+- [x] Commit with `git commit -m "feat: add deterministic Arena movement"`.
 
 ### Task 4: Vitality, Break, combos, defense, and exact abilities
 
