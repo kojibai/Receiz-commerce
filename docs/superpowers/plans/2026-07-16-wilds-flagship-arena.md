@@ -233,12 +233,12 @@ export function sealArenaReceipt(input: ArenaReceiptInput): ArenaReceipt;
 export function verifyArenaReceipt(receipt: ArenaReceipt): boolean;
 ```
 
-- [ ] Write failing replay mutation tests for seed, ruleset, roster proof/revision, loadout, frame, actor, vector, combat intent, tag, item, checkpoint, zero frame, terminal state, and digest.
-- [ ] Write failing consequence tests for contribution-grounded XP/mastery, bounded injury/scar/resource/achievement/evolution, relationship rescues, checkpoint history, winner with fallen teammate, practice zero awards, retirement epitaph, memorial, and deliberate-sacrifice anti-farming bounds.
-- [ ] Run all three focused suites; expect failure.
-- [ ] Implement checkpoints at frame 0, every 120 frames, phase/boss transitions, retirement, and terminal state. Receipt binds parents, definition, transcript, consequences, actor, mode, device/global authority, and publication state.
-- [ ] Run focused suites; expect PASS.
-- [ ] Commit with `git commit -m "feat: seal replayed Arena lives"`.
+- [x] Write failing replay mutation tests for seed, ruleset, roster proof/revision, loadout, frame, actor, vector, combat intent, tag, item, checkpoint, zero frame, terminal state, and digest.
+- [x] Write failing consequence tests for contribution-grounded XP/mastery, bounded injury/scar/resource/achievement/evolution, relationship rescues, checkpoint history, winner with fallen teammate, practice zero awards, retirement epitaph, memorial, and deliberate-sacrifice anti-farming bounds.
+- [x] Run all three focused suites; expect failure.
+- [x] Implement checkpoints at frame 0, every 120 frames, phase/boss transitions, retirement, and terminal state. Receipt binds parents, definition, transcript, consequences, actor, mode, device/global authority, and publication state.
+- [x] Run focused suites; expect PASS.
+- [x] Commit with `git commit -m "feat: seal replayed Arena lives"`.
 
 ### Task 8: Device signatures and atomic offline ledger
 

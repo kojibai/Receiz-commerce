@@ -8,6 +8,7 @@ import { ARENA_RULESET_ID, type ArenaVec3 } from "./rules";
 export type ArenaPickupDefinition = Readonly<{ id: string; kind: "heal"; amount: number; position: ArenaVec3 }>;
 export type ArenaMechanismDefinition = Readonly<{ id: string; kind: "bridge" | "gate"; position: ArenaVec3 }>;
 export type ArenaHazardDefinition = Readonly<{ id: string; damage: number; position: ArenaVec3; radius: number }>;
+export type ArenaBossPhaseRuntime = Readonly<{ id: string; vitalityThreshold: number; transitionFrame: number; weakness: string; hazard: string; legalActions: readonly string[] }>;
 export type ArenaTeamDefinition = Readonly<{ id: string; fighters: readonly ArenaFighterDefinition[]; items?: Readonly<Record<string, number>> }>;
 export type ArenaMatchDefinition = Readonly<{
   seed: string;
@@ -18,6 +19,7 @@ export type ArenaMatchDefinition = Readonly<{
   pickups: readonly ArenaPickupDefinition[];
   mechanisms: readonly ArenaMechanismDefinition[];
   hazards: readonly ArenaHazardDefinition[];
+  boss?: Readonly<{ teamId: string; phases: readonly ArenaBossPhaseRuntime[] }>;
 }>;
 
 export type ArenaFighterRuntimeStatus = "active" | "ready" | "knocked-out" | "retired";
@@ -44,8 +46,10 @@ export type ArenaStageState = Readonly<{
   consumedPickupIds: readonly string[];
   activatedMechanismIds: readonly string[];
   hazardCooldowns: Readonly<Record<string, number>>;
+  activeBossHazard: string | null;
+  bossLegalActions: readonly string[];
 }>;
-export type ArenaEventKind = "fighter.moved" | "fighter.action" | "fighter.hit" | "fighter.guarded" | "fighter.parried" | "fighter.dodged" | "fighter.tagged" | "fighter.tag-cancelled" | "fighter.rescued" | "fighter.knocked-out" | "fighter.retired" | "fighter.withdrew" | "item.used" | "pickup.consumed" | "mechanism.activated" | "hazard.hit" | "fighter.fell";
+export type ArenaEventKind = "fighter.moved" | "fighter.action" | "fighter.hit" | "fighter.guarded" | "fighter.parried" | "fighter.dodged" | "fighter.tagged" | "fighter.tag-cancelled" | "fighter.rescued" | "fighter.knocked-out" | "fighter.retired" | "fighter.withdrew" | "item.used" | "pickup.consumed" | "mechanism.activated" | "hazard.hit" | "fighter.fell" | "boss.phase-transition";
 export type ArenaEvent = Readonly<{ id: string; sequence: number; frame: number; kind: ArenaEventKind; actorId: string; targetId: string | null; amount: number; detail: string }>;
 export type ArenaTerminalState = Readonly<{ reason: "withdrawal" | "team-defeat"; winnerTeamId: string; loserTeamId: string; frame: number }>;
 export type ArenaInputFrame = Readonly<{
@@ -73,6 +77,7 @@ export type ArenaMatchState = Readonly<{
   events: readonly ArenaEvent[];
   inputs: readonly ArenaInputFrame[];
   resolvedHitIds: readonly string[];
+  boss: Readonly<{ teamId: string; phases: readonly ArenaBossPhaseRuntime[]; transitionedPhaseIds: readonly string[] }> | null;
   terminal: ArenaTerminalState | null;
 }>;
 
@@ -115,6 +120,7 @@ export function createArenaMatch(definition: ArenaMatchDefinition): ArenaMatchSt
   const allIds = definition.teams.flatMap((team) => team.fighters.map((fighter) => fighter.assetId));
   if (new Set(allIds).size !== allIds.length) throw new Error("arena_roster_duplicate");
   const definitionDigest = digest(definition);
+  if (definition.boss && !definition.teams.some((team) => team.id === definition.boss!.teamId)) throw new Error("arena_boss_team_invalid");
   return {
     schema: "receiz.wilds.arena_match.v1",
     id: `arena:match:${definitionDigest.slice(7, 31)}`,
@@ -134,8 +140,28 @@ export function createArenaMatch(definition: ArenaMatchDefinition): ArenaMatchSt
       consumedPickupIds: [],
       activatedMechanismIds: [],
       hazardCooldowns: {},
+      activeBossHazard: null,
+      bossLegalActions: [],
     },
-    events: [], inputs: [], resolvedHitIds: [], terminal: null,
+    events: [], inputs: [], resolvedHitIds: [], boss: definition.boss ? { teamId: definition.boss.teamId, phases: definition.boss.phases, transitionedPhaseIds: [] } : null, terminal: null,
+  };
+}
+
+function applyBossTransition(state: ArenaMatchState, input: ArenaInputFrame) {
+  if (!state.boss || state.phase === "terminal") return state;
+  const team = state.teams.find((candidate) => candidate.id === state.boss!.teamId);
+  if (!team) throw new Error("arena_boss_team_invalid");
+  const fighter = team.fighters[team.activeAssetId]!;
+  const ratio = fighter.combat.vitality / Math.max(1, fighter.definition.maxVitality);
+  const phase = state.boss.phases.find((candidate) => !state.boss!.transitionedPhaseIds.includes(candidate.id)
+    && input.frame >= candidate.transitionFrame
+    && ratio <= candidate.vitalityThreshold);
+  if (!phase) return state;
+  return {
+    ...state,
+    boss: { ...state.boss, transitionedPhaseIds: [...state.boss.transitionedPhaseIds, phase.id] },
+    stage: { ...state.stage, activeBossHazard: phase.hazard, bossLegalActions: phase.legalActions },
+    events: [...state.events, event(state, input, "boss.phase-transition", fighter.definition.assetId, phase.id, Math.round(ratio * 1_000), `Boss phase exposed ${phase.weakness}.`)],
   };
 }
 
@@ -328,7 +354,7 @@ function advanceOne(state: ArenaMatchState, input: ArenaInputFrame) {
   next = applyContextAction(next, input, located.teamIndex);
   next = applyHazards(next, input, located.teamIndex);
   if (next.phase === "terminal") return next;
-  return resolveActiveHit(next, input, located.teamIndex);
+  return applyBossTransition(resolveActiveHit(next, input, located.teamIndex), input);
 }
 
 export function advanceArenaMatch(state: ArenaMatchState, inputs: readonly ArenaInputFrame[]): ArenaMatchState {
