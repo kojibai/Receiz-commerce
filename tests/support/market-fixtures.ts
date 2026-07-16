@@ -1,6 +1,7 @@
 import { emptyAdventureCondition } from "../../src/features/play/adventure/card-condition";
 import { projectMarketCard } from "../../src/features/play/market/card-role";
-import type { MarketBoardInput } from "../../src/features/play/market/contract-director";
+import { generateMarketBoard, type MarketBoardInput } from "../../src/features/play/market/contract-director";
+import { createMarketNegotiation } from "../../src/features/play/market/negotiation-resolver";
 import { sealCollectedCard } from "../../src/features/play/portable-card";
 import type { WildsEcologySite } from "../../src/features/play/wilds-ecology";
 
@@ -55,4 +56,10 @@ export function marketFixtureInput(squad: MarketBoardInput["squad"], mortal = fa
     history: [],
     mortal,
   };
+}
+
+export function marketNegotiationFixture() {
+  const cards = marketFixtureCards();
+  const contract = generateMarketBoard(marketFixtureInput([cards.groveScout, cards.stoneCarrier])).contracts[0];
+  return { ...cards, contract, state: createMarketNegotiation(contract) };
 }
