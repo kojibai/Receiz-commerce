@@ -56,6 +56,16 @@ export type HearttreeAudioRouting = Readonly<{
   effectId: string | null;
 }>;
 
+export type MarketAudioSignal = Readonly<{
+  phase: "board" | "intelligence" | "negotiation" | "execution" | "result" | "extracted" | "defeated";
+  eventKind?: "moved" | "inspected" | "negotiated" | "guarded" | "dodged" | "role-action" | "ability.succeeded" | "switched" | "hazard.hit" | "objective.completed" | "extracted" | "error" | null;
+  element?: string | null;
+  squadElements?: readonly string[];
+  risk?: "standard" | "mortal";
+  terminalReason?: "player-extracted" | "squad-defeated" | "completed" | null;
+  paused?: boolean;
+}>;
+
 type HearttreeSemanticAudioEvent = Readonly<{ type: "hearttree"; assetId: string }>;
 
 export type WildsAudioPlayRequest = Readonly<{
@@ -144,6 +154,45 @@ export function hearttreeAudioEvent(signal: HearttreeAudioSignal): HearttreeAudi
   };
 }
 
+const MARKET_EFFECTS: Readonly<Record<NonNullable<MarketAudioSignal["eventKind"]>, string>> = {
+  moved: "hearttree.movement.movement-leaves",
+  inspected: "hearttree.leaf.leaf-rustle",
+  negotiated: "hearttree.mechanism.mechanism-turn",
+  guarded: "hearttree.guard.guard-impact",
+  dodged: "hearttree.dodge.dodge-rush",
+  "role-action": "hearttree.impact.heavy-impact",
+  "ability.succeeded": "hearttree.ability.ability-grove",
+  switched: "hearttree.switch.switch-card",
+  "hazard.hit": "hearttree.injury.injury-hit",
+  "objective.completed": "hearttree.reward.reward-awaken",
+  extracted: "hearttree.extraction.extraction-open",
+  error: "hearttree.ui.ui-error",
+};
+
+export function marketAudioEvent(signal: MarketAudioSignal): HearttreeAudioRouting {
+  const defeated = signal.phase === "defeated" || signal.terminalReason === "squad-defeated";
+  const extracted = signal.phase === "extracted" || signal.terminalReason === "player-extracted";
+  const completed = signal.phase === "result" && signal.terminalReason === "completed";
+  const musicRole = defeated ? "memorial"
+    : extracted ? "extraction"
+      : completed ? "victory"
+        : signal.phase === "execution" ? signal.risk === "mortal" ? "boss" : "danger"
+          : signal.phase === "negotiation" ? "mastery"
+            : signal.phase === "intelligence" ? "mystery" : "exploration";
+  const motifIds = [...new Set(signal.squadElements ?? [])]
+    .map((element) => `hearttree.motif.${element.toLowerCase()}`)
+    .filter((id) => ["hearttree.motif.grove", "hearttree.motif.spark", "hearttree.motif.tide", "hearttree.motif.stone"].includes(id));
+  let effectId = signal.eventKind ? MARKET_EFFECTS[signal.eventKind] : null;
+  if (signal.eventKind === "ability.succeeded" && signal.element) effectId = `hearttree.ability.ability-${signal.element.toLowerCase()}`;
+  if (defeated) effectId = "hearttree.death.death-seal";
+  return {
+    ambienceId: signal.phase === "board" ? "hearttree.ambience.exterior" : "hearttree.ambience.interior",
+    musicId: `hearttree.music.${musicRole}`,
+    motifIds,
+    effectId,
+  };
+}
+
 export function createWildsAudioDirector(harness: WildsAudioDirectorHarness) {
   const assets = new Map((harness.assets ?? WILDS_AUDIO_ASSETS).map((asset) => [asset.id, asset] as const));
   const now = harness.now ?? Date.now;
@@ -155,6 +204,7 @@ export function createWildsAudioDirector(harness: WildsAudioDirectorHarness) {
   let currentMusicId: string | null = null;
   let worldState: WildsAudioWorldState | null = null;
   let currentHearttreeMotifs = "";
+  let currentMarketMotifs = "";
   let disposed = false;
 
   const transition = async (id: string, current: "ambience" | "music") => {
@@ -247,6 +297,23 @@ export function createWildsAudioDirector(harness: WildsAudioDirectorHarness) {
       const motifKey = routing.motifIds.join(":");
       const motifs = motifKey !== currentHearttreeMotifs ? routing.motifIds.map(playById) : [];
       currentHearttreeMotifs = motifKey;
+      await Promise.allSettled([
+        transition(routing.ambienceId, "ambience"),
+        transition(routing.musicId, "music"),
+        ...motifs,
+        ...(routing.effectId ? [playById(routing.effectId)] : []),
+      ]);
+    },
+    async updateMarket(signal: MarketAudioSignal) {
+      if (disposed) return;
+      await harness.setPaused?.(signal.paused ?? false);
+      if (signal.paused) return;
+      harness.retainBanks?.(new Set<WildsAudioBankId>(["hearttree"]));
+      await harness.preloadBank?.("hearttree");
+      const routing = marketAudioEvent(signal);
+      const motifKey = routing.motifIds.join(":");
+      const motifs = motifKey !== currentMarketMotifs ? routing.motifIds.map(playById) : [];
+      currentMarketMotifs = motifKey;
       await Promise.allSettled([
         transition(routing.ambienceId, "ambience"),
         transition(routing.musicId, "music"),

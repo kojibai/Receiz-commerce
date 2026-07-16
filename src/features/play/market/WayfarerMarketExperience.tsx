@@ -16,17 +16,19 @@ import { createMarketRuntime, stepMarketRuntime, type MarketRuntimeState } from 
 import { marketTranscript } from "./transcript";
 import { WayfarerMarketControls, type MarketControlIntent } from "./WayfarerMarketControls";
 import { WayfarerMarketScene } from "./WayfarerMarketScene";
+import type { MarketAudioSignal } from "../audio/wilds-audio-director";
 
 type Stage = "board" | "active" | "publishing" | "result";
 
 export function WayfarerMarketExperience({
-  cards, conditions, guestId, marketSquadAssetIds, onExit, onReceipt, onSquadChange,
+  cards, conditions, guestId, marketSquadAssetIds, onAudioEvent, onExit, onReceipt, onSquadChange,
   participantCount, site, worldMode,
 }: {
   cards: readonly PortableCardAsset[];
   conditions: Readonly<Record<string, AdventureCardCondition>>;
   guestId: string | null;
   marketSquadAssetIds: readonly string[];
+  onAudioEvent: (signal: MarketAudioSignal) => void;
   onExit: () => void;
   onReceipt: (receipt: MarketReceipt) => void;
   onSquadChange: (assetIds: string[]) => void;
@@ -50,6 +52,7 @@ export function WayfarerMarketExperience({
   const [runtime, setRuntime] = useState<MarketRuntimeState | null>(null);
   const runtimeRef = useRef<MarketRuntimeState | null>(null);
   const contractRef = useRef<MarketContractDefinition | null>(null);
+  const lastAudioSequenceRef = useRef(-1);
   const [consent, setConsent] = useState<MarketMortalConsent | null>(null);
   const [stage, setStage] = useState<Stage>("board");
   const [paused, setPaused] = useState(false);
@@ -58,6 +61,27 @@ export function WayfarerMarketExperience({
 
   useEffect(() => { runtimeRef.current = runtime; }, [runtime]);
   useEffect(() => { contractRef.current = contract; }, [contract]);
+  useEffect(() => {
+    if (!runtime) {
+      onAudioEvent({ phase: "board", squadElements: squad.map((card) => card.element), risk: mortal ? "mortal" : "standard", paused });
+      return;
+    }
+    const latest = runtime.sequence !== lastAudioSequenceRef.current ? runtime.events.at(-1) : null;
+    lastAudioSequenceRef.current = runtime.sequence;
+    const eventKind = latest?.kind === "intelligence.gathered" ? "inspected"
+      : latest?.kind === "negotiation.succeeded" || latest?.kind === "negotiation.failed" || latest?.kind === "negotiation.accepted" ? "negotiated"
+        : latest?.kind ?? null;
+    const active = runtime.squad.find((card) => card.assetId === runtime.activeAssetId);
+    onAudioEvent({
+      phase: runtime.phase,
+      eventKind,
+      element: active?.element,
+      squadElements: runtime.squad.map((card) => card.element),
+      risk: contract?.risk ?? (mortal ? "mortal" : "standard"),
+      terminalReason: runtime.terminalReason === "extracted" ? "player-extracted" : runtime.terminalReason === "contract-failed" ? null : runtime.terminalReason,
+      paused,
+    });
+  }, [contract?.risk, mortal, onAudioEvent, paused, runtime, squad]);
 
   const toggleCard = (assetId: string) => {
     setSelectedIds((current) => current.includes(assetId) ? current.filter((id) => id !== assetId) : current.length < 3 ? [...current, assetId] : current);

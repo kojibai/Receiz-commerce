@@ -10,14 +10,16 @@ import type { WildsSettlementWorldMode } from "./WildsSettlementEnvironment";
 import type { AdventureCardCondition } from "./adventure/card-condition";
 import type { MarketReceipt } from "./market/receipt";
 import { WayfarerMarketExperience } from "./market/WayfarerMarketExperience";
+import type { MarketAudioSignal } from "./audio/wilds-audio-director";
 
-export function WildsEcologyExperience({ card, cards, conditions, guestId, marketSquadAssetIds, onExit, onMarketReceipt, onMarketSquadChange, onSubmit, open, participantCount, site, worldMode }: {
+export function WildsEcologyExperience({ card, cards, conditions, guestId, marketSquadAssetIds, onExit, onMarketAudioEvent = () => {}, onMarketReceipt, onMarketSquadChange, onSubmit, open, participantCount, site, worldMode }: {
   card: PortableCardAsset | null;
   cards: readonly PortableCardAsset[];
   conditions: Readonly<Record<string, AdventureCardCondition>>;
   guestId: string | null;
   marketSquadAssetIds: readonly string[];
   onExit: () => void;
+  onMarketAudioEvent?: (signal: MarketAudioSignal) => void;
   onMarketReceipt: (receipt: MarketReceipt) => void;
   onMarketSquadChange: (assetIds: string[]) => void;
   onSubmit: (input: { siteId: string; amount: number; cardProofDigest: string }) => Promise<void> | void;
@@ -63,6 +65,7 @@ export function WildsEcologyExperience({ card, cards, conditions, guestId, marke
     conditions={conditions}
     guestId={guestId}
     marketSquadAssetIds={marketSquadAssetIds}
+    onAudioEvent={onMarketAudioEvent}
     onExit={onExit}
     onReceipt={onMarketReceipt}
     onSquadChange={onMarketSquadChange}

@@ -792,6 +792,7 @@ export function PlayCampaign({
         conditions={state.adventureConditions}
         guestId={multiplayer.guestId}
         marketSquadAssetIds={state.marketSquadAssetIds}
+        onMarketAudioEvent={presentation.playMarket}
         onExit={() => setActiveEcologySiteId(null)}
         onMarketReceipt={(receipt) => dispatch({ type: "market-admit", receipt })}
         onMarketSquadChange={(assetIds) => dispatch({ type: "market-select-squad", assetIds })}

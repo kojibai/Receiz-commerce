@@ -5,6 +5,7 @@ import { createWildsAudioMixer, type WildsGainNodeLike } from "./audio/wilds-aud
 import {
   createWildsAudioDirector,
   type HearttreeAudioSignal,
+  type MarketAudioSignal,
   type WildsAudioPlayRequest,
   type WildsAudioStreamTransition,
   type WildsAudioWorldState,
@@ -338,6 +339,10 @@ export function createWildsAudioRuntime(
     hearttree(signal: HearttreeAudioSignal) {
       if (!director || destroyed || settings.muted) return;
       void director.updateHearttree(signal);
+    },
+    market(signal: MarketAudioSignal) {
+      if (!director || destroyed || settings.muted) return;
+      void director.updateMarket(signal);
     },
     stopAmbience: stopStreams,
     async destroy() {
