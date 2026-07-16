@@ -78,7 +78,7 @@ describe("Wilds visual events", () => {
   });
 });
 
-describe("Wilds synthesized audio", () => {
+describe("Wilds production audio", () => {
   it("normalizes persisted audio settings", () => {
     assert.deepEqual(normalizeWildsAudioSettings({
       master: 2,
@@ -120,7 +120,7 @@ describe("Wilds synthesized audio", () => {
     );
   });
 
-  it("maps settlement arrival, services, and route play onto local synthesized cues", () => {
+  it("maps settlement arrival, services, and route play onto production cues", () => {
     assert.equal(settlementAudioCue("arrival"), "settlement-arrival");
     assert.equal(settlementAudioCue("service"), "settlement-service");
     assert.equal(settlementAudioCue("route-step"), "route-step");
@@ -135,40 +135,53 @@ describe("Wilds synthesized audio", () => {
     assert.equal(ecologyAudioCue("resolved", "unstable-portal"), "ecology-resolved");
   });
 
-  it("maps global boss families and outcomes onto local synthesized motifs", () => {
+  it("maps global boss families and outcomes onto production motifs", () => {
     assert.equal(bossAudioCue("telegraph", "skycoil-tempest"), "boss-skycoil");
     assert.equal(bossAudioCue("action", "mirecrown-colossus"), "boss-action");
     assert.equal(bossAudioCue("defeat", "crystal-burrower"), "boss-defeat");
   });
 
-  it("destroys every synthesized audio resource", async () => {
+  it("destroys every loaded production audio resource", async () => {
     const calls: string[] = [];
-    const audioParam = {
-      setValueAtTime() {},
-      exponentialRampToValueAtTime() {}
+    const gainParam = {
+      value: 1,
+      setValueAtTime(value: number) { this.value = value; },
+      linearRampToValueAtTime(value: number) { this.value = value; }
     };
     const runtime = createWildsAudioRuntime(() => ({
       currentTime: 0,
       destination: {},
       resume: async () => { calls.push("resume"); },
       close: async () => { calls.push("close"); },
-      createOscillator: () => ({
-        type: "sine",
-        frequency: audioParam,
+      decodeAudioData: async () => ({ duration: 1, length: 2, numberOfChannels: 1 }),
+      createBufferSource: () => ({
+        buffer: null,
+        onended: null,
         connect() {},
         disconnect() {},
-        start() {},
-        stop() { calls.push("stop"); }
+        start() { calls.push("source-start"); },
+        stop() { calls.push("source-stop"); }
       }),
       createGain: () => ({
-        gain: audioParam,
+        gain: { ...gainParam },
         connect() {},
         disconnect() {}
       })
-    }));
+    }), {
+      fetchImpl: async () => new Response(new Uint8Array([1, 2, 3])),
+      createMedia: (url) => ({
+        src: url,
+        loop: false,
+        volume: 1,
+        currentTime: 0,
+        play: async () => { calls.push("media-play"); },
+        pause: () => { calls.push("media-pause"); }
+      })
+    });
     await runtime.unlock();
     runtime.play("search");
+    await new Promise((resolve) => setTimeout(resolve, 0));
     await runtime.destroy();
-    assert.deepEqual(calls, ["resume", "stop", "close"]);
+    assert.deepEqual(calls, ["resume", "source-start", "source-stop", "close"]);
   });
 });

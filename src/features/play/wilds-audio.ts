@@ -1,5 +1,7 @@
 import type { WildsEcologyFamilyId } from "./wilds-ecology";
 import type { WildsBossFamilyId } from "./wilds-boss-ecology";
+import { createWildsAudioLoader, type WildsDecodedAudioBuffer } from "./audio/wilds-audio-loader";
+import { createWildsAudioMixer, type WildsGainNodeLike } from "./audio/wilds-audio-mixer";
 
 export type WildsAudioSettings = {
   master: number;
@@ -68,24 +70,22 @@ export const DEFAULT_WILDS_AUDIO_SETTINGS: WildsAudioSettings = {
   muted: false
 };
 
-type AudioParamLike = {
-  setValueAtTime(value: number, time: number): void;
-  exponentialRampToValueAtTime(value: number, time: number): void;
-};
-
-type OscillatorLike = {
-  type: string;
-  frequency: AudioParamLike;
+type BufferSourceLike = {
+  buffer: WildsDecodedAudioBuffer | null;
+  onended: (() => void) | null;
   connect(target: unknown): void;
   disconnect(): void;
   start(time?: number): void;
   stop(time?: number): void;
 };
 
-type GainLike = {
-  gain: AudioParamLike;
-  connect(target: unknown): void;
-  disconnect(): void;
+type WildsMediaLike = {
+  src: string;
+  loop: boolean;
+  volume: number;
+  currentTime: number;
+  play(): Promise<void>;
+  pause(): void;
 };
 
 export type WildsAudioContextLike = {
@@ -93,63 +93,9 @@ export type WildsAudioContextLike = {
   destination: unknown;
   resume(): Promise<void>;
   close(): Promise<void>;
-  createOscillator(): OscillatorLike;
-  createGain(): GainLike;
-};
-
-type CueVoice = {
-  frequency: number;
-  endFrequency: number;
-  duration: number;
-  gain: number;
-  type: "sine" | "triangle" | "square" | "sawtooth";
-};
-
-const CUE_VOICES: Readonly<Record<WildsAudioCue, CueVoice>> = {
-  search: { frequency: 440, endFrequency: 760, duration: 0.28, gain: 0.18, type: "sine" },
-  "proximity-warm": { frequency: 520, endFrequency: 620, duration: 0.34, gain: 0.16, type: "triangle" },
-  "proximity-hot": { frequency: 620, endFrequency: 920, duration: 0.42, gain: 0.2, type: "triangle" },
-  rustle: { frequency: 180, endFrequency: 260, duration: 0.24, gain: 0.12, type: "sawtooth" },
-  emerge: { frequency: 220, endFrequency: 740, duration: 0.58, gain: 0.22, type: "triangle" },
-  "battle-hit": { frequency: 150, endFrequency: 72, duration: 0.2, gain: 0.28, type: "square" },
-  capture: { frequency: 380, endFrequency: 720, duration: 0.5, gain: 0.22, type: "triangle" },
-  seal: { frequency: 660, endFrequency: 1_180, duration: 0.48, gain: 0.2, type: "sine" },
-  reveal: { frequency: 520, endFrequency: 1_320, duration: 0.78, gain: 0.2, type: "triangle" },
-  evolve: { frequency: 420, endFrequency: 1_480, duration: 1.1, gain: 0.2, type: "sine" },
-  lineage: { frequency: 360, endFrequency: 1_040, duration: 1.15, gain: 0.18, type: "triangle" },
-  "player-arrival": { frequency: 490, endFrequency: 820, duration: 0.36, gain: 0.14, type: "sine" },
-  "weather-pollen": { frequency: 310, endFrequency: 470, duration: 0.7, gain: 0.08, type: "sine" },
-  "landmark-near": { frequency: 330, endFrequency: 880, duration: 0.72, gain: 0.14, type: "triangle" },
-  "settlement-arrival": { frequency: 294, endFrequency: 784, duration: 0.82, gain: 0.16, type: "triangle" },
-  "settlement-service": { frequency: 587, endFrequency: 988, duration: 0.42, gain: 0.13, type: "sine" },
-  "route-step": { frequency: 440, endFrequency: 554, duration: 0.16, gain: 0.1, type: "triangle" },
-  "route-complete": { frequency: 523, endFrequency: 1_176, duration: 0.72, gain: 0.17, type: "sine" },
-  "foliage-surge": { frequency: 170, endFrequency: 390, duration: 0.34, gain: 0.11, type: "sawtooth" },
-  "ecology-rumor": { frequency: 196, endFrequency: 294, duration: 0.55, gain: 0.09, type: "sine" },
-  "ecology-step": { frequency: 392, endFrequency: 523, duration: 0.22, gain: 0.11, type: "triangle" },
-  "ecology-resolved": { frequency: 523, endFrequency: 1_318, duration: 0.92, gain: 0.17, type: "sine" },
-  "ecology-market": { frequency: 330, endFrequency: 659, duration: 0.58, gain: 0.13, type: "triangle" },
-  "ecology-ruin": { frequency: 174, endFrequency: 349, duration: 0.78, gain: 0.12, type: "sine" },
-  "ecology-portal": { frequency: 277, endFrequency: 1_109, duration: 0.7, gain: 0.14, type: "sawtooth" },
-  "ecology-festival": { frequency: 440, endFrequency: 880, duration: 0.68, gain: 0.13, type: "triangle" },
-  "ecology-migration": { frequency: 220, endFrequency: 440, duration: 0.64, gain: 0.12, type: "triangle" },
-  "ecology-bloom": { frequency: 349, endFrequency: 988, duration: 0.72, gain: 0.12, type: "sine" },
-  "ecology-storm": { frequency: 123, endFrequency: 247, duration: 0.66, gain: 0.15, type: "sawtooth" },
-  "ecology-distress": { frequency: 262, endFrequency: 196, duration: 0.48, gain: 0.14, type: "square" },
-  "boss-crystal": { frequency: 196, endFrequency: 988, duration: .72, gain: .17, type: "triangle" },
-  "boss-skycoil": { frequency: 147, endFrequency: 1_176, duration: .66, gain: .17, type: "sawtooth" },
-  "boss-mirecrown": { frequency: 82, endFrequency: 220, duration: .88, gain: .18, type: "triangle" },
-  "boss-embermane": { frequency: 110, endFrequency: 659, duration: .58, gain: .19, type: "square" },
-  "boss-tidal": { frequency: 123, endFrequency: 523, duration: .82, gain: .16, type: "sine" },
-  "boss-echo": { frequency: 174, endFrequency: 698, duration: .9, gain: .15, type: "sine" },
-  "boss-lumen": { frequency: 392, endFrequency: 1_318, duration: .78, gain: .14, type: "triangle" },
-  "boss-voidroot": { frequency: 73, endFrequency: 294, duration: 1.05, gain: .2, type: "sawtooth" },
-  "boss-action": { frequency: 220, endFrequency: 440, duration: .18, gain: .18, type: "square" },
-  "boss-transform": { frequency: 147, endFrequency: 880, duration: .94, gain: .2, type: "sawtooth" },
-  "boss-vulnerable": { frequency: 523, endFrequency: 1_397, duration: .6, gain: .18, type: "triangle" },
-  "boss-defeat": { frequency: 196, endFrequency: 1_568, duration: 1.35, gain: .22, type: "sine" },
-  confirm: { frequency: 540, endFrequency: 760, duration: 0.18, gain: 0.14, type: "sine" },
-  error: { frequency: 210, endFrequency: 130, duration: 0.24, gain: 0.16, type: "square" }
+  createGain(): WildsGainNodeLike;
+  createBufferSource(): BufferSourceLike;
+  decodeAudioData(data: ArrayBuffer): Promise<WildsDecodedAudioBuffer>;
 };
 
 export function settlementAudioCue(action: "arrival" | "service" | "route-step" | "route-complete"): WildsAudioCue {
@@ -228,37 +174,49 @@ export function audioCuesForTransition(
   return [];
 }
 
-export function createWildsAudioRuntime(factory: () => WildsAudioContextLike) {
+export function createWildsAudioRuntime(
+  factory: () => WildsAudioContextLike,
+  options: {
+    fetchImpl?: typeof fetch;
+    createMedia?: (url: string) => WildsMediaLike;
+  } = {}
+) {
   let context: WildsAudioContextLike | null = null;
+  let loader: ReturnType<typeof createWildsAudioLoader> | null = null;
+  let mixer: ReturnType<typeof createWildsAudioMixer> | null = null;
   let settings = { ...DEFAULT_WILDS_AUDIO_SETTINGS };
   let destroyed = false;
-  let ambience: Array<{ oscillator: OscillatorLike; gain: GainLike }> = [];
+  let ambience: WildsMediaLike | null = null;
+  const activeSources = new Set<BufferSourceLike>();
+
+  const createMedia = options.createMedia ?? ((url: string) => {
+    const media = new Audio(url);
+    return media;
+  });
 
   const play = (cue: WildsAudioCue) => {
-    if (!context || destroyed || settings.muted) return;
-    const voice = CUE_VOICES[cue];
-    const oscillator = context.createOscillator();
-    const gain = context.createGain();
-    const now = context.currentTime;
-    const volume = Math.max(0.0001, voice.gain * settings.master * settings.effects);
-    oscillator.type = voice.type;
-    oscillator.frequency.setValueAtTime(voice.frequency, now);
-    oscillator.frequency.exponentialRampToValueAtTime(voice.endFrequency, now + voice.duration);
-    gain.gain.setValueAtTime(volume, now);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + voice.duration);
-    oscillator.connect(gain);
-    gain.connect(context.destination);
-    oscillator.start(now);
-    oscillator.stop(now + voice.duration);
+    if (!context || !loader || !mixer || destroyed || settings.muted) return;
+    void loader.load(`effects.${cue}`).then((loaded) => {
+      if (!context || !mixer || !loaded.buffer || destroyed || settings.muted) return;
+      const source = context.createBufferSource();
+      source.buffer = loaded.buffer;
+      source.connect(mixer.input(loaded.asset.bus));
+      source.onended = () => {
+        activeSources.delete(source);
+        source.disconnect();
+      };
+      activeSources.add(source);
+      source.start(context.currentTime);
+    }).catch(() => {
+      // Missing production audio degrades to silence and remains visible in loader diagnostics.
+    });
   };
 
   const stopAmbience = () => {
-    ambience.forEach(({ oscillator, gain }) => {
-      try { oscillator.stop(); } catch { /* The oscillator may already be stopped. */ }
-      oscillator.disconnect();
-      gain.disconnect();
-    });
-    ambience = [];
+    if (!ambience) return;
+    ambience.pause();
+    ambience.currentTime = 0;
+    ambience = null;
   };
 
   return {
@@ -266,25 +224,31 @@ export function createWildsAudioRuntime(factory: () => WildsAudioContextLike) {
       if (destroyed) return;
       context ??= factory();
       await context.resume();
+      mixer ??= createWildsAudioMixer(context);
+      loader ??= createWildsAudioLoader({
+        fetchImpl: options.fetchImpl,
+        decode: (data) => context!.decodeAudioData(data),
+      });
+      mixer.setSettings({ ...settings, creatures: 0.72, dialogue: 0.9 });
     },
     setSettings(next: WildsAudioSettings) {
       settings = normalizeWildsAudioSettings(next);
+      mixer?.setSettings({ ...settings, creatures: 0.72, dialogue: 0.9 });
+      if (ambience) ambience.volume = settings.master * settings.ambience;
       if (settings.muted) stopAmbience();
     },
     play,
     startAmbience() {
-      if (!context || destroyed || settings.muted || ambience.length > 0) return;
-      ambience = [98, 147].map((frequency, index) => {
-        const oscillator = context!.createOscillator();
-        const gain = context!.createGain();
-        oscillator.type = index === 0 ? "sine" : "triangle";
-        oscillator.frequency.setValueAtTime(frequency, context!.currentTime);
-        const volume = Math.max(0.0001, settings.master * settings.ambience * (index === 0 ? 0.025 : 0.012));
-        gain.gain.setValueAtTime(volume, context!.currentTime);
-        oscillator.connect(gain);
-        gain.connect(context!.destination);
-        oscillator.start(context!.currentTime);
-        return { oscillator, gain };
+      if (!context || !loader || destroyed || settings.muted || ambience) return;
+      void loader.load("ambience.verdant-heartlands.day").then((loaded) => {
+        if (ambience || destroyed || settings.muted) return;
+        const media = createMedia(loaded.variantUrl);
+        media.loop = true;
+        media.volume = settings.master * settings.ambience;
+        ambience = media;
+        return media.play();
+      }).catch(() => {
+        stopAmbience();
       });
     },
     stopAmbience,
@@ -292,6 +256,15 @@ export function createWildsAudioRuntime(factory: () => WildsAudioContextLike) {
       if (destroyed) return;
       destroyed = true;
       stopAmbience();
+      for (const source of activeSources) {
+        try { source.stop(); } catch { /* The source may already have ended. */ }
+        source.disconnect();
+      }
+      activeSources.clear();
+      loader?.dispose();
+      mixer?.dispose();
+      loader = null;
+      mixer = null;
       const activeContext = context;
       context = null;
       if (activeContext) await activeContext.close();

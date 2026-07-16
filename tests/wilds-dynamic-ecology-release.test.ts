@@ -33,16 +33,21 @@ describe("Wilds V3 Slice 3 release contract", () => {
     assert.deepEqual(restored.ecologyKnowledge, {});
   });
 
-  it("uses only local procedural visuals and local synthesized audio", () => {
+  it("uses local procedural visuals and locally shipped production audio", () => {
     const sources = [
       "src/features/play/WildsEcologyEnvironment.tsx",
       "src/features/play/WildsEcologyExperience.tsx",
       "src/features/play/wilds-ecology.ts",
-      "src/features/play/wilds-audio.ts"
+      "src/features/play/wilds-audio.ts",
+      "src/features/play/audio/wilds-audio-catalog.ts",
+      "src/features/play/audio/wilds-audio-loader.ts",
+      "src/features/play/audio/wilds-audio-mixer.ts"
     ].map((path) => readFileSync(path, "utf8")).join("\n");
     assert.doesNotMatch(sources, /https?:\/\//);
-    assert.doesNotMatch(sources, /fetch\(|new Audio\(/);
-    assert.match(sources, /createOscillator/);
+    assert.match(sources, /\/audio\/wilds\//);
+    assert.match(sources, /createWildsAudioLoader/);
+    assert.match(sources, /createWildsAudioMixer/);
+    assert.doesNotMatch(sources, /createOscillator|speechSynthesis|SpeechSynthesis/);
     assert.match(sources, /instancedMesh/);
   });
 
