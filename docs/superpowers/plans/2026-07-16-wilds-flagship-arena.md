@@ -59,7 +59,37 @@
 
 ---
 
-### Task 1: Arena ruleset and exact fighter projection
+### Task 1: Parent-linked living revisions and retirement state
+
+**Files:**
+- Create: `src/features/play/arena/living-revision.ts`
+- Modify: `src/features/play/adventure/card-condition.ts`
+- Test: `tests/arena-living-revision.test.ts`
+- Test: `tests/adventure-card-condition.test.ts`
+
+**Interfaces:**
+
+```ts
+export type ArenaLifeState = "healthy" | "strained" | "wounded" | "critical" | "mortal" | "retired";
+export type ArenaLivingRevision = Readonly<{
+  schema: "receiz.wilds.arena_living_revision.v1"; assetId: string; revision: number;
+  parentDigest: string | null; eventId: string; rulesetId: string; occurredAt: string;
+  condition: AdventureCardCondition; lifeState: ArenaLifeState; scarIds: readonly string[];
+  relationshipIds: readonly string[]; achievementIds: readonly string[];
+  evolutionIds: readonly string[]; matchReceiptDigests: readonly string[]; digest: string;
+}>;
+export function createArenaLivingRevision(input: ArenaLivingRevisionInput): ArenaLivingRevision;
+export function verifyArenaLivingRevision(revision: ArenaLivingRevision, parent?: ArenaLivingRevision): ArenaRevisionVerification;
+```
+
+- [x] Write failing tests for genesis, parent digest/revision, canonical digest, bounded fields, life-state derivation, old-parent rejection, and irreversible `retired` dominance.
+- [x] Run `node --import tsx --test tests/arena-living-revision.test.ts tests/adventure-card-condition.test.ts`; expect failure.
+- [x] Extend the shared condition with compatibility-safe `retiredAt`, `retirementCauseEventId`, and optional embodied recovery metadata while preserving Save V10 defaults and `life: "dead"` interoperability.
+- [x] Implement revision creation/verification; any retired revision must carry `condition.life === "dead"` and no descendant may return to alive.
+- [x] Run focused and Hearttree/Market consequence tests; expect PASS.
+- [x] Commit with `git commit -m "feat: append living Arena revisions"`.
+
+### Task 2: Arena ruleset and exact fighter projection
 
 **Files:**
 - Create: `src/features/play/arena/rules.ts`
@@ -90,36 +120,6 @@ export function projectArenaFighter(card: PortableCardAsset, revision: ArenaLivi
 - [ ] **Step 3: Implement** bounded constants and `projectArenaFighter` using `verifyAnyWildsCard`, `creatureForm`, `effectiveAdventureStats`, and the revision validator. Named abilities must match the catalog exactly.
 - [ ] **Step 4: Run** the focused test plus `tests/hearttree-card-capability.test.ts` and `tests/market-card-role.test.ts`; expect PASS.
 - [ ] **Step 5: Commit** with `git commit -m "feat: project cards into Arena fighters"`.
-
-### Task 2: Parent-linked living revisions and retirement state
-
-**Files:**
-- Create: `src/features/play/arena/living-revision.ts`
-- Modify: `src/features/play/adventure/card-condition.ts`
-- Test: `tests/arena-living-revision.test.ts`
-- Test: `tests/adventure-card-condition.test.ts`
-
-**Interfaces:**
-
-```ts
-export type ArenaLifeState = "healthy" | "strained" | "wounded" | "critical" | "mortal" | "retired";
-export type ArenaLivingRevision = Readonly<{
-  schema: "receiz.wilds.arena_living_revision.v1"; assetId: string; revision: number;
-  parentDigest: string | null; eventId: string; rulesetId: string; occurredAt: string;
-  condition: AdventureCardCondition; lifeState: ArenaLifeState; scarIds: readonly string[];
-  relationshipIds: readonly string[]; achievementIds: readonly string[];
-  evolutionIds: readonly string[]; matchReceiptDigests: readonly string[]; digest: string;
-}>;
-export function createArenaLivingRevision(input: ArenaLivingRevisionInput): ArenaLivingRevision;
-export function verifyArenaLivingRevision(revision: ArenaLivingRevision, parent?: ArenaLivingRevision): ArenaRevisionVerification;
-```
-
-- [ ] Write failing tests for genesis, parent digest/revision, canonical digest, bounded fields, life-state derivation, old-parent rejection, and irreversible `retired` dominance.
-- [ ] Run `node --import tsx --test tests/arena-living-revision.test.ts tests/adventure-card-condition.test.ts`; expect failure.
-- [ ] Extend the shared condition with compatibility-safe `retiredAt`, `retirementCauseEventId`, and optional embodied recovery metadata while preserving Save V10 defaults and `life: "dead"` interoperability.
-- [ ] Implement revision creation/verification; any retired revision must carry `condition.life === "dead"` and no descendant may return to alive.
-- [ ] Run focused and Hearttree/Market consequence tests; expect PASS.
-- [ ] Commit with `git commit -m "feat: append living Arena revisions"`.
 
 ### Task 3: Deterministic 3D movement and collision
 

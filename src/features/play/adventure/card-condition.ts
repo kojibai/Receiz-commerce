@@ -10,6 +10,12 @@ export type AdventureInjury = Readonly<{
   sourceEventId: string;
 }>;
 
+export type AdventureRecovery = Readonly<{
+  state: "stable" | "resting" | "treatment";
+  trauma: number;
+  lastEventId: string | null;
+}>;
+
 export type AdventureCardCondition = Readonly<{
   assetId: string;
   life: AdventureLifeState;
@@ -19,6 +25,9 @@ export type AdventureCardCondition = Readonly<{
   mastery: Readonly<Record<string, number>>;
   upgradeIds: readonly string[];
   receiptDigests: readonly string[];
+  retiredAt?: string;
+  retirementCauseEventId?: string;
+  recovery?: AdventureRecovery;
 }>;
 
 export type AdventureConditionDelta = Readonly<{
@@ -85,6 +94,25 @@ export function validateAdventureCondition(condition: AdventureCardCondition): A
   uniqueText(condition.upgradeIds, "adventure_condition_upgrade_invalid");
   uniqueText(condition.receiptDigests, "adventure_condition_receipt_invalid");
   if (condition.receiptDigests.some((digest) => !/^sha256:[a-f0-9]{64}$/.test(digest))) throw new Error("adventure_condition_receipt_invalid");
+  const hasRetiredAt = condition.retiredAt !== undefined;
+  const hasRetirementCause = condition.retirementCauseEventId !== undefined;
+  if (hasRetiredAt !== hasRetirementCause
+    || (hasRetiredAt && (!Number.isFinite(Date.parse(condition.retiredAt!))
+      || condition.life !== "dead"
+      || !condition.retirementCauseEventId!.trim()
+      || condition.retirementCauseEventId!.length > 160))) {
+    throw new Error("adventure_condition_retirement_invalid");
+  }
+  if (condition.recovery) {
+    const { state, trauma, lastEventId } = condition.recovery;
+    if (!["stable", "resting", "treatment"].includes(state)
+      || !Number.isSafeInteger(trauma)
+      || trauma < 0
+      || trauma > 100
+      || (lastEventId !== null && (!lastEventId.trim() || lastEventId.length > 160))) {
+      throw new Error("adventure_condition_recovery_invalid");
+    }
+  }
   return condition;
 }
 

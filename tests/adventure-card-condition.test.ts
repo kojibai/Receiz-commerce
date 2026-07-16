@@ -14,6 +14,16 @@ import {
 } from "../src/features/play/hearttree/card-capability";
 
 describe("shared Wilds adventure card conditions", () => {
+  it("validates embodied recovery and canonical retirement metadata", () => {
+    const base = emptyAdventureCondition("card:arena-condition");
+    const resting = validateAdventureCondition({ ...base, recovery: { state: "resting", trauma: 42, lastEventId: "arena:event:care" } });
+    assert.equal(resting.recovery?.trauma, 42);
+    const retired = validateAdventureCondition({ ...base, life: "dead", retiredAt: "2026-07-16T20:10:00.000Z", retirementCauseEventId: "arena:event:zero" });
+    assert.equal(retired.life, "dead");
+    assert.throws(() => validateAdventureCondition({ ...base, retiredAt: "not-a-time" }), /adventure_condition_retirement_invalid/);
+    assert.throws(() => validateAdventureCondition({ ...base, recovery: { state: "resting", trauma: 101, lastEventId: null } }), /adventure_condition_recovery_invalid/);
+  });
+
   it("applies bounded cross-location progression without duplicating evidence", () => {
     const initial = emptyAdventureCondition("card:one");
     const delta: AdventureConditionDelta = {
