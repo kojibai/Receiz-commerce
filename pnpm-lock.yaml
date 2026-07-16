@@ -18,8 +18,8 @@ importers:
         specifier: ^9.6.1
         version: 9.6.1(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.182.0)
       '@receiz/sdk':
-        specifier: ^100.0.0
-        version: 100.0.0(react@19.2.7)
+        specifier: ^101.0.0
+        version: 101.0.0(react@19.2.7)
       lucide-react:
         specifier: ^0.468.0
         version: 0.468.0(react@19.2.7)
@@ -423,8 +423,8 @@ packages:
       react-native:
         optional: true
 
-  '@receiz/sdk@100.0.0':
-    resolution: {integrity: sha512-CB4LI7i4LOMqqqe1Xu5qwYLLpTcNTm3Wvbv8rOwMZRYfZn4dPwD2yiEz5xJPXRA2ztHIQQb9g6lT9MRmwqYJdw==}
+  '@receiz/sdk@101.0.0':
+    resolution: {integrity: sha512-aO8u0XOlw7DL+9I7WdxPQDJkpFV69P/4/TPVLmSQRiThrRI3XaY7Ke5iQouWQo4Xy3ADpU6Oz2fJ3ulDmj+XUw==}
     hasBin: true
     peerDependencies:
       react: '>=18.0.0 <20.0.0'
@@ -2328,7 +2328,7 @@ snapshots:
       - '@types/react'
       - immer
 
-  '@receiz/sdk@100.0.0(react@19.2.7)':
+  '@receiz/sdk@101.0.0(react@19.2.7)':
     optionalDependencies:
       react: 19.2.7
 

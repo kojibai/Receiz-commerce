@@ -6,7 +6,11 @@ Status: General Availability · repository release
 
 Release unit: Repository release, not an npm package
 
-SDK target: `@receiz/sdk@100.0.0`
+SDK target: `@receiz/sdk@101.0.0`
+
+SDK v101 alignment: July 15, 2026
+
+The v3 release has been re-qualified against `@receiz/sdk@101.0.0`. The proof, vault, publish, commerce, world, and recovery rails remain behind the centralized Receiz adapter; the SDK doctor and release gate are the authoritative checks for the installed capability surface. The supported MCP pairing is `@receiz/mcp-server@101.0.0`.
 
 ## The release
 

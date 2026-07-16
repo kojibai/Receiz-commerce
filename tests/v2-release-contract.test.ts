@@ -15,8 +15,8 @@ test("the repository identifies the shipped release as 3.0.0", async () => {
   const lockfile = await read("pnpm-lock.yaml");
 
   assert.equal(packageJson.version, "3.0.0");
-  assert.equal(packageJson.dependencies?.["@receiz/sdk"], "^100.0.0");
-  assert.match(lockfile, /'@receiz\/sdk':[\s\S]*?specifier: \^100\.0\.0[\s\S]*?version: 100\.0\.0/);
+  assert.equal(packageJson.dependencies?.["@receiz/sdk"], "^101.0.0");
+  assert.match(lockfile, /'@receiz\/sdk':[\s\S]*?specifier: \^101\.0\.0[\s\S]*?version: 101\.0\.0/);
 });
 
 test("the v3 release preserves v2 migration evidence and adds final qualification evidence", async () => {
