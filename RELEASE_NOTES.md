@@ -6,13 +6,15 @@ Status: General Availability · repository release
 
 Release unit: Repository release, not an npm package
 
-SDK target: `@receiz/sdk@106.0.0`
+SDK target: `@receiz/sdk@107.0.0`
+
+SDK v107 alignment: July 17, 2026
 
 ## The release
 
 V4 is the release where the V3 living world stops treating cards as collection objects that merely unlock activities and starts treating them as living participants whose exact identity changes how the world plays.
 
-Everything established in V3 remains: one canonical world, stable atlas geography, walkable landmarks, ecology, global successor bosses, raids, teams, leagues, mastery, crafting, lineage, narrative memory, mobile controls, portable cards, and complete player Vaults. V4 builds on that foundation with real location gameplay, real card causality, real recorded adaptive sound, persistent physical and emotional consequences, offline continuity, and the Receiz v106 constitutional toolchain.
+Everything established in V3 remains: one canonical world, stable atlas geography, walkable landmarks, ecology, global successor bosses, raids, teams, leagues, mastery, crafting, lineage, narrative memory, mobile controls, portable cards, and complete player Vaults. V4 builds on that foundation with real location gameplay, real card causality, real recorded adaptive sound, persistent physical and emotional consequences, offline continuity, and the Receiz v107 constitutional toolchain.
 
 ## Complete V3-to-V4 recap
 
@@ -50,14 +52,14 @@ Everything established in V3 remains: one canonical world, stable atlas geograph
 - Added deterministic transcripts, replay-grounded XP/injury/scar/relationship/retirement consequences, memorials, offline device signatures, atomic local transactions, causal merge, conflict inspection, and portable Save V10/Vault V3 state.
 - V4 intentionally does not claim the final player-facing Arena renderer, touch HUD, global synchronization route, production Arena audio bank, or browser qualification as complete; those remain the next Arena slice.
 
-### Receiz v106 constitutional alignment
+### Receiz v107 unified operations alignment
 
-- Pinned `@receiz/sdk`, `@receiz/mcp-server`, and `@receiz/ai-skills` to exact `106.0.0` official tarballs.
-- Adopted the exact v106 constitution registry digest `bf851c209e807309672c0f466411baa5607ce6b3195fe4eb16755edfeb7f5a1a`.
+- Pinned `@receiz/sdk`, `@receiz/mcp-server`, and `@receiz/ai-skills` to exact `107.0.0` official tarballs.
+- Adopted the exact v107 constitution registry digest `4d0caa6172a69c3bf5817c1c35db5630e555b5d6d824091d45a90fb426b86ef6`.
 - Added an application constitutional boundary for executable laws, command admission, causal history, and fail-closed registry validation.
-- Added all constitutional MCP tools for architecture, domains, commands, laws, authority, simulation, receipts, history, merge, bypass scans, conformance, release verification, and permitted execution.
-- Added and validated all twenty-four AI skill directories, including the fifteen machine-readable constitutional production skills.
-- Added a v106 release lock that checks package, tarball, registry, MCP, AI-skill, lockfile, and conformance parity before release.
+- Added unified identity/profile/media, portable-continuity, generic bearer-ownership, proof-head, canonical-receipt, and signed offline-command operations across SDK, MCP, and AI skills.
+- Preserved the rule that queued offline commands are signed proposals with `globallyCommitted: false` until canonical receipt verification.
+- Added a v107 release lock that checks package, tarball, registry, MCP, AI-skill, lockfile, and conformance parity before release.
 
 ## Authority and safety
 
@@ -71,9 +73,9 @@ V4 preserves the same non-negotiable order:
 
 ## Release qualification
 
-The v4 repository release is qualified by the complete automated suite, TypeScript, lint, build, v106 app inspection, SDK conformance, AI-skill validation, constitutional release lock, secret scan, and Receiz doctor. Exact evidence is recorded in `docs/releases/2026-07-16-v4-release-evidence.md`.
+The v4 repository release is qualified by the complete automated suite, TypeScript, lint, build, v107 app inspection, SDK conformance, AI-skill validation, constitutional release lock, secret scan, and Receiz doctor. Original v4 evidence is recorded in `docs/releases/2026-07-16-v4-release-evidence.md`; the coordinated v107 migration is recorded in `docs/releases/2026-07-17-v107-migration-audit.md`.
 
-The separate fail-closed v105→v106 migration dry run proposed no automatic safe changes and surfaced conservative syntax findings for explicit review. Its exact plan digest, category-by-category disposition, and no-rewrite decision are recorded in `docs/releases/2026-07-16-v106-migration-audit.md`.
+The source-only v106→v107 migration dry run proposed no automatic rewrites, accounted for all 73 SDK write dispositions, preserved proof-history digests, found no pending outbox entries, and performed no writes.
 
 ---
 

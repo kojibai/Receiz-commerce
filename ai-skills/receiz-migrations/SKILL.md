@@ -1,6 +1,6 @@
 ---
 name: receiz-migrations
-description: Use when upgrading Receiz schemas, commands, events, projections, rulesets, registries, or v105 applications.
+description: Use when upgrading Receiz schemas, commands, events, projections, rulesets, registries, or applications to v107.
 ---
 
 # receiz-migrations

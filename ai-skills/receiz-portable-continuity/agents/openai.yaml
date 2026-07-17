@@ -1,0 +1,4 @@
+interface:
+  display_name: "Receiz Portable Continuity"
+  short_description: "Restore and reconcile portable identity"
+  default_prompt: "Use $receiz-portable-continuity to restore portable account truth and reconcile verified additions."

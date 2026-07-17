@@ -4,7 +4,7 @@
 
 Receiz Commerce Kit is a full working commerce product and a forkable SDK kernel for building proof-sealed applications with `@receiz/sdk` and Receiz MCP.
 
-Current release: `4.0.0` · SDK target: `@receiz/sdk@106.0.0`
+Current release: `4.0.0` · SDK target: `@receiz/sdk@107.0.0`
 
 It ships as a Next.js App Router application with a public storefront, customer account area, no-code merchant admin, Receiz ID, checkout, wallet projection, rewards, Receized assets, domain hosting, media upload, proof memory, publish recovery, webhook verification, release diagnostics, and an AI operator layer built around Receiz MCP, Twin, World, and SDK doctor workflows. You can run it as the Receiz.app Commerce Cloud product, or clone it and build your own commerce, rewards, marketplace, game, content, or agent-operated SaaS on top of the same primitives.
 
@@ -31,7 +31,7 @@ This repository is intentionally two things at once:
 - **A working product:** a mobile-first commerce cloud where a merchant can create or restore Receiz ID, customize a storefront, add products and content, activate rewards, publish to a free `*.receiz.app` subdomain, connect a custom domain, and run Receiz checkout.
 - **A developer kernel:** a production-shaped reference for using one typed SDK boundary to build identity, proof, payments, wallet, rewards, domains, media, public app state, webhooks, release checks, and agent tooling without scattering SDK calls through the UI.
 
-The release unit is the repository, not an npm package. `package.json` remains `private: true` to prevent accidental application publishing to npm. Version 4 turns the V3 living-world foundation into a card-driven adventure platform with real recorded adaptive audio, deep location gameplay, persistent consequences, portable offline history, and the Receiz v106 constitutional authority layer.
+The release unit is the repository, not an npm package. `package.json` remains `private: true` to prevent accidental application publishing to npm. Version 4 turns the V3 living-world foundation into a card-driven adventure platform with real recorded adaptive audio, deep location gameplay, persistent consequences, portable offline history, and the Receiz v107 constitutional authority layer.
 
 ## Why It Matters
 
@@ -58,9 +58,9 @@ pnpm install
 pnpm dev
 ```
 
-The v106 Receiz toolchain is pinned as `@receiz/sdk@106.0.0`, `@receiz/mcp-server@106.0.0`, and `@receiz/ai-skills@106.0.0`. Until the coordinated packages reach the public registry, pnpm overrides resolve the exact official release tarballs committed under `vendor/`; the dependency contract remains `106.0.0` and is portable across clones. The local `ai-skills/` source is aligned with that package and can be checked with `pnpm validate:ai-skills`.
+The v107 Receiz toolchain is pinned as `@receiz/sdk@107.0.0`, `@receiz/mcp-server@107.0.0`, and `@receiz/ai-skills@107.0.0`. Pnpm overrides resolve the exact official release tarballs committed under `vendor/`; the dependency contract remains `107.0.0` and is portable across clones. The local `ai-skills/` source is aligned with that package and can be checked with `pnpm validate:ai-skills`.
 
-`receiz.app.json` declares the application feature and authority contract, while `receiz.constitution.json` pins the exact v106 constitutional registry used by SDK, MCP, and AI skills. Run `pnpm receiz:check` to compile and inspect the integration, `pnpm receiz:conformance` for deterministic runtime evidence, and `pnpm receiz:release-lock` for package, registry, MCP-tool, AI-skill, lockfile, and conformance parity. Canonical mutation belongs behind receipt-producing command admission; sealed proof objects and verified local history remain stronger authority than SDK, MCP, server, database, session, or UI projections.
+`receiz.app.json` declares the application feature and authority contract, while `receiz.constitution.json` pins the exact v107 constitutional registry used by SDK, MCP, and AI skills. V107 unifies identity/profile/media updates, portable continuity, generic bearer ownership, proof heads, receipt verification, and signed offline commands. Run `pnpm receiz:check` to compile and inspect the integration, `pnpm receiz:conformance` for deterministic runtime evidence, and `pnpm receiz:release-lock` for package, registry, MCP-tool, AI-skill, lockfile, and conformance parity. Canonical mutation belongs behind receipt-producing command admission; a queued offline command is a signed proposal, never a global commitment. Sealed proof objects and verified local history remain stronger authority than SDK, MCP, server, database, session, or UI projections.
 
 Open:
 
@@ -74,7 +74,7 @@ Run the release gate:
 pnpm release:check
 ```
 
-`pnpm release:check` runs the tracked-file secret scan, tests, typecheck, the v106 app-contract integration check, official conformance, the v106 release lock, AI-skill validation, lint, a guarded production build, and Receiz doctor. Public forks can run doctor without static access tokens; production releases should run with configured delegated permission and show `ok: true`, `missing: []`, and no warnings.
+`pnpm release:check` runs the tracked-file secret scan, tests, typecheck, the v107 app-contract integration check, official conformance, the v107 release lock, AI-skill validation, lint, a guarded production build, and Receiz doctor. Public forks can run doctor without static access tokens; production releases should run with configured delegated permission and show `ok: true`, `missing: []`, and no warnings.
 
 ## Product Tour
 
@@ -200,7 +200,7 @@ startup_timeout_sec = 120
 RECEIZ_BASE_URL = "https://receiz.com"
 ```
 
-The local command resolves the pnpm-pinned `@receiz/mcp-server@106.0.0`. Use the matching `@receiz/ai-skills@106.0.0` doctrine from `node_modules/@receiz/ai-skills` or the aligned local `ai-skills/` directory. V106 adds the executable constitution registry, capability-bound command admission, atomic receipts, causal history and replay, bypass detection, migration inspection, constitutional MCP operations, machine-readable production skills, and a coordinated release lock. MCP and AI skills never become authority; they inspect, plan, simulate, and invoke permitted rails beneath sealed proof objects and verified local history. SDK proof-object creation resolves the authenticated Receiz ID, creates its native Record projection, then seals and verifies at the same coordinates.
+The local command resolves the pnpm-pinned `@receiz/mcp-server@107.0.0`. Use the matching `@receiz/ai-skills@107.0.0` doctrine from `node_modules/@receiz/ai-skills` or the aligned local `ai-skills/` directory. V107 preserves the executable constitutional boundary and adds semantic MCP operations for identity/profile, proof media, portable continuity, bearer ownership, offline queues, proof heads, and receipt verification. MCP and AI skills never become authority; they inspect, plan, simulate, and invoke permitted rails beneath sealed proof objects and verified local history. SDK proof-object creation resolves the authenticated Receiz ID, creates its native Record projection, then seals and verifies at the same coordinates.
 
 Brand edits preview immediately in the merchant workspace. `Publish theme` uses the same signed publication transaction as `Publish changes`: success means the authoritative public-store revision was accepted and adopted by the workspace. A pending or failed publication remains visibly unresolved and is never presented as globally saved. Other open merchant tabs adopt the updated workspace through scoped storage synchronization, while storefront subdomains and custom domains continue to resolve from the published Receiz projection.
 

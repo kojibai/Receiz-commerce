@@ -1,0 +1,4 @@
+interface:
+  display_name: "Receiz Proof Media"
+  short_description: "Publish identity-owned proof media"
+  default_prompt: "Use $receiz-proof-media to publish and attach identity-owned proof media atomically."

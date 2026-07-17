@@ -38,12 +38,12 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "receiz:doctor": "node scripts/receiz-doctor.mjs",
-    "receiz:check": "receiz app check --target 106.0.0 --json",
+    "receiz:check": "receiz app check --target 107.0.0 --json",
     "receiz:conformance": "receiz conformance",
-    "receiz:migrate:dry-run": "receiz migrate v105-v106 --dry-run --root .",
-    "receiz:migrate:verify": "node scripts/receiz-v106-migration-verify.mjs --root .",
+    "receiz:migrate:dry-run": "receiz migrate v106-v107 --dry-run --root .",
+    "receiz:migrate:verify": "node scripts/receiz-v107-migration-verify.mjs --root .",
     "receiz:cli:check": "node scripts/receiz-cli-check.mjs",
-    "receiz:release-lock": "node scripts/receiz-v106-release-lock.mjs",
+    "receiz:release-lock": "node scripts/receiz-v107-release-lock.mjs",
     "validate:ai-skills": "node --import tsx ai-skills/scripts/validate-skills.ts",
     "validate:audio:catalog": "node --import tsx scripts/validate-wilds-audio.mjs --catalog-only",
     "validate:audio:hearttree": "node scripts/validate-hearttree-audio.mjs",
@@ -54,9 +54,9 @@
   "dependencies": {
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.6.1",
-    "@receiz/ai-skills": "106.0.0",
-    "@receiz/mcp-server": "106.0.0",
-    "@receiz/sdk": "106.0.0",
+    "@receiz/ai-skills": "107.0.0",
+    "@receiz/mcp-server": "107.0.0",
+    "@receiz/sdk": "107.0.0",
     "lucide-react": "^0.468.0",
     "next": "^15.0.0",
     "qrcode": "^1.5.4",
@@ -78,9 +78,9 @@
   },
   "pnpm": {
     "overrides": {
-      "@receiz/ai-skills": "file:vendor/receiz-ai-skills-106.0.0.tgz",
-      "@receiz/mcp-server": "file:vendor/receiz-mcp-server-106.0.0.tgz",
-      "@receiz/sdk": "file:vendor/receiz-sdk-106.0.0.tgz",
+      "@receiz/ai-skills": "file:vendor/receiz-ai-skills-107.0.0.tgz",
+      "@receiz/mcp-server": "file:vendor/receiz-mcp-server-107.0.0.tgz",
+      "@receiz/sdk": "file:vendor/receiz-sdk-107.0.0.tgz",
       "postcss": ">=8.5.10"
     }
   }

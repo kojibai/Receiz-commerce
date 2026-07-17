@@ -1,0 +1,14 @@
+{
+  "schema": "receiz.ai-skill-contract.v107",
+  "name": "receiz-offline-command",
+  "version": "107.0.0",
+  "requires": { "sdk": ">=107.0.0 <108.0.0", "mcp": ">=107.0.0 <108.0.0", "ruleset": "107.0.0", "registryDigest": "4d0caa6172a69c3bf5817c1c35db5630e555b5d6d824091d45a90fb426b86ef6" },
+  "laws": ["receiz.offline.signed-intent", "receiz.local-truth.immediate", "receiz.receipt.verify"],
+  "sdkOperations": ["offline.createCommandQueue", "offline.executeOrQueue", "receipts.verify"],
+  "allowedTools": ["receiz_proof_head_get", "receiz_receipt_verify"],
+  "requiredScopes": ["receiz:record"],
+  "emulatorFixtures": ["offline-rename-global-conflict", "interrupted-sync-deterministic-resume"],
+  "forbiddenOperations": ["queued-as-committed", "unsigned-command", "cross-lane-blocking", "authority-bypass"],
+  "requiredEvidence": ["receipt-verification", "emulator-conformance", "release-lock-pass"],
+  "maximumAutonomousAuthority": "inspect-plan-simulate"
+}

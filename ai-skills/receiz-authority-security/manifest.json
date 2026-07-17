@@ -2,10 +2,10 @@
   "schema": "receiz.ai-skill-contract.v106",
   "name": "receiz-authority-security",
   "requires": {
-    "sdk": ">=106.0.0 <107.0.0",
-    "mcp": ">=106.0.0 <107.0.0",
-    "ruleset": "106.0.0",
-    "registryDigest": "bf851c209e807309672c0f466411baa5607ce6b3195fe4eb16755edfeb7f5a1a"
+    "sdk": ">=107.0.0 <108.0.0",
+    "mcp": ">=107.0.0 <108.0.0",
+    "ruleset": "107.0.0",
+    "registryDigest": "4d0caa6172a69c3bf5817c1c35db5630e555b5d6d824091d45a90fb426b86ef6"
   },
   "laws": [
     "receiz.authority.capability-bound",

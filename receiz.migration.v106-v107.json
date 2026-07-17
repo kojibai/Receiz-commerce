@@ -1,0 +1,16 @@
+{
+  "schema": "receiz.repository.v106-v107.migration-attestation.v1",
+  "sourceVersion": "106.0.0",
+  "destinationVersion": "107.0.0",
+  "planDigest": "f306f5e643b6524f732e95eee9d0108272b3aa7e5927e6abe04815520bfb2341",
+  "blocked": false,
+  "changes": 0,
+  "inventoryDispositions": 73,
+  "pendingOutboxCount": 0,
+  "manualAuthorityReview": "complete",
+  "writesPerformed": 0,
+  "historyRewritten": false,
+  "strongerTruth": "sealed-receiz-proof-object",
+  "queuedCommandIsGlobalCommitment": false,
+  "recovery": "roll-forward-from-verified-checkpoint"
+}

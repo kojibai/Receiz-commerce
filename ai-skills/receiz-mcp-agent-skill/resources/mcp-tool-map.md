@@ -1,6 +1,6 @@
 # MCP Tool Map
 
-## v105 Application Compiler And Semantic Operations
+## v107 Application Compiler And Semantic Operations
 
 | Need | Tool | Mutation |
 |---|---|---|
@@ -21,6 +21,25 @@ Repository inspection is not verification. These tools never supply an artifact
 verification verdict or proof authority.
 
 Source: `packages/receiz-mcp-server/src/index.ts`.
+
+## v107 Unified Operations
+
+| Need | Tool | Mutation |
+|---|---|---|
+| Read identity/profile proof state | `receiz_identity_profile_get` | Read-only |
+| Check username availability | `receiz_username_check` | Advisory read-only result |
+| Plan identity/profile update | `receiz_identity_profile_update_plan` | Read-only digest-bound plan |
+| Execute identity/profile update | `receiz_identity_profile_update_execute` | Exact plan confirmation and verified receipt required |
+| Plan proof-media publication | `receiz_media_publish_plan` | Read-only digest-bound plan |
+| Execute proof-media publication | `receiz_media_publish_execute` | Exact plan confirmation and verified receipt required |
+| Plan generic bearer claim | `receiz_bearer_asset_claim_plan` | Read-only digest-bound plan |
+| Execute generic bearer claim | `receiz_bearer_asset_claim_execute` | Enclosing artifact verification, exact confirmation, and verified receipt required |
+| Plan continuity synchronization | `receiz_continuity_sync_plan` | Read-only digest-bound plan |
+| Execute continuity synchronization | `receiz_continuity_sync_execute` | Exact plan confirmation and verified receipt required |
+| Read proof head | `receiz_proof_head_get` | Read-only |
+| Verify canonical receipt | `receiz_receipt_verify` | Read-only verification |
+
+Portable artifact restore, namespaced account-state append, and offline command signing remain local SDK operations because the developer-held artifact and key are the stronger source of truth. MCP never upgrades a queued proposal into committed state without canonical admission and receipt verification.
 
 ## Diagnostics And Setup
 

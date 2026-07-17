@@ -1,0 +1,4 @@
+interface:
+  display_name: "Receiz Bearer Ownership"
+  short_description: "Claim generic bearer proof artifacts"
+  default_prompt: "Use $receiz-bearer-ownership to claim a qualifying bearer artifact through its enclosing proof."

@@ -5,9 +5,9 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
-  '@receiz/ai-skills': file:vendor/receiz-ai-skills-106.0.0.tgz
-  '@receiz/mcp-server': file:vendor/receiz-mcp-server-106.0.0.tgz
-  '@receiz/sdk': file:vendor/receiz-sdk-106.0.0.tgz
+  '@receiz/ai-skills': file:vendor/receiz-ai-skills-107.0.0.tgz
+  '@receiz/mcp-server': file:vendor/receiz-mcp-server-107.0.0.tgz
+  '@receiz/sdk': file:vendor/receiz-sdk-107.0.0.tgz
   postcss: '>=8.5.10'
 
 importers:
@@ -21,14 +21,14 @@ importers:
         specifier: ^9.6.1
         version: 9.6.1(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.182.0)
       '@receiz/ai-skills':
-        specifier: file:vendor/receiz-ai-skills-106.0.0.tgz
-        version: file:vendor/receiz-ai-skills-106.0.0.tgz
+        specifier: file:vendor/receiz-ai-skills-107.0.0.tgz
+        version: file:vendor/receiz-ai-skills-107.0.0.tgz
       '@receiz/mcp-server':
-        specifier: file:vendor/receiz-mcp-server-106.0.0.tgz
-        version: file:vendor/receiz-mcp-server-106.0.0.tgz(react@19.2.7)
+        specifier: file:vendor/receiz-mcp-server-107.0.0.tgz
+        version: file:vendor/receiz-mcp-server-107.0.0.tgz(react@19.2.7)
       '@receiz/sdk':
-        specifier: file:vendor/receiz-sdk-106.0.0.tgz
-        version: file:vendor/receiz-sdk-106.0.0.tgz(react@19.2.7)
+        specifier: file:vendor/receiz-sdk-107.0.0.tgz
+        version: file:vendor/receiz-sdk-107.0.0.tgz(react@19.2.7)
       lucide-react:
         specifier: ^0.468.0
         version: 0.468.0(react@19.2.7)
@@ -591,18 +591,18 @@ packages:
       react-native:
         optional: true
 
-  '@receiz/ai-skills@file:vendor/receiz-ai-skills-106.0.0.tgz':
-    resolution: {integrity: sha512-HsAdxuPqVCKAY29C9LHOrEQeWCydvXA6+dnP0H315ENZUr3VE5JAaQK/71kZqMauGVnQAK3eEoPtKIryGodH0Q==, tarball: file:vendor/receiz-ai-skills-106.0.0.tgz}
-    version: 106.0.0
+  '@receiz/ai-skills@file:vendor/receiz-ai-skills-107.0.0.tgz':
+    resolution: {integrity: sha512-/eoVzhnhAEY/s2L/wseCNFUmcuHmO/oqqeQOTxjbG1iLC2XMZBVmwPiZNcg8EGR5o8Tw9IVad3XarIiGJvu2oA==, tarball: file:vendor/receiz-ai-skills-107.0.0.tgz}
+    version: 107.0.0
 
-  '@receiz/mcp-server@file:vendor/receiz-mcp-server-106.0.0.tgz':
-    resolution: {integrity: sha512-naap8Dnt+5LQQBGpS8X9YIs9EFTVcpvOZv0I/Zazz1mIFmopqsKI1yQJ8Gtshww/fPC0qcXQw3pOVNQZmD3OIA==, tarball: file:vendor/receiz-mcp-server-106.0.0.tgz}
-    version: 106.0.0
+  '@receiz/mcp-server@file:vendor/receiz-mcp-server-107.0.0.tgz':
+    resolution: {integrity: sha512-pjWF9ipfB/L2m4eBi3MQODeyVMIhHEubn2xnCE87iVOS9aY1OZH2LMBafJpx2JKW6BCw+UXD/hvwMIkiMTaieg==, tarball: file:vendor/receiz-mcp-server-107.0.0.tgz}
+    version: 107.0.0
     hasBin: true
 
-  '@receiz/sdk@file:vendor/receiz-sdk-106.0.0.tgz':
-    resolution: {integrity: sha512-JBucMKp66PTzIVn0G89F9NYhHKNGcuafATEi9hw2hpemQVfAgJZNiQjTMPadUqV/ggBWJqtEqTddAcX7bVWmbA==, tarball: file:vendor/receiz-sdk-106.0.0.tgz}
-    version: 106.0.0
+  '@receiz/sdk@file:vendor/receiz-sdk-107.0.0.tgz':
+    resolution: {integrity: sha512-f702XOvOL5TM3bO7rsINObSrzakrJQrRhEnoloEx6SdAlmB790tuOQZTJlsQNQXPuJrk+WhbCwDPSKroo44biw==, tarball: file:vendor/receiz-sdk-107.0.0.tgz}
+    version: 107.0.0
     hasBin: true
     peerDependencies:
       react: '>=18.0.0 <20.0.0'
@@ -2599,18 +2599,18 @@ snapshots:
       - '@types/react'
       - immer
 
-  '@receiz/ai-skills@file:vendor/receiz-ai-skills-106.0.0.tgz': {}
+  '@receiz/ai-skills@file:vendor/receiz-ai-skills-107.0.0.tgz': {}
 
-  '@receiz/mcp-server@file:vendor/receiz-mcp-server-106.0.0.tgz(react@19.2.7)':
+  '@receiz/mcp-server@file:vendor/receiz-mcp-server-107.0.0.tgz(react@19.2.7)':
     dependencies:
-      '@receiz/ai-skills': file:vendor/receiz-ai-skills-106.0.0.tgz
-      '@receiz/sdk': file:vendor/receiz-sdk-106.0.0.tgz(react@19.2.7)
+      '@receiz/ai-skills': file:vendor/receiz-ai-skills-107.0.0.tgz
+      '@receiz/sdk': file:vendor/receiz-sdk-107.0.0.tgz(react@19.2.7)
     transitivePeerDependencies:
       - react
 
-  '@receiz/sdk@file:vendor/receiz-sdk-106.0.0.tgz(react@19.2.7)':
+  '@receiz/sdk@file:vendor/receiz-sdk-107.0.0.tgz(react@19.2.7)':
     dependencies:
-      '@receiz/ai-skills': file:vendor/receiz-ai-skills-106.0.0.tgz
+      '@receiz/ai-skills': file:vendor/receiz-ai-skills-107.0.0.tgz
     optionalDependencies:
       react: 19.2.7
 

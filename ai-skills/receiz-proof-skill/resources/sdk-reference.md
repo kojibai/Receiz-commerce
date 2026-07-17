@@ -1,6 +1,6 @@
 # SDK Reference For Proof Work
 
-The v105 app compiler APIs (`defineReceizApp`, `compileReceizAppContract`, and
+The v107 app compiler APIs (`defineReceizApp`, `compileReceizAppContract`, and
 repository planning/checking functions) inspect and integrate applications.
 They do not verify proof bytes. Continue to use `verification.verifyArtifact`
 for the indivisible integrity, owner, namespace, and continuity verdict.
@@ -61,6 +61,23 @@ Use proof memory as admitted truth. It is not cache.
 - `receiz.sports.conformance()`
 - `receiz.sports.resolveCardMemory(...)`
 - `receiz.sports.resolvePitchDayProof(...)`
+
+## v107 Unified Operations
+
+- `receiz.identity.getProfile()`
+- `receiz.identity.checkUsernameAvailability(...)`
+- `receiz.identity.updateProfile(...)`
+- `receiz.identity.restoreAccount(...)`
+- `receiz.identity.appendAccountState(...)`
+- `receiz.media.publishIdentityImage(...)`
+- `receiz.ownership.claimBearerAsset(...)`
+- `receiz.continuity.reconcile(...)`
+- `receiz.continuity.commit(...)`
+- `receiz.proofHeads.get(...)`
+- `receiz.receipts.verify(...)`
+- `receiz.offline.executeOrQueue(...)`
+
+Mutations require the canonical expected head and idempotency key. Project committed state only after canonical receipt verification; queued offline proposals are not global commitment.
 
 ## Identity Proof Helpers
 

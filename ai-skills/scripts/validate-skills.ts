@@ -129,6 +129,29 @@ const constitutionalSkills = [
   "receiz-build-production-system",
 ] as const;
 
+const v107Skills = [
+  "receiz-identity-profile",
+  "receiz-portable-continuity",
+  "receiz-bearer-ownership",
+  "receiz-offline-command",
+  "receiz-proof-media",
+  "receiz-cross-app-state",
+  "receiz-receipt-admission",
+] as const;
+
+const v107Sections = [
+  "## Exact SDK operation",
+  "## Required authority",
+  "## Required proof head",
+  "## Idempotency",
+  "## Offline behavior",
+  "## Conflict behavior",
+  "## Receipt verification",
+  "## User confirmation",
+  "## MCP parity",
+  "## Emulator fixture",
+] as const;
+
 const requiredSections = [
   "## When To Use This Skill",
   "## When Not To Use This Skill",
@@ -231,8 +254,8 @@ function assertConstitutionalSkill(name: (typeof constitutionalSkills)[number]):
   }
   const serialized = JSON.stringify(manifest);
   for (const required of [
-    ">=106.0.0 <107.0.0",
-    "bf851c209e807309672c0f466411baa5607ce6b3195fe4eb16755edfeb7f5a1a",
+    ">=107.0.0 <108.0.0",
+    "4d0caa6172a69c3bf5817c1c35db5630e555b5d6d824091d45a90fb426b86ef6",
     "direct-state-write",
     "history-rewrite",
     "authority-bypass",
@@ -245,9 +268,49 @@ function assertConstitutionalSkill(name: (typeof constitutionalSkills)[number]):
   assertMarkdownLinks(skillFile, text);
 }
 
+function assertV107Skill(name: (typeof v107Skills)[number]): void {
+  const skillDir = join(root, name);
+  const skillFile = join(skillDir, "SKILL.md");
+  const manifestFile = join(skillDir, "manifest.json");
+  assertPath(skillFile);
+  assertPath(manifestFile);
+  assertPath(join(skillDir, "agents", "openai.yaml"));
+  if (!existsSync(skillFile) || !existsSync(manifestFile)) return;
+
+  const text = read(skillFile);
+  const manifest = JSON.parse(read(manifestFile)) as Record<string, unknown>;
+  if (!new RegExp(`^---\\nname: ${name}\\ndescription: Use when `).test(text)) {
+    fail(`${name}/SKILL.md has invalid discovery frontmatter`);
+  }
+  for (const section of v107Sections) {
+    if (!text.includes(section)) fail(`${name}/SKILL.md missing section ${section}`);
+  }
+  if (!/```ts[\s\S]*createReceizClient[\s\S]*```/.test(text)) fail(`${name}/SKILL.md missing copy-paste TypeScript`);
+  if (manifest.schema !== "receiz.ai-skill-contract.v107" || manifest.name !== name || manifest.version !== "107.0.0") {
+    fail(`${name}/manifest.json has invalid schema, name, or version`);
+  }
+  const serialized = JSON.stringify(manifest);
+  for (const required of [
+    ">=107.0.0 <108.0.0",
+    "107.0.0",
+    "4d0caa6172a69c3bf5817c1c35db5630e555b5d6d824091d45a90fb426b86ef6",
+    "receipt-verification",
+    "emulator-conformance",
+    "release-lock-pass",
+    "inspect-plan-simulate",
+  ]) {
+    if (!serialized.includes(required)) fail(`${name}/manifest.json missing ${required}`);
+  }
+  for (const field of ["sdkOperations", "allowedTools", "requiredScopes", "emulatorFixtures", "requiredEvidence"]) {
+    if (!Array.isArray(manifest[field]) || manifest[field].length === 0) fail(`${name}/manifest.json missing ${field}`);
+  }
+  assertMarkdownLinks(skillFile, text);
+}
+
 assertPath(join(root, "README.md"));
 for (const skill of skills) assertSkill(skill);
 for (const skill of constitutionalSkills) assertConstitutionalSkill(skill);
+for (const skill of v107Skills) assertV107Skill(skill);
 
 for (const file of markdownFiles(root)) {
   const text = read(file);
@@ -266,4 +329,4 @@ if (failures.length > 0) {
   process.exit(1);
 }
 
-console.log(`ai-skills validation passed for ${skills.length + constitutionalSkills.length} skills.`);
+console.log(`ai-skills validation passed for ${skills.length + constitutionalSkills.length + v107Skills.length} skills.`);

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Receiz Offline Command"
+  short_description: "Queue signed proof-native commands"
+  default_prompt: "Use $receiz-offline-command to execute or queue an identity-signed Receiz command safely."
