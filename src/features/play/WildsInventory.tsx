@@ -6,7 +6,7 @@ import QRCode from "qrcode";
 import { Icons } from "@/components/icons";
 import { creatureForm } from "./creature-catalog";
 import { downloadPortableCard, downloadPortableVault, standaloneCardUrl, verifyPortableCardPng, verifyPortableVaultPng } from "./card-export";
-import { canUseWildsAsset, isRetiredWildsAsset, playableInventory, type PlayState, type WildsInput } from "./game-state";
+import { canUseWildsAsset, isRetiredWildsAsset, type PlayState, type WildsInput } from "./game-state";
 import { WildsCardScene } from "./WildsCardScene";
 import { WildsGrowthPanel } from "./WildsGrowthPanel";
 import { clampInventoryPage, inventoryPageSize } from "./inventory-pagination";
@@ -14,12 +14,14 @@ import type { WildsPlayerVaultPayload } from "./wilds-player-vault";
 
 export function WildsInventory({
   state,
+  playableCount,
   onInput,
   onListAsset,
   createVaultPlayer,
   onRestorePlayerVault
 }: {
   state: PlayState;
+  playableCount: number;
   onInput: (input: WildsInput) => void;
   onListAsset?: (asset: PlayState["inventory"][number], priceCents: number) => Promise<PlayState["inventory"][number] | null>;
   createVaultPlayer?: () => WildsPlayerVaultPayload;
@@ -133,7 +135,7 @@ export function WildsInventory({
             <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 6h16v13H4zM8 6V4h8v2m-4 3v6m0 0-3-3m3 3 3-3" /></svg>
             <span>Save vault image</span>
           </button>
-          <button aria-label="Fuse cards" className="wilds-import-card fusion" disabled={playableInventory(state).length < 2} onClick={() => setFusionOpen((value) => !value)} title="Fuse cards" type="button">
+          <button aria-label="Fuse cards" className="wilds-import-card fusion" disabled={playableCount < 2} onClick={() => setFusionOpen((value) => !value)} title="Fuse cards" type="button">
             <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 7h5l2 3 2-3h5M5 17h5l2-3 2 3h5" /></svg>
             <span>Fuse cards</span>
           </button>

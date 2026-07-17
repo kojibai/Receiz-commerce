@@ -6,7 +6,7 @@ The official `receiz migrate v106-v107 --dry-run` command was run through the re
 
 - Source version: `106.0.0`
 - Destination version: `107.0.0`
-- Plan digest: `f306f5e643b6524f732e95eee9d0108272b3aa7e5927e6abe04815520bfb2341`
+- Plan digest: `300409f203001447b97ef6782028e75a34071eebb4d245829e951b50f7b9abce`
 - Blocked: `false`
 - Safe changes proposed: `0`
 - SDK write dispositions accounted for: `73`

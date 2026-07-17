@@ -122,8 +122,16 @@ export function PlayCampaign({
   }, [avatarStyle, onComplete]);
   const activeMission = missionCards[state.completedMissionIds.length % missionCards.length];
   const worldProgression = projectWorldProgression(state.worldMastery);
-  const activeCard = selectedCard(state);
-  const activeAsset = selectedAsset(state);
+  const { inventory, adventureConditions, arenaLivingRevisions, selectedAssetId, selectedCardId } = state;
+  const playableDeck = useMemo(
+    () => playableInventory({ inventory, adventureConditions, arenaLivingRevisions }),
+    [inventory, adventureConditions, arenaLivingRevisions]
+  );
+  const activeAsset = useMemo(
+    () => selectedAsset({ selectedAssetId, selectedCardId }, playableDeck),
+    [playableDeck, selectedAssetId, selectedCardId]
+  );
+  const activeCard = useMemo(() => selectedCard({ selectedCardId }, activeAsset ?? null), [activeAsset, selectedCardId]);
   const deckCards = state.inventory;
   const activeProgress = state.companionProgress[activeCard.id] ?? { level: 1, xp: 0, bond: 0 };
   const activeMastery = useMemo(() => activeAsset ? projectWildsCardMastery(activeAsset) : null, [activeAsset]);
@@ -563,6 +571,7 @@ export function PlayCampaign({
           <div className="wilds-vault-sheet-heading"><small>Portable card vault</small><strong>{state.inventory.length} sealed {state.inventory.length === 1 ? "card" : "cards"}</strong></div>
           <WildsInventory
             state={state}
+            playableCount={playableDeck.length}
             onInput={dispatch}
             onListAsset={onListAsset}
             createVaultPlayer={createVaultPlayer}
@@ -774,7 +783,7 @@ export function PlayCampaign({
       <WildsLandmarkExperience
         access={activeLandmarkId && activeLandmarkId !== "wayfinder-hollow" ? evaluateLandmarkAccess(WILDS_FLAGSHIP_LANDMARKS.find((item) => item.id === activeLandmarkId)!, landmarkProgress) : null}
         card={activeAsset}
-        cards={playableInventory(state)}
+        cards={playableDeck}
         conditions={state.hearttreeConditions}
         guestId={multiplayer.guestId}
         hearttreeSquadAssetIds={state.hearttreeSquadAssetIds}
@@ -804,7 +813,7 @@ export function PlayCampaign({
       />
       <WildsEcologyExperience
         card={activeAsset}
-        cards={playableInventory(state)}
+        cards={playableDeck}
         conditions={state.adventureConditions}
         guestId={multiplayer.guestId}
         marketSquadAssetIds={state.marketSquadAssetIds}

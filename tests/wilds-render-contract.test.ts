@@ -398,9 +398,20 @@ describe("Receiz Wilds rendering contract", () => {
     assert.doesNotMatch(world, /camera\.position\.lerp\(target/);
   });
 
-  it("keeps restored vault size out of the movement render loop", async () => {
+  it("verifies a restored vault once instead of on every movement render", async () => {
     const campaign = await readFile("src/features/play/PlayCampaign.tsx", "utf8");
+    const inventory = await readFile("src/features/play/WildsInventory.tsx", "utf8");
+
     assert.match(campaign, /useMemo/);
+    assert.match(
+      campaign,
+      /const playableDeck = useMemo\([\s\S]*?playableInventory\(\{ inventory, adventureConditions, arenaLivingRevisions \}\)[\s\S]*?\[inventory, adventureConditions, arenaLivingRevisions\]/
+    );
+    assert.match(campaign, /selectedAsset\(\{ selectedAssetId, selectedCardId \}, playableDeck\)/);
+    assert.match(campaign, /selectedCard\(\{ selectedCardId \}, activeAsset \?\? null\)/);
+    assert.equal(campaign.match(/playableInventory\(/g)?.length, 1);
+    assert.doesNotMatch(inventory, /playableInventory\(state\)/);
+    assert.match(inventory, /playableCount < 2/);
     assert.match(campaign, /deckCards\.slice\(0, 24\)/);
   });
 

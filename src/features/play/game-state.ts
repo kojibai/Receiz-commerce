@@ -653,21 +653,23 @@ function restoreEncounter(value: unknown): EncounterState {
   return { ...candidate, proximity, trend } as EncounterState;
 }
 
-export function selectedCard(state: PlayState) {
-  const asset = selectedAsset(state);
+export function selectedCard(state: Pick<PlayState, "selectedCardId">, verifiedAsset?: PortableCardAsset | null) {
+  const asset = verifiedAsset === undefined ? selectedAsset(state as PlayState) : verifiedAsset;
   return creatureCards.find((card) => card.id === (asset?.manifest.familyId ?? state.selectedCardId)) ?? creatureCards[0];
 }
 
-export function selectedAsset(state: PlayState) {
-  const playable = playableInventory(state);
+export function selectedAsset(state: Pick<PlayState, "selectedAssetId" | "selectedCardId">, verifiedInventory?: readonly PortableCardAsset[]) {
+  const playable = verifiedInventory ?? playableInventory(state as PlayState);
   return playable.find((asset) => asset.id === state.selectedAssetId) ?? playable.find((asset) => asset.manifest.familyId === state.selectedCardId) ?? playable[0];
 }
 
-export function isRetiredWildsAsset(state: PlayState, assetId: string) {
+type PlayableInventoryState = Pick<PlayState, "inventory" | "adventureConditions" | "arenaLivingRevisions">;
+
+export function isRetiredWildsAsset(state: Pick<PlayState, "adventureConditions" | "arenaLivingRevisions">, assetId: string) {
   return state.adventureConditions[assetId]?.life === "dead" || state.arenaLivingRevisions[assetId]?.lifeState === "retired";
 }
 
-export function canUseWildsAsset(state: PlayState, assetId: string, _purpose: WildsAssetUse) {
+export function canUseWildsAsset(state: PlayableInventoryState, assetId: string, _purpose: WildsAssetUse) {
   const asset = state.inventory.find((candidate) => candidate.id === assetId);
   return Boolean(asset
     && asset.status !== "suspended"
@@ -676,11 +678,11 @@ export function canUseWildsAsset(state: PlayState, assetId: string, _purpose: Wi
     && !isRetiredWildsAsset(state, assetId));
 }
 
-export function isPlayableAsset(state: PlayState, assetId: string) {
+export function isPlayableAsset(state: PlayableInventoryState, assetId: string) {
   return canUseWildsAsset(state, assetId, "active");
 }
 
-export function playableInventory(state: PlayState) {
+export function playableInventory(state: PlayableInventoryState) {
   return state.inventory.filter((asset) => isPlayableAsset(state, asset.id));
 }
 
