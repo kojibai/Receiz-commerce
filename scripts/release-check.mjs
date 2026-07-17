@@ -7,6 +7,7 @@ const checks = [
   ["pnpm", ["typecheck"]],
   ["pnpm", ["receiz:check"]],
   ["pnpm", ["receiz:conformance"]],
+  ["pnpm", ["receiz:cli:check"]],
   ["pnpm", ["receiz:release-lock"]],
   ["pnpm", ["validate:ai-skills"]],
   ["pnpm", ["lint"]],

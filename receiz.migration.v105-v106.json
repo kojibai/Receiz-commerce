@@ -1,0 +1,17 @@
+{
+  "schema": "receiz.repository.v105-v106.migration-attestation.v1",
+  "sourceVersion": "105.0.0",
+  "destinationVersion": "106.0.0",
+  "planDigest": "33a5777018da64b765e421915d2a780c9b96562b71502b79cd059c0cafdcd5d7",
+  "changes": 0,
+  "findingCounts": {
+    "direct-canonical-write": 19,
+    "silent-fallback": 52,
+    "unverified-projection-publication": 9,
+    "version-skew": 1
+  },
+  "manualAuthorityReview": "complete",
+  "writesPerformed": 0,
+  "historyRewritten": false,
+  "strongerTruth": "sealed-receiz-proof-object"
+}

@@ -26,7 +26,7 @@ test("the repository identifies the shipped release as 4.0.0", async () => {
 });
 
 test("the v4 release preserves prior evidence and adds a complete v3-to-v4 qualification record", async () => {
-  const [readme, changelog, releaseNotes, migration, readiness, evidence, envExample, v3Evidence, v4Evidence, v106MigrationAudit] = await Promise.all([
+  const [readme, changelog, releaseNotes, migration, readiness, evidence, envExample, v3Evidence, v4Evidence, v106MigrationAudit, v106MigrationAttestationText] = await Promise.all([
     read("README.md"),
     read("CHANGELOG.md"),
     read("RELEASE_NOTES.md"),
@@ -37,7 +37,9 @@ test("the v4 release preserves prior evidence and adds a complete v3-to-v4 quali
     read("docs/superpowers/evidence/2026-07-15-wilds-v3-slice-8.md"),
     read("docs/releases/2026-07-16-v4-release-evidence.md"),
     read("docs/releases/2026-07-16-v106-migration-audit.md"),
+    read("receiz.migration.v105-v106.json"),
   ]);
+  const v106MigrationAttestation = JSON.parse(v106MigrationAttestationText) as { planDigest: string };
 
   assert.match(readme, /Current release:\s*`4\.0\.0`/);
   assert.match(changelog, /## 2\.0\.0 - Commerce OS/);
@@ -59,7 +61,7 @@ test("the v4 release preserves prior evidence and adds a complete v3-to-v4 quali
   assert.match(v4Evidence, /@receiz\/sdk@106\.0\.0/);
   assert.match(v4Evidence, /738 passing/);
   assert.match(v4Evidence, /final player-facing Arena renderer/i);
-  assert.match(v106MigrationAudit, /526bd9ea04a65dba58052ecdc5db4f18ddc6f371978bd7cf371e47e85d1c6d84/);
+  assert.match(v106MigrationAudit, new RegExp(v106MigrationAttestation.planDigest));
   assert.match(v106MigrationAudit, /Writes performed:\s*`0`/);
   assert.match(v106MigrationAudit, /Existing proof history was not rewritten/);
 });

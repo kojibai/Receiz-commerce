@@ -2,12 +2,14 @@
 
 Date: 2026-07-16
 
-Dry-run plan digest: `526bd9ea04a65dba58052ecdc5db4f18ddc6f371978bd7cf371e47e85d1c6d84`
+Source-only dry-run plan digest: `33a5777018da64b765e421915d2a780c9b96562b71502b79cd059c0cafdcd5d7`
 Writes performed: `0`
 
 ## Result
 
 The fail-closed v106 migration heuristic reported 81 ambiguous findings and no automatic safe changes. The plan was not applied because v106 correctly refuses to rewrite ambiguous authority or existing witnessed history.
+
+Repository verification runs the official v106 dry-run against a deterministic source-only projection. Generated `.test-build`, `.next`, package-store, coverage, distribution, and output trees are excluded so running tests or builds cannot change the migration digest or duplicate findings. Because no migration was applied, verification uses this reviewed attestation instead of fabricating the apply-only `.receiz/migrations/v105-v106.state.json` required by the raw SDK `--verify` command.
 
 The findings were manually reviewed by category against the exact source files, the v106 application inspector, the constitutional release lock, and the full release suite. They are conservative syntax matches rather than unresolved canonical authority changes:
 
