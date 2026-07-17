@@ -1,0 +1,4 @@
+interface:
+  display_name: "Receiz Build Production System"
+  short_description: "Orchestrate production Receiz builds"
+  default_prompt: "Use -build-production-system to build and release-lock a substantial Receiz production system."

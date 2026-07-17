@@ -7,7 +7,7 @@ async function read(path: string) {
   return readFile(resolve(process.cwd(), path), "utf8");
 }
 
-test("the repository identifies the shipped release as 3.0.0", async () => {
+test("the repository identifies the shipped release as 4.0.0", async () => {
   const packageJson = JSON.parse(await read("package.json")) as {
     version?: string;
     dependencies?: Record<string, string>;
@@ -15,18 +15,18 @@ test("the repository identifies the shipped release as 3.0.0", async () => {
   };
   const lockfile = await read("pnpm-lock.yaml");
 
-  assert.equal(packageJson.version, "3.0.0");
-  assert.equal(packageJson.dependencies?.["@receiz/sdk"], "105.0.0");
-  assert.equal(packageJson.dependencies?.["@receiz/mcp-server"], "105.0.0");
-  assert.equal(packageJson.dependencies?.["@receiz/ai-skills"], "105.0.0");
-  assert.equal(packageJson.scripts?.["receiz:check"], "receiz app check --target 105.0.0 --json");
-  assert.match(lockfile, /'@receiz\/sdk':[\s\S]*?version: file:vendor\/receiz-sdk-105\.0\.0\.tgz/);
-  assert.match(lockfile, /'@receiz\/mcp-server':[\s\S]*?version: file:vendor\/receiz-mcp-server-105\.0\.0\.tgz/);
-  assert.match(lockfile, /'@receiz\/ai-skills':[\s\S]*?version: file:vendor\/receiz-ai-skills-105\.0\.0\.tgz/);
+  assert.equal(packageJson.version, "4.0.0");
+  assert.equal(packageJson.dependencies?.["@receiz/sdk"], "106.0.0");
+  assert.equal(packageJson.dependencies?.["@receiz/mcp-server"], "106.0.0");
+  assert.equal(packageJson.dependencies?.["@receiz/ai-skills"], "106.0.0");
+  assert.equal(packageJson.scripts?.["receiz:check"], "receiz app check --target 106.0.0 --json");
+  assert.match(lockfile, /'@receiz\/sdk':[\s\S]*?version: file:vendor\/receiz-sdk-106\.0\.0\.tgz/);
+  assert.match(lockfile, /'@receiz\/mcp-server':[\s\S]*?version: file:vendor\/receiz-mcp-server-106\.0\.0\.tgz/);
+  assert.match(lockfile, /'@receiz\/ai-skills':[\s\S]*?version: file:vendor\/receiz-ai-skills-106\.0\.0\.tgz/);
 });
 
-test("the v3 release preserves v2 migration evidence and adds final qualification evidence", async () => {
-  const [readme, changelog, releaseNotes, migration, readiness, evidence, envExample, v3Evidence] = await Promise.all([
+test("the v4 release preserves prior evidence and adds a complete v3-to-v4 qualification record", async () => {
+  const [readme, changelog, releaseNotes, migration, readiness, evidence, envExample, v3Evidence, v4Evidence, v106MigrationAudit] = await Promise.all([
     read("README.md"),
     read("CHANGELOG.md"),
     read("RELEASE_NOTES.md"),
@@ -35,9 +35,11 @@ test("the v3 release preserves v2 migration evidence and adds final qualificatio
     read("docs/audits/2026-07-13-v2-release-evidence.md"),
     read(".env.example"),
     read("docs/superpowers/evidence/2026-07-15-wilds-v3-slice-8.md"),
+    read("docs/releases/2026-07-16-v4-release-evidence.md"),
+    read("docs/releases/2026-07-16-v106-migration-audit.md"),
   ]);
 
-  assert.match(readme, /Current release:\s*`3\.0\.0`/);
+  assert.match(readme, /Current release:\s*`4\.0\.0`/);
   assert.match(changelog, /## 2\.0\.0 - Commerce OS/);
   assert.match(releaseNotes, /Receiz Commerce Kit v2\.0\.0/);
   assert.match(releaseNotes, /@receiz\/sdk@100\.0\.0/);
@@ -51,4 +53,13 @@ test("the v3 release preserves v2 migration evidence and adds final qualificatio
   assert.match(releaseNotes, /Receiz Commerce Kit v3\.0\.0/);
   assert.match(v3Evidence, /552 passing/);
   assert.match(v3Evidence, /9\.23\/10/);
+  assert.match(changelog, /## 4\.0\.0 - Wilds Living Cards/);
+  assert.match(releaseNotes, /Receiz Commerce Kit v4\.0\.0/);
+  assert.match(releaseNotes, /Complete V3-to-V4 recap/);
+  assert.match(v4Evidence, /@receiz\/sdk@106\.0\.0/);
+  assert.match(v4Evidence, /738 passing/);
+  assert.match(v4Evidence, /final player-facing Arena renderer/i);
+  assert.match(v106MigrationAudit, /526bd9ea04a65dba58052ecdc5db4f18ddc6f371978bd7cf371e47e85d1c6d84/);
+  assert.match(v106MigrationAudit, /Writes performed:\s*`0`/);
+  assert.match(v106MigrationAudit, /Existing proof history was not rewritten/);
 });

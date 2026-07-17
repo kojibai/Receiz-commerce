@@ -11,6 +11,11 @@ const root = resolve(process.cwd(), "ai-skills");
 
 const skills: SkillSpec[] = [
   {
+    name: "receiz-app-builder-skill",
+    resources: ["workflow.md", "authority-boundaries.md", "generated-file-repair.md", "upgrade-rules.md"],
+    examples: ["commerce.md", "marketplace.md", "persistent-world.md", "ai-operated.md", "profile-portfolio.md", "content-publishing.md", "proof-verifier.md", "minimal-proof-object.md"],
+  },
+  {
     name: "receiz-proof-skill",
     resources: [
       "receiz-laws.md",
@@ -106,6 +111,24 @@ const skills: SkillSpec[] = [
   },
 ];
 
+const constitutionalSkills = [
+  "receiz-architecture",
+  "receiz-domain-builder",
+  "receiz-constitutional-laws",
+  "receiz-command-builder",
+  "receiz-authority-security",
+  "receiz-deterministic-replay",
+  "receiz-offline-first",
+  "receiz-causal-sync",
+  "receiz-portable-artifacts",
+  "receiz-migrations",
+  "receiz-performance",
+  "receiz-observability",
+  "receiz-testing",
+  "receiz-release",
+  "receiz-build-production-system",
+] as const;
+
 const requiredSections = [
   "## When To Use This Skill",
   "## When Not To Use This Skill",
@@ -186,8 +209,45 @@ function assertSkill(skill: SkillSpec): void {
   assertMarkdownLinks(skillFile, text);
 }
 
+function assertConstitutionalSkill(name: (typeof constitutionalSkills)[number]): void {
+  const skillDir = join(root, name);
+  const skillFile = join(skillDir, "SKILL.md");
+  const manifestFile = join(skillDir, "manifest.json");
+  assertPath(skillFile);
+  assertPath(manifestFile);
+  assertPath(join(skillDir, "agents", "openai.yaml"));
+  if (!existsSync(skillFile) || !existsSync(manifestFile)) return;
+
+  const text = read(skillFile);
+  const manifest = JSON.parse(read(manifestFile)) as Record<string, unknown>;
+  if (!new RegExp(`^---\\nname: ${name}\\ndescription: Use when `).test(text)) {
+    fail(`${name}/SKILL.md has invalid discovery frontmatter`);
+  }
+  for (const section of ["## Constitutional workflow", "## Machine contract", "## Quick reference", "## Common mistakes", "## Completion refusal", "## Example"]) {
+    if (!text.includes(section)) fail(`${name}/SKILL.md missing section ${section}`);
+  }
+  if (manifest.schema !== "receiz.ai-skill-contract.v106" || manifest.name !== name) {
+    fail(`${name}/manifest.json has invalid schema or name`);
+  }
+  const serialized = JSON.stringify(manifest);
+  for (const required of [
+    ">=106.0.0 <107.0.0",
+    "bf851c209e807309672c0f466411baa5607ce6b3195fe4eb16755edfeb7f5a1a",
+    "direct-state-write",
+    "history-rewrite",
+    "authority-bypass",
+    "independent-verifier",
+    "release-lock-pass",
+    "inspect-plan-scaffold-test",
+  ]) {
+    if (!serialized.includes(required)) fail(`${name}/manifest.json missing ${required}`);
+  }
+  assertMarkdownLinks(skillFile, text);
+}
+
 assertPath(join(root, "README.md"));
 for (const skill of skills) assertSkill(skill);
+for (const skill of constitutionalSkills) assertConstitutionalSkill(skill);
 
 for (const file of markdownFiles(root)) {
   const text = read(file);
@@ -206,4 +266,4 @@ if (failures.length > 0) {
   process.exit(1);
 }
 
-console.log(`ai-skills validation passed for ${skills.length} skills.`);
+console.log(`ai-skills validation passed for ${skills.length + constitutionalSkills.length} skills.`);

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Receiz Command Builder"
+  short_description: "Build admitted commands and events"
+  default_prompt: "Use -command-builder to define an admitted Receiz command, events, and projections."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Receiz Architecture"
+  short_description: "Inspect constitutional architecture"
+  default_prompt: "Use -architecture to inspect a Receiz system's domains, truth hierarchy, and authority boundaries."

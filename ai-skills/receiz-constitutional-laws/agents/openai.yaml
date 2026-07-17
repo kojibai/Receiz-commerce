@@ -1,0 +1,4 @@
+interface:
+  display_name: "Receiz Constitutional Laws"
+  short_description: "Define and audit executable laws"
+  default_prompt: "Use -constitutional-laws to define, explain, and test executable Receiz laws."

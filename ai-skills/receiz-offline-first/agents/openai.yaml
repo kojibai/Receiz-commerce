@@ -1,0 +1,4 @@
+interface:
+  display_name: "Receiz Offline First"
+  short_description: "Build verified offline continuity"
+  default_prompt: "Use -offline-first to implement verified local truth and offline append behavior."

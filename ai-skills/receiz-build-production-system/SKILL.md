@@ -1,0 +1,93 @@
+---
+name: receiz-build-production-system
+description: Use when building or materially changing a production Receiz application across multiple constitutional domains.
+---
+
+# receiz-build-production-system
+
+Coordinate the complete production workflow across architecture, domains, laws, commands, history, offline behavior, MCP, verification, migration, and release. Receiz is a proof-native artifact system; this skill operates beneath sealed proof and verified local history.
+
+## Constitutional workflow
+
+1. Inspect the repository and installed SDK version.
+2. Load the active signed registry and applicable constitutional laws.
+3. Identify every authority boundary affected by the change.
+4. Write the implementation contract before implementation.
+5. Implement canonical changes only through SDK commands.
+6. Add law, mutation, replay, and compatibility tests.
+7. Run MCP conformance checks.
+8. Require independent verifier evidence.
+9. Refuse completion until the release lock passes.
+
+## Orchestration
+
+1. Discover
+2. Model domain
+3. Compile laws
+4. Define commands
+5. Implement events
+6. Build projections
+7. Add offline behavior
+8. Expose safe MCP tools
+9. Generate tests
+10. Audit authority
+11. Verify performance
+12. Release-lock
+
+**REQUIRED SUB-SKILL:** Use receiz-architecture
+
+**REQUIRED SUB-SKILL:** Use receiz-domain-builder
+
+**REQUIRED SUB-SKILL:** Use receiz-constitutional-laws
+
+**REQUIRED SUB-SKILL:** Use receiz-command-builder
+
+**REQUIRED SUB-SKILL:** Use receiz-authority-security
+
+**REQUIRED SUB-SKILL:** Use receiz-deterministic-replay
+
+**REQUIRED SUB-SKILL:** Use receiz-offline-first
+
+**REQUIRED SUB-SKILL:** Use receiz-causal-sync
+
+**REQUIRED SUB-SKILL:** Use receiz-portable-artifacts
+
+**REQUIRED SUB-SKILL:** Use receiz-migrations
+
+**REQUIRED SUB-SKILL:** Use receiz-performance
+
+**REQUIRED SUB-SKILL:** Use receiz-observability
+
+**REQUIRED SUB-SKILL:** Use receiz-testing
+
+**REQUIRED SUB-SKILL:** Use receiz-release
+
+## Machine contract
+
+Read [manifest.json](manifest.json) before acting. Its package range, ruleset, active registry digest requirement, laws, allowed tools, forbidden operations, evidence, escalation conditions, and autonomous-authority ceiling are executable constraints. Use plan/permit/execute for any admitted command and obtain explicit confirmation for the exact permit digest. The skill and MCP context are never proof authority.
+
+## Quick reference
+
+| Boundary | Required result |
+|---|---|
+| Stronger truth | Sealed artifact and verified local history remain above SDK, MCP, server, DB, session, and UI projections. |
+| Mutation | Canonical state changes only through an allowed SDK command and atomic receipt-producing admission. |
+| Evidence | MCP output and agent assertions do not count; independent verification and release-lock evidence do. |
+| Escalation | Stop on digest skew, authority bypass, missing capability, ambiguous migration, or absent independent evidence. |
+
+## Common mistakes
+
+- Treating a larger or newer server snapshot as permission to replace stronger admitted truth.
+- Calling an MCP plan, simulation, hash, model response, or passing UI check verification.
+- Appending an event without a command admission receipt.
+- Marking the task complete while required evidence is missing.
+
+## Completion refusal
+
+Refuse completion when any manifest input, law, test, conformance result, independent-verifier result, or release-lock result is absent or failing. Never reduce the evidence list, change a test to bless a visible regression, invent authority, or accept “the AI said it is valid” as evidence.
+
+## Example
+
+Request: Build a production Receiz domain.
+
+Return the implementation contract and plan. Execute confirmed allowed commands, then report all evidence and the exact remaining boundary.

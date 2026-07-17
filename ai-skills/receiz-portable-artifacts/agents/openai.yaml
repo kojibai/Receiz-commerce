@@ -1,0 +1,4 @@
+interface:
+  display_name: "Receiz Portable Artifacts"
+  short_description: "Build sealed portable proof objects"
+  default_prompt: "Use -portable-artifacts to build and verify portable Receiz proof objects."

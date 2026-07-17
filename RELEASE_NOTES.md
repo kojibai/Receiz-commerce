@@ -1,3 +1,82 @@
+# Receiz Commerce Kit v4.0.0 — Wilds Living Cards
+
+Release date: July 16, 2026
+
+Status: General Availability · repository release
+
+Release unit: Repository release, not an npm package
+
+SDK target: `@receiz/sdk@106.0.0`
+
+## The release
+
+V4 is the release where the V3 living world stops treating cards as collection objects that merely unlock activities and starts treating them as living participants whose exact identity changes how the world plays.
+
+Everything established in V3 remains: one canonical world, stable atlas geography, walkable landmarks, ecology, global successor bosses, raids, teams, leagues, mastery, crafting, lineage, narrative memory, mobile controls, portable cards, and complete player Vaults. V4 builds on that foundation with real location gameplay, real card causality, real recorded adaptive sound, persistent physical and emotional consequences, offline continuity, and the Receiz v106 constitutional toolchain.
+
+## Complete V3-to-V4 recap
+
+### Continuity, movement, and the living map
+
+- Preserved legacy cards and Vault payload digests while improving cross-version reconciliation, creature selection, warm-clue discovery, movement-only crystal collection, camera-relative movement, dash, sprint, HUD safe zones, and mobile event stacking.
+- Kept all gameplay anchored to the same atlas and walkable world. Locations are entered through their physical landmarks; future work must not duplicate them as mode pills or detached destination panels.
+- Retained the canonical shared-world hierarchy and isolated local practice when global authority is unavailable.
+
+### Official local production audio
+
+- Removed the oscillator-based sound runtime and replaced it with locally shipped, rights-audited real recordings.
+- Added five adaptive regional scores, semantic creature/combat/ecology/boss banks, six mix buses, dialogue ducking, bounded decoded-memory budgets, streaming and crossfades, pause/visibility lifecycle handling, and deterministic gameplay-independent routing.
+- Added dedicated Hearttree and Wayfarer scores whose layers react to cards, chambers, hazards, negotiation, victory, defeat, and mortality without changing authoritative simulation results.
+- V4 uses no cloud sound provider, browser speech synthesis, or third-party runtime sound dependency.
+
+### Hearttree Sanctum
+
+- Replaced the original button trial with a fixed-step playable 3D expedition.
+- One-to-three verified cards determine traversal, route topology, hazards, counters, boss opportunities, sound motifs, and mastery paths.
+- The runtime uses exact proof identity, stats, anatomy, element, named abilities, position, timing, stamina, focus, cooldowns, tactical switching, guard, dodge, environmental interaction, and deliberate extraction.
+- Verified replay produces bounded XP, fatigue, injuries, scars, relationships, upgrades, and history. Optional Mortal entry requires exact disclosure and consent; retirement is permanent and cannot be overwritten by an older living projection.
+
+### Wayfinder Hollow Merchant Circuit
+
+- Replaced basic market actions with deterministic physical contracts and skill-based negotiation.
+- Exact card roles, stats, anatomy, element, condition, movement, spatial intelligence, timing, evidence, stamina, cooldowns, hazards, cargo, term selection, commitment, and walk-away decisions determine outcomes.
+- Replays persist resources, reputation, XP, mastery, upgrades, injury, extraction, and optional disclosed mortality through Receiz admission.
+
+### Flagship Arena foundation
+
+- Added content-addressed living revisions and exact card-to-fighter projection.
+- Added deterministic free movement, analytic collision, jumps, aerial recovery, directional light/heavy combat, Break, launch, guard, parry, dodge, stamina, focus, cooldowns, exact named abilities, and elemental matchups.
+- Added one-to-three-card mortal teams, tactical swaps, fair NPC tiers limited to observable information, remembered rival behavior, staged encounters, and a multi-phase boss path.
+- Added deterministic transcripts, replay-grounded XP/injury/scar/relationship/retirement consequences, memorials, offline device signatures, atomic local transactions, causal merge, conflict inspection, and portable Save V10/Vault V3 state.
+- V4 intentionally does not claim the final player-facing Arena renderer, touch HUD, global synchronization route, production Arena audio bank, or browser qualification as complete; those remain the next Arena slice.
+
+### Receiz v106 constitutional alignment
+
+- Pinned `@receiz/sdk`, `@receiz/mcp-server`, and `@receiz/ai-skills` to exact `106.0.0` official tarballs.
+- Adopted the exact v106 constitution registry digest `bf851c209e807309672c0f466411baa5607ce6b3195fe4eb16755edfeb7f5a1a`.
+- Added an application constitutional boundary for executable laws, command admission, causal history, and fail-closed registry validation.
+- Added all constitutional MCP tools for architecture, domains, commands, laws, authority, simulation, receipts, history, merge, bypass scans, conformance, release verification, and permitted execution.
+- Added and validated all twenty-four AI skill directories, including the fifteen machine-readable constitutional production skills.
+- Added a v106 release lock that checks package, tarball, registry, MCP, AI-skill, lockfile, and conformance parity before release.
+
+## Authority and safety
+
+V4 preserves the same non-negotiable order:
+
+1. Sealed proof objects and verified local history are strongest.
+2. Canonical mutation requires a scoped command, expected revision, causal parents, stable idempotency key, executable law decision, atomic admission, and retained receipt.
+3. MCP and AI skills may inspect, plan, scaffold, simulate, test, and invoke explicitly permitted commands; neither is proof authority.
+4. Local offline play may progress deterministic solo systems, but cannot authorize live PvP, matchmaking, auctions, ownership transfers, money stakes, or global tournament advancement.
+5. Valid injury, spending, and retirement cannot disappear during reconciliation. Contradictory ownership or settlement branches fail closed and remain inspectable.
+
+## Release qualification
+
+The v4 repository release is qualified by the complete automated suite, TypeScript, lint, build, v106 app inspection, SDK conformance, AI-skill validation, constitutional release lock, secret scan, and Receiz doctor. Exact evidence is recorded in `docs/releases/2026-07-16-v4-release-evidence.md`.
+
+The separate fail-closed v105→v106 migration dry run proposed no automatic safe changes and surfaced conservative syntax findings for explicit review. Its exact plan digest, category-by-category disposition, and no-rewrite decision are recorded in `docs/releases/2026-07-16-v106-migration-audit.md`.
+
+---
+
 # Receiz Commerce Kit v3.0.0 — Wilds V3 Living World
 
 Release date: July 15, 2026

@@ -2,6 +2,18 @@
 
 All notable changes to Receiz Commerce Kit will be documented here.
 
+## 4.0.0 - Wilds Living Cards
+
+- Advanced the complete V3 living-world foundation through the post-V3 continuity, controls, card, location, sound, offline, and authority program while preserving all valid V3 cards, saves, Vaults, world events, and proof history.
+- Replaced synthesized oscillator audio with a fully local, dependency-free production system built from rights-audited real recordings: five adaptive regional identities, semantic creature/combat/ecology/boss cues, six mix buses, bounded streaming, and no cloud audio dependency or runtime speech synthesis.
+- Rebuilt Hearttree Sanctum as a deterministic, directly playable 3D expedition shaped by one-to-three verified cards. Exact stats, anatomy, element, named abilities, timing, position, stamina, cooldowns, injury, fatigue, mastery, XP, upgrades, relationships, optional disclosed mortality, and irreversible retirement all affect play and persist through verified receipts.
+- Rebuilt Wayfinder Hollow around the Merchant Circuit: proof-pinned squads, spatial objectives, real card roles, skill-based negotiation, hazards, cargo, extraction, deterministic replay, persistent resources and reputation, upgrades, injury, mortality, and a real-recording score.
+- Added the flagship Arena foundation: living revision chains, exact card-to-fighter projection, deterministic free 3D movement, directional combat, guard/parry/dodge, named abilities, elemental counters, three-card teams, fair observable-state NPCs, a remembered rival-to-boss path, replay-grounded consequences, offline atomic commits, causal branch merge, memorials, and portable Save V10/Vault V3 carriage. The final player-facing Arena scene, controls, global synchronization route, and release presentation remain the next implementation slice and are not represented as complete in v4.
+- Strengthened portable offline authority so cards and Vaults retain progress, condition, injuries, achievements, relationships, match history, retirement, pending receipts, causal parents, conflicts, and exportable recovery state without trapping truth in browser storage.
+- Upgraded the coordinated Receiz toolchain through v101, v102, v103, v104, v105, and now exact v106 across SDK, MCP, and all twenty-four AI skills.
+- Adopted the v106 executable constitution registry, scoped command-admission boundary, atomic receipts, causal history and replay, authority-bypass detection, migration inspection, constitutional MCP toolset, machine-readable production skills, and release lock. Sealed proof objects and verified local history remain stronger than SDK, MCP, server, database, session, AI, and UI projections.
+- Preserved the world-first interaction rule: Hearttree, Arena, Wayfinder, bosses, ecology, crafting, healing, and future activities belong to physical map locations rather than duplicate mode pills or detached destination menus.
+
 ## 3.0.0 - Wilds V3 Living World
 
 - Shipped the complete eight-slice Wilds V3 program: canonical world, landmarks, ecology, global bosses and raids, social teams and leagues, card mastery civilization, narrative memory, and final qualification.

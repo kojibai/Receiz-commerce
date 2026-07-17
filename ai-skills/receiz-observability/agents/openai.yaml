@@ -1,0 +1,4 @@
+interface:
+  display_name: "Receiz Observability"
+  short_description: "Instrument proof-safe operations"
+  default_prompt: "Use -observability to add privacy-safe constitutional tracing and operational evidence."

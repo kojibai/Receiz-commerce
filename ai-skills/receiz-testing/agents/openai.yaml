@@ -1,0 +1,4 @@
+interface:
+  display_name: "Receiz Testing"
+  short_description: "Test laws replay and compatibility"
+  default_prompt: "Use -testing to build Receiz law, mutation, replay, fuzz, and compatibility tests."

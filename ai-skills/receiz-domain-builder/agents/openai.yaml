@@ -1,0 +1,4 @@
+interface:
+  display_name: "Receiz Domain Builder"
+  short_description: "Build command-governed domains"
+  default_prompt: "Use -domain-builder to model and scaffold a command-governed Receiz domain."

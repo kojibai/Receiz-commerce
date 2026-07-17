@@ -1,0 +1,4 @@
+interface:
+  display_name: "Receiz Deterministic Replay"
+  short_description: "Verify replay and equivalence"
+  default_prompt: "Use -deterministic-replay to verify deterministic history replay and checkpoint equivalence."

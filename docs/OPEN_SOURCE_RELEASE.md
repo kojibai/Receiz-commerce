@@ -46,6 +46,10 @@ pnpm secret:scan
 - `pnpm lint`
 - `pnpm build`
 - `pnpm receiz:doctor`
+- `pnpm receiz:check`
+- `pnpm receiz:conformance`
+- `pnpm receiz:release-lock`
+- `pnpm validate:ai-skills`
 
 `pnpm secret:scan` checks tracked source files for common committed secret patterns and server-only env values that should not be public.
 
@@ -194,7 +198,7 @@ Before release:
 
 ## Release Notes
 
-For `v0.1.0`, highlight:
+For `v4.0.0`, highlight:
 
 - Full working Receiz Commerce Cloud app.
 - Forkable `@receiz/sdk` kernel.
@@ -207,11 +211,11 @@ For `v0.1.0`, highlight:
 
 ## Tagging
 
-After all gates pass:
+After all gates pass and only when publication is explicitly authorized:
 
 ```bash
 git status --short
-git tag v0.1.0
+git tag v4.0.0
 git push origin main --tags
 ```
 

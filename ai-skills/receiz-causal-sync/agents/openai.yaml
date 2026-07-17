@@ -1,0 +1,4 @@
+interface:
+  display_name: "Receiz Causal Sync"
+  short_description: "Build deterministic causal merging"
+  default_prompt: "Use -causal-sync to implement causal synchronization, conflicts, and deterministic merging."

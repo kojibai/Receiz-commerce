@@ -1,32 +1,42 @@
 import {
+  RECEIZ_RELEASE_VERSION,
+  RECEIZ_RULESET_VERSION,
   RECEIZ_SDK_VERSION,
+  RECEIZ_V106_REGISTRY_DIGEST,
+  createReceizAdmissionEngine,
+  createReceizCausalHistory,
   describeReceizCapabilities,
-  describeReceizError
+  describeReceizError,
+  evaluateReceizLawSet,
+  validateReceizConstitutionRegistry,
 } from "@receiz/sdk";
 import { createReceizEmulator, runReceizConformance } from "@receiz/sdk/testing";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 
-describe("Receiz v105 dependency contract", () => {
-  it("pins the supported v105 SDK, MCP, AI skills, and vendored publication bridge", () => {
+describe("Receiz v106 dependency contract", () => {
+  it("pins the supported v106 SDK, MCP, AI skills, registry, and vendored publication bridge", () => {
     const pkg = JSON.parse(readFileSync("package.json", "utf8")) as {
       dependencies: Record<string, string>;
       scripts?: Record<string, string>;
       pnpm?: { overrides?: Record<string, string> };
     };
 
-    assert.equal(RECEIZ_SDK_VERSION, "105.0.0");
-    assert.equal(pkg.dependencies["@receiz/sdk"], "105.0.0");
-    assert.equal(pkg.dependencies["@receiz/mcp-server"], "105.0.0");
-    assert.equal(pkg.dependencies["@receiz/ai-skills"], "105.0.0");
-    assert.equal(pkg.scripts?.["receiz:check"], "receiz app check --target 105.0.0 --json");
+    assert.equal(RECEIZ_SDK_VERSION, "106.0.0");
+    assert.equal(RECEIZ_RELEASE_VERSION, "106.0.0");
+    assert.equal(RECEIZ_RULESET_VERSION, "106.0.0");
+    assert.equal(RECEIZ_V106_REGISTRY_DIGEST, "bf851c209e807309672c0f466411baa5607ce6b3195fe4eb16755edfeb7f5a1a");
+    assert.equal(pkg.dependencies["@receiz/sdk"], "106.0.0");
+    assert.equal(pkg.dependencies["@receiz/mcp-server"], "106.0.0");
+    assert.equal(pkg.dependencies["@receiz/ai-skills"], "106.0.0");
+    assert.equal(pkg.scripts?.["receiz:check"], "receiz app check --target 106.0.0 --json");
     assert.equal(pkg.scripts?.["receiz:conformance"], "receiz conformance");
     assert.equal(pkg.scripts?.["validate:ai-skills"], "node --import tsx ai-skills/scripts/validate-skills.ts");
     assert.equal(pkg.pnpm?.overrides?.postcss, ">=8.5.10");
-    assert.equal(pkg.pnpm?.overrides?.["@receiz/sdk"], "file:vendor/receiz-sdk-105.0.0.tgz");
-    assert.equal(pkg.pnpm?.overrides?.["@receiz/mcp-server"], "file:vendor/receiz-mcp-server-105.0.0.tgz");
-    assert.equal(pkg.pnpm?.overrides?.["@receiz/ai-skills"], "file:vendor/receiz-ai-skills-105.0.0.tgz");
+    assert.equal(pkg.pnpm?.overrides?.["@receiz/sdk"], "file:vendor/receiz-sdk-106.0.0.tgz");
+    assert.equal(pkg.pnpm?.overrides?.["@receiz/mcp-server"], "file:vendor/receiz-mcp-server-106.0.0.tgz");
+    assert.equal(pkg.pnpm?.overrides?.["@receiz/ai-skills"], "file:vendor/receiz-ai-skills-106.0.0.tgz");
   });
 
   it("documents the supported MCP pair and authoritative theme publication", () => {
@@ -36,10 +46,10 @@ describe("Receiz v105 dependency contract", () => {
     const mcpToolMap = readFileSync("ai-skills/receiz-mcp-agent-skill/resources/mcp-tool-map.md", "utf8");
     const adapter = readFileSync("src/lib/receiz/adapter.ts", "utf8");
 
-    assert.match(readme, /@receiz\/mcp-server@105\.0\.0/);
-    assert.match(readme, /@receiz\/ai-skills@105\.0\.0/);
+    assert.match(readme, /@receiz\/mcp-server@106\.0\.0/);
+    assert.match(readme, /@receiz\/ai-skills@106\.0\.0/);
     assert.match(readme, /Publish theme/);
-    assert.match(rails, /@receiz\/sdk@105\.0\.0/);
+    assert.match(rails, /@receiz\/sdk@106\.0\.0/);
     assert.match(rails, /authoritative public-store revision/);
     assert.match(rails, /native Record projection before sealing/);
     assert.match(skillsReadme, /published as `@receiz\/ai-skills`/);
@@ -52,7 +62,7 @@ describe("Receiz v105 dependency contract", () => {
     assert.doesNotMatch(adapter, /sealArtifact/);
   });
 
-  it("keeps the v105 Node-only compiler outside browser bundles", () => {
+  it("keeps the v106 Node-only compiler outside browser bundles", () => {
     const nextConfig = readFileSync("next.config.mjs", "utf8");
     const sdkPackage = JSON.parse(readFileSync("node_modules/@receiz/sdk/package.json", "utf8")) as {
       exports?: Record<string, unknown>;
@@ -65,19 +75,23 @@ describe("Receiz v105 dependency contract", () => {
     assert.doesNotMatch(nextConfig, /NormalModuleReplacementPlugin|"fs\/promises": false/);
   });
 
-  it("exposes canonical v105 capabilities, errors, emulator, and conformance", async () => {
+  it("exposes canonical v106 constitution, admission, causal history, capabilities, errors, emulator, and conformance", async () => {
     assert.equal(typeof describeReceizCapabilities, "function");
     assert.equal(typeof describeReceizError, "function");
     assert.equal(typeof createReceizEmulator, "function");
     assert.equal(typeof runReceizConformance, "function");
+    assert.equal(typeof validateReceizConstitutionRegistry, "function");
+    assert.equal(typeof evaluateReceizLawSet, "function");
+    assert.equal(typeof createReceizAdmissionEngine, "function");
+    assert.equal(typeof createReceizCausalHistory, "function");
 
     const descriptor = describeReceizCapabilities();
     assert.equal(descriptor.schema, "receiz.sdk.capability_descriptor.v1");
-    assert.equal(descriptor.packageCompatibility.sdk, ">=105.0.0 <106");
+    assert.equal(descriptor.packageCompatibility.sdk, ">=106.0.0 <107");
 
     const report = await runReceizConformance();
     assert.equal(report.schema, "receiz.sdk.conformance_report.v1");
-    assert.equal(report.sdkVersion, "105.0.0");
+    assert.equal(report.sdkVersion, "106.0.0");
     assert.equal(report.ok, true);
     assert.equal(report.summary.failed, 0);
     assert.equal(report.summary.networkCalls, 0);

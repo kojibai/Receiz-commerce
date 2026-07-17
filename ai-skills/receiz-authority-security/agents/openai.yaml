@@ -1,0 +1,4 @@
+interface:
+  display_name: "Receiz Authority Security"
+  short_description: "Audit capabilities and authority"
+  default_prompt: "Use -authority-security to audit Receiz capabilities, tenancy, and authority boundaries."

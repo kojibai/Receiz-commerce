@@ -1,0 +1,4 @@
+interface:
+  display_name: "Receiz Migrations"
+  short_description: "Migrate constitutional applications"
+  default_prompt: "Use -migrations to migrate a Receiz application without rewriting admitted history."

@@ -1,0 +1,57 @@
+{
+  "schema": "receiz.ai-skill-contract.v106",
+  "name": "receiz-domain-builder",
+  "requires": {
+    "sdk": ">=106.0.0 <107.0.0",
+    "mcp": ">=106.0.0 <107.0.0",
+    "ruleset": "106.0.0",
+    "registryDigest": "bf851c209e807309672c0f466411baa5607ce6b3195fe4eb16755edfeb7f5a1a"
+  },
+  "laws": [
+    "receiz.command-only-mutation",
+    "receiz.atomic-unit-of-work",
+    "receiz.history.append-only"
+  ],
+  "allowedTools": [
+    "receiz_architecture_inspect",
+    "receiz_domain_scaffold",
+    "receiz_command_scaffold",
+    "receiz_law_define",
+    "receiz_conformance_run"
+  ],
+  "forbiddenOperations": [
+    "direct-state-write",
+    "history-rewrite",
+    "authority-bypass"
+  ],
+  "requiredInputs": [
+    "repository-root",
+    "installed-sdk-version",
+    "active-registry-digest",
+    "applicable-laws",
+    "authority-boundaries"
+  ],
+  "requiredEvidence": [
+    "typecheck",
+    "law-coverage",
+    "mutation-tests",
+    "replay-equivalence",
+    "compatibility",
+    "mcp-conformance",
+    "independent-verifier"
+  ],
+  "completionCriteria": [
+    "written-implementation-contract",
+    "constitutional-context-digest-match",
+    "all-required-evidence-pass",
+    "release-lock-pass"
+  ],
+  "escalationConditions": [
+    "authority-bypass-detected",
+    "registry-digest-mismatch",
+    "missing-independent-evidence",
+    "missing-capability",
+    "ambiguous-migration"
+  ],
+  "maximumAutonomousAuthority": "inspect-plan-scaffold-test"
+}

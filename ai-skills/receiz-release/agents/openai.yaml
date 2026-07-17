@@ -1,0 +1,4 @@
+interface:
+  display_name: "Receiz Release"
+  short_description: "Qualify a constitutional release"
+  default_prompt: "Use -release to verify and release-lock a coordinated Receiz version."

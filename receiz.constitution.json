@@ -1,0 +1,34 @@
+{
+  "schema": "receiz.constitution.registry.v1",
+  "version": "106.0.0",
+  "previousRegistryDigest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "effectiveKai": "kai:106-release",
+  "createdAt": "2026-07-16T00:00:00.000Z",
+  "laws": [
+    {
+      "id": "wilds.retirement.irreversible",
+      "version": 1,
+      "phases": ["command", "merge", "migration"],
+      "denyWhen": { "op": "transition", "path": "life", "from": "dead", "to": "alive" },
+      "denial": { "code": "RETIREMENT_IS_FINAL", "safeAlternatives": ["memorialize", "retire", "create-descendant"] }
+    },
+    {
+      "id": "authority.tenant.explicit",
+      "version": 1,
+      "phases": ["command", "admission"],
+      "denyWhen": { "op": "not", "value": { "op": "path", "value": "tenant.id" } },
+      "denial": { "code": "TENANT_REQUIRED", "safeAlternatives": ["bind-tenant"] }
+    },
+    {
+      "id": "receiz.command-only-mutation",
+      "version": 1,
+      "phases": ["command", "event", "merge", "migration", "admission"],
+      "denyWhen": {
+        "op": "not",
+        "value": { "op": "equal", "left": { "op": "path", "value": "mutation.mode" }, "right": { "op": "literal", "value": "admitted-command" } }
+      },
+      "denial": { "code": "DIRECT_STATE_WRITE_FORBIDDEN", "safeAlternatives": ["define-command", "simulate-command", "request-capability"] }
+    }
+  ],
+  "authority": { "registryPayloadIsAuthority": false, "strongerTruth": "sealed-receiz-proof-object" }
+}

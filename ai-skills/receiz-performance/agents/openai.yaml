@@ -1,0 +1,4 @@
+interface:
+  display_name: "Receiz Performance"
+  short_description: "Enforce constitutional performance"
+  default_prompt: "Use -performance to measure and enforce Receiz first-paint and admission budgets."

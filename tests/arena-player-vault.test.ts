@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { describe, it } from "node:test";
 import { emptyAdventureCondition } from "../src/features/play/adventure/card-condition.js";
 import { generateArenaPath } from "../src/features/play/arena/campaign.js";
@@ -141,7 +142,7 @@ describe("portable Arena lives", () => {
   });
 
   it("renders memorial status and life-history inspection without active retired-card actions", () => {
-    const source = readFileSync(new URL("../src/features/play/WildsInventory.tsx", import.meta.url), "utf8");
+    const source = readFileSync(resolve(process.cwd(), "src/features/play/WildsInventory.tsx"), "utf8");
     assert.match(source, /Memorial/);
     assert.match(source, /Life history/);
     assert.match(source, /canUseWildsAsset/);

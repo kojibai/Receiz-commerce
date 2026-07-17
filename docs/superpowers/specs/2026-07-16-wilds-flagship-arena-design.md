@@ -101,6 +101,8 @@ Arenas are tactical rule systems rather than backgrounds. Elevation, cover, dest
 
 The first release includes a complete Arena Path:
 
+Arena entry remains a physical world interaction at the Arena of Echoes. The map and walkable location are the interface; no duplicate mode pill, destination panel, or detached activity menu may launch it. The same rule applies to Hearttree and every other landmark. Small contextual prompts and combat HUD feedback are allowed only when they support direct interaction with the location itself.
+
 - approachable rivals teach one concept at a time;
 - advanced rivals recognize repeated habits and punish predictable loadouts;
 - champions coordinate teams, arena control, recovery denial, counters, and swaps;

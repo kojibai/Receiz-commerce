@@ -1,12 +1,14 @@
 # Receiz AI Skills
 
-`receiz-app-builder-skill` is the authoritative v105 workflow for starting,
-integrating, upgrading, diagnosing, and repairing repositories through the typed
-Receiz app contract, shared SDK compiler, CLI, and MCP tools.
+`receiz-build-production-system` is the v106 orchestration skill for substantial
+Receiz applications. Fourteen focused constitutional skills supply architecture,
+domain, law, command, authority, replay, offline, causal, artifact, migration,
+performance, observability, testing, and release contracts. The earlier nine
+domain skills remain packaged for compatibility.
 
 This package teaches AI agents how to understand, verify, build with, and operate Receiz from the existing repository surfaces.
 
-It is published as `@receiz/ai-skills` and is an exact-version dependency of both `@receiz/sdk` and `@receiz/mcp-server`. Installing either package places these nine skill directories under `node_modules/@receiz/ai-skills` for explicit loading by an agent host.
+It is published as `@receiz/ai-skills` and is an exact-version dependency of both `@receiz/sdk` and `@receiz/mcp-server`. Installing either package places all twenty-four skill directories under `node_modules/@receiz/ai-skills` for explicit loading by an agent host.
 
 Receiz is a proof-native artifact system. A Receiz object is not a database row. It is a proof-carrying artifact. The artifact's witnessed history is the truth boundary. Server state, database state, UI state, marketplace state, and model memory are projections only. Old witnessed truth is not stale. If a projection is wrong, rebuild it from object history. If truth is missing, append new truth. Never mutate witnessed truth.
 
@@ -20,7 +22,7 @@ Agents may acquire scoped delegated access through the official Receiz Connect/O
 
 ## How Agents Should Use This Package
 
-Start with `receiz-skill-bundle` when the request spans multiple Receiz domains. Use `receiz-proof-skill` for any verification, proof object, vault, profile, pack, card, post, product, listing, receipt, marketplace, or offline artifact question. Use narrower skills only after the primitive is named.
+Start with `receiz-build-production-system` when work spans multiple constitutional domains. Its machine-readable manifest requires the exact active signed registry digest, command-only mutation, independent verification, MCP conformance, and a passing release lock. Use a focused v106 skill for narrower production work. The compatibility router `receiz-skill-bundle` and proof/domain skills remain available for earlier workflows.
 
 Do not invent APIs. Use the SDK and MCP maps inside the skills, then inspect the repo when a requested operation is not listed.
 
