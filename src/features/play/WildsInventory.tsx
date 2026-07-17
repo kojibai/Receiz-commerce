@@ -144,7 +144,8 @@ export function WildsInventory({
           className="wilds-import-input"
           multiple
           onChange={async (event) => {
-            const files = Array.from(event.currentTarget.files ?? []);
+            const input = event.currentTarget;
+            const files = Array.from(input.files ?? []);
             let imported = 0;
             let rejected = 0;
             for (const file of files) {
@@ -158,7 +159,7 @@ export function WildsInventory({
               setSelectedId(assets.at(-1)!.id);
               imported += assets.length;
             }
-            event.currentTarget.value = "";
+            input.value = "";
             setImportMessage(imported
               ? `${imported} verified card${imported === 1 ? "" : "s"} added${rejected ? ` · ${rejected} rejected` : ""}.`
               : "No card was added. Only an untampered Receiz sealed PNG can enter the game.");

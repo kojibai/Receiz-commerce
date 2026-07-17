@@ -15,7 +15,7 @@ import {
   type PlayState,
   type WildsInput
 } from "@/features/play/game-state";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { PortableCardAsset } from "@/features/play/portable-card";
 import { WildsCaptureReward } from "@/features/play/WildsCaptureReward";
 import { WildsInventory } from "@/features/play/WildsInventory";
@@ -54,6 +54,7 @@ import type { WildsBossFamilyId } from "@/features/play/wilds-boss-ecology";
 import { deriveLoadoutSynergy, projectWildsCardMastery } from "@/features/play/wilds-card-mastery";
 import { lineageSummary } from "@/features/play/wilds-lineage-utility";
 import { projectRegionalStory, projectReturnContinuity } from "@/features/play/wilds-narrative-memory";
+import { createWildsSaveScheduler, type WildsSaveScheduler } from "@/features/play/wilds-save-scheduler";
 
 const WILDS_SAVE_KEY = "receiz:wilds:save:v2";
 const WILDS_AVATAR_KEY = "receiz:wilds:explorer:v1";
@@ -110,6 +111,15 @@ export function PlayCampaign({
   const [raidBusyIntent, setRaidBusyIntent] = useState<WildsRaidIntent["type"] | null>(null);
   const [landmarkUnlocks, setLandmarkUnlocks] = useState<string[]>([]);
   const [riftError, setRiftError] = useState("");
+  const saveSchedulerRef = useRef<WildsSaveScheduler<PlayState> | null>(null);
+  const dispatch = useCallback((input: WildsInput) => {
+    if (!avatarStyle) return;
+    setState((current) => {
+      const next = applyWildsInput(current, input);
+      if (!current.completed && next.completed) onComplete?.(next.beans);
+      return next;
+    });
+  }, [avatarStyle, onComplete]);
   const activeMission = missionCards[state.completedMissionIds.length % missionCards.length];
   const worldProgression = projectWorldProgression(state.worldMastery);
   const activeCard = selectedCard(state);
@@ -173,6 +183,26 @@ export function PlayCampaign({
   }, []);
 
   useEffect(() => {
+    const scheduler = createWildsSaveScheduler<PlayState>({
+      serialize: serializePlayState,
+      write: (serialized) => window.localStorage.setItem(WILDS_SAVE_KEY, serialized)
+    });
+    saveSchedulerRef.current = scheduler;
+    const flush = () => scheduler.flush();
+    const flushWhenHidden = () => {
+      if (document.visibilityState === "hidden") flush();
+    };
+    window.addEventListener("pagehide", flush);
+    document.addEventListener("visibilitychange", flushWhenHidden);
+    return () => {
+      window.removeEventListener("pagehide", flush);
+      document.removeEventListener("visibilitychange", flushWhenHidden);
+      flush();
+      saveSchedulerRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
     const restored = restorePlayState(window.localStorage.getItem(WILDS_SAVE_KEY));
     const params = new URLSearchParams(window.location.search);
     const joinRoom = params.get("wildsJoin");
@@ -204,11 +234,7 @@ export function PlayCampaign({
 
   useEffect(() => {
     if (!saveRestored) return;
-    try {
-      window.localStorage.setItem(WILDS_SAVE_KEY, serializePlayState(state));
-    } catch {
-      // The game remains playable when browser persistence is unavailable.
-    }
+    saveSchedulerRef.current?.schedule(state);
   }, [saveRestored, state]);
 
   useEffect(() => {
@@ -270,16 +296,6 @@ export function PlayCampaign({
     );
   }
 
-  const dispatch = (input: WildsInput) => {
-    if (!avatarStyle) return;
-    setState((current) => {
-      const next = applyWildsInput(current, input);
-      if (!current.completed && next.completed) {
-        onComplete?.(next.beans);
-      }
-      return next;
-    });
-  };
   const discoveryActive = state.encounter.phase === "idle" || state.encounter.phase === "searching" || state.encounter.phase === "hint";
   const activeProximity = state.encounter.phase === "idle" ? "cold" : state.encounter.proximity ?? "cold";
   const proximityLabel = state.encounter.phase === "idle"

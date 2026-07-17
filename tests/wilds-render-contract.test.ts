@@ -404,6 +404,24 @@ describe("Receiz Wilds rendering contract", () => {
     assert.match(campaign, /deckCards\.slice\(0, 24\)/);
   });
 
+  it("keeps large-vault persistence off the live movement tick", async () => {
+    const campaign = await readFile("src/features/play/PlayCampaign.tsx", "utf8");
+
+    assert.match(campaign, /createWildsSaveScheduler/);
+    assert.match(campaign, /saveSchedulerRef\.current\?\.schedule\(state\)/);
+    assert.match(campaign, /const dispatch = useCallback/);
+    assert.doesNotMatch(campaign, /localStorage\.setItem\(WILDS_SAVE_KEY, serializePlayState\(state\)\)/);
+  });
+
+  it("verifies the active card only when movement crosses a growth milestone", async () => {
+    const state = await readFile("src/features/play/game-state.ts", "utf8");
+
+    assert.match(
+      state,
+      /if \(!crossedMilestone\) return collected;\s*const leader = selectedAsset\(state\);\s*if \(!leader\) return collected;/
+    );
+  });
+
   it("prevents accidental selection and long-press callouts across the gameplay surface", async () => {
     const css = await readFile("app/globals.css", "utf8");
 
@@ -545,6 +563,8 @@ describe("Receiz Wilds rendering contract", () => {
     assert.match(inventory, />Save vault image</);
     assert.match(inventory, />Save card image</);
     assert.match(inventory, /aria-label="Import card or vault"/);
+    assert.match(inventory, /const input = event\.currentTarget;/);
+    assert.match(inventory, /input\.value = "";/);
     assert.match(inventory, /aria-label="Save vault image"/);
     assert.match(inventory, /aria-label="Fuse cards"/);
     assert.match(inventory, /setVaultMessage/);

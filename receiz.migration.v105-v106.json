@@ -2,7 +2,7 @@
   "schema": "receiz.repository.v105-v106.migration-attestation.v1",
   "sourceVersion": "105.0.0",
   "destinationVersion": "106.0.0",
-  "planDigest": "33a5777018da64b765e421915d2a780c9b96562b71502b79cd059c0cafdcd5d7",
+  "planDigest": "09620ca338b65ee8a01a880172fc0f46a46f83df86c267e12f6b30b585cd74a6",
   "changes": 0,
   "findingCounts": {
     "direct-canonical-write": 19,

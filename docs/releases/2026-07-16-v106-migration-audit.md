@@ -2,7 +2,7 @@
 
 Date: 2026-07-16
 
-Source-only dry-run plan digest: `33a5777018da64b765e421915d2a780c9b96562b71502b79cd059c0cafdcd5d7`
+Source-only dry-run plan digest: `09620ca338b65ee8a01a880172fc0f46a46f83df86c267e12f6b30b585cd74a6`
 Writes performed: `0`
 
 ## Result

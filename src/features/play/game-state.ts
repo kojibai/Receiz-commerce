@@ -1254,8 +1254,9 @@ export function applyWildsInput(state: PlayState, input: WildsInput): PlayState 
         }
       : moved;
     const crossedMilestone = Math.floor(state.player.x / 8) !== Math.floor(nextPlayer.x / 8) || Math.floor(state.player.z / 8) !== Math.floor(nextPlayer.z / 8);
+    if (!crossedMilestone) return collected;
     const leader = selectedAsset(state);
-    if (!crossedMilestone || !leader) return collected;
+    if (!leader) return collected;
     const milestoneId = `${Math.floor(nextPlayer.x / 8)}:${Math.floor(nextPlayer.z / 8)}`;
     const progressed = applyRecordedGrowth(collected, leader, {
       eventId: `active_travel:${leader.id}:${milestoneId}`,
