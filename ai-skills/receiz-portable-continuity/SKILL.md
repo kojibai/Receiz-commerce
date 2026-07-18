@@ -67,8 +67,18 @@ Use `receiz_artifact_verify` and `receiz_artifact_extract_verified` for carried 
 
 ## Emulator fixture
 
-Run the current identity-artifact helper, native artifact round-trip, and artifact-substitution rejection contracts. Historical obsolete-versioned reconciliation fixtures are archival evidence only and are not a v110 operation contract.
+Run the current identity-artifact helper, native artifact round-trip, and artifact-substitution rejection contracts. Historical obsolete-versioned reconciliation fixtures are archival evidence only and are not a v111 operation contract.
 
-## v110 continuity recovery
+## v111 continuity recovery
 
 Use `artifacts.admitAndRecover` to verify exact bytes, classify authority, preserve parent-linked proof history, and project the latest authorized state offline. Report the plan digest, prior and next head, complete provenance, explicit actions, and non-authoritative explanation. Reconnect may append verified descendants only; it may not rewrite prior history or unknown application namespaces.
+
+## v111 artifact-derived authority
+
+Engineers remain free to build whatever they choose, but conforming Receiz receivers recognize authority only when every authority-bearing value is provably derived from independently verified artifact truth. Custom JavaScript objects, callbacks, normalized histories, local receipts, server rows, sessions, MCP memory, and AI explanations remain application data or inspection material; their shape never creates Receiz authority.
+
+Admission must retain and canonically reverify the exact enclosing artifact bytes under the complete frozen verifier context. Recovery-authoritative history requires explicit independently verified evidence roots and fails closed on divergent verified heads. Canonical identity and `canSign` require enclosing-owner binding, identity-owner binding, key identity, and a domain-separated private-key challenge. Recovery planning re-derives state from verified admission and verified history.
+
+Deterministic plan identity and unique execution-attempt identity are separate. MCP may reuse a confirmation digest only while the identical attempt is actively pending; committed and failed attempts are terminal and require a fresh confirmation. Expected authority failures are structured, immutable, machine-readable, and report zero writes.
+
+Historical sealed proof objects remain exact-byte verifiable evidence. Historical runtime admissions, histories, capabilities, plans, or confirmations cannot authorize a current v111 receiver; re-admit the historical artifact's exact bytes under the current verifier.

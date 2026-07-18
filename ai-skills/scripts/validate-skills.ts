@@ -151,8 +151,8 @@ const artifactSkills = [
   "receiz-release",
 ] as const;
 
-const artifactRegistryDigest = "824aa4af849c4840ba94535798eab36e45d514703b6ae0cd30d4aa53f3c896e4";
-const artifactLaws = Array.from({ length: 15 }, (_, index) => `ARTIFACT-${String(index + 1).padStart(3, "0")}`);
+const artifactRegistryDigest = "cf02d0bce6ad1541cfe84e27bfb1036777b29616bf8a1e5aeafb899a945e359a";
+const artifactLaws = Array.from({ length: 20 }, (_, index) => `ARTIFACT-${String(index + 1).padStart(3, "0")}`);
 const artifactSdkOperations = [
   "assets.createProofObject", "artifacts.download", "artifacts.verifyAndOpen", "artifacts.admit",
   "artifacts.planRecovery", "artifacts.admitAndRecover", "artifacts.commitRecovery",
@@ -347,13 +347,13 @@ function assertConstitutionalSkill(name: (typeof constitutionalSkills)[number]):
   for (const section of ["## Constitutional workflow", "## Machine contract", "## Quick reference", "## Common mistakes", "## Completion refusal", "## Example"]) {
     if (!text.includes(section)) fail(`${name}/SKILL.md missing section ${section}`);
   }
-  if (manifest.schema !== "receiz.ai-skill-contract.v110" || manifest.name !== name || manifest.version !== "110.0.0") {
+  if (manifest.schema !== "receiz.ai-skill-contract.v111" || manifest.name !== name || manifest.version !== "111.0.0") {
     fail(`${name}/manifest.json has invalid schema or name`);
   }
   const serialized = JSON.stringify(manifest);
   for (const required of [
-    ">=110.0.0 <111.0.0",
-    "824aa4af849c4840ba94535798eab36e45d514703b6ae0cd30d4aa53f3c896e4",
+    ">=111.0.0 <112.0.0",
+    "cf02d0bce6ad1541cfe84e27bfb1036777b29616bf8a1e5aeafb899a945e359a",
     "direct-state-write",
     "history-rewrite",
     "authority-bypass",
@@ -384,14 +384,14 @@ function assertOperationSkill(name: (typeof operationSkills)[number]): void {
     if (!text.includes(section)) fail(`${name}/SKILL.md missing section ${section}`);
   }
   if (!/```ts[\s\S]*createReceizClient[\s\S]*```/.test(text)) fail(`${name}/SKILL.md missing copy-paste TypeScript`);
-  if (manifest.schema !== "receiz.ai-skill-contract.v110" || manifest.name !== name || manifest.version !== "110.0.0") {
+  if (manifest.schema !== "receiz.ai-skill-contract.v111" || manifest.name !== name || manifest.version !== "111.0.0") {
     fail(`${name}/manifest.json has invalid schema, name, or version`);
   }
   const serialized = JSON.stringify(manifest);
   for (const required of [
-    ">=110.0.0 <111.0.0",
-    "110.0.0",
-    "824aa4af849c4840ba94535798eab36e45d514703b6ae0cd30d4aa53f3c896e4",
+    ">=111.0.0 <112.0.0",
+    "111.0.0",
+    "cf02d0bce6ad1541cfe84e27bfb1036777b29616bf8a1e5aeafb899a945e359a",
     "emulator-conformance",
     "release-lock-pass",
     "inspect-plan-simulate",
@@ -409,7 +409,7 @@ function assertOperationSkill(name: (typeof operationSkills)[number]): void {
       if (!serialized.includes(required)) fail(`${name}/manifest.json missing ${required}`);
     }
     if (/identity\.getProfile|identity\.restoreAccount|identity\.appendAccountState|continuity\.reconcile|continuity\.commit|offline\.createCommandQueue|offline\.executeOrQueue|proofHead\.get|receipts\.verify|identityKeyId|expectedOwnershipHead|claimantKeyId|receiz_proof_head_get|receiz_receipt_verify|receiz_continuity_sync_plan|receiz_continuity_sync_execute|media\.publishIdentityImage/.test(text + serialized)) {
-      fail(`${name} retains a retired obsolete-versioned prerequisite in the active v110 outcome`);
+      fail(`${name} retains a retired obsolete-versioned prerequisite in the active v111 outcome`);
     }
     if (/## Required proof head|## Receipt verification/.test(text)) {
       fail(`${name}/SKILL.md retains a retired obsolete-versioned current-outcome section`);
@@ -447,13 +447,13 @@ function assertArtifactSkill(name: (typeof artifactSkills)[number]): void {
     fail(`${name}/SKILL.md must refuse production-ready completion without evidence`);
   }
 
-  if (manifest.schema !== "receiz.ai-skill-contract.v110" || manifest.name !== name || manifest.version !== "110.0.0") {
-    fail(`${name}/manifest.json has invalid v110 schema, name, or version`);
+  if (manifest.schema !== "receiz.ai-skill-contract.v111" || manifest.name !== name || manifest.version !== "111.0.0") {
+    fail(`${name}/manifest.json has invalid v111 schema, name, or version`);
   }
-  if (requires?.ruleset !== "110.0.0" || requires.registryDigest !== artifactRegistryDigest) {
+  if (requires?.ruleset !== "111.0.0" || requires.registryDigest !== artifactRegistryDigest) {
     fail(`${name}/manifest.json has artifact registry or ruleset skew`);
   }
-  if (manifest.artifactLawVersion !== "110.0.0" || JSON.stringify(manifest.artifactLaws) !== JSON.stringify(artifactLaws)) {
+  if (manifest.artifactLawVersion !== "111.0.0" || JSON.stringify(manifest.artifactLaws) !== JSON.stringify(artifactLaws)) {
     fail(`${name}/manifest.json has artifact law version or law-set skew`);
   }
   const sdkOperations = Array.isArray(manifest.sdkOperations) ? manifest.sdkOperations : [];

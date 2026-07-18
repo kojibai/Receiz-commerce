@@ -1,14 +1,58 @@
 {
-  "schema": "receiz.ai-skill-contract.v110",
+  "schema": "receiz.ai-skill-contract.v111",
   "name": "receiz-offline-command",
-  "version": "110.0.0",
-  "requires": { "sdk": ">=110.0.0 <111.0.0", "mcp": ">=110.0.0 <111.0.0", "ruleset": "110.0.0", "registryDigest": "824aa4af849c4840ba94535798eab36e45d514703b6ae0cd30d4aa53f3c896e4" },
-  "laws": ["receiz.offline.transport-intent", "receiz.local-truth.immediate", "artifact.verify-before-extract"],
-  "sdkOperations": ["offline.createQueue", "artifacts.verifyAndOpen"],
-  "allowedTools": ["receiz_artifact_verify", "receiz_artifact_explain"],
-  "requiredScopes": ["receiz:record"],
-  "emulatorFixtures": ["offline-proof-replay", "durable-queue", "artifact-substitution-rejection"],
-  "forbiddenOperations": ["queued-as-committed", "transport-settled-as-admission", "payload-as-artifact", "cross-lane-blocking", "retired-proof-head-prerequisite", "authority-bypass"],
-  "requiredEvidence": ["queued-not-global-admission", "independent-artifact-verification", "emulator-conformance", "release-lock-pass"],
+  "version": "111.0.0",
+  "requires": {
+    "sdk": ">=111.0.0 <112.0.0",
+    "mcp": ">=111.0.0 <112.0.0",
+    "ruleset": "111.0.0",
+    "registryDigest": "cf02d0bce6ad1541cfe84e27bfb1036777b29616bf8a1e5aeafb899a945e359a"
+  },
+  "laws": [
+    "receiz.offline.transport-intent",
+    "receiz.local-truth.immediate",
+    "artifact.verify-before-extract"
+  ],
+  "sdkOperations": [
+    "offline.createQueue",
+    "artifacts.verifyAndOpen"
+  ],
+  "allowedTools": [
+    "receiz_artifact_verify",
+    "receiz_artifact_explain"
+  ],
+  "requiredScopes": [
+    "receiz:record"
+  ],
+  "emulatorFixtures": [
+    "offline-proof-replay",
+    "durable-queue",
+    "artifact-substitution-rejection"
+  ],
+  "forbiddenOperations": [
+    "queued-as-committed",
+    "transport-settled-as-admission",
+    "payload-as-artifact",
+    "cross-lane-blocking",
+    "retired-proof-head-prerequisite",
+    "authority-bypass",
+    "structural-object-as-authority",
+    "caller-verifier-as-history-authority",
+    "parseable-key-as-signing-authority",
+    "terminal-mcp-confirmation-reuse",
+    "historical-runtime-object-as-current-authority"
+  ],
+  "requiredEvidence": [
+    "queued-not-global-admission",
+    "independent-artifact-verification",
+    "emulator-conformance",
+    "release-lock-pass",
+    "canonical-exact-byte-readmission",
+    "complete-verifier-context-digest",
+    "independent-proof-history-evidence-roots",
+    "domain-separated-signing-challenge",
+    "distinct-plan-and-attempt-identities",
+    "structured-zero-write-failures"
+  ],
   "maximumAutonomousAuthority": "inspect-plan-simulate"
 }

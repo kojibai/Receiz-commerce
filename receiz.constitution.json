@@ -1,9 +1,9 @@
 {
   "schema": "receiz.constitution.registry.v1",
-  "version": "110.0.0",
-  "previousRegistryDigest": "824aa4af849c4840ba94535798eab36e45d514703b6ae0cd30d4aa53f3c896e4",
-  "effectiveKai": "13185897",
-  "createdAt": "2026-07-18T09:10:00.000Z",
+  "version": "111.0.0",
+  "previousRegistryDigest": "cf02d0bce6ad1541cfe84e27bfb1036777b29616bf8a1e5aeafb899a945e359a",
+  "effectiveKai": "13189908",
+  "createdAt": "2026-07-18T15:00:00.000Z",
   "laws": [
     {
       "id": "wilds.retirement.irreversible",
@@ -178,6 +178,108 @@
       "denial": {
         "code": "PROOF_EXPLANATION_NOT_AUTHORITY",
         "safeAlternatives": ["use-bounded-explanation-as-non-authoritative-projection", "retain-underlying-proof-object-as-authority"]
+      }
+    },
+    {
+      "id": "ARTIFACT-016",
+      "version": 1,
+      "phases": ["admission", "command"],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          { "op": "equal", "left": { "op": "path", "value": "operation.kind" }, "right": { "op": "literal", "value": "artifact-recovery" } },
+          {
+            "op": "any",
+            "values": [
+              { "op": "equal", "left": { "op": "path", "value": "proposed.structuralObjectCreatesAuthority" }, "right": { "op": "literal", "value": true } },
+              { "op": "not", "value": { "op": "equal", "left": { "op": "path", "value": "evidence.admissionDerivedFromCanonicalExactByteVerification" }, "right": { "op": "literal", "value": true } } },
+              { "op": "not", "value": { "op": "equal", "left": { "op": "path", "value": "evidence.admissionBasisIndependentlyRecomputed" }, "right": { "op": "literal", "value": true } } }
+            ]
+          }
+        ]
+      },
+      "denial": {
+        "code": "STRUCTURAL_ADMISSION_AUTHORITY_FORBIDDEN",
+        "safeAlternatives": ["reverify-sdk-retained-exact-artifact-bytes", "recompute-complete-admission-basis"]
+      }
+    },
+    {
+      "id": "ARTIFACT-017",
+      "version": 1,
+      "phases": ["admission", "merge", "command"],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          { "op": "equal", "left": { "op": "path", "value": "operation.kind" }, "right": { "op": "literal", "value": "artifact-recovery" } },
+          {
+            "op": "any",
+            "values": [
+              { "op": "equal", "left": { "op": "path", "value": "proposed.callerNormalizedHistoryCreatesAuthority" }, "right": { "op": "literal", "value": true } },
+              { "op": "not", "value": { "op": "equal", "left": { "op": "path", "value": "evidence.everyRecoveryHistoryNodeHasIndependentStrongerEvidenceRoot" }, "right": { "op": "literal", "value": true } } },
+              { "op": "equal", "left": { "op": "path", "value": "proposed.divergentVerifiedHeadsResolvedByPreference" }, "right": { "op": "literal", "value": true } }
+            ]
+          }
+        ]
+      },
+      "denial": {
+        "code": "VERIFIED_HISTORY_EVIDENCE_REQUIRED",
+        "safeAlternatives": ["admit-sealed-history-artifact", "fail-closed-on-divergent-heads"]
+      }
+    },
+    {
+      "id": "ARTIFACT-018",
+      "version": 1,
+      "phases": ["admission", "command"],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          { "op": "equal", "left": { "op": "path", "value": "proposed.verdict" }, "right": { "op": "literal", "value": "canonical-identity" } },
+          {
+            "op": "any",
+            "values": [
+              { "op": "not", "value": { "op": "equal", "left": { "op": "path", "value": "evidence.enclosingOwnerMatchesIdentityOwner" }, "right": { "op": "literal", "value": true } } },
+              { "op": "not", "value": { "op": "equal", "left": { "op": "path", "value": "evidence.keyIdentityVerified" }, "right": { "op": "literal", "value": true } } },
+              { "op": "not", "value": { "op": "equal", "left": { "op": "path", "value": "evidence.domainSeparatedPrivateKeyChallengeVerified" }, "right": { "op": "literal", "value": true } } }
+            ]
+          }
+        ]
+      },
+      "denial": {
+        "code": "COMPLETE_CANONICAL_IDENTITY_BINDING_REQUIRED",
+        "safeAlternatives": ["prove-private-key-control", "return-missing-authority-with-canSign-false"]
+      }
+    },
+    {
+      "id": "ARTIFACT-019",
+      "version": 1,
+      "phases": ["admission", "command", "merge", "migration"],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          { "op": "equal", "left": { "op": "path", "value": "operation.requestsCurrentAuthority" }, "right": { "op": "literal", "value": true } },
+          { "op": "not", "value": { "op": "equal", "left": { "op": "path", "value": "evidence.registryDigest" }, "right": { "op": "path", "value": "current.registryDigest" } } }
+        ]
+      },
+      "denial": {
+        "code": "STALE_OPERATIONAL_RELEASE_AUTHORITY",
+        "safeAlternatives": ["read-historical-proof-as-evidence", "readmit-exact-bytes-under-current-release"]
+      }
+    },
+    {
+      "id": "ARTIFACT-020",
+      "version": 1,
+      "phases": ["command"],
+      "denyWhen": {
+        "op": "any",
+        "values": [
+          { "op": "equal", "left": { "op": "path", "value": "proposed.mcpConfirmationReusedAfterCommit" }, "right": { "op": "literal", "value": true } },
+          { "op": "equal", "left": { "op": "path", "value": "proposed.mcpConfirmationReusedAfterFailure" }, "right": { "op": "literal", "value": true } },
+          { "op": "equal", "left": { "op": "path", "value": "proposed.planIdentityEqualsAttemptIdentity" }, "right": { "op": "literal", "value": true } }
+        ]
+      },
+      "denial": {
+        "code": "FRESH_MCP_ATTEMPT_IDENTITY_REQUIRED",
+        "safeAlternatives": ["reuse-only-actively-pending-identical-attempt", "issue-fresh-confirmation-after-terminal-outcome"]
       }
     },
     {

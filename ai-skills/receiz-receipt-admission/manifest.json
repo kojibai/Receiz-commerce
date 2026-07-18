@@ -1,14 +1,63 @@
 {
-  "schema": "receiz.ai-skill-contract.v110",
+  "schema": "receiz.ai-skill-contract.v111",
   "name": "receiz-receipt-admission",
-  "version": "110.0.0",
-  "requires": { "sdk": ">=110.0.0 <111.0.0", "mcp": ">=110.0.0 <111.0.0", "ruleset": "110.0.0", "registryDigest": "824aa4af849c4840ba94535798eab36e45d514703b6ae0cd30d4aa53f3c896e4" },
-  "laws": ["artifact.complete-object-custody", "artifact.verify-before-extract", "developer-evidence.additive-only", "receiz.stronger-truth.sealed-artifact"],
-  "sdkOperations": ["artifacts.verifyAndOpen", "artifacts.admit", "artifacts.planRecovery", "artifacts.commitRecovery"],
-  "allowedTools": ["receiz_artifact_verify", "receiz_artifact_round_trip_check", "receiz_artifact_explain", "receiz_artifact_admit", "receiz_artifact_recovery_plan", "receiz_artifact_recovery_commit"],
+  "version": "111.0.0",
+  "requires": {
+    "sdk": ">=111.0.0 <112.0.0",
+    "mcp": ">=111.0.0 <112.0.0",
+    "ruleset": "111.0.0",
+    "registryDigest": "cf02d0bce6ad1541cfe84e27bfb1036777b29616bf8a1e5aeafb899a945e359a"
+  },
+  "laws": [
+    "artifact.complete-object-custody",
+    "artifact.verify-before-extract",
+    "developer-evidence.additive-only",
+    "receiz.stronger-truth.sealed-artifact"
+  ],
+  "sdkOperations": [
+    "artifacts.verifyAndOpen",
+    "artifacts.admit",
+    "artifacts.planRecovery",
+    "artifacts.commitRecovery"
+  ],
+  "allowedTools": [
+    "receiz_artifact_verify",
+    "receiz_artifact_round_trip_check",
+    "receiz_artifact_explain",
+    "receiz_artifact_admit",
+    "receiz_artifact_recovery_plan",
+    "receiz_artifact_recovery_commit"
+  ],
   "requiredScopes": [],
-  "emulatorFixtures": ["native-artifact-round-trip", "artifact-substitution-rejection"],
-  "forbiddenOperations": ["receipt-as-current-authority", "plan-as-admission", "receipt-repair", "queued-as-committed", "retired-proof-head-prerequisite", "authority-bypass"],
-  "requiredEvidence": ["complete-artifact-verification", "exact-artifact-byte-identity", "independent-artifact-verification", "emulator-conformance", "release-lock-pass"],
+  "emulatorFixtures": [
+    "native-artifact-round-trip",
+    "artifact-substitution-rejection"
+  ],
+  "forbiddenOperations": [
+    "receipt-as-current-authority",
+    "plan-as-admission",
+    "receipt-repair",
+    "queued-as-committed",
+    "retired-proof-head-prerequisite",
+    "authority-bypass",
+    "structural-object-as-authority",
+    "caller-verifier-as-history-authority",
+    "parseable-key-as-signing-authority",
+    "terminal-mcp-confirmation-reuse",
+    "historical-runtime-object-as-current-authority"
+  ],
+  "requiredEvidence": [
+    "complete-artifact-verification",
+    "exact-artifact-byte-identity",
+    "independent-artifact-verification",
+    "emulator-conformance",
+    "release-lock-pass",
+    "canonical-exact-byte-readmission",
+    "complete-verifier-context-digest",
+    "independent-proof-history-evidence-roots",
+    "domain-separated-signing-challenge",
+    "distinct-plan-and-attempt-identities",
+    "structured-zero-write-failures"
+  ],
   "maximumAutonomousAuthority": "inspect-plan-simulate"
 }

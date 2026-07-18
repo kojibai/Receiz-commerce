@@ -2,6 +2,14 @@
 
 All notable changes to Receiz Commerce Kit will be documented here.
 
+## 4.4.0 - Receiz v111 Artifact-Derived Authority
+
+- Upgraded SDK, MCP server, and all thirty-one AI skills to exact official `111.0.0` vendored artifacts with lockfile and release-lock parity.
+- Bound artifact admission to canonical retained exact bytes and independently recomputed admission proof instead of trusting structural SDK objects.
+- Required independent stronger evidence roots for recovered history, fail-closed divergent heads, and complete owner/key/domain-separated signing-challenge evidence for canonical identity.
+- Chained application law to the canonical v111 registry and adopted `ARTIFACT-016` through `ARTIFACT-020`, including current-registry authority and fresh MCP attempt identities.
+- Replaced v110 release and migration gates with v111 package, registry-chain, authority-encoding, MCP-attempt, AI-skill, CLI, conformance, history-evidence, and preservation checks.
+
 ## 4.3.0 - Receiz v110 Unified Admission and Recovery
 
 - Upgraded SDK, MCP server, and all thirty-one AI skills to exact official `110.0.0` vendored artifacts with lockfile and release-lock parity.

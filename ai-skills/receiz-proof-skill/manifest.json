@@ -1,14 +1,14 @@
 {
-  "schema": "receiz.ai-skill-contract.v110",
+  "schema": "receiz.ai-skill-contract.v111",
   "name": "receiz-proof-skill",
-  "version": "110.0.0",
+  "version": "111.0.0",
   "requires": {
-    "sdk": ">=110.0.0 <111.0.0",
-    "mcp": ">=110.0.0 <111.0.0",
-    "ruleset": "110.0.0",
-    "registryDigest": "824aa4af849c4840ba94535798eab36e45d514703b6ae0cd30d4aa53f3c896e4"
+    "sdk": ">=111.0.0 <112.0.0",
+    "mcp": ">=111.0.0 <112.0.0",
+    "ruleset": "111.0.0",
+    "registryDigest": "cf02d0bce6ad1541cfe84e27bfb1036777b29616bf8a1e5aeafb899a945e359a"
   },
-  "artifactLawVersion": "110.0.0",
+  "artifactLawVersion": "111.0.0",
   "artifactLaws": [
     "ARTIFACT-001",
     "ARTIFACT-002",
@@ -24,7 +24,12 @@
     "ARTIFACT-012",
     "ARTIFACT-013",
     "ARTIFACT-014",
-    "ARTIFACT-015"
+    "ARTIFACT-015",
+    "ARTIFACT-016",
+    "ARTIFACT-017",
+    "ARTIFACT-018",
+    "ARTIFACT-019",
+    "ARTIFACT-020"
   ],
   "laws": [
     "receiz.artifact.sealed-truth",
@@ -61,7 +66,12 @@
     "hidden-recovery-mutation",
     "explanation-as-authority",
     "raw-capability-authority",
-    "card-payload-admission"
+    "card-payload-admission",
+    "structural-object-as-authority",
+    "caller-verifier-as-history-authority",
+    "parseable-key-as-signing-authority",
+    "terminal-mcp-confirmation-reuse",
+    "historical-runtime-object-as-current-authority"
   ],
   "requiredInputs": [
     "installed-sdk-version",
@@ -89,7 +99,13 @@
     "zero-network-read-only-coordinator",
     "atomic-recovery-commit",
     "operation-identity-parity",
-    "multi-application-convergence"
+    "multi-application-convergence",
+    "canonical-exact-byte-readmission",
+    "complete-verifier-context-digest",
+    "independent-proof-history-evidence-roots",
+    "domain-separated-signing-challenge",
+    "distinct-plan-and-attempt-identities",
+    "structured-zero-write-failures"
   ],
   "requiredCompletionFields": [
     "sdk-version",
@@ -118,7 +134,7 @@
     "release-lock-pass",
     "zero-network-verification",
     "local-verifier-result",
-    "v110-admission-recovery-conformance",
+    "v111-artifact-authority-conformance",
     "no-hidden-mutation",
     "explanation-remains-non-authoritative"
   ],

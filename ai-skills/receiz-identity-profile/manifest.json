@@ -1,14 +1,61 @@
 {
-  "schema": "receiz.ai-skill-contract.v110",
+  "schema": "receiz.ai-skill-contract.v111",
   "name": "receiz-identity-profile",
-  "version": "110.0.0",
-  "requires": { "sdk": ">=110.0.0 <111.0.0", "mcp": ">=110.0.0 <111.0.0", "ruleset": "110.0.0", "registryDigest": "824aa4af849c4840ba94535798eab36e45d514703b6ae0cd30d4aa53f3c896e4" },
-  "laws": ["receiz.identity.continuity", "receiz.profile.same-account-uid", "receiz.profile.commit-time-username-uniqueness"],
-  "sdkOperations": ["identity.checkUsernameAvailability", "profile.update", "artifacts.admit", "artifacts.planRecovery", "artifacts.commitRecovery"],
-  "allowedTools": ["receiz_identity_profile_update_plan", "receiz_identity_profile_update_execute", "receiz_artifact_admit", "receiz_artifact_recovery_plan", "receiz_artifact_recovery_commit"],
-  "requiredScopes": ["profile"],
-  "emulatorFixtures": ["username-race"],
-  "forbiddenOperations": ["direct-state-write", "identity-replacement", "identity-key-prerequisite", "caller-proof-head-prerequisite", "receipt-authority", "authority-bypass"],
-  "requiredEvidence": ["same-account-uid-result", "emulator-conformance", "release-lock-pass"],
+  "version": "111.0.0",
+  "requires": {
+    "sdk": ">=111.0.0 <112.0.0",
+    "mcp": ">=111.0.0 <112.0.0",
+    "ruleset": "111.0.0",
+    "registryDigest": "cf02d0bce6ad1541cfe84e27bfb1036777b29616bf8a1e5aeafb899a945e359a"
+  },
+  "laws": [
+    "receiz.identity.continuity",
+    "receiz.profile.same-account-uid",
+    "receiz.profile.commit-time-username-uniqueness"
+  ],
+  "sdkOperations": [
+    "identity.checkUsernameAvailability",
+    "profile.update",
+    "artifacts.admit",
+    "artifacts.planRecovery",
+    "artifacts.commitRecovery"
+  ],
+  "allowedTools": [
+    "receiz_identity_profile_update_plan",
+    "receiz_identity_profile_update_execute",
+    "receiz_artifact_admit",
+    "receiz_artifact_recovery_plan",
+    "receiz_artifact_recovery_commit"
+  ],
+  "requiredScopes": [
+    "profile"
+  ],
+  "emulatorFixtures": [
+    "username-race"
+  ],
+  "forbiddenOperations": [
+    "direct-state-write",
+    "identity-replacement",
+    "identity-key-prerequisite",
+    "caller-proof-head-prerequisite",
+    "receipt-authority",
+    "authority-bypass",
+    "structural-object-as-authority",
+    "caller-verifier-as-history-authority",
+    "parseable-key-as-signing-authority",
+    "terminal-mcp-confirmation-reuse",
+    "historical-runtime-object-as-current-authority"
+  ],
+  "requiredEvidence": [
+    "same-account-uid-result",
+    "emulator-conformance",
+    "release-lock-pass",
+    "canonical-exact-byte-readmission",
+    "complete-verifier-context-digest",
+    "independent-proof-history-evidence-roots",
+    "domain-separated-signing-challenge",
+    "distinct-plan-and-attempt-identities",
+    "structured-zero-write-failures"
+  ],
   "maximumAutonomousAuthority": "inspect-plan-simulate"
 }

@@ -53,6 +53,7 @@ import {
   type ReceizArtifactRecoveryCommitResult,
   type ReceizArtifactRecoveryPlan,
   type ReceizArtifactRecoveryResult,
+  type ReceizAuthorityFailure,
   type ReceizAdmissionStore,
   type ReceizBearerArtifactClaimInput,
   type ReceizOpenedArtifact,
@@ -154,7 +155,7 @@ export type ReceizCommerceAdapter = {
   planArtifactRecovery(
     admission: ReceizArtifactAdmissionResult,
     knownHistory?: ReceizProofHistory
-  ): Promise<ReceizArtifactRecoveryPlan | null>;
+  ): Promise<ReceizArtifactRecoveryPlan | ReceizAuthorityFailure | null>;
   admitAndRecoverArtifact(file: Blob, context?: ReceizArtifactAdmissionContext): Promise<ReceizArtifactRecoveryResult>;
   commitArtifactRecovery(
     plan: ReceizArtifactRecoveryPlan,

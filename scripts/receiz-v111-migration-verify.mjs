@@ -3,8 +3,8 @@ import { createHash } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 
-const RECEIZ_SDK_VERSION = "110.0.0";
-const RECEIZ_V110_REGISTRY_DIGEST = "824aa4af849c4840ba94535798eab36e45d514703b6ae0cd30d4aa53f3c896e4";
+const RECEIZ_SDK_VERSION = "111.0.0";
+const RECEIZ_V111_REGISTRY_DIGEST = "cf02d0bce6ad1541cfe84e27bfb1036777b29616bf8a1e5aeafb899a945e359a";
 
 function canonicalize(value) {
   if (value === null || typeof value === "string" || typeof value === "boolean" || typeof value === "number") return JSON.stringify(value);
@@ -29,7 +29,7 @@ function inspectOfficialUpgrade(root) {
     encoding: "utf8",
     maxBuffer: 64 * 1024 * 1024,
   });
-  if (result.status !== 0) throw new Error(`receiz_v110_upgrade_inspection_failed:${result.stderr || result.stdout}`);
+  if (result.status !== 0) throw new Error(`receiz_v111_upgrade_inspection_failed:${result.stderr || result.stdout}`);
   return JSON.parse(result.stdout);
 }
 
@@ -38,29 +38,34 @@ const root = resolve(optionValue(args, "--root") ?? process.cwd());
 const plan = inspectOfficialUpgrade(root);
 const pkg = json(join(root, "package.json"));
 const registry = json(join(root, "receiz.constitution.json"));
-const attestation = json(join(root, "receiz.migration.v109-v110.json"));
+const attestation = json(join(root, "receiz.migration.v110-v111.json"));
 const appRegistryDigest = createHash("sha256").update(canonicalize(registry)).digest("hex");
 const packageNames = ["@receiz/sdk", "@receiz/mcp-server", "@receiz/ai-skills"];
 
 const checks = [
-  { id: "official-v110-upgrade-inspection", ok: plan.schema === "receiz.app.upgrade_plan.v1" && plan.targetVersion === RECEIZ_SDK_VERSION },
+  { id: "official-v111-upgrade-inspection", ok: plan.schema === "receiz.app.upgrade_plan.v1" && plan.targetVersion === RECEIZ_SDK_VERSION },
   { id: "integration-compliant", ok: plan.actions.length === 0 && plan.findings.every((finding) => finding.disposition === "satisfied") },
   { id: "packages-exact", ok: packageNames.every((name) => pkg.dependencies?.[name] === RECEIZ_SDK_VERSION) },
   { id: "registry-valid", ok: registry.schema === "receiz.constitution.registry.v1" && registry.version === RECEIZ_SDK_VERSION && Array.isArray(registry.laws) && registry.laws.length > 0 },
-  { id: "registry-chains-canonical-v110", ok: registry.previousRegistryDigest === RECEIZ_V110_REGISTRY_DIGEST },
-  { id: "unified-artifact-admission-law", ok: registry.laws.some((law) => law.id === "ARTIFACT-012" && law.denial?.code === "COMPLETE_ARTIFACT_ADMISSION_REQUIRED") },
-  { id: "bearer-authority-law", ok: registry.laws.some((law) => law.id === "ARTIFACT-013" && law.denial?.code === "BEARER_AUTHORITY_ESCALATION_FORBIDDEN") },
-  { id: "atomic-recovery-law", ok: registry.laws.some((law) => law.id === "ARTIFACT-014" && law.denial?.code === "ATOMIC_CAPABILITY_RECOVERY_COMMIT_REQUIRED") },
-  { id: "explanation-authority-law", ok: registry.laws.some((law) => law.id === "ARTIFACT-015" && law.denial?.code === "PROOF_EXPLANATION_NOT_AUTHORITY") },
+  { id: "registry-chains-canonical-v111", ok: registry.previousRegistryDigest === RECEIZ_V111_REGISTRY_DIGEST },
+  { id: "structural-authority-law", ok: registry.laws.some((law) => law.id === "ARTIFACT-016" && law.denial?.code === "STRUCTURAL_ADMISSION_AUTHORITY_FORBIDDEN") },
+  { id: "verified-history-law", ok: registry.laws.some((law) => law.id === "ARTIFACT-017" && law.denial?.code === "VERIFIED_HISTORY_EVIDENCE_REQUIRED") },
+  { id: "canonical-identity-law", ok: registry.laws.some((law) => law.id === "ARTIFACT-018" && law.denial?.code === "COMPLETE_CANONICAL_IDENTITY_BINDING_REQUIRED") },
+  { id: "current-registry-law", ok: registry.laws.some((law) => law.id === "ARTIFACT-019" && law.denial?.code === "STALE_OPERATIONAL_RELEASE_AUTHORITY") },
+  { id: "fresh-mcp-attempt-law", ok: registry.laws.some((law) => law.id === "ARTIFACT-020" && law.denial?.code === "FRESH_MCP_ATTEMPT_IDENTITY_REQUIRED") },
   { id: "app-registry-attested", ok: attestation.appRegistryDigest === appRegistryDigest },
   { id: "history-not-rewritten", ok: attestation.historyRewritten === false },
-  { id: "unified-artifact-admission", ok: attestation.unifiedArtifactAdmission === true },
-  { id: "verify-before-classification", ok: attestation.completeArtifactVerifiedBeforeClassification === true },
-  { id: "bearer-authority-not-escalated", ok: attestation.bearerAuthorityEscalationAllowed === false },
+  { id: "canonical-exact-byte-admission", ok: attestation.admissionDerivedFromCanonicalExactBytes === true },
+  { id: "admission-basis-recomputed", ok: attestation.admissionBasisIndependentlyRecomputed === true },
+  { id: "verified-history-evidence-roots", ok: attestation.recoveryHistoryRequiresIndependentEvidenceRoots === true },
+  { id: "divergent-heads-fail-closed", ok: attestation.divergentVerifiedHeadsResolvedByPreference === false },
+  { id: "canonical-identity-signing-challenge", ok: attestation.canonicalIdentityRequiresSigningChallenge === true },
+  { id: "current-registry-required", ok: attestation.currentAuthorityRequiresCurrentRegistryDigest === true },
+  { id: "plan-attempt-identity-distinct", ok: attestation.planIdentityDistinctFromAttemptIdentity === true },
+  { id: "terminal-confirmation-not-reusable", ok: attestation.terminalMcpAttemptConfirmationReusable === false },
   { id: "recovery-plan-not-authority", ok: attestation.recoveryPlanIsProofAuthority === false },
   { id: "proof-explanation-not-authority", ok: attestation.proofExplanationIsProofAuthority === false },
   { id: "recovery-capability-required", ok: attestation.recoveryCommitRequiresVerifiedCapability === true },
-  { id: "recovery-idempotency-required", ok: attestation.recoveryCommitRequiresStableIdempotencyKey === true },
   { id: "recovery-atomic", ok: attestation.recoveryCommitAtomic === true },
   { id: "zero-network-local-verification", ok: attestation.localArtifactVerificationNetworkCalls === 0 },
   { id: "database-unchanged", ok: attestation.databaseChanged === false },
@@ -69,10 +74,10 @@ const checks = [
 
 const report = {
   ok: checks.every((check) => check.ok),
-  schema: "receiz.repository.v109-v110.migration-verification.v1",
+  schema: "receiz.repository.v110-v111.migration-verification.v1",
   sdkVersion: RECEIZ_SDK_VERSION,
   mode: "audited-app-upgrade",
-  canonicalRegistryDigest: RECEIZ_V110_REGISTRY_DIGEST,
+  canonicalRegistryDigest: RECEIZ_V111_REGISTRY_DIGEST,
   appRegistryDigest,
   actionsPending: plan.actions.length,
   historyRewritten: false,

@@ -1,3 +1,19 @@
+# Receiz Commerce Kit v4.4.0 — Artifact-Derived Authority
+
+Release date: July 18, 2026
+
+Status: General Availability · repository release
+
+SDK target: `@receiz/sdk@111.0.0`
+
+V4.4 aligns the SDK, MCP server, and thirty-one-skill stack at the official v111 release. Admission authority is now derived from canonical retained exact bytes and an independently recomputed admission proof. Structural SDK objects cannot grant authority by their shape alone, recovered history nodes require independent stronger evidence roots, and divergent verified heads fail closed rather than resolving by caller preference.
+
+Canonical identity now requires complete enclosing-owner, key-identity, and domain-separated private-key challenge evidence. Current operational authority requires the v111 registry digest. MCP plan identity is distinct from attempt identity, and confirmation cannot be reused after a committed or failed terminal attempt.
+
+The app law overlay chains to the canonical v111 registry and adds `ARTIFACT-016` through `ARTIFACT-020`. Exact official tarball integrity, lockfile parity, all twenty canonical artifact laws, coordinated MCP tools, v111 AI-skill contracts, official conformance, the v110→v111 attestation, tests, typecheck, lint, production build, secret scan, and SDK doctor remain release gates.
+
+---
+
 # Receiz Commerce Kit v4.3.0 — Unified Artifact Admission and Recovery
 
 Release date: July 18, 2026

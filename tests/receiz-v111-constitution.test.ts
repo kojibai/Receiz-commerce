@@ -1,5 +1,5 @@
 import {
-  RECEIZ_V110_REGISTRY_DIGEST,
+  RECEIZ_V111_REGISTRY_DIGEST,
   createReceizCausalRecord,
   digestReceizConstitution,
   evaluateReceizLawSet,
@@ -21,27 +21,27 @@ import {
 
 const registry = JSON.parse(readFileSync("receiz.constitution.json", "utf8")) as ReceizConstitutionRegistry;
 
-describe("Receiz v110 constitutional alignment", () => {
+describe("Receiz v111 constitutional alignment", () => {
   it("pins the exact validated registry digest used by SDK, MCP, and the app", async () => {
     assert.equal(validateReceizConstitutionRegistry(registry).ok, true);
     const appRegistryDigest = await digestReceizConstitution(registry);
-    assert.equal(registry.previousRegistryDigest, RECEIZ_V110_REGISTRY_DIGEST);
+    assert.equal(registry.previousRegistryDigest, RECEIZ_V111_REGISTRY_DIGEST);
     const context = createReceizConstitutionalContext({
-      registryDigest: RECEIZ_V110_REGISTRY_DIGEST,
+      registryDigest: RECEIZ_V111_REGISTRY_DIGEST,
       applicableLaws: registry.laws.map((law) => law.id),
       authorityBoundary: { profile: "global-shared", tenantRequired: true },
       stateMachine: { initial: "claimed", states: ["claimed", "admitted", "denied"], transitions: [{ command: "wilds.arena.sync", from: "claimed", to: "admitted" }] },
       allowedCommands: ["wilds.arena.sync"],
     });
-    assert.equal(context.registryDigest, RECEIZ_V110_REGISTRY_DIGEST);
+    assert.equal(context.registryDigest, RECEIZ_V111_REGISTRY_DIGEST);
     assert.deepEqual(context.forbiddenMutations, ["direct-state-write", "history-rewrite", "authority-bypass"]);
     assert.deepEqual(await verifyReceizAppConstitution(), {
       ok: true,
-      registryDigest: RECEIZ_V110_REGISTRY_DIGEST,
+      registryDigest: RECEIZ_V111_REGISTRY_DIGEST,
       appRegistryDigest,
-      rulesetVersion: "110.0.0",
+      rulesetVersion: "111.0.0",
     });
-    assert.equal(RECEIZ_APP_CONSTITUTION.version, "110.0.0");
+    assert.equal(RECEIZ_APP_CONSTITUTION.version, "111.0.0");
   });
 
   it("enforces retirement, command-only mutation, and local verification through executable law", async () => {
@@ -65,20 +65,31 @@ describe("Receiz v110 constitutional alignment", () => {
     assert.equal(unsafeCommit.denials.some((denial) => denial.code === "ATOMIC_CAPABILITY_RECOVERY_COMMIT_REQUIRED"), true);
     const authoritativeExplanation = await evaluateReceizAppLaws({ phase: "merge", context: { proposed: { explanationIsProofAuthority: true } } });
     assert.equal(authoritativeExplanation.denials.some((denial) => denial.code === "PROOF_EXPLANATION_NOT_AUTHORITY"), true);
+
+    const structuralAuthority = await evaluateReceizAppLaws({ phase: "admission", context: { operation: { kind: "artifact-recovery" }, evidence: { admissionDerivedFromCanonicalExactByteVerification: false, admissionBasisIndependentlyRecomputed: false }, proposed: { structuralObjectCreatesAuthority: true } } });
+    assert.equal(structuralAuthority.denials.some((denial) => denial.code === "STRUCTURAL_ADMISSION_AUTHORITY_FORBIDDEN"), true);
+    const unverifiedHistory = await evaluateReceizAppLaws({ phase: "merge", context: { operation: { kind: "artifact-recovery" }, evidence: { everyRecoveryHistoryNodeHasIndependentStrongerEvidenceRoot: false }, proposed: { callerNormalizedHistoryCreatesAuthority: true, divergentVerifiedHeadsResolvedByPreference: true } } });
+    assert.equal(unverifiedHistory.denials.some((denial) => denial.code === "VERIFIED_HISTORY_EVIDENCE_REQUIRED"), true);
+    const incompleteIdentity = await evaluateReceizAppLaws({ phase: "admission", context: { evidence: { enclosingOwnerMatchesIdentityOwner: true, keyIdentityVerified: false, domainSeparatedPrivateKeyChallengeVerified: false }, proposed: { verdict: "canonical-identity" } } });
+    assert.equal(incompleteIdentity.denials.some((denial) => denial.code === "COMPLETE_CANONICAL_IDENTITY_BINDING_REQUIRED"), true);
+    const staleAuthority = await evaluateReceizAppLaws({ phase: "command", context: { operation: { requestsCurrentAuthority: true }, evidence: { registryDigest: "stale" }, current: { registryDigest: RECEIZ_V111_REGISTRY_DIGEST } } });
+    assert.equal(staleAuthority.denials.some((denial) => denial.code === "STALE_OPERATIONAL_RELEASE_AUTHORITY"), true);
+    const reusedConfirmation = await evaluateReceizAppLaws({ phase: "command", context: { proposed: { mcpConfirmationReusedAfterCommit: true, mcpConfirmationReusedAfterFailure: false, planIdentityEqualsAttemptIdentity: false } } });
+    assert.equal(reusedConfirmation.denials.some((denial) => denial.code === "FRESH_MCP_ATTEMPT_IDENTITY_REQUIRED"), true);
   });
 
-  it("binds causal history and resumable checkpoints to the same v110 registry", async () => {
+  it("binds causal history and resumable checkpoints to the same v111 registry", async () => {
     const history = createReceizAppCausalHistory({ verifyAdmissionReceipt: () => false });
-    assert.equal(history.registryDigest, RECEIZ_V110_REGISTRY_DIGEST);
+    assert.equal(history.registryDigest, RECEIZ_V111_REGISTRY_DIGEST);
     assert.deepEqual(history.records(), []);
     assert.deepEqual(history.heads(), []);
-    assert.equal(await history.historyRoot(), await digestReceizConstitution({ schema: "receiz.causal.history-root.v1", registryDigest: RECEIZ_V110_REGISTRY_DIGEST, records: [], heads: [] }));
+    assert.equal(await history.historyRoot(), await digestReceizConstitution({ schema: "receiz.causal.history-root.v1", registryDigest: RECEIZ_V111_REGISTRY_DIGEST, records: [], heads: [] }));
     const checkpoint = await checkpointReceizAppCausalHistory(history);
     const resumed = await verifyReceizAppCausalCheckpoint(checkpoint, history);
     assert.equal(resumed.ok, true);
     assert.equal((resumed as { checkpoint: { historyRoot: string } }).checkpoint.historyRoot, checkpoint.historyRoot);
     const record = await createReceizCausalRecord({
-      registryDigest: RECEIZ_V110_REGISTRY_DIGEST,
+      registryDigest: RECEIZ_V111_REGISTRY_DIGEST,
       aggregateId: "card:living-1",
       kaiPulse: "1",
       parentDigests: [],

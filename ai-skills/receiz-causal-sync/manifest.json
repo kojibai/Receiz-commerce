@@ -1,12 +1,12 @@
 {
-  "schema": "receiz.ai-skill-contract.v110",
+  "schema": "receiz.ai-skill-contract.v111",
   "name": "receiz-causal-sync",
-  "version": "110.0.0",
+  "version": "111.0.0",
   "requires": {
-    "sdk": ">=110.0.0 <111.0.0",
-    "mcp": ">=110.0.0 <111.0.0",
-    "ruleset": "110.0.0",
-    "registryDigest": "824aa4af849c4840ba94535798eab36e45d514703b6ae0cd30d4aa53f3c896e4"
+    "sdk": ">=111.0.0 <112.0.0",
+    "mcp": ">=111.0.0 <112.0.0",
+    "ruleset": "111.0.0",
+    "registryDigest": "cf02d0bce6ad1541cfe84e27bfb1036777b29616bf8a1e5aeafb899a945e359a"
   },
   "laws": [
     "receiz.merge.causal",
@@ -23,7 +23,12 @@
   "forbiddenOperations": [
     "direct-state-write",
     "history-rewrite",
-    "authority-bypass"
+    "authority-bypass",
+    "structural-object-as-authority",
+    "caller-verifier-as-history-authority",
+    "parseable-key-as-signing-authority",
+    "terminal-mcp-confirmation-reuse",
+    "historical-runtime-object-as-current-authority"
   ],
   "requiredInputs": [
     "repository-root",
@@ -39,7 +44,13 @@
     "replay-equivalence",
     "compatibility",
     "mcp-conformance",
-    "independent-verifier"
+    "independent-verifier",
+    "canonical-exact-byte-readmission",
+    "complete-verifier-context-digest",
+    "independent-proof-history-evidence-roots",
+    "domain-separated-signing-challenge",
+    "distinct-plan-and-attempt-identities",
+    "structured-zero-write-failures"
   ],
   "completionCriteria": [
     "written-implementation-contract",

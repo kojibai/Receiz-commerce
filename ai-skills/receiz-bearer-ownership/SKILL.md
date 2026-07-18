@@ -68,6 +68,16 @@ The active MCP path calls `client.artifacts.verifyAndOpen(completeFile)`, then `
 
 Run `generic-bearer-transfer` and `previous-owner-projection-invalidation` across qualifying artifact families. Require the prior ownership reference to come from carried verified proof and the output to be a native sealed artifact.
 
-## v110 recovery authority
+## v111 recovery authority
 
 Call `artifacts.admit` before recovery planning. A `bearer-recovery` verdict may report `canRestore` or a capability-gated `canClaimOwnership`, but it must report `canSign: false`, `canPublish: false`, and `canSettle: false`. Possession never becomes canonical identity. Commit only an SDK-issued plan through a runtime-verified capability, stable idempotency key, expected head, and atomic local store.
+
+## v111 artifact-derived authority
+
+Engineers remain free to build whatever they choose, but conforming Receiz receivers recognize authority only when every authority-bearing value is provably derived from independently verified artifact truth. Custom JavaScript objects, callbacks, normalized histories, local receipts, server rows, sessions, MCP memory, and AI explanations remain application data or inspection material; their shape never creates Receiz authority.
+
+Admission must retain and canonically reverify the exact enclosing artifact bytes under the complete frozen verifier context. Recovery-authoritative history requires explicit independently verified evidence roots and fails closed on divergent verified heads. Canonical identity and `canSign` require enclosing-owner binding, identity-owner binding, key identity, and a domain-separated private-key challenge. Recovery planning re-derives state from verified admission and verified history.
+
+Deterministic plan identity and unique execution-attempt identity are separate. MCP may reuse a confirmation digest only while the identical attempt is actively pending; committed and failed attempts are terminal and require a fresh confirmation. Expected authority failures are structured, immutable, machine-readable, and report zero writes.
+
+Historical sealed proof objects remain exact-byte verifiable evidence. Historical runtime admissions, histories, capabilities, plans, or confirmations cannot authorize a current v111 receiver; re-admit the historical artifact's exact bytes under the current verifier.

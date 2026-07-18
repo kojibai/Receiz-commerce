@@ -5,7 +5,7 @@ description: Use when inspecting admission evidence while preserving the rule th
 
 # Receiz Receipt Admission
 
-Current admission evidence begins with the complete verified proof object. Historical receipts may remain immutable witnesses of the law and digest they recorded, but they do not authorize or qualify a current v110 outcome.
+Current admission evidence begins with the complete verified proof object. Historical receipts may remain immutable witnesses of the law and digest they recorded, but they do not authorize or qualify a current v111 outcome.
 
 ## Exact SDK operation
 
@@ -54,12 +54,22 @@ Read-only verification requires no confirmation. Any mutation that creates a new
 
 ## MCP parity
 
-Use `receiz_artifact_verify`, `receiz_artifact_round_trip_check`, and `receiz_artifact_explain`. They share the current SDK verifier and cannot authorize mutation. Do not call retired proof-head or receipt tools for a v110 outcome.
+Use `receiz_artifact_verify`, `receiz_artifact_round_trip_check`, and `receiz_artifact_explain`. They share the current SDK verifier and cannot authorize mutation. Do not call retired proof-head or receipt tools for a v111 outcome.
 
 ## Emulator fixture
 
 Run the current native artifact round-trip and cross-boundary substitution rejection contracts. Historical receipt fixtures remain historical evidence only.
 
-## v110 migration and recovery receipts
+## v111 migration and recovery receipts
 
-A v110 legacy admission receipt states exactly what bytes and provenance were preserved, what authority is granted, and what remains read-only. The receipt and bounded explanation are evidence projections, never authority. Recovery mutation requires the SDK-issued plan, verified capability, stable operation identity, expected head, and one atomic commit.
+A v111 legacy admission receipt states exactly what bytes and provenance were preserved, what authority is granted, and what remains read-only. The receipt and bounded explanation are evidence projections, never authority. Recovery mutation requires the SDK-issued plan, verified capability, stable operation identity, expected head, and one atomic commit.
+
+## v111 artifact-derived authority
+
+Engineers remain free to build whatever they choose, but conforming Receiz receivers recognize authority only when every authority-bearing value is provably derived from independently verified artifact truth. Custom JavaScript objects, callbacks, normalized histories, local receipts, server rows, sessions, MCP memory, and AI explanations remain application data or inspection material; their shape never creates Receiz authority.
+
+Admission must retain and canonically reverify the exact enclosing artifact bytes under the complete frozen verifier context. Recovery-authoritative history requires explicit independently verified evidence roots and fails closed on divergent verified heads. Canonical identity and `canSign` require enclosing-owner binding, identity-owner binding, key identity, and a domain-separated private-key challenge. Recovery planning re-derives state from verified admission and verified history.
+
+Deterministic plan identity and unique execution-attempt identity are separate. MCP may reuse a confirmation digest only while the identical attempt is actively pending; committed and failed attempts are terminal and require a fresh confirmation. Expected authority failures are structured, immutable, machine-readable, and report zero writes.
+
+Historical sealed proof objects remain exact-byte verifiable evidence. Historical runtime admissions, histories, capabilities, plans, or confirmations cannot authorize a current v111 receiver; re-admit the historical artifact's exact bytes under the current verifier.
