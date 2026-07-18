@@ -1,60 +1,61 @@
 ---
 name: receiz-receipt-admission
-description: Use when verifying a v107 canonical admission receipt, checking proof-head continuity, or refusing tampered and mismatched outcomes.
+description: Use when inspecting admission evidence while preserving the rule that receipts and heads are witnesses beneath the verified proof object.
 ---
 
 # Receiz Receipt Admission
 
-A canonical receipt proves admitted append evidence but remains beneath the sealed proof object. Never treat a plan, MCP response, self-hash, or UI success state as admission.
+Current admission evidence begins with the complete verified proof object. Historical receipts may remain immutable witnesses of the law and digest they recorded, but they do not authorize or qualify a current v108 outcome.
 
 ## Exact SDK operation
 
-Use `proofHead.get` and `receipts.verify` after the canonical mutation returns its receipt.
+Use the current root SDK artifact verifier. Do not call historical proof-head or receipt endpoints from a current operation.
 
 ```ts
 import { createReceizClient } from "@receiz/sdk";
 
-const receiz = createReceizClient({ accessToken });
-const before = await receiz.proofHead.get({ aggregateId });
-const result = await executeConfirmedOperation(before);
-if (!await receiz.receipts.verify(result.receipt)) throw new Error("receipt_invalid");
-if (result.receipt.head.aggregateId !== aggregateId) throw new Error("receipt_invalid");
-const after = await receiz.proofHead.get({ aggregateId });
-if (after.digest !== result.receipt.head.digest) throw new Error("stale_proof_head");
+const receiz = createReceizClient();
+const opened = await receiz.artifacts.verifyAndOpen(completeArtifactFile);
+if (opened.sealedArtifact.artifactSha256 !== expectedArtifactSha256) {
+  throw new Error("artifact_digest_mismatch");
+}
+if (opened.verifiedPayload.sha256 !== expectedPayloadSha256) {
+  throw new Error("payload_binding_mismatch");
+}
 ```
 
 ## Required authority
 
-Proof-head reads require `receiz:record`. Verification is local cryptographic/structural evidence; it does not grant mutation authority or outrank the sealed artifact.
+Read-only inspection requires no delegated mutation scope. The enclosing sealed artifact, accepted identity proof, or other native Receiz primitive supplies the truth boundary. A receipt, registry row, plan digest, MCP response, or UI success state remains weaker evidence.
 
-## Required proof head
+## Required proof object
 
-Record the aggregate's verified head before mutation. The receipt must bind the same aggregate and its admission head digest; compare the returned canonical head after admission.
+Supply and verify the complete artifact. Require integrity, Signature V4 where current native output requires it, owner/claim/path binding, artifact digest, and payload binding before reading inner content.
 
-## Idempotency
+## Deterministic behavior
 
-An exact duplicate request must reproduce the original admitted outcome and receipt. Reusing the key with different intent must fail `idempotency_conflict`.
+The same complete bytes must produce the same artifact digest and verified payload digest. Historical receipt bytes remain immutable historical evidence; do not regenerate them for a current operation and do not use them as a prerequisite.
 
 ## Offline behavior
 
-Verify carried receipts locally when all verification material is present. A queued command has no canonical receipt and must remain `globallyCommitted: false`.
+Verify carried proof locally when all verification material is present. A queued operation has no proof of global admission merely because a transport queue marks it settled.
 
 ## Conflict behavior
 
-Reject tampering, aggregate mismatch, prior-head mismatch, invalid digest, and stale head. Preserve the last verified head and require a new confirmed plan; never repair a receipt in place.
+Reject artifact mutation, owner substitution, claim substitution, path substitution, payload substitution, or receipt claims that disagree with the stronger artifact. Preserve the last verified proof and append a new lawful correction rather than repairing history.
 
-## Receipt verification
+## Result verification
 
-Require exact canonical schema, admission receipt, receipt digest, head/admission digest equality, and `receipts.verify(...) === true`. Then compare operation, aggregate, and expected transition.
+Require exact artifact-byte identity, artifact and payload digest agreement, native carrier, signature, owner/claim binding, and independent verification. An explanation or trace is evidence only.
 
 ## User confirmation
 
-Receipt verification is read-only. The mutation producing it still requires confirmation of operation, authority, expected head, consequences, and idempotency key. Do not ask users to confirm a receipt after the fact as a substitute for verification.
+Read-only verification requires no confirmation. Any mutation that creates a new proof object requires its own exact Record -> Seal plan confirmation; inspecting an old receipt cannot substitute for that confirmation.
 
 ## MCP parity
 
-Call `receiz_proof_head_get` before planning. After the operation-specific execute tool returns, call `receiz_receipt_verify` independently. The plan digest confirms user intent; the canonical receipt verifies admission; neither replaces the proof object.
+Use `receiz_artifact_verify`, `receiz_artifact_round_trip_check`, and `receiz_artifact_explain`. They share the current SDK verifier and cannot authorize mutation. Do not call retired proof-head or receipt tools for a v108 outcome.
 
 ## Emulator fixture
 
-Run `duplicate-idempotency-and-conflicting-reuse` and `canonical-receipt-tampering-rejection`.
+Run the current native artifact round-trip and cross-boundary substitution rejection contracts. Historical receipt fixtures remain historical evidence only.

@@ -1,4 +1,4 @@
 interface:
   display_name: "Receiz Bearer Ownership"
-  short_description: "Claim generic bearer proof artifacts"
-  default_prompt: "Use $receiz-bearer-ownership to claim a qualifying bearer artifact through its enclosing proof."
+  short_description: "Claim from a complete sealed artifact"
+  default_prompt: "Use $receiz-bearer-ownership to verify the complete sealed artifact and return the authenticated owner's new native Record -> Seal artifact. A verified proof object is not limited to the platform that created it: any lawful platform may append authenticated ownership and history only while preserving the same immutable object identity, payload, provenance root, prior history, and unknown namespaces."

@@ -1,6 +1,6 @@
 # MCP Tool Map
 
-## v107 Application Compiler And Semantic Operations
+## v108 Application Compiler
 
 | Need | Tool | Mutation |
 |---|---|---|
@@ -22,24 +22,35 @@ verification verdict or proof authority.
 
 Source: `packages/receiz-mcp-server/src/index.ts`.
 
-## v107 Unified Operations
+## v108 Current Profile And Ownership Outcomes
 
 | Need | Tool | Mutation |
 |---|---|---|
-| Read identity/profile proof state | `receiz_identity_profile_get` | Read-only |
-| Check username availability | `receiz_username_check` | Advisory read-only result |
-| Plan identity/profile update | `receiz_identity_profile_update_plan` | Read-only digest-bound plan |
-| Execute identity/profile update | `receiz_identity_profile_update_execute` | Exact plan confirmation and verified receipt required |
-| Plan proof-media publication | `receiz_media_publish_plan` | Read-only digest-bound plan |
-| Execute proof-media publication | `receiz_media_publish_execute` | Exact plan confirmation and verified receipt required |
-| Plan generic bearer claim | `receiz_bearer_asset_claim_plan` | Read-only digest-bound plan |
-| Execute generic bearer claim | `receiz_bearer_asset_claim_execute` | Enclosing artifact verification, exact confirmation, and verified receipt required |
-| Plan continuity synchronization | `receiz_continuity_sync_plan` | Read-only digest-bound plan |
-| Execute continuity synchronization | `receiz_continuity_sync_execute` | Exact plan confirmation and verified receipt required |
-| Read proof head | `receiz_proof_head_get` | Read-only |
-| Verify canonical receipt | `receiz_receipt_verify` | Read-only verification |
+| Plan authenticated profile update | `receiz_identity_profile_update_plan` | Read-only plan; accepts `{ profile }` only |
+| Execute authenticated profile update | `receiz_identity_profile_update_execute` | Exact confirmation; calls `client.profile.update(profile)` and requires the same-UID result |
+| Plan bearer ownership claim | `receiz_bearer_asset_claim_plan` | Accepts `{ artifactBase64, filename, mimeType }` for the complete sealed artifact |
+| Execute bearer ownership claim | `receiz_bearer_asset_claim_execute` | Exact confirmation; returns the newly claimed complete native artifact bytes and evidence |
 
-Portable artifact restore, namespaced account-state append, and offline command signing remain local SDK operations because the developer-held artifact and key are the stronger source of truth. MCP never upgrades a queued proposal into committed state without canonical admission and receipt verification.
+The profile plan performs no profile read and accepts no account selector, key, caller head, or idempotency field. The authenticated session/OIDC actor is the account, and execution requires the returned UID to remain unchanged.
+
+The bearer plan verifies the complete sealed artifact with `client.artifacts.verifyAndOpen`. Execution passes only `opened.sealedArtifact` to `client.ownership.claimBearerAsset` and returns the new native Record -> Seal artifact. Prior ownership comes from the verified carried proof. MCP never accepts a detached payload, caller owner, claim key, or caller head.
+
+A verified proof object is not limited to the platform that created it. Any lawful platform may append authenticated ownership and history only while preserving the same immutable object identity, payload, provenance root, prior history, and unknown namespaces, then returning a complete verified proof object. These MCP tools invoke that same SDK continuity and never create an origin-platform lock or parallel chain.
+
+## v108 Complete Artifact Custody
+
+| Need | Tool | Boundary |
+|---|---|---|
+| Plan native Record -> Seal | `receiz_artifact_record_seal_plan` | Read-only digest-bound plan |
+| Execute native Record -> Seal | `receiz_artifact_record_seal_execute` | Exact confirmation required |
+| Verify complete artifact | `receiz_artifact_verify` | Shared SDK verifier; no extraction |
+| Extract verified payload | `receiz_artifact_extract_verified` | Enclosing verification must pass first |
+| Check exact round trip | `receiz_artifact_round_trip_check` | Complete artifact byte identity |
+| Explain artifact evidence | `receiz_artifact_explain` | Read-only evidence; never authority |
+
+These six tools preserve artifact and payload as separate byte domains. They never relabel payload bytes, repack a native artifact, or treat MCP state as proof authority.
+
+Stable v107 operation schemas remain available only through their explicit historical compatibility import. They are not part of this active/default tool inventory.
 
 ## Diagnostics And Setup
 
@@ -70,7 +81,7 @@ Portable artifact restore, namespaced account-state append, and offline command 
 - `receiz_inspect_proof_object`
 - `receiz_proof_query`: delegated proof query projection.
 
-Use SDK `verification.verifyArtifact(file)` for verification; it requires enclosing integrity and ownership continuity.
+Use SDK `artifacts.verifyAndOpen(file)` when a workflow needs verified artifact custody and payload extraction. `verification.verifyArtifact(file)` is inspection evidence and does not create an ownership-capable artifact handle.
 Emulator output is labeled `sandboxVerified`; never translate it into Receiz verification.
 
 ## Sports, Wallet, World

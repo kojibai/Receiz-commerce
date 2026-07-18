@@ -1,3 +1,17 @@
+# Receiz Commerce Kit v4.1.0 — Artifact Continuity
+
+Release date: July 18, 2026
+
+Status: General Availability · repository release
+
+SDK target: `@receiz/sdk@108.0.0`
+
+V4.1 upgrades the coordinated SDK, MCP, and thirty-one-skill stack to v108. Complete sealed artifacts now remain in custody through native Record → Seal creation, verification, verified payload extraction, download evidence, and cross-platform bearer ownership appends. The app adapter exposes every current v108 operation, proof-object imports parse only SDK-verified payload bytes, causal histories bind to the canonical v108 registry, and deterministic checkpoints provide tamper-evident resume continuity. Historical v107 operations remain available only through their explicit compatibility subpaths.
+
+The release gate verifies exact vendored package integrity, lockfile parity, canonical registry chaining, all ten v108 artifact laws, current MCP tool parity, local/published AI-skill alignment, migration attestation, official zero-network conformance, tests, typecheck, lint, production build, secret scan, and SDK doctor. No witnessed history is rewritten.
+
+---
+
 # Receiz Commerce Kit v4.0.0 — Wilds Living Cards
 
 Release date: July 16, 2026

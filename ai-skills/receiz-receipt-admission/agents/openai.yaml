@@ -1,4 +1,4 @@
 interface:
   display_name: "Receiz Receipt Admission"
-  short_description: "Verify admission receipts and heads"
-  default_prompt: "Use $receiz-receipt-admission to verify canonical receipts against the expected proof head."
+  short_description: "Inspect evidence beneath proof objects"
+  default_prompt: "Use $receiz-receipt-admission to verify the complete artifact and keep receipts or heads as historical witness evidence only."

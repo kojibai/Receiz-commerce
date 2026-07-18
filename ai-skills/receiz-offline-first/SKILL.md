@@ -50,3 +50,4 @@ Refuse completion when any manifest input, law, test, conformance result, indepe
 Request: Admit verified local truth immediately, queue idempotent appends, and let network work discover additions without replacing settled truth.
 
 Return a written implementation contract and read-only plan first. Execute only allowed commands after exact confirmation, then report registry digest, laws, authority, tests, independent evidence, release-lock status, and the exact remaining boundary.
+

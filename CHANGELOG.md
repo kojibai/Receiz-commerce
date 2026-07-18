@@ -2,6 +2,14 @@
 
 All notable changes to Receiz Commerce Kit will be documented here.
 
+## 4.1.0 - Receiz v108 Artifact Continuity
+
+- Upgraded SDK, MCP server, and all thirty-one AI skills to exact official `108.0.0` vendored artifacts with lockfile and release-lock parity.
+- Adopted v108 whole-artifact custody: native Record → Seal creation, verify-before-extract opening, exact artifact download evidence, same-account profile updates, and cross-platform bearer ownership appends.
+- Hardened imported proof objects so domain payload parsing occurs only on the SDK-returned verified payload while provenance and the enclosing artifact digest remain intact.
+- Chained application law to the canonical v108 registry, retained append-only causal history, and added deterministic checkpoint verification for reliable cross-session resume.
+- Replaced v107 release and migration gates with v108 package, registry-chain, artifact-law, MCP-tool, AI-skill, CLI, conformance, and history-preservation checks.
+
 ## 4.0.0 - Wilds Living Cards
 
 - Advanced the complete V3 living-world foundation through the post-V3 continuity, controls, card, location, sound, offline, and authority program while preserving all valid V3 cards, saves, Vaults, world events, and proof history.

@@ -801,8 +801,8 @@ async function sha256BasisForBlob(file: Blob) {
   return `sha256:${file.size}-${file.type || "receiz-proof-object"}`;
 }
 
-async function readManifestCandidate(file: File) {
-  const likelyJson = file.type.includes("json") || file.name.toLowerCase().endsWith(".json");
+async function readManifestCandidate(file: Blob, filename: string) {
+  const likelyJson = file.type.includes("json") || filename.toLowerCase().endsWith(".json");
   if (!likelyJson) return null;
 
   try {
@@ -938,14 +938,13 @@ function domainManifestFromVerifiedArtifact(
 
 async function receizedAssetFromProofObject(file: File, actorReceizId: string): Promise<ReceizedAsset> {
   const receiz = createReceizCommerceAdapter();
-  const verified = await receiz.verifyArtifact(file);
-
-  if (!verified.ok) {
-    throw new Error(verified.errors.filter(Boolean).join(", ") || "Receiz proof object verification failed");
-  }
-
-  const artifactSha256Basis = await sha256BasisForBlob(file);
-  const manifestCandidate = await readManifestCandidate(file);
+  const opened = await receiz.verifyAndOpenArtifact(file);
+  const verified = opened.verification;
+  const artifactSha256Basis = `sha256:${opened.sealedArtifact.artifactSha256}`;
+  const payloadBytes = new Uint8Array(opened.verifiedPayload.bytes.byteLength);
+  payloadBytes.set(opened.verifiedPayload.bytes);
+  const verifiedPayload = new Blob([payloadBytes.buffer], { type: opened.verifiedPayload.mimeType });
+  const manifestCandidate = await readManifestCandidate(verifiedPayload, opened.verifiedPayload.filename);
   let projection: SdkReceizAssetManifestProjection | null = null;
 
   if (manifestCandidate) {

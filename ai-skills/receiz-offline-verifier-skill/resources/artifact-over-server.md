@@ -4,8 +4,8 @@ Artifact truth outranks server confirmation.
 
 ## Correct Order
 
-1. Verify artifact.
-2. Parse proof payload.
+1. Preserve and verify the complete sealed artifact with `artifacts.verifyAndOpen`.
+2. Parse only the separately returned verified payload.
 3. Project identity, ownership, provenance, or settlement state.
 4. Optionally compare to server or public registry.
 5. Append verified additions when discovered.

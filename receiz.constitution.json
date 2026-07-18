@@ -1,9 +1,9 @@
 {
   "schema": "receiz.constitution.registry.v1",
-  "version": "107.0.0",
-  "previousRegistryDigest": "bf851c209e807309672c0f466411baa5607ce6b3195fe4eb16755edfeb7f5a1a",
-  "effectiveKai": "kai:107-release",
-  "createdAt": "2026-07-17T00:00:00.000Z",
+  "version": "108.0.0",
+  "previousRegistryDigest": "126ca9283fee4ef4c398dbcb958e861cbea191724fdab8eb08df55ff0c14bb79",
+  "effectiveKai": "13182786",
+  "createdAt": "2026-07-18T04:38:26.799Z",
   "laws": [
     {
       "id": "wilds.retirement.irreversible",
@@ -30,25 +30,25 @@
       "denial": { "code": "DIRECT_STATE_WRITE_FORBIDDEN", "safeAlternatives": ["define-command", "simulate-command", "request-capability"] }
     },
     {
-      "id": "identity.rename.same-key",
+      "id": "identity.profile.same-account-uid",
       "version": 1,
       "phases": ["command", "admission", "migration"],
       "denyWhen": {
         "op": "not",
         "value": {
           "op": "equal",
-          "left": { "op": "path", "value": "previous.identity.keyId" },
-          "right": { "op": "path", "value": "proposed.identity.keyId" }
+          "left": { "op": "path", "value": "actor.accountUid" },
+          "right": { "op": "path", "value": "proposed.accountUid" }
         }
       },
-      "denial": { "code": "IDENTITY_KEY_MISMATCH", "safeAlternatives": ["reuse-original-identity-key", "restore-receiz-identity"] }
+      "denial": { "code": "PROFILE_ACCOUNT_UID_MISMATCH", "safeAlternatives": ["use-authenticated-account-uid", "restore-receiz-identity"] }
     },
     {
-      "id": "profile.atomic-proof-head",
+      "id": "artifact.complete-object-custody",
       "version": 1,
       "phases": ["command", "admission"],
-      "denyWhen": { "op": "not", "value": { "op": "path", "value": "proposed.receipt.head.digest" } },
-      "denial": { "code": "PROFILE_PROOF_HEAD_REQUIRED", "safeAlternatives": ["commit-profile-media-and-head-atomically"] }
+      "denyWhen": { "op": "not", "value": { "op": "path", "value": "artifact.complete" } },
+      "denial": { "code": "COMPLETE_ARTIFACT_REQUIRED", "safeAlternatives": ["preserve-complete-sealed-artifact", "verify-before-extract"] }
     },
     {
       "id": "ownership.enclosing-artifact-first",

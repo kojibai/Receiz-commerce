@@ -1,64 +1,67 @@
 ---
 name: receiz-identity-profile
-description: Use when reading or updating a Receiz identity profile, checking or changing a username, or attaching raw or prepublished proof media.
+description: Use when checking username availability or updating a Receiz profile through the authenticated same-account v108 operation.
 ---
 
 # Receiz Identity Profile
 
-Preserve one Receiz identity while appending profile truth. A rename releases the prior username globally; the replacement username is appended to the same original identity.
+Preserve the admitted Receiz account. A profile update changes that account's projection; it never selects or replaces the active identity.
 
 ## Exact SDK operation
 
-Use `identity.getProfile`, `identity.checkUsernameAvailability`, and `identity.updateProfile` from `createReceizClient`. `avatar` accepts either a raw `File` or a previously returned media proof reference.
+Use `identity.checkUsernameAvailability` only as an advisory read. Submit the profile patch directly through `profile.update`.
 
 ```ts
 import { createReceizClient } from "@receiz/sdk";
 
 const receiz = createReceizClient({ accessToken });
-const current = await receiz.identity.getProfile();
 const availability = await receiz.identity.checkUsernameAvailability(nextUsername);
 if (!availability.available && !availability.isCurrent) throw new Error("username_taken");
-const result = await receiz.identity.updateProfile({
-  identity: current.identity,
-  expectedHead: current.head,
-  idempotencyKey: `profile:${current.head.digest}:${nextUsername}`,
-  profile: { username: nextUsername, displayName, avatar: avatarFileOrMediaReference },
+
+const result = await receiz.profile.update({
+  username: nextUsername,
+  displayName,
+  bio,
 });
-if (!await receiz.receipts.verify(result.receipt)) throw new Error("receipt_invalid");
+if (result.accountUid !== authenticatedAccountUid) throw new Error("profile_identity_mismatch");
 ```
+
+The returned `accountUid` must equal the authenticated session or OIDC actor UID. The same neutral SDK operation handles a username-only change and a full profile update.
 
 ## Required authority
 
-Require the signed-in identity session or delegated `profile` scope. Availability is advisory and never reserves a username. The identity proof, not the username, is the continuity root.
+Treat accepted Receiz identity proof plus the admitted same-account binding as the identity primitive. Receiz.com applies the patch to that admitted account. Keep SDK, MCP, and AI beneath those primitives.
 
-## Required proof head
+Do not require an identity-key projection, choose a latest server key, read a caller proof head, or ask another rail which identity is active. A database or session projection may refresh after commitment; it cannot redefine the actor.
 
-Pass the exact `head` returned by `identity.getProfile`. Never synthesize it or replace it with DB, session, or UI state.
+## Required admission
 
-## Idempotency
+Require the signed-in Receiz session or delegated `profile` scope. Derive the actor from that authenticated session or OIDC token. Do not accept an account UID inside the profile patch.
 
-Derive one stable key from the intended patch and expected head. Reuse it only for byte-for-byte equivalent intent; changed intent requires a new key.
+## Deterministic behavior
+
+Treat username availability as advisory. Let commit-time username uniqueness decide the winner, then require the returned same-UID profile and public path. Do not release the prior username before the replacement commits.
 
 ## Offline behavior
 
-Queue the identity-signed proposal and show `queued` as local intent, never as global completion. A queued rename does not reserve the username.
+Preserve known local identity truth immediately, but do not report an offline profile proposal as saved. Run the authenticated profile operation when service is available; background work may refresh projections only after commitment.
 
 ## Conflict behavior
 
-On `stale_proof_head`, reread the canonical head, show the verified additions, and request confirmation for a rebased append. On `username_taken`, keep the same identity and choose another available username. Never restore the released name by rewriting history.
+On `username_taken`, keep the same account and request another username. Preserve truthful validation and service errors. Never translate a missing projection or unrelated failure into an identity mismatch.
 
-## Receipt verification
+## Result verification
 
-Report `committed` only after `receipts.verify(result.receipt)` returns true and the returned head follows the expected head.
+Require `status === "updated"`, an `accountUid` equal to the authenticated actor, the returned profile projection, and a `/u/` profile path. The current v108 outcome has no caller proof-head or receipt prerequisite.
 
 ## User confirmation
 
-Show the current and next username, released prior username, profile fields, media identity, expected head, and idempotency key. Require explicit confirmation before mutation.
+Show the exact profile fields and username consequence before mutation. Do not request or display an identity key, caller head, claim key, or receipt as authority for this update.
 
 ## MCP parity
 
-Call `receiz_identity_profile_get`, then `receiz_username_check`, then `receiz_identity_profile_update_plan`. Show its consequences and require the exact `confirmationDigest`; call `receiz_identity_profile_update_execute` with identical `planDigest` and `confirmation`, then independently call `receiz_receipt_verify`.
+Call `receiz_identity_profile_update_plan` with `{ profile }` only. Show the plan consequences, require the exact confirmation digest, then call `receiz_identity_profile_update_execute` with `{ planDigest, confirmation }`. The active MCP path calls `client.profile.update(profile)` and verifies the same-UID result; it performs no identity/profile pre-read.
 
 ## Emulator fixture
 
-Run `username-race`, `rename-stale-head`, and `offline-rename-global-conflict`. Emulator evidence is simulation evidence, never production verification.
+Run `username-race`. Require one commit-time winner, unchanged account UID, and no identity-key dependency. Emulator evidence is simulation evidence, never production verification.

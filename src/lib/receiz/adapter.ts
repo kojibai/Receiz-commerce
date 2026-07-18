@@ -46,8 +46,13 @@ import {
   type ReceizPermissionCheckRequest,
   type ReceizPermissionGrantRequest,
   type ReceizProofObjectCreateOptions,
-  type ReceizProofObjectCreateResult,
   type ReceizProofObjectCreateInput,
+  type ReceizArtifactDownloadEvidence,
+  type ReceizBearerArtifactClaimInput,
+  type ReceizOpenedArtifact,
+  type ReceizProfileUpdateInput,
+  type ReceizProfileUpdateResult,
+  type ReceizSealedArtifact,
   type ReceizPublicStoreAppendResult,
   type ReceizPublicStorePublishInput,
   type ReceizPublicStoreResolveInput,
@@ -140,7 +145,11 @@ export type ReceizCommerceAdapter = {
   createProofObject(
     input: ReceizProofObjectCreateInput,
     options: ReceizProofObjectCreateOptions
-  ): Promise<ReceizProofObjectCreateResult>;
+  ): Promise<ReceizSealedArtifact>;
+  verifyAndOpenArtifact(file: Blob): Promise<ReceizOpenedArtifact>;
+  downloadArtifact(artifact: ReceizSealedArtifact): Promise<ReceizArtifactDownloadEvidence>;
+  claimBearerArtifact(input: ReceizBearerArtifactClaimInput): Promise<ReceizSealedArtifact>;
+  updateIdentityProfile(input: ReceizProfileUpdateInput): Promise<ReceizProfileUpdateResult>;
   observePublicProof(body: { url: string; externalCreatorId?: string; title?: string }): Promise<PublicProofRecord>;
   getPublicProofByUrl(url: string): Promise<PublicProofRecord>;
   getPublicProofById(id: string): Promise<PublicProofRecord>;
@@ -504,6 +513,18 @@ export function createReceizCommerceAdapter(
     },
     createProofObject(input, options) {
       return client.assets.createProofObject(input, options);
+    },
+    verifyAndOpenArtifact(file) {
+      return client.artifacts.verifyAndOpen(file);
+    },
+    downloadArtifact(artifact) {
+      return client.artifacts.download(artifact);
+    },
+    claimBearerArtifact(input) {
+      return client.ownership.claimBearerAsset(input);
+    },
+    updateIdentityProfile(input) {
+      return client.profile.update(input);
     },
     observePublicProof(body) {
       return client.publicProof.observe(body);

@@ -1,4 +1,4 @@
 interface:
   display_name: "Receiz Identity Profile"
-  short_description: "Operate identity profile proof safely"
-  default_prompt: "Use $receiz-identity-profile to update a Receiz identity profile with exact proof-head and receipt checks."
+  short_description: "Update the admitted account profile"
+  default_prompt: "Use $receiz-identity-profile to update the authenticated Receiz profile through the neutral same-UID operation."

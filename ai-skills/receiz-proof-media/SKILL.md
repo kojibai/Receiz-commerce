@@ -1,69 +1,68 @@
 ---
 name: receiz-proof-media
-description: Use when publishing identity-owned avatar or banner proof media or atomically attaching raw or prepublished media to a profile.
+description: Use when creating native Receiz proof media, preserving its exact artifact bytes, or projecting its verified public URL onto the authenticated profile.
 ---
 
 # Receiz Proof Media
 
-Media is a proof-bearing identity attachment. Preserve source/transformed digests, media proof identity, owner identity, and verification route.
+Treat media as a proof object. Keep the complete sealed media artifact stronger than its profile URL or rendered derivative.
 
 ## Exact SDK operation
 
-Use `media.publishIdentityImage`, `identity.updateProfile`, and `receipts.verify`. Raw `File` input must go directly through the atomic profile update; separately publish only when a reusable proof reference is intended.
+Create media through the native proof-object operation and preserve the returned exact artifact. Project a verified public media URL through the neutral profile operation only when that URL resolves to the same proof object.
 
 ```ts
 import { createReceizClient } from "@receiz/sdk";
 
 const receiz = createReceizClient({ accessToken });
-const published = await receiz.media.publishIdentityImage({
-  file: avatarFile,
-  kind: "avatar",
-  identityKeyId: current.identity.keyId,
-});
-if (!await receiz.receipts.verify(published.receipt)) throw new Error("receipt_invalid");
-const result = await receiz.identity.updateProfile({
-  identity: current.identity,
-  expectedHead: current.head,
-  idempotencyKey: `avatar:${current.head.digest}:${published.reference.mediaProofId}`,
-  profile: { avatar: published.reference },
-});
-if (!await receiz.receipts.verify(result.receipt)) throw new Error("receipt_invalid");
+const payloadBytes = new Uint8Array(await mediaFile.arrayBuffer());
+const sealedMedia = await receiz.assets.createProofObject(
+  {
+    assetType: "profile_original",
+    payload: { bytes: payloadBytes, mimeType: mediaFile.type },
+  },
+  { filename: mediaFile.name, idempotencyKey: mediaCreationKey },
+);
+const downloadEvidence = await receiz.artifacts.download(sealedMedia);
+
+const profileResult = await receiz.profile.update({ avatarUrl: mediaPublicProofUrl });
+if (profileResult.accountUid !== authenticatedAccountUid) throw new Error("profile_identity_mismatch");
 ```
 
-For one atomic raw upload, pass `profile: { avatar: avatarFile }` to `identity.updateProfile` and skip independent publication.
+Do not invent `mediaPublicProofUrl`. Use only a public Receiz verification/projection URL already bound to `sealedMedia`; otherwise keep the exact artifact without attaching a URL.
 
 ## Required authority
 
-Independent publication requires `receiz:media.write`; profile attachment requires `profile`. The media owner identity must match the profile identity.
+Treat the sealed media proof object and its native Record -> Seal continuity as stronger truth. Treat the avatar or banner URL as a profile projection beneath it. Accepted identity proof plus the admitted same-account binding defines the profile actor; SDK, MCP, and AI remain beneath those primitives.
 
-## Required proof head
+## Required proof object
 
-Independent media publication creates its media proof head. Profile attachment must use the exact current identity/profile head and the full validated media proof reference.
+Require source bytes and MIME type for creation. Preserve the returned runtime-issued sealed artifact, Record identity, claim/path binding, owner continuity, Signature V4, and payload digest. Never substitute a URL, transformed image, detached payload, or database row for that artifact.
 
-## Idempotency
+## Deterministic behavior
 
-Bind publication to source bytes, kind, and owner key. Bind attachment to media proof ID and profile head. Never substitute a URL while reusing the same key.
+Use `assets.createProofObject` to run native Record -> Seal and `artifacts.download` to preserve exact bytes. Use `profile.update` only for the same-UID URL projection. The profile operation takes no identity key or caller proof head.
 
 ## Offline behavior
 
-Stage raw bytes locally without claiming publication. A known verified media reference may render immediately. Queue attachment intent only with its complete reference and expected profile head.
+Store and render the known verified artifact immediately when available. Do not claim a new Record -> Seal or profile projection succeeded while offline. Later sync may append a verified public projection without replacing the artifact.
 
 ## Conflict behavior
 
-On media rejection or profile failure, the raw atomic operation rolls back the entire profile mutation. For prepublished media, keep the independently verified media object and rebase only the profile attachment.
+If Record, Seal, or enclosing verification fails, return no new media artifact. If the profile projection fails, preserve the already sealed media proof object and leave the prior profile projection unchanged.
 
-## Receipt verification
+## Result verification
 
-Verify the publication receipt before reuse and the profile receipt after attachment. Check owner identity and all digests; a URL alone is not proof media.
+Require exact download evidence for the sealed artifact. For profile attachment, require `status === "updated"` and an `accountUid` equal to the authenticated actor. No identity key, caller head, or receipt is emitted or required for the current profile outcome.
 
 ## User confirmation
 
-Show kind, owner identity, source file, transformed dimensions, verification URL, expected profile head, and whether the operation is atomic raw upload or two-step reusable publication.
+Show the source media, artifact filename, proof-object type, public URL if one is already verified, and affected avatar or banner field. Do not ask the user for a key ID, proof head, or receipt.
 
 ## MCP parity
 
-For reusable media, call `receiz_media_publish_plan`, confirm its digest, call `receiz_media_publish_execute`, and call `receiz_receipt_verify`. Then call `receiz_identity_profile_update_plan`, confirm, call `receiz_identity_profile_update_execute`, and verify again.
+Use the SDK artifact-custody workflow for media Record -> Seal; the active default MCP surface does not introduce a parallel media authority. To project an already verified media URL, call `receiz_identity_profile_update_plan` with `{ profile }`, require exact confirmation, then call `receiz_identity_profile_update_execute` with `{ planDigest, confirmation }`.
 
 ## Emulator fixture
 
-Run `profile-media-atomic-rollback` and require no partial profile or media attachment after injected failure.
+Run `profile-media-atomic-rollback`. Require no partial profile projection after injected failure while preserving any independently completed sealed media proof object.

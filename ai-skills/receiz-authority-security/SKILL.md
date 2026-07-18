@@ -50,3 +50,4 @@ Refuse completion when any manifest input, law, test, conformance result, indepe
 Request: Audit actors, tenants, capabilities, proof domains, confused-deputy paths, escalation, and cross-boundary effects.
 
 Return a written implementation contract and read-only plan first. Execute only allowed commands after exact confirmation, then report registry digest, laws, authority, tests, independent evidence, release-lock status, and the exact remaining boundary.
+

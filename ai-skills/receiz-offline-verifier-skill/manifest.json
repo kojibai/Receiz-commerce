@@ -1,0 +1,17 @@
+{
+  "schema": "receiz.ai-skill-contract.v108",
+  "name": "receiz-offline-verifier-skill",
+  "version": "108.0.0",
+  "requires": { "sdk": ">=108.0.0 <109.0.0", "mcp": ">=108.0.0 <109.0.0", "ruleset": "108.0.0", "registryDigest": "126ca9283fee4ef4c398dbcb958e861cbea191724fdab8eb08df55ff0c14bb79" },
+  "artifactLawVersion": "108.0.0",
+  "artifactLaws": ["ARTIFACT-001", "ARTIFACT-002", "ARTIFACT-003", "ARTIFACT-004", "ARTIFACT-005", "ARTIFACT-006", "ARTIFACT-007", "ARTIFACT-008", "ARTIFACT-009", "ARTIFACT-010"],
+  "laws": ["receiz.offline-proof.primitive", "receiz.artifact.verify-before-extract", "receiz.truth.stronger-first", "ownership.cross-platform-proof-object-continuity"],
+  "sdkOperations": ["assets.createProofObject", "artifacts.download", "artifacts.verifyAndOpen"],
+  "allowedTools": ["receiz_inspect_offline_file", "receiz_inspect_proof_object", "receiz_asset_by_id"],
+  "forbiddenOperations": ["payload-fallback", "payload-relabel-as-artifact", "artifact-repack", "shape-only-verification", "history-rewrite", "authority-bypass"],
+  "requiredInputs": ["installed-sdk-version", "active-registry-digest", "artifact-law-version", "labeled-byte-domains", "complete-sealed-artifact", "cross-app-destination"],
+  "requiredEvidence": ["exact-artifact-byte-identity", "artifact-digest-match", "payload-digest-binding", "signature-v4", "owner-claim-binding", "independent-artifact-verification", "cross-platform-round-trip", "legacy-read-compatibility", "release-lock-pass"],
+  "requiredCompletionFields": ["sdk-version", "registry-digest", "artifact-law-version", "artifact-carrier", "signature-version", "artifact-digest", "payload-digest", "owner-and-claim-binding", "independent-verification-result", "cross-platform-round-trip-result", "legacy-compatibility-result", "release-lock-result"],
+  "completionCriteria": ["all-required-evidence-pass", "release-lock-pass"],
+  "maximumAutonomousAuthority": "inspect-verify-report"
+}

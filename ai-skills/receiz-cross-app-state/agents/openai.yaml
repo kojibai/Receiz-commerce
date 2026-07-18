@@ -1,4 +1,4 @@
 interface:
   display_name: "Receiz Cross-App State"
   short_description: "Continue verified state across apps"
-  default_prompt: "Use $receiz-cross-app-state to carry verified account state across Receiz applications."
+  default_prompt: "Use $receiz-cross-app-state to carry verified sealed artifacts across Receiz applications without payload substitution or history rewrite."

@@ -1,4 +1,4 @@
 interface:
   display_name: "Receiz Migrations"
   short_description: "Migrate constitutional applications"
-  default_prompt: "Use -migrations to migrate a Receiz application without rewriting admitted history."
+  default_prompt: "Use $receiz-migrations to migrate v108 artifact workflows without payload fallback, byte repacking, or admitted-history rewrite."

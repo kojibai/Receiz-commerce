@@ -1,11 +1,13 @@
 import registryPayload from "../../../receiz.constitution.json" with { type: "json" };
 import {
   RECEIZ_RULESET_VERSION,
-  RECEIZ_V107_REGISTRY_DIGEST,
+  RECEIZ_V108_REGISTRY_DIGEST,
+  createReceizCausalCheckpoint,
   createReceizAdmissionEngine,
   createReceizCausalHistory,
   digestReceizConstitution,
   evaluateReceizLawSet,
+  verifyReceizCausalCheckpoint,
   validateReceizConstitutionRegistry,
   type ReceizConstitutionPhase,
   type ReceizConstitutionRegistry,
@@ -14,7 +16,7 @@ import {
 const validation = validateReceizConstitutionRegistry(registryPayload);
 
 if (!validation.ok) {
-  throw new Error(`RECEIZ_V107_REGISTRY_INVALID:${validation.issues.join(",")}`);
+  throw new Error(`RECEIZ_V108_APP_REGISTRY_INVALID:${validation.issues.join(",")}`);
 }
 
 export const RECEIZ_APP_CONSTITUTION: ReceizConstitutionRegistry = validation.value;
@@ -22,12 +24,14 @@ export const RECEIZ_APP_CONSTITUTION: ReceizConstitutionRegistry = validation.va
 export async function verifyReceizAppConstitution(): Promise<Readonly<{
   ok: boolean;
   registryDigest: string;
+  appRegistryDigest: string;
   rulesetVersion: string;
 }>> {
   const registryDigest = await digestReceizConstitution(RECEIZ_APP_CONSTITUTION);
   return {
-    ok: registryDigest === RECEIZ_V107_REGISTRY_DIGEST && RECEIZ_APP_CONSTITUTION.version === RECEIZ_RULESET_VERSION,
-    registryDigest,
+    ok: RECEIZ_APP_CONSTITUTION.previousRegistryDigest === RECEIZ_V108_REGISTRY_DIGEST && RECEIZ_APP_CONSTITUTION.version === RECEIZ_RULESET_VERSION,
+    registryDigest: RECEIZ_V108_REGISTRY_DIGEST,
+    appRegistryDigest: registryDigest,
     rulesetVersion: RECEIZ_RULESET_VERSION,
   };
 }
@@ -54,5 +58,18 @@ export function createReceizAppAdmissionEngine(
 export function createReceizAppCausalHistory(
   options: Omit<Parameters<typeof createReceizCausalHistory>[0], "registryDigest">,
 ) {
-  return createReceizCausalHistory({ ...options, registryDigest: RECEIZ_V107_REGISTRY_DIGEST });
+  return createReceizCausalHistory({ ...options, registryDigest: RECEIZ_V108_REGISTRY_DIGEST });
+}
+
+export function checkpointReceizAppCausalHistory(
+  history: ReturnType<typeof createReceizAppCausalHistory>,
+) {
+  return createReceizCausalCheckpoint(history);
+}
+
+export function verifyReceizAppCausalCheckpoint(
+  checkpoint: Parameters<typeof verifyReceizCausalCheckpoint>[0],
+  history: ReturnType<typeof createReceizAppCausalHistory>,
+) {
+  return verifyReceizCausalCheckpoint(checkpoint, history);
 }

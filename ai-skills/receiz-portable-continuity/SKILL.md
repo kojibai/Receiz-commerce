@@ -1,69 +1,70 @@
 ---
 name: receiz-portable-continuity
-description: Use when restoring Record, Seal, Key, or Vault account truth, appending namespaced local state, or reconciling verified additions across devices.
+description: Use when restoring Record, Seal, Key, or Vault account truth and carrying verified additions across devices without a weaker reconciliation authority.
 ---
 
 # Receiz Portable Continuity
 
-Treat the verified portable artifact as the account source of truth. Server reconciliation may append verified additions beneath it; it may not replace it.
+Treat the verified portable proof object as the account source of truth. Local projection happens after proof acceptance. Server synchronization may discover and append verified additions beneath carried truth; it may not replace it.
+
+The originating platform has no continuing ownership of the proof boundary. Any lawful platform may verify the complete object and append authenticated ownership or history while preserving its immutable object identity, payload, provenance root, prior history, and unknown application namespaces.
 
 ## Exact SDK operation
 
-Use `identity.restoreAccount`, `identity.appendAccountState`, `continuity.reconcile`, and `continuity.commit`.
+Use the current root SDK identity verifier and native artifact custody methods. Do not import the historical v107 continuity client.
 
 ```ts
 import { createReceizClient } from "@receiz/sdk";
 
 const receiz = createReceizClient({ accessToken });
-const account = await receiz.identity.restoreAccount(artifactFile, { artifactKind: "receiz-key" });
-const local = await receiz.identity.appendAccountState(account, {
-  expectedHead: account.head,
-  idempotencyKey: `state:${account.head.digest}:calendar`,
-  allowedNamespaces: ["calendar"],
-  additions: { appState: { calendar: verifiedCalendarAddition } },
-});
-const plan = await receiz.continuity.reconcile({ priorOwnerScope, idempotencyKey: `sync:${local.head.digest}` });
-if (plan.status === "conflict") throw new Error("continuity_conflict");
-const committed = await receiz.continuity.commit({
-  priorOwnerScope,
-  receizKeyId: local.identity.keyId,
-  idempotencyKey: `sync:${local.head.digest}`,
-  planDigest: plan.receipt.planDigest,
-});
+const identityFile = await receiz.identity.readArtifact(identityArtifactFile);
+const account = await receiz.identity.projectAccount(identityFile);
+
+const carried = await receiz.artifacts.verifyAndOpen(portableStateArtifactFile);
+const next = await receiz.assets.createProofObject(
+  {
+    assetType: "proof_object",
+    payload: { bytes: nextVerifiedStateBytes, mimeType: "application/json" },
+  },
+  { filename: "portable-state.receiz", idempotencyKey },
+);
+await receiz.artifacts.download(next);
 ```
+
+`nextVerifiedStateBytes` must preserve the verified identity, previous artifact digest, immutable history, and every unknown application namespace. It is application input to native Record -> Seal, not a substitute artifact.
 
 ## Required authority
 
-Local restore authority comes from the verified enclosing artifact. Online reconcile/commit requires a signed-in identity session or delegated `receiz:record` scope. Neither MCP nor server state outranks the artifact.
+Local restore authority comes from the verified enclosing Identity Record, Identity Seal, Receiz Key, Vault object, or other accepted Receiz identity proof. Native resealing requires the admitted session or delegated Record and Seal scopes. Neither MCP nor server state outranks the artifact.
 
-## Required proof head
+## Required proof object
 
-Use the restored `account.head` for local appends and the reconciliation plan basis for commit. Reject any head from a different identity-account aggregate.
+Supply the complete identity artifact and complete portable-state artifact. Verify each enclosing object before reading its payload. A key registry row, inner JSON document, payload hash, receipt, or proof head cannot stand in for either proof object.
 
-## Idempotency
+## Deterministic behavior
 
-Bind the local append key to namespace, additions, and expected head. Bind synchronization to the restored head and prior owner scope. Never reuse a key with changed bytes or scope.
+Project the accepted identity immediately. Preserve exact prior artifact bytes as history, bind the next artifact to their digest, and keep unknown namespaces byte-for-byte. A change creates a new native Record -> Seal artifact; it never edits the prior artifact in place.
 
 ## Offline behavior
 
-Restore and namespaced append work from verified local artifact truth. Online reconciliation waits; it must not make the local signed-in experience half-restored.
+Identity verification and carried-state projection work locally. Persist the exact verified artifact bytes. Network work may append verified additions later, but it cannot keep the UI half-restored or redefine the admitted account.
 
 ## Conflict behavior
 
-On stale head, preserve the restored artifact, inspect verified additions, and append a new resolution. Namespace collisions and owner-scope conflicts stop that lane without erasing other state.
+On namespace or history conflict, preserve both verified artifacts and stop the affected append. Require an explicit new payload that cites both histories, then create a new artifact. Never choose a latest server row and never erase either proof object.
 
-## Receipt verification
+## Result verification
 
-Local append evidence is the re-exported verified artifact and new local head. Global synchronization is complete only after the canonical commit result and its verified append evidence; never treat the plan receipt as admission.
+Require the same account UID from identity projection, exact downloaded artifact bytes, native Record -> Seal continuity, Signature V4, owner/claim/path binding, and successful independent `artifacts.verifyAndOpen()` of the saved file.
 
 ## User confirmation
 
-Require confirmation before appending a namespace or committing an owner-scope transition. Show artifact kind, key ID, namespaces, prior scope, head, plan digest, and exact consequences.
+Before native reseal, show the admitted account UID, source artifact digest, affected namespaces, new payload digest, output filename, and consequences. Confirmation authorizes only that exact Record -> Seal plan.
 
 ## MCP parity
 
-Call `receiz_continuity_sync_plan`, show `writesPerformed: 0`, require the exact confirmation digest, call `receiz_continuity_sync_execute`, and then call `receiz_receipt_verify` for any canonical receipt returned by the committed additions.
+Use `receiz_artifact_verify` and `receiz_artifact_extract_verified` for carried input, then `receiz_artifact_record_seal_plan` and `receiz_artifact_record_seal_execute` for the confirmed output. Finish with `receiz_artifact_round_trip_check`. MCP has no second continuity authority and must not call retired reconcile, head, or receipt tools.
 
 ## Emulator fixture
 
-Run `interrupted-sync-deterministic-resume` and `portable-restore-cross-app-continuation`.
+Run the current identity-artifact helper, native artifact round-trip, and artifact-substitution rejection contracts. Historical v107 reconciliation fixtures are archival evidence only and are not a v108 operation contract.

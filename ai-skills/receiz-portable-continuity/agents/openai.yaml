@@ -1,4 +1,4 @@
 interface:
   display_name: "Receiz Portable Continuity"
-  short_description: "Restore and reconcile portable identity"
-  default_prompt: "Use $receiz-portable-continuity to restore portable account truth and reconcile verified additions."
+  short_description: "Restore and reseal portable identity truth"
+  default_prompt: "Use $receiz-portable-continuity to restore portable proof truth and create only verified native Record -> Seal additions. A verified proof object is not limited to the platform that created it: any lawful platform may append authenticated ownership and history only while preserving the same immutable object identity, payload, provenance root, prior history, and unknown namespaces."

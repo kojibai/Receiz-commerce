@@ -1,65 +1,69 @@
 ---
 name: receiz-bearer-ownership
-description: Use when claiming ownership of any qualifying Receiz bearer artifact and invalidating its previous active owner projection.
+description: Use when claiming a qualifying Receiz bearer proof object from a complete verified artifact and returning its new native sealed artifact.
 ---
 
 # Receiz Bearer Ownership
 
-Claim the generic enclosing artifact, not a card-specific or subpayload-specific invention. Verify the stronger proof object before projecting its embedded payload.
+Claim the enclosing proof object, not a detached payload or a card-specific invention. Preserve the verified carried ownership chain through the new native artifact.
 
 ## Exact SDK operation
 
-Use `proofHead.get`, `ownership.claimBearerAsset`, and `receipts.verify` for every supported artifact type.
+Verify and open the complete sealed artifact first. Pass only the runtime-issued sealed-artifact handle into the ownership operation, then download the exact new artifact.
 
 ```ts
 import { createReceizClient } from "@receiz/sdk";
 
 const receiz = createReceizClient({ accessToken });
-const expectedOwnershipHead = await receiz.proofHead.get({ aggregateId: `ownership:${artifactId}` });
-const result = await receiz.ownership.claimBearerAsset({
-  artifactBytes: new Uint8Array(await artifactFile.arrayBuffer()),
-  filename: artifactFile.name,
-  mimeType: artifactFile.type || "application/octet-stream",
-  claimantKeyId,
-  expectedOwnershipHead,
-  idempotencyKey: `claim:${artifactId}:${claimantKeyId}:${expectedOwnershipHead.digest}`,
+const opened = await receiz.artifacts.verifyAndOpen(artifactFile);
+const claimed = await receiz.ownership.claimBearerAsset({
+  artifact: opened.sealedArtifact,
 });
-if (!await receiz.receipts.verify(result.receipt)) throw new Error("receipt_invalid");
-if (result.previousOwnerProjection.active || !result.owner.active) throw new Error("custody_conflict");
+const downloadEvidence = await receiz.artifacts.download(claimed);
 ```
+
+`opened.verifiedPayload` is an inspected projection. Ownership input remains `opened.sealedArtifact`, the complete sealed artifact.
 
 ## Required authority
 
-Require the claimant Receiz identity plus delegated `receiz:record` and `receiz:seal` scopes or the corresponding signed-in session. The enclosing sealed artifact remains ownership authority.
+Treat the enclosing sealed proof object and its carried ownership continuity as stronger truth. Bind the new owner to the authenticated Receiz account. Keep the server, SDK, MCP, and AI beneath those primitives.
 
-## Required proof head
+The proof object is not limited to the platform that created it. Any lawful platform may verify it and append authenticated ownership and history through the same operation, provided the result preserves the same immutable object identity, payload, provenance root, and prior history and returns a newly verified complete proof object.
 
-Read `ownership:${artifactId}` immediately before planning. Pass that exact head; never use a subpayload hash as the ownership boundary.
+Require the signed-in session or delegated `receiz:record` and `receiz:seal` scopes. Do not accept a caller-selected owner, identity key, claim key, or proof head.
 
-## Idempotency
+## Required proof object
 
-Bind the key to artifact identity, claimant identity, artifact bytes, and expected ownership head. Exact replay returns the original admitted artifact; changed input with the same key is a conflict.
+Require a complete sealed artifact that passes enclosing integrity, Signature V4, claim/path, owner, and payload-binding verification. Reject payload bytes, a self-hash, an arbitrary Blob, or a caller-constructed artifact handle.
+
+Prior ownership is derived from the verified carried proof payload. Never fetch or accept a caller-provided latest ownership head as the authority boundary.
+
+## Deterministic behavior
+
+Append the authenticated Receiz owner to the verified carried ownership document, then run native Record -> Seal. Return only the newly verified complete artifact. Use `artifacts.download` to preserve its exact bytes and metadata.
 
 ## Offline behavior
 
-Offline work may verify the artifact and queue signed claim intent, but cannot report global ownership. Display `queued`, preserve the original artifact, and admit only after reconnect.
+Retain the original artifact and its verified local truth when network service is unavailable. Do not report an ownership claim as complete until authenticated Record -> Seal returns the new verified artifact.
 
 ## Conflict behavior
 
-On `ownership_head_stale` or `custody_conflict`, fetch the canonical ownership head and show the current owner/custody chain. Never overwrite, silently retry against a new owner, or revive the previous active projection.
+On failed enclosing verification, non-bearer custody, authenticated-owner failure, Record failure, Seal failure, or custody conflict, return no claimed artifact. Never retry by substituting a server row, caller head, or detached payload.
 
-## Receipt verification
+## Result verification
 
-Verify the returned canonical receipt and confirm `previousOwnerProjection.active === false`, `owner.active === true`, and ownership-head continuity before reporting ownership.
+Require a runtime-issued current native artifact with complete verification, authenticated owner continuity, Record identity, claim/path binding, Signature V4, and native Record -> Seal continuity. A receipt is not emitted or required for this current outcome.
 
 ## User confirmation
 
-Show artifact ID/type, claimant key ID, prior owner, expected head, irreversible custody consequence, and idempotency key. Require explicit confirmation.
+Show the source artifact identity, verified current custody, authenticated destination account, and the consequence of creating a new ownership artifact. Never ask for a claimant key ID or expected ownership head.
 
 ## MCP parity
 
-Call `receiz_proof_head_get`, then `receiz_bearer_asset_claim_plan`. Require the exact digest, call `receiz_bearer_asset_claim_execute`, then call `receiz_receipt_verify`. MCP planning and subpayload hashes are not proof authority.
+Call `receiz_bearer_asset_claim_plan` with `{ artifactBase64, filename, mimeType }`, where the bytes are the complete sealed artifact. Require the exact confirmation digest, then call `receiz_bearer_asset_claim_execute` with `{ planDigest, confirmation }`.
+
+The active MCP path calls `client.artifacts.verifyAndOpen(completeFile)`, then `client.ownership.claimBearerAsset({ artifact: opened.sealedArtifact })`. It returns the newly claimed complete sealed artifact bytes and evidence, never the extracted payload.
 
 ## Emulator fixture
 
-Run `generic-bearer-transfer` and `previous-owner-projection-invalidation` across all supported artifact families.
+Run `generic-bearer-transfer` and `previous-owner-projection-invalidation` across qualifying artifact families. Require the prior ownership reference to come from carried verified proof and the output to be a native sealed artifact.

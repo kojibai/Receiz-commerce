@@ -1,14 +1,14 @@
 {
-  "schema": "receiz.ai-skill-contract.v107",
+  "schema": "receiz.ai-skill-contract.v108",
   "name": "receiz-offline-command",
-  "version": "107.0.0",
-  "requires": { "sdk": ">=107.0.0 <108.0.0", "mcp": ">=107.0.0 <108.0.0", "ruleset": "107.0.0", "registryDigest": "4d0caa6172a69c3bf5817c1c35db5630e555b5d6d824091d45a90fb426b86ef6" },
-  "laws": ["receiz.offline.signed-intent", "receiz.local-truth.immediate", "receiz.receipt.verify"],
-  "sdkOperations": ["offline.createCommandQueue", "offline.executeOrQueue", "receipts.verify"],
-  "allowedTools": ["receiz_proof_head_get", "receiz_receipt_verify"],
+  "version": "108.0.0",
+  "requires": { "sdk": ">=108.0.0 <109.0.0", "mcp": ">=108.0.0 <109.0.0", "ruleset": "108.0.0", "registryDigest": "126ca9283fee4ef4c398dbcb958e861cbea191724fdab8eb08df55ff0c14bb79" },
+  "laws": ["receiz.offline.transport-intent", "receiz.local-truth.immediate", "artifact.verify-before-extract"],
+  "sdkOperations": ["offline.createQueue", "artifacts.verifyAndOpen"],
+  "allowedTools": ["receiz_artifact_verify", "receiz_artifact_explain"],
   "requiredScopes": ["receiz:record"],
-  "emulatorFixtures": ["offline-rename-global-conflict", "interrupted-sync-deterministic-resume"],
-  "forbiddenOperations": ["queued-as-committed", "unsigned-command", "cross-lane-blocking", "authority-bypass"],
-  "requiredEvidence": ["receipt-verification", "emulator-conformance", "release-lock-pass"],
+  "emulatorFixtures": ["offline-proof-replay", "durable-queue", "artifact-substitution-rejection"],
+  "forbiddenOperations": ["queued-as-committed", "transport-settled-as-admission", "payload-as-artifact", "cross-lane-blocking", "retired-proof-head-prerequisite", "authority-bypass"],
+  "requiredEvidence": ["queued-not-global-admission", "independent-artifact-verification", "emulator-conformance", "release-lock-pass"],
   "maximumAutonomousAuthority": "inspect-plan-simulate"
 }

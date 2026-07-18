@@ -1,14 +1,14 @@
 {
-  "schema": "receiz.ai-skill-contract.v107",
+  "schema": "receiz.ai-skill-contract.v108",
   "name": "receiz-proof-media",
-  "version": "107.0.0",
-  "requires": { "sdk": ">=107.0.0 <108.0.0", "mcp": ">=107.0.0 <108.0.0", "ruleset": "107.0.0", "registryDigest": "4d0caa6172a69c3bf5817c1c35db5630e555b5d6d824091d45a90fb426b86ef6" },
-  "laws": ["receiz.media.proof-reference", "receiz.profile.atomic-media", "receiz.receipt.verify"],
-  "sdkOperations": ["media.publishIdentityImage", "identity.updateProfile", "receipts.verify"],
-  "allowedTools": ["receiz_media_publish_plan", "receiz_media_publish_execute", "receiz_identity_profile_update_plan", "receiz_identity_profile_update_execute", "receiz_receipt_verify"],
-  "requiredScopes": ["receiz:media.write", "profile"],
+  "version": "108.0.0",
+  "requires": { "sdk": ">=108.0.0 <109.0.0", "mcp": ">=108.0.0 <109.0.0", "ruleset": "108.0.0", "registryDigest": "126ca9283fee4ef4c398dbcb958e861cbea191724fdab8eb08df55ff0c14bb79" },
+  "laws": ["receiz.media.enclosing-proof-object", "receiz.artifact.native-record-seal", "receiz.profile.same-account-uid"],
+  "sdkOperations": ["assets.createProofObject", "artifacts.download", "profile.update"],
+  "allowedTools": ["receiz_identity_profile_update_plan", "receiz_identity_profile_update_execute"],
+  "requiredScopes": ["receiz:record", "receiz:seal", "profile"],
   "emulatorFixtures": ["profile-media-atomic-rollback"],
-  "forbiddenOperations": ["url-as-proof", "partial-profile-media-commit", "owner-substitution", "authority-bypass"],
-  "requiredEvidence": ["receipt-verification", "emulator-conformance", "release-lock-pass"],
+  "forbiddenOperations": ["url-as-proof", "payload-as-artifact", "identity-key-prerequisite", "caller-proof-head-prerequisite", "receipt-authority", "owner-substitution", "authority-bypass"],
+  "requiredEvidence": ["complete-artifact-verification", "native-record-seal", "same-account-uid-result", "emulator-conformance", "release-lock-pass"],
   "maximumAutonomousAuthority": "inspect-plan-simulate"
 }

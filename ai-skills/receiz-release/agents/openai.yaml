@@ -1,4 +1,4 @@
 interface:
   display_name: "Receiz Release"
   short_description: "Qualify a constitutional release"
-  default_prompt: "Use -release to verify and release-lock a coordinated Receiz version."
+  default_prompt: "Use $receiz-release to release-lock one registry and artifact-law version with complete native artifact evidence."

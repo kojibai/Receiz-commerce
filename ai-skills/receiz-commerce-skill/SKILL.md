@@ -34,7 +34,7 @@ Receiz commerce is proof-native commerce. A product page, storefront, order view
 1. Name the product primitive: proof object, ownership surface, settlement primitive, public proof surface, certificate, note, receipt, or storefront projection.
 2. Verify the product object or public proof URL before making ownership or provenance claims.
 3. Separate product proof from checkout mechanics and receipt projection.
-4. Use no-database patterns only when artifact truth and SDK/MCP rails remain the source of truth.
+4. Use no-database patterns only when sealed artifact truth and verified local truth remain the source of truth; SDK and MCP rails may transport or project that truth only.
 5. Use buyer and seller language from [resources/seller-buyer-language.md](resources/seller-buyer-language.md).
 6. Preserve explicit confirmation before checkout, transfer, certificate, note, or receipt append actions.
 

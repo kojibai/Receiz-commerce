@@ -1,6 +1,6 @@
 # Verify Card
 
-Use `assertReceizSportsCardManifest` or MCP `receiz_inspect_offline_file` only to inspect a local card manifest shape. Use SDK `verification.verifyArtifact(file)` for verification. Use `receiz_card_history` when the user provides local card memory or asks for append history.
+Use MCP `receiz_inspect_offline_file` only to inspect a local card-manifest shape. Use SDK `artifacts.verifyAndOpen(file)` on the complete sealed artifact, then give only `opened.verifiedPayload.bytes` to `assertReceizSportsCardManifest`. Use `receiz_card_history` when the user provides admitted local card memory or asks for append history.
 
 Report:
 

@@ -50,3 +50,4 @@ Refuse completion when any manifest input, law, test, conformance result, indepe
 Request: Recompute admitted history from canonical inputs and prove checkpoint, full replay, and independent-engine equivalence.
 
 Return a written implementation contract and read-only plan first. Execute only allowed commands after exact confirmation, then report registry digest, laws, authority, tests, independent evidence, release-lock status, and the exact remaining boundary.
+

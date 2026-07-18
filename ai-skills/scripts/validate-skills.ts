@@ -1,5 +1,6 @@
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join, normalize, relative, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
 type SkillSpec = {
   name: string;
@@ -7,7 +8,7 @@ type SkillSpec = {
   examples: string[];
 };
 
-const root = resolve(process.cwd(), "ai-skills");
+const root = resolve(fileURLToPath(new URL("..", import.meta.url)));
 
 const skills: SkillSpec[] = [
   {
@@ -129,7 +130,7 @@ const constitutionalSkills = [
   "receiz-build-production-system",
 ] as const;
 
-const v107Skills = [
+const operationSkills = [
   "receiz-identity-profile",
   "receiz-portable-continuity",
   "receiz-bearer-ownership",
@@ -139,7 +140,48 @@ const v107Skills = [
   "receiz-receipt-admission",
 ] as const;
 
-const v107Sections = [
+const artifactSkills = [
+  "receiz-portable-artifacts",
+  "receiz-proof-skill",
+  "receiz-offline-verifier-skill",
+  "receiz-cross-app-state",
+  "receiz-app-builder-skill",
+  "receiz-migrations",
+  "receiz-testing",
+  "receiz-release",
+] as const;
+
+const artifactRegistryDigest = "126ca9283fee4ef4c398dbcb958e861cbea191724fdab8eb08df55ff0c14bb79";
+const artifactLaws = Array.from({ length: 10 }, (_, index) => `ARTIFACT-${String(index + 1).padStart(3, "0")}`);
+const artifactSdkOperations = ["assets.createProofObject", "artifacts.download", "artifacts.verifyAndOpen"] as const;
+const artifactEvidence = [
+  "exact-artifact-byte-identity", "artifact-digest-match", "payload-digest-binding", "signature-v4",
+  "owner-claim-binding", "independent-artifact-verification", "cross-platform-round-trip",
+  "legacy-read-compatibility", "release-lock-pass",
+] as const;
+const artifactCompletionFields = [
+  "sdk-version", "registry-digest", "artifact-law-version", "artifact-carrier", "signature-version",
+  "artifact-digest", "payload-digest", "owner-and-claim-binding", "independent-verification-result",
+  "cross-platform-round-trip-result", "legacy-compatibility-result", "release-lock-result",
+] as const;
+const artifactCompletionLabels = [
+  "SDK version:", "Registry digest:", "Artifact law version:", "Artifact carrier:", "Signature version:",
+  "Artifact digest:", "Payload digest:", "Owner and claim binding:", "Independent verification result:",
+  "Cross-platform round-trip result:", "Legacy compatibility result:", "Release-lock result:",
+] as const;
+const artifactProhibitions = [
+  "Never download an unsealed payload fallback.",
+  "Never call an inner payload a Receiz artifact.",
+  "Never relabel payload bytes as a Receiz artifact.",
+  "Never repack, wrap, recompress, or modify native Record -> Seal bytes.",
+  "Never treat shape validation as artifact verification.",
+  "Never delete unknown cross-application namespaces.",
+  "Never rewrite immutable ownership or provenance history.",
+  "Never weaken a failing test to accept payload-only continuity.",
+  "Never claim success from UI rendering alone.",
+] as const;
+
+const compatibilityOperationSections = [
   "## Exact SDK operation",
   "## Required authority",
   "## Required proof head",
@@ -151,6 +193,47 @@ const v107Sections = [
   "## MCP parity",
   "## Emulator fixture",
 ] as const;
+
+const currentOutcomeSections: Record<string, readonly string[]> = {
+  "receiz-identity-profile": [
+    "## Exact SDK operation", "## Required authority", "## Required admission", "## Deterministic behavior",
+    "## Offline behavior", "## Conflict behavior", "## Result verification", "## User confirmation", "## MCP parity", "## Emulator fixture",
+  ],
+  "receiz-bearer-ownership": [
+    "## Exact SDK operation", "## Required authority", "## Required proof object", "## Deterministic behavior",
+    "## Offline behavior", "## Conflict behavior", "## Result verification", "## User confirmation", "## MCP parity", "## Emulator fixture",
+  ],
+  "receiz-proof-media": [
+    "## Exact SDK operation", "## Required authority", "## Required proof object", "## Deterministic behavior",
+    "## Offline behavior", "## Conflict behavior", "## Result verification", "## User confirmation", "## MCP parity", "## Emulator fixture",
+  ],
+  "receiz-portable-continuity": [
+    "## Exact SDK operation", "## Required authority", "## Required proof object", "## Deterministic behavior",
+    "## Offline behavior", "## Conflict behavior", "## Result verification", "## User confirmation", "## MCP parity", "## Emulator fixture",
+  ],
+  "receiz-offline-command": [
+    "## Exact SDK operation", "## Required authority", "## Required proof object", "## Deterministic behavior",
+    "## Offline behavior", "## Conflict behavior", "## Result verification", "## User confirmation", "## MCP parity", "## Emulator fixture",
+  ],
+  "receiz-cross-app-state": [
+    "## Exact SDK operation", "## Required authority", "## Required proof object", "## Deterministic behavior",
+    "## Offline behavior", "## Conflict behavior", "## Result verification", "## User confirmation", "## MCP parity", "## Emulator fixture",
+  ],
+  "receiz-receipt-admission": [
+    "## Exact SDK operation", "## Required authority", "## Required proof object", "## Deterministic behavior",
+    "## Offline behavior", "## Conflict behavior", "## Result verification", "## User confirmation", "## MCP parity", "## Emulator fixture",
+  ],
+};
+
+const currentOutcomeEvidence: Record<string, readonly string[]> = {
+  "receiz-identity-profile": ["same-account-uid-result"],
+  "receiz-bearer-ownership": ["complete-artifact-verification", "native-record-seal"],
+  "receiz-proof-media": ["complete-artifact-verification", "native-record-seal", "same-account-uid-result"],
+  "receiz-portable-continuity": ["complete-artifact-verification", "native-record-seal", "same-account-uid-result"],
+  "receiz-offline-command": ["queued-not-global-admission", "independent-artifact-verification"],
+  "receiz-cross-app-state": ["complete-artifact-verification", "native-record-seal", "same-account-uid-result"],
+  "receiz-receipt-admission": ["complete-artifact-verification", "independent-artifact-verification"],
+};
 
 const requiredSections = [
   "## When To Use This Skill",
@@ -249,13 +332,13 @@ function assertConstitutionalSkill(name: (typeof constitutionalSkills)[number]):
   for (const section of ["## Constitutional workflow", "## Machine contract", "## Quick reference", "## Common mistakes", "## Completion refusal", "## Example"]) {
     if (!text.includes(section)) fail(`${name}/SKILL.md missing section ${section}`);
   }
-  if (manifest.schema !== "receiz.ai-skill-contract.v106" || manifest.name !== name) {
+  if (manifest.schema !== "receiz.ai-skill-contract.v108" || manifest.name !== name || manifest.version !== "108.0.0") {
     fail(`${name}/manifest.json has invalid schema or name`);
   }
   const serialized = JSON.stringify(manifest);
   for (const required of [
-    ">=107.0.0 <108.0.0",
-    "4d0caa6172a69c3bf5817c1c35db5630e555b5d6d824091d45a90fb426b86ef6",
+    ">=108.0.0 <109.0.0",
+    "126ca9283fee4ef4c398dbcb958e861cbea191724fdab8eb08df55ff0c14bb79",
     "direct-state-write",
     "history-rewrite",
     "authority-bypass",
@@ -268,7 +351,7 @@ function assertConstitutionalSkill(name: (typeof constitutionalSkills)[number]):
   assertMarkdownLinks(skillFile, text);
 }
 
-function assertV107Skill(name: (typeof v107Skills)[number]): void {
+function assertOperationSkill(name: (typeof operationSkills)[number]): void {
   const skillDir = join(root, name);
   const skillFile = join(skillDir, "SKILL.md");
   const manifestFile = join(skillDir, "manifest.json");
@@ -282,19 +365,18 @@ function assertV107Skill(name: (typeof v107Skills)[number]): void {
   if (!new RegExp(`^---\\nname: ${name}\\ndescription: Use when `).test(text)) {
     fail(`${name}/SKILL.md has invalid discovery frontmatter`);
   }
-  for (const section of v107Sections) {
+  for (const section of currentOutcomeSections[name] ?? compatibilityOperationSections) {
     if (!text.includes(section)) fail(`${name}/SKILL.md missing section ${section}`);
   }
   if (!/```ts[\s\S]*createReceizClient[\s\S]*```/.test(text)) fail(`${name}/SKILL.md missing copy-paste TypeScript`);
-  if (manifest.schema !== "receiz.ai-skill-contract.v107" || manifest.name !== name || manifest.version !== "107.0.0") {
+  if (manifest.schema !== "receiz.ai-skill-contract.v108" || manifest.name !== name || manifest.version !== "108.0.0") {
     fail(`${name}/manifest.json has invalid schema, name, or version`);
   }
   const serialized = JSON.stringify(manifest);
   for (const required of [
-    ">=107.0.0 <108.0.0",
-    "107.0.0",
-    "4d0caa6172a69c3bf5817c1c35db5630e555b5d6d824091d45a90fb426b86ef6",
-    "receipt-verification",
+    ">=108.0.0 <109.0.0",
+    "108.0.0",
+    "126ca9283fee4ef4c398dbcb958e861cbea191724fdab8eb08df55ff0c14bb79",
     "emulator-conformance",
     "release-lock-pass",
     "inspect-plan-simulate",
@@ -302,7 +384,77 @@ function assertV107Skill(name: (typeof v107Skills)[number]): void {
     if (!serialized.includes(required)) fail(`${name}/manifest.json missing ${required}`);
   }
   for (const field of ["sdkOperations", "allowedTools", "requiredScopes", "emulatorFixtures", "requiredEvidence"]) {
-    if (!Array.isArray(manifest[field]) || manifest[field].length === 0) fail(`${name}/manifest.json missing ${field}`);
+    const value = manifest[field];
+    const readOnlyLocalScope = field === "requiredScopes" && name === "receiz-receipt-admission";
+    if (!Array.isArray(value) || (!readOnlyLocalScope && value.length === 0)) fail(`${name}/manifest.json missing ${field}`);
+  }
+  const nativeEvidence = currentOutcomeEvidence[name];
+  if (nativeEvidence) {
+    for (const required of nativeEvidence) {
+      if (!serialized.includes(required)) fail(`${name}/manifest.json missing ${required}`);
+    }
+    if (/identity\.getProfile|identity\.restoreAccount|identity\.appendAccountState|continuity\.reconcile|continuity\.commit|offline\.createCommandQueue|offline\.executeOrQueue|proofHead\.get|receipts\.verify|identityKeyId|expectedOwnershipHead|claimantKeyId|receiz_proof_head_get|receiz_receipt_verify|receiz_continuity_sync_plan|receiz_continuity_sync_execute|media\.publishIdentityImage/.test(text + serialized)) {
+      fail(`${name} retains a retired v107 prerequisite in the active v108 outcome`);
+    }
+    if (/## Required proof head|## Receipt verification/.test(text)) {
+      fail(`${name}/SKILL.md retains a retired v107 current-outcome section`);
+    }
+  } else if (!serialized.includes("receipt-verification")) {
+    fail(`${name}/manifest.json missing receipt-verification compatibility evidence`);
+  }
+  assertMarkdownLinks(skillFile, text);
+}
+
+function assertArtifactSkill(name: (typeof artifactSkills)[number]): void {
+  const skillDir = join(root, name);
+  const skillFile = join(skillDir, "SKILL.md");
+  const manifestFile = join(skillDir, "manifest.json");
+  assertPath(skillFile);
+  assertPath(manifestFile);
+  if (!existsSync(skillFile) || !existsSync(manifestFile)) return;
+
+  const text = read(skillFile);
+  const manifest = JSON.parse(read(manifestFile)) as Record<string, unknown>;
+  const requires = manifest.requires as Record<string, unknown> | undefined;
+  if (!text.includes("A Receiz artifact is the exact byte sequence returned by native Record -> Seal. The inner payload is never an acceptable substitute.")) {
+    fail(`${name}/SKILL.md missing binding artifact law`);
+  }
+  for (const operation of artifactSdkOperations) {
+    if (!text.includes(`receiz.${operation}`)) fail(`${name}/SKILL.md missing receiz.${operation}`);
+  }
+  for (const label of artifactCompletionLabels) {
+    if (!text.includes(label)) fail(`${name}/SKILL.md missing completion field ${label}`);
+  }
+  for (const prohibition of artifactProhibitions) {
+    if (!text.includes(prohibition)) fail(`${name}/SKILL.md missing prohibition ${prohibition}`);
+  }
+  if (!/refuse to (?:call|say|report|claim).*production-ready|refuse production-ready completion/i.test(text)) {
+    fail(`${name}/SKILL.md must refuse production-ready completion without evidence`);
+  }
+
+  if (manifest.schema !== "receiz.ai-skill-contract.v108" || manifest.name !== name || manifest.version !== "108.0.0") {
+    fail(`${name}/manifest.json has invalid v108 schema, name, or version`);
+  }
+  if (requires?.ruleset !== "108.0.0" || requires.registryDigest !== artifactRegistryDigest) {
+    fail(`${name}/manifest.json has artifact registry or ruleset skew`);
+  }
+  if (manifest.artifactLawVersion !== "108.0.0" || JSON.stringify(manifest.artifactLaws) !== JSON.stringify(artifactLaws)) {
+    fail(`${name}/manifest.json has artifact law version or law-set skew`);
+  }
+  const sdkOperations = Array.isArray(manifest.sdkOperations) ? manifest.sdkOperations : [];
+  const evidence = Array.isArray(manifest.requiredEvidence) ? manifest.requiredEvidence : [];
+  const forbidden = Array.isArray(manifest.forbiddenOperations) ? manifest.forbiddenOperations : [];
+  for (const operation of artifactSdkOperations) {
+    if (!sdkOperations.includes(operation)) fail(`${name}/manifest.json missing ${operation}`);
+  }
+  for (const required of artifactEvidence) {
+    if (!evidence.includes(required)) fail(`${name}/manifest.json missing ${required}`);
+  }
+  for (const required of ["payload-fallback", "payload-relabel-as-artifact", "artifact-repack", "shape-only-verification", "history-rewrite"]) {
+    if (!forbidden.includes(required)) fail(`${name}/manifest.json missing ${required}`);
+  }
+  if (JSON.stringify(manifest.requiredCompletionFields) !== JSON.stringify(artifactCompletionFields)) {
+    fail(`${name}/manifest.json requiredCompletionFields do not match shared artifact law`);
   }
   assertMarkdownLinks(skillFile, text);
 }
@@ -310,7 +462,8 @@ function assertV107Skill(name: (typeof v107Skills)[number]): void {
 assertPath(join(root, "README.md"));
 for (const skill of skills) assertSkill(skill);
 for (const skill of constitutionalSkills) assertConstitutionalSkill(skill);
-for (const skill of v107Skills) assertV107Skill(skill);
+for (const skill of operationSkills) assertOperationSkill(skill);
+for (const skill of artifactSkills) assertArtifactSkill(skill);
 
 for (const file of markdownFiles(root)) {
   const text = read(file);
@@ -329,4 +482,4 @@ if (failures.length > 0) {
   process.exit(1);
 }
 
-console.log(`ai-skills validation passed for ${skills.length + constitutionalSkills.length + v107Skills.length} skills.`);
+console.log(`ai-skills validation passed for ${skills.length + constitutionalSkills.length + operationSkills.length} skills.`);

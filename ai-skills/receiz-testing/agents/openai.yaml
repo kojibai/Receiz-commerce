@@ -1,4 +1,4 @@
 interface:
   display_name: "Receiz Testing"
   short_description: "Test laws replay and compatibility"
-  default_prompt: "Use -testing to build Receiz law, mutation, replay, fuzz, and compatibility tests."
+  default_prompt: "Use $receiz-testing to prove exact artifact bytes, digests, Signature V4, owner/claim binding, cross-app continuity, and failure refusal."

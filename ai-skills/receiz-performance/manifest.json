@@ -1,11 +1,12 @@
 {
-  "schema": "receiz.ai-skill-contract.v106",
+  "schema": "receiz.ai-skill-contract.v108",
   "name": "receiz-performance",
+  "version": "108.0.0",
   "requires": {
-    "sdk": ">=107.0.0 <108.0.0",
-    "mcp": ">=107.0.0 <108.0.0",
-    "ruleset": "107.0.0",
-    "registryDigest": "4d0caa6172a69c3bf5817c1c35db5630e555b5d6d824091d45a90fb426b86ef6"
+    "sdk": ">=108.0.0 <109.0.0",
+    "mcp": ">=108.0.0 <109.0.0",
+    "ruleset": "108.0.0",
+    "registryDigest": "126ca9283fee4ef4c398dbcb958e861cbea191724fdab8eb08df55ff0c14bb79"
   },
   "laws": [
     "receiz.performance.known-truth-first",

@@ -50,3 +50,4 @@ Refuse completion when any manifest input, law, test, conformance result, indepe
 Request: Model aggregate identities, commands, events, projections, privacy classes, migrations, and tests as one registry-bound domain.
 
 Return a written implementation contract and read-only plan first. Execute only allowed commands after exact confirmation, then report registry digest, laws, authority, tests, independent evidence, release-lock status, and the exact remaining boundary.
+
