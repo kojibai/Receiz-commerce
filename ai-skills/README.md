@@ -4,10 +4,10 @@
 Receiz applications. Fourteen focused constitutional skills supply architecture,
 domain, law, command, authority, replay, offline, causal, artifact, migration,
 performance, observability, testing, and release contracts. The earlier nine
-domain skill names remain packaged for compatibility. Seven operation skill names first introduced in v107 now
-describe current v108 outcomes for identity profiles, portable continuity, bearer ownership, offline transport,
-proof media, cross-app state, and admission evidence. Their retired v107 mechanisms are not active defaults.
-Every current manifest uses schema and version `v108` / `108.0.0`, requires SDK/MCP `>=108.0.0 <109.0.0`, and binds ruleset `108.0.0` to registry digest `126ca9283fee4ef4c398dbcb958e861cbea191724fdab8eb08df55ff0c14bb79`.
+domain skill names remain packaged for compatibility. Seven operation skill names first introduced in obsolete-versioned now
+describe current v109 outcomes for identity profiles, portable continuity, bearer ownership, offline transport,
+proof media, cross-app state, and admission evidence. Their retired obsolete-versioned mechanisms are not active defaults.
+Every current manifest uses schema and version `v109` / `109.0.0`, requires SDK/MCP `>=109.0.0 <110.0.0`, and binds ruleset `109.0.0` to registry digest `17f76b37c9fcd46f710239b5c1660b03cc34ec64bed30d1cc45c18d5d40eab70`.
 
 This package teaches AI agents how to understand, verify, build with, and operate Receiz from the existing repository surfaces.
 
@@ -27,11 +27,11 @@ Agents may acquire scoped delegated access through the official Receiz Connect/O
 
 ## How Agents Should Use This Package
 
-Start with `receiz-build-production-system` when work spans multiple constitutional domains. Its machine-readable manifest requires the exact active signed registry digest, command-only mutation, independent verification, MCP conformance, and a passing release lock. Use a focused operation skill for SDK/MCP implementation and a constitutional skill for broader system law. Stable v107 wire schemas remain available only through the explicit historical `@receiz/sdk/v107` package entry; current skills never teach their key, head, receipt, reconcile, or signed-command mechanics as a v108 outcome.
+Start with `receiz-build-production-system` when work spans multiple constitutional domains. Its machine-readable manifest requires the exact active signed registry digest, command-only mutation, independent verification, MCP conformance, and a passing release lock. Use a focused operation skill for SDK/MCP implementation and a constitutional skill for broader system law. Stable obsolete-versioned wire schemas remain available only through the explicit historical `@receiz/sdk/obsolete-versioned` package entry; current skills never teach their key, head, receipt, reconcile, or signed-command mechanics as a v109 outcome.
 
-The v108 operation skills are executable contracts. Current profile work uses the neutral authenticated same-UID profile operation. Current bearer ownership accepts a complete verified artifact, derives prior ownership from carried proof, and returns a native Record -> Seal artifact. Proof media uses the same native artifact custody and projects only a verified URL beneath it. These outcomes have no active identity-key, caller-head, claim-key, or receipt prerequisite. MCP calls the same SDK outcomes and never creates a parallel authority.
+The v109 operation skills are executable contracts. Current profile work uses the neutral authenticated same-UID profile operation. Current bearer ownership accepts a complete verified artifact, derives prior ownership from carried proof, and returns a native Record -> Seal artifact. Proof media uses the same native artifact custody and projects only a verified URL beneath it. These outcomes have no active identity-key, caller-head, claim-key, or receipt prerequisite. MCP calls the same SDK outcomes and never creates a parallel authority.
 
-Stable v107 schema names and their head/receipt mechanics remain explicitly historical compatibility, not the active/default profile, bearer, or proof-media contract.
+Stable obsolete-versioned schema names and their head/receipt mechanics remain explicitly historical compatibility, not the active/default profile, bearer, or proof-media contract.
 
 Do not invent APIs. Use the SDK and MCP maps inside the skills, then inspect the repo when a requested operation is not listed.
 

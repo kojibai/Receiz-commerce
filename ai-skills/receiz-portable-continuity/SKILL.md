@@ -11,7 +11,7 @@ The originating platform has no continuing ownership of the proof boundary. Any 
 
 ## Exact SDK operation
 
-Use the current root SDK identity verifier and native artifact custody methods. Do not import the historical v107 continuity client.
+Use the current root SDK identity verifier and native artifact custody methods. Do not import the historical obsolete-versioned continuity client.
 
 ```ts
 import { createReceizClient } from "@receiz/sdk";
@@ -67,4 +67,4 @@ Use `receiz_artifact_verify` and `receiz_artifact_extract_verified` for carried 
 
 ## Emulator fixture
 
-Run the current identity-artifact helper, native artifact round-trip, and artifact-substitution rejection contracts. Historical v107 reconciliation fixtures are archival evidence only and are not a v108 operation contract.
+Run the current identity-artifact helper, native artifact round-trip, and artifact-substitution rejection contracts. Historical obsolete-versioned reconciliation fixtures are archival evidence only and are not a v109 operation contract.

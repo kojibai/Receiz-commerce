@@ -1,0 +1,17 @@
+{
+  "schema": "receiz.repository.v108-v109.migration-attestation.v1",
+  "sourceVersion": "108.0.0",
+  "destinationVersion": "109.0.0",
+  "canonicalRegistryDigest": "17f76b37c9fcd46f710239b5c1660b03cc34ec64bed30d1cc45c18d5d40eab70",
+  "appRegistryDigest": "0e2b42437cdf493fa2f01f4433a0837beaa316b03492905049e3638ddf51a4d0",
+  "historyRewritten": false,
+  "completeArtifactCustody": true,
+  "verifyBeforeExtract": true,
+  "localArtifactVerificationNetworkCalls": 0,
+  "databaseChanged": false,
+  "crossPlatformContinuity": true,
+  "obsoleteVersionedDeveloperExports": false,
+  "manualAuthorityReview": "complete",
+  "strongerTruth": "sealed-receiz-proof-object",
+  "recovery": "roll-forward-from-verified-checkpoint"
+}

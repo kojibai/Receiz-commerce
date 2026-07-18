@@ -2,6 +2,14 @@
 
 All notable changes to Receiz Commerce Kit will be documented here.
 
+## 4.2.0 - Receiz v109 Local Verification
+
+- Upgraded SDK, MCP server, and all thirty-one AI skills to exact official `109.0.0` vendored artifacts with lockfile and release-lock parity.
+- Added v109 zero-network verification and verify-before-extract opening for complete `.receizbundle` proof objects without a session, database, registry lookup, or running Receiz.com process.
+- Chained application law to the canonical v109 registry and adopted `ARTIFACT-011`, which rejects SDK artifact verification or opening that depends on weaker state.
+- Removed obsolete version-specific developer exports from the active contract while preserving historical sealed artifacts, receipts, registry records, migration attestations, and proof history.
+- Replaced v108 release and migration gates with v109 package, registry-chain, local-verifier, MCP-tool, AI-skill, CLI, conformance, and history-preservation checks.
+
 ## 4.1.0 - Receiz v108 Artifact Continuity
 
 - Upgraded SDK, MCP server, and all thirty-one AI skills to exact official `108.0.0` vendored artifacts with lockfile and release-lock parity.

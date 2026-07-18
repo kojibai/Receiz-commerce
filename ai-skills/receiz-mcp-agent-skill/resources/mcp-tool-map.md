@@ -1,6 +1,6 @@
 # MCP Tool Map
 
-## v108 Application Compiler
+## v109 Application Compiler
 
 | Need | Tool | Mutation |
 |---|---|---|
@@ -22,7 +22,7 @@ verification verdict or proof authority.
 
 Source: `packages/receiz-mcp-server/src/index.ts`.
 
-## v108 Current Profile And Ownership Outcomes
+## v109 Current Profile And Ownership Outcomes
 
 | Need | Tool | Mutation |
 |---|---|---|
@@ -37,7 +37,7 @@ The bearer plan verifies the complete sealed artifact with `client.artifacts.ver
 
 A verified proof object is not limited to the platform that created it. Any lawful platform may append authenticated ownership and history only while preserving the same immutable object identity, payload, provenance root, prior history, and unknown namespaces, then returning a complete verified proof object. These MCP tools invoke that same SDK continuity and never create an origin-platform lock or parallel chain.
 
-## v108 Complete Artifact Custody
+## v109 Complete Artifact Custody
 
 | Need | Tool | Boundary |
 |---|---|---|
@@ -50,7 +50,7 @@ A verified proof object is not limited to the platform that created it. Any lawf
 
 These six tools preserve artifact and payload as separate byte domains. They never relabel payload bytes, repack a native artifact, or treat MCP state as proof authority.
 
-Stable v107 operation schemas remain available only through their explicit historical compatibility import. They are not part of this active/default tool inventory.
+Obsolete versioned operation schemas are not shipped as installable compatibility surfaces. Historical sealed artifacts and release evidence remain verifiable without carrying obsolete developer APIs forward.
 
 ## Diagnostics And Setup
 

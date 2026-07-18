@@ -1,3 +1,17 @@
+# Receiz Commerce Kit v4.2.0 — Local Artifact Verification
+
+Release date: July 18, 2026
+
+Status: General Availability · repository release
+
+SDK target: `@receiz/sdk@109.0.0`
+
+V4.2 aligns the SDK, MCP server, and thirty-one-skill stack at v109. Complete `.receizbundle` proof objects can now be verified and opened locally with zero network calls and no access token, cookie, database, registry lookup, or running Receiz.com process. Verification still fails closed for malformed or mutated carriers, invalid Signature V4 or Groth16 proof material, artifact-binding mismatches, and broken portable continuity.
+
+The app law overlay is chained to the canonical v109 registry and includes `ARTIFACT-011`, while existing witnessed history and the v108 migration record remain immutable. Exact official tarball integrity, lockfile parity, all eleven artifact laws, MCP and AI-skill alignment, official zero-network conformance, the v108→v109 attestation, tests, typecheck, lint, production build, secret scan, and SDK doctor remain release gates.
+
+---
+
 # Receiz Commerce Kit v4.1.0 — Artifact Continuity
 
 Release date: July 18, 2026

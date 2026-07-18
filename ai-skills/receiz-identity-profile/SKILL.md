@@ -1,6 +1,6 @@
 ---
 name: receiz-identity-profile
-description: Use when checking username availability or updating a Receiz profile through the authenticated same-account v108 operation.
+description: Use when checking username availability or updating a Receiz profile through the authenticated same-account v109 operation.
 ---
 
 # Receiz Identity Profile
@@ -52,7 +52,7 @@ On `username_taken`, keep the same account and request another username. Preserv
 
 ## Result verification
 
-Require `status === "updated"`, an `accountUid` equal to the authenticated actor, the returned profile projection, and a `/u/` profile path. The current v108 outcome has no caller proof-head or receipt prerequisite.
+Require `status === "updated"`, an `accountUid` equal to the authenticated actor, the returned profile projection, and a `/u/` profile path. The current v109 outcome has no caller proof-head or receipt prerequisite.
 
 ## User confirmation
 

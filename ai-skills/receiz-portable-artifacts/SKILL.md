@@ -7,7 +7,7 @@ description: Use when creating, importing, exporting, inspecting, signing, or ve
 
 Bind payloads to the enclosing sealed artifact, preserve provenance and history, and verify without server authority. Receiz is a proof-native artifact system; this skill operates beneath sealed proof and verified local history.
 
-## Binding v108 artifact law
+## Binding v109 artifact law
 
 A Receiz artifact is the exact byte sequence returned by native Record -> Seal. The inner payload is never an acceptable substitute.
 
@@ -38,7 +38,7 @@ Independently hash the saved bytes and require equality with `sealedArtifact.art
 ## Twelve-step artifact workflow
 
 1. Label the input bytes as `payload`; never call them an artifact.
-2. Load the active signed v108 registry and `ARTIFACT-001` through `ARTIFACT-010`.
+2. Load the active signed v109 registry and `ARTIFACT-001` through `ARTIFACT-010`.
 3. Call `receiz.assets.createProofObject` so Receiz.com performs native Record -> Seal.
 4. Require an SDK-issued `receiz.native-record-seal`; failure returns no artifact and no payload fallback.
 5. Require complete enclosing-artifact verification, integrity, Signature V4, owner, claim, verify path, and payload binding.
@@ -88,6 +88,8 @@ Independent verification result:
 Cross-platform round-trip result:
 Legacy compatibility result:
 Release-lock result:
+Network calls during verification: 0
+Local verifier result:
 ```
 
 ## Constitutional workflow

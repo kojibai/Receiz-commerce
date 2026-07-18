@@ -1,5 +1,5 @@
 import {
-  RECEIZ_V108_REGISTRY_DIGEST,
+  RECEIZ_V109_REGISTRY_DIGEST,
   createReceizCausalRecord,
   digestReceizConstitution,
   evaluateReceizLawSet,
@@ -21,30 +21,30 @@ import {
 
 const registry = JSON.parse(readFileSync("receiz.constitution.json", "utf8")) as ReceizConstitutionRegistry;
 
-describe("Receiz v108 constitutional alignment", () => {
+describe("Receiz v109 constitutional alignment", () => {
   it("pins the exact validated registry digest used by SDK, MCP, and the app", async () => {
     assert.equal(validateReceizConstitutionRegistry(registry).ok, true);
     const appRegistryDigest = await digestReceizConstitution(registry);
-    assert.equal(registry.previousRegistryDigest, RECEIZ_V108_REGISTRY_DIGEST);
+    assert.equal(registry.previousRegistryDigest, RECEIZ_V109_REGISTRY_DIGEST);
     const context = createReceizConstitutionalContext({
-      registryDigest: RECEIZ_V108_REGISTRY_DIGEST,
+      registryDigest: RECEIZ_V109_REGISTRY_DIGEST,
       applicableLaws: registry.laws.map((law) => law.id),
       authorityBoundary: { profile: "global-shared", tenantRequired: true },
       stateMachine: { initial: "claimed", states: ["claimed", "admitted", "denied"], transitions: [{ command: "wilds.arena.sync", from: "claimed", to: "admitted" }] },
       allowedCommands: ["wilds.arena.sync"],
     });
-    assert.equal(context.registryDigest, RECEIZ_V108_REGISTRY_DIGEST);
+    assert.equal(context.registryDigest, RECEIZ_V109_REGISTRY_DIGEST);
     assert.deepEqual(context.forbiddenMutations, ["direct-state-write", "history-rewrite", "authority-bypass"]);
     assert.deepEqual(await verifyReceizAppConstitution(), {
       ok: true,
-      registryDigest: RECEIZ_V108_REGISTRY_DIGEST,
+      registryDigest: RECEIZ_V109_REGISTRY_DIGEST,
       appRegistryDigest,
-      rulesetVersion: "108.0.0",
+      rulesetVersion: "109.0.0",
     });
-    assert.equal(RECEIZ_APP_CONSTITUTION.version, "108.0.0");
+    assert.equal(RECEIZ_APP_CONSTITUTION.version, "109.0.0");
   });
 
-  it("enforces retirement and command-only mutation through executable law", async () => {
+  it("enforces retirement, command-only mutation, and local verification through executable law", async () => {
     const retirement = await evaluateReceizLawSet({ registry, phase: "merge", budget: 100, context: { previous: { life: "dead" }, proposed: { life: "alive" }, mutation: { mode: "admitted-command" } } });
     assert.equal(retirement.allowed, false);
     assert.equal(retirement.denials.some((denial) => denial.code === "RETIREMENT_IS_FINAL"), true);
@@ -53,20 +53,23 @@ describe("Receiz v108 constitutional alignment", () => {
     assert.equal(direct.denials.some((denial) => denial.code === "DIRECT_STATE_WRITE_FORBIDDEN"), true);
     const appDecision = await evaluateReceizAppLaws({ phase: "command", context: { mutation: { mode: "direct-write" } } });
     assert.equal(appDecision.allowed, false);
+    const networkDependentVerification = await evaluateReceizAppLaws({ phase: "command", context: { operation: { kind: "sdk-artifact-verify-or-open", requiresWeakerState: true } } });
+    assert.equal(networkDependentVerification.allowed, false);
+    assert.equal(networkDependentVerification.denials.some((denial) => denial.code === "LOCAL_ARTIFACT_VERIFICATION_MUST_NOT_REQUIRE_WEAKER_STATE"), true);
   });
 
-  it("binds causal history and resumable checkpoints to the same v108 registry", async () => {
+  it("binds causal history and resumable checkpoints to the same v109 registry", async () => {
     const history = createReceizAppCausalHistory({ verifyAdmissionReceipt: () => false });
-    assert.equal(history.registryDigest, RECEIZ_V108_REGISTRY_DIGEST);
+    assert.equal(history.registryDigest, RECEIZ_V109_REGISTRY_DIGEST);
     assert.deepEqual(history.records(), []);
     assert.deepEqual(history.heads(), []);
-    assert.equal(await history.historyRoot(), await digestReceizConstitution({ schema: "receiz.causal.history-root.v1", registryDigest: RECEIZ_V108_REGISTRY_DIGEST, records: [], heads: [] }));
+    assert.equal(await history.historyRoot(), await digestReceizConstitution({ schema: "receiz.causal.history-root.v1", registryDigest: RECEIZ_V109_REGISTRY_DIGEST, records: [], heads: [] }));
     const checkpoint = await checkpointReceizAppCausalHistory(history);
     const resumed = await verifyReceizAppCausalCheckpoint(checkpoint, history);
     assert.equal(resumed.ok, true);
     assert.equal((resumed as { checkpoint: { historyRoot: string } }).checkpoint.historyRoot, checkpoint.historyRoot);
     const record = await createReceizCausalRecord({
-      registryDigest: RECEIZ_V108_REGISTRY_DIGEST,
+      registryDigest: RECEIZ_V109_REGISTRY_DIGEST,
       aggregateId: "card:living-1",
       kaiPulse: "1",
       parentDigests: [],

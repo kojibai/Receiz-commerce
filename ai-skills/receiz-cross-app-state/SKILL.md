@@ -7,7 +7,7 @@ description: Use when carrying verified namespaced account state between Receiz 
 
 Continue the same Receiz identity across applications by restoring portable account truth and appending isolated namespaces. Cross-app continuation is an identity primitive, not session sharing.
 
-## Binding v108 artifact law
+## Binding v109 artifact law
 
 A Receiz artifact is the exact byte sequence returned by native Record -> Seal. The inner payload is never an acceptable substitute.
 
@@ -38,7 +38,7 @@ Independently hash the saved bytes and require equality with `sealedArtifact.art
 ## Twelve-step artifact workflow
 
 1. Label the input bytes as `payload`; never call them an artifact.
-2. Load the active signed v108 registry and `ARTIFACT-001` through `ARTIFACT-010`.
+2. Load the active signed v109 registry and `ARTIFACT-001` through `ARTIFACT-010`.
 3. Call `receiz.assets.createProofObject` so Receiz.com performs native Record -> Seal.
 4. Require an SDK-issued `receiz.native-record-seal`; failure returns no artifact and no payload fallback.
 5. Require complete enclosing-artifact verification, integrity, Signature V4, owner, claim, verify path, and payload binding.
@@ -88,11 +88,13 @@ Independent verification result:
 Cross-platform round-trip result:
 Legacy compatibility result:
 Release-lock result:
+Network calls during verification: 0
+Local verifier result:
 ```
 
 ## Exact SDK operation
 
-Use the current root SDK identity verifier and complete-artifact custody methods. Do not import the historical v107 continuity client.
+Use the current root SDK identity verifier and complete-artifact custody methods. Do not import the historical obsolete-versioned continuity client.
 
 ```ts
 import { createReceizClient } from "@receiz/sdk";
@@ -148,4 +150,4 @@ Call `receiz_artifact_verify` and `receiz_artifact_extract_verified` for input, 
 
 ## Emulator fixture
 
-Run current native artifact round-trip, destination reopen, namespace-preservation, and artifact-substitution rejection contracts. Historical v107 reconcile fixtures are archival evidence only.
+Run current native artifact round-trip, destination reopen, namespace-preservation, and artifact-substitution rejection contracts. Historical obsolete-versioned reconcile fixtures are archival evidence only.

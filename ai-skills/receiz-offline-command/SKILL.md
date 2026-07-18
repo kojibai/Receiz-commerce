@@ -9,7 +9,7 @@ Offline intent is durable transport state, not global admission. Verified local 
 
 ## Exact SDK operation
 
-Use the current root SDK offline proof queue. Do not import the historical v107 signed-command client.
+Use the current root SDK offline proof queue. Do not import the historical obsolete-versioned signed-command client.
 
 ```ts
 import { createReceizClient } from "@receiz/sdk";
@@ -67,4 +67,4 @@ There is no current MCP queue mutation authority. Do not invent one and do not c
 
 ## Emulator fixture
 
-Run the current offline proof replay, durable queue, and artifact-substitution rejection contracts. Historical v107 signed-command fixtures remain archival evidence only.
+Run the current offline proof replay, durable queue, and artifact-substitution rejection contracts. Historical obsolete-versioned signed-command fixtures remain archival evidence only.

@@ -7,7 +7,7 @@ description: Use when qualifying, locking, packaging, attesting, or preparing pu
 
 Require package, registry, verifier, migration, conformance, security, performance, documentation, and attestation parity. Receiz is a proof-native artifact system; this skill operates beneath sealed proof and verified local history.
 
-## Binding v108 artifact law
+## Binding v109 artifact law
 
 A Receiz artifact is the exact byte sequence returned by native Record -> Seal. The inner payload is never an acceptable substitute.
 
@@ -33,12 +33,12 @@ if (opened.sealedArtifact.artifactSha256 !== sealedArtifact.artifactSha256) thro
 if (opened.verifiedPayload.sha256 !== sealedArtifact.payloadSha256) throw new Error("payload_binding_mismatch");
 ```
 
-Independently hash the saved bytes and require equality with `sealedArtifact.artifactSha256`. Require `verification.ok`, `integrity.ok`, carrier `native-record-seal`, Signature V4, owner, claim, and verify-path agreement. Reopen the exact saved file with `verifyAndOpen`, then prove a different Receiz application preserves identity, cards, history, receipts, and unknown namespaces. Require SDK, MCP, and AI packages to report the same v108 registry digest and artifact-law version before release qualification.
+Independently hash the saved bytes and require equality with `sealedArtifact.artifactSha256`. Require `verification.ok`, `integrity.ok`, carrier `native-record-seal`, Signature V4, owner, claim, and verify-path agreement. Reopen the exact saved file with `verifyAndOpen`, then prove a different Receiz application preserves identity, cards, history, receipts, and unknown namespaces. Require SDK, MCP, and AI packages to report the same v109 registry digest and artifact-law version before release qualification.
 
 ## Twelve-step artifact workflow
 
 1. Label the input bytes as `payload`; never call them an artifact.
-2. Load the active signed v108 registry and `ARTIFACT-001` through `ARTIFACT-010`.
+2. Load the active signed v109 registry and `ARTIFACT-001` through `ARTIFACT-010`.
 3. Call `receiz.assets.createProofObject` so Receiz.com performs native Record -> Seal.
 4. Require an SDK-issued `receiz.native-record-seal`; failure returns no artifact and no payload fallback.
 5. Require complete enclosing-artifact verification, integrity, Signature V4, owner, claim, verify path, and payload binding.
@@ -88,6 +88,8 @@ Independent verification result:
 Cross-platform round-trip result:
 Legacy compatibility result:
 Release-lock result:
+Network calls during verification: 0
+Local verifier result:
 ```
 
 ## Constitutional workflow
