@@ -12,6 +12,7 @@ import type { CommerceState } from "../../types/domain";
 import {
   STORE_STATE_SCHEMA,
   admitCommerceEvent as admitCommerceEventProjection,
+  compareStoreStateKaiUpulse,
   isCommerceEventRecord,
   isStoreStateRecord,
   projectCommerceEventsFromRecords,
@@ -38,6 +39,7 @@ function entryFromStoreRecord(record: StoreStateRecord): ReceizProofRegisterEntr
     id: record.id,
     kind: STORE_STATE_SCHEMA,
     createdAt: record.recordedAt,
+    kaiUpulse: record.updatedKaiUpulse ?? null,
     payload: record as unknown as JsonObject,
     projection: {
       schema: "receiz.app.store_state_projection.v1",
@@ -72,8 +74,26 @@ function entryFromCommerceEvent(event: CommerceEventRecord): ReceizProofRegister
 function entries(memory: ReceizProofMemory) {
   return memory
     .entries()
-    .map((entry) => entry.payload)
+    .map((entry) => {
+      if (isStoreStateRecord(entry.payload) && entry.kaiUpulse !== null && entry.kaiUpulse !== undefined) {
+        return { ...entry.payload, updatedKaiUpulse: entry.kaiUpulse };
+      }
+
+      return entry.payload;
+    })
     .filter((payload): payload is StoreStateRecord | CommerceEventRecord => isStoreStateRecord(payload) || isCommerceEventRecord(payload));
+}
+
+function nextCanonicalKaiUpulse(memory: ReceizProofMemory) {
+  const highest = memory
+    .entries()
+    .map((entry) => entry.kaiUpulse)
+    .filter((pulse): pulse is string | number => pulse !== null && pulse !== undefined)
+    .map(String)
+    .filter((pulse) => /^\d+(?:\.\d+)?$/.test(pulse))
+    .sort((left, right) => compareStoreStateKaiUpulse(right, left))[0];
+
+  return String(highest ? BigInt(highest.split(".")[0]) + 1n : 1n);
 }
 
 export async function createProofStateStore(options: {
@@ -89,11 +109,16 @@ export async function createProofStateStore(options: {
   return {
     async admitStoreRecord(record) {
       if (!memory.has(record.id)) {
-        memory.append(entryFromStoreRecord(record));
+        const admittedRecord = {
+          ...record,
+          updatedKaiUpulse: record.updatedKaiUpulse ?? nextCanonicalKaiUpulse(memory)
+        };
+        memory.append(entryFromStoreRecord(admittedRecord));
         await memory.flush();
+        return admittedRecord;
       }
 
-      return record;
+      return entries(memory).filter(isStoreStateRecord).find((entry) => entry.id === record.id) ?? record;
     },
     async admitCommerceEvent(state, event) {
       if (memory.has(event.id)) {

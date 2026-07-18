@@ -49,6 +49,7 @@ export type StoreStateRecord = {
   type: "store.state.published";
   reason: "publish" | "sync" | "restore";
   recordedAt: string;
+  updatedKaiUpulse?: string | number;
   actorReceizId: string;
   tenantHost: string;
   tenantSlug: string;
@@ -114,6 +115,7 @@ export type StoreStateRecordInput = {
   tenantHost?: string;
   reason?: StoreStateRecord["reason"];
   recordedAt?: string;
+  updatedKaiUpulse?: string | number;
 };
 
 function stableSlug(value: string) {
@@ -200,6 +202,7 @@ export function buildStoreStateRecord(state: CommerceState, input: StoreStateRec
     type: "store.state.published",
     reason: input.reason ?? "publish",
     recordedAt,
+    ...(input.updatedKaiUpulse === undefined ? {} : { updatedKaiUpulse: input.updatedKaiUpulse }),
     actorReceizId: input.actorReceizId,
     tenantHost,
     tenantSlug,
@@ -271,15 +274,73 @@ export function storeStateProjectionSource(records: unknown[], tenantHost: strin
     : "fallback";
 }
 
+function normalizedKaiUpulse(value: unknown) {
+  if (typeof value === "number") {
+    if (!Number.isFinite(value) || value < 0) return null;
+    value = String(value);
+  }
+
+  if (typeof value !== "string") return null;
+  const normalized = value.trim().replace(/^\+/, "");
+  return /^\d+(?:\.\d+)?$/.test(normalized) ? normalized : null;
+}
+
+export function compareStoreStateKaiUpulse(leftValue: unknown, rightValue: unknown) {
+  const left = normalizedKaiUpulse(leftValue);
+  const right = normalizedKaiUpulse(rightValue);
+  if (left === null || right === null) return left === right ? 0 : left === null ? -1 : 1;
+
+  const [leftWholeRaw, leftFractionRaw = ""] = left.split(".");
+  const [rightWholeRaw, rightFractionRaw = ""] = right.split(".");
+  const leftWhole = leftWholeRaw.replace(/^0+/, "") || "0";
+  const rightWhole = rightWholeRaw.replace(/^0+/, "") || "0";
+
+  if (leftWhole.length !== rightWhole.length) return leftWhole.length > rightWhole.length ? 1 : -1;
+  if (leftWhole !== rightWhole) return leftWhole > rightWhole ? 1 : -1;
+
+  const fractionLength = Math.max(leftFractionRaw.length, rightFractionRaw.length);
+  const leftFraction = leftFractionRaw.padEnd(fractionLength, "0");
+  const rightFraction = rightFractionRaw.padEnd(fractionLength, "0");
+  if (leftFraction === rightFraction) return 0;
+  return leftFraction > rightFraction ? 1 : -1;
+}
+
+function authoritativeStoreStateRecord(records: StoreStateRecord[]) {
+  const withPulse = records.filter((record) => normalizedKaiUpulse(record.updatedKaiUpulse) !== null);
+
+  // One pulse-less baseline remains readable for compatibility. Multiple pulse-less
+  // records are ambiguous and must never be ranked by recordedAt or transport order.
+  if (!withPulse.length) return records.length === 1 ? records[0] : undefined;
+
+  let head: StoreStateRecord | undefined;
+  let headIsAmbiguous = false;
+
+  for (const record of withPulse) {
+    if (!head) {
+      head = record;
+      continue;
+    }
+
+    const order = compareStoreStateKaiUpulse(record.updatedKaiUpulse, head.updatedKaiUpulse);
+    if (order > 0) {
+      head = record;
+      headIsAmbiguous = false;
+    } else if (order === 0 && record.id !== head.id) {
+      headIsAmbiguous = true;
+    }
+  }
+
+  return headIsAmbiguous ? undefined : head;
+}
+
 export function projectStoreStateFromRecords(
   baseState: CommerceState,
   records: unknown[],
   tenantHost: string
 ): CommerceState {
-  const latest = records
+  const latest = authoritativeStoreStateRecord(records
     .filter(isStoreStateRecord)
-    .filter((record) => storeStateRecordMatchesTenantHost(record, tenantHost))
-    .sort((left, right) => Date.parse(right.recordedAt) - Date.parse(left.recordedAt))[0];
+    .filter((record) => storeStateRecordMatchesTenantHost(record, tenantHost)));
 
   if (!latest) return baseState;
 

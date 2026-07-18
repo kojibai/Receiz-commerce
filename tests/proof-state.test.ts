@@ -234,25 +234,52 @@ describe("Receiz proof commerce state", () => {
     assert.equal(projectStoreStateFromRecords(baseState(), [legacyRecord], "bjklock.receiz.app").brand.name, "Baseline Saved Store");
   });
 
-  it("projects the newest published store state for the requested host", () => {
-    const boost = buildStoreStateRecord(baseState(), {
-      actorReceizId: "boost.receiz.id",
-      tenantHost: "boost.receiz.app",
-      reason: "publish",
-      ...receizAppendFixture("2026-06-30T00:00:00.000Z")
-    });
-    const latest = buildStoreStateRecord(
-      {
-        ...baseState(),
-        brand: { ...baseState().brand, name: "Boost Prime" }
-      },
+  it("fails closed instead of using Chronos to choose between pulse-less records", () => {
+    const first = buildStoreStateRecord(
+      { ...baseState(), brand: { ...baseState().brand, name: "Future Chronos" } },
       {
         actorReceizId: "boost.receiz.id",
         tenantHost: "boost.receiz.app",
-        reason: "publish",
-        ...receizAppendFixture("2026-06-30T00:01:00.000Z")
+        recordedAt: "2099-01-01T00:00:00.000Z"
       }
     );
+    const second = buildStoreStateRecord(
+      { ...baseState(), brand: { ...baseState().brand, name: "Past Chronos" } },
+      {
+        actorReceizId: "boost.receiz.id",
+        tenantHost: "boost.receiz.app",
+        recordedAt: "2000-01-01T00:00:00.000Z"
+      }
+    );
+
+    assert.equal(projectStoreStateFromRecords(baseState(), [first, second], "boost.receiz.app").brand.name, "Boost Coffee");
+  });
+
+  it("projects the authoritative published store state by deterministic Kai pulse", () => {
+    const boost = {
+      ...buildStoreStateRecord(baseState(), {
+        actorReceizId: "boost.receiz.id",
+        tenantHost: "boost.receiz.app",
+        reason: "publish",
+        ...receizAppendFixture("2026-06-30T00:02:00.000Z")
+      }),
+      updatedKaiUpulse: "100"
+    };
+    const latest = {
+      ...buildStoreStateRecord(
+        {
+          ...baseState(),
+          brand: { ...baseState().brand, name: "Boost Prime" }
+        },
+        {
+          actorReceizId: "boost.receiz.id",
+          tenantHost: "boost.receiz.app",
+          reason: "publish",
+          ...receizAppendFixture("2026-06-30T00:01:00.000Z")
+        }
+      ),
+      updatedKaiUpulse: "200"
+    };
     const other = buildStoreStateRecord(
       {
         ...baseState(),
@@ -276,6 +303,24 @@ describe("Receiz proof commerce state", () => {
 
     assert.equal(projected.brand.name, "Boost Prime");
     assert.equal(projected.hosting.subdomain, "boost.receiz.app");
+  });
+
+  it("fails closed when distinct records claim the same authoritative Kai pulse", () => {
+    const record = (name: string, recordedAt: string) => ({
+      ...buildStoreStateRecord(
+        { ...baseState(), brand: { ...baseState().brand, name } },
+        { actorReceizId: "boost.receiz.id", tenantHost: "boost.receiz.app", recordedAt }
+      ),
+      updatedKaiUpulse: "500.000001"
+    });
+
+    const projected = projectStoreStateFromRecords(
+      baseState(),
+      [record("Future Chronos", "2099-01-01T00:00:00.000Z"), record("Past Chronos", "2000-01-01T00:00:00.000Z")],
+      "boost.receiz.app"
+    );
+
+    assert.equal(projected.brand.name, "Boost Coffee");
   });
 
   it("projects a saved store for both its subdomain and custom domain", () => {

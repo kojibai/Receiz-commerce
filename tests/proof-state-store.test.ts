@@ -38,6 +38,32 @@ describe("Receiz proof state store", () => {
     assert.equal(store.snapshot().head.count, 2);
   });
 
+  it("assigns canonical append pulses so Chronos cannot choose the projected head", async () => {
+    const store = await createInMemoryProofStateStore("pulse-owner");
+    const first = buildStoreStateRecord(baseState(), {
+      actorReceizId: "boost.receiz.id",
+      tenantHost: "boost.receiz.app",
+      recordedAt: "2099-01-01T00:00:00.000Z"
+    });
+    const authoritative = buildStoreStateRecord(
+      {
+        ...baseState(),
+        brand: { ...baseState().brand, name: "Canonical Append Wins" }
+      } as CommerceState,
+      {
+        actorReceizId: "boost.receiz.id",
+        tenantHost: "boost.receiz.app",
+        recordedAt: "2000-01-01T00:00:00.000Z"
+      }
+    );
+
+    await store.admitStoreRecord(first);
+    await store.admitStoreRecord(authoritative);
+
+    assert.equal(store.projectHost(baseState(), "boost.receiz.app").brand.name, "Canonical Append Wins");
+    assert.deepEqual(store.snapshot().entries.map((entry) => entry.kaiUpulse), ["2", "1"]);
+  });
+
   it("projects saved tenant theme, content, and custom categories by subdomain", async () => {
     const store = await createInMemoryProofStateStore("test-owner");
     const saved = {
