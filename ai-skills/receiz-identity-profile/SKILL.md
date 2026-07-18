@@ -1,6 +1,6 @@
 ---
 name: receiz-identity-profile
-description: Use when checking username availability or updating a Receiz profile through the authenticated same-account v109 operation.
+description: Use when checking username availability or updating a Receiz profile through the authenticated same-account v110 operation.
 ---
 
 # Receiz Identity Profile
@@ -52,7 +52,7 @@ On `username_taken`, keep the same account and request another username. Preserv
 
 ## Result verification
 
-Require `status === "updated"`, an `accountUid` equal to the authenticated actor, the returned profile projection, and a `/u/` profile path. The current v109 outcome has no caller proof-head or receipt prerequisite.
+Require `status === "updated"`, an `accountUid` equal to the authenticated actor, the returned profile projection, and a `/u/` profile path. The current v110 outcome has no caller proof-head or receipt prerequisite.
 
 ## User confirmation
 
@@ -65,3 +65,7 @@ Call `receiz_identity_profile_update_plan` with `{ profile }` only. Show the pla
 ## Emulator fixture
 
 Run `username-race`. Require one commit-time winner, unchanged account UID, and no identity-key dependency. Emulator evidence is simulation evidence, never production verification.
+
+## v110 identity recovery
+
+`canonical-identity` is an identity continuity verdict from a verified enclosing artifact. Use its explicit permitted actions; do not infer publishing or settlement authority. `foreign-owner` and `verified-legacy-read` remain read-only. `admitAndRecover` plans locally and performs no session, network, database, or hidden mutation.

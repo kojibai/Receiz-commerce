@@ -1,3 +1,19 @@
+# Receiz Commerce Kit v4.3.0 — Unified Artifact Admission and Recovery
+
+Release date: July 18, 2026
+
+Status: General Availability · repository release
+
+SDK target: `@receiz/sdk@110.0.0`
+
+V4.3 aligns the SDK, MCP server, and thirty-one-skill stack at v110. The application now exposes the full unified artifact admission and recovery flow: exact complete bytes are verified locally before payload classification, authority is reported through explicit permitted actions, and verified state/history can be restored without network calls or writes during planning.
+
+The app law overlay chains to the canonical v110 registry and adds `ARTIFACT-012` through `ARTIFACT-015`. Bearer recovery cannot grant signing, canonical identity, publishing, or settlement authority. Recovery commits accept only SDK-issued plans with a verified capability, stable idempotency key, and atomic admission store. Recovery plans and bounded proof explanations remain non-authoritative projections beneath sealed proof objects and verified local history.
+
+Exact official tarball integrity, lockfile parity, all fifteen canonical artifact laws, the four new MCP recovery tools, synchronized AI-skill doctrine, official conformance, the v109→v110 attestation, tests, typecheck, lint, production build, secret scan, and SDK doctor remain release gates.
+
+---
+
 # Receiz Commerce Kit v4.2.0 — Local Artifact Verification
 
 Release date: July 18, 2026

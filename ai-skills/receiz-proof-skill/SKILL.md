@@ -7,7 +7,7 @@ description: Use when an agent must verify, inspect, explain, or report on Recei
 
 Receiz proof inspection starts from the artifact, manifest, proof bundle, verified append, or admitted local register. Do not start from a database row, marketplace card, UI state, or model memory.
 
-## Binding v109 artifact law
+## Binding v110 artifact law
 
 A Receiz artifact is the exact byte sequence returned by native Record -> Seal. The inner payload is never an acceptable substitute.
 
@@ -38,7 +38,7 @@ Independently hash the saved bytes and require equality with `sealedArtifact.art
 ## Twelve-step artifact workflow
 
 1. Label the input bytes as `payload`; never call them an artifact.
-2. Load the active signed v109 registry and `ARTIFACT-001` through `ARTIFACT-010`.
+2. Load the active signed v110 registry and `ARTIFACT-001` through `ARTIFACT-010`.
 3. Call `receiz.assets.createProofObject` so Receiz.com performs native Record -> Seal.
 4. Require an SDK-issued `receiz.native-record-seal`; failure returns no artifact and no payload fallback.
 5. Require complete enclosing-artifact verification, integrity, Signature V4, owner, claim, verify path, and payload binding.
@@ -181,3 +181,29 @@ Load resources as needed:
 - [Failure modes](resources/failure-modes.md)
 - [MCP tool map](resources/mcp-tool-map.md)
 - [SDK reference](resources/sdk-reference.md)
+
+## v110 unified admission and recovery
+
+Use `receiz.artifacts.admit(file)` to verify the complete artifact before classification. Verdicts are exactly `canonical-identity`, `bearer-recovery`, `verified-legacy-read`, `foreign-owner`, or `invalid`. Every verified result must report `canRestore`, `canSign`, `canClaimOwnership`, `canPublish`, and `canSettle` without inferring stronger authority from possession.
+
+Use `receiz.artifacts.planRecovery(admission)` for an explicit read-only plan, or `receiz.artifacts.admitAndRecover(file)` for zero-network, read-only verification and recovery planning. Both perform zero writes. The standard proof history, parent links, ownership transitions, terminal events, unknown namespaces, plan digest, and explicit permitted actions must remain intact. Explanation is not authority; the underlying sealed proof object remains authority.
+
+Commit only through `receiz.artifacts.commitRecovery(plan, capability, idempotencyKey, store)`. Raw capability authority is forbidden. MCP JSON must never carry a capability or store object; use runtime-resolved verified capability and a caller-provided local atomic store. The SDK/MCP/AI operation identity must match.
+
+- Never admit a card-only payload as a Receiz artifact.
+- Never treat an explanation as proof authority.
+- Never accept raw capability JSON as recovery authority.
+- Never hide mutation inside `admitAndRecover` or a recovery plan.
+
+Current MCP parity: `receiz_artifact_admit`, `receiz_artifact_recovery_plan`, `receiz_artifact_admit_and_recover`, and `receiz_artifact_recovery_commit`.
+
+Required completion evidence:
+
+```md
+Admission verdict:
+Permitted actions:
+Proof history digest:
+Recovery plan digest:
+Operation identity:
+Atomic commit result:
+```

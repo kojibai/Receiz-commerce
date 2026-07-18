@@ -1,14 +1,14 @@
 {
-  "schema": "receiz.ai-skill-contract.v109",
+  "schema": "receiz.ai-skill-contract.v110",
   "name": "receiz-bearer-ownership",
-  "version": "109.0.0",
-  "requires": { "sdk": ">=109.0.0 <110.0.0", "mcp": ">=109.0.0 <110.0.0", "ruleset": "109.0.0", "registryDigest": "17f76b37c9fcd46f710239b5c1660b03cc34ec64bed30d1cc45c18d5d40eab70" },
+  "version": "110.0.0",
+  "requires": { "sdk": ">=110.0.0 <111.0.0", "mcp": ">=110.0.0 <111.0.0", "ruleset": "110.0.0", "registryDigest": "824aa4af849c4840ba94535798eab36e45d514703b6ae0cd30d4aa53f3c896e4" },
   "laws": ["receiz.ownership.enclosing-proof", "receiz.ownership.carried-continuity", "receiz.artifact.native-record-seal", "ownership.cross-platform-proof-object-continuity"],
-  "sdkOperations": ["artifacts.verifyAndOpen", "ownership.claimBearerAsset", "artifacts.download"],
-  "allowedTools": ["receiz_bearer_asset_claim_plan", "receiz_bearer_asset_claim_execute"],
+  "sdkOperations": ["artifacts.verifyAndOpen", "artifacts.admit", "artifacts.planRecovery", "artifacts.commitRecovery", "ownership.claimBearerAsset", "artifacts.download"],
+  "allowedTools": ["receiz_bearer_asset_claim_plan", "receiz_bearer_asset_claim_execute", "receiz_artifact_admit", "receiz_artifact_recovery_plan", "receiz_artifact_recovery_commit"],
   "requiredScopes": ["receiz:record", "receiz:seal"],
   "emulatorFixtures": ["generic-bearer-transfer", "previous-owner-projection-invalidation"],
-  "forbiddenOperations": ["direct-state-write", "payload-as-claim-input", "caller-owner-substitution", "caller-proof-head-prerequisite", "claim-key-prerequisite", "receipt-authority", "origin-platform-lock", "authority-bypass"],
+  "forbiddenOperations": ["direct-state-write", "payload-as-claim-input", "caller-owner-substitution", "caller-proof-head-prerequisite", "claim-key-prerequisite", "receipt-authority", "origin-platform-lock", "bearer-authority-escalation", "raw-capability-authority", "authority-bypass"],
   "requiredEvidence": ["complete-artifact-verification", "native-record-seal", "emulator-conformance", "release-lock-pass"],
   "maximumAutonomousAuthority": "inspect-plan-simulate"
 }

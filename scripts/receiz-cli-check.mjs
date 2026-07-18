@@ -5,9 +5,9 @@ const root = process.cwd();
 const cli = resolve(root, "node_modules", "@receiz", "sdk", "dist", "cli.js");
 const commands = [
   { id: "binary-help", command: process.execPath, args: [cli, "--help"], json: false },
-  { id: "app-check", command: process.execPath, args: [cli, "app", "check", "--target", "109.0.0", "--root", root, "--json"], json: true },
+  { id: "app-check", command: process.execPath, args: [cli, "app", "check", "--target", "110.0.0", "--root", root, "--json"], json: true },
   { id: "conformance", command: process.execPath, args: [cli, "conformance"], json: true },
-  { id: "migration-verification", command: process.execPath, args: [resolve(root, "scripts", "receiz-v109-migration-verify.mjs"), "--root", root], json: true }
+  { id: "migration-verification", command: process.execPath, args: [resolve(root, "scripts", "receiz-v110-migration-verify.mjs"), "--root", root], json: true }
 ];
 
 const checks = commands.map((entry) => {
@@ -40,7 +40,7 @@ const checks = commands.map((entry) => {
 const report = {
   ok: checks.every((check) => check.ok),
   schema: "receiz.repository.cli-health.v1",
-  sdkVersion: "109.0.0",
+  sdkVersion: "110.0.0",
   checks
 };
 process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);

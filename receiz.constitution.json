@@ -1,9 +1,9 @@
 {
   "schema": "receiz.constitution.registry.v1",
-  "version": "109.0.0",
-  "previousRegistryDigest": "17f76b37c9fcd46f710239b5c1660b03cc34ec64bed30d1cc45c18d5d40eab70",
-  "effectiveKai": "13184788",
-  "createdAt": "2026-07-18T07:33:09.542Z",
+  "version": "110.0.0",
+  "previousRegistryDigest": "824aa4af849c4840ba94535798eab36e45d514703b6ae0cd30d4aa53f3c896e4",
+  "effectiveKai": "13185897",
+  "createdAt": "2026-07-18T09:10:00.000Z",
   "laws": [
     {
       "id": "wilds.retirement.irreversible",
@@ -71,6 +71,113 @@
       "denial": {
         "code": "LOCAL_ARTIFACT_VERIFICATION_MUST_NOT_REQUIRE_WEAKER_STATE",
         "safeAlternatives": ["verify-complete-artifact-bytes-locally", "discover-verified-additions-after-local-verdict"]
+      }
+    },
+    {
+      "id": "ARTIFACT-012",
+      "version": 1,
+      "phases": ["admission"],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": { "op": "path", "value": "operation.kind" },
+            "right": { "op": "literal", "value": "artifact-admit" }
+          },
+          {
+            "op": "any",
+            "values": [
+              {
+                "op": "not",
+                "value": {
+                  "op": "equal",
+                  "left": { "op": "path", "value": "evidence.completeArtifactBytesVerified" },
+                  "right": { "op": "literal", "value": true }
+                }
+              },
+              {
+                "op": "equal",
+                "left": { "op": "path", "value": "proposed.payloadClassifiedBeforeArtifactVerification" },
+                "right": { "op": "literal", "value": true }
+              }
+            ]
+          }
+        ]
+      },
+      "denial": {
+        "code": "COMPLETE_ARTIFACT_ADMISSION_REQUIRED",
+        "safeAlternatives": ["verify-exact-enclosing-artifact-bytes", "classify-only-after-verification"]
+      }
+    },
+    {
+      "id": "ARTIFACT-013",
+      "version": 1,
+      "phases": ["command", "admission"],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": { "op": "path", "value": "admission.verdict" },
+            "right": { "op": "literal", "value": "bearer-recovery" }
+          },
+          {
+            "op": "any",
+            "values": [
+              { "op": "equal", "left": { "op": "path", "value": "proposed.canSign" }, "right": { "op": "literal", "value": true } },
+              { "op": "equal", "left": { "op": "path", "value": "proposed.canPublish" }, "right": { "op": "literal", "value": true } },
+              { "op": "equal", "left": { "op": "path", "value": "proposed.canSettle" }, "right": { "op": "literal", "value": true } },
+              { "op": "equal", "left": { "op": "path", "value": "proposed.canonicalIdentityAuthority" }, "right": { "op": "literal", "value": true } }
+            ]
+          }
+        ]
+      },
+      "denial": {
+        "code": "BEARER_AUTHORITY_ESCALATION_FORBIDDEN",
+        "safeAlternatives": ["require-verified-claimant-capability", "retain-explicit-permitted-actions"]
+      }
+    },
+    {
+      "id": "ARTIFACT-014",
+      "version": 1,
+      "phases": ["command", "admission"],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": { "op": "path", "value": "operation.kind" },
+            "right": { "op": "literal", "value": "artifact-recovery-commit" }
+          },
+          {
+            "op": "any",
+            "values": [
+              { "op": "not", "value": { "op": "equal", "left": { "op": "path", "value": "evidence.sdkIssuedPlan" }, "right": { "op": "literal", "value": true } } },
+              { "op": "not", "value": { "op": "equal", "left": { "op": "path", "value": "evidence.verifiedCapability" }, "right": { "op": "literal", "value": true } } },
+              { "op": "not", "value": { "op": "equal", "left": { "op": "path", "value": "evidence.stableIdempotencyKey" }, "right": { "op": "literal", "value": true } } },
+              { "op": "not", "value": { "op": "equal", "left": { "op": "path", "value": "proposed.atomicUnitOfWork" }, "right": { "op": "literal", "value": true } } }
+            ]
+          }
+        ]
+      },
+      "denial": {
+        "code": "ATOMIC_CAPABILITY_RECOVERY_COMMIT_REQUIRED",
+        "safeAlternatives": ["use-sdk-issued-recovery-plan", "verify-capability", "commit-one-atomic-unit-of-work"]
+      }
+    },
+    {
+      "id": "ARTIFACT-015",
+      "version": 1,
+      "phases": ["command", "admission", "merge"],
+      "denyWhen": {
+        "op": "equal",
+        "left": { "op": "path", "value": "proposed.explanationIsProofAuthority" },
+        "right": { "op": "literal", "value": true }
+      },
+      "denial": {
+        "code": "PROOF_EXPLANATION_NOT_AUTHORITY",
+        "safeAlternatives": ["use-bounded-explanation-as-non-authoritative-projection", "retain-underlying-proof-object-as-authority"]
       }
     },
     {

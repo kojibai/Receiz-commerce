@@ -67,4 +67,8 @@ Use `receiz_artifact_verify` and `receiz_artifact_extract_verified` for carried 
 
 ## Emulator fixture
 
-Run the current identity-artifact helper, native artifact round-trip, and artifact-substitution rejection contracts. Historical obsolete-versioned reconciliation fixtures are archival evidence only and are not a v109 operation contract.
+Run the current identity-artifact helper, native artifact round-trip, and artifact-substitution rejection contracts. Historical obsolete-versioned reconciliation fixtures are archival evidence only and are not a v110 operation contract.
+
+## v110 continuity recovery
+
+Use `artifacts.admitAndRecover` to verify exact bytes, classify authority, preserve parent-linked proof history, and project the latest authorized state offline. Report the plan digest, prior and next head, complete provenance, explicit actions, and non-authoritative explanation. Reconnect may append verified descendants only; it may not rewrite prior history or unknown application namespaces.

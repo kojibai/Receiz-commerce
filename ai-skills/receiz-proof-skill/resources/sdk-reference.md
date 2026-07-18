@@ -1,6 +1,6 @@
 # SDK Reference For Proof Work
 
-The v109 app compiler APIs (`defineReceizApp`, `compileReceizAppContract`, and
+The v110 app compiler APIs (`defineReceizApp`, `compileReceizAppContract`, and
 repository planning/checking functions) inspect and integrate applications.
 They do not verify proof bytes. Use the SDK artifact-custody workflow for
 construction, exact-byte download, enclosing verification, and extraction.
@@ -78,7 +78,7 @@ The exact native Record -> Seal byte sequence is the artifact. The payload is a 
 
 In the workflow above, `file` is the complete sealed artifact selected for verification, never the source payload.
 
-## v109 Native Profile, Artifact, And Ownership Outcomes
+## v110 Native Profile, Artifact, And Ownership Outcomes
 
 - `receiz.profile.update(profile)` applies the patch to the authenticated session/OIDC actor and returns that same account's `accountUid`, profile projection, and public path.
 - `receiz.identity.checkUsernameAvailability(username)` is advisory only; commit-time uniqueness decides the update.
@@ -93,7 +93,7 @@ Bearer ownership accepts only the sealed-artifact handle produced by complete ve
 
 A verified proof object is not limited to the platform that created it. Any lawful platform may append authenticated ownership and history only while preserving the same immutable object identity, payload, provenance root, prior history, and unknown namespaces, then returning a complete verified proof object. SDK verification and append operations preserve that one continuity chain without granting authority to the origin platform.
 
-Stable obsolete-versioned schemas remain historical compatibility imports. Do not teach their key/head/receipt mechanics as the active v109 profile or bearer outcome.
+Stable obsolete-versioned schemas remain historical compatibility imports. Do not teach their key/head/receipt mechanics as the active v110 profile or bearer outcome.
 
 ## Identity Proof Helpers
 

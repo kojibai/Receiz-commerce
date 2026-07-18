@@ -67,3 +67,7 @@ The active MCP path calls `client.artifacts.verifyAndOpen(completeFile)`, then `
 ## Emulator fixture
 
 Run `generic-bearer-transfer` and `previous-owner-projection-invalidation` across qualifying artifact families. Require the prior ownership reference to come from carried verified proof and the output to be a native sealed artifact.
+
+## v110 recovery authority
+
+Call `artifacts.admit` before recovery planning. A `bearer-recovery` verdict may report `canRestore` or a capability-gated `canClaimOwnership`, but it must report `canSign: false`, `canPublish: false`, and `canSettle: false`. Possession never becomes canonical identity. Commit only an SDK-issued plan through a runtime-verified capability, stable idempotency key, expected head, and atomic local store.

@@ -48,6 +48,12 @@ import {
   type ReceizProofObjectCreateOptions,
   type ReceizProofObjectCreateInput,
   type ReceizArtifactDownloadEvidence,
+  type ReceizArtifactAdmissionContext,
+  type ReceizArtifactAdmissionResult,
+  type ReceizArtifactRecoveryCommitResult,
+  type ReceizArtifactRecoveryPlan,
+  type ReceizArtifactRecoveryResult,
+  type ReceizAdmissionStore,
   type ReceizBearerArtifactClaimInput,
   type ReceizOpenedArtifact,
   type ReceizProfileUpdateInput,
@@ -66,6 +72,7 @@ import {
   type ReceizProofMemoryAdditionsQuery,
   type ReceizProofMemoryOptions,
   type ReceizProofRegister,
+  type ReceizProofHistory,
   type ReceizSportsCardManifest,
   type ReceizSportsCardManifestProjection,
   type ReceizWorldProfileMessageRequest,
@@ -82,6 +89,7 @@ import {
   type TwinMindImportSummaryResponse,
   type TwinPromotionApprovalInput,
   type ReceizWebhookEvent,
+  type ReceizVerifiedCapability,
   type WalletLedgerFeed
 } from "@receiz/sdk";
 import type { GameResult, Product, ProofEvent, ReceizedAsset, Reward, VerifiedObject } from "@/types/domain";
@@ -142,6 +150,18 @@ export type ReceizCommerceAdapter = {
     limit?: number
   ): ReceizProofMemoryAdditionsQuery;
   verifyArtifact(file: Blob): Promise<DocumentVerifyResponse>;
+  admitArtifact(file: Blob, context?: ReceizArtifactAdmissionContext): Promise<ReceizArtifactAdmissionResult>;
+  planArtifactRecovery(
+    admission: ReceizArtifactAdmissionResult,
+    knownHistory?: ReceizProofHistory
+  ): Promise<ReceizArtifactRecoveryPlan | null>;
+  admitAndRecoverArtifact(file: Blob, context?: ReceizArtifactAdmissionContext): Promise<ReceizArtifactRecoveryResult>;
+  commitArtifactRecovery(
+    plan: ReceizArtifactRecoveryPlan,
+    capability: ReceizVerifiedCapability,
+    idempotencyKey: string,
+    store: ReceizAdmissionStore
+  ): Promise<ReceizArtifactRecoveryCommitResult>;
   createProofObject(
     input: ReceizProofObjectCreateInput,
     options: ReceizProofObjectCreateOptions
@@ -510,6 +530,18 @@ export function createReceizCommerceAdapter(
     },
     verifyArtifact(file) {
       return client.verification.verifyArtifact(file);
+    },
+    admitArtifact(file, context) {
+      return client.artifacts.admit(file, context);
+    },
+    planArtifactRecovery(admission, knownHistory) {
+      return client.artifacts.planRecovery(admission, knownHistory);
+    },
+    admitAndRecoverArtifact(file, context) {
+      return client.artifacts.admitAndRecover(file, context);
+    },
+    commitArtifactRecovery(plan, capability, idempotencyKey, store) {
+      return client.artifacts.commitRecovery(plan, capability, idempotencyKey, store);
     },
     createProofObject(input, options) {
       return client.assets.createProofObject(input, options);

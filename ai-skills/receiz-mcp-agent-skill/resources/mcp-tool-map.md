@@ -1,6 +1,6 @@
 # MCP Tool Map
 
-## v109 Application Compiler
+## v110 Application Compiler
 
 | Need | Tool | Mutation |
 |---|---|---|
@@ -22,7 +22,7 @@ verification verdict or proof authority.
 
 Source: `packages/receiz-mcp-server/src/index.ts`.
 
-## v109 Current Profile And Ownership Outcomes
+## v110 Current Profile And Ownership Outcomes
 
 | Need | Tool | Mutation |
 |---|---|---|
@@ -37,7 +37,7 @@ The bearer plan verifies the complete sealed artifact with `client.artifacts.ver
 
 A verified proof object is not limited to the platform that created it. Any lawful platform may append authenticated ownership and history only while preserving the same immutable object identity, payload, provenance root, prior history, and unknown namespaces, then returning a complete verified proof object. These MCP tools invoke that same SDK continuity and never create an origin-platform lock or parallel chain.
 
-## v109 Complete Artifact Custody
+## v110 Complete Artifact Custody
 
 | Need | Tool | Boundary |
 |---|---|---|
@@ -110,3 +110,10 @@ Emulator output is labeled `sandboxVerified`; never translate it into Receiz ver
 - `receiz://store/{tenantHost}`
 - `receiz://sdk/docs`
 - `receiz://schemas/proof-object-v1`
+
+## v110 artifact admission and recovery
+
+- `receiz_artifact_admit` — exact-byte local admission and typed authority verdict; zero writes.
+- `receiz_artifact_recovery_plan` — deterministic plan from the runtime-held SDK admission; zero writes.
+- `receiz_artifact_admit_and_recover` — one SDK call for local admission plus recovery planning; zero writes.
+- `receiz_artifact_recovery_commit` — exact confirmation plus idempotency and expected head; verified capability/store are runtime-only.

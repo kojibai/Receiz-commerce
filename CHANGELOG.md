@@ -2,6 +2,14 @@
 
 All notable changes to Receiz Commerce Kit will be documented here.
 
+## 4.3.0 - Receiz v110 Unified Admission and Recovery
+
+- Upgraded SDK, MCP server, and all thirty-one AI skills to exact official `110.0.0` vendored artifacts with lockfile and release-lock parity.
+- Added typed adapter rails for complete artifact admission, recovery planning, combined admit-and-recover, and capability-gated atomic recovery commits.
+- Chained application law to the canonical v110 registry and adopted `ARTIFACT-012` through `ARTIFACT-015`: exact bytes before classification, no bearer authority escalation, atomic capability recovery, and non-authoritative explanations.
+- Added the four v110 artifact admission/recovery MCP tools and synchronized their published AI doctrine.
+- Replaced v109 release and migration gates with v110 package, registry-chain, artifact-law, MCP-tool, AI-skill, CLI, conformance, recovery, and history-preservation checks.
+
 ## 4.2.0 - Receiz v109 Local Verification
 
 - Upgraded SDK, MCP server, and all thirty-one AI skills to exact official `109.0.0` vendored artifacts with lockfile and release-lock parity.
