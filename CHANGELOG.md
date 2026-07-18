@@ -2,6 +2,13 @@
 
 All notable changes to Receiz Commerce Kit will be documented here.
 
+## 4.4.1 - Canonical Store Projection Authority
+
+- Removed Chronos timestamps from published store-state authority selection.
+- Required storefront projections to consume canonically admitted proof-memory envelopes instead of trusting raw record fields.
+- Persisted a distinct canonical append ordinal for local admission without manufacturing Kai proof coordinates.
+- Isolated legacy singleton projection and made missing, forged, or conflicting authority metadata fail closed.
+
 ## 4.4.0 - Receiz v111 Artifact-Derived Authority
 
 - Upgraded SDK, MCP server, and all thirty-one AI skills to exact official `111.0.0` vendored artifacts with lockfile and release-lock parity.

@@ -21,6 +21,7 @@ import type {
 } from "../../types/domain";
 
 export const STORE_STATE_SCHEMA = "receiz.app.store_state.v1";
+export const ADMITTED_STORE_STATE_SCHEMA = "receiz.app.store_state_admission.v1";
 export const STORE_STATE_CONNECT_SCHEMA = "receiz.app.store_state_connect.v1";
 export const COMMERCE_EVENT_SCHEMA = "receiz.app.commerce_event.v1";
 
@@ -49,12 +50,22 @@ export type StoreStateRecord = {
   type: "store.state.published";
   reason: "publish" | "sync" | "restore";
   recordedAt: string;
-  updatedKaiUpulse?: string | number;
   actorReceizId: string;
   tenantHost: string;
   tenantSlug: string;
   merchantReceizId: string;
   state: PublishedStoreState;
+};
+
+export type AdmittedStoreStateRecord = {
+  schema: typeof ADMITTED_STORE_STATE_SCHEMA;
+  record: StoreStateRecord;
+  authority: {
+    kind: "canonical_append";
+    entryId: string;
+    canonicalAppendOrdinal: number;
+    verifiedKaiUpulse: string | number | null;
+  };
 };
 
 export type StoreStateConnectRecord = {
@@ -115,7 +126,6 @@ export type StoreStateRecordInput = {
   tenantHost?: string;
   reason?: StoreStateRecord["reason"];
   recordedAt?: string;
-  updatedKaiUpulse?: string | number;
 };
 
 function stableSlug(value: string) {
@@ -202,7 +212,6 @@ export function buildStoreStateRecord(state: CommerceState, input: StoreStateRec
     type: "store.state.published",
     reason: input.reason ?? "publish",
     recordedAt,
-    ...(input.updatedKaiUpulse === undefined ? {} : { updatedKaiUpulse: input.updatedKaiUpulse }),
     actorReceizId: input.actorReceizId,
     tenantHost,
     tenantSlug,
@@ -274,74 +283,70 @@ export function storeStateProjectionSource(records: unknown[], tenantHost: strin
     : "fallback";
 }
 
-function normalizedKaiUpulse(value: unknown) {
-  if (typeof value === "number") {
-    if (!Number.isFinite(value) || value < 0) return null;
-    value = String(value);
-  }
+function isAdmittedStoreStateRecord(value: unknown): value is AdmittedStoreStateRecord {
+  if (!isRecord(value) || value.schema !== ADMITTED_STORE_STATE_SCHEMA) return false;
+  if (!isStoreStateRecord(value.record) || !isRecord(value.authority)) return false;
 
-  if (typeof value !== "string") return null;
-  const normalized = value.trim().replace(/^\+/, "");
-  return /^\d+(?:\.\d+)?$/.test(normalized) ? normalized : null;
+  return (
+    value.authority.kind === "canonical_append" &&
+    value.authority.entryId === value.record.id &&
+    typeof value.authority.canonicalAppendOrdinal === "number" &&
+    Number.isSafeInteger(value.authority.canonicalAppendOrdinal) &&
+    value.authority.canonicalAppendOrdinal > 0 &&
+    (value.authority.verifiedKaiUpulse === null ||
+      typeof value.authority.verifiedKaiUpulse === "string" ||
+      (typeof value.authority.verifiedKaiUpulse === "number" &&
+        Number.isFinite(value.authority.verifiedKaiUpulse)))
+  );
 }
 
-export function compareStoreStateKaiUpulse(leftValue: unknown, rightValue: unknown) {
-  const left = normalizedKaiUpulse(leftValue);
-  const right = normalizedKaiUpulse(rightValue);
-  if (left === null || right === null) return left === right ? 0 : left === null ? -1 : 1;
-
-  const [leftWholeRaw, leftFractionRaw = ""] = left.split(".");
-  const [rightWholeRaw, rightFractionRaw = ""] = right.split(".");
-  const leftWhole = leftWholeRaw.replace(/^0+/, "") || "0";
-  const rightWhole = rightWholeRaw.replace(/^0+/, "") || "0";
-
-  if (leftWhole.length !== rightWhole.length) return leftWhole.length > rightWhole.length ? 1 : -1;
-  if (leftWhole !== rightWhole) return leftWhole > rightWhole ? 1 : -1;
-
-  const fractionLength = Math.max(leftFractionRaw.length, rightFractionRaw.length);
-  const leftFraction = leftFractionRaw.padEnd(fractionLength, "0");
-  const rightFraction = rightFractionRaw.padEnd(fractionLength, "0");
-  if (leftFraction === rightFraction) return 0;
-  return leftFraction > rightFraction ? 1 : -1;
-}
-
-function authoritativeStoreStateRecord(records: StoreStateRecord[]) {
-  const withPulse = records.filter((record) => normalizedKaiUpulse(record.updatedKaiUpulse) !== null);
-
-  // One pulse-less baseline remains readable for compatibility. Multiple pulse-less
-  // records are ambiguous and must never be ranked by recordedAt or transport order.
-  if (!withPulse.length) return records.length === 1 ? records[0] : undefined;
-
-  let head: StoreStateRecord | undefined;
+function authoritativeStoreStateRecord(admissions: AdmittedStoreStateRecord[]) {
+  let head: AdmittedStoreStateRecord | undefined;
   let headIsAmbiguous = false;
 
-  for (const record of withPulse) {
+  for (const admission of admissions) {
     if (!head) {
-      head = record;
+      head = admission;
       continue;
     }
 
-    const order = compareStoreStateKaiUpulse(record.updatedKaiUpulse, head.updatedKaiUpulse);
+    const order = admission.authority.canonicalAppendOrdinal - head.authority.canonicalAppendOrdinal;
     if (order > 0) {
-      head = record;
+      head = admission;
       headIsAmbiguous = false;
-    } else if (order === 0 && record.id !== head.id) {
+    } else if (order === 0 && admission.record.id !== head.record.id) {
       headIsAmbiguous = true;
     }
   }
 
-  return headIsAmbiguous ? undefined : head;
+  return headIsAmbiguous ? undefined : head?.record;
 }
 
 export function projectStoreStateFromRecords(
   baseState: CommerceState,
-  records: unknown[],
+  records: readonly AdmittedStoreStateRecord[],
   tenantHost: string
 ): CommerceState {
-  const latest = authoritativeStoreStateRecord(records
-    .filter(isStoreStateRecord)
-    .filter((record) => storeStateRecordMatchesTenantHost(record, tenantHost)));
+  const latest = authoritativeStoreStateRecord(
+    records
+      .filter(isAdmittedStoreStateRecord)
+      .filter((admission) => storeStateRecordMatchesTenantHost(admission.record, tenantHost))
+  );
 
+  return projectStoreState(baseState, latest);
+}
+
+export function projectLegacyStoreStateRecord(
+  baseState: CommerceState,
+  record: unknown,
+  tenantHost: string
+): CommerceState {
+  const legacy =
+    isStoreStateRecord(record) && storeStateRecordMatchesTenantHost(record, tenantHost) ? record : undefined;
+  return projectStoreState(baseState, legacy);
+}
+
+function projectStoreState(baseState: CommerceState, latest?: StoreStateRecord): CommerceState {
   if (!latest) return baseState;
 
   return {

@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import type { CommerceState } from "../src/types/domain.js";
 import {
+  ADMITTED_STORE_STATE_SCHEMA,
   COMMERCE_EVENT_SCHEMA,
   STORE_STATE_SCHEMA,
   admitCommerceEvent,
@@ -9,9 +10,12 @@ import {
   buildStoreStateRecord,
   commerceEventFromUnknown,
   isStoreStateRecord,
+  projectLegacyStoreStateRecord,
   storeStateProjectionSource,
   storeStateRecordMatchesTenantHost,
-  projectStoreStateFromRecords
+  projectStoreStateFromRecords,
+  type AdmittedStoreStateRecord,
+  type StoreStateRecord
 } from "../src/lib/receiz/proof-state.js";
 import { buildPublishedCommerceState } from "../src/lib/hosting/published-state.js";
 import { receizAppendFixture } from "./support/receiz-append.js";
@@ -173,6 +177,23 @@ function baseState(): CommerceState {
   };
 }
 
+function admittedStoreRecord(
+  record: StoreStateRecord,
+  canonicalAppendOrdinal: number,
+  verifiedKaiUpulse: string | number | null = null
+): AdmittedStoreStateRecord {
+  return {
+    schema: ADMITTED_STORE_STATE_SCHEMA,
+    record,
+    authority: {
+      kind: "canonical_append",
+      entryId: record.id,
+      canonicalAppendOrdinal,
+      verifiedKaiUpulse
+    }
+  };
+}
+
 describe("Receiz proof commerce state", () => {
   it("builds a tenant-scoped store record without checkout-only or cart state", () => {
     const state = baseState();
@@ -231,7 +252,7 @@ describe("Receiz proof commerce state", () => {
     };
 
     assert.equal(isStoreStateRecord(legacyRecord), true);
-    assert.equal(projectStoreStateFromRecords(baseState(), [legacyRecord], "bjklock.receiz.app").brand.name, "Baseline Saved Store");
+    assert.equal(projectLegacyStoreStateRecord(baseState(), legacyRecord, "bjklock.receiz.app").brand.name, "Baseline Saved Store");
   });
 
   it("fails closed instead of using Chronos to choose between pulse-less records", () => {
@@ -252,34 +273,43 @@ describe("Receiz proof commerce state", () => {
       }
     );
 
-    assert.equal(projectStoreStateFromRecords(baseState(), [first, second], "boost.receiz.app").brand.name, "Boost Coffee");
+    assert.equal(projectStoreStateFromRecords(baseState(), [first, second] as never, "boost.receiz.app").brand.name, "Boost Coffee");
   });
 
-  it("projects the authoritative published store state by deterministic Kai pulse", () => {
-    const boost = {
-      ...buildStoreStateRecord(baseState(), {
+  it("does not accept an unadmitted record with a forged Kai pulse as store truth", () => {
+    const forged = {
+      ...buildStoreStateRecord(
+        { ...baseState(), brand: { ...baseState().brand, name: "Forged Pulse Store" } },
+        { actorReceizId: "boost.receiz.id", tenantHost: "boost.receiz.app" }
+      ),
+      updatedKaiUpulse: "999999999999999999999999"
+    };
+
+    assert.equal(
+      projectStoreStateFromRecords(baseState(), [forged] as never, "boost.receiz.app").brand.name,
+      "Boost Coffee"
+    );
+  });
+
+  it("projects the authoritative state by canonical append admission", () => {
+    const boost = buildStoreStateRecord(baseState(), {
+      actorReceizId: "boost.receiz.id",
+      tenantHost: "boost.receiz.app",
+      reason: "publish",
+      ...receizAppendFixture("2026-06-30T00:02:00.000Z")
+    });
+    const latest = buildStoreStateRecord(
+      {
+        ...baseState(),
+        brand: { ...baseState().brand, name: "Boost Prime" }
+      },
+      {
         actorReceizId: "boost.receiz.id",
         tenantHost: "boost.receiz.app",
         reason: "publish",
-        ...receizAppendFixture("2026-06-30T00:02:00.000Z")
-      }),
-      updatedKaiUpulse: "100"
-    };
-    const latest = {
-      ...buildStoreStateRecord(
-        {
-          ...baseState(),
-          brand: { ...baseState().brand, name: "Boost Prime" }
-        },
-        {
-          actorReceizId: "boost.receiz.id",
-          tenantHost: "boost.receiz.app",
-          reason: "publish",
-          ...receizAppendFixture("2026-06-30T00:01:00.000Z")
-        }
-      ),
-      updatedKaiUpulse: "200"
-    };
+        ...receizAppendFixture("2026-06-30T00:01:00.000Z")
+      }
+    );
     const other = buildStoreStateRecord(
       {
         ...baseState(),
@@ -299,24 +329,29 @@ describe("Receiz proof commerce state", () => {
       }
     );
 
-    const projected = projectStoreStateFromRecords(baseState(), [boost, other, latest], "boost.receiz.app");
+    const projected = projectStoreStateFromRecords(
+      baseState(),
+      [admittedStoreRecord(boost, 1), admittedStoreRecord(other, 3), admittedStoreRecord(latest, 2)],
+      "boost.receiz.app"
+    );
 
     assert.equal(projected.brand.name, "Boost Prime");
     assert.equal(projected.hosting.subdomain, "boost.receiz.app");
   });
 
-  it("fails closed when distinct records claim the same authoritative Kai pulse", () => {
-    const record = (name: string, recordedAt: string) => ({
-      ...buildStoreStateRecord(
+  it("fails closed when distinct records claim the same canonical append ordinal", () => {
+    const record = (name: string, recordedAt: string) =>
+      buildStoreStateRecord(
         { ...baseState(), brand: { ...baseState().brand, name } },
         { actorReceizId: "boost.receiz.id", tenantHost: "boost.receiz.app", recordedAt }
-      ),
-      updatedKaiUpulse: "500.000001"
-    });
+      );
 
     const projected = projectStoreStateFromRecords(
       baseState(),
-      [record("Future Chronos", "2099-01-01T00:00:00.000Z"), record("Past Chronos", "2000-01-01T00:00:00.000Z")],
+      [
+        admittedStoreRecord(record("Future Chronos", "2099-01-01T00:00:00.000Z"), 5),
+        admittedStoreRecord(record("Past Chronos", "2000-01-01T00:00:00.000Z"), 5)
+      ],
       "boost.receiz.app"
     );
 
@@ -349,8 +384,8 @@ describe("Receiz proof commerce state", () => {
       ...receizAppendFixture("2026-06-30T00:04:00.000Z")
     });
 
-    assert.equal(projectStoreStateFromRecords(baseState(), [record], "shop.bjklock.com").brand.name, "BJK Lock Store");
-    assert.equal(projectStoreStateFromRecords(baseState(), [record], "bjklock.receiz.app").brand.name, "BJK Lock Store");
+    assert.equal(projectStoreStateFromRecords(baseState(), [admittedStoreRecord(record, 1)], "shop.bjklock.com").brand.name, "BJK Lock Store");
+    assert.equal(projectStoreStateFromRecords(baseState(), [admittedStoreRecord(record, 1)], "bjklock.receiz.app").brand.name, "BJK Lock Store");
   });
 
   it("preserves the submitted merchant host when building a published state", () => {
@@ -398,7 +433,7 @@ describe("Receiz proof commerce state", () => {
     assert.equal(record.tenantHost, "shop.bjklock.com");
     assert.equal(record.merchantReceizId, "bjklock.receiz.id");
     assert.equal(storeStateRecordMatchesTenantHost(record, "bjklock.receiz.app"), true);
-    const projected = projectStoreStateFromRecords(baseState(), [record], "bjklock.receiz.app");
+    const projected = projectStoreStateFromRecords(baseState(), [admittedStoreRecord(record, 1)], "bjklock.receiz.app");
     assert.equal(projected.brand.name, "Bjklock Supply");
     assert.equal(projected.products[0]?.name, "Saved espresso kit");
     assert.equal(projected.products[0]?.imageUrl, savedImageUrl);
@@ -557,7 +592,7 @@ describe("Receiz proof commerce state", () => {
         ...receizAppendFixture("2026-06-30T00:05:15.000Z")
       }
     );
-    const projected = projectStoreStateFromRecords(base, [record], "bjklock.receiz.app");
+    const projected = projectStoreStateFromRecords(base, [admittedStoreRecord(record, 1)], "bjklock.receiz.app");
 
     assert.equal(projected.brand.name, "BJ Klock");
     assert.equal(projected.orders.length, 0);

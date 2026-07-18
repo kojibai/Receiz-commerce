@@ -1,3 +1,19 @@
+# Receiz Commerce Kit v4.4.1 — Canonical Store Projection Authority
+
+Release date: July 18, 2026
+
+Status: General Availability · repository release
+
+SDK target: `@receiz/sdk@111.0.0`
+
+V4.4.1 removes Chronos timestamps from published storefront truth decisions. Store-state projection now accepts only canonically admitted proof-memory envelopes and selects the authoritative tenant state by persisted canonical append order. Raw payloads—including records carrying forged pulse-shaped fields—cannot become projected truth.
+
+Local admission records a distinct canonical append ordinal and does not manufacture Kai proof. Verified Kai metadata remains separate proof-register evidence. Conflicting append ordinals and multiple unadmitted candidates fail closed, while compatibility for one legacy baseline record is isolated behind an explicit singleton projection path.
+
+The release retains the official v111 SDK, MCP server, AI-skill, constitution, and artifact-derived authority baseline from v4.4.0.
+
+---
+
 # Receiz Commerce Kit v4.4.0 — Artifact-Derived Authority
 
 Release date: July 18, 2026

@@ -38,7 +38,7 @@ describe("Receiz proof state store", () => {
     assert.equal(store.snapshot().head.count, 2);
   });
 
-  it("assigns canonical append pulses so Chronos cannot choose the projected head", async () => {
+  it("uses canonical append admission without manufacturing Kai proof", async () => {
     const store = await createInMemoryProofStateStore("pulse-owner");
     const first = buildStoreStateRecord(baseState(), {
       actorReceizId: "boost.receiz.id",
@@ -61,7 +61,12 @@ describe("Receiz proof state store", () => {
     await store.admitStoreRecord(authoritative);
 
     assert.equal(store.projectHost(baseState(), "boost.receiz.app").brand.name, "Canonical Append Wins");
-    assert.deepEqual(store.snapshot().entries.map((entry) => entry.kaiUpulse), ["2", "1"]);
+    const entriesById = new Map(store.snapshot().entries.map((entry) => [entry.id, entry]));
+    assert.equal(entriesById.get(first.id)?.kaiUpulse, null);
+    assert.equal(entriesById.get(authoritative.id)?.kaiUpulse, null);
+    assert.equal(entriesById.get(first.id)?.projection?.admissionSchema, "receiz.app.store_state_admission.v1");
+    assert.equal(entriesById.get(first.id)?.projection?.canonicalAppendOrdinal, 1);
+    assert.equal(entriesById.get(authoritative.id)?.projection?.canonicalAppendOrdinal, 2);
   });
 
   it("projects saved tenant theme, content, and custom categories by subdomain", async () => {

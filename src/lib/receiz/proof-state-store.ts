@@ -10,13 +10,16 @@ import {
 } from "@receiz/sdk";
 import type { CommerceState } from "../../types/domain";
 import {
+  ADMITTED_STORE_STATE_SCHEMA,
   STORE_STATE_SCHEMA,
   admitCommerceEvent as admitCommerceEventProjection,
-  compareStoreStateKaiUpulse,
   isCommerceEventRecord,
   isStoreStateRecord,
   projectCommerceEventsFromRecords,
+  projectLegacyStoreStateRecord,
   projectStoreStateFromRecords,
+  storeStateRecordMatchesTenantHost,
+  type AdmittedStoreStateRecord,
   type CommerceEventRecord,
   type StoreStateRecord
 } from "./proof-state";
@@ -34,12 +37,13 @@ export type ProofStateStore = {
   flush(): Promise<void>;
 };
 
-function entryFromStoreRecord(record: StoreStateRecord): ReceizProofRegisterEntry {
+function entryFromStoreRecord(record: StoreStateRecord, canonicalAppendOrdinal: number): ReceizProofRegisterEntry {
   return {
     id: record.id,
     kind: STORE_STATE_SCHEMA,
     createdAt: record.recordedAt,
-    kaiUpulse: record.updatedKaiUpulse ?? null,
+    kaiUpulse: null,
+    proof: null,
     payload: record as unknown as JsonObject,
     projection: {
       schema: "receiz.app.store_state_projection.v1",
@@ -48,7 +52,10 @@ function entryFromStoreRecord(record: StoreStateRecord): ReceizProofRegisterEntr
       merchantReceizId: record.merchantReceizId,
       brandName: record.state.brand.name,
       productCount: record.state.products.length,
-      published: record.state.hosting.published
+      published: record.state.hosting.published,
+      admissionSchema: ADMITTED_STORE_STATE_SCHEMA,
+      canonicalAppendOrdinal,
+      authorityKind: "canonical_append"
     }
   };
 }
@@ -71,29 +78,56 @@ function entryFromCommerceEvent(event: CommerceEventRecord): ReceizProofRegister
   };
 }
 
-function entries(memory: ReceizProofMemory) {
+function payloadEntries(memory: ReceizProofMemory) {
   return memory
     .entries()
-    .map((entry) => {
-      if (isStoreStateRecord(entry.payload) && entry.kaiUpulse !== null && entry.kaiUpulse !== undefined) {
-        return { ...entry.payload, updatedKaiUpulse: entry.kaiUpulse };
-      }
-
-      return entry.payload;
-    })
+    .map((entry) => entry.payload)
     .filter((payload): payload is StoreStateRecord | CommerceEventRecord => isStoreStateRecord(payload) || isCommerceEventRecord(payload));
 }
 
-function nextCanonicalKaiUpulse(memory: ReceizProofMemory) {
-  const highest = memory
-    .entries()
-    .map((entry) => entry.kaiUpulse)
-    .filter((pulse): pulse is string | number => pulse !== null && pulse !== undefined)
-    .map(String)
-    .filter((pulse) => /^\d+(?:\.\d+)?$/.test(pulse))
-    .sort((left, right) => compareStoreStateKaiUpulse(right, left))[0];
+function canonicalAppendOrdinal(entry: ReceizProofRegisterEntry) {
+  if (entry.kind !== STORE_STATE_SCHEMA) return null;
+  if (entry.projection?.admissionSchema !== ADMITTED_STORE_STATE_SCHEMA) return null;
+  if (entry.projection.authorityKind !== "canonical_append" && entry.projection.authorityKind !== "verified_kai") {
+    return null;
+  }
 
-  return String(highest ? BigInt(highest.split(".")[0]) + 1n : 1n);
+  const ordinal = entry.projection?.canonicalAppendOrdinal;
+  return typeof ordinal === "number" && Number.isSafeInteger(ordinal) && ordinal > 0 ? ordinal : null;
+}
+
+function nextCanonicalAppendOrdinal(memory: ReceizProofMemory) {
+  return memory
+    .entries()
+    .map(canonicalAppendOrdinal)
+    .reduce<number>((highest, ordinal) => Math.max(highest, ordinal ?? 0), 0) + 1;
+}
+
+function admittedStoreStateRecords(memory: ReceizProofMemory): AdmittedStoreStateRecord[] {
+  return memory.entries().flatMap((entry) => {
+    if (!isStoreStateRecord(entry.payload)) return [];
+    const ordinal = canonicalAppendOrdinal(entry);
+    if (ordinal === null) return [];
+
+    return [
+      {
+        schema: ADMITTED_STORE_STATE_SCHEMA,
+        record: entry.payload,
+        authority: {
+          kind: "canonical_append",
+          entryId: entry.id,
+          canonicalAppendOrdinal: ordinal,
+          verifiedKaiUpulse: entry.kaiUpulse ?? null
+        }
+      }
+    ];
+  });
+}
+
+function legacyStoreStateRecords(memory: ReceizProofMemory) {
+  return memory
+    .entries()
+    .filter((entry) => isStoreStateRecord(entry.payload) && canonicalAppendOrdinal(entry) === null);
 }
 
 export async function createProofStateStore(options: {
@@ -109,16 +143,11 @@ export async function createProofStateStore(options: {
   return {
     async admitStoreRecord(record) {
       if (!memory.has(record.id)) {
-        const admittedRecord = {
-          ...record,
-          updatedKaiUpulse: record.updatedKaiUpulse ?? nextCanonicalKaiUpulse(memory)
-        };
-        memory.append(entryFromStoreRecord(admittedRecord));
+        memory.append(entryFromStoreRecord(record, nextCanonicalAppendOrdinal(memory)));
         await memory.flush();
-        return admittedRecord;
       }
 
-      return entries(memory).filter(isStoreStateRecord).find((entry) => entry.id === record.id) ?? record;
+      return payloadEntries(memory).filter(isStoreStateRecord).find((entry) => entry.id === record.id) ?? record;
     },
     async admitCommerceEvent(state, event) {
       if (memory.has(event.id)) {
@@ -134,12 +163,24 @@ export async function createProofStateStore(options: {
       return result;
     },
     projectHost(baseState, tenantHost) {
-      const admittedRecords = entries(memory);
-      const publishedState = projectStoreStateFromRecords(baseState, admittedRecords, tenantHost);
-      return projectCommerceEventsFromRecords(publishedState, admittedRecords, tenantHost);
+      const admittedRecords = admittedStoreStateRecords(memory);
+      const hasCanonicalState = admittedRecords.some((admission) =>
+        storeStateRecordMatchesTenantHost(admission.record, tenantHost)
+      );
+      const legacyMatches = legacyStoreStateRecords(memory)
+        .map((entry) => entry.payload)
+        .filter(isStoreStateRecord)
+        .filter((record) => storeStateRecordMatchesTenantHost(record, tenantHost));
+      const publishedState = hasCanonicalState
+        ? projectStoreStateFromRecords(baseState, admittedRecords, tenantHost)
+        : legacyMatches.length === 1
+          ? projectLegacyStoreStateRecord(baseState, legacyMatches[0], tenantHost)
+          : baseState;
+      const records = payloadEntries(memory);
+      return projectCommerceEventsFromRecords(publishedState, records, tenantHost);
     },
     records() {
-      return entries(memory);
+      return payloadEntries(memory);
     },
     snapshot() {
       return memory.snapshot();
