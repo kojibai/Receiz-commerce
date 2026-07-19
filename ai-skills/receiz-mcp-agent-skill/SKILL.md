@@ -88,6 +88,6 @@ Resources:
 - [Action confirmation rules](resources/action-confirmation-rules.md)
 - [Response templates](resources/response-templates.md)
 
-## v110 artifact recovery tools
+## v112 artifact recovery tools
 
-Use `receiz_artifact_admit`, `receiz_artifact_recovery_plan`, and `receiz_artifact_admit_and_recover` as read-only SDK orchestration. For `receiz_artifact_recovery_commit`, pass only the plan digest, exact confirmation, stable idempotency key, and expected head. Never put a capability or store object in MCP JSON; the host resolves verified authority out of band.
+Use exactly `receiz_artifact_verify`, `receiz_artifact_admit`, `receiz_artifact_append_plan`, `receiz_artifact_transition_seal_and_stage`, and `receiz_artifact_transition_commit`. Never put an admission, history, actor, plan, verified capability, candidate, or store in MCP JSON; same-runtime custody is mandatory and exact bytes crossing a process require `reverify-exact-bytes`.

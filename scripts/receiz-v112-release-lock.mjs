@@ -3,8 +3,8 @@ import {
   RECEIZ_RELEASE_VERSION,
   RECEIZ_RULESET_VERSION,
   RECEIZ_SDK_VERSION,
-  RECEIZ_V111_ARTIFACT_LAWS,
-  RECEIZ_V111_REGISTRY_DIGEST,
+  RECEIZ_V112_ARTIFACT_LAWS,
+  RECEIZ_V112_REGISTRY_DIGEST,
   digestReceizConstitution,
   validateReceizConstitutionRegistry,
 } from "@receiz/sdk";
@@ -13,8 +13,8 @@ import { RECEIZ_MCP_TOOLS } from "@receiz/mcp-server";
 import { createHash } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 
-const expectedVersion = "111.0.0";
-const expectedRange = ">=111.0.0 <112.0.0";
+const expectedVersion = "112.0.0";
+const expectedRange = ">=112.0.0 <113.0.0";
 const requiredDoctrineSkills = [
   "receiz-app-builder-skill",
   "receiz-architecture",
@@ -91,25 +91,16 @@ const requiredTools = [
   "receiz_conformance_run",
   "receiz_release_verify",
   "receiz_mcp_execute_command",
-  "receiz_identity_profile_update_plan",
-  "receiz_identity_profile_update_execute",
-  "receiz_bearer_asset_claim_plan",
-  "receiz_bearer_asset_claim_execute",
-  "receiz_artifact_record_seal_plan",
-  "receiz_artifact_record_seal_execute",
   "receiz_artifact_verify",
-  "receiz_artifact_extract_verified",
-  "receiz_artifact_round_trip_check",
-  "receiz_artifact_explain",
   "receiz_artifact_admit",
-  "receiz_artifact_recovery_plan",
-  "receiz_artifact_admit_and_recover",
-  "receiz_artifact_recovery_commit",
+  "receiz_artifact_append_plan",
+  "receiz_artifact_transition_seal_and_stage",
+  "receiz_artifact_transition_commit",
 ];
 const expectedArchiveIntegrity = {
-  "receiz-sdk-111.0.0.tgz": "sha512-j0T0mtC5WKOF7P6t2sv9dBtX2RMkKvmCyHRxiZQ52Uu+tLFuYzaC+myzBHwOW+MQQlSyHRqyAqqwz0Wn6LjIQg==",
-  "receiz-mcp-server-111.0.0.tgz": "sha512-UYlwD+tfqlp5h5jnissBJtiKm7jGOAGAH2G96Oz2O+NhFHDOaA10hWpY1zUVQKClsuae8d5rJyeq7qW7m1mLgA==",
-  "receiz-ai-skills-111.0.0.tgz": "sha512-ZPO14qVOM9OWspvpec7VpDz5x28Ap77wEoNSZyVitDicP41M7KnSsywfexv02SRZGtNSLNQyQg6SbS/gX9L+/Q==",
+  "receiz-sdk-112.0.0.tgz": "sha512-xak1lr5Ho1ywmDRA0+dXAOTM7GvTor7grvjWCbTpgTuJ+B3QW46VSYHFq2B+N6DmwKSYgtGgGsdqz1+8+QBdMQ==",
+  "receiz-mcp-server-112.0.0.tgz": "sha512-BpAgNCxlDgKJn42+CTRf0d1yhrykM7Q+t5dpoqEyNn09ozB33KQhwP+8/lvg4bdimiS4zrVAi5tCwxEpxU5MZA==",
+  "receiz-ai-skills-112.0.0.tgz": "sha512-zw0RtkXxdCBNKngIFxNh3E56H432L1oBAbQFBnVPYfWjn4cdOXTJ7VpZKD9yIh+Z7lN5JFlSdF+xYb5jEoQkRA==",
 };
 
 const checks = [];
@@ -121,9 +112,9 @@ for (const name of ["@receiz/sdk", "@receiz/mcp-server", "@receiz/ai-skills"]) {
   check(`package:${name}`, pkg.dependencies?.[name] === expectedVersion, pkg.dependencies?.[name]);
 }
 for (const [name, file] of Object.entries({
-  "@receiz/sdk": "receiz-sdk-111.0.0.tgz",
-  "@receiz/mcp-server": "receiz-mcp-server-111.0.0.tgz",
-  "@receiz/ai-skills": "receiz-ai-skills-111.0.0.tgz",
+  "@receiz/sdk": "receiz-sdk-112.0.0.tgz",
+  "@receiz/mcp-server": "receiz-mcp-server-112.0.0.tgz",
+  "@receiz/ai-skills": "receiz-ai-skills-112.0.0.tgz",
 })) {
   const override = pkg.pnpm?.overrides?.[name];
   check(`override:${name}`, override === `file:vendor/${file}` && existsSync(`vendor/${file}`), override);
@@ -141,14 +132,19 @@ const registryPayload = json("receiz.constitution.json");
 const registryValidation = validateReceizConstitutionRegistry(registryPayload);
 check("registry:valid", registryValidation.ok, registryValidation.ok ? "valid" : registryValidation.issues.join(","));
 const registryDigest = await digestReceizConstitution(registryPayload);
-check("registry:canonical-v111-chain", registryPayload.previousRegistryDigest === RECEIZ_V111_REGISTRY_DIGEST, registryPayload.previousRegistryDigest);
-check("registry:artifact-laws", RECEIZ_V111_ARTIFACT_LAWS.length === 20 && RECEIZ_V111_ARTIFACT_LAWS.at(-1) === "ARTIFACT-020", RECEIZ_V111_ARTIFACT_LAWS.join(","));
+check("registry:canonical-v112-chain", registryPayload.previousRegistryDigest === RECEIZ_V112_REGISTRY_DIGEST, registryPayload.previousRegistryDigest);
+check("registry:artifact-laws", RECEIZ_V112_ARTIFACT_LAWS.length === 30 && RECEIZ_V112_ARTIFACT_LAWS.at(-1) === "ARTIFACT-030", RECEIZ_V112_ARTIFACT_LAWS.join(","));
 for (const [id, code] of Object.entries({
-  "ARTIFACT-016": "STRUCTURAL_ADMISSION_AUTHORITY_FORBIDDEN",
-  "ARTIFACT-017": "VERIFIED_HISTORY_EVIDENCE_REQUIRED",
-  "ARTIFACT-018": "COMPLETE_CANONICAL_IDENTITY_BINDING_REQUIRED",
-  "ARTIFACT-019": "STALE_OPERATIONAL_RELEASE_AUTHORITY",
-  "ARTIFACT-020": "FRESH_MCP_ATTEMPT_IDENTITY_REQUIRED",
+  "ARTIFACT-021": "PROFILE_ADMISSION_IS_NOT_OPERATION_AUTHORITY",
+  "ARTIFACT-022": "TYPED_PORTABLE_TRANSITION_DIGEST_REQUIRED",
+  "ARTIFACT-023": "VERIFIED_ACTOR_PLAN_CAPABILITY_REQUIRED",
+  "ARTIFACT-024": "VERIFIED_TRANSITION_HISTORY_REQUIRED",
+  "ARTIFACT-025": "DURABLE_STAGING_AND_INDEPENDENT_RESOLUTION_REQUIRED",
+  "ARTIFACT-026": "NAMED_DOMAIN_ATOMIC_ACCEPTANCE_REQUIRED",
+  "ARTIFACT-027": "COMMIT_DOMAIN_MISMATCH",
+  "ARTIFACT-028": "IDEMPOTENCY_CONFLICT",
+  "ARTIFACT-029": "APPEND_RECEIPT_REPORT_ONLY",
+  "ARTIFACT-030": "FRESH_RUNTIME_CUSTODY_AND_PROCESS_READMISSION_REQUIRED",
 })) check(`registry:${id}`, registryPayload.laws.some((law) => law.id === id && law.denial?.code === code), code);
 
 const toolNames = new Set(RECEIZ_MCP_TOOLS.map((tool) => tool.name));
@@ -161,12 +157,12 @@ for (const skill of requiredDoctrineSkills) {
     check(`skill:${root}:${skill}:doctrine`, existsSync(skillPath), existsSync(skillPath) ? "present" : "missing");
     if (!requiredManifestSkills.has(skill)) continue;
     const manifest = existsSync(manifestPath) ? json(manifestPath) : null;
-    check(`skill:${root}:${skill}:manifest`, manifest?.schema === "receiz.ai-skill-contract.v111" && manifest?.version === expectedVersion && manifest?.requires?.sdk === expectedRange && manifest?.requires?.mcp === expectedRange && manifest?.requires?.ruleset === expectedVersion && manifest?.requires?.registryDigest === RECEIZ_V111_REGISTRY_DIGEST, manifest?.requires?.registryDigest ?? "missing");
+    check(`skill:${root}:${skill}:manifest`, manifest?.schema === "receiz.ai-skill-contract.v112" && manifest?.version === expectedVersion && manifest?.requires?.sdk === expectedRange && manifest?.requires?.mcp === expectedRange && manifest?.requires?.ruleset === expectedVersion && manifest?.requires?.registryDigest === RECEIZ_V112_REGISTRY_DIGEST, manifest?.requires?.registryDigest ?? "missing");
   }
 }
 
 const lockfile = readFileSync("pnpm-lock.yaml", "utf8");
-for (const file of ["receiz-sdk-111.0.0.tgz", "receiz-mcp-server-111.0.0.tgz", "receiz-ai-skills-111.0.0.tgz"]) {
+for (const file of ["receiz-sdk-112.0.0.tgz", "receiz-mcp-server-112.0.0.tgz", "receiz-ai-skills-112.0.0.tgz"]) {
   check(`lockfile:${file}`, lockfile.includes(file), file);
 }
 
@@ -175,10 +171,10 @@ check("conformance", conformance.ok && conformance.summary.failed === 0, `${conf
 
 const ok = checks.every((item) => item.ok);
 console.log(JSON.stringify({
-  schema: "receiz.app.v111.release-lock.v1",
+  schema: "receiz.app.v112.release-lock.v1",
   ok,
   releaseVersion: RECEIZ_RELEASE_VERSION,
-  registryDigest: RECEIZ_V111_REGISTRY_DIGEST,
+  registryDigest: RECEIZ_V112_REGISTRY_DIGEST,
   appRegistryDigest: registryDigest,
   checks,
   authority: { releaseLockIsAdmission: false, strongerTruth: "sealed-receiz-proof-object" },

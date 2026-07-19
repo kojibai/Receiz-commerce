@@ -2,6 +2,14 @@
 
 All notable changes to Receiz Commerce Kit will be documented here.
 
+## 4.5.0 - Receiz v112 Artifact Transition Custody
+
+- Upgraded SDK, MCP server, and all thirty-one AI skills to exact official `112.0.0` vendored artifacts with lockfile and release-lock parity.
+- Added the complete nine-operation v112 application authority matrix and migrated local verification to typed verified, invalid, and unsupported results.
+- Replaced the fourteen legacy MCP mutation operations with the five current verify, admit, append-plan, seal-and-stage, and commit tools.
+- Chained application law to the package-embedded v112 registry and adopted `ARTIFACT-021` through `ARTIFACT-030` for typed transitions, verified custody, durable staging, named atomic commit domains, report-only receipts, and process readmission.
+- Added the v111→v112 attestation and v112 package, registry, artifact-law, operation-matrix, MCP, AI-skill, CLI, conformance, and preservation release gates.
+
 ## 4.4.1 - Canonical Store Projection Authority
 
 - Removed Chronos timestamps from published store-state authority selection.

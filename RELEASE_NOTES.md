@@ -1,3 +1,19 @@
+# Receiz Commerce Kit v4.5.0 — Artifact Transition Custody
+
+Release date: July 19, 2026
+
+Status: General Availability · repository release
+
+SDK target: `@receiz/sdk@112.0.0`
+
+V4.5 aligns the SDK, MCP server, and thirty-one-skill stack at the official v112 release. The app contract now declares all nine current authority operations. Exact artifact bytes are verified into same-runtime custody, admission uses an explicit identity, portable-state, or document profile, and profile admission never grants operation authority by itself.
+
+Portable appends now bind a verified predecessor, verified proof history, verified actor, current discovered registry law, canonical event, expected head, named commit domain, and domain-scoped idempotency identity. The portable transition digest excludes plan coordination and external effects; registry law derives those effects. Successor bytes are sealed, durably staged without a head write, independently resolved and reverified by the store, and accepted atomically in the named domain. Append receipts remain report-only.
+
+The app law overlay chains to the package-embedded canonical v112 registry and adds `ARTIFACT-021` through `ARTIFACT-030`. Exact official tarball integrity, lockfile parity, all thirty artifact laws, the five current MCP coordination tools, v112 AI-skill contracts, official conformance, the v111→v112 attestation, tests, typecheck, lint, production build, secret scan, and SDK doctor remain release gates.
+
+---
+
 # Receiz Commerce Kit v4.4.1 — Canonical Store Projection Authority
 
 Release date: July 18, 2026

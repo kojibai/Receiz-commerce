@@ -2,18 +2,22 @@ import {
   RECEIZ_DEFAULT_BASE_URL,
   RECEIZ_SDK_VERSION,
   appendReceizIdentityArtifactTrailerToPng,
+  commitArtifactTransition,
+  createReceizBrowserAdmissionStore,
   createReceizClient,
+  loadReceizCurrentRegistry,
+  planArtifactAppend,
+  sealArtifactTransitionCandidate,
+  signReceizCapability,
   type ActionLedgerFeed,
   type CheckoutRequest,
   type CheckoutSessionResponse,
   type ConnectTransferRequest,
   type ConnectTransferResponse,
   type ConnectWalletResponse,
-  type DocumentVerifyResponse,
   type JsonObject,
   type OidcTokenRequest,
   type OidcTokenResponse,
-  type PublicProofRecord,
   type ReceizAppStateFeedResponse,
   type ReceizAppStateRecordResponse,
   type ReceizAppStateRestoreResult,
@@ -48,12 +52,10 @@ import {
   type ReceizProofObjectCreateOptions,
   type ReceizProofObjectCreateInput,
   type ReceizArtifactDownloadEvidence,
-  type ReceizArtifactAdmissionContext,
+  type ReceizArtifactAdmissionOptions,
+  type ReceizArtifactInput,
+  type ReceizArtifactVerificationResult,
   type ReceizArtifactAdmissionResult,
-  type ReceizArtifactRecoveryCommitResult,
-  type ReceizArtifactRecoveryPlan,
-  type ReceizArtifactRecoveryResult,
-  type ReceizAuthorityFailure,
   type ReceizAdmissionStore,
   type ReceizBearerArtifactClaimInput,
   type ReceizOpenedArtifact,
@@ -66,6 +68,7 @@ import {
   type ReceizPublicStoreResolveResult,
   type ReceizPublicStoreRestoreLatestInput,
   type ReceizPublicStoreSignedPublishInput,
+  type ReceizPublicProjectionRecord,
   type ReceizReleasePinRequest,
   type ReceizSearchRequest,
   type ReceizKeyFile,
@@ -73,7 +76,6 @@ import {
   type ReceizProofMemoryAdditionsQuery,
   type ReceizProofMemoryOptions,
   type ReceizProofRegister,
-  type ReceizProofHistory,
   type ReceizSportsCardManifest,
   type ReceizSportsCardManifestProjection,
   type ReceizWorldProfileMessageRequest,
@@ -90,7 +92,6 @@ import {
   type TwinMindImportSummaryResponse,
   type TwinPromotionApprovalInput,
   type ReceizWebhookEvent,
-  type ReceizVerifiedCapability,
   type WalletLedgerFeed
 } from "@receiz/sdk";
 import type { GameResult, Product, ProofEvent, ReceizedAsset, Reward, VerifiedObject } from "@/types/domain";
@@ -142,6 +143,9 @@ export type ReceizCommerceAdapter = {
     challengeB64Url: string;
     signatureB64Url: string;
   }): Promise<boolean>;
+  signIdentityCapability(
+    input: Parameters<typeof signReceizCapability>[0]
+  ): ReturnType<typeof signReceizCapability>;
   continueReceizId(identity: ReceizDeviceIdentity, next?: string): Promise<JsonObject>;
   ensureTenantSession(input: ReceizEnsureTenantSessionInput): ReceizEnsureTenantSessionResult;
   createProofRegister(ownerId?: string): ReceizProofRegister;
@@ -150,19 +154,24 @@ export type ReceizCommerceAdapter = {
     value: ReceizProofRegister | ReceizProofMemory,
     limit?: number
   ): ReceizProofMemoryAdditionsQuery;
-  verifyArtifact(file: Blob): Promise<DocumentVerifyResponse>;
-  admitArtifact(file: Blob, context?: ReceizArtifactAdmissionContext): Promise<ReceizArtifactAdmissionResult>;
-  planArtifactRecovery(
-    admission: ReceizArtifactAdmissionResult,
-    knownHistory?: ReceizProofHistory
-  ): Promise<ReceizArtifactRecoveryPlan | ReceizAuthorityFailure | null>;
-  admitAndRecoverArtifact(file: Blob, context?: ReceizArtifactAdmissionContext): Promise<ReceizArtifactRecoveryResult>;
-  commitArtifactRecovery(
-    plan: ReceizArtifactRecoveryPlan,
-    capability: ReceizVerifiedCapability,
-    idempotencyKey: string,
-    store: ReceizAdmissionStore
-  ): Promise<ReceizArtifactRecoveryCommitResult>;
+  verifyArtifact(input: ReceizArtifactInput): Promise<ReceizArtifactVerificationResult>;
+  admitArtifact(
+    verification: ReceizArtifactVerificationResult,
+    options: ReceizArtifactAdmissionOptions
+  ): Promise<ReceizArtifactAdmissionResult>;
+  loadCurrentRegistry(): ReturnType<typeof loadReceizCurrentRegistry>;
+  createBrowserAdmissionStore(
+    options: Parameters<typeof createReceizBrowserAdmissionStore>[0]
+  ): ReceizAdmissionStore;
+  planArtifactAppend(
+    input: Parameters<typeof planArtifactAppend>[0]
+  ): ReturnType<typeof planArtifactAppend>;
+  sealArtifactTransitionCandidate(
+    input: Parameters<typeof sealArtifactTransitionCandidate>[0]
+  ): ReturnType<typeof sealArtifactTransitionCandidate>;
+  commitArtifactTransition(
+    input: Parameters<typeof commitArtifactTransition>[0]
+  ): ReturnType<typeof commitArtifactTransition>;
   createProofObject(
     input: ReceizProofObjectCreateInput,
     options: ReceizProofObjectCreateOptions
@@ -171,9 +180,9 @@ export type ReceizCommerceAdapter = {
   downloadArtifact(artifact: ReceizSealedArtifact): Promise<ReceizArtifactDownloadEvidence>;
   claimBearerArtifact(input: ReceizBearerArtifactClaimInput): Promise<ReceizSealedArtifact>;
   updateIdentityProfile(input: ReceizProfileUpdateInput): Promise<ReceizProfileUpdateResult>;
-  observePublicProof(body: { url: string; externalCreatorId?: string; title?: string }): Promise<PublicProofRecord>;
-  getPublicProofByUrl(url: string): Promise<PublicProofRecord>;
-  getPublicProofById(id: string): Promise<PublicProofRecord>;
+  observePublicProof(body: { url: string; externalCreatorId?: string; title?: string }): Promise<ReceizPublicProjectionRecord>;
+  getPublicProofByUrl(url: string): Promise<ReceizPublicProjectionRecord>;
+  getPublicProofById(id: string): Promise<ReceizPublicProjectionRecord>;
   worldSnapshot(): Promise<ReceizWorldPublicSnapshotResponse>;
   worldProfile(username: string, query?: ReceizWorldProfileQuery): Promise<ReceizWorldProfileResponse>;
   worldMessage(username: string, body: ReceizWorldProfileMessageRequest): Promise<ReceizWorldProfileResponse>;
@@ -514,6 +523,9 @@ export function createReceizCommerceAdapter(
     verifyIdentityLoginProof(input) {
       return client.identity.verifyLoginProof(input);
     },
+    signIdentityCapability(input) {
+      return client.identity.signCapability(input);
+    },
     continueReceizId(identity, next) {
       return client.identity.continueReceizId(identity, { next });
     },
@@ -529,20 +541,26 @@ export function createReceizCommerceAdapter(
     proofMemoryAdditionsQuery(value, limit) {
       return client.proofMemory.additionsQuery(value, limit);
     },
-    verifyArtifact(file) {
-      return client.verification.verifyArtifact(file);
+    verifyArtifact(input) {
+      return client.verification.verifyArtifact(input);
     },
-    admitArtifact(file, context) {
-      return client.artifacts.admit(file, context);
+    admitArtifact(verification, options) {
+      return client.artifacts.admit(verification, options);
     },
-    planArtifactRecovery(admission, knownHistory) {
-      return client.artifacts.planRecovery(admission, knownHistory);
+    loadCurrentRegistry() {
+      return loadReceizCurrentRegistry();
     },
-    admitAndRecoverArtifact(file, context) {
-      return client.artifacts.admitAndRecover(file, context);
+    createBrowserAdmissionStore(options) {
+      return client.admission.browserStore(options);
     },
-    commitArtifactRecovery(plan, capability, idempotencyKey, store) {
-      return client.artifacts.commitRecovery(plan, capability, idempotencyKey, store);
+    planArtifactAppend(input) {
+      return planArtifactAppend(input);
+    },
+    sealArtifactTransitionCandidate(input) {
+      return sealArtifactTransitionCandidate(input);
+    },
+    commitArtifactTransition(input) {
+      return commitArtifactTransition(input);
     },
     createProofObject(input, options) {
       return client.assets.createProofObject(input, options);

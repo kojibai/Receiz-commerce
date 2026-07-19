@@ -63,18 +63,18 @@ Show the admitted actor, operation kind, payload consequences, idempotency key, 
 
 ## MCP parity
 
-There is no current MCP queue mutation authority. Do not invent one and do not call retired proof-head or receipt tools. When replay produces an artifact, use `receiz_artifact_verify` and `receiz_artifact_explain` as independent evidence beneath the proof object.
+There is no current MCP queue mutation authority. Do not invent one and do not call retired proof-head, receipt, extraction, explanation, or Record-to-Seal helper tools. When replay produces an artifact, begin with `receiz_artifact_verify`; use the remaining four v112 artifact-transition tools only when current admission, verified actor/history, capability, staging, and named-domain commitment evidence are present.
 
 ## Emulator fixture
 
 Run the current offline proof replay, durable queue, and artifact-substitution rejection contracts. Historical obsolete-versioned signed-command fixtures remain archival evidence only.
 
-## v111 artifact-derived authority
+## v112 artifact-derived authority
 
 Engineers remain free to build whatever they choose, but conforming Receiz receivers recognize authority only when every authority-bearing value is provably derived from independently verified artifact truth. Custom JavaScript objects, callbacks, normalized histories, local receipts, server rows, sessions, MCP memory, and AI explanations remain application data or inspection material; their shape never creates Receiz authority.
 
-Admission must retain and canonically reverify the exact enclosing artifact bytes under the complete frozen verifier context. Recovery-authoritative history requires explicit independently verified evidence roots and fails closed on divergent verified heads. Canonical identity and `canSign` require enclosing-owner binding, identity-owner binding, key identity, and a domain-separated private-key challenge. Recovery planning re-derives state from verified admission and verified history.
+Admission begins from runtime-custodied verification of the exact enclosing artifact bytes under the complete frozen verifier context. Verified history and actor evidence remain same-runtime objects and fail closed on divergence or structural reconstruction. Identity Seal signing uses a locally held Ed25519 or P-256 key and emits a signed capability claim; only current verification of that claim against the exact plan produces capability authority.
 
 Deterministic plan identity and unique execution-attempt identity are separate. MCP may reuse a confirmation digest only while the identical attempt is actively pending; committed and failed attempts are terminal and require a fresh confirmation. Expected authority failures are structured, immutable, machine-readable, and report zero writes.
 
-Historical sealed proof objects remain exact-byte verifiable evidence. Historical runtime admissions, histories, capabilities, plans, or confirmations cannot authorize a current v111 receiver; re-admit the historical artifact's exact bytes under the current verifier.
+Historical sealed proof objects remain exact-byte verifiable evidence. Historical runtime admissions, histories, actors, capabilities, plans, candidates, stores, or confirmations cannot authorize a current v112 receiver; exact bytes crossing a process require `reverify-exact-bytes`, followed by current profile admission and `same-runtime-custody` through plan, capability, seal, stage, independent byte resolution, atomic named-domain acceptance, and report-only receipt.

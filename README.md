@@ -4,7 +4,7 @@
 
 Receiz Commerce Kit is a full working commerce product and a forkable SDK kernel for building proof-sealed applications with `@receiz/sdk` and Receiz MCP.
 
-Current release: `4.4.1` · SDK target: `@receiz/sdk@111.0.0`
+Current release: `4.5.0` · SDK target: `@receiz/sdk@112.0.0`
 
 It ships as a Next.js App Router application with a public storefront, customer account area, no-code merchant admin, Receiz ID, checkout, wallet projection, rewards, Receized assets, domain hosting, media upload, proof memory, publish recovery, webhook verification, release diagnostics, and an AI operator layer built around Receiz MCP, Twin, World, and SDK doctor workflows. You can run it as the Receiz.app Commerce Cloud product, or clone it and build your own commerce, rewards, marketplace, game, content, or agent-operated SaaS on top of the same primitives.
 
@@ -31,7 +31,7 @@ This repository is intentionally two things at once:
 - **A working product:** a mobile-first commerce cloud where a merchant can create or restore Receiz ID, customize a storefront, add products and content, activate rewards, publish to a free `*.receiz.app` subdomain, connect a custom domain, and run Receiz checkout.
 - **A developer kernel:** a production-shaped reference for using one typed SDK boundary to build identity, proof, payments, wallet, rewards, domains, media, public app state, webhooks, release checks, and agent tooling without scattering SDK calls through the UI.
 
-The release unit is the repository, not an npm package. `package.json` remains `private: true` to prevent accidental application publishing to npm. Version 4.4 carries the living-world foundation onto the Receiz v111 artifact-derived authority layer: admission is recomputed from retained canonical exact bytes, recovery history requires independent stronger evidence roots, canonical identity requires a domain-separated signing challenge, and every terminal MCP attempt requires fresh confirmation.
+The release unit is the repository, not an npm package. `package.json` remains `private: true` to prevent accidental application publishing to npm. Version 4.5 carries the living-world foundation onto the Receiz v112 artifact-transition authority layer: exact bytes are verified before explicit profile admission, portable transitions are planned from verified actor and history custody, successor bytes are durably staged, and only a named atomic commit domain may accept a new head.
 
 ## Why It Matters
 
@@ -58,9 +58,9 @@ pnpm install
 pnpm dev
 ```
 
-The v111 Receiz toolchain is pinned as `@receiz/sdk@111.0.0`, `@receiz/mcp-server@111.0.0`, and `@receiz/ai-skills@111.0.0`. Pnpm overrides resolve the exact official release tarballs committed under `vendor/`; the dependency contract remains `111.0.0` and is portable across clones. The local `ai-skills/` source is aligned with the published doctrine and can be checked with `pnpm validate:ai-skills`.
+The v112 Receiz toolchain is pinned as `@receiz/sdk@112.0.0`, `@receiz/mcp-server@112.0.0`, and `@receiz/ai-skills@112.0.0`. Pnpm overrides resolve the exact official release tarballs committed under `vendor/`; the dependency contract remains `112.0.0` and is portable across clones. The local `ai-skills/` source is aligned with the published doctrine and can be checked with `pnpm validate:ai-skills`.
 
-`receiz.app.json` declares the application feature and authority contract, while `receiz.constitution.json` is the app law overlay chained to the canonical v111 registry digest. V111 retains unified zero-write, zero-network admission/recovery and adds `ARTIFACT-016` through `ARTIFACT-020`: structural objects cannot invent authority, every recovered history node needs an independent evidence root, canonical identity needs complete owner/key/challenge binding, current operations require the current registry digest, and MCP confirmation is bound to a fresh attempt identity. The adapter exposes admission, recovery planning, combined admit-and-recover, and explicit recovery commit rails, including v111 authority-failure results. Run `pnpm receiz:check` to inspect the integration, `pnpm receiz:conformance` for deterministic runtime evidence, and `pnpm receiz:release-lock` for package, registry-chain, MCP-tool, AI-skill, lockfile, artifact-law, and conformance parity. Sealed proof objects and verified local history remain stronger authority than SDK, MCP, server, database, session, AI, or UI projections.
+`receiz.app.json` declares the complete nine-operation v112 authority matrix, while `receiz.constitution.json` is the app law overlay chained to the package-embedded canonical v112 registry digest. V112 adds `ARTIFACT-021` through `ARTIFACT-030`: profile admission is not operation authority; portable transition meaning excludes commit coordination and external effects; actor, plan, capability, and history custody are verified; staging and byte resolution are durable and independent; named-domain acceptance is atomic; domain mismatch and idempotency conflict remain distinct; receipts are reports; and authority objects cannot cross process boundaries without exact-byte reverification and readmission. Run `pnpm receiz:check` to inspect the integration, `pnpm receiz:conformance` for deterministic runtime evidence, and `pnpm receiz:release-lock` for package, registry-chain, MCP-tool, AI-skill, lockfile, artifact-law, and conformance parity. Sealed proof objects and accepted artifact history remain stronger authority than SDK, MCP, server, database, session, AI, receipt, or UI projections.
 
 Open:
 
@@ -74,7 +74,7 @@ Run the release gate:
 pnpm release:check
 ```
 
-`pnpm release:check` runs the tracked-file secret scan, tests, typecheck, the v111 app-contract integration check, official conformance, the v111 migration/CLI checks and release lock, AI-skill validation, lint, a guarded production build, and Receiz doctor. Public forks can run doctor without static access tokens; production releases should run with configured delegated permission and show `ok: true`, `missing: []`, and no warnings.
+`pnpm release:check` runs the tracked-file secret scan, tests, typecheck, the v112 app-contract and operation-matrix integration check, official conformance, the v112 migration/CLI checks and release lock, AI-skill validation, lint, a guarded production build, and Receiz doctor. Public forks can run doctor without static access tokens; production releases should run with configured delegated permission and show `ok: true`, `missing: []`, and no warnings.
 
 ## Product Tour
 
@@ -200,7 +200,7 @@ startup_timeout_sec = 120
 RECEIZ_BASE_URL = "https://receiz.com"
 ```
 
-The local command resolves the pnpm-pinned `@receiz/mcp-server@111.0.0`. Use the matching `@receiz/ai-skills@111.0.0` doctrine from `node_modules/@receiz/ai-skills` or the aligned local `ai-skills/` directory. V111 preserves the fourteen coordinated identity, ownership, artifact, and recovery operations while binding plans, confirmations, and attempts to domain-separated authority digests. Terminal attempts cannot reuse confirmation, and current authority cannot be granted from a stale operational release. MCP and AI skills never become authority; they inspect, plan, simulate, verify, and invoke permitted rails beneath sealed proof objects and verified local history.
+The local command resolves the pnpm-pinned `@receiz/mcp-server@112.0.0`. Use the matching `@receiz/ai-skills@112.0.0` doctrine from `node_modules/@receiz/ai-skills` or the aligned local `ai-skills/` directory. V112 exposes exactly five current artifact-coordination tools: verify, admit, append-plan, seal-and-stage, and commit. Plans, confirmations, staged references, actors, and receipts remain non-authoritative reports; capability, sealer, history, registry discovery, and store authority are resolved out of band under same-runtime custody. MCP and AI skills never become authority.
 
 Brand edits preview immediately in the merchant workspace. `Publish theme` uses the same signed publication transaction as `Publish changes`: success means the authoritative public-store revision was accepted and adopted by the workspace. A pending or failed publication remains visibly unresolved and is never presented as globally saved. Other open merchant tabs adopt the updated workspace through scoped storage synchronization, while storefront subdomains and custom domains continue to resolve from the published Receiz projection.
 

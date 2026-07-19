@@ -1,6 +1,6 @@
 # MCP Tool Map
 
-## v110 Application Compiler
+## v112 Application Compiler
 
 | Need | Tool | Mutation |
 |---|---|---|
@@ -22,7 +22,7 @@ verification verdict or proof authority.
 
 Source: `packages/receiz-mcp-server/src/index.ts`.
 
-## v110 Current Profile And Ownership Outcomes
+## v112 Current Profile And Ownership Outcomes
 
 | Need | Tool | Mutation |
 |---|---|---|
@@ -37,18 +37,17 @@ The bearer plan verifies the complete sealed artifact with `client.artifacts.ver
 
 A verified proof object is not limited to the platform that created it. Any lawful platform may append authenticated ownership and history only while preserving the same immutable object identity, payload, provenance root, prior history, and unknown namespaces, then returning a complete verified proof object. These MCP tools invoke that same SDK continuity and never create an origin-platform lock or parallel chain.
 
-## v110 Complete Artifact Custody
+## v112 Complete Artifact Custody
 
 | Need | Tool | Boundary |
 |---|---|---|
-| Plan native Record -> Seal | `receiz_artifact_record_seal_plan` | Read-only digest-bound plan |
-| Execute native Record -> Seal | `receiz_artifact_record_seal_execute` | Exact confirmation required |
-| Verify complete artifact | `receiz_artifact_verify` | Shared SDK verifier; no extraction |
-| Extract verified payload | `receiz_artifact_extract_verified` | Enclosing verification must pass first |
-| Check exact round trip | `receiz_artifact_round_trip_check` | Complete artifact byte identity |
-| Explain artifact evidence | `receiz_artifact_explain` | Read-only evidence; never authority |
+| Verify exact artifact bytes | `receiz_artifact_verify` | Shared SDK verifier; no mutation |
+| Admit verified artifact to a profile | `receiz_artifact_admit` | Profile membership only; no operation authority |
+| Plan a governed append | `receiz_artifact_append_plan` | Zero writes; binds actor, history, effects, idempotency, registry, and domain |
+| Seal and durably stage candidate bytes | `receiz_artifact_transition_seal_and_stage` | Candidate proof object; no accepted-head write |
+| Resolve, reverify, and atomically accept | `receiz_artifact_transition_commit` | Named-domain atomic acceptance and report-only receipt |
 
-These six tools preserve artifact and payload as separate byte domains. They never relabel payload bytes, repack a native artifact, or treat MCP state as proof authority.
+These five tools preserve artifact and payload as separate byte domains. They never relabel payload bytes, repack a native artifact, or treat MCP state as proof authority.
 
 Obsolete versioned operation schemas are not shipped as installable compatibility surfaces. Historical sealed artifacts and release evidence remain verifiable without carrying obsolete developer APIs forward.
 
@@ -111,9 +110,12 @@ Emulator output is labeled `sandboxVerified`; never translate it into Receiz ver
 - `receiz://sdk/docs`
 - `receiz://schemas/proof-object-v1`
 
-## v110 artifact admission and recovery
+## v112 artifact transition authority
 
-- `receiz_artifact_admit` — exact-byte local admission and typed authority verdict; zero writes.
-- `receiz_artifact_recovery_plan` — deterministic plan from the runtime-held SDK admission; zero writes.
-- `receiz_artifact_admit_and_recover` — one SDK call for local admission plus recovery planning; zero writes.
-- `receiz_artifact_recovery_commit` — exact confirmation plus idempotency and expected head; verified capability/store are runtime-only.
+- `receiz_artifact_verify` — exact-byte verification; bytes crossing a process require `reverify-exact-bytes`.
+- `receiz_artifact_admit` — profile admission from the same-runtime verified artifact; zero writes.
+- `receiz_artifact_append_plan` — plans the transition, registry-derived effects, idempotency identity, expected head, and named commit domain; zero writes.
+- `receiz_artifact_transition_seal_and_stage` — seals a proof-object candidate and durably stages it with zero head writes; the staging locator is non-authoritative.
+- `receiz_artifact_transition_commit` — independently resolves and reverifies staged bytes, then atomically accepts them within the named domain and returns a report-only receipt.
+
+These are exactly the five current artifact MCP tools. MCP property bags, confirmations, receipts, and reported actors never become proof, identity, capability, or commit authority.

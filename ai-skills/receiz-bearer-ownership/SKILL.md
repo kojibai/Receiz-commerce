@@ -68,16 +68,16 @@ The active MCP path calls `client.artifacts.verifyAndOpen(completeFile)`, then `
 
 Run `generic-bearer-transfer` and `previous-owner-projection-invalidation` across qualifying artifact families. Require the prior ownership reference to come from carried verified proof and the output to be a native sealed artifact.
 
-## v111 recovery authority
+## v112 recovery authority
 
-Call `artifacts.admit` before recovery planning. A `bearer-recovery` verdict may report `canRestore` or a capability-gated `canClaimOwnership`, but it must report `canSign: false`, `canPublish: false`, and `canSettle: false`. Possession never becomes canonical identity. Commit only an SDK-issued plan through a runtime-verified capability, stable idempotency key, expected head, and atomic local store.
+Verify exact bytes, then request the `portable-state` admission profile before append planning. Admission proves eligibility only; possession never becomes identity or operation authority. Ownership transition requires verified history and actor evidence, registry-derived effects, the exact named-domain plan, a plan-bound verified capability, sealed and durably staged bytes, and atomic acceptance after independent byte resolution.
 
-## v111 artifact-derived authority
+## v112 artifact-derived authority
 
 Engineers remain free to build whatever they choose, but conforming Receiz receivers recognize authority only when every authority-bearing value is provably derived from independently verified artifact truth. Custom JavaScript objects, callbacks, normalized histories, local receipts, server rows, sessions, MCP memory, and AI explanations remain application data or inspection material; their shape never creates Receiz authority.
 
-Admission must retain and canonically reverify the exact enclosing artifact bytes under the complete frozen verifier context. Recovery-authoritative history requires explicit independently verified evidence roots and fails closed on divergent verified heads. Canonical identity and `canSign` require enclosing-owner binding, identity-owner binding, key identity, and a domain-separated private-key challenge. Recovery planning re-derives state from verified admission and verified history.
+Admission begins from runtime-custodied verification of the exact enclosing artifact bytes under the complete frozen verifier context. Verified history and actor evidence remain same-runtime objects and fail closed on divergence or structural reconstruction. Identity Seal signing uses a locally held Ed25519 or P-256 key and emits a signed capability claim; only current verification of that claim against the exact plan produces capability authority.
 
 Deterministic plan identity and unique execution-attempt identity are separate. MCP may reuse a confirmation digest only while the identical attempt is actively pending; committed and failed attempts are terminal and require a fresh confirmation. Expected authority failures are structured, immutable, machine-readable, and report zero writes.
 
-Historical sealed proof objects remain exact-byte verifiable evidence. Historical runtime admissions, histories, capabilities, plans, or confirmations cannot authorize a current v111 receiver; re-admit the historical artifact's exact bytes under the current verifier.
+Historical sealed proof objects remain exact-byte verifiable evidence. Historical runtime admissions, histories, actors, capabilities, plans, candidates, stores, or confirmations cannot authorize a current v112 receiver; exact bytes crossing a process require `reverify-exact-bytes`, followed by current profile admission and `same-runtime-custody` through plan, capability, seal, stage, independent byte resolution, atomic named-domain acceptance, and report-only receipt.

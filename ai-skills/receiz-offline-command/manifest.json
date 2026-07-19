@@ -1,12 +1,12 @@
 {
-  "schema": "receiz.ai-skill-contract.v111",
+  "schema": "receiz.ai-skill-contract.v112",
   "name": "receiz-offline-command",
-  "version": "111.0.0",
+  "version": "112.0.0",
   "requires": {
-    "sdk": ">=111.0.0 <112.0.0",
-    "mcp": ">=111.0.0 <112.0.0",
-    "ruleset": "111.0.0",
-    "registryDigest": "cf02d0bce6ad1541cfe84e27bfb1036777b29616bf8a1e5aeafb899a945e359a"
+    "sdk": ">=112.0.0 <113.0.0",
+    "mcp": ">=112.0.0 <113.0.0",
+    "ruleset": "112.0.0",
+    "registryDigest": "1356f8122d0b5fcbe891d7e6ed1e75faca827f15d63d1ed5d950664e11c146ee"
   },
   "laws": [
     "receiz.offline.transport-intent",
@@ -15,11 +15,23 @@
   ],
   "sdkOperations": [
     "offline.createQueue",
-    "artifacts.verifyAndOpen"
+    "artifacts.verifyAndOpen",
+    "artifact.verify",
+    "artifact.admit",
+    "artifact.append.plan",
+    "identity.capability.sign",
+    "artifact.transition.seal",
+    "artifact.transition.stage",
+    "artifact.transition.commit",
+    "admission.command.execute",
+    "public-proof.projection.locate"
   ],
   "allowedTools": [
     "receiz_artifact_verify",
-    "receiz_artifact_explain"
+    "receiz_artifact_admit",
+    "receiz_artifact_append_plan",
+    "receiz_artifact_transition_seal_and_stage",
+    "receiz_artifact_transition_commit"
   ],
   "requiredScopes": [
     "receiz:record"
@@ -40,7 +52,22 @@
     "caller-verifier-as-history-authority",
     "parseable-key-as-signing-authority",
     "terminal-mcp-confirmation-reuse",
-    "historical-runtime-object-as-current-authority"
+    "historical-runtime-object-as-current-authority",
+    "projection-as-artifact-authority",
+    "runtime-shape-as-v112-authority",
+    "subpayload-hash-as-enclosing-authority",
+    "unaccepted-candidate-as-committed",
+    "staging-reference-without-byte-resolution",
+    "receipt-as-proof-authority",
+    "cross-domain-idempotency-conflict",
+    "external-effects-in-transition-digest",
+    "serialized-sdk-authority",
+    "mcp-property-bag-authority",
+    "generic-constitutional-artifact-mutation",
+    "confirmation-as-proof-authority",
+    "receipt-actor-as-runtime-identity",
+    "browser-proof-object-storage",
+    "known-artifact-first-paint-blocking"
   ],
   "requiredEvidence": [
     "queued-not-global-admission",
@@ -52,7 +79,211 @@
     "independent-proof-history-evidence-roots",
     "domain-separated-signing-challenge",
     "distinct-plan-and-attempt-identities",
-    "structured-zero-write-failures"
+    "structured-zero-write-failures",
+    "exact-nine-row-operation-matrix-parity",
+    "exact-five-tool-mcp-parity",
+    "process-boundary-parity",
+    "exact-byte-reverification",
+    "identity-seal-ed25519-p256-signing",
+    "neutral-staging-zero-head-writes",
+    "independent-staged-byte-resolution",
+    "named-domain-atomic-acceptance",
+    "report-only-receipt",
+    "browser-ledger-no-proof-bytes",
+    "generated-file-ownership-preservation",
+    "current-registry-payload-digest-equality"
   ],
-  "maximumAutonomousAuthority": "inspect-plan-simulate"
+  "maximumAutonomousAuthority": "inspect-plan-simulate",
+  "artifactLawVersion": "112.0.0",
+  "artifactLaws": [
+    "ARTIFACT-001",
+    "ARTIFACT-002",
+    "ARTIFACT-003",
+    "ARTIFACT-004",
+    "ARTIFACT-005",
+    "ARTIFACT-006",
+    "ARTIFACT-007",
+    "ARTIFACT-008",
+    "ARTIFACT-009",
+    "ARTIFACT-010",
+    "ARTIFACT-011",
+    "ARTIFACT-012",
+    "ARTIFACT-013",
+    "ARTIFACT-014",
+    "ARTIFACT-015",
+    "ARTIFACT-016",
+    "ARTIFACT-017",
+    "ARTIFACT-018",
+    "ARTIFACT-019",
+    "ARTIFACT-020",
+    "ARTIFACT-021",
+    "ARTIFACT-022",
+    "ARTIFACT-023",
+    "ARTIFACT-024",
+    "ARTIFACT-025",
+    "ARTIFACT-026",
+    "ARTIFACT-027",
+    "ARTIFACT-028",
+    "ARTIFACT-029",
+    "ARTIFACT-030"
+  ],
+  "operationAuthorityMatrix": [
+    {
+      "operation": "artifact.verify",
+      "authorityProfiles": [],
+      "inputAuthority": "exact-artifact-bytes",
+      "requiredEvidence": [
+        "exact-artifact-bytes",
+        "pinned-verifier-roots"
+      ],
+      "outputAuthority": "verified-artifact-runtime",
+      "processBoundary": "reverify-exact-bytes",
+      "namespacePolicy": "not-applicable",
+      "compatibleSdkRange": ">=112.0.0 <113.0.0"
+    },
+    {
+      "operation": "artifact.admit",
+      "authorityProfiles": [],
+      "inputAuthority": "verified-artifact-runtime",
+      "requiredEvidence": [
+        "verified-artifact-runtime",
+        "admission-profile",
+        "current-registry"
+      ],
+      "outputAuthority": "verified-admission-runtime",
+      "processBoundary": "same-runtime-custody",
+      "namespacePolicy": "not-applicable",
+      "compatibleSdkRange": ">=112.0.0 <113.0.0"
+    },
+    {
+      "operation": "artifact.append.plan",
+      "authorityProfiles": [
+        "artifact-local",
+        "global-shared"
+      ],
+      "inputAuthority": "verified-admission-runtime",
+      "requiredEvidence": [
+        "verified-admission-runtime",
+        "verified-history-runtime",
+        "verified-actor-runtime",
+        "discovered-registry-law-runtime",
+        "commit-domain",
+        "canonical-event",
+        "expected-head",
+        "idempotency-identity"
+      ],
+      "outputAuthority": "sdk-plan-runtime",
+      "processBoundary": "same-runtime-custody",
+      "namespacePolicy": "preserve-all-non-target",
+      "compatibleSdkRange": ">=112.0.0 <113.0.0"
+    },
+    {
+      "operation": "identity.capability.sign",
+      "authorityProfiles": [],
+      "inputAuthority": "identity-key-file",
+      "requiredEvidence": [
+        "identity-key-file",
+        "capability-payload"
+      ],
+      "outputAuthority": "signed-capability-claim-not-yet-verified",
+      "processBoundary": "local-identity-key-custody",
+      "namespacePolicy": "not-applicable",
+      "compatibleSdkRange": ">=112.0.0 <113.0.0"
+    },
+    {
+      "operation": "artifact.transition.seal",
+      "authorityProfiles": [
+        "artifact-local",
+        "global-shared"
+      ],
+      "inputAuthority": "sdk-plan-runtime",
+      "requiredEvidence": [
+        "sdk-plan-runtime",
+        "verified-capability-runtime",
+        "transition-sealer-runtime"
+      ],
+      "outputAuthority": "sealed-candidate-proof-object-not-accepted-head",
+      "processBoundary": "same-runtime-custody",
+      "namespacePolicy": "preserve-all-non-target",
+      "compatibleSdkRange": ">=112.0.0 <113.0.0"
+    },
+    {
+      "operation": "artifact.transition.stage",
+      "authorityProfiles": [
+        "artifact-local",
+        "global-shared"
+      ],
+      "inputAuthority": "sealed-candidate-runtime",
+      "requiredEvidence": [
+        "sealed-candidate-runtime",
+        "conforming-transition-store-runtime",
+        "commit-domain"
+      ],
+      "outputAuthority": "staged-candidate-locator-non-authoritative",
+      "processBoundary": "same-runtime-custody",
+      "namespacePolicy": "preserve-all-non-target",
+      "compatibleSdkRange": ">=112.0.0 <113.0.0"
+    },
+    {
+      "operation": "artifact.transition.commit",
+      "authorityProfiles": [
+        "artifact-local",
+        "global-shared"
+      ],
+      "inputAuthority": "staged-candidate-reference",
+      "requiredEvidence": [
+        "sdk-plan-runtime",
+        "verified-capability-runtime",
+        "staged-candidate-reference",
+        "conforming-transition-store-runtime",
+        "commit-domain"
+      ],
+      "outputAuthority": "accepted-artifact-history-with-report-only-receipt",
+      "processBoundary": "same-runtime-custody",
+      "namespacePolicy": "preserve-all-non-target",
+      "compatibleSdkRange": ">=112.0.0 <113.0.0"
+    },
+    {
+      "operation": "admission.command.execute",
+      "authorityProfiles": [
+        "artifact-local",
+        "global-shared",
+        "projection-only",
+        "simulation-only"
+      ],
+      "inputAuthority": "claimed-command",
+      "requiredEvidence": [
+        "claimed-command",
+        "current-registry",
+        "capability-verifier-runtime",
+        "consequence-projector-runtime",
+        "admission-store"
+      ],
+      "outputAuthority": "admission-receipt-non-authoritative",
+      "processBoundary": "same-runtime-custody",
+      "namespacePolicy": "not-applicable",
+      "compatibleSdkRange": ">=112.0.0 <113.0.0"
+    },
+    {
+      "operation": "public-proof.projection.locate",
+      "authorityProfiles": [
+        "projection-only"
+      ],
+      "inputAuthority": "projection-only",
+      "requiredEvidence": [
+        "projection-locator"
+      ],
+      "outputAuthority": "exact-artifact-bytes-not-yet-verified",
+      "processBoundary": "projection-only",
+      "namespacePolicy": "not-applicable",
+      "compatibleSdkRange": ">=112.0.0 <113.0.0"
+    }
+  ],
+  "currentMcpArtifactTools": [
+    "receiz_artifact_verify",
+    "receiz_artifact_admit",
+    "receiz_artifact_append_plan",
+    "receiz_artifact_transition_seal_and_stage",
+    "receiz_artifact_transition_commit"
+  ]
 }

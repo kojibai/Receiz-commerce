@@ -1,6 +1,6 @@
 ---
 name: receiz-identity-profile
-description: Use when checking username availability or updating a Receiz profile through the authenticated same-account v111 operation.
+description: Use when checking username availability or updating a Receiz profile through the authenticated same-account v112 operation.
 ---
 
 # Receiz Identity Profile
@@ -52,7 +52,7 @@ On `username_taken`, keep the same account and request another username. Preserv
 
 ## Result verification
 
-Require `status === "updated"`, an `accountUid` equal to the authenticated actor, the returned profile projection, and a `/u/` profile path. The current v111 outcome has no caller proof-head or receipt prerequisite.
+Require `status === "updated"`, an `accountUid` equal to the authenticated actor, the returned profile projection, and a `/u/` profile path. The current v112 outcome has no caller proof-head or receipt prerequisite.
 
 ## User confirmation
 
@@ -66,16 +66,16 @@ Call `receiz_identity_profile_update_plan` with `{ profile }` only. Show the pla
 
 Run `username-race`. Require one commit-time winner, unchanged account UID, and no identity-key dependency. Emulator evidence is simulation evidence, never production verification.
 
-## v111 identity recovery
+## v112 identity recovery
 
-`canonical-identity` is an identity continuity verdict from a verified enclosing artifact. Use its explicit permitted actions; do not infer publishing or settlement authority. `foreign-owner` and `verified-legacy-read` remain read-only. `admitAndRecover` plans locally and performs no session, network, database, or hidden mutation.
+Identity-profile admission is identity continuity evidence from a verified enclosing artifact. It reports profile admission and a runtime-custodied actor reference; it does not grant publishing, transfer, settlement, or append authority. Operation authority still requires the exact v112 plan, verified plan-bound capability, and atomic commitment boundary.
 
-## v111 artifact-derived authority
+## v112 artifact-derived authority
 
 Engineers remain free to build whatever they choose, but conforming Receiz receivers recognize authority only when every authority-bearing value is provably derived from independently verified artifact truth. Custom JavaScript objects, callbacks, normalized histories, local receipts, server rows, sessions, MCP memory, and AI explanations remain application data or inspection material; their shape never creates Receiz authority.
 
-Admission must retain and canonically reverify the exact enclosing artifact bytes under the complete frozen verifier context. Recovery-authoritative history requires explicit independently verified evidence roots and fails closed on divergent verified heads. Canonical identity and `canSign` require enclosing-owner binding, identity-owner binding, key identity, and a domain-separated private-key challenge. Recovery planning re-derives state from verified admission and verified history.
+Admission begins from runtime-custodied verification of the exact enclosing artifact bytes under the complete frozen verifier context. Verified history and actor evidence remain same-runtime objects and fail closed on divergence or structural reconstruction. Identity Seal signing uses a locally held Ed25519 or P-256 key and emits a signed capability claim; only current verification of that claim against the exact plan produces capability authority.
 
 Deterministic plan identity and unique execution-attempt identity are separate. MCP may reuse a confirmation digest only while the identical attempt is actively pending; committed and failed attempts are terminal and require a fresh confirmation. Expected authority failures are structured, immutable, machine-readable, and report zero writes.
 
-Historical sealed proof objects remain exact-byte verifiable evidence. Historical runtime admissions, histories, capabilities, plans, or confirmations cannot authorize a current v111 receiver; re-admit the historical artifact's exact bytes under the current verifier.
+Historical sealed proof objects remain exact-byte verifiable evidence. Historical runtime admissions, histories, actors, capabilities, plans, candidates, stores, or confirmations cannot authorize a current v112 receiver; exact bytes crossing a process require `reverify-exact-bytes`, followed by current profile admission and `same-runtime-custody` through plan, capability, seal, stage, independent byte resolution, atomic named-domain acceptance, and report-only receipt.

@@ -1,5 +1,7 @@
 # Combined Agent Behavior
 
+V112 agents preserve exact bytes and current runtime custody. They never convert MCP JSON, a confirmation, staging reference, receipt, reported actor, database row, or model output into artifact, identity, capability, or commitment authority. Identity Seal signing supports Ed25519 and P-256 under local key custody; private keys and passphrases never serialize.
+
 ## Core Loop
 
 1. Name the primitive.

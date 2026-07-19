@@ -7,7 +7,7 @@ description: Use when qualifying, locking, packaging, attesting, or preparing pu
 
 Require package, registry, verifier, migration, conformance, security, performance, documentation, and attestation parity. Receiz is a proof-native artifact system; this skill operates beneath sealed proof and verified local history.
 
-## Binding v111 artifact law
+## Binding v112 artifact law
 
 A Receiz artifact is the exact byte sequence returned by native Record -> Seal. The inner payload is never an acceptable substitute.
 
@@ -19,6 +19,8 @@ Label every release fixture byte sequence:
 - `sealed artifact`: the indivisible SDK-issued Record -> Seal bytes carrying integrity, Signature V4, owner, claim, verify path, provenance, and payload binding.
 
 ## Required SDK artifact workflow
+
+The exact v112 application-operation inventory is `receiz.artifact.verify`, `receiz.artifact.admit`, `receiz.artifact.append.plan`, `receiz.identity.capability.sign`, `receiz.artifact.transition.seal`, `receiz.artifact.transition.stage`, `receiz.artifact.transition.commit`, `receiz.admission.command.execute`, and `receiz.public-proof.projection.locate`. These identifiers describe the application authority matrix; they do not create authority.
 
 ```ts
 const payload = { bytes: applicationPayload, mimeType: applicationMimeType };
@@ -33,12 +35,12 @@ if (opened.sealedArtifact.artifactSha256 !== sealedArtifact.artifactSha256) thro
 if (opened.verifiedPayload.sha256 !== sealedArtifact.payloadSha256) throw new Error("payload_binding_mismatch");
 ```
 
-Independently hash the saved bytes and require equality with `sealedArtifact.artifactSha256`. Require `verification.ok`, `integrity.ok`, carrier `native-record-seal`, Signature V4, owner, claim, and verify-path agreement. Reopen the exact saved file with `verifyAndOpen`, then prove a different Receiz application preserves identity, cards, history, receipts, and unknown namespaces. Require SDK, MCP, and AI packages to report the same v111 registry digest and artifact-law version before release qualification.
+Independently hash the saved bytes and require equality with `sealedArtifact.artifactSha256`. Require `verification.ok`, `integrity.ok`, carrier `native-record-seal`, Signature V4, owner, claim, and verify-path agreement. Reopen the exact saved file with `verifyAndOpen`, then prove a different Receiz application preserves identity, cards, history, receipts, and unknown namespaces. Require SDK, MCP, and AI packages to report the same v112 registry digest and artifact-law version before release qualification.
 
 ## Twelve-step artifact workflow
 
 1. Label the input bytes as `payload`; never call them an artifact.
-2. Load the active signed v111 registry and `ARTIFACT-001` through `ARTIFACT-010`.
+2. Load the active canonical v112 registry and `ARTIFACT-001` through `ARTIFACT-030`.
 3. Call `receiz.assets.createProofObject` so Receiz.com performs native Record -> Seal.
 4. Require an SDK-issued `receiz.native-record-seal`; failure returns no artifact and no payload fallback.
 5. Require complete enclosing-artifact verification, integrity, Signature V4, owner, claim, verify path, and payload binding.
@@ -52,12 +54,11 @@ Independently hash the saved bytes and require equality with `sealedArtifact.art
 
 When MCP is available, use only these current artifact tools; each remains subordinate to the SDK and enclosing proof:
 
-- `receiz_artifact_record_seal_plan`
-- `receiz_artifact_record_seal_execute`
 - `receiz_artifact_verify`
-- `receiz_artifact_extract_verified`
-- `receiz_artifact_round_trip_check`
-- `receiz_artifact_explain`
+- `receiz_artifact_admit`
+- `receiz_artifact_append_plan`
+- `receiz_artifact_transition_seal_and_stage`
+- `receiz_artifact_transition_commit`
 
 ## Artifact prohibitions
 
@@ -92,20 +93,20 @@ Network calls during verification: 0
 Local verifier result:
 ```
 
-## v111 unified admission and recovery
+## v112 unified admission and recovery
 
-Use `receiz.artifacts.admit(file)` to verify the complete artifact before classification. Verdicts are exactly `canonical-identity`, `bearer-recovery`, `verified-legacy-read`, `foreign-owner`, or `invalid`. Every verified result must report `canRestore`, `canSign`, `canClaimOwnership`, `canPublish`, and `canSettle` without inferring stronger authority from possession.
+First call `verifyReceizArtifact(file)`. Then call `receiz.artifacts.admit(verification, profileOptions)` in the same runtime. Admission reports profile membership and primitive-specific assessments; it does not authorize an operation. Verified actor evidence exists only after identity-profile admission, never from a caller constraint or structural object.
 
-Use `receiz.artifacts.planRecovery(admission)` for an explicit read-only plan, or `receiz.artifacts.admitAndRecover(file)` for zero-network, read-only verification and recovery planning. Both perform zero writes. The standard proof history, parent links, ownership transitions, terminal events, unknown namespaces, plan digest, and explicit permitted actions must remain intact. Explanation is not authority; the underlying sealed proof object remains authority.
+Call `verifyReceizArtifact(file)`, then `receiz.artifacts.admit(verification, profileOptions)`, and pass the runtime-custodied admission, verified history, actor evidence, registry law, named commit domain, event, expected head, and idempotency identity to `planArtifactAppend`. Planning performs zero writes and preserves unknown namespaces byte-for-byte.
 
-Commit only through `receiz.artifacts.commitRecovery(plan, capability, idempotencyKey, store)`. Raw capability authority is forbidden. MCP JSON must never carry a capability or store object; use runtime-resolved verified capability and a caller-provided local atomic store. The SDK/MCP/AI operation identity must match.
+Seal and durably stage the plan-bound candidate before commit. Commit independently resolves and reverifies the staged bytes inside the named domain, then advances the head atomically. A receipt reports acceptance and cannot re-enter any authority-bearing API.
 
 - Never admit a card-only payload as a Receiz artifact.
 - Never treat an explanation as proof authority.
 - Never accept raw capability JSON as recovery authority.
-- Never hide mutation inside `admitAndRecover` or a recovery plan.
+- Never hide mutation inside admission or append planning.
 
-Current MCP parity: `receiz_artifact_admit`, `receiz_artifact_recovery_plan`, `receiz_artifact_admit_and_recover`, and `receiz_artifact_recovery_commit`.
+Current MCP parity is exactly `receiz_artifact_verify`, `receiz_artifact_admit`, `receiz_artifact_append_plan`, `receiz_artifact_transition_seal_and_stage`, and `receiz_artifact_transition_commit`.
 
 Required completion evidence:
 
@@ -121,7 +122,7 @@ Atomic commit result:
 ## Constitutional workflow
 
 1. Inspect the repository and installed SDK version.
-2. Load the active signed registry and applicable constitutional laws.
+2. Load the active canonical v112 registry and applicable constitutional laws.
 3. Identify every authority boundary affected by the change.
 4. Write the implementation contract before implementation.
 5. Implement canonical changes only through SDK commands.
@@ -162,12 +163,12 @@ Request: Require package, registry, verifier, migration, conformance, security, 
 
 Return a written implementation contract and read-only plan first. Execute only allowed commands after exact confirmation, then report registry digest, laws, authority, tests, independent evidence, release-lock status, and the exact remaining boundary.
 
-## v111 artifact-derived authority
+## v112 artifact-derived authority
 
 Engineers remain free to build whatever they choose, but conforming Receiz receivers recognize authority only when every authority-bearing value is provably derived from independently verified artifact truth. Custom JavaScript objects, callbacks, normalized histories, local receipts, server rows, sessions, MCP memory, and AI explanations remain application data or inspection material; their shape never creates Receiz authority.
 
-Admission must retain and canonically reverify the exact enclosing artifact bytes under the complete frozen verifier context. Recovery-authoritative history requires explicit independently verified evidence roots and fails closed on divergent verified heads. Canonical identity and `canSign` require enclosing-owner binding, identity-owner binding, key identity, and a domain-separated private-key challenge. Recovery planning re-derives state from verified admission and verified history.
+Admission begins from runtime-custodied verification of the exact enclosing artifact bytes under the complete frozen verifier context. Verified history and actor evidence remain same-runtime objects and fail closed on divergence or structural reconstruction. Identity Seal signing uses a locally held Ed25519 or P-256 key and emits a signed capability claim; only current verification of that claim against the exact plan produces capability authority.
 
 Deterministic plan identity and unique execution-attempt identity are separate. MCP may reuse a confirmation digest only while the identical attempt is actively pending; committed and failed attempts are terminal and require a fresh confirmation. Expected authority failures are structured, immutable, machine-readable, and report zero writes.
 
-Historical sealed proof objects remain exact-byte verifiable evidence. Historical runtime admissions, histories, capabilities, plans, or confirmations cannot authorize a current v111 receiver; re-admit the historical artifact's exact bytes under the current verifier.
+Historical sealed proof objects remain exact-byte verifiable evidence. Historical runtime admissions, histories, actors, capabilities, plans, candidates, stores, or confirmations cannot authorize a current v112 receiver; exact bytes crossing a process require `reverify-exact-bytes`, followed by current profile admission and `same-runtime-custody` through plan, capability, seal, stage, independent byte resolution, atomic named-domain acceptance, and report-only receipt.

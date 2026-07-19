@@ -1,19 +1,20 @@
 "use client";
 
-import type { DocumentVerifyResponse } from "@receiz/sdk";
+import type { ReceizArtifactVerificationResult } from "@receiz/sdk";
 import { useState } from "react";
 import { createReceizCommerceAdapter } from "@/lib/receiz/adapter";
 import { Button, Panel, StatusPill } from "@/components/ui";
 
 export function ProofVerifier({ claim, pulse }: { claim?: string; pulse?: string }) {
-  const [result, setResult] = useState<DocumentVerifyResponse | null>(null);
+  const [result, setResult] = useState<ReceizArtifactVerificationResult | null>(null);
+  const verified = result?.status === "verified-artifact";
   const [message, setMessage] = useState("Choose a Receiz proof object to verify it locally on this surface.");
 
   return (
     <Panel className="verify-surface-panel">
       <div className="section-heading">
         <div>
-          <StatusPill tone={result?.ok ? "green" : "neutral"}>{result?.ok ? "Verified" : "Local verification"}</StatusPill>
+          <StatusPill tone={verified ? "green" : "neutral"}>{verified ? "Verified" : "Local verification"}</StatusPill>
           <h1>Verify a Receiz proof object</h1>
           <p>{message}</p>
         </div>
@@ -37,9 +38,11 @@ export function ProofVerifier({ claim, pulse }: { claim?: string; pulse?: string
           void createReceizCommerceAdapter().verifyArtifact(file).then((verification) => {
             setResult(verification);
             setMessage(
-              verification.ok
+              verification.status === "verified-artifact"
                 ? `${file.name} passed Receiz SDK verification on this device.`
-                : verification.errors.filter(Boolean).join(", ") || `${file.name} could not be verified.`
+                : verification.status === "invalid"
+                  ? verification.errors.map((error) => error.message).filter(Boolean).join(", ") || `${file.name} could not be verified.`
+                  : `${file.name} uses an unsupported ${verification.reason.replaceAll("-", " ")}.`
             );
           }).catch((error) => {
             setResult(null);
@@ -51,9 +54,9 @@ export function ProofVerifier({ claim, pulse }: { claim?: string; pulse?: string
       <Button onClick={() => history.back()} variant="outline">Return to your workspace</Button>
       {result ? (
         <div className="proof-verification-result" role="status">
-          <strong>{result.ok ? "Cryptographic checks passed" : "Verification failed"}</strong>
-          <span>{result.kind || "Receiz proof object"}</span>
-          {result.warnings.length ? <span>{result.warnings.join(" · ")}</span> : null}
+          <strong>{verified ? "Cryptographic checks passed" : "Verification failed"}</strong>
+          <span>{verified ? result.verification.kind : "Receiz proof object"}</span>
+          {verified && result.verification.warnings.length ? <span>{result.verification.warnings.join(" · ")}</span> : null}
         </div>
       ) : null}
     </Panel>

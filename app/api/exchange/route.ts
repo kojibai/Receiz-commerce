@@ -78,9 +78,12 @@ export async function POST(request: NextRequest) {
 
   const receiz = createReceizCommerceAdapter({ accessToken });
   const verification = await receiz.verifyArtifact(file);
-  if (!verification.ok) {
+  if (verification.status !== "verified-artifact") {
+    const message = verification.status === "invalid"
+      ? verification.errors.map((error) => error.message).join(", ")
+      : `Unsupported artifact: ${verification.reason}`;
     return NextResponse.json(
-      { ok: false, error: "exchange_proof_verification_failed", message: verification.errors.join(", ") },
+      { ok: false, error: "exchange_proof_verification_failed", message },
       { status: 422 }
     );
   }
@@ -101,7 +104,7 @@ export async function POST(request: NextRequest) {
       artifactDigest: digest,
       filename: file.name,
       submittedAsset,
-      verification,
+      verification: verification.verification,
       existingAssetIds: [
         ...baseState.assets.map((asset) => asset.id),
         ...baseState.exchange.assets.map((asset) => asset.sourceAssetId)
@@ -132,7 +135,13 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({
     ok: true,
     state,
-    verification: { kind: verification.kind, warnings: verification.warnings },
+    verification: {
+      kind: verification.verification.kind,
+      warnings: verification.verification.warnings,
+      artifactDigest: verification.artifactDigest,
+      payloadDigest: verification.payloadDigest,
+      authority: verification.operationAuthority
+    },
     storeStateSync: {
       ok: receizStoreStateWriteSucceeded(publication),
       synced: receizStoreStateSyncCompleted(publication),

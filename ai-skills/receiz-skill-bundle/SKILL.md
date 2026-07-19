@@ -54,6 +54,8 @@ When MCP tools are needed, route to `receiz-mcp-agent-skill` and follow delegate
 
 When generated code is needed, route to `receiz-builder-skill` and then to domain skills. Use `createReceizClient`, SDK validators, proof memory, public proof, public store, sports, identity, offline, commerce, payments, and connect rails according to the selected skill.
 
+For v112 authority-bearing artifact work, route through exact-byte verification, profile admission, runtime-custodied actor and history, transition planning, a plan-bound Identity Seal capability claim, sealing, durable neutral staging, independent staged-byte resolution, atomic named-domain acceptance, and a report-only receipt. AI routing is never authority.
+
 ## Output Format
 
 Use this router output:

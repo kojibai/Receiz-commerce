@@ -5,7 +5,7 @@ description: Use when inspecting admission evidence while preserving the rule th
 
 # Receiz Receipt Admission
 
-Current admission evidence begins with the complete verified proof object. Historical receipts may remain immutable witnesses of the law and digest they recorded, but they do not authorize or qualify a current v111 outcome.
+Current admission evidence begins with the complete verified proof object. Historical receipts may remain immutable witnesses of the law and digest they recorded, but they do not authorize or qualify a current v112 outcome.
 
 ## Exact SDK operation
 
@@ -54,22 +54,22 @@ Read-only verification requires no confirmation. Any mutation that creates a new
 
 ## MCP parity
 
-Use `receiz_artifact_verify`, `receiz_artifact_round_trip_check`, and `receiz_artifact_explain`. They share the current SDK verifier and cannot authorize mutation. Do not call retired proof-head or receipt tools for a v111 outcome.
+Use the exact current artifact MCP tools: `receiz_artifact_verify`, `receiz_artifact_admit`, `receiz_artifact_append_plan`, `receiz_artifact_transition_seal_and_stage`, and `receiz_artifact_transition_commit`. MCP confirmation and result objects remain non-authoritative.
 
 ## Emulator fixture
 
 Run the current native artifact round-trip and cross-boundary substitution rejection contracts. Historical receipt fixtures remain historical evidence only.
 
-## v111 migration and recovery receipts
+## v112 append receipts
 
-A v111 legacy admission receipt states exactly what bytes and provenance were preserved, what authority is granted, and what remains read-only. The receipt and bounded explanation are evidence projections, never authority. Recovery mutation requires the SDK-issued plan, verified capability, stable operation identity, expected head, and one atomic commit.
+A v112 receipt reports the exact accepted artifact digest, transition and plan identity, named commit domain, reported actor, head, effects, and idempotency outcome. It grants no authority and cannot be supplied to admission, identity, capability, planning, staging, or commitment APIs. The accepted artifact—not the receipt—is the source of committed history.
 
-## v111 artifact-derived authority
+## v112 artifact-derived authority
 
 Engineers remain free to build whatever they choose, but conforming Receiz receivers recognize authority only when every authority-bearing value is provably derived from independently verified artifact truth. Custom JavaScript objects, callbacks, normalized histories, local receipts, server rows, sessions, MCP memory, and AI explanations remain application data or inspection material; their shape never creates Receiz authority.
 
-Admission must retain and canonically reverify the exact enclosing artifact bytes under the complete frozen verifier context. Recovery-authoritative history requires explicit independently verified evidence roots and fails closed on divergent verified heads. Canonical identity and `canSign` require enclosing-owner binding, identity-owner binding, key identity, and a domain-separated private-key challenge. Recovery planning re-derives state from verified admission and verified history.
+Admission begins from runtime-custodied verification of the exact enclosing artifact bytes under the complete frozen verifier context. Verified history and actor evidence remain same-runtime objects and fail closed on divergence or structural reconstruction. Identity Seal signing uses a locally held Ed25519 or P-256 key and emits a signed capability claim; only current verification of that claim against the exact plan produces capability authority.
 
 Deterministic plan identity and unique execution-attempt identity are separate. MCP may reuse a confirmation digest only while the identical attempt is actively pending; committed and failed attempts are terminal and require a fresh confirmation. Expected authority failures are structured, immutable, machine-readable, and report zero writes.
 
-Historical sealed proof objects remain exact-byte verifiable evidence. Historical runtime admissions, histories, capabilities, plans, or confirmations cannot authorize a current v111 receiver; re-admit the historical artifact's exact bytes under the current verifier.
+Historical sealed proof objects remain exact-byte verifiable evidence. Historical runtime admissions, histories, actors, capabilities, plans, candidates, stores, or confirmations cannot authorize a current v112 receiver; exact bytes crossing a process require `reverify-exact-bytes`, followed by current profile admission and `same-runtime-custody` through plan, capability, seal, stage, independent byte resolution, atomic named-domain acceptance, and report-only receipt.

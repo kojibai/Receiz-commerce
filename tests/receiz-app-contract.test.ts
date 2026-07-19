@@ -2,17 +2,17 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 
-describe("Receiz v111 application contract", () => {
-  it("compiles the complete app contract through the v111 SDK", async () => {
+describe("Receiz v112 application contract", () => {
+  it("compiles the complete app contract through the v112 SDK", async () => {
     const compiler = await import("@receiz/sdk/compiler");
     assert.equal(typeof compiler.defineReceizApp, "function");
     assert.equal(typeof compiler.compileReceizAppContract, "function");
 
     const input = JSON.parse(readFileSync("receiz.app.json", "utf8"));
     const contract = compiler.defineReceizApp(input);
-    const plan = compiler.compileReceizAppContract(contract, { targetSdkVersion: "111.0.0" });
+    const plan = compiler.compileReceizAppContract(contract, { targetSdkVersion: "112.0.0" });
 
-    assert.equal(plan.targetSdkVersion, "111.0.0");
+    assert.equal(plan.targetSdkVersion, "112.0.0");
     assert.deepEqual(contract.features, [
       "identity",
       "proof",
@@ -25,10 +25,11 @@ describe("Receiz v111 application contract", () => {
     ]);
     assert.equal(contract.authority.mode, "artifact-first");
     assert.equal(contract.authority.allowDatabaseAuthority, false);
+    assert.deepEqual(contract.operations, compiler.RECEIZ_V112_APPLICATION_OPERATION_MATRIX);
     assert.ok(plan.verificationCommands.length > 0);
   });
 
-  it("passes the v111 integration check with verified production rails", async () => {
+  it("passes the v112 integration check with verified production rails", async () => {
     const compiler = await import("@receiz/sdk/compiler");
     const generated = JSON.parse(readFileSync("receiz.generated.json", "utf8"));
 
@@ -40,7 +41,7 @@ describe("Receiz v111 application contract", () => {
 
     const result = await compiler.checkReceizIntegration({
       root: process.cwd(),
-      targetSdkVersion: "111.0.0",
+      targetSdkVersion: "112.0.0",
     });
     assert.deepEqual(result.blockingFindings, []);
     assert.equal(result.ok, true);

@@ -1,5 +1,7 @@
 # Canonical Receiz Language
 
+Say “sealed candidate proof object, not accepted head,” “durable neutral stage,” “independent staged-byte resolution,” “atomic named-domain acceptance,” and “report-only receipt.” Do not call durable local truth a cache, a receipt authority, or a staging reference commitment.
+
 ## Required Primitive Names
 
 - Proof object

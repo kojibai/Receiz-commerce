@@ -2,18 +2,23 @@ import {
   RECEIZ_RELEASE_VERSION,
   RECEIZ_RULESET_VERSION,
   RECEIZ_SDK_VERSION,
-  RECEIZ_V111_ARTIFACT_LAWS,
-  RECEIZ_V111_REGISTRY_DIGEST,
-  admitAndRecoverReceizArtifact,
+  RECEIZ_V112_ARTIFACT_LAWS,
+  RECEIZ_V112_REGISTRY_DIGEST,
   admitReceizArtifact,
-  commitReceizArtifactRecovery,
+  commitArtifactTransition,
+  createPublicProofProjection,
+  createReceizArtifactAdmissionEngine,
   createReceizAdmissionEngine,
+  createReceizBrowserAdmissionStore,
   createReceizCausalHistory,
   describeReceizCapabilities,
   describeReceizError,
   digestReceizAuthority,
   evaluateReceizLawSet,
-  planReceizArtifactRecovery,
+  loadReceizCurrentRegistry,
+  planArtifactAppend,
+  sealArtifactTransitionCandidate,
+  signReceizCapability,
   validateReceizConstitutionRegistry,
   verifyReceizArtifactAdmission,
 } from "@receiz/sdk";
@@ -22,29 +27,29 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 
-describe("Receiz v111 dependency contract", () => {
-  it("pins the supported v111 SDK, MCP, AI skills, registry, and vendored publication bridge", () => {
+describe("Receiz v112 dependency contract", () => {
+  it("pins the supported v112 SDK, MCP, AI skills, registry, and vendored publication bridge", () => {
     const pkg = JSON.parse(readFileSync("package.json", "utf8")) as {
       dependencies: Record<string, string>;
       scripts?: Record<string, string>;
       pnpm?: { overrides?: Record<string, string> };
     };
 
-    assert.equal(RECEIZ_SDK_VERSION, "111.0.0");
-    assert.equal(RECEIZ_RELEASE_VERSION, "111.0.0");
-    assert.equal(RECEIZ_RULESET_VERSION, "111.0.0");
-    assert.equal(RECEIZ_V111_REGISTRY_DIGEST, "cf02d0bce6ad1541cfe84e27bfb1036777b29616bf8a1e5aeafb899a945e359a");
-    assert.deepEqual(RECEIZ_V111_ARTIFACT_LAWS, Array.from({ length: 20 }, (_, index) => `ARTIFACT-${String(index + 1).padStart(3, "0")}`));
-    assert.equal(pkg.dependencies["@receiz/sdk"], "111.0.0");
-    assert.equal(pkg.dependencies["@receiz/mcp-server"], "111.0.0");
-    assert.equal(pkg.dependencies["@receiz/ai-skills"], "111.0.0");
-    assert.equal(pkg.scripts?.["receiz:check"], "receiz app check --target 111.0.0 --json");
+    assert.equal(RECEIZ_SDK_VERSION, "112.0.0");
+    assert.equal(RECEIZ_RELEASE_VERSION, "112.0.0");
+    assert.equal(RECEIZ_RULESET_VERSION, "112.0.0");
+    assert.equal(RECEIZ_V112_REGISTRY_DIGEST, "1356f8122d0b5fcbe891d7e6ed1e75faca827f15d63d1ed5d950664e11c146ee");
+    assert.deepEqual(RECEIZ_V112_ARTIFACT_LAWS, Array.from({ length: 30 }, (_, index) => `ARTIFACT-${String(index + 1).padStart(3, "0")}`));
+    assert.equal(pkg.dependencies["@receiz/sdk"], "112.0.0");
+    assert.equal(pkg.dependencies["@receiz/mcp-server"], "112.0.0");
+    assert.equal(pkg.dependencies["@receiz/ai-skills"], "112.0.0");
+    assert.equal(pkg.scripts?.["receiz:check"], "receiz app check --target 112.0.0 --json");
     assert.equal(pkg.scripts?.["receiz:conformance"], "receiz conformance");
     assert.equal(pkg.scripts?.["validate:ai-skills"], "node --import tsx ai-skills/scripts/validate-skills.ts");
     assert.equal(pkg.pnpm?.overrides?.postcss, ">=8.5.10");
-    assert.equal(pkg.pnpm?.overrides?.["@receiz/sdk"], "file:vendor/receiz-sdk-111.0.0.tgz");
-    assert.equal(pkg.pnpm?.overrides?.["@receiz/mcp-server"], "file:vendor/receiz-mcp-server-111.0.0.tgz");
-    assert.equal(pkg.pnpm?.overrides?.["@receiz/ai-skills"], "file:vendor/receiz-ai-skills-111.0.0.tgz");
+    assert.equal(pkg.pnpm?.overrides?.["@receiz/sdk"], "file:vendor/receiz-sdk-112.0.0.tgz");
+    assert.equal(pkg.pnpm?.overrides?.["@receiz/mcp-server"], "file:vendor/receiz-mcp-server-112.0.0.tgz");
+    assert.equal(pkg.pnpm?.overrides?.["@receiz/ai-skills"], "file:vendor/receiz-ai-skills-112.0.0.tgz");
   });
 
   it("documents the supported MCP pair and authoritative theme publication", () => {
@@ -54,10 +59,10 @@ describe("Receiz v111 dependency contract", () => {
     const mcpToolMap = readFileSync("ai-skills/receiz-mcp-agent-skill/resources/mcp-tool-map.md", "utf8");
     const adapter = readFileSync("src/lib/receiz/adapter.ts", "utf8");
 
-    assert.match(readme, /@receiz\/mcp-server@111\.0\.0/);
-    assert.match(readme, /@receiz\/ai-skills@111\.0\.0/);
+    assert.match(readme, /@receiz\/mcp-server@112\.0\.0/);
+    assert.match(readme, /@receiz\/ai-skills@112\.0\.0/);
     assert.match(readme, /Publish theme/);
-    assert.match(rails, /@receiz\/sdk@111\.0\.0/);
+    assert.match(rails, /@receiz\/sdk@112\.0\.0/);
     assert.match(rails, /authoritative public-store revision/);
     assert.match(rails, /native Record projection before sealing/);
     assert.match(skillsReadme, /published as `@receiz\/ai-skills`/);
@@ -71,14 +76,18 @@ describe("Receiz v111 dependency contract", () => {
     assert.match(adapter, /claimBearerArtifact/);
     assert.match(adapter, /updateIdentityProfile/);
     assert.match(adapter, /admitArtifact/);
-    assert.match(adapter, /planArtifactRecovery/);
-    assert.match(adapter, /admitAndRecoverArtifact/);
-    assert.match(adapter, /commitArtifactRecovery/);
+    assert.match(adapter, /signIdentityCapability/);
+    assert.match(adapter, /createBrowserAdmissionStore/);
+    assert.match(adapter, /planArtifactAppend/);
+    assert.match(adapter, /sealArtifactTransitionCandidate/);
+    assert.match(adapter, /commitArtifactTransition/);
+    assert.doesNotMatch(adapter, /planArtifactRecovery/);
+    assert.doesNotMatch(adapter, /commitArtifactRecovery/);
     assert.doesNotMatch(adapter, /ReceizPortableAsset/);
-    assert.doesNotMatch(adapter, /sealArtifact/);
+    assert.doesNotMatch(adapter, /\bsealArtifact\(/);
   });
 
-  it("keeps the v111 Node-only compiler outside browser bundles", () => {
+  it("keeps the v112 Node-only compiler outside browser bundles", () => {
     const nextConfig = readFileSync("next.config.mjs", "utf8");
     const sdkPackage = JSON.parse(readFileSync("node_modules/@receiz/sdk/package.json", "utf8")) as {
       exports?: Record<string, unknown>;
@@ -91,7 +100,7 @@ describe("Receiz v111 dependency contract", () => {
     assert.doesNotMatch(nextConfig, /NormalModuleReplacementPlugin|"fs\/promises": false/);
   });
 
-  it("exposes canonical v111 artifact-derived authority, admission, recovery, causal history, capabilities, errors, emulator, and zero-network conformance", async () => {
+  it("exposes canonical v112 verification, profile admission, transition custody, projections, capabilities, errors, emulator, and zero-network conformance", async () => {
     assert.equal(typeof describeReceizCapabilities, "function");
     assert.equal(typeof describeReceizError, "function");
     assert.equal(typeof createReceizEmulator, "function");
@@ -100,20 +109,25 @@ describe("Receiz v111 dependency contract", () => {
     assert.equal(typeof evaluateReceizLawSet, "function");
     assert.equal(typeof createReceizAdmissionEngine, "function");
     assert.equal(typeof createReceizCausalHistory, "function");
+    assert.equal(typeof createReceizArtifactAdmissionEngine, "function");
+    assert.equal(typeof createReceizBrowserAdmissionStore, "function");
     assert.equal(typeof admitReceizArtifact, "function");
-    assert.equal(typeof planReceizArtifactRecovery, "function");
-    assert.equal(typeof admitAndRecoverReceizArtifact, "function");
-    assert.equal(typeof commitReceizArtifactRecovery, "function");
+    assert.equal(typeof planArtifactAppend, "function");
+    assert.equal(typeof signReceizCapability, "function");
+    assert.equal(typeof sealArtifactTransitionCandidate, "function");
+    assert.equal(typeof commitArtifactTransition, "function");
+    assert.equal(typeof loadReceizCurrentRegistry, "function");
+    assert.equal(typeof createPublicProofProjection, "function");
     assert.equal(typeof verifyReceizArtifactAdmission, "function");
     assert.equal(typeof digestReceizAuthority, "function");
 
     const descriptor = describeReceizCapabilities();
     assert.equal(descriptor.schema, "receiz.sdk.capability_descriptor.v1");
-    assert.equal(descriptor.packageCompatibility.sdk, ">=111.0.0 <112.0.0");
+    assert.equal(descriptor.packageCompatibility.sdk, ">=112.0.0 <113.0.0");
 
     const report = await runReceizConformance();
     assert.equal(report.schema, "receiz.sdk.conformance_report.v1");
-    assert.equal(report.sdkVersion, "111.0.0");
+    assert.equal(report.sdkVersion, "112.0.0");
     assert.equal(report.ok, true);
     assert.equal(report.summary.failed, 0);
     assert.equal(report.summary.networkCalls, 0);
