@@ -1,10 +1,11 @@
 import type { JsonObject, ReceizKeyFileV1 } from "@receiz/sdk";
 import { NextRequest, NextResponse } from "next/server";
-import { admitPublicWildsCard, parsePublicWildsCardRecord, publicWildsCardRecoverySourceUrls, resolveLocalPublicWildsCard, type PublicWildsCardIdentityProof } from "@/features/play/public-card-registry";
+import { admitPublicWildsCard, type PublicWildsCardIdentityProof } from "@/features/play/public-card-registry";
 import type { PortableCardAsset } from "@/features/play/portable-card";
 import { createReceizCommerceAdapter } from "@/lib/receiz/adapter";
 import { receizRequestSession } from "@/lib/receiz/session";
 import { platform } from "@/lib/platform";
+import { resolvePublicWildsCardGlobally } from "@/lib/receiz/public-card-server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -89,18 +90,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ as
 
 export async function GET(request: NextRequest, context: { params: Promise<{ assetId: string }> }) {
   const { assetId } = await context.params;
-  const local = resolveLocalPublicWildsCard(assetId);
-  if (local) return NextResponse.json({ ok: true, record: local });
-
-  const origin = publicOrigin(request);
-  const sourceUrls = publicWildsCardRecoverySourceUrls(assetId, origin, platform.domain);
-  for (const sourceUrl of sourceUrls) {
-    try {
-      const recovered = parsePublicWildsCardRecord(await createReceizCommerceAdapter().readAppStateByUrl(sourceUrl));
-      if (recovered?.assetId === assetId) return NextResponse.json({ ok: true, record: recovered });
-    } catch {
-      // Try the legacy source URL before reporting the verified card unavailable.
-    }
-  }
+  const recovered = await resolvePublicWildsCardGlobally(assetId, publicOrigin(request));
+  if (recovered) return NextResponse.json({ ok: true, record: recovered });
   return NextResponse.json({ ok: false, error: "wilds_public_card_not_found" }, { status: 404 });
 }

@@ -2788,6 +2788,14 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
           pendingBrowserIdentityKeyFileRef.current = identity.keyFile;
         }
 
+        if (typeof window !== "undefined") {
+          const resolvedState = identity.apply(snapshot);
+          const browserSession = buildBrowserReceizIdSession(resolvedState, identity.keyFile ?? undefined);
+          if (browserSession) {
+            safeSetLocalStorage(window.localStorage, BROWSER_RECEIZ_ID_SESSION_KEY, JSON.stringify(browserSession));
+          }
+        }
+
         setState((current) => {
           const nextState = identity.apply(current);
 

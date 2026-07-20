@@ -5,7 +5,7 @@ import Link from "next/link";
 import QRCode from "qrcode";
 import { Icons } from "@/components/icons";
 import { creatureForm } from "./creature-catalog";
-import { downloadPortableCard, downloadPortableVault, standaloneCardUrl, verifyPortableCardPng, verifyPortableVaultPng } from "./card-export";
+import { downloadPortableCard, downloadPortableVault, publishStandaloneCard, standaloneCardUrl, verifyPortableCardPng, verifyPortableVaultPng } from "./card-export";
 import { canUseWildsAsset, isRetiredWildsAsset, type PlayState, type WildsInput } from "./game-state";
 import { WildsCardScene } from "./WildsCardScene";
 import { WildsGrowthPanel } from "./WildsGrowthPanel";
@@ -86,8 +86,17 @@ export function WildsInventory({
       return;
     }
     let active = true;
-    void QRCode.toDataURL(standaloneCardUrl(selected.id, origin), { errorCorrectionLevel: "M", margin: 4, width: 160 })
-      .then((value) => { if (active) setQr(value); })
+    setQr("");
+    void publishStandaloneCard(selected)
+      .then((publication) => {
+        if (!active) return;
+        if (!publication.published) {
+          setDownloadMessage(`Standalone card publication failed: ${publication.error}`);
+          return;
+        }
+        return QRCode.toDataURL(standaloneCardUrl(selected.id, origin), { errorCorrectionLevel: "M", margin: 4, width: 160 })
+          .then((value) => { if (active) setQr(value); });
+      })
       .catch(() => { if (active) setQr(""); });
     return () => { active = false; };
   }, [origin, selected]);
@@ -240,10 +249,8 @@ export function WildsInventory({
                 onClick={async () => {
                   setDownloadMessage("Publishing verified card link…");
                   try {
-                    const result = await downloadPortableCard(selected);
-                    setDownloadMessage(result.published
-                      ? "Portable PNG downloaded. Its QR opens this verified card from another device."
-                      : "Portable PNG downloaded and verifies offline. Connect Receiz ID to publish its short QR link across devices.");
+                    await downloadPortableCard(selected);
+                    setDownloadMessage("Portable PNG downloaded. Its QR opens this verified card from another device.");
                   } catch (error) {
                     setDownloadMessage(error instanceof Error
                       ? `Card download failed: ${error.message}`

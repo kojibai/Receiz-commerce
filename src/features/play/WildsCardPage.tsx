@@ -9,8 +9,8 @@ import { standaloneCardUrl } from "./card-export";
 import type { PortableCardAsset } from "./portable-card";
 import { WildsCardScene } from "./WildsCardScene";
 
-export function WildsCardPage({ assetId }: { assetId: string }) {
-  const [asset, setAsset] = useState<PortableCardAsset | null>(() => initialPlayState.inventory.find((item) => item.id === assetId) ?? null);
+export function WildsCardPage({ assetId, initialAsset = null }: { assetId: string; initialAsset?: PortableCardAsset | null }) {
+  const [asset, setAsset] = useState<PortableCardAsset | null>(() => initialAsset ?? initialPlayState.inventory.find((item) => item.id === assetId) ?? null);
   const [tab, setTab] = useState<"Overview" | "Proof" | "Lineage" | "Offers">("Overview");
   const [qr, setQr] = useState("");
   const [origin, setOrigin] = useState("https://receiz.app");
@@ -18,7 +18,7 @@ export function WildsCardPage({ assetId }: { assetId: string }) {
   useEffect(() => {
     const controller = new AbortController();
     const restored = restorePlayState(window.localStorage.getItem("receiz:wilds:save:v2"));
-    const local = restored.inventory.find((item) => item.id === assetId) ?? null;
+    const local = restored.inventory.find((item) => item.id === assetId) ?? initialAsset;
     setAsset(local);
     setOrigin(window.location.origin);
     void QRCode.toDataURL(standaloneCardUrl(assetId, window.location.origin), { errorCorrectionLevel: "M", margin: 4, width: 160 }).then(setQr);
@@ -29,7 +29,7 @@ export function WildsCardPage({ assetId }: { assetId: string }) {
       .catch(() => undefined)
       .finally(() => setLoading(false));
     return () => controller.abort();
-  }, [assetId]);
+  }, [assetId, initialAsset]);
   const detail = useMemo(() => {
     if (!asset) return "This proof-sealed card is not stored on this device yet.";
     if (tab === "Proof") return `${asset.proof.kind} · ${asset.proof.digest}`;

@@ -334,20 +334,24 @@ export async function downloadPortableCard(asset: PortableCardAsset) {
   if (typeof document === "undefined") throw new Error("wilds_card_download_browser_required");
   const filename = asset.manifest.formId;
   const publication = await attemptCardPublication(asset);
+  if (!publication.published) throw new Error(publication.error);
   downloadBlob(await renderPortableCardPngBlob(asset), `${filename}.receized.png`);
-  return { published: publication.published };
+  return { published: true as const };
 }
 
 export async function portableCardPngBlob(asset: PortableCardAsset) {
   if (typeof document === "undefined") throw new Error("wilds_card_png_browser_required");
-  await attemptCardPublication(asset);
+  const publication = await attemptCardPublication(asset);
+  if (!publication.published) throw new Error(publication.error);
   return renderPortableCardPngBlob(asset);
 }
 
-function attemptCardPublication(asset: PortableCardAsset) {
+export function publishStandaloneCard(asset: PortableCardAsset) {
   const browserIdentity = parseBrowserReceizIdSession(safeGetLocalStorage(window.localStorage, BROWSER_RECEIZ_ID_SESSION_KEY));
   return attemptPublicWildsCardRegistration(asset, browserIdentity?.keyFile ? { identityProof: { keyFile: browserIdentity.keyFile } } : {});
 }
+
+const attemptCardPublication = publishStandaloneCard;
 
 async function renderPortableCardPngBlob(asset: PortableCardAsset) {
   const rendered = await svgPngBlob(renderWildsCardSvg(asset, { origin: window.location.origin }));

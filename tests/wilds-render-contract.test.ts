@@ -524,11 +524,14 @@ describe("Receiz Wilds rendering contract", () => {
     const scene = await readFile("src/features/play/WildsCardScene.tsx", "utf8");
     const cardExport = await readFile("src/features/play/card-export.ts", "utf8");
     const cardRoute = await readFile("app/api/cards/[assetId]/route.ts", "utf8");
+    const compactCardPage = await readFile("app/c/[code]/page.tsx", "utf8");
+    const publicCardServer = await readFile("src/lib/receiz/public-card-server.ts", "utf8");
     const inventory = await readFile("src/features/play/WildsInventory.tsx", "utf8");
     const css = await readFile("app/globals.css", "utf8");
     const campaign = await readFile("src/features/play/PlayCampaign.tsx", "utf8");
 
     assert.match(page, /fetch\(`\/api\/cards\/\$\{encodeURIComponent\(assetId\)\}`/);
+    assert.match(page, /initialAsset/);
     assert.doesNotMatch(page, /not found locally/i);
     assert.match(scene, /WildsCardBack/);
     assert.match(scene, /wilds-card-flipper/);
@@ -545,14 +548,18 @@ describe("Receiz Wilds rendering contract", () => {
     assert.match(cardRoute, /publishPublicStoreWithIdentityProof/);
     assert.match(cardRoute, /compactCardPath\(assetId\)/);
     assert.match(cardRoute, /const hasPublicationAuthority/);
+    assert.match(cardRoute, /resolvePublicWildsCardGlobally/);
     assert.match(cardRoute, /published:\s*false/);
     assert.doesNotMatch(cardRoute, /status:[^\n]*503/);
+    assert.match(compactCardPage, /resolvePublicWildsCardGlobally/);
+    assert.match(compactCardPage, /initialAsset=\{record\?\.asset \?\? null\}/);
+    assert.match(publicCardServer, /publicWildsCardRecoverySourceUrls/);
     assert.match(inventory, /Publishing verified card link/);
     assert.match(inventory, /Portable PNG downloaded/);
-    assert.match(inventory, /Portable PNG downloaded and verifies offline/);
+    assert.match(inventory, /publishStandaloneCard\(selected\)/);
     assert.match(cardExport, /premiumQrSvg\(cardPath/);
     assert.match(cardExport, /attemptPublicWildsCardRegistration/);
-    assert.match(cardExport, /return \{ published: publication\.published \}/);
+    assert.match(cardExport, /if \(!publication\.published\) throw new Error\(publication\.error\)/);
     assert.match(cardExport, /errorCorrectionLevel:\s*"L"/);
     assert.match(css, /backface-visibility:\s*hidden/);
     assert.match(css, /-webkit-backface-visibility:\s*hidden/);
