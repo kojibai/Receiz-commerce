@@ -1,3 +1,19 @@
+# Receiz Commerce Kit v4.6.0 — Global Coordination
+
+Release date: July 19, 2026
+
+Status: General Availability · repository release
+
+SDK target: `@receiz/sdk@113.0.0`
+
+V4.6 aligns the SDK, MCP server, and thirty-two-skill stack at the official v113 release. The app contract declares all eleven current authority operations, including named-domain artifact resolution and offline-to-global reconciliation. The adapter requires the player’s returned Connect token as an explicit caller-supplied value for coordination; it never treats that token as proof or operation authority.
+
+Known sealed artifact truth paints before remote startup. Every returned artifact and causal addition is independently reverified. Planning is read-only, staging writes immutable candidate bytes without advancing a head, and commitment independently resolves the exact staged version before one atomic expected-head acceptance. Sibling branches and namespace conflicts remain explicit divergence; there is no last-write-wins, timestamp winner, silent merge, or rebase. Accepted-head status and external-effect delivery remain separate, and an indeterminate commit remains recoverable by attempt identity.
+
+The app overlay chains to canonical v113 digest `4c4aa85f9785d205dcf7e4e5109837a83f8c3bf8e166130ae7e87353f299c637`, pins the v113 protocol limits, and attests operation-matrix digest `091ab9e6b3acb05283510a19754e53c637dbd96b47b499a524dc44c34f8e783b`. Exact tarball integrity, lockfile parity, all thirty artifact laws, all nine current MCP artifact tools, thirty-two aligned AI skills, official conformance, the v112→v113 attestation, tests, typecheck, lint, production build, secret scan, and SDK doctor remain release gates.
+
+---
+
 # Receiz Commerce Kit v4.5.0 — Artifact Transition Custody
 
 Release date: July 19, 2026

@@ -7,7 +7,7 @@ description: Use when an agent must verify, inspect, explain, or report on Recei
 
 Receiz proof inspection starts from the artifact, manifest, proof bundle, verified append, or admitted local register. Do not start from a database row, marketplace card, UI state, or model memory.
 
-## Binding v112 artifact law
+## Binding v113 artifact law
 
 A Receiz artifact is the exact byte sequence returned by native Record -> Seal. The inner payload is never an acceptable substitute.
 
@@ -20,7 +20,7 @@ Label every byte sequence before inspection:
 
 ## Required SDK artifact workflow
 
-The exact v112 application-operation inventory is `receiz.artifact.verify`, `receiz.artifact.admit`, `receiz.artifact.append.plan`, `receiz.identity.capability.sign`, `receiz.artifact.transition.seal`, `receiz.artifact.transition.stage`, `receiz.artifact.transition.commit`, `receiz.admission.command.execute`, and `receiz.public-proof.projection.locate`. These identifiers describe the application authority matrix; they do not create authority.
+The exact v113 application-operation inventory is `receiz.artifact.verify`, `receiz.artifact.admit`, `receiz.artifact.append.plan`, `receiz.identity.capability.sign`, `receiz.artifact.transition.seal`, `receiz.artifact.transition.stage`, `receiz.artifact.transition.commit`, `receiz.admission.command.execute`, `receiz.public-proof.projection.locate`, `receiz.artifact.global.resolve`, and `receiz.artifact.offline.reconcile`. These identifiers describe the application authority matrix; they do not create authority.
 
 ```ts
 const payload = { bytes: applicationPayload, mimeType: applicationMimeType };
@@ -40,7 +40,7 @@ Independently hash the saved bytes and require equality with `sealedArtifact.art
 ## Twelve-step artifact workflow
 
 1. Label the input bytes as `payload`; never call them an artifact.
-2. Load the active canonical v112 registry and `ARTIFACT-001` through `ARTIFACT-030`.
+2. Load the active canonical v113 registry and `ARTIFACT-001` through `ARTIFACT-030`.
 3. Call `receiz.assets.createProofObject` so Receiz.com performs native Record -> Seal.
 4. Require an SDK-issued `receiz.native-record-seal`; failure returns no artifact and no payload fallback.
 5. Require complete enclosing-artifact verification, integrity, Signature V4, owner, claim, verify path, and payload binding.
@@ -59,6 +59,10 @@ When MCP is available, use only these current artifact tools; each remains subor
 - `receiz_artifact_append_plan`
 - `receiz_artifact_transition_seal_and_stage`
 - `receiz_artifact_transition_commit`
+- `receiz_artifact_global_resolve`
+- `receiz_artifact_reconcile_plan`
+- `receiz_artifact_reconcile_stage`
+- `receiz_artifact_reconcile_commit`
 
 ## Artifact prohibitions
 
@@ -183,7 +187,7 @@ Load resources as needed:
 - [MCP tool map](resources/mcp-tool-map.md)
 - [SDK reference](resources/sdk-reference.md)
 
-## v112 unified admission and recovery
+## v113 unified admission and recovery
 
 First call `verifyReceizArtifact(file)`. Then call `receiz.artifacts.admit(verification, profileOptions)` in the same runtime. Admission reports profile membership and primitive-specific assessments; it does not authorize an operation. Verified actor evidence exists only after identity-profile admission, never from a caller constraint or structural object.
 
@@ -196,7 +200,7 @@ Seal and durably stage the plan-bound candidate before commit. Commit independen
 - Never accept raw capability JSON as recovery authority.
 - Never hide mutation inside admission or append planning.
 
-Current MCP parity is exactly `receiz_artifact_verify`, `receiz_artifact_admit`, `receiz_artifact_append_plan`, `receiz_artifact_transition_seal_and_stage`, and `receiz_artifact_transition_commit`.
+Current MCP parity is exactly `receiz_artifact_verify`, `receiz_artifact_admit`, `receiz_artifact_append_plan`, `receiz_artifact_transition_seal_and_stage`, `receiz_artifact_transition_commit`, `receiz_artifact_global_resolve`, `receiz_artifact_reconcile_plan`, `receiz_artifact_reconcile_stage`, and `receiz_artifact_reconcile_commit`. The first five are preserved as the historical v112 compatibility inventory, not as a second current inventory.
 
 Required completion evidence:
 
@@ -209,7 +213,7 @@ Operation identity:
 Atomic commit result:
 ```
 
-## v112 artifact-derived authority
+## v113 artifact-derived authority
 
 Engineers remain free to build whatever they choose, but conforming Receiz receivers recognize authority only when every authority-bearing value is provably derived from independently verified artifact truth. Custom JavaScript objects, callbacks, normalized histories, local receipts, server rows, sessions, MCP memory, and AI explanations remain application data or inspection material; their shape never creates Receiz authority.
 
@@ -217,4 +221,4 @@ Admission begins from runtime-custodied verification of the exact enclosing arti
 
 Deterministic plan identity and unique execution-attempt identity are separate. MCP may reuse a confirmation digest only while the identical attempt is actively pending; committed and failed attempts are terminal and require a fresh confirmation. Expected authority failures are structured, immutable, machine-readable, and report zero writes.
 
-Historical sealed proof objects remain exact-byte verifiable evidence. Historical runtime admissions, histories, actors, capabilities, plans, candidates, stores, or confirmations cannot authorize a current v112 receiver; exact bytes crossing a process require `reverify-exact-bytes`, followed by current profile admission and `same-runtime-custody` through plan, capability, seal, stage, independent byte resolution, atomic named-domain acceptance, and report-only receipt.
+Historical sealed proof objects remain exact-byte verifiable evidence. Historical runtime admissions, histories, actors, capabilities, plans, candidates, stores, or confirmations cannot authorize a current v113 receiver; exact bytes crossing a process require `reverify-exact-bytes`, followed by current profile admission and `same-runtime-custody` through plan, capability, seal, stage, independent byte resolution, atomic named-domain acceptance, and report-only receipt.

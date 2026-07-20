@@ -1,6 +1,6 @@
 # SDK Reference For Proof Work
 
-The v112 app compiler APIs (`defineReceizApp`, `compileReceizAppContract`, and
+The v113 app compiler APIs (`defineReceizApp`, `compileReceizAppContract`, and
 repository planning/checking functions) inspect and integrate applications.
 They do not verify proof bytes. Use the SDK artifact-custody workflow for
 construction, exact-byte download, enclosing verification, and extraction.
@@ -9,7 +9,9 @@ does not authorize a payload parser by itself.
 
 Import runtime proof APIs from `@receiz/sdk`, React bindings from `@receiz/sdk/react`, compiler APIs from `@receiz/sdk/compiler`, and sandbox/conformance helpers from `@receiz/sdk/testing`. Emulator evidence is `sandboxVerified`, not production verification.
 
-Load `RECEIZ_CURRENT_CONSTITUTION_REGISTRY` or `loadReceizCurrentRegistry()` for the exact recursively frozen current payload whose digest equals `RECEIZ_CURRENT_REGISTRY_DIGEST`. Create admission composition with `client.admission.createEngine(...)`; `client.admission.browserStore(...)` is durable coordination that stores no proof bytes. `client.identity.signCapability(...)` supports Ed25519 and P-256 local Identity Seal keys and returns a signed claim that still requires current verification against the exact plan. `client.admission.remoteStore` and `client.admission.reconcileOffline` are explicitly unavailable in v112.
+Load `RECEIZ_CURRENT_CONSTITUTION_REGISTRY` or `loadReceizCurrentRegistry()` for the exact recursively frozen current payload whose digest equals `RECEIZ_CURRENT_REGISTRY_DIGEST`. Create admission composition with `client.admission.createEngine(...)`; `client.admission.browserStore(...)` is durable coordination that stores no proof bytes. `client.identity.signCapability(...)` supports Ed25519 and P-256 local Identity Seal keys and returns a signed claim that still requires current verification against the exact plan. V113 named-domain reconciliation uses `client.coordination.remoteDomain(...)`; known artifact truth paints before that remote domain starts.
+
+The current MCP artifact inventory contains nine tools: `receiz_artifact_verify`, `receiz_artifact_admit`, `receiz_artifact_append_plan`, `receiz_artifact_transition_seal_and_stage`, `receiz_artifact_transition_commit`, `receiz_artifact_global_resolve`, `receiz_artifact_reconcile_plan`, `receiz_artifact_reconcile_stage`, and `receiz_artifact_reconcile_commit`. The first five are the historical v112 compatibility inventory only.
 
 Source: `packages/receiz-sdk/src/index.ts`, `packages/receiz-sdk/src/identity.ts`, `packages/receiz-sdk/src/react.ts`, and SDK package docs.
 
@@ -80,7 +82,7 @@ The exact native Record -> Seal byte sequence is the artifact. The payload is a 
 
 In the workflow above, `file` is the complete sealed artifact selected for verification, never the source payload.
 
-## v112 Native Profile, Artifact, And Ownership Outcomes
+## V113 Native Profile, Artifact, And Ownership Outcomes
 
 - `receiz.profile.update(profile)` applies the patch to the authenticated session/OIDC actor and returns that same account's `accountUid`, profile projection, and public path.
 - `receiz.identity.checkUsernameAvailability(username)` is advisory only; commit-time uniqueness decides the update.
@@ -95,7 +97,7 @@ Bearer ownership accepts only the sealed-artifact handle produced by complete ve
 
 A verified proof object is not limited to the platform that created it. Any lawful platform may append authenticated ownership and history only while preserving the same immutable object identity, payload, provenance root, prior history, and unknown namespaces, then returning a complete verified proof object. SDK verification and append operations preserve that one continuity chain without granting authority to the origin platform.
 
-Stable obsolete-versioned schemas remain historical compatibility imports. Do not teach their key/head/receipt mechanics as the active v112 profile or bearer outcome. Historical bytes must be reverified and currently admitted; no historical runtime authority object crosses the boundary.
+Stable obsolete-versioned schemas remain historical compatibility imports. Do not teach their key/head/receipt mechanics as the active v113 profile or bearer outcome. Historical bytes must be reverified and currently admitted; no historical runtime authority object crosses the boundary.
 
 ## Identity Proof Helpers
 

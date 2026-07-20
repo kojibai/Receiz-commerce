@@ -2,6 +2,14 @@
 
 All notable changes to Receiz Commerce Kit will be documented here.
 
+## 4.6.0 - Receiz v113 Global Coordination
+
+- Upgraded SDK, MCP server, and all thirty-two AI skills to the exact official `113.0.0` artifacts with integrity, lockfile, and release-lock parity.
+- Expanded the application authority matrix to eleven operations with named-domain global resolution and offline reconciliation.
+- Added explicit adapter custody for a caller-supplied Connect token and the full remote-domain resolve, plan, stage, commit, attempt-resolution, and effect-status rail.
+- Chained application law to the canonical v113 registry, including frozen protocol limits, structural divergence handling, independently verified historical handoffs, immutable staging, and atomic expected-head acceptance.
+- Added the v112→v113 migration attestation and v113 package, registry, operation-matrix, nine-tool MCP, thirty-two-skill, CLI, conformance, and preservation gates.
+
 ## 4.5.0 - Receiz v112 Artifact Transition Custody
 
 - Upgraded SDK, MCP server, and all thirty-one AI skills to exact official `112.0.0` vendored artifacts with lockfile and release-lock parity.

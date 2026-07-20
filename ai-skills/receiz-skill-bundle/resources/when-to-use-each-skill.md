@@ -27,3 +27,11 @@ Use for local files, sealed artifacts, offline verification, airplane mode, embe
 ## receiz-distribution-skill
 
 Use for QR activation, Pack Derby venues, restaurant or bar copy, affiliate boundaries, staff scripts, and physical-to-proof distribution.
+
+## receiz-global-reconciliation
+
+Use for one named coordination domain's accepted head, monotonic catch-up, verified offline history, structural divergence, ownership succession, contention, indeterminate attempt recovery, first paint, and separate effect status.
+
+## Current MCP inventory
+
+The single current nine-tool inventory is `receiz_artifact_verify`, `receiz_artifact_admit`, `receiz_artifact_append_plan`, `receiz_artifact_transition_seal_and_stage`, `receiz_artifact_transition_commit`, `receiz_artifact_global_resolve`, `receiz_artifact_reconcile_plan`, `receiz_artifact_reconcile_stage`, and `receiz_artifact_reconcile_commit`. The first five are explicitly the historical v112 compatibility inventory, not a second active surface.

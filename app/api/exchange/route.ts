@@ -81,7 +81,9 @@ export async function POST(request: NextRequest) {
   if (verification.status !== "verified-artifact") {
     const message = verification.status === "invalid"
       ? verification.errors.map((error) => error.message).join(", ")
-      : `Unsupported artifact: ${verification.reason}`;
+      : verification.status === "denied"
+        ? `Artifact verification was not evaluated: ${verification.code}`
+        : `Unsupported artifact: ${verification.reason}`;
     return NextResponse.json(
       { ok: false, error: "exchange_proof_verification_failed", message },
       { status: 422 }

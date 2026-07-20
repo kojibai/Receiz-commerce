@@ -1,6 +1,6 @@
 # MCP Tool Map
 
-## v112 Application Compiler
+## V113 Application Compiler
 
 | Need | Tool | Mutation |
 |---|---|---|
@@ -22,7 +22,7 @@ verification verdict or proof authority.
 
 Source: `packages/receiz-mcp-server/src/index.ts`.
 
-## v112 Current Profile And Ownership Outcomes
+## V113 Current Profile And Ownership Outcomes
 
 | Need | Tool | Mutation |
 |---|---|---|
@@ -37,7 +37,7 @@ The bearer plan verifies the complete sealed artifact with `client.artifacts.ver
 
 A verified proof object is not limited to the platform that created it. Any lawful platform may append authenticated ownership and history only while preserving the same immutable object identity, payload, provenance root, prior history, and unknown namespaces, then returning a complete verified proof object. These MCP tools invoke that same SDK continuity and never create an origin-platform lock or parallel chain.
 
-## v112 Complete Artifact Custody
+## V113 Current Artifact Coordination
 
 | Need | Tool | Boundary |
 |---|---|---|
@@ -46,8 +46,12 @@ A verified proof object is not limited to the platform that created it. Any lawf
 | Plan a governed append | `receiz_artifact_append_plan` | Zero writes; binds actor, history, effects, idempotency, registry, and domain |
 | Seal and durably stage candidate bytes | `receiz_artifact_transition_seal_and_stage` | Candidate proof object; no accepted-head write |
 | Resolve, reverify, and atomically accept | `receiz_artifact_transition_commit` | Named-domain atomic acceptance and report-only receipt |
+| Resolve authenticated global head | `receiz_artifact_global_resolve` | Read-only locator; returned exact bytes require independent verification |
+| Plan offline reconciliation | `receiz_artifact_reconcile_plan` | Read-only plan and capability payload; zero writes |
+| Stage reconciliation candidate | `receiz_artifact_reconcile_stage` | Neutral immutable bytes only; zero accepted-head writes |
+| Commit reconciliation | `receiz_artifact_reconcile_commit` | Distinct confirmation and atomic expected-head acceptance |
 
-These five tools preserve artifact and payload as separate byte domains. They never relabel payload bytes, repack a native artifact, or treat MCP state as proof authority.
+These nine current tools preserve artifact and payload as separate byte domains. They never relabel payload bytes, repack a native artifact, or treat MCP state as proof authority. The first five are the historical v112 compatibility inventory; that historical inventory is not a second current surface.
 
 Obsolete versioned operation schemas are not shipped as installable compatibility surfaces. Historical sealed artifacts and release evidence remain verifiable without carrying obsolete developer APIs forward.
 
@@ -110,12 +114,16 @@ Emulator output is labeled `sandboxVerified`; never translate it into Receiz ver
 - `receiz://sdk/docs`
 - `receiz://schemas/proof-object-v1`
 
-## v112 artifact transition authority
+## V113 artifact coordination authority
 
 - `receiz_artifact_verify` — exact-byte verification; bytes crossing a process require `reverify-exact-bytes`.
 - `receiz_artifact_admit` — profile admission from the same-runtime verified artifact; zero writes.
 - `receiz_artifact_append_plan` — plans the transition, registry-derived effects, idempotency identity, expected head, and named commit domain; zero writes.
 - `receiz_artifact_transition_seal_and_stage` — seals a proof-object candidate and durably stages it with zero head writes; the staging locator is non-authoritative.
 - `receiz_artifact_transition_commit` — independently resolves and reverifies staged bytes, then atomically accepts them within the named domain and returns a report-only receipt.
+- `receiz_artifact_global_resolve` — resolves one authenticated named-domain head; returned bytes are not artifact truth until independently verified.
+- `receiz_artifact_reconcile_plan` — plans the verified additions, expected head, effects ceiling, and plan-bound capability payload with zero writes.
+- `receiz_artifact_reconcile_stage` — stages confirmed exact bytes without changing the accepted head.
+- `receiz_artifact_reconcile_commit` — independently resolves the exact staged version and atomically accepts only the expected head after distinct confirmation.
 
-These are exactly the five current artifact MCP tools. MCP property bags, confirmations, receipts, and reported actors never become proof, identity, capability, or commit authority.
+These are exactly the nine tools in the single current MCP artifact inventory. The first five remain explicitly documented as the historical v112 compatibility inventory only. MCP property bags, confirmations, receipts, and reported actors never become proof, identity, capability, or commit authority.

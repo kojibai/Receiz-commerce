@@ -42,7 +42,9 @@ export function ProofVerifier({ claim, pulse }: { claim?: string; pulse?: string
                 ? `${file.name} passed Receiz SDK verification on this device.`
                 : verification.status === "invalid"
                   ? verification.errors.map((error) => error.message).filter(Boolean).join(", ") || `${file.name} could not be verified.`
-                  : `${file.name} uses an unsupported ${verification.reason.replaceAll("-", " ")}.`
+                  : verification.status === "denied"
+                    ? `${file.name} was not evaluated: ${verification.code.replaceAll("_", " ").toLowerCase()}.`
+                    : `${file.name} uses an unsupported ${verification.reason.replaceAll("-", " ")}.`
             );
           }).catch((error) => {
             setResult(null);

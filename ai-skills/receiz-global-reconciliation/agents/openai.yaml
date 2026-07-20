@@ -1,0 +1,4 @@
+interface:
+  display_name: "Receiz Global Reconciliation"
+  short_description: "Reconcile verified history into one named Receiz domain"
+  default_prompt: "Use $receiz-global-reconciliation to resolve and reconcile verified offline artifact history without downgrading exact artifact truth."

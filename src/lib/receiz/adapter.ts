@@ -28,6 +28,7 @@ import {
   type ReceizCapabilitiesOptions,
   type ReceizClient,
   type ReceizClientOptions,
+  type ReceizCommitDomainId,
   type ReceizCommerceRuntimeRequest,
   type ReceizCustomerSessionBootstrapRequest,
   type ReceizCustomerSessionBootstrapResponse,
@@ -76,6 +77,7 @@ import {
   type ReceizProofMemoryAdditionsQuery,
   type ReceizProofMemoryOptions,
   type ReceizProofRegister,
+  type ReceizRemoteDomain,
   type ReceizSportsCardManifest,
   type ReceizSportsCardManifestProjection,
   type ReceizWorldProfileMessageRequest,
@@ -163,6 +165,13 @@ export type ReceizCommerceAdapter = {
   createBrowserAdmissionStore(
     options: Parameters<typeof createReceizBrowserAdmissionStore>[0]
   ): ReceizAdmissionStore;
+  createRemoteCoordinationDomain(options: {
+    accessToken: string;
+    namespace: string;
+    commitDomain: ReceizCommitDomainId;
+    baseUrl?: string;
+    fetchImpl?: typeof fetch;
+  }): ReceizRemoteDomain;
   planArtifactAppend(
     input: Parameters<typeof planArtifactAppend>[0]
   ): ReturnType<typeof planArtifactAppend>;
@@ -327,6 +336,7 @@ export type ReceizRailKey =
   | "portability"
   | "notifications"
   | "offline"
+  | "coordination"
   | "releases"
   | "world"
   | "twin";
@@ -441,6 +451,7 @@ export function createReceizCommerceAdapter(
           { key: "manifests", label: "Manifest validation and display projections", status: "available" },
           { key: "proofMemory", label: "Admit-once proof memory and known-head sync", status: "available" },
           { key: "offline", label: "Offline proof queue for resilient appends", status: "available" },
+          { key: "coordination", label: "Named-domain resolution and offline-to-global reconciliation with an explicitly supplied player token", status: "available" },
           { key: "world", label: "Public World profiles and public Twin conversations", status: "available" },
           { key: "verification", label: "Artifact verification and seal calls", status: "available" },
           { key: "publicProof", label: "Public proof rendering and observation", status: "available" },
@@ -552,6 +563,14 @@ export function createReceizCommerceAdapter(
     },
     createBrowserAdmissionStore(options) {
       return client.admission.browserStore(options);
+    },
+    createRemoteCoordinationDomain({ accessToken, namespace, commitDomain, baseUrl, fetchImpl }) {
+      const coordinationClient = createReceizClient({
+        accessToken,
+        baseUrl: baseUrl ?? client.baseUrl,
+        fetchImpl,
+      });
+      return coordinationClient.coordination.remoteDomain({ namespace, commitDomain });
     },
     planArtifactAppend(input) {
       return planArtifactAppend(input);

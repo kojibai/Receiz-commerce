@@ -1,10 +1,33 @@
 {
   "schema": "receiz.constitution.registry.v1",
-  "version": "112.0.0",
-  "previousRegistryDigest": "1356f8122d0b5fcbe891d7e6ed1e75faca827f15d63d1ed5d950664e11c146ee",
-  "effectiveKai": "13192000",
-  "createdAt": "2026-07-18T18:00:00.000Z",
+  "version": "113.0.0",
+  "previousRegistryDigest": "4c4aa85f9785d205dcf7e4e5109837a83f8c3bf8e166130ae7e87353f299c637",
+  "effectiveKai": "13198000",
+  "createdAt": "2026-07-19T12:00:00.000Z",
   "predicateLanguageVersion": "receiz-law-expression.v1",
+  "authority": {
+    "registryPayloadIsAuthority": false,
+    "strongerTruth": "sealed-receiz-proof-object"
+  },
+  "protocolLimits": {
+    "exactArtifactBytes": 524288000,
+    "archiveEntries": 5000,
+    "singleDecompressedEntryBytes": 1073741824,
+    "totalDecompressedBytes": 2147483648,
+    "rootArchiveContainerDepth": 1,
+    "embeddedArchiveNesting": 0,
+    "perEntryCompressionRatio": 200,
+    "aggregateCompressionRatio": 100,
+    "canonicalArchivePathBytes": 1024,
+    "archiveEntryNameBytes": 255,
+    "manifestBytes": 16777216,
+    "verifiedHistoryNodes": 4096,
+    "reconciliationAdditions": 64,
+    "remotePredecessorFetches": 256,
+    "artifactNamespaces": 256,
+    "reducerOperations": 4096,
+    "lawExpressionOperations": 4096
+  },
   "laws": [
     {
       "id": "wilds.retirement.irreversible",
@@ -52,7 +75,7 @@
     },
     {
       "id": "receiz.command-only-mutation",
-      "version": 1,
+      "version": 2,
       "phases": [
         "command",
         "event",
@@ -61,18 +84,27 @@
         "admission"
       ],
       "denyWhen": {
-        "op": "not",
-        "value": {
-          "op": "equal",
-          "left": {
+        "op": "all",
+        "values": [
+          {
             "op": "path",
             "value": "mutation.mode"
           },
-          "right": {
-            "op": "literal",
-            "value": "admitted-command"
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "mutation.mode"
+              },
+              "right": {
+                "op": "literal",
+                "value": "admitted-command"
+              }
+            }
           }
-        }
+        ]
       },
       "denial": {
         "code": "DIRECT_STATE_WRITE_FORBIDDEN",
@@ -84,7 +116,215 @@
       }
     },
     {
-      "id": "identity.profile.same-account-uid",
+      "id": "authority.proof-object-first",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "merge",
+        "migration",
+        "admission"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "authority-ordering"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "proposed.authority.strongerTruth"
+              },
+              "right": {
+                "op": "literal",
+                "value": "sealed-receiz-proof-object"
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "PROOF_OBJECT_AUTHORITY_REQUIRED",
+        "safeAlternatives": [
+          "preserve-sealed-proof-object-authority",
+          "place-projection-beneath-proof"
+        ]
+      }
+    },
+    {
+      "id": "identity.rename.same-account-uid",
+      "version": 2,
+      "phases": [
+        "command",
+        "admission",
+        "migration"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "profile-rename"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "actor.accountUid"
+              },
+              "right": {
+                "op": "path",
+                "value": "proposed.profile.accountUid"
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "PROFILE_ACCOUNT_UID_CHANGE_FORBIDDEN",
+        "safeAlternatives": [
+          "rename-under-admitted-account-uid",
+          "restore-admitted-account-binding"
+        ]
+      }
+    },
+    {
+      "id": "profile.first-party-no-developer-prerequisite",
+      "version": 1,
+      "phases": [
+        "command",
+        "admission"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.surface"
+            },
+            "right": {
+              "op": "literal",
+              "value": "receiz.com-first-party-profile"
+            }
+          },
+          {
+            "op": "any",
+            "values": [
+              {
+                "op": "equal",
+                "left": {
+                  "op": "path",
+                  "value": "dependency.rail"
+                },
+                "right": {
+                  "op": "literal",
+                  "value": "developer-profile-route"
+                }
+              },
+              {
+                "op": "equal",
+                "left": {
+                  "op": "path",
+                  "value": "dependency.rail"
+                },
+                "right": {
+                  "op": "literal",
+                  "value": "sdk"
+                }
+              },
+              {
+                "op": "equal",
+                "left": {
+                  "op": "path",
+                  "value": "dependency.rail"
+                },
+                "right": {
+                  "op": "literal",
+                  "value": "mcp"
+                }
+              },
+              {
+                "op": "equal",
+                "left": {
+                  "op": "path",
+                  "value": "dependency.rail"
+                },
+                "right": {
+                  "op": "literal",
+                  "value": "ai"
+                }
+              },
+              {
+                "op": "equal",
+                "left": {
+                  "op": "path",
+                  "value": "requirements.identityKeyProjection"
+                },
+                "right": {
+                  "op": "literal",
+                  "value": true
+                }
+              },
+              {
+                "op": "equal",
+                "left": {
+                  "op": "path",
+                  "value": "requirements.proofHead"
+                },
+                "right": {
+                  "op": "literal",
+                  "value": true
+                }
+              },
+              {
+                "op": "equal",
+                "left": {
+                  "op": "path",
+                  "value": "requirements.canonicalReceipt"
+                },
+                "right": {
+                  "op": "literal",
+                  "value": true
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "denial": {
+        "code": "FIRST_PARTY_PROFILE_PREREQUISITE_FORBIDDEN",
+        "safeAlternatives": [
+          "use-admitted-account-binding",
+          "patch-api-profile-me",
+          "append-developer-evidence-after-save"
+        ]
+      }
+    },
+    {
+      "id": "identity.projection-cannot-authorize-profile",
       "version": 1,
       "phases": [
         "command",
@@ -92,24 +332,706 @@
         "migration"
       ],
       "denyWhen": {
-        "op": "not",
-        "value": {
-          "op": "equal",
-          "left": {
-            "op": "path",
-            "value": "actor.accountUid"
+        "op": "all",
+        "values": [
+          {
+            "op": "any",
+            "values": [
+              {
+                "op": "equal",
+                "left": {
+                  "op": "path",
+                  "value": "operation.kind"
+                },
+                "right": {
+                  "op": "literal",
+                  "value": "profile-update"
+                }
+              },
+              {
+                "op": "equal",
+                "left": {
+                  "op": "path",
+                  "value": "operation.kind"
+                },
+                "right": {
+                  "op": "literal",
+                  "value": "profile-rename"
+                }
+              }
+            ]
           },
-          "right": {
-            "op": "path",
-            "value": "proposed.accountUid"
+          {
+            "op": "any",
+            "values": [
+              {
+                "op": "equal",
+                "left": {
+                  "op": "path",
+                  "value": "requirements.identityKeyProjection"
+                },
+                "right": {
+                  "op": "literal",
+                  "value": true
+                }
+              },
+              {
+                "op": "equal",
+                "left": {
+                  "op": "path",
+                  "value": "identity.keySelectionMode"
+                },
+                "right": {
+                  "op": "literal",
+                  "value": "latest-server-key"
+                }
+              },
+              {
+                "op": "equal",
+                "left": {
+                  "op": "path",
+                  "value": "identity.projectionCanBlock"
+                },
+                "right": {
+                  "op": "literal",
+                  "value": true
+                }
+              }
+            ]
           }
-        }
+        ]
       },
       "denial": {
-        "code": "PROFILE_ACCOUNT_UID_MISMATCH",
+        "code": "IDENTITY_PROJECTION_AUTHORITY_FORBIDDEN",
         "safeAlternatives": [
-          "use-authenticated-account-uid",
-          "restore-receiz-identity"
+          "use-accepted-identity-proof-and-admitted-account-binding",
+          "preserve-same-account-uid",
+          "project-identity-keys-beneath-the-save"
+        ]
+      }
+    },
+    {
+      "id": "identity.mismatch-requires-explicit-contradiction",
+      "version": 1,
+      "phases": [
+        "command",
+        "admission"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "proposed.error.code"
+            },
+            "right": {
+              "op": "literal",
+              "value": "identity_key_mismatch"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "evidence.explicitKeyAccountContradiction"
+              },
+              "right": {
+                "op": "literal",
+                "value": true
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "IDENTITY_MISMATCH_UNPROVEN",
+        "safeAlternatives": [
+          "report-identity-projection-unavailable",
+          "report-profile-service-unavailable",
+          "preserve-admitted-identity"
+        ]
+      }
+    },
+    {
+      "id": "portable-state.verifier-required",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "merge",
+        "migration",
+        "admission"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "proposed.portableStateVerified"
+            },
+            "right": {
+              "op": "literal",
+              "value": true
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "evidence.portableArtifactVerifierAccepted"
+              },
+              "right": {
+                "op": "literal",
+                "value": true
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "PORTABLE_STATE_VERIFICATION_REQUIRED",
+        "safeAlternatives": [
+          "verify-carried-portable-artifact",
+          "project-portable-state-as-unverified",
+          "treat-registry-row-as-projection-only"
+        ]
+      }
+    },
+    {
+      "id": "developer-evidence.additive-only",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission"
+      ],
+      "denyWhen": {
+        "op": "any",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "proposed.developerEvidence.authorizesIdentity"
+            },
+            "right": {
+              "op": "literal",
+              "value": true
+            }
+          },
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "proposed.developerEvidence.definesActiveIdentity"
+            },
+            "right": {
+              "op": "literal",
+              "value": true
+            }
+          },
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "proposed.developerEvidence.blocksReceizComOperation"
+            },
+            "right": {
+              "op": "literal",
+              "value": true
+            }
+          },
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "proposed.proofHead.blocksReceizComOperation"
+            },
+            "right": {
+              "op": "literal",
+              "value": true
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "DEVELOPER_EVIDENCE_MUST_BE_ADDITIVE",
+        "safeAlternatives": [
+          "attach-evidence-after-native-operation",
+          "retain-historical-witnesses-as-history",
+          "preserve-receiz-com-operation"
+        ]
+      }
+    },
+    {
+      "id": "ARTIFACT-001",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission"
+      ],
+      "denyWhen": {
+        "op": "any",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "proposed.artifact.bytesDivisible"
+            },
+            "right": {
+              "op": "literal",
+              "value": true
+            }
+          },
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "proposed.payloadSubstitutesForArtifact"
+            },
+            "right": {
+              "op": "literal",
+              "value": true
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "ARTIFACT_BYTES_ARE_INDIVISIBLE",
+        "safeAlternatives": [
+          "retain-exact-native-record-seal-bytes"
+        ]
+      }
+    },
+    {
+      "id": "ARTIFACT-002",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "artifact-download"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "evidence.downloadedBytesEqualSdkArtifactBytes"
+              },
+              "right": {
+                "op": "literal",
+                "value": true
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "DOWNLOADED_ARTIFACT_BYTES_MUST_MATCH",
+        "safeAlternatives": [
+          "rehash-sdk-artifact",
+          "download-sdk-issued-bytes"
+        ]
+      }
+    },
+    {
+      "id": "ARTIFACT-003",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "evidence.nativeSealSucceeded"
+            },
+            "right": {
+              "op": "literal",
+              "value": false
+            }
+          },
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "proposed.downloadableArtifactIssued"
+            },
+            "right": {
+              "op": "literal",
+              "value": true
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "SEAL_FAILURE_ISSUES_NO_ARTIFACT",
+        "safeAlternatives": [
+          "return-explicit-seal-failure"
+        ]
+      }
+    },
+    {
+      "id": "ARTIFACT-004",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "proposed.payloadExtracted"
+            },
+            "right": {
+              "op": "literal",
+              "value": true
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "evidence.enclosingArtifactVerified"
+              },
+              "right": {
+                "op": "literal",
+                "value": true
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "VERIFY_BEFORE_PAYLOAD_EXTRACTION",
+        "safeAlternatives": [
+          "verify-and-open-complete-artifact"
+        ]
+      }
+    },
+    {
+      "id": "ARTIFACT-005",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "domain-parser"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "input.byteDomain"
+              },
+              "right": {
+                "op": "literal",
+                "value": "verified-payload"
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "DOMAIN_PARSER_REQUIRES_VERIFIED_PAYLOAD",
+        "safeAlternatives": [
+          "verify-enclosing-artifact",
+          "pass-extracted-verified-payload"
+        ]
+      }
+    },
+    {
+      "id": "ARTIFACT-006",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "proposed.verification.ok"
+            },
+            "right": {
+              "op": "literal",
+              "value": true
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "evidence.ownerClaimSignatureV4Agree"
+              },
+              "right": {
+                "op": "literal",
+                "value": true
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "OWNER_CLAIM_SIGNATURE_V4_MUST_AGREE",
+        "safeAlternatives": [
+          "reject-artifact-verification"
+        ]
+      }
+    },
+    {
+      "id": "ARTIFACT-007",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "artifact-emit"
+            }
+          },
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "artifact.formatClass"
+            },
+            "right": {
+              "op": "literal",
+              "value": "legacy"
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "LEGACY_ARTIFACT_EMISSION_FORBIDDEN",
+        "safeAlternatives": [
+          "read-verified-legacy",
+          "emit-current-native-record-seal"
+        ]
+      }
+    },
+    {
+      "id": "ARTIFACT-008",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "migration",
+        "admission"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "artifact-reexport"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "proposed.unknownApplicationNamespacesPreserved"
+              },
+              "right": {
+                "op": "literal",
+                "value": true
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "UNKNOWN_NAMESPACES_MUST_BE_PRESERVED",
+        "safeAlternatives": [
+          "preserve-unrecognized-namespaces-byte-for-byte"
+        ]
+      }
+    },
+    {
+      "id": "ARTIFACT-009",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "migration",
+        "admission"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "artifact-reexport"
+            }
+          },
+          {
+            "op": "any",
+            "values": [
+              {
+                "op": "equal",
+                "left": {
+                  "op": "path",
+                  "value": "proposed.historyRewritten"
+                },
+                "right": {
+                  "op": "literal",
+                  "value": true
+                }
+              },
+              {
+                "op": "not",
+                "value": {
+                  "op": "equal",
+                  "left": {
+                    "op": "path",
+                    "value": "proposed.continuityAppended"
+                  },
+                  "right": {
+                    "op": "literal",
+                    "value": true
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "denial": {
+        "code": "REEXPORT_MUST_APPEND_CONTINUITY",
+        "safeAlternatives": [
+          "append-continuity",
+          "preserve-immutable-history"
+        ]
+      }
+    },
+    {
+      "id": "ARTIFACT-010",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "artifact-relabel"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "payload.sealed"
+              },
+              "right": {
+                "op": "literal",
+                "value": true
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "PAYLOAD_CANNOT_BE_RELABELED_AS_ARTIFACT",
+        "safeAlternatives": [
+          "call-native-record-seal",
+          "use-sdk-issued-artifact"
         ]
       }
     },
@@ -118,20 +1040,820 @@
       "version": 1,
       "phases": [
         "command",
+        "event",
         "admission"
       ],
       "denyWhen": {
-        "op": "not",
-        "value": {
-          "op": "path",
-          "value": "artifact.complete"
-        }
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.domain"
+            },
+            "right": {
+              "op": "literal",
+              "value": "artifact-custody"
+            }
+          },
+          {
+            "op": "any",
+            "values": [
+              {
+                "op": "not",
+                "value": {
+                  "op": "equal",
+                  "left": {
+                    "op": "path",
+                    "value": "artifact.complete"
+                  },
+                  "right": {
+                    "op": "literal",
+                    "value": true
+                  }
+                }
+              },
+              {
+                "op": "equal",
+                "left": {
+                  "op": "path",
+                  "value": "proposed.payloadOnlyFallback"
+                },
+                "right": {
+                  "op": "literal",
+                  "value": true
+                }
+              },
+              {
+                "op": "equal",
+                "left": {
+                  "op": "path",
+                  "value": "proposed.repackedArtifact"
+                },
+                "right": {
+                  "op": "literal",
+                  "value": true
+                }
+              }
+            ]
+          }
+        ]
       },
       "denial": {
         "code": "COMPLETE_ARTIFACT_REQUIRED",
         "safeAlternatives": [
-          "preserve-complete-sealed-artifact",
-          "verify-before-extract"
+          "retain-complete-sealed-artifact",
+          "download-exact-artifact-bytes",
+          "verify-complete-artifact"
+        ]
+      }
+    },
+    {
+      "id": "artifact.verify-before-extract",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "proposed.payloadExtracted"
+            },
+            "right": {
+              "op": "literal",
+              "value": true
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "evidence.enclosingArtifactVerified"
+              },
+              "right": {
+                "op": "literal",
+                "value": true
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "VERIFY_ENCLOSING_ARTIFACT_FIRST",
+        "safeAlternatives": [
+          "verify-complete-artifact-then-extract",
+          "keep-artifact-and-payload-domains-distinct"
+        ]
+      }
+    },
+    {
+      "id": "artifact.exact-byte-round-trip",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "artifact-round-trip-check"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "evidence.exactBytesPreserved"
+              },
+              "right": {
+                "op": "literal",
+                "value": true
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "ARTIFACT_ROUND_TRIP_MISMATCH",
+        "safeAlternatives": [
+          "download-sdk-issued-exact-bytes",
+          "compare-artifact-digests",
+          "do-not-repack"
+        ]
+      }
+    },
+    {
+      "id": "artifact.sdk-custody-unforgeable",
+      "version": 1,
+      "phases": [
+        "command",
+        "admission"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.rail"
+            },
+            "right": {
+              "op": "literal",
+              "value": "sdk"
+            }
+          },
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.domain"
+            },
+            "right": {
+              "op": "literal",
+              "value": "artifact-custody"
+            }
+          },
+          {
+            "op": "any",
+            "values": [
+              {
+                "op": "equal",
+                "left": {
+                  "op": "path",
+                  "value": "proposed.artifactHandleForged"
+                },
+                "right": {
+                  "op": "literal",
+                  "value": true
+                }
+              },
+              {
+                "op": "equal",
+                "left": {
+                  "op": "path",
+                  "value": "proposed.verifiedPayloadHandleForged"
+                },
+                "right": {
+                  "op": "literal",
+                  "value": true
+                }
+              },
+              {
+                "op": "equal",
+                "left": {
+                  "op": "path",
+                  "value": "proposed.downloadBytesNotExact"
+                },
+                "right": {
+                  "op": "literal",
+                  "value": true
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "denial": {
+        "code": "SDK_ARTIFACT_CUSTODY_FORGERY_FORBIDDEN",
+        "safeAlternatives": [
+          "create-proof-object-through-sdk",
+          "verify-and-open-through-sdk",
+          "download-sdk-issued-artifact"
+        ]
+      }
+    },
+    {
+      "id": "developer.conformance-direction",
+      "version": 1,
+      "phases": [
+        "command",
+        "migration",
+        "admission"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "developer-conformance"
+            }
+          },
+          {
+            "op": "any",
+            "values": [
+              {
+                "op": "not",
+                "value": {
+                  "op": "equal",
+                  "left": {
+                    "op": "path",
+                    "value": "implementation.direction"
+                  },
+                  "right": {
+                    "op": "literal",
+                    "value": "receiz.com-to-sdk-to-mcp-to-ai"
+                  }
+                }
+              },
+              {
+                "op": "equal",
+                "left": {
+                  "op": "path",
+                  "value": "proposed.developerRail.outRanksProofObject"
+                },
+                "right": {
+                  "op": "literal",
+                  "value": true
+                }
+              },
+              {
+                "op": "equal",
+                "left": {
+                  "op": "path",
+                  "value": "proposed.developerRail.blocksReceizCom"
+                },
+                "right": {
+                  "op": "literal",
+                  "value": true
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "denial": {
+        "code": "DEVELOPER_CONFORMANCE_DIRECTION_INVALID",
+        "safeAlternatives": [
+          "adapt-sdk-to-receiz-com",
+          "adapt-mcp-to-sdk",
+          "adapt-ai-to-mcp-and-sdk"
+        ]
+      }
+    },
+    {
+      "id": "identity.username.commit-time-uniqueness",
+      "version": 1,
+      "phases": [
+        "command",
+        "admission"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "profile-rename"
+            }
+          },
+          {
+            "op": "any",
+            "values": [
+              {
+                "op": "not",
+                "value": {
+                  "op": "equal",
+                  "left": {
+                    "op": "path",
+                    "value": "proposed.username.uniquenessAuthority"
+                  },
+                  "right": {
+                    "op": "literal",
+                    "value": "canonical-commit"
+                  }
+                }
+              },
+              {
+                "op": "equal",
+                "left": {
+                  "op": "path",
+                  "value": "proposed.username.previousNameReleasedBeforeCommit"
+                },
+                "right": {
+                  "op": "literal",
+                  "value": true
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "denial": {
+        "code": "USERNAME_COMMIT_ORDER_INVALID",
+        "safeAlternatives": [
+          "coordinate-uniqueness-at-canonical-commit",
+          "release-prior-name-after-commit"
+        ]
+      }
+    },
+    {
+      "id": "ownership.enclosing-artifact-first",
+      "version": 2,
+      "phases": [
+        "command",
+        "admission"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "bearer-ownership-claim"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "artifact.enclosingProofVerified"
+              },
+              "right": {
+                "op": "literal",
+                "value": true
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "ENCLOSING_ARTIFACT_PROOF_REQUIRED",
+        "safeAlternatives": [
+          "verify-enclosing-artifact-then-claim"
+        ]
+      }
+    },
+    {
+      "id": "ownership.authenticated-native-reseal-continuity",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "bearer-ownership-claim"
+            }
+          },
+          {
+            "op": "any",
+            "values": [
+              {
+                "op": "not",
+                "value": {
+                  "op": "equal",
+                  "left": {
+                    "op": "path",
+                    "value": "evidence.ownerAuthenticated"
+                  },
+                  "right": {
+                    "op": "literal",
+                    "value": true
+                  }
+                }
+              },
+              {
+                "op": "not",
+                "value": {
+                  "op": "equal",
+                  "left": {
+                    "op": "path",
+                    "value": "evidence.previousOwnershipDerivedFromArtifact"
+                  },
+                  "right": {
+                    "op": "literal",
+                    "value": true
+                  }
+                }
+              },
+              {
+                "op": "not",
+                "value": {
+                  "op": "equal",
+                  "left": {
+                    "op": "path",
+                    "value": "evidence.nativeRecordSealCompleted"
+                  },
+                  "right": {
+                    "op": "literal",
+                    "value": true
+                  }
+                }
+              },
+              {
+                "op": "not",
+                "value": {
+                  "op": "equal",
+                  "left": {
+                    "op": "path",
+                    "value": "evidence.outputArtifactReverified"
+                  },
+                  "right": {
+                    "op": "literal",
+                    "value": true
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "denial": {
+        "code": "OWNERSHIP_NATIVE_CONTINUITY_REQUIRED",
+        "safeAlternatives": [
+          "authenticate-current-owner",
+          "derive-continuity-from-verified-artifact",
+          "record-then-seal",
+          "reverify-output-artifact"
+        ]
+      }
+    },
+    {
+      "id": "ownership.cross-platform-proof-object-continuity",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "merge",
+        "migration",
+        "admission"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "any",
+            "values": [
+              {
+                "op": "equal",
+                "left": {
+                  "op": "path",
+                  "value": "operation.kind"
+                },
+                "right": {
+                  "op": "literal",
+                  "value": "bearer-ownership-claim"
+                }
+              },
+              {
+                "op": "equal",
+                "left": {
+                  "op": "path",
+                  "value": "operation.kind"
+                },
+                "right": {
+                  "op": "literal",
+                  "value": "proof-object-ownership-append"
+                }
+              },
+              {
+                "op": "equal",
+                "left": {
+                  "op": "path",
+                  "value": "operation.kind"
+                },
+                "right": {
+                  "op": "literal",
+                  "value": "proof-object-history-append"
+                }
+              }
+            ]
+          },
+          {
+            "op": "any",
+            "values": [
+              {
+                "op": "equal",
+                "left": {
+                  "op": "path",
+                  "value": "proposed.originPlatformLock"
+                },
+                "right": {
+                  "op": "literal",
+                  "value": true
+                }
+              },
+              {
+                "op": "not",
+                "value": {
+                  "op": "equal",
+                  "left": {
+                    "op": "path",
+                    "value": "evidence.enclosingArtifactVerified"
+                  },
+                  "right": {
+                    "op": "literal",
+                    "value": true
+                  }
+                }
+              },
+              {
+                "op": "not",
+                "value": {
+                  "op": "equal",
+                  "left": {
+                    "op": "path",
+                    "value": "evidence.appendAuthenticated"
+                  },
+                  "right": {
+                    "op": "literal",
+                    "value": true
+                  }
+                }
+              },
+              {
+                "op": "not",
+                "value": {
+                  "op": "equal",
+                  "left": {
+                    "op": "path",
+                    "value": "proposed.objectIdentityPreserved"
+                  },
+                  "right": {
+                    "op": "literal",
+                    "value": true
+                  }
+                }
+              },
+              {
+                "op": "not",
+                "value": {
+                  "op": "equal",
+                  "left": {
+                    "op": "path",
+                    "value": "proposed.payloadPreserved"
+                  },
+                  "right": {
+                    "op": "literal",
+                    "value": true
+                  }
+                }
+              },
+              {
+                "op": "not",
+                "value": {
+                  "op": "equal",
+                  "left": {
+                    "op": "path",
+                    "value": "proposed.provenanceRootPreserved"
+                  },
+                  "right": {
+                    "op": "literal",
+                    "value": true
+                  }
+                }
+              },
+              {
+                "op": "not",
+                "value": {
+                  "op": "equal",
+                  "left": {
+                    "op": "path",
+                    "value": "proposed.priorHistoryPreserved"
+                  },
+                  "right": {
+                    "op": "literal",
+                    "value": true
+                  }
+                }
+              },
+              {
+                "op": "not",
+                "value": {
+                  "op": "equal",
+                  "left": {
+                    "op": "path",
+                    "value": "proposed.unknownApplicationNamespacesPreserved"
+                  },
+                  "right": {
+                    "op": "literal",
+                    "value": true
+                  }
+                }
+              },
+              {
+                "op": "not",
+                "value": {
+                  "op": "equal",
+                  "left": {
+                    "op": "path",
+                    "value": "evidence.outputArtifactReverified"
+                  },
+                  "right": {
+                    "op": "literal",
+                    "value": true
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "denial": {
+        "code": "CROSS_PLATFORM_PROOF_OBJECT_CONTINUITY_REQUIRED",
+        "safeAlternatives": [
+          "verify-enclosing-proof-object",
+          "authenticate-ownership-or-history-append",
+          "preserve-object-identity-payload-provenance-root-and-prior-history",
+          "preserve-unknown-application-namespaces",
+          "return-complete-reverified-proof-object-without-origin-platform-lock"
+        ]
+      }
+    },
+    {
+      "id": "offline.queued-not-committed",
+      "version": 1,
+      "phases": [
+        "command",
+        "admission",
+        "migration"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "proposed.status"
+            },
+            "right": {
+              "op": "literal",
+              "value": "queued"
+            }
+          },
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "proposed.globallyCommitted"
+            },
+            "right": {
+              "op": "literal",
+              "value": true
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "QUEUED_COMMAND_NOT_COMMITTED",
+        "safeAlternatives": [
+          "report-signed-queued-proposal",
+          "resume-canonical-admission"
+        ]
+      }
+    },
+    {
+      "id": "migration.witnessed-history-immutable",
+      "version": 1,
+      "phases": [
+        "migration"
+      ],
+      "denyWhen": {
+        "op": "equal",
+        "left": {
+          "op": "path",
+          "value": "migration.historyRewritten"
+        },
+        "right": {
+          "op": "literal",
+          "value": true
+        }
+      },
+      "denial": {
+        "code": "WITNESSED_HISTORY_REWRITE_FORBIDDEN",
+        "safeAlternatives": [
+          "roll-forward-from-verified-checkpoint"
+        ]
+      }
+    },
+    {
+      "id": "migration.never-applied-v107-sql-nondeployable",
+      "version": 1,
+      "phases": [
+        "migration"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "migration.sourceClassification"
+            },
+            "right": {
+              "op": "literal",
+              "value": "never-applied-v107-design"
+            }
+          },
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "migration.deployable"
+            },
+            "right": {
+              "op": "literal",
+              "value": true
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "NEVER_APPLIED_V107_SQL_NONDEPLOYABLE",
+        "safeAlternatives": [
+          "retain-exact-sql-as-non-executable-history",
+          "compose-v108-from-established-primitives"
         ]
       }
     },
@@ -757,101 +2479,6 @@
       }
     },
     {
-      "id": "ownership.enclosing-artifact-first",
-      "version": 1,
-      "phases": [
-        "command",
-        "admission"
-      ],
-      "denyWhen": {
-        "op": "not",
-        "value": {
-          "op": "equal",
-          "left": {
-            "op": "path",
-            "value": "artifact.enclosingProofVerified"
-          },
-          "right": {
-            "op": "literal",
-            "value": true
-          }
-        }
-      },
-      "denial": {
-        "code": "ENCLOSING_ARTIFACT_PROOF_REQUIRED",
-        "safeAlternatives": [
-          "verify-enclosing-artifact-then-claim"
-        ]
-      }
-    },
-    {
-      "id": "offline.queued-not-committed",
-      "version": 1,
-      "phases": [
-        "command",
-        "admission",
-        "migration"
-      ],
-      "denyWhen": {
-        "op": "all",
-        "values": [
-          {
-            "op": "equal",
-            "left": {
-              "op": "path",
-              "value": "proposed.status"
-            },
-            "right": {
-              "op": "literal",
-              "value": "queued"
-            }
-          },
-          {
-            "op": "equal",
-            "left": {
-              "op": "path",
-              "value": "proposed.globallyCommitted"
-            },
-            "right": {
-              "op": "literal",
-              "value": true
-            }
-          }
-        ]
-      },
-      "denial": {
-        "code": "QUEUED_COMMAND_NOT_COMMITTED",
-        "safeAlternatives": [
-          "report-signed-queued-proposal",
-          "resume-canonical-admission"
-        ]
-      }
-    },
-    {
-      "id": "migration.witnessed-history-immutable",
-      "version": 1,
-      "phases": [
-        "migration"
-      ],
-      "denyWhen": {
-        "op": "equal",
-        "left": {
-          "op": "path",
-          "value": "migration.historyRewritten"
-        },
-        "right": {
-          "op": "literal",
-          "value": true
-        }
-      },
-      "denial": {
-        "code": "WITNESSED_HISTORY_REWRITE_FORBIDDEN",
-        "safeAlternatives": [
-          "roll-forward-from-verified-checkpoint"
-        ]
-      }
-    },
-    {
       "id": "ARTIFACT-021",
       "version": 1,
       "phases": [
@@ -1413,6 +3040,289 @@
           "derive-actor-from-runtime-custodied-identity-admission",
           "resolve-identity-seal-issuer-from-admitted-identity-truth",
           "verify-capability-against-the-exact-plan-and-commit-domain"
+        ]
+      }
+    },
+    {
+      "id": "artifact.append.effects-derived",
+      "version": 1,
+      "phases": [
+        "command",
+        "admission"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "artifact.append.plan"
+            }
+          },
+          {
+            "op": "any",
+            "values": [
+              {
+                "op": "equal",
+                "left": {
+                  "op": "path",
+                  "value": "proposed.callerSuppliedEffects"
+                },
+                "right": {
+                  "op": "literal",
+                  "value": true
+                }
+              },
+              {
+                "op": "equal",
+                "left": {
+                  "op": "path",
+                  "value": "proposed.callerSuppliedEffectsDigest"
+                },
+                "right": {
+                  "op": "literal",
+                  "value": true
+                }
+              },
+              {
+                "op": "equal",
+                "left": {
+                  "op": "path",
+                  "value": "proposed.callerSuppliedRequestedEffects"
+                },
+                "right": {
+                  "op": "literal",
+                  "value": true
+                }
+              },
+              {
+                "op": "not",
+                "value": {
+                  "op": "equal",
+                  "left": {
+                    "op": "path",
+                    "value": "evidence.effectsDerivedByRegistryOperationLaw"
+                  },
+                  "right": {
+                    "op": "literal",
+                    "value": true
+                  }
+                }
+              },
+              {
+                "op": "not",
+                "value": {
+                  "op": "equal",
+                  "left": {
+                    "op": "path",
+                    "value": "evidence.derivedEffectsCanonicalized"
+                  },
+                  "right": {
+                    "op": "literal",
+                    "value": true
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "denial": {
+        "code": "ARTIFACT_APPEND_EFFECTS_MUST_BE_REGISTRY_DERIVED",
+        "safeAlternatives": [
+          "derive-effects-from-verified-inputs-and-canonical-event",
+          "canonicalize-derived-effects-under-v112-authority-encoding",
+          "attenuate-capability-to-the-derived-effect-set"
+        ]
+      }
+    },
+    {
+      "id": "receiz.namespace.provenance-append.v112@1",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "artifact.append.plan"
+            }
+          },
+          {
+            "op": "any",
+            "values": [
+              {
+                "op": "not",
+                "value": {
+                  "op": "equal",
+                  "left": {
+                    "op": "path",
+                    "value": "input.namespace.value"
+                  },
+                  "right": {
+                    "op": "literal",
+                    "value": "provenance"
+                  }
+                }
+              },
+              {
+                "op": "not",
+                "value": {
+                  "op": "equal",
+                  "left": {
+                    "op": "path",
+                    "value": "proposed.namespaceLawVersion"
+                  },
+                  "right": {
+                    "op": "literal",
+                    "value": "receiz.namespace.provenance-append.v112@1"
+                  }
+                }
+              },
+              {
+                "op": "equal",
+                "left": {
+                  "op": "path",
+                  "value": "proposed.targetNamespaceArbitrarilyReplaced"
+                },
+                "right": {
+                  "op": "literal",
+                  "value": true
+                }
+              },
+              {
+                "op": "not",
+                "value": {
+                  "op": "equal",
+                  "left": {
+                    "op": "path",
+                    "value": "evidence.everyNonTargetNamespaceBodyBytePreserved"
+                  },
+                  "right": {
+                    "op": "literal",
+                    "value": true
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "denial": {
+        "code": "PROVENANCE_NAMESPACE_LAW_REQUIRED",
+        "safeAlternatives": [
+          "target-only-the-registered-provenance-namespace",
+          "bind-the-exact-namespace-law-version",
+          "preserve-every-non-target-namespace-body-byte-for-byte"
+        ]
+      }
+    },
+    {
+      "id": "receiz.namespace.provenance-append.reducer.v1",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "artifact.append.plan"
+            }
+          },
+          {
+            "op": "any",
+            "values": [
+              {
+                "op": "not",
+                "value": {
+                  "op": "equal",
+                  "left": {
+                    "op": "path",
+                    "value": "proposed.namespaceReducerVersion"
+                  },
+                  "right": {
+                    "op": "literal",
+                    "value": "receiz.namespace.provenance-append.reducer.v1"
+                  }
+                }
+              },
+              {
+                "op": "not",
+                "value": {
+                  "op": "equal",
+                  "left": {
+                    "op": "path",
+                    "value": "evidence.reducerConsumesPriorTargetBytesAndCanonicalEvent"
+                  },
+                  "right": {
+                    "op": "literal",
+                    "value": true
+                  }
+                }
+              },
+              {
+                "op": "not",
+                "value": {
+                  "op": "equal",
+                  "left": {
+                    "op": "path",
+                    "value": "evidence.reducerIsDeterministic"
+                  },
+                  "right": {
+                    "op": "literal",
+                    "value": true
+                  }
+                }
+              },
+              {
+                "op": "not",
+                "value": {
+                  "op": "equal",
+                  "left": {
+                    "op": "path",
+                    "value": "evidence.proposedTargetDigestMatchesReduction"
+                  },
+                  "right": {
+                    "op": "literal",
+                    "value": true
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "denial": {
+        "code": "PROVENANCE_NAMESPACE_REDUCER_REQUIRED",
+        "safeAlternatives": [
+          "use-the-exact-registered-reducer-version",
+          "reduce-prior-target-bytes-with-the-canonical-event",
+          "verify-the-proposed-target-digest"
         ]
       }
     },
@@ -2251,10 +4161,144 @@
           "reverify-readmit-and-reacquire-fresh-runtime-custody-in-the-receiving-runtime"
         ]
       }
+    },
+    {
+      "id": "browser.admission-ledger.beneath-artifact-truth",
+      "version": 1,
+      "phases": [
+        "command",
+        "admission"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "admission.browser-store"
+            }
+          },
+          {
+            "op": "any",
+            "values": [
+              {
+                "op": "equal",
+                "left": {
+                  "op": "path",
+                  "value": "proposed.storesProofObjectsOrSealedArtifactBytes"
+                },
+                "right": {
+                  "op": "literal",
+                  "value": true
+                }
+              },
+              {
+                "op": "equal",
+                "left": {
+                  "op": "path",
+                  "value": "proposed.representsCacheOrArtifactCustody"
+                },
+                "right": {
+                  "op": "literal",
+                  "value": true
+                }
+              },
+              {
+                "op": "equal",
+                "left": {
+                  "op": "path",
+                  "value": "proposed.blocksRefetchesOrReprovesKnownArtifactFirstPaint"
+                },
+                "right": {
+                  "op": "literal",
+                  "value": true
+                }
+              },
+              {
+                "op": "equal",
+                "left": {
+                  "op": "path",
+                  "value": "proposed.claimsRemoteGlobalServerSessionOrTokenAuthority"
+                },
+                "right": {
+                  "op": "literal",
+                  "value": true
+                }
+              },
+              {
+                "op": "equal",
+                "left": {
+                  "op": "path",
+                  "value": "proposed.usesShadowSyncFireAndForgetOrSwallowedPersistence"
+                },
+                "right": {
+                  "op": "literal",
+                  "value": true
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "denial": {
+        "code": "BROWSER_ADMISSION_TRUTH_DOWNGRADE_FORBIDDEN",
+        "safeAlternatives": [
+          "persist-only-atomic-admission-ledger-coordination",
+          "keep-user-held-exact-artifact-truth-primary",
+          "perform-browser-ledger-work-after-deterministic-first-paint"
+        ]
+      }
+    },
+    {
+      "id": "release.current-version.v113",
+      "version": 1,
+      "phases": [
+        "command",
+        "admission",
+        "migration"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "release-current-default"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "proposed.release.version"
+              },
+              "right": {
+                "op": "literal",
+                "value": "113.0.0"
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "STALE_CURRENT_RELEASE_VERSION",
+        "safeAlternatives": [
+          "use-v113-current-default",
+          "retain-historical-proof-as-non-executable-evidence"
+        ]
+      }
     }
-  ],
-  "authority": {
-    "registryPayloadIsAuthority": false,
-    "strongerTruth": "sealed-receiz-proof-object"
-  }
+  ]
 }

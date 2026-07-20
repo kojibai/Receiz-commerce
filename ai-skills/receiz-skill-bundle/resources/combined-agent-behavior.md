@@ -1,6 +1,8 @@
 # Combined Agent Behavior
 
-V112 agents preserve exact bytes and current runtime custody. They never convert MCP JSON, a confirmation, staging reference, receipt, reported actor, database row, or model output into artifact, identity, capability, or commitment authority. Identity Seal signing supports Ed25519 and P-256 under local key custody; private keys and passphrases never serialize.
+V113 agents preserve exact bytes and current runtime custody. They never convert MCP JSON, a confirmation, staging reference, receipt, reported actor, database row, or model output into artifact, identity, capability, or commitment authority. Identity Seal signing supports Ed25519 and P-256 under local key custody; private keys and passphrases never serialize.
+
+The single current nine-tool MCP artifact inventory is `receiz_artifact_verify`, `receiz_artifact_admit`, `receiz_artifact_append_plan`, `receiz_artifact_transition_seal_and_stage`, `receiz_artifact_transition_commit`, `receiz_artifact_global_resolve`, `receiz_artifact_reconcile_plan`, `receiz_artifact_reconcile_stage`, and `receiz_artifact_reconcile_commit`. The first five remain the historical v112 compatibility inventory; history does not create a second current mutation surface.
 
 ## Core Loop
 

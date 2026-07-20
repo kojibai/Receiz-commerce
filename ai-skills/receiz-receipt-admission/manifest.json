@@ -1,12 +1,13 @@
 {
-  "schema": "receiz.ai-skill-contract.v112",
+  "schema": "receiz.ai-skill-contract.v113",
   "name": "receiz-receipt-admission",
-  "version": "112.0.0",
+  "version": "113.0.0",
   "requires": {
-    "sdk": ">=112.0.0 <113.0.0",
-    "mcp": ">=112.0.0 <113.0.0",
-    "ruleset": "112.0.0",
-    "registryDigest": "1356f8122d0b5fcbe891d7e6ed1e75faca827f15d63d1ed5d950664e11c146ee"
+    "sdk": ">=113.0.0 <114.0.0",
+    "mcp": ">=113.0.0 <114.0.0",
+    "ruleset": "113.0.0",
+    "registryDigest": "4c4aa85f9785d205dcf7e4e5109837a83f8c3bf8e166130ae7e87353f299c637",
+    "operationMatrixDigest": "091ab9e6b3acb05283510a19754e53c637dbd96b47b499a524dc44c34f8e783b"
   },
   "laws": [
     "artifact.complete-object-custody",
@@ -65,7 +66,18 @@
     "confirmation-as-proof-authority",
     "receipt-actor-as-runtime-identity",
     "browser-proof-object-storage",
-    "known-artifact-first-paint-blocking"
+    "known-artifact-first-paint-blocking",
+    "last-write-wins",
+    "timestamp-as-head-authority",
+    "connect-token-as-proof-authority",
+    "local-receipt-as-global-authority",
+    "projection-as-current-owner",
+    "silent-divergence-resolution",
+    "remote-reconciliation-before-first-paint",
+    "unverified-server-artifact-render",
+    "environment-player-token-fallback",
+    "accepted-means-effects-delivered",
+    "indeterminate-means-failed"
   ],
   "requiredEvidence": [
     "complete-artifact-verification",
@@ -79,8 +91,8 @@
     "domain-separated-signing-challenge",
     "distinct-plan-and-attempt-identities",
     "structured-zero-write-failures",
-    "exact-nine-row-operation-matrix-parity",
-    "exact-five-tool-mcp-parity",
+    "exact-eleven-row-operation-matrix-parity",
+    "exact-nine-tool-mcp-parity",
     "process-boundary-parity",
     "exact-byte-reverification",
     "identity-seal-ed25519-p256-signing",
@@ -93,7 +105,7 @@
     "current-registry-payload-digest-equality"
   ],
   "maximumAutonomousAuthority": "inspect-plan-simulate",
-  "artifactLawVersion": "112.0.0",
+  "artifactLawVersion": "113.0.0",
   "artifactLaws": [
     "ARTIFACT-001",
     "ARTIFACT-002",
@@ -138,7 +150,7 @@
       "outputAuthority": "verified-artifact-runtime",
       "processBoundary": "reverify-exact-bytes",
       "namespacePolicy": "not-applicable",
-      "compatibleSdkRange": ">=112.0.0 <113.0.0"
+      "compatibleSdkRange": ">=113.0.0 <114.0.0"
     },
     {
       "operation": "artifact.admit",
@@ -152,7 +164,7 @@
       "outputAuthority": "verified-admission-runtime",
       "processBoundary": "same-runtime-custody",
       "namespacePolicy": "not-applicable",
-      "compatibleSdkRange": ">=112.0.0 <113.0.0"
+      "compatibleSdkRange": ">=113.0.0 <114.0.0"
     },
     {
       "operation": "artifact.append.plan",
@@ -174,7 +186,7 @@
       "outputAuthority": "sdk-plan-runtime",
       "processBoundary": "same-runtime-custody",
       "namespacePolicy": "preserve-all-non-target",
-      "compatibleSdkRange": ">=112.0.0 <113.0.0"
+      "compatibleSdkRange": ">=113.0.0 <114.0.0"
     },
     {
       "operation": "identity.capability.sign",
@@ -187,7 +199,7 @@
       "outputAuthority": "signed-capability-claim-not-yet-verified",
       "processBoundary": "local-identity-key-custody",
       "namespacePolicy": "not-applicable",
-      "compatibleSdkRange": ">=112.0.0 <113.0.0"
+      "compatibleSdkRange": ">=113.0.0 <114.0.0"
     },
     {
       "operation": "artifact.transition.seal",
@@ -204,7 +216,7 @@
       "outputAuthority": "sealed-candidate-proof-object-not-accepted-head",
       "processBoundary": "same-runtime-custody",
       "namespacePolicy": "preserve-all-non-target",
-      "compatibleSdkRange": ">=112.0.0 <113.0.0"
+      "compatibleSdkRange": ">=113.0.0 <114.0.0"
     },
     {
       "operation": "artifact.transition.stage",
@@ -221,7 +233,7 @@
       "outputAuthority": "staged-candidate-locator-non-authoritative",
       "processBoundary": "same-runtime-custody",
       "namespacePolicy": "preserve-all-non-target",
-      "compatibleSdkRange": ">=112.0.0 <113.0.0"
+      "compatibleSdkRange": ">=113.0.0 <114.0.0"
     },
     {
       "operation": "artifact.transition.commit",
@@ -240,7 +252,7 @@
       "outputAuthority": "accepted-artifact-history-with-report-only-receipt",
       "processBoundary": "same-runtime-custody",
       "namespacePolicy": "preserve-all-non-target",
-      "compatibleSdkRange": ">=112.0.0 <113.0.0"
+      "compatibleSdkRange": ">=113.0.0 <114.0.0"
     },
     {
       "operation": "admission.command.execute",
@@ -261,7 +273,7 @@
       "outputAuthority": "admission-receipt-non-authoritative",
       "processBoundary": "same-runtime-custody",
       "namespacePolicy": "not-applicable",
-      "compatibleSdkRange": ">=112.0.0 <113.0.0"
+      "compatibleSdkRange": ">=113.0.0 <114.0.0"
     },
     {
       "operation": "public-proof.projection.locate",
@@ -275,10 +287,60 @@
       "outputAuthority": "exact-artifact-bytes-not-yet-verified",
       "processBoundary": "projection-only",
       "namespacePolicy": "not-applicable",
-      "compatibleSdkRange": ">=112.0.0 <113.0.0"
+      "compatibleSdkRange": ">=113.0.0 <114.0.0"
+    },
+    {
+      "operation": "artifact.global.resolve",
+      "authorityProfiles": [
+        "global-shared",
+        "projection-only"
+      ],
+      "inputAuthority": "projection-only",
+      "requiredEvidence": [
+        "projection-locator",
+        "commit-domain"
+      ],
+      "outputAuthority": "exact-artifact-bytes-not-yet-verified",
+      "processBoundary": "reverify-exact-bytes",
+      "namespacePolicy": "not-applicable",
+      "compatibleSdkRange": ">=113.0.0 <114.0.0"
+    },
+    {
+      "operation": "artifact.offline.reconcile",
+      "authorityProfiles": [
+        "global-shared"
+      ],
+      "inputAuthority": "exact-artifact-bytes",
+      "requiredEvidence": [
+        "exact-artifact-bytes",
+        "pinned-verifier-roots",
+        "current-registry",
+        "verified-history-runtime",
+        "verified-actor-runtime",
+        "sdk-plan-runtime",
+        "verified-capability-runtime",
+        "commit-domain",
+        "expected-head",
+        "idempotency-identity"
+      ],
+      "outputAuthority": "accepted-artifact-history-with-report-only-receipt",
+      "processBoundary": "reverify-exact-bytes",
+      "namespacePolicy": "preserve-all-non-target",
+      "compatibleSdkRange": ">=113.0.0 <114.0.0"
     }
   ],
   "currentMcpArtifactTools": [
+    "receiz_artifact_verify",
+    "receiz_artifact_admit",
+    "receiz_artifact_append_plan",
+    "receiz_artifact_transition_seal_and_stage",
+    "receiz_artifact_transition_commit",
+    "receiz_artifact_global_resolve",
+    "receiz_artifact_reconcile_plan",
+    "receiz_artifact_reconcile_stage",
+    "receiz_artifact_reconcile_commit"
+  ],
+  "historicalV112McpArtifactTools": [
     "receiz_artifact_verify",
     "receiz_artifact_admit",
     "receiz_artifact_append_plan",
