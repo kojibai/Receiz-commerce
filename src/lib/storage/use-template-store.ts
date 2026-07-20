@@ -1755,7 +1755,7 @@ async function createLocalReceizIdentitySessionInput(snapshot: CommerceState, fa
 }
 
 async function receizIdentityForAutomaticCustomerSession(snapshot: CommerceState, reason: string) {
-  if (snapshot.auth.receizId.connected) {
+  if (snapshot.auth.receizId.connected && snapshot.auth.receizId.localProofVerified) {
     return {
       keyFile: null as unknown | null,
       detail: "",
@@ -2781,7 +2781,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
       },
       async ensureCustomerSession(reason = "this store") {
         const snapshot = stateRef.current;
-        if (snapshot.auth.receizId.connected) return true;
+        if (snapshot.auth.receizId.connected && snapshot.auth.receizId.localProofVerified) return true;
 
         const identity = await receizIdentityForAutomaticCustomerSession(snapshot, reason);
         if (identity.keyFile) {

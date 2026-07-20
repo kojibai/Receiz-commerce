@@ -22,9 +22,14 @@ import { readFileSync } from "node:fs";
 describe("Wilds presentation quality", () => {
   it("mounts a single responsive campaign owner", () => {
     const storefront = readFileSync(`${process.cwd()}/src/features/storefront/PublicStorefront.tsx`, "utf8");
+    const campaign = readFileSync(`${process.cwd()}/src/features/play/PlayCampaign.tsx`, "utf8");
     assert.equal(storefront.match(/<PlayCampaign\b/g)?.length, 1);
     assert.match(storefront, /mobileCampaign=\{compactLayout \? campaign : null\}/);
     assert.match(storefront, /\{compactLayout === false \? campaign : null\}/);
+    assert.match(storefront, /actions\.ensureCustomerSession\("enter Wilds"\)/);
+    assert.match(storefront, /ownerReceizId=\{receizOwnerId\}/);
+    assert.doesNotMatch(storefront, /ownerReceizId=\{receizHandle\}/);
+    assert.doesNotMatch(campaign, /ownerReceizId\s*=\s*"wilds\.player\.receiz\.id"/);
   });
 
   it("selects bounded mobile and desktop profiles", () => {

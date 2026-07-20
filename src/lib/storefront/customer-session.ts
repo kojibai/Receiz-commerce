@@ -39,3 +39,17 @@ export function customerReceizHandle(state: CommerceState, customer: CustomerAcc
   if (state.auth.receizId.connected) return state.auth.receizId.handle;
   return "Receiz ID not connected";
 }
+
+function validReceizOwnerId(value: string | undefined) {
+  const candidate = value?.trim() ?? "";
+  return candidate.length >= 3 && candidate.length <= 180 && /^[a-z0-9][a-z0-9:._-]*$/i.test(candidate)
+    ? candidate
+    : null;
+}
+
+/** Returns proof-backed identity data only; presentation labels never cross this boundary. */
+export function customerReceizOwnerId(state: CommerceState, customer: CustomerAccount, tenantSurface = false) {
+  if (!state.auth.receizId.connected || !state.auth.receizId.localProofVerified) return null;
+  if (tenantSurface && customer.id === "guest-customer") return null;
+  return validReceizOwnerId(customer.receizHandle ?? state.auth.receizId.handle);
+}

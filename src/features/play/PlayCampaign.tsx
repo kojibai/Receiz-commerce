@@ -86,13 +86,13 @@ export function PlayCampaign({
   campaignName = "Reward Challenge",
   enabled,
   onComplete,
-  ownerReceizId = "wilds.player.receiz.id",
+  ownerReceizId,
   onListAsset
 }: {
   campaignName?: string;
   enabled: boolean;
   onComplete?: (beans: number) => void;
-  ownerReceizId?: string;
+  ownerReceizId: string;
   onListAsset?: (asset: PortableCardAsset, priceCents: number) => Promise<PortableCardAsset | null>;
 }) {
   const [state, setState] = useState(initialPlayState);

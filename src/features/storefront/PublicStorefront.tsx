@@ -25,7 +25,7 @@ import {
 } from "@/lib/storefront/proof-exchange";
 import { buildProductPurchaseModel, productRoutePath } from "@/lib/storefront/product-purchase";
 import { activeStorefrontProducts, resolveProductBySlug } from "@/lib/storefront/content-routing";
-import { customerForAccountSurface, customerReceizHandle } from "@/lib/storefront/customer-session";
+import { customerForAccountSurface, customerReceizHandle, customerReceizOwnerId } from "@/lib/storefront/customer-session";
 import {
   accountRouteActiveFromMobileView,
   shouldAutoResolveAccountRouteSession,
@@ -101,9 +101,11 @@ export function PublicStorefront({
   const [platformAccountResolving, setPlatformAccountResolving] = useState(false);
   const compactLayout = useCompactStorefrontLayout();
   const platformAccountAutoResolvedRef = useRef(false);
+  const wildsIdentityResolutionRef = useRef(false);
   const tenantSurface = hostContext.surface === "tenant";
   const customer = customerForAccountSurface(state, tenantSurface);
   const receizHandle = customerReceizHandle(state, customer, tenantSurface);
+  const receizOwnerId = customerReceizOwnerId(state, customer, tenantSurface);
   const reward = state.rewards[0] ?? null;
   const campaignName = state.campaigns[0]?.name ?? "Reward Challenge";
   const homepageMode = state.storefront.homepageMode ?? "store";
@@ -153,6 +155,17 @@ export function PublicStorefront({
     },
     [actions, identityActionsReady, state.auth.receizId.connected, tenantSurface]
   );
+
+  useEffect(() => {
+    if (!gameEnabled || !identityActionsReady || receizOwnerId || wildsIdentityResolutionRef.current) return;
+
+    wildsIdentityResolutionRef.current = true;
+    void actions.ensureCustomerSession("enter Wilds")
+      .catch(() => false)
+      .finally(() => {
+        wildsIdentityResolutionRef.current = false;
+      });
+  }, [actions, gameEnabled, identityActionsReady, receizOwnerId]);
   const resolvePlatformMerchantAccount = useCallback(async () => {
     if (
       platformAccountAutoResolvedRef.current ||
@@ -333,14 +346,18 @@ export function PublicStorefront({
     }
   }, [cartSummary.lines.length]);
 
-  const campaign = compactLayout === null ? null : (
+  const campaign = compactLayout === null ? null : receizOwnerId ? (
     <PlayCampaign
       campaignName={campaignName}
       enabled={gameEnabled}
       onComplete={completeGame}
       onListAsset={listWildsCard}
-      ownerReceizId={receizHandle}
+      ownerReceizId={receizOwnerId}
     />
+  ) : (
+    <section aria-label="Preparing Wilds Receiz ID" className="wilds-canvas-fallback">
+      Preparing your locally verified Receiz ID…
+    </section>
   );
 
   return (
