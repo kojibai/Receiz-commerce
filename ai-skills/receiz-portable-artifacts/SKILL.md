@@ -20,7 +20,7 @@ Label every byte sequence before use:
 
 ## Required SDK artifact workflow
 
-The exact v113 application-operation inventory is `receiz.artifact.verify`, `receiz.artifact.admit`, `receiz.artifact.append.plan`, `receiz.identity.capability.sign`, `receiz.artifact.transition.seal`, `receiz.artifact.transition.stage`, `receiz.artifact.transition.commit`, `receiz.admission.command.execute`, `receiz.public-proof.projection.locate`, `receiz.artifact.global.resolve`, and `receiz.artifact.offline.reconcile`. These identifiers describe the application authority matrix; they do not create authority.
+The exact v114 application-operation inventory is `receiz.artifact.verify`, `receiz.artifact.admit`, `receiz.artifact.append.plan`, `receiz.identity.capability.sign`, `receiz.artifact.transition.seal`, `receiz.artifact.transition.stage`, `receiz.artifact.transition.commit`, `receiz.admission.command.execute`, `receiz.public-proof.projection.locate`, `receiz.artifact.global.resolve`, `receiz.artifact.offline.reconcile`, `receiz.profile-showcase.genesis.plan`, `receiz.profile-showcase.append.plan`, `receiz.economy-showcase.genesis.plan`, `receiz.economy-showcase.append.plan`, and `receiz.economy-showcase.merge.plan`. These identifiers describe the application authority matrix; they do not create authority.
 
 ```ts
 const payload = { bytes: applicationPayload, mimeType: applicationMimeType };
@@ -40,7 +40,7 @@ Independently hash the saved bytes and require equality with `sealedArtifact.art
 ## Twelve-step artifact workflow
 
 1. Label the input bytes as `payload`; never call them an artifact.
-2. Load the active canonical v113 registry and `ARTIFACT-001` through `ARTIFACT-030`.
+2. Load the active canonical v114 registry and `ARTIFACT-001` through `ARTIFACT-030`.
 3. Call `receiz.assets.createProofObject` so Receiz.com performs native Record -> Seal.
 4. Require an SDK-issued `receiz.native-record-seal`; failure returns no artifact and no payload fallback.
 5. Require complete enclosing-artifact verification, integrity, Signature V4, owner, claim, verify path, and payload binding.
@@ -126,7 +126,7 @@ Atomic commit result:
 ## Constitutional workflow
 
 1. Inspect the repository and installed SDK version.
-2. Load the active canonical v113 registry and applicable constitutional laws.
+2. Load the active canonical v114 registry and applicable constitutional laws.
 3. Identify every authority boundary affected by the change.
 4. Write the implementation contract before implementation.
 5. Implement canonical changes only through SDK commands.
@@ -175,4 +175,4 @@ Admission begins from runtime-custodied verification of the exact enclosing arti
 
 Deterministic plan identity and unique execution-attempt identity are separate. MCP may reuse a confirmation digest only while the identical attempt is actively pending; committed and failed attempts are terminal and require a fresh confirmation. Expected authority failures are structured, immutable, machine-readable, and report zero writes.
 
-Historical sealed proof objects remain exact-byte verifiable evidence. Historical runtime admissions, histories, actors, capabilities, plans, candidates, stores, or confirmations cannot authorize a current v113 receiver; exact bytes crossing a process require `reverify-exact-bytes`, followed by current profile admission and `same-runtime-custody` through plan, capability, seal, stage, independent byte resolution, atomic named-domain acceptance, and report-only receipt.
+Historical sealed proof objects remain exact-byte verifiable evidence. Historical runtime admissions, histories, actors, capabilities, plans, candidates, stores, or confirmations cannot authorize a current v114 receiver; exact bytes crossing a process require `reverify-exact-bytes`, followed by current profile admission and `same-runtime-custody` through plan, capability, seal, stage, independent byte resolution, atomic named-domain acceptance, and report-only receipt.

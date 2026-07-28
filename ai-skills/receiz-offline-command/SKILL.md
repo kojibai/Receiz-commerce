@@ -63,13 +63,13 @@ Show the admitted actor, operation kind, payload consequences, idempotency key, 
 
 ## MCP parity
 
-There is no current MCP queue mutation authority. Do not invent one and do not call retired proof-head, receipt, extraction, explanation, or Record-to-Seal helper tools. When replay produces an artifact, begin with `receiz_artifact_verify`; use the remaining four v112 artifact-transition tools only when current admission, verified actor/history, capability, staging, and named-domain commitment evidence are present.
+There is no current MCP queue mutation authority. Do not invent one and do not call retired proof-head, receipt, extraction, explanation, or Record-to-Seal helper tools. When replay produces an artifact, begin with `receiz_artifact_verify`; use the remaining four v113 artifact-transition tools only when current admission, verified actor/history, capability, staging, and named-domain commitment evidence are present.
 
 ## Emulator fixture
 
 Run the current offline proof replay, durable queue, and artifact-substitution rejection contracts. Historical obsolete-versioned signed-command fixtures remain archival evidence only.
 
-## v112 artifact-derived authority
+## v113 artifact-derived authority
 
 Engineers remain free to build whatever they choose, but conforming Receiz receivers recognize authority only when every authority-bearing value is provably derived from independently verified artifact truth. Custom JavaScript objects, callbacks, normalized histories, local receipts, server rows, sessions, MCP memory, and AI explanations remain application data or inspection material; their shape never creates Receiz authority.
 
@@ -77,4 +77,4 @@ Admission begins from runtime-custodied verification of the exact enclosing arti
 
 Deterministic plan identity and unique execution-attempt identity are separate. MCP may reuse a confirmation digest only while the identical attempt is actively pending; committed and failed attempts are terminal and require a fresh confirmation. Expected authority failures are structured, immutable, machine-readable, and report zero writes.
 
-Historical sealed proof objects remain exact-byte verifiable evidence. Historical runtime admissions, histories, actors, capabilities, plans, candidates, stores, or confirmations cannot authorize a current v112 receiver; exact bytes crossing a process require `reverify-exact-bytes`, followed by current profile admission and `same-runtime-custody` through plan, capability, seal, stage, independent byte resolution, atomic named-domain acceptance, and report-only receipt.
+Historical sealed proof objects remain exact-byte verifiable evidence. Historical runtime admissions, histories, actors, capabilities, plans, candidates, stores, or confirmations cannot authorize a current v114 receiver; exact bytes crossing a process require `reverify-exact-bytes`, followed by current profile admission and `same-runtime-custody` through plan, capability, seal, stage, independent byte resolution, atomic named-domain acceptance, and report-only receipt.

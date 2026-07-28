@@ -55,6 +55,22 @@ describe("Receiz v114 dependency contract", () => {
     assert.equal(pkg.pnpm?.overrides?.["@receiz/ai-skills"], undefined);
   });
 
+  it("mirrors the published v114 AI-skills contract into the repository", () => {
+    const skillsIndex = JSON.parse(readFileSync("ai-skills/skills.json", "utf8")) as {
+      schema?: string;
+      version?: string;
+      registryDigest?: string;
+      operationMatrixDigest?: string;
+      skills?: unknown[];
+    };
+
+    assert.equal(skillsIndex.schema, "receiz.ai-skills-index.v114");
+    assert.equal(skillsIndex.version, "114.0.0");
+    assert.equal(skillsIndex.registryDigest, "ae912154d97b695464c3a19361bceb9440bc5d703a1d9129edac92c64192e29a");
+    assert.equal(skillsIndex.operationMatrixDigest, "fd4ea8fccd867a0b9aab772ea6c5827ea8bdfe4c7fbed017c5a4843a40109c4f");
+    assert.equal(skillsIndex.skills?.length, 32);
+  });
+
   it("documents the supported MCP pair and authoritative theme publication", () => {
     const readme = readFileSync("README.md", "utf8");
     const rails = readFileSync("docs/SDK_RAILS.md", "utf8");
