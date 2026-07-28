@@ -7,7 +7,7 @@ async function read(path: string) {
   return readFile(resolve(process.cwd(), path), "utf8");
 }
 
-test("the repository identifies the shipped release as 4.6.0", async () => {
+test("the repository identifies the shipped release as 4.7.0 on the public Receiz v114 graph", async () => {
   const packageJson = JSON.parse(await read("package.json")) as {
     version?: string;
     dependencies?: Record<string, string>;
@@ -15,14 +15,15 @@ test("the repository identifies the shipped release as 4.6.0", async () => {
   };
   const lockfile = await read("pnpm-lock.yaml");
 
-  assert.equal(packageJson.version, "4.6.0");
-  assert.equal(packageJson.dependencies?.["@receiz/sdk"], "113.0.0");
-  assert.equal(packageJson.dependencies?.["@receiz/mcp-server"], "113.0.0");
-  assert.equal(packageJson.dependencies?.["@receiz/ai-skills"], "113.0.0");
-  assert.equal(packageJson.scripts?.["receiz:check"], "receiz app check --target 113.0.0 --json");
-  assert.match(lockfile, /'@receiz\/sdk':[\s\S]*?version: file:vendor\/receiz-sdk-113\.0\.0\.tgz/);
-  assert.match(lockfile, /'@receiz\/mcp-server':[\s\S]*?version: file:vendor\/receiz-mcp-server-113\.0\.0\.tgz/);
-  assert.match(lockfile, /'@receiz\/ai-skills':[\s\S]*?version: file:vendor\/receiz-ai-skills-113\.0\.0\.tgz/);
+  assert.equal(packageJson.version, "4.7.0");
+  assert.equal(packageJson.dependencies?.["@receiz/sdk"], "114.0.0");
+  assert.equal(packageJson.dependencies?.["@receiz/mcp-server"], "114.0.0");
+  assert.equal(packageJson.dependencies?.["@receiz/ai-skills"], "114.0.0");
+  assert.equal(packageJson.scripts?.["receiz:check"], "receiz app check --target 114.0.0 --json");
+  assert.doesNotMatch(lockfile, /file:vendor\/receiz-(?:sdk|mcp-server|ai-skills)-113\.0\.0\.tgz/);
+  assert.match(lockfile, /@receiz\/sdk@114\.0\.0/);
+  assert.match(lockfile, /@receiz\/mcp-server@114\.0\.0/);
+  assert.match(lockfile, /@receiz\/ai-skills@114\.0\.0/);
 });
 
 test("the v4 release preserves prior evidence and adds a complete v3-to-v4 qualification record", async () => {

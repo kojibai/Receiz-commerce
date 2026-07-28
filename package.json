@@ -1,6 +1,6 @@
 {
   "name": "receiz-commerce-kit",
-  "version": "4.6.0",
+  "version": "4.7.0",
   "description": "Open-source Receiz SDK commerce SaaS template for proof-sealed storefronts, rewards, checkout, domains, and admin builders.",
   "license": "MIT",
   "private": true,
@@ -38,7 +38,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "receiz:doctor": "node scripts/receiz-doctor.mjs",
-    "receiz:check": "receiz app check --target 113.0.0 --json",
+    "receiz:check": "receiz app check --target 114.0.0 --json",
     "receiz:conformance": "receiz conformance",
     "receiz:migrate:dry-run": "receiz app upgrade --root . --json",
     "receiz:migrate:verify": "node scripts/receiz-v113-migration-verify.mjs --root .",
@@ -54,9 +54,9 @@
   "dependencies": {
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.6.1",
-    "@receiz/ai-skills": "113.0.0",
-    "@receiz/mcp-server": "113.0.0",
-    "@receiz/sdk": "113.0.0",
+    "@receiz/ai-skills": "114.0.0",
+    "@receiz/mcp-server": "114.0.0",
+    "@receiz/sdk": "114.0.0",
     "lucide-react": "^0.468.0",
     "next": "^15.0.0",
     "qrcode": "^1.5.4",
@@ -78,9 +78,6 @@
   },
   "pnpm": {
     "overrides": {
-      "@receiz/ai-skills": "file:vendor/receiz-ai-skills-113.0.0.tgz",
-      "@receiz/mcp-server": "file:vendor/receiz-mcp-server-113.0.0.tgz",
-      "@receiz/sdk": "file:vendor/receiz-sdk-113.0.0.tgz",
       "postcss": ">=8.5.10"
     }
   }
