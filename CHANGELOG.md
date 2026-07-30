@@ -2,6 +2,14 @@
 
 All notable changes to Receiz Commerce Kit will be documented here.
 
+## 4.8.0 - Receiz v116 Coordinated Release
+
+- Upgraded the SDK, MCP server, and all thirty-two AI skills to exact public `116.0.0` packages with published integrity and lockfile parity.
+- Applied the confirmed v116 integration preview, adding generated Connect callback, verification, webhook, adapter, environment, capability, emulator, proof-memory, and conformance surfaces.
+- Expanded the application contract to the canonical sixteen-operation v116 matrix and chained the application law overlay to canonical registry digest `9bf61fcf4541edf565bb2ded252e35a976a3ca7c9176dea0f1ffac74ce192a80`.
+- Added the v114→v116 migration attestation, verifier, CLI qualification, release lock, synchronized AI-skill mirror, and dated release audit.
+- Preserved all historical sealed artifacts, registries, attestations, and proof history without a production data migration or deployment.
+
 ## 4.6.0 - Receiz v113 Global Coordination
 
 - Upgraded SDK, MCP server, and all thirty-two AI skills to the exact official `113.0.0` artifacts with integrity, lockfile, and release-lock parity.

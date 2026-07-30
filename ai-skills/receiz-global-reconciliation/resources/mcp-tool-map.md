@@ -10,7 +10,7 @@ Historical v112 compatibility inventory (the first five current tools):
 4. `receiz_artifact_transition_seal_and_stage`
 5. `receiz_artifact_transition_commit`
 
-Multi-addition v113 reconciliation flow:
+V116 current multi-addition reconciliation flow (preserving the immutable inherited wire schema):
 
 1. `receiz_artifact_global_resolve`
 2. `receiz_artifact_reconcile_plan`

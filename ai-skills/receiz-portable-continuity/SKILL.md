@@ -67,13 +67,13 @@ Use `receiz_artifact_verify` for the carried bytes, `receiz_artifact_admit` for 
 
 ## Emulator fixture
 
-Run the current identity-artifact helper, native artifact round-trip, and artifact-substitution rejection contracts. Historical obsolete-versioned reconciliation fixtures are archival evidence only and are not a v113 operation contract.
+Run the current identity-artifact helper, native artifact round-trip, and artifact-substitution rejection contracts. Historical obsolete-versioned reconciliation fixtures are archival evidence only and are not a current v116 operation contract.
 
-## v113 continuity recovery
+## v116 continuity recovery
 
 Use `verifyReceizArtifact`, profile admission, and `planArtifactAppend` to preserve parent-linked verified history and project the latest authorized state offline. Report transition and plan digests, prior and next head, complete provenance, explicit actions, and the non-authoritative receipt. Reconnect may append verified descendants only; it may not rewrite prior history or unknown namespaces.
 
-## v113 artifact-derived authority
+## v116 artifact-derived authority
 
 Engineers remain free to build whatever they choose, but conforming Receiz receivers recognize authority only when every authority-bearing value is provably derived from independently verified artifact truth. Custom JavaScript objects, callbacks, normalized histories, local receipts, server rows, sessions, MCP memory, and AI explanations remain application data or inspection material; their shape never creates Receiz authority.
 
@@ -81,4 +81,4 @@ Admission begins from runtime-custodied verification of the exact enclosing arti
 
 Deterministic plan identity and unique execution-attempt identity are separate. MCP may reuse a confirmation digest only while the identical attempt is actively pending; committed and failed attempts are terminal and require a fresh confirmation. Expected authority failures are structured, immutable, machine-readable, and report zero writes.
 
-Historical sealed proof objects remain exact-byte verifiable evidence. Historical runtime admissions, histories, actors, capabilities, plans, candidates, stores, or confirmations cannot authorize a current v114 receiver; exact bytes crossing a process require `reverify-exact-bytes`, followed by current profile admission and `same-runtime-custody` through plan, capability, seal, stage, independent byte resolution, atomic named-domain acceptance, and report-only receipt.
+Historical sealed proof objects remain exact-byte verifiable evidence. Historical runtime admissions, histories, actors, capabilities, plans, candidates, stores, or confirmations cannot authorize a current v116 receiver; exact bytes crossing a process require `reverify-exact-bytes`, followed by current profile admission and `same-runtime-custody` through plan, capability, seal, stage, independent byte resolution, atomic named-domain acceptance, and report-only receipt.

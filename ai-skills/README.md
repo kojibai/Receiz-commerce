@@ -1,8 +1,16 @@
 # Receiz AI Skills
 
-The `114.0.0` package is a registry-bound operating-contract distribution beneath Receiz proof authority. AI instructions, MCP confirmations, JSON objects, database rows, staging references, and receipts never become proof or runtime authority.
+The `116.0.0` package is a registry-bound operating-contract distribution beneath Receiz proof authority. AI instructions, MCP confirmations, JSON objects, database rows, staging references, and receipts never become proof or runtime authority.
 
-## V113 artifact authority chain
+## V116 artifact authority chain
+
+V116 carries two established proof-object laws unchanged:
+`receiz.native_capture.v1` binds exact bytes from Receiz's dedicated camera
+ceremony, and `receiz.pbi.proof-object-authorship.v1` appends verified PBI
+authorship to an already verified predecessor. Signing is unavailable before
+canonical verification. Multi-signer history remains ordered forever, local
+settlement completes before optional global publication, and authorship never
+changes ownership, media bytes, capture provenance, or prior proof.
 
 The exact current sequence is: verify exact bytes → profile admission → verified actor/history → transition → plan/domain/effects/idempotency → plan-bound capability → seal → durable stage → independent byte resolution → atomic named-domain acceptance → report-only receipt.
 
@@ -10,16 +18,16 @@ Exact bytes cross a process only as bytes and require `reverify-exact-bytes`. Ve
 
 The single current MCP artifact inventory contains nine tools: `receiz_artifact_verify`, `receiz_artifact_admit`, `receiz_artifact_append_plan`, `receiz_artifact_transition_seal_and_stage`, `receiz_artifact_transition_commit`, `receiz_artifact_global_resolve`, `receiz_artifact_reconcile_plan`, `receiz_artifact_reconcile_stage`, and `receiz_artifact_reconcile_commit`. The first five are also the explicitly historical v112 compatibility inventory, not a second current surface. A sealed candidate is a proof object but not the accepted head. Stage writes no head and its reference is non-authoritative. Commit resolves and reverifies staged bytes before atomic named-domain acceptance. `COMMIT_DOMAIN_MISMATCH` is distinct from same-domain `IDEMPOTENCY_CONFLICT`; registry-derived effects stay outside the portable transition digest; unknown namespaces remain byte-preserved.
 
-`client.admission.browserStore` is durable admission coordination only: it stores no proof object or sealed artifact bytes and never blocks known-artifact first paint. V113 production reconciliation uses the provider-neutral `client.coordination` rail and never exposes Supabase mechanics. Receiz-generated files retain declared ownership, while `receiz.extensions.ts` is developer-owned and must never be overwritten.
+`client.admission.browserStore` is durable admission coordination only: it stores no proof object or sealed artifact bytes and never blocks known-artifact first paint. V116 production reconciliation preserves the provider-neutral `client.coordination` rail and never exposes Supabase mechanics. Receiz-generated files retain declared ownership, while `receiz.extensions.ts` is developer-owned and must never be overwritten.
 
 `receiz-build-production-system` remains the constitutional orchestration skill for substantial
 Receiz applications. Fifteen focused constitutional skills supply architecture,
 domain, law, command, authority, replay, offline, causal, artifact, migration,
 performance, observability, testing, and release contracts. The earlier nine
 domain skill names remain packaged for compatibility. Seven operation skill names first introduced in obsolete-versioned now
-describe current v114 outcomes for identity profiles, portable continuity, bearer ownership, offline transport,
+describe current v116 outcomes for identity profiles, portable continuity, bearer ownership, offline transport,
 proof media, cross-app state, and admission evidence. Their retired obsolete-versioned mechanisms are not active defaults.
-One dedicated `receiz-global-reconciliation` skill governs accepted-head resolution, verified offline reconciliation, structural divergence, first paint, indeterminate recovery, and effects. Every current manifest uses package version `114.0.0`, requires SDK/MCP `>=114.0.0 <115.0.0`, and binds ruleset `114.0.0` to registry digest `ae912154d97b695464c3a19361bceb9440bc5d703a1d9129edac92c64192e29a` and operation-matrix digest `fd4ea8fccd867a0b9aab772ea6c5827ea8bdfe4c7fbed017c5a4843a40109c4f` from SDK source.
+One dedicated `receiz-global-reconciliation` skill governs accepted-head resolution, verified offline reconciliation, structural divergence, first paint, indeterminate recovery, and effects. Every current manifest uses package version `116.0.0`, requires SDK/MCP `>=116.0.0 <117.0.0`, and binds ruleset `116.0.0` to registry digest `9bf61fcf4541edf565bb2ded252e35a976a3ca7c9176dea0f1ffac74ce192a80` and operation-matrix digest `ec5829eeec039c1f4885d056b8cd6cf6506d08547cee58daa229ecbd44155420` from SDK source.
 
 This package teaches AI agents how to understand, verify, build with, and operate Receiz from the existing repository surfaces.
 
@@ -39,9 +47,9 @@ Agents may acquire scoped delegated access through the official Receiz Connect/O
 
 ## How Agents Should Use This Package
 
-Start with `receiz-build-production-system` when work spans multiple constitutional domains and `receiz-global-reconciliation` for named-domain coordination. Machine-readable manifests require the exact active canonical v114 registry and operation-matrix digests, command-only mutation, independent verification, MCP conformance, and a passing release lock. Use a focused operation skill for SDK/MCP implementation and a constitutional skill for broader system law. Stable obsolete-versioned wire schemas remain available only through the explicit historical `@receiz/sdk/obsolete-versioned` package entry; current skills never teach their key, head, receipt, reconcile, or signed-command mechanics as a current outcome.
+Start with `receiz-build-production-system` when work spans multiple constitutional domains and `receiz-global-reconciliation` for named-domain coordination. Machine-readable manifests require the exact active canonical v116 registry and operation-matrix digests, command-only mutation, independent verification, MCP conformance, and a passing release lock. Use a focused operation skill for SDK/MCP implementation and a constitutional skill for broader system law. Stable obsolete-versioned wire schemas remain available only through the explicit historical `@receiz/sdk/obsolete-versioned` package entry; current skills never teach their key, head, receipt, reconcile, or signed-command mechanics as a current outcome.
 
-The v114 operation skills are executable contracts. Current profile work uses the neutral authenticated same-UID profile operation. Current bearer ownership accepts a complete verified artifact, derives prior ownership from carried proof, and returns a native Record -> Seal artifact. Proof media uses the same native artifact custody and projects only a verified URL beneath it. These outcomes have no active identity-key, caller-head, claim-key, or receipt prerequisite. MCP calls the same SDK outcomes and never creates a parallel authority.
+The v116 operation skills are executable contracts. Current profile work uses the neutral authenticated same-UID profile operation. Current bearer ownership accepts a complete verified artifact, derives prior ownership from carried proof, and returns a native Record -> Seal artifact. Proof media uses the same native artifact custody and projects only a verified URL beneath it. These outcomes have no active identity-key, caller-head, claim-key, or receipt prerequisite. MCP calls the same SDK outcomes and never creates a parallel authority.
 
 Stable obsolete-versioned schema names and their head/receipt mechanics remain explicitly historical compatibility, not the active/default profile, bearer, or proof-media contract.
 

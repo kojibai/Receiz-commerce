@@ -16,7 +16,7 @@
 - Do not invent schemas, tool names, issuers, rarity levels, ownership states, or receipt IDs.
 - Do not create a parallel auth model that downgrades Receiz ID, PBI, Receiz Key, Identity Record, or Identity Seal.
 - Do not make UI cache, React state, database rows, or model memory final authority.
-- Never serialize or reconstruct v113 verified artifacts, admissions, histories, actors, plans, verified capabilities, candidates, or stores. Preserve same-runtime custody and cross process boundaries only with exact bytes requiring reverification.
+- Never serialize or reconstruct current verified artifacts, admissions, histories, actors, plans, verified capabilities, candidates, or stores. Preserve same-runtime custody and cross-process boundaries only with exact bytes requiring reverification.
 - Preserve generated-file ownership declarations. Never overwrite developer-owned `receiz.extensions.ts`.
 - Do not hide verification behind a preview or share page.
 
