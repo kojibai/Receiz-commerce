@@ -7,7 +7,7 @@ description: Use when an agent must verify, explain, debug, or build Receiz offl
 
 Offline verification is a Receiz primitive. It verifies artifact truth without requiring the server, database, session, or marketplace to answer first.
 
-## Binding v116 artifact law
+## Binding v118 artifact law
 
 A Receiz artifact is the exact byte sequence returned by native Record -> Seal. The inner payload is never an acceptable substitute.
 
@@ -20,7 +20,7 @@ Label every byte sequence before offline verification:
 
 ## Required SDK artifact workflow
 
-The exact v116 application-operation inventory is `receiz.artifact.verify`, `receiz.artifact.admit`, `receiz.artifact.append.plan`, `receiz.identity.capability.sign`, `receiz.artifact.transition.seal`, `receiz.artifact.transition.stage`, `receiz.artifact.transition.commit`, `receiz.admission.command.execute`, `receiz.public-proof.projection.locate`, `receiz.artifact.global.resolve`, `receiz.artifact.offline.reconcile`, `receiz.profile-showcase.genesis.plan`, `receiz.profile-showcase.append.plan`, `receiz.economy-showcase.genesis.plan`, `receiz.economy-showcase.append.plan`, and `receiz.economy-showcase.merge.plan`. These identifiers describe the application authority matrix; they do not create authority.
+The exact v118 application-operation inventory is `receiz.artifact.verify`, `receiz.artifact.admit`, `receiz.artifact.append.plan`, `receiz.identity.capability.sign`, `receiz.artifact.transition.seal`, `receiz.artifact.transition.stage`, `receiz.artifact.transition.commit`, `receiz.admission.command.execute`, `receiz.public-proof.projection.locate`, `receiz.artifact.global.resolve`, `receiz.artifact.offline.reconcile`, `receiz.profile-showcase.genesis.plan`, `receiz.profile-showcase.append.plan`, `receiz.economy-showcase.genesis.plan`, `receiz.economy-showcase.append.plan`, and `receiz.economy-showcase.merge.plan`. These identifiers describe the application authority matrix; they do not create authority.
 
 ```ts
 const payload = { bytes: applicationPayload, mimeType: applicationMimeType };
@@ -40,7 +40,7 @@ Independently hash the saved bytes and require equality with `sealedArtifact.art
 ## Twelve-step artifact workflow
 
 1. Label the input bytes as `payload`; never call them an artifact.
-2. Load the active canonical v116 registry and `ARTIFACT-001` through `ARTIFACT-030`.
+2. Load the active canonical v118 registry and `ARTIFACT-001` through `ARTIFACT-030`.
 3. Call `receiz.assets.createProofObject` so Receiz.com performs native Record -> Seal.
 4. Require an SDK-issued `receiz.native-record-seal`; failure returns no artifact and no payload fallback.
 5. Require complete enclosing-artifact verification, integrity, Signature V4, owner, claim, verify path, and payload binding.
@@ -180,7 +180,7 @@ Load resources as needed:
 - [Airplane mode principle](resources/airplane-mode-principle.md)
 - [Security boundaries](resources/security-boundaries.md)
 
-## v116 unified admission and recovery
+## v118 unified admission and recovery
 
 First call `verifyReceizArtifact(file)`. Then call `receiz.artifacts.admit(verification, profileOptions)` in the same runtime. Admission reports profile membership and primitive-specific assessments; it does not authorize an operation. Verified actor evidence exists only after identity-profile admission, never from a caller constraint or structural object.
 
@@ -206,7 +206,7 @@ Operation identity:
 Atomic commit result:
 ```
 
-## v116 artifact-derived authority
+## v118 artifact-derived authority
 
 Engineers remain free to build whatever they choose, but conforming Receiz receivers recognize authority only when every authority-bearing value is provably derived from independently verified artifact truth. Custom JavaScript objects, callbacks, normalized histories, local receipts, server rows, sessions, MCP memory, and AI explanations remain application data or inspection material; their shape never creates Receiz authority.
 
@@ -214,4 +214,4 @@ Admission begins from runtime-custodied verification of the exact enclosing arti
 
 Deterministic plan identity and unique execution-attempt identity are separate. MCP may reuse a confirmation digest only while the identical attempt is actively pending; committed and failed attempts are terminal and require a fresh confirmation. Expected authority failures are structured, immutable, machine-readable, and report zero writes.
 
-Historical sealed proof objects remain exact-byte verifiable evidence. Historical runtime admissions, histories, actors, capabilities, plans, candidates, stores, or confirmations cannot authorize a current v116 receiver; exact bytes crossing a process require `reverify-exact-bytes`, followed by current profile admission and `same-runtime-custody` through plan, capability, seal, stage, independent byte resolution, atomic named-domain acceptance, and report-only receipt.
+Historical sealed proof objects remain exact-byte verifiable evidence. Historical runtime admissions, histories, actors, capabilities, plans, candidates, stores, or confirmations cannot authorize a current v118 receiver; exact bytes crossing a process require `reverify-exact-bytes`, followed by current profile admission and `same-runtime-custody` through plan, capability, seal, stage, independent byte resolution, atomic named-domain acceptance, and report-only receipt.

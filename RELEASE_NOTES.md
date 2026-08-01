@@ -1,16 +1,16 @@
-# Receiz Commerce Kit v4.8.0 — Receiz v116
+# Receiz Commerce Kit v4.9.0 — Receiz v118
 
-Release date: July 30, 2026
+Release date: August 1, 2026
 
 Status: General Availability · repository release
 
-SDK target: `@receiz/sdk@116.0.0`
+SDK target: `@receiz/sdk@118.0.0`
 
-V4.8 aligns the SDK, MCP server, and thirty-two-skill stack at the official public v116 release. The app contract declares all sixteen current authority operations and includes the SDK-generated integration routes, project adapter, capability description, environment contract, proof memory, emulator fixture, and conformance test.
+V4.9 aligns the SDK, MCP server, and thirty-two-skill stack at the official public v118 release. The app contract declares all sixteen current authority operations and includes the SDK-generated integration routes, project adapter, capability description, environment contract, proof memory, emulator fixture, and conformance test.
 
 Known sealed artifact truth paints before remote startup. Every returned artifact and causal addition is independently reverified. Planning is read-only, staging writes immutable candidate bytes without advancing a head, and commitment independently resolves the exact staged version before one atomic expected-head acceptance. Sibling branches and namespace conflicts remain explicit divergence; there is no last-write-wins, timestamp winner, silent merge, or rebase. Accepted-head status and external-effect delivery remain separate, and an indeterminate commit remains recoverable by attempt identity.
 
-The app overlay chains to canonical v116 digest `9bf61fcf4541edf565bb2ded252e35a976a3ca7c9176dea0f1ffac74ce192a80` and attests operation-matrix digest `ec5829eeec039c1f4885d056b8cd6cf6506d08547cee58daa229ecbd44155420`. Published integrity, lockfile parity, all thirty artifact laws, all nine current MCP artifact tools, thirty-two aligned AI skills, official zero-network conformance, migration verification, tests, typecheck, lint, production build, secret scan, SDK doctor, and the v116 release lock remain release gates.
+The app overlay chains to canonical v118 digest `c284bd39a891c1a828b532523bd548507570819c32e307d79b8043f06d2d3360` and attests operation-matrix digest `153b2472830567ec3b445c2c1b4102e4c036ed4c45cc374d40d0079096a40f54`. Published integrity, lockfile parity, all forty-four v118 artifact laws, all nine current MCP artifact tools, thirty-two aligned AI skills, official zero-network conformance, migration verification, tests, typecheck, lint, production build, secret scan, SDK doctor, and the v118 release lock remain release gates.
 
 ---
 
@@ -26,7 +26,7 @@ V4.5 aligns the SDK, MCP server, and thirty-one-skill stack at the official v112
 
 Portable appends now bind a verified predecessor, verified proof history, verified actor, current discovered registry law, canonical event, expected head, named commit domain, and domain-scoped idempotency identity. The portable transition digest excludes plan coordination and external effects; registry law derives those effects. Successor bytes are sealed, durably staged without a head write, independently resolved and reverified by the store, and accepted atomically in the named domain. Append receipts remain report-only.
 
-The app law overlay chains to the package-embedded canonical v112 registry and adds `ARTIFACT-021` through `ARTIFACT-030`. Exact official tarball integrity, lockfile parity, all thirty artifact laws, the five current MCP coordination tools, v112 AI-skill contracts, official conformance, the v111→v112 attestation, tests, typecheck, lint, production build, secret scan, and SDK doctor remain release gates.
+The app law overlay chains to the package-embedded canonical v112 registry and adds `ARTIFACT-021` through `ARTIFACT-030`. Exact official tarball integrity, lockfile parity, all forty-four v118 artifact laws, the five current MCP coordination tools, v112 AI-skill contracts, official conformance, the v111→v112 attestation, tests, typecheck, lint, production build, secret scan, and SDK doctor remain release gates.
 
 ---
 

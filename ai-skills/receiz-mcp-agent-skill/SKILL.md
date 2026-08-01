@@ -88,6 +88,6 @@ Resources:
 - [Action confirmation rules](resources/action-confirmation-rules.md)
 - [Response templates](resources/response-templates.md)
 
-## v116 artifact recovery tools
+## v118 artifact recovery tools
 
 Use exactly `receiz_artifact_verify`, `receiz_artifact_admit`, `receiz_artifact_append_plan`, `receiz_artifact_transition_seal_and_stage`, and `receiz_artifact_transition_commit`. Never put an admission, history, actor, plan, verified capability, candidate, or store in MCP JSON; same-runtime custody is mandatory and exact bytes crossing a process require `reverify-exact-bytes`.

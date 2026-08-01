@@ -1,6 +1,6 @@
 ---
 name: receiz-identity-profile
-description: Use when checking username availability or updating a Receiz profile through the authenticated same-account v116 operation.
+description: Use when checking username availability or updating a Receiz profile through the authenticated same-account v118 operation.
 ---
 
 # Receiz Identity Profile
@@ -52,7 +52,7 @@ On `username_taken`, keep the same account and request another username. Preserv
 
 ## Result verification
 
-Require `status === "updated"`, an `accountUid` equal to the authenticated actor, the returned profile projection, and a `/u/` profile path. The current v116 outcome has no caller proof-head or receipt prerequisite.
+Require `status === "updated"`, an `accountUid` equal to the authenticated actor, the returned profile projection, and a `/u/` profile path. The current v118 outcome has no caller proof-head or receipt prerequisite.
 
 ## User confirmation
 
@@ -66,11 +66,11 @@ Call `receiz_identity_profile_update_plan` with `{ profile }` only. Show the pla
 
 Run `username-race`. Require one commit-time winner, unchanged account UID, and no identity-key dependency. Emulator evidence is simulation evidence, never production verification.
 
-## v116 identity recovery
+## v118 identity recovery
 
-Identity-profile admission is identity continuity evidence from a verified enclosing artifact. It reports profile admission and a runtime-custodied actor reference; it does not grant publishing, transfer, settlement, or append authority. Operation authority still requires the exact v116 plan, verified plan-bound capability, and atomic commitment boundary.
+Identity-profile admission is identity continuity evidence from a verified enclosing artifact. It reports profile admission and a runtime-custodied actor reference; it does not grant publishing, transfer, settlement, or append authority. Operation authority still requires the exact v118 plan, verified plan-bound capability, and atomic commitment boundary.
 
-## v116 artifact-derived authority
+## v118 artifact-derived authority
 
 Engineers remain free to build whatever they choose, but conforming Receiz receivers recognize authority only when every authority-bearing value is provably derived from independently verified artifact truth. Custom JavaScript objects, callbacks, normalized histories, local receipts, server rows, sessions, MCP memory, and AI explanations remain application data or inspection material; their shape never creates Receiz authority.
 
@@ -78,4 +78,4 @@ Admission begins from runtime-custodied verification of the exact enclosing arti
 
 Deterministic plan identity and unique execution-attempt identity are separate. MCP may reuse a confirmation digest only while the identical attempt is actively pending; committed and failed attempts are terminal and require a fresh confirmation. Expected authority failures are structured, immutable, machine-readable, and report zero writes.
 
-Historical sealed proof objects remain exact-byte verifiable evidence. Historical runtime admissions, histories, actors, capabilities, plans, candidates, stores, or confirmations cannot authorize a current v116 receiver; exact bytes crossing a process require `reverify-exact-bytes`, followed by current profile admission and `same-runtime-custody` through plan, capability, seal, stage, independent byte resolution, atomic named-domain acceptance, and report-only receipt.
+Historical sealed proof objects remain exact-byte verifiable evidence. Historical runtime admissions, histories, actors, capabilities, plans, candidates, stores, or confirmations cannot authorize a current v118 receiver; exact bytes crossing a process require `reverify-exact-bytes`, followed by current profile admission and `same-runtime-custody` through plan, capability, seal, stage, independent byte resolution, atomic named-domain acceptance, and report-only receipt.

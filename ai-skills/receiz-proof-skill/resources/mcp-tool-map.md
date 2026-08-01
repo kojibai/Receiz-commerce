@@ -6,7 +6,7 @@ Source: `packages/receiz-mcp-server/src/index.ts`.
 
 MCP is not authority. It calls canonical Receiz SDK/API rails and reports the source primitive. Its responses remain beneath sealed artifact truth, deterministic proof object state, verified local truth, verified register append, and authenticated SDK/API projection.
 
-## V116 Current Artifact Tools
+## V118 Current Artifact Tools
 
 The single current nine-tool inventory is exactly `receiz_artifact_verify`, `receiz_artifact_admit`, `receiz_artifact_append_plan`, `receiz_artifact_transition_seal_and_stage`, `receiz_artifact_transition_commit`, `receiz_artifact_global_resolve`, `receiz_artifact_reconcile_plan`, `receiz_artifact_reconcile_stage`, and `receiz_artifact_reconcile_commit`. Verification, admission, resolution, and planning write nothing. Staging durably preserves sealed candidate bytes but advances no head. Commit independently resolves and reverifies staged bytes before atomic named-domain acceptance and returns a report-only receipt.
 

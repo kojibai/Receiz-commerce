@@ -1,6 +1,6 @@
 # MCP Tool Map
 
-## V116 Application Compiler
+## V118 Application Compiler
 
 | Need | Tool | Mutation |
 |---|---|---|
@@ -22,7 +22,7 @@ verification verdict or proof authority.
 
 Source: `packages/receiz-mcp-server/src/index.ts`.
 
-## V116 Current Profile And Ownership Outcomes
+## V118 Current Profile And Ownership Outcomes
 
 | Need | Tool | Mutation |
 |---|---|---|
@@ -37,7 +37,7 @@ The bearer plan verifies the complete sealed artifact with `client.artifacts.ver
 
 A verified proof object is not limited to the platform that created it. Any lawful platform may append authenticated ownership and history only while preserving the same immutable object identity, payload, provenance root, prior history, and unknown namespaces, then returning a complete verified proof object. These MCP tools invoke that same SDK continuity and never create an origin-platform lock or parallel chain.
 
-## V116 Current Artifact Coordination
+## V118 Current Artifact Coordination
 
 | Need | Tool | Boundary |
 |---|---|---|
@@ -114,7 +114,7 @@ Emulator output is labeled `sandboxVerified`; never translate it into Receiz ver
 - `receiz://sdk/docs`
 - `receiz://schemas/proof-object-v1`
 
-## V116 artifact coordination authority
+## V118 artifact coordination authority
 
 - `receiz_artifact_verify` — exact-byte verification; bytes crossing a process require `reverify-exact-bytes`.
 - `receiz_artifact_admit` — profile admission from the same-runtime verified artifact; zero writes.
