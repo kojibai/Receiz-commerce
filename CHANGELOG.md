@@ -2,6 +2,14 @@
 
 All notable changes to Receiz Commerce Kit will be documented here.
 
+## 4.10.0 - Receiz v119 Coordinated Release
+
+- Upgraded the SDK, MCP server, and all thirty-two AI skills to exact public `119.0.0` packages with published integrity and lockfile parity.
+- Confirmed the official v119 integration planner requires zero source actions and zero repository writes.
+- Chained the application law overlay to canonical v119 registry digest `49c167a437ec7c0e486412dd62c54af4abdf94eda1ebc18d263a027d105cecd9` and adopted the canonical sixteen-operation matrix digest `53cf9d6862b2396e2fe7864f8607c00c4e3b6e31b082ab5c5c8dff088fcb52c1`.
+- Added v119 recursive-continuity, enclosing sports-card proof, migration attestation, verifier, CLI qualification, release lock, synchronized AI-skill mirror, and dated release audit evidence.
+- Preserved historical sealed artifacts, registries, attestations, and proof history without a production data migration or deployment.
+
 ## 4.9.0 - Receiz v118 Coordinated Release
 
 - Upgraded the SDK, MCP server, and all thirty-two AI skills to exact public `118.0.0` packages with published integrity and lockfile parity.

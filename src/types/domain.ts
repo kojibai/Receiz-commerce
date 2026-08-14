@@ -421,6 +421,7 @@ export type ReceizAssetManifestProjection = {
     | "sports_card"
     | "signal_card"
     | "wallet_note"
+    | "reserve_funding"
     | "market_certificate"
     | "profile_original"
     | "document";

@@ -1,9 +1,9 @@
 {
   "schema": "receiz.constitution.registry.v1",
-  "version": "118.0.0",
-  "previousRegistryDigest": "c284bd39a891c1a828b532523bd548507570819c32e307d79b8043f06d2d3360",
-  "effectiveKai": "13417900",
-  "createdAt": "2026-08-01T10:45:00.000Z",
+  "version": "119.0.0",
+  "previousRegistryDigest": "49c167a437ec7c0e486412dd62c54af4abdf94eda1ebc18d263a027d105cecd9",
+  "effectiveKai": "13423772",
+  "createdAt": "2026-08-01T19:08:45.796Z",
   "predicateLanguageVersion": "receiz-law-expression.v1",
   "authority": {
     "registryPayloadIsAuthority": false,

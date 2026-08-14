@@ -1,16 +1,16 @@
-# Receiz Commerce Kit v4.9.0 — Receiz v118
+# Receiz Commerce Kit v4.10.0 — Receiz v119
 
-Release date: August 1, 2026
+Release date: August 14, 2026
 
 Status: General Availability · repository release
 
-SDK target: `@receiz/sdk@118.0.0`
+SDK target: `@receiz/sdk@119.0.0`
 
-V4.9 aligns the SDK, MCP server, and thirty-two-skill stack at the official public v118 release. The app contract declares all sixteen current authority operations and includes the SDK-generated integration routes, project adapter, capability description, environment contract, proof memory, emulator fixture, and conformance test.
+V4.10 aligns the SDK, MCP server, and thirty-two-skill stack at the official public v119 release. The app contract retains all sixteen current authority operations and the SDK-generated integration routes, project adapter, capability description, environment contract, proof memory, emulator fixture, and conformance test. The SDK migration planner reports the integration source compliant with zero actions and zero writes.
 
-Known sealed artifact truth paints before remote startup. Every returned artifact and causal addition is independently reverified. Planning is read-only, staging writes immutable candidate bytes without advancing a head, and commitment independently resolves the exact staged version before one atomic expected-head acceptance. Sibling branches and namespace conflicts remain explicit divergence; there is no last-write-wins, timestamp winner, silent merge, or rebase. Accepted-head status and external-effect delivery remain separate, and an indeterminate commit remains recoverable by attempt identity.
+Known sealed artifact truth paints before remote startup. Every returned artifact and causal addition is independently reverified. Planning is read-only, staging writes immutable candidate bytes without advancing a head, and commitment independently resolves the exact staged version before one atomic expected-head acceptance. V119 adds recursive-continuity law: Kai selects the highest verified causal head, Merkle roots commit exact appends, and Fibonacci links carry sparse ancestry. Sports-card admission still requires the verified enclosing proof object; no subpayload becomes authority.
 
-The app overlay chains to canonical v118 digest `c284bd39a891c1a828b532523bd548507570819c32e307d79b8043f06d2d3360` and attests operation-matrix digest `153b2472830567ec3b445c2c1b4102e4c036ed4c45cc374d40d0079096a40f54`. Published integrity, lockfile parity, all forty-four v118 artifact laws, all nine current MCP artifact tools, thirty-two aligned AI skills, official zero-network conformance, migration verification, tests, typecheck, lint, production build, secret scan, SDK doctor, and the v118 release lock remain release gates.
+The app overlay chains to canonical v119 digest `49c167a437ec7c0e486412dd62c54af4abdf94eda1ebc18d263a027d105cecd9` and attests operation-matrix digest `53cf9d6862b2396e2fe7864f8607c00c4e3b6e31b082ab5c5c8dff088fcb52c1`. Published integrity, lockfile parity, all forty-eight v119 artifact laws, all nine current MCP artifact tools, thirty-two aligned AI skills, official zero-network conformance, migration verification, tests, typecheck, lint, production build, secret scan, SDK doctor, and the v119 release lock remain release gates.
 
 ---
 

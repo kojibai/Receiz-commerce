@@ -1,13 +1,13 @@
-# Receiz AI Skills v118
+# Receiz AI Skills v119
 
-V118 preserves sealed proof/object authority and adds
+V119 preserves sealed proof/object authority and adds
 `receiz.native_capture.v1` plus
 `receiz.pbi.proof-object-authorship.v1`. Native Capture binds dedicated camera
 ceremony bytes. PBI authorship requires canonical predecessor verification,
 appends ordered history, settles locally before optional publication, and does
 not transfer ownership.
 
-This package ships 32 skills, 26 machine-readable manifests, and 23 OpenAI agent prompts. Every current manifest binds registry digest `c284bd39a891c1a828b532523bd548507570819c32e307d79b8043f06d2d3360` and application-operation-matrix digest `153b2472830567ec3b445c2c1b4102e4c036ed4c45cc374d40d0079096a40f54` from the v118 SDK source.
+This package ships 32 skills, 26 machine-readable manifests, and 23 OpenAI agent prompts. Every current manifest binds registry digest `49c167a437ec7c0e486412dd62c54af4abdf94eda1ebc18d263a027d105cecd9` and application-operation-matrix digest `53cf9d6862b2396e2fe7864f8607c00c4e3b6e31b082ab5c5c8dff088fcb52c1` from the v119 SDK source.
 
 ## Current MCP artifact inventory: nine tools
 

@@ -1,8 +1,8 @@
 {
-  "schema": "receiz.ai-skills-index.v118",
-  "version": "118.0.0",
-  "registryDigest": "c284bd39a891c1a828b532523bd548507570819c32e307d79b8043f06d2d3360",
-  "operationMatrixDigest": "153b2472830567ec3b445c2c1b4102e4c036ed4c45cc374d40d0079096a40f54",
+  "schema": "receiz.ai-skills-index.v119",
+  "version": "119.0.0",
+  "registryDigest": "49c167a437ec7c0e486412dd62c54af4abdf94eda1ebc18d263a027d105cecd9",
+  "operationMatrixDigest": "53cf9d6862b2396e2fe7864f8607c00c4e3b6e31b082ab5c5c8dff088fcb52c1",
   "currentMcpArtifactTools": [
     "receiz_artifact_verify",
     "receiz_artifact_admit",

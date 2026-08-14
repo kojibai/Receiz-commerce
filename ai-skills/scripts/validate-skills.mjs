@@ -350,12 +350,12 @@ function assertConstitutionalSkill(name) {
         if (!text.includes(section))
             fail(`${name}/SKILL.md missing section ${section}`);
     }
-    if (manifest.schema !== "receiz.ai-skill-contract.v118" || manifest.name !== name || manifest.version !== "118.0.0") {
+    if (manifest.schema !== "receiz.ai-skill-contract.v119" || manifest.name !== name || manifest.version !== "119.0.0") {
         fail(`${name}/manifest.json has invalid schema or name`);
     }
     const serialized = JSON.stringify(manifest);
     for (const required of [
-        ">=118.0.0 <119.0.0",
+        ">=119.0.0 <120.0.0",
         artifactRegistryDigest,
         operationMatrixDigest,
         "direct-state-write",
@@ -390,13 +390,13 @@ function assertOperationSkill(name) {
     }
     if (!/```ts[\s\S]*createReceizClient[\s\S]*```/.test(text))
         fail(`${name}/SKILL.md missing copy-paste TypeScript`);
-    if (manifest.schema !== "receiz.ai-skill-contract.v118" || manifest.name !== name || manifest.version !== "118.0.0") {
+    if (manifest.schema !== "receiz.ai-skill-contract.v119" || manifest.name !== name || manifest.version !== "119.0.0") {
         fail(`${name}/manifest.json has invalid schema, name, or version`);
     }
     const serialized = JSON.stringify(manifest);
     for (const required of [
-        ">=118.0.0 <119.0.0",
-        "118.0.0",
+        ">=119.0.0 <120.0.0",
+        "119.0.0",
         artifactRegistryDigest,
         operationMatrixDigest,
         "emulator-conformance",
@@ -419,7 +419,7 @@ function assertOperationSkill(name) {
                 fail(`${name}/manifest.json missing ${required}`);
         }
         if (/identity\.getProfile|identity\.restoreAccount|identity\.appendAccountState|continuity\.reconcile|continuity\.commit|offline\.createCommandQueue|offline\.executeOrQueue|proofHead\.get|receipts\.verify|identityKeyId|expectedOwnershipHead|claimantKeyId|receiz_proof_head_get|receiz_receipt_verify|receiz_continuity_sync_plan|receiz_continuity_sync_execute|media\.publishIdentityImage/.test(text + serialized)) {
-            fail(`${name} retains a retired obsolete-versioned prerequisite in the active v118 outcome`);
+            fail(`${name} retains a retired obsolete-versioned prerequisite in the active v119 outcome`);
         }
         if (/## Required proof head|## Receipt verification/.test(text)) {
             fail(`${name}/SKILL.md retains a retired obsolete-versioned current-outcome section`);
@@ -459,13 +459,13 @@ function assertArtifactSkill(name) {
     if (!/refuse to (?:call|say|report|claim).*production-ready|refuse production-ready completion/i.test(text)) {
         fail(`${name}/SKILL.md must refuse production-ready completion without evidence`);
     }
-    if (manifest.schema !== "receiz.ai-skill-contract.v118" || manifest.name !== name || manifest.version !== "118.0.0") {
-        fail(`${name}/manifest.json has invalid v118 schema, name, or version`);
+    if (manifest.schema !== "receiz.ai-skill-contract.v119" || manifest.name !== name || manifest.version !== "119.0.0") {
+        fail(`${name}/manifest.json has invalid v119 schema, name, or version`);
     }
-    if (requires?.ruleset !== "118.0.0" || requires.registryDigest !== artifactRegistryDigest || requires.operationMatrixDigest !== operationMatrixDigest) {
+    if (requires?.ruleset !== "119.0.0" || requires.registryDigest !== artifactRegistryDigest || requires.operationMatrixDigest !== operationMatrixDigest) {
         fail(`${name}/manifest.json has artifact registry or ruleset skew`);
     }
-    if (manifest.artifactLawVersion !== "118.0.0" || JSON.stringify(manifest.artifactLaws) !== JSON.stringify(artifactLaws)) {
+    if (manifest.artifactLawVersion !== "119.0.0" || JSON.stringify(manifest.artifactLaws) !== JSON.stringify(artifactLaws)) {
         fail(`${name}/manifest.json has artifact law version or law-set skew`);
     }
     const evidence = Array.isArray(manifest.requiredEvidence) ? manifest.requiredEvidence : [];
@@ -501,9 +501,9 @@ function assertGlobalReconciliationSkill() {
         return;
     const text = read(skillFile);
     const manifest = JSON.parse(read(manifestFile));
-    if (manifest.schema !== "receiz.ai-skill-contract.v118" || manifest.version !== "118.0.0" || manifest.name !== name)
-        fail(`${name}/manifest.json has invalid v118 identity`);
-    for (const required of [artifactRegistryDigest, operationMatrixDigest, ">=118.0.0 <119.0.0"])
+    if (manifest.schema !== "receiz.ai-skill-contract.v119" || manifest.version !== "119.0.0" || manifest.name !== name)
+        fail(`${name}/manifest.json has invalid v119 identity`);
+    for (const required of [artifactRegistryDigest, operationMatrixDigest, ">=119.0.0 <120.0.0"])
         if (!JSON.stringify(manifest).includes(required))
             fail(`${name}/manifest.json missing ${required}`);
     assertMarkdownLinks(skillFile, text);
@@ -513,11 +513,11 @@ function assertCurrentManifest(name) {
     if (!existsSync(manifestFile))
         return;
     const manifest = JSON.parse(read(manifestFile));
-    if (manifest.schema !== "receiz.ai-skill-contract.v118" || manifest.version !== "118.0.0" || manifest.name !== name)
-        fail(`${name}/manifest.json is not current v118`);
+    if (manifest.schema !== "receiz.ai-skill-contract.v119" || manifest.version !== "119.0.0" || manifest.name !== name)
+        fail(`${name}/manifest.json is not current v119`);
     const requires = manifest.requires ?? {};
-    if (requires.sdk !== ">=118.0.0 <119.0.0" || requires.mcp !== ">=118.0.0 <119.0.0"
-        || requires.ruleset !== "118.0.0" || requires.registryDigest !== artifactRegistryDigest
+    if (requires.sdk !== ">=119.0.0 <120.0.0" || requires.mcp !== ">=119.0.0 <120.0.0"
+        || requires.ruleset !== "119.0.0" || requires.registryDigest !== artifactRegistryDigest
         || requires.operationMatrixDigest !== operationMatrixDigest)
         fail(`${name}/manifest.json current source binding mismatch`);
     if (JSON.stringify(manifest.operationAuthorityMatrix?.map((row) => row.operation)) !== JSON.stringify(artifactSdkOperations))
