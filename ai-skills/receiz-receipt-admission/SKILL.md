@@ -5,7 +5,7 @@ description: Use when inspecting admission evidence while preserving the rule th
 
 # Receiz Receipt Admission
 
-Current admission evidence begins with the complete verified proof object. Historical receipts may remain immutable witnesses of the law and digest they recorded, but they do not authorize or qualify a current v119 outcome.
+Current admission evidence begins with the complete verified proof object. Historical receipts may remain immutable witnesses of the law and digest they recorded, but they do not authorize or qualify a current v120 outcome.
 
 ## Exact SDK operation
 
@@ -60,11 +60,11 @@ Use the exact current artifact MCP tools: `receiz_artifact_verify`, `receiz_arti
 
 Run the current native artifact round-trip and cross-boundary substitution rejection contracts. Historical receipt fixtures remain historical evidence only.
 
-## V119 reconciliation receipts
+## V120 reconciliation receipts
 
 A current reconciliation receipt reports the exact accepted artifact digest, transition and plan identity, named commit domain, reported actor, head, effects, and idempotency outcome. Its inherited wire schema remains immutable compatibility history; it grants no authority and cannot be supplied to admission, identity, capability, planning, staging, or commitment APIs. The accepted artifact—not the receipt—is the source of committed history.
 
-## v119 artifact-derived authority
+## v120 artifact-derived authority
 
 Engineers remain free to build whatever they choose, but conforming Receiz receivers recognize authority only when every authority-bearing value is provably derived from independently verified artifact truth. Custom JavaScript objects, callbacks, normalized histories, local receipts, server rows, sessions, MCP memory, and AI explanations remain application data or inspection material; their shape never creates Receiz authority.
 
@@ -72,4 +72,4 @@ Admission begins from runtime-custodied verification of the exact enclosing arti
 
 Deterministic plan identity and unique execution-attempt identity are separate. MCP may reuse a confirmation digest only while the identical attempt is actively pending; committed and failed attempts are terminal and require a fresh confirmation. Expected authority failures are structured, immutable, machine-readable, and report zero writes.
 
-Historical sealed proof objects remain exact-byte verifiable evidence. Historical runtime admissions, histories, actors, capabilities, plans, candidates, stores, or confirmations cannot authorize a current v119 receiver; exact bytes crossing a process require `reverify-exact-bytes`, followed by current profile admission and `same-runtime-custody` through plan, capability, seal, stage, independent byte resolution, atomic named-domain acceptance, and report-only receipt.
+Historical sealed proof objects remain exact-byte verifiable evidence. Historical runtime admissions, histories, actors, capabilities, plans, candidates, stores, or confirmations cannot authorize a current v120 receiver; exact bytes crossing a process require `reverify-exact-bytes`, followed by current profile admission and `same-runtime-custody` through plan, capability, seal, stage, independent byte resolution, atomic named-domain acceptance, and report-only receipt.

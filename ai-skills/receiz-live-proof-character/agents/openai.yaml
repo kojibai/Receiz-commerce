@@ -1,0 +1,4 @@
+interface:
+  display_name: "Receiz Live Proof Character"
+  short_description: "Stream a proof-grounded live character"
+  default_prompt: "Use $receiz-live-proof-character to stream speech and non-authoritative performance from exact proof context."

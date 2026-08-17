@@ -1,0 +1,10 @@
+{
+  "schema": "receiz.ai-skill-tests.v120",
+  "skill": "receiz-multi-subject-transaction",
+  "registryDigest": "0728651789b26e1d10c1991ec1c06c1ea4a576f0c6520537b250b171f8857073",
+  "required": [
+    "multi_subject_effects_are_atomic",
+    "bounded_autonomous_trade",
+    "battle_advances_all_histories"
+  ]
+}

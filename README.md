@@ -4,7 +4,7 @@
 
 Receiz Commerce Kit is a full working commerce product and a forkable SDK kernel for building proof-sealed applications with `@receiz/sdk` and Receiz MCP.
 
-Current release: `4.10.0` · SDK target: `@receiz/sdk@119.0.0`
+Current release: `4.11.0` · SDK target: `@receiz/sdk@120.0.0`
 
 It ships as a Next.js App Router application with a public storefront, customer account area, no-code merchant admin, Receiz ID, checkout, wallet projection, rewards, Receized assets, domain hosting, media upload, proof memory, publish recovery, webhook verification, release diagnostics, and an AI operator layer built around Receiz MCP, Twin, World, and SDK doctor workflows. You can run it as the Receiz.app Commerce Cloud product, or clone it and build your own commerce, rewards, marketplace, game, content, or agent-operated SaaS on top of the same primitives.
 
@@ -31,7 +31,9 @@ This repository is intentionally two things at once:
 - **A working product:** a mobile-first commerce cloud where a merchant can create or restore Receiz ID, customize a storefront, add products and content, activate rewards, publish to a free `*.receiz.app` subdomain, connect a custom domain, and run Receiz checkout.
 - **A developer kernel:** a production-shaped reference for using one typed SDK boundary to build identity, proof, payments, wallet, rewards, domains, media, public app state, webhooks, release checks, and agent tooling without scattering SDK calls through the UI.
 
-The release unit is the repository, not an npm package. `package.json` remains `private: true` to prevent accidental application publishing to npm. Version 4.10 carries the living-world foundation onto the coordinated Receiz v119 layer: known artifact truth paints first, remote bytes are independently reverified, offline history is reconciled structurally, and recursive continuity selects the highest verified Kai head while Merkle commitments and Fibonacci ancestry remain evidence beneath the sealed proof object.
+The release unit is the repository, not an npm package. `package.json` remains `private: true` to prevent accidental application publishing to npm. Version 4.11 carries the living-world foundation onto Receiz v120's living-proof-subject layer: portable subject identity, complete proof-derived memory, subject-scoped Twins, bounded autonomous mandates, deterministic world commands, atomic multi-subject transactions, and one-time bearer transfer all remain subordinate to sealed proof rather than model output or institutional databases.
+
+The highest frame is continuity that travels with the subject. A platform, company, government, game, marketplace, or AI provider may recognize and operate on that continuity, but none has to be its sole keeper. This is not a claim of legal sovereignty and it does not supersede applicable law; it is a technical architecture in which identity, memory, relationships, and provenance can outlive any one institution while remaining independently verifiable.
 
 ## Why It Matters
 
@@ -47,7 +49,7 @@ This codebase demonstrates how much of that collapses into one Receiz SDK bounda
 - **Hosting:** free subdomain reservation, custom-domain verification, tenant resolution, DNS instructions, and optional Vercel domain automation.
 - **Media:** durable Receiz media upload/transform paths so logos, product images, and blog covers survive cold starts.
 - **Operations:** webhook signature verification, audit append, jobs, permissions, risk, compliance export, portability, notifications, release checks, and release pinning.
-- **AI operator layer:** Receiz MCP, Twin, World, SDK doctor, and capability checks let tools like Codex inspect diagnostics, draft content, call allowed SDK/API rails, and operate release workflows while proof objects remain the source of truth.
+- **AI operator layer:** Receiz MCP, subject Twins, bounded mandates, deterministic World commands, SDK doctor, and capability checks let tools like Codex inspect, draft, reason, and invoke permitted rails while proof objects—not model speech—remain the source of truth.
 
 The result is not a toy demo. It is a reference architecture for building a complete Receiz-native product surface from primitives that stay portable and inspectable.
 
@@ -58,9 +60,9 @@ pnpm install
 pnpm dev
 ```
 
-The v119 Receiz toolchain is pinned as `@receiz/sdk@119.0.0`, `@receiz/mcp-server@119.0.0`, and `@receiz/ai-skills@119.0.0` from the public npm registry. The lockfile pins their published integrity values with no Receiz package override. The local thirty-two-skill `ai-skills/` source is aligned byte-for-byte with the published doctrine, excluding only the package manifest, and can be checked with `pnpm validate:ai-skills`.
+The v120 Receiz toolchain is pinned as `@receiz/sdk@120.0.0`, `@receiz/mcp-server@120.0.0`, and `@receiz/ai-skills@120.0.0` from the public npm registry. The lockfile pins their published integrity values with no Receiz package override. The local thirty-nine-skill `ai-skills/` source is aligned byte-for-byte with the published doctrine, excluding only the package manifest, and can be checked with `pnpm validate:ai-skills`.
 
-`receiz.app.json` declares the complete sixteen-operation v119 authority matrix, while `receiz.constitution.json` is the app law overlay chained to the package-embedded canonical v119 registry digest. Resolution and planning are read-only; staging writes immutable candidate bytes without advancing a head; commitment independently resolves and reverifies the staged version before atomic expected-head acceptance. Structural divergence never auto-merges, rebases, or selects a timestamp winner, and acceptance never implies external effects were delivered. Run `pnpm receiz:check`, `pnpm receiz:conformance`, and `pnpm receiz:release-lock` for the complete evidence chain. Sealed proof objects and verified artifact history remain stronger authority than SDK, MCP, server, database, token, session, AI, receipt, or UI projections.
+`receiz.app.json` declares the complete thirty-operation v120 authority matrix, while `receiz.constitution.json` is the app law overlay chained to the package-embedded canonical v120 registry digest. Fourteen living-subject operations extend the sixteen retained artifact and showcase operations. Resolution and planning are read-only; model output proposes intent but cannot append an event; command and transaction admission revalidate exact heads and authority; every failed decision writes zero state, including Kai. Run `pnpm receiz:check`, `pnpm receiz:conformance`, and `pnpm receiz:release-lock` for the complete evidence chain. Sealed proof objects and verified artifact history remain stronger authority than SDK, MCP, server, database, token, session, AI, receipt, or UI projections.
 
 Open:
 
@@ -74,7 +76,7 @@ Run the release gate:
 pnpm release:check
 ```
 
-`pnpm release:check` runs the tracked-file secret scan, tests, typecheck, the v119 app-contract and operation-matrix integration check, official conformance, the v119 migration/CLI checks and release lock, AI-skill validation, lint, a guarded production build, and Receiz doctor. Public forks can run doctor without static access tokens; production releases should run with configured delegated permission and show `ok: true`, `missing: []`, and no warnings.
+`pnpm release:check` runs the tracked-file secret scan, tests, typecheck, the v120 app-contract and thirty-operation matrix check, general SDK conformance, the nineteen-law living-subject conformance suite, v120 migration/CLI checks and release lock, AI-skill validation, lint, a guarded production build, and Receiz doctor. Public forks can run doctor without static access tokens; production releases should run with configured delegated permission and show `ok: true`, `missing: []`, and no warnings.
 
 ## Product Tour
 
@@ -200,7 +202,7 @@ startup_timeout_sec = 120
 RECEIZ_BASE_URL = "https://receiz.com"
 ```
 
-The local command resolves the pnpm-pinned `@receiz/mcp-server@119.0.0`. Use the matching `@receiz/ai-skills@119.0.0` doctrine from `node_modules/@receiz/ai-skills` or the aligned local `ai-skills/` directory. V119 exposes nine current artifact-coordination tools: verify, admit, append-plan, seal-and-stage, commit, global-resolve, reconciliation-plan, reconciliation-stage, and reconciliation-commit. Plans, confirmations, staged references, actors, receipts, and acceptance reports remain non-authoritative. MCP and AI skills never become authority.
+The local command resolves the pnpm-pinned `@receiz/mcp-server@120.0.0`. Use the matching `@receiz/ai-skills@120.0.0` doctrine from `node_modules/@receiz/ai-skills` or the aligned local `ai-skills/` directory. V120 retains the nine current artifact-coordination tools and adds thirty-seven typed living-subject tools for subject state, proof-brain retrieval, Twins, mandates, runtime jobs, world commands and transactions, replay, and bearer transfer. Plans, model statements, confirmations, staged references, actors, receipts, and acceptance reports remain non-authoritative. MCP and AI skills never become authority.
 
 Brand edits preview immediately in the merchant workspace. `Publish theme` uses the same signed publication transaction as `Publish changes`: success means the authoritative public-store revision was accepted and adopted by the workspace. A pending or failed publication remains visibly unresolved and is never presented as globally saved. Other open merchant tabs adopt the updated workspace through scoped storage synchronization, while storefront subdomains and custom domains continue to resolve from the published Receiz projection.
 

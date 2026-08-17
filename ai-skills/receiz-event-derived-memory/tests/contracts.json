@@ -1,0 +1,10 @@
+{
+  "schema": "receiz.ai-skill-tests.v120",
+  "skill": "receiz-event-derived-memory",
+  "registryDigest": "0728651789b26e1d10c1991ec1c06c1ea4a576f0c6520537b250b171f8857073",
+  "required": [
+    "factual_memory_cites_admitted_event",
+    "offline_restoration_preserves_exact_state",
+    "summary_rebuild_equivalence"
+  ]
+}

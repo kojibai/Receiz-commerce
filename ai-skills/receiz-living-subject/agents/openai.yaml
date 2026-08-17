@@ -1,0 +1,4 @@
+interface:
+  display_name: "Receiz Living Subject"
+  short_description: "Build proof-native living subjects"
+  default_prompt: "Use $receiz-living-subject to build a proof-native creature with immutable identity and complete history."

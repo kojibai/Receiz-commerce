@@ -7,7 +7,7 @@ description: Use when qualifying, locking, packaging, attesting, or preparing pu
 
 Require package, registry, verifier, migration, conformance, security, performance, documentation, and attestation parity. Receiz is a proof-native artifact system; this skill operates beneath sealed proof and verified local history.
 
-## Binding v119 artifact law
+## Binding v120 artifact law
 
 A Receiz artifact is the exact byte sequence returned by native Record -> Seal. The inner payload is never an acceptable substitute.
 
@@ -20,7 +20,7 @@ Label every release fixture byte sequence:
 
 ## Required SDK artifact workflow
 
-The exact v119 application-operation inventory is `receiz.artifact.verify`, `receiz.artifact.admit`, `receiz.artifact.append.plan`, `receiz.identity.capability.sign`, `receiz.artifact.transition.seal`, `receiz.artifact.transition.stage`, `receiz.artifact.transition.commit`, `receiz.admission.command.execute`, `receiz.public-proof.projection.locate`, `receiz.artifact.global.resolve`, `receiz.artifact.offline.reconcile`, `receiz.profile-showcase.genesis.plan`, `receiz.profile-showcase.append.plan`, `receiz.economy-showcase.genesis.plan`, `receiz.economy-showcase.append.plan`, and `receiz.economy-showcase.merge.plan`. These identifiers describe the application authority matrix; they do not create authority.
+The exact v120 application-operation inventory is `receiz.artifact.verify`, `receiz.artifact.admit`, `receiz.artifact.append.plan`, `receiz.identity.capability.sign`, `receiz.artifact.transition.seal`, `receiz.artifact.transition.stage`, `receiz.artifact.transition.commit`, `receiz.admission.command.execute`, `receiz.public-proof.projection.locate`, `receiz.artifact.global.resolve`, `receiz.artifact.offline.reconcile`, `receiz.profile-showcase.genesis.plan`, `receiz.profile-showcase.append.plan`, `receiz.economy-showcase.genesis.plan`, `receiz.economy-showcase.append.plan`, `receiz.economy-showcase.merge.plan`, `receiz.subject.resolve`, `receiz.subject.brain.retrieve`, `receiz.subject.twin.message`, `receiz.subject.mandate.activate`, `receiz.world.command.plan`, `receiz.world.command.execute`, `receiz.world.transaction.plan`, `receiz.world.transaction.execute`, `receiz.subject.runtime.enqueue`, `receiz.subject.memory.project`, `receiz.bearer.transfer.plan`, `receiz.bearer.instrument.issue`, `receiz.bearer.instrument.claim`, `receiz.bearer.transfer.cancel`. These identifiers describe the application authority matrix; they do not create authority.
 
 ```ts
 const payload = { bytes: applicationPayload, mimeType: applicationMimeType };
@@ -35,12 +35,12 @@ if (opened.sealedArtifact.artifactSha256 !== sealedArtifact.artifactSha256) thro
 if (opened.verifiedPayload.sha256 !== sealedArtifact.payloadSha256) throw new Error("payload_binding_mismatch");
 ```
 
-Independently hash the saved bytes and require equality with `sealedArtifact.artifactSha256`. Require `verification.ok`, `integrity.ok`, carrier `native-record-seal`, Signature V4, owner, claim, and verify-path agreement. Reopen the exact saved file with `verifyAndOpen`, then prove a different Receiz application preserves identity, cards, history, receipts, and unknown namespaces. Require SDK, MCP, and AI packages to report the same v119 registry digest and artifact-law version before release qualification.
+Independently hash the saved bytes and require equality with `sealedArtifact.artifactSha256`. Require `verification.ok`, `integrity.ok`, carrier `native-record-seal`, Signature V4, owner, claim, and verify-path agreement. Reopen the exact saved file with `verifyAndOpen`, then prove a different Receiz application preserves identity, cards, history, receipts, and unknown namespaces. Require SDK, MCP, and AI packages to report the same v120 registry digest and artifact-law version before release qualification.
 
 ## Twelve-step artifact workflow
 
 1. Label the input bytes as `payload`; never call them an artifact.
-2. Load the active canonical v119 registry and `ARTIFACT-001` through `ARTIFACT-030`.
+2. Load the active canonical v120 registry and `ARTIFACT-001` through `ARTIFACT-030`.
 3. Call `receiz.assets.createProofObject` so Receiz.com performs native Record -> Seal.
 4. Require an SDK-issued `receiz.native-record-seal`; failure returns no artifact and no payload fallback.
 5. Require complete enclosing-artifact verification, integrity, Signature V4, owner, claim, verify path, and payload binding.
@@ -97,7 +97,7 @@ Network calls during verification: 0
 Local verifier result:
 ```
 
-## v119 unified admission and recovery
+## v120 unified admission and recovery
 
 First call `verifyReceizArtifact(file)`. Then call `receiz.artifacts.admit(verification, profileOptions)` in the same runtime. Admission reports profile membership and primitive-specific assessments; it does not authorize an operation. Verified actor evidence exists only after identity-profile admission, never from a caller constraint or structural object.
 
@@ -126,7 +126,7 @@ Atomic commit result:
 ## Constitutional workflow
 
 1. Inspect the repository and installed SDK version.
-2. Load the active canonical v119 registry and applicable constitutional laws.
+2. Load the active canonical v120 registry and applicable constitutional laws.
 3. Identify every authority boundary affected by the change.
 4. Write the implementation contract before implementation.
 5. Implement canonical changes only through SDK commands.
@@ -167,7 +167,7 @@ Request: Require package, registry, verifier, migration, conformance, security, 
 
 Return a written implementation contract and read-only plan first. Execute only allowed commands after exact confirmation, then report registry digest, laws, authority, tests, independent evidence, release-lock status, and the exact remaining boundary.
 
-## v119 artifact-derived authority
+## v120 artifact-derived authority
 
 Engineers remain free to build whatever they choose, but conforming Receiz receivers recognize authority only when every authority-bearing value is provably derived from independently verified artifact truth. Custom JavaScript objects, callbacks, normalized histories, local receipts, server rows, sessions, MCP memory, and AI explanations remain application data or inspection material; their shape never creates Receiz authority.
 
@@ -175,4 +175,10 @@ Admission begins from runtime-custodied verification of the exact enclosing arti
 
 Deterministic plan identity and unique execution-attempt identity are separate. MCP may reuse a confirmation digest only while the identical attempt is actively pending; committed and failed attempts are terminal and require a fresh confirmation. Expected authority failures are structured, immutable, machine-readable, and report zero writes.
 
-Historical sealed proof objects remain exact-byte verifiable evidence. Historical runtime admissions, histories, actors, capabilities, plans, candidates, stores, or confirmations cannot authorize a current v119 receiver; exact bytes crossing a process require `reverify-exact-bytes`, followed by current profile admission and `same-runtime-custody` through plan, capability, seal, stage, independent byte resolution, atomic named-domain acceptance, and report-only receipt.
+Historical sealed proof objects remain exact-byte verifiable evidence. Historical runtime admissions, histories, actors, capabilities, plans, candidates, stores, or confirmations cannot authorize a current v120 receiver; exact bytes crossing a process require `reverify-exact-bytes`, followed by current profile admission and `same-runtime-custody` through plan, capability, seal, stage, independent byte resolution, atomic named-domain acceptance, and report-only receipt.
+
+## v120 living-subject contract
+
+Use canonical head → entire proof history → bounded index retrieval → exact primary-object resolution → reasoning → provenance. The 96-object window is working context, never history truncation. AI speech and performance remain non-authoritative. Consequential actions require typed deterministic command admission; meetings, relationships, trades, gifts, and battles require atomic multi-subject transactions. Autonomous execution requires a current digest-bound mandate at lease time. Bearer transfer preserves identity, full history, memory policy, inventory disposition, and unknown namespace bytes while immediately revoking former-owner authority.
+
+Concrete v120 evidence must include: a creature speaking from exact long-form proof memory; absent-owner exploration inside a mandate; a mutual relationship; a bounded autonomous trade; an atomic battle; exact device restoration; queued-action revocation; partition convergence without history replacement; rejection of an AI-invented event; and cross-application subject continuity.

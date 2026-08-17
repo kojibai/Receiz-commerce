@@ -143,16 +143,13 @@ const artifactSkills = [
 const artifactRegistryDigest = skillsIndex.registryDigest;
 const operationMatrixDigest = skillsIndex.operationMatrixDigest;
 const artifactLaws = Array.from({ length: 30 }, (_, index) => `ARTIFACT-${String(index + 1).padStart(3, "0")}`);
-const artifactSdkOperations = [
-    "artifact.verify", "artifact.admit", "artifact.append.plan", "identity.capability.sign",
-    "artifact.transition.seal", "artifact.transition.stage", "artifact.transition.commit",
-    "admission.command.execute", "public-proof.projection.locate", "artifact.global.resolve",
-    "artifact.offline.reconcile",
-    "profile-showcase.genesis.plan", "profile-showcase.append.plan",
-    "economy-showcase.genesis.plan", "economy-showcase.append.plan", "economy-showcase.merge.plan",
-];
+const artifactSdkOperations = skillsIndex.operationAuthorityMatrix.map((row) => row.operation);
 const currentMcpArtifactTools = skillsIndex.currentMcpArtifactTools;
+const currentMcpLivingSubjectTools = skillsIndex.currentMcpLivingSubjectTools;
 const historicalV112McpArtifactTools = skillsIndex.historicalV112McpArtifactTools;
+const currentVersion = skillsIndex.version;
+const currentRange = `>=${Number(currentVersion.split(".")[0])}.0.0 <${Number(currentVersion.split(".")[0]) + 1}.0.0`;
+const currentSchema = "receiz.ai-skill-contract.v120";
 const currentForbiddenOperations = [
     "last-write-wins", "timestamp-as-head-authority", "connect-token-as-proof-authority",
     "local-receipt-as-global-authority", "projection-as-current-owner", "silent-divergence-resolution",
@@ -208,6 +205,15 @@ const compatibilityOperationSections = [
     "## User confirmation",
     "## MCP parity",
     "## Emulator fixture",
+];
+const livingSubjectSkills = [
+    "receiz-living-subject",
+    "receiz-subject-twin",
+    "receiz-autonomous-mandate",
+    "receiz-world-event-runtime",
+    "receiz-multi-subject-transaction",
+    "receiz-event-derived-memory",
+    "receiz-live-proof-character",
 ];
 const currentOutcomeSections = {
     "receiz-identity-profile": [
@@ -350,12 +356,12 @@ function assertConstitutionalSkill(name) {
         if (!text.includes(section))
             fail(`${name}/SKILL.md missing section ${section}`);
     }
-    if (manifest.schema !== "receiz.ai-skill-contract.v119" || manifest.name !== name || manifest.version !== "119.0.0") {
+    if (manifest.schema !== currentSchema || manifest.name !== name || manifest.version !== currentVersion) {
         fail(`${name}/manifest.json has invalid schema or name`);
     }
     const serialized = JSON.stringify(manifest);
     for (const required of [
-        ">=119.0.0 <120.0.0",
+        currentRange,
         artifactRegistryDigest,
         operationMatrixDigest,
         "direct-state-write",
@@ -390,13 +396,13 @@ function assertOperationSkill(name) {
     }
     if (!/```ts[\s\S]*createReceizClient[\s\S]*```/.test(text))
         fail(`${name}/SKILL.md missing copy-paste TypeScript`);
-    if (manifest.schema !== "receiz.ai-skill-contract.v119" || manifest.name !== name || manifest.version !== "119.0.0") {
+    if (manifest.schema !== currentSchema || manifest.name !== name || manifest.version !== currentVersion) {
         fail(`${name}/manifest.json has invalid schema, name, or version`);
     }
     const serialized = JSON.stringify(manifest);
     for (const required of [
-        ">=119.0.0 <120.0.0",
-        "119.0.0",
+        currentRange,
+        currentVersion,
         artifactRegistryDigest,
         operationMatrixDigest,
         "emulator-conformance",
@@ -419,7 +425,7 @@ function assertOperationSkill(name) {
                 fail(`${name}/manifest.json missing ${required}`);
         }
         if (/identity\.getProfile|identity\.restoreAccount|identity\.appendAccountState|continuity\.reconcile|continuity\.commit|offline\.createCommandQueue|offline\.executeOrQueue|proofHead\.get|receipts\.verify|identityKeyId|expectedOwnershipHead|claimantKeyId|receiz_proof_head_get|receiz_receipt_verify|receiz_continuity_sync_plan|receiz_continuity_sync_execute|media\.publishIdentityImage/.test(text + serialized)) {
-            fail(`${name} retains a retired obsolete-versioned prerequisite in the active v119 outcome`);
+            fail(`${name} retains a retired obsolete-versioned prerequisite in the active v120 outcome`);
         }
         if (/## Required proof head|## Receipt verification/.test(text)) {
             fail(`${name}/SKILL.md retains a retired obsolete-versioned current-outcome section`);
@@ -459,13 +465,13 @@ function assertArtifactSkill(name) {
     if (!/refuse to (?:call|say|report|claim).*production-ready|refuse production-ready completion/i.test(text)) {
         fail(`${name}/SKILL.md must refuse production-ready completion without evidence`);
     }
-    if (manifest.schema !== "receiz.ai-skill-contract.v119" || manifest.name !== name || manifest.version !== "119.0.0") {
-        fail(`${name}/manifest.json has invalid v119 schema, name, or version`);
+    if (manifest.schema !== currentSchema || manifest.name !== name || manifest.version !== currentVersion) {
+        fail(`${name}/manifest.json has invalid v120 schema, name, or version`);
     }
-    if (requires?.ruleset !== "119.0.0" || requires.registryDigest !== artifactRegistryDigest || requires.operationMatrixDigest !== operationMatrixDigest) {
+    if (requires?.ruleset !== currentVersion || requires.registryDigest !== artifactRegistryDigest || requires.operationMatrixDigest !== operationMatrixDigest) {
         fail(`${name}/manifest.json has artifact registry or ruleset skew`);
     }
-    if (manifest.artifactLawVersion !== "119.0.0" || JSON.stringify(manifest.artifactLaws) !== JSON.stringify(artifactLaws)) {
+    if (manifest.artifactLawVersion !== currentVersion || JSON.stringify(manifest.artifactLaws) !== JSON.stringify(artifactLaws)) {
         fail(`${name}/manifest.json has artifact law version or law-set skew`);
     }
     const evidence = Array.isArray(manifest.requiredEvidence) ? manifest.requiredEvidence : [];
@@ -501,9 +507,9 @@ function assertGlobalReconciliationSkill() {
         return;
     const text = read(skillFile);
     const manifest = JSON.parse(read(manifestFile));
-    if (manifest.schema !== "receiz.ai-skill-contract.v119" || manifest.version !== "119.0.0" || manifest.name !== name)
-        fail(`${name}/manifest.json has invalid v119 identity`);
-    for (const required of [artifactRegistryDigest, operationMatrixDigest, ">=119.0.0 <120.0.0"])
+    if (manifest.schema !== currentSchema || manifest.version !== currentVersion || manifest.name !== name)
+        fail(`${name}/manifest.json has invalid v120 identity`);
+    for (const required of [artifactRegistryDigest, operationMatrixDigest, currentRange])
         if (!JSON.stringify(manifest).includes(required))
             fail(`${name}/manifest.json missing ${required}`);
     assertMarkdownLinks(skillFile, text);
@@ -513,29 +519,52 @@ function assertCurrentManifest(name) {
     if (!existsSync(manifestFile))
         return;
     const manifest = JSON.parse(read(manifestFile));
-    if (manifest.schema !== "receiz.ai-skill-contract.v119" || manifest.version !== "119.0.0" || manifest.name !== name)
-        fail(`${name}/manifest.json is not current v119`);
+    if (manifest.schema !== currentSchema || manifest.version !== currentVersion || manifest.name !== name)
+        fail(`${name}/manifest.json is not current v120`);
     const requires = manifest.requires ?? {};
-    if (requires.sdk !== ">=119.0.0 <120.0.0" || requires.mcp !== ">=119.0.0 <120.0.0"
-        || requires.ruleset !== "119.0.0" || requires.registryDigest !== artifactRegistryDigest
+    if (requires.sdk !== currentRange || requires.mcp !== currentRange
+        || requires.ruleset !== currentVersion || requires.registryDigest !== artifactRegistryDigest
         || requires.operationMatrixDigest !== operationMatrixDigest)
         fail(`${name}/manifest.json current source binding mismatch`);
     if (JSON.stringify(manifest.operationAuthorityMatrix?.map((row) => row.operation)) !== JSON.stringify(artifactSdkOperations))
         fail(`${name}/manifest.json current operation matrix mismatch`);
     if (JSON.stringify(manifest.currentMcpArtifactTools) !== JSON.stringify(currentMcpArtifactTools))
         fail(`${name}/manifest.json current nine-tool MCP inventory mismatch`);
+    if (JSON.stringify(manifest.currentMcpLivingSubjectTools) !== JSON.stringify(currentMcpLivingSubjectTools))
+        fail(`${name}/manifest.json current living-subject MCP inventory mismatch`);
     if (JSON.stringify(manifest.historicalV112McpArtifactTools) !== JSON.stringify(historicalV112McpArtifactTools))
         fail(`${name}/manifest.json historical v112 five-tool inventory mismatch`);
     for (const forbidden of currentForbiddenOperations)
         if (!manifest.forbiddenOperations?.includes(forbidden))
             fail(`${name}/manifest.json missing forbidden operation ${forbidden}`);
 }
+function assertLivingSubjectSkill(name) {
+    const skillDir = join(root, name);
+    const skillFile = join(skillDir, "SKILL.md");
+    const manifestFile = join(skillDir, "manifest.json");
+    for (const path of [skillFile, manifestFile, join(skillDir, "agents", "openai.yaml"), join(skillDir, "references", "sdk-map.md"), join(skillDir, "references", "mcp-map.md"), join(skillDir, "references", "examples.md"), join(skillDir, "tests", "contracts.json")])
+        assertPath(path);
+    if (!existsSync(skillFile) || !existsSync(manifestFile)) return;
+    const text = read(skillFile);
+    const manifest = JSON.parse(read(manifestFile));
+    if (!new RegExp(`^---\\nname: ${name}\\ndescription: Use when `).test(text))
+        fail(`${name}/SKILL.md has invalid discovery frontmatter`);
+    for (const section of ["## Constitutional workflow", "## Machine contract", "## Quick reference", "## Common mistakes", "## Completion refusal", "## Authority rule"])
+        if (!text.includes(section)) fail(`${name}/SKILL.md missing section ${section}`);
+    if (manifest.schema !== currentSchema || manifest.name !== name || manifest.version !== currentVersion)
+        fail(`${name}/manifest.json has invalid v120 identity`);
+    for (const field of ["laws", "sdkOperations", "allowedTools", "requiredScopes", "emulatorFixtures", "forbiddenOperations", "requiredEvidence"])
+        if (!Array.isArray(manifest[field]) || manifest[field].length === 0) fail(`${name}/manifest.json missing ${field}`);
+    for (const required of ["model-output-as-world-event", "index-as-proof-authority", "latest-snapshot-wins", "failed-decision-with-writes"])
+        if (!manifest.forbiddenOperations.includes(required)) fail(`${name}/manifest.json missing forbidden operation ${required}`);
+    assertMarkdownLinks(skillFile, text);
+}
 assertPath(join(root, "README.md"));
 assertPath(join(root, "SKILLS.md"));
 assertPath(join(root, "skills.json"));
-if (skillsIndex.skills?.length !== 32 || skillsIndex.skills?.filter((entry) => entry.manifest).length !== 26
-    || skillsIndex.skills?.filter((entry) => entry.agent).length !== 23)
-    fail("skills.json must preserve 32 skills, 26 manifests, and 23 OpenAI agent prompts");
+if (skillsIndex.skills?.length !== 39 || skillsIndex.skills?.filter((entry) => entry.manifest).length !== 33
+    || skillsIndex.skills?.filter((entry) => entry.agent).length !== 30)
+    fail("skills.json must preserve 39 skills, 33 manifests, and 30 OpenAI agent prompts");
 for (const skill of skills)
     assertSkill(skill);
 for (const skill of constitutionalSkills)
@@ -545,6 +574,8 @@ for (const skill of operationSkills)
 for (const skill of artifactSkills)
     assertArtifactSkill(skill);
 assertGlobalReconciliationSkill();
+for (const skill of livingSubjectSkills)
+    assertLivingSubjectSkill(skill);
 for (const entry of skillsIndex.skills ?? [])
     assertCurrentManifest(entry.name);
 for (const file of markdownFiles(root)) {
@@ -566,4 +597,4 @@ if (failures.length > 0) {
         console.error(`- ${failure}`);
     process.exit(1);
 }
-console.log(`ai-skills validation passed for ${skills.length + constitutionalSkills.length + operationSkills.length + 1} skills.`);
+console.log(`ai-skills validation passed for ${skillsIndex.skills.length} skills.`);

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Receiz World Event Runtime"
+  short_description: "Admit deterministic world commands and events"
+  default_prompt: "Use $receiz-world-event-runtime to plan, validate, and admit an idempotent world command."

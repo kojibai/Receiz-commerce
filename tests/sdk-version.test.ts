@@ -5,10 +5,13 @@ import {
   RECEIZ_V112_ARTIFACT_LAWS,
   RECEIZ_V113_GLOBAL_COMMIT_DOMAIN,
   RECEIZ_V114_PROTOCOL_LIMITS,
-  RECEIZ_V119_REGISTRY_DIGEST,
+  RECEIZ_LIVING_SUBJECT_REDUCER_DIGEST,
+  RECEIZ_LIVING_SUBJECT_SCHEMAS,
+  RECEIZ_V120_REGISTRY_DIGEST,
   admitReceizArtifact,
   commitArtifactTransition,
   createPublicProofProjection,
+  createReceizLivingSubjectRuntime,
   createReceizArtifactAdmissionEngine,
   createReceizAdmissionEngine,
   createReceizBrowserAdmissionStore,
@@ -25,28 +28,30 @@ import {
   validateReceizConstitutionRegistry,
   verifyReceizArtifactAdmission,
 } from "@receiz/sdk";
-import { createReceizEmulator, runReceizConformance } from "@receiz/sdk/testing";
+import { createReceizEmulator, runReceizConformance, runReceizLivingSubjectConformanceV120 } from "@receiz/sdk/testing";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 
-describe("Receiz v119 dependency contract", () => {
-  it("pins the supported public v119 SDK, MCP, AI skills, and registry contract", () => {
+describe("Receiz v120 dependency contract", () => {
+  it("pins the supported public v120 SDK, MCP, AI skills, and registry contract", () => {
     const pkg = JSON.parse(readFileSync("package.json", "utf8")) as {
       dependencies: Record<string, string>;
       scripts?: Record<string, string>;
       pnpm?: { overrides?: Record<string, string> };
     };
 
-    assert.equal(RECEIZ_SDK_VERSION, "119.0.0");
-    assert.equal(RECEIZ_RELEASE_VERSION, "119.0.0");
-    assert.equal(RECEIZ_RULESET_VERSION, "119.0.0");
-    assert.equal(RECEIZ_V119_REGISTRY_DIGEST, "49c167a437ec7c0e486412dd62c54af4abdf94eda1ebc18d263a027d105cecd9");
+    assert.equal(RECEIZ_SDK_VERSION, "120.0.0");
+    assert.equal(RECEIZ_RELEASE_VERSION, "120.0.0");
+    assert.equal(RECEIZ_RULESET_VERSION, "120.0.0");
+    assert.equal(RECEIZ_V120_REGISTRY_DIGEST, "0728651789b26e1d10c1991ec1c06c1ea4a576f0c6520537b250b171f8857073");
+    assert.equal(RECEIZ_LIVING_SUBJECT_REDUCER_DIGEST, "5694662e2acc8b886ac9697ffad202b411d7e66c5f26f9106ee0768df7c7b8c8");
+    assert.equal(Object.keys(RECEIZ_LIVING_SUBJECT_SCHEMAS).length, 30);
     assert.deepEqual(RECEIZ_V112_ARTIFACT_LAWS, Array.from({ length: 30 }, (_, index) => `ARTIFACT-${String(index + 1).padStart(3, "0")}`));
-    assert.equal(pkg.dependencies["@receiz/sdk"], "119.0.0");
-    assert.equal(pkg.dependencies["@receiz/mcp-server"], "119.0.0");
-    assert.equal(pkg.dependencies["@receiz/ai-skills"], "119.0.0");
-    assert.equal(pkg.scripts?.["receiz:check"], "receiz app check --target 119.0.0 --json");
+    assert.equal(pkg.dependencies["@receiz/sdk"], "120.0.0");
+    assert.equal(pkg.dependencies["@receiz/mcp-server"], "120.0.0");
+    assert.equal(pkg.dependencies["@receiz/ai-skills"], "120.0.0");
+    assert.equal(pkg.scripts?.["receiz:check"], "receiz app check --target 120.0.0 --json");
     assert.equal(pkg.scripts?.["receiz:conformance"], "receiz conformance");
     assert.equal(pkg.scripts?.["validate:ai-skills"], "node ai-skills/scripts/validate-skills.mjs");
     assert.equal(pkg.pnpm?.overrides?.postcss, ">=8.5.10");
@@ -55,7 +60,7 @@ describe("Receiz v119 dependency contract", () => {
     assert.equal(pkg.pnpm?.overrides?.["@receiz/ai-skills"], undefined);
   });
 
-  it("mirrors the published v119 AI-skills contract into the repository", () => {
+  it("mirrors the published v120 AI-skills contract into the repository", () => {
     const skillsIndex = JSON.parse(readFileSync("ai-skills/skills.json", "utf8")) as {
       schema?: string;
       version?: string;
@@ -64,11 +69,11 @@ describe("Receiz v119 dependency contract", () => {
       skills?: unknown[];
     };
 
-    assert.equal(skillsIndex.schema, "receiz.ai-skills-index.v119");
-    assert.equal(skillsIndex.version, "119.0.0");
-    assert.equal(skillsIndex.registryDigest, "49c167a437ec7c0e486412dd62c54af4abdf94eda1ebc18d263a027d105cecd9");
-    assert.equal(skillsIndex.operationMatrixDigest, "53cf9d6862b2396e2fe7864f8607c00c4e3b6e31b082ab5c5c8dff088fcb52c1");
-    assert.equal(skillsIndex.skills?.length, 32);
+    assert.equal(skillsIndex.schema, "receiz.ai-skills-index.v120");
+    assert.equal(skillsIndex.version, "120.0.0");
+    assert.equal(skillsIndex.registryDigest, "0728651789b26e1d10c1991ec1c06c1ea4a576f0c6520537b250b171f8857073");
+    assert.equal(skillsIndex.operationMatrixDigest, "1c779ee5ade4b877ae9c6922ab02ba96fffffeb7580f1cf105a59fbb4424f351");
+    assert.equal(skillsIndex.skills?.length, 39);
   });
 
   it("documents the supported MCP pair and authoritative theme publication", () => {
@@ -78,10 +83,10 @@ describe("Receiz v119 dependency contract", () => {
     const mcpToolMap = readFileSync("ai-skills/receiz-mcp-agent-skill/resources/mcp-tool-map.md", "utf8");
     const adapter = readFileSync("src/lib/receiz/adapter.ts", "utf8");
 
-    assert.match(readme, /@receiz\/mcp-server@119\.0\.0/);
-    assert.match(readme, /@receiz\/ai-skills@119\.0\.0/);
+    assert.match(readme, /@receiz\/mcp-server@120\.0\.0/);
+    assert.match(readme, /@receiz\/ai-skills@120\.0\.0/);
     assert.match(readme, /Publish theme/);
-    assert.match(rails, /@receiz\/sdk@119\.0\.0/);
+    assert.match(rails, /@receiz\/sdk@120\.0\.0/);
     assert.match(rails, /authoritative public-store revision/);
     assert.match(rails, /native Record projection before sealing/);
     assert.match(skillsReadme, /published as `@receiz\/ai-skills`/);
@@ -107,7 +112,7 @@ describe("Receiz v119 dependency contract", () => {
     assert.doesNotMatch(adapter, /\bsealArtifact\(/);
   });
 
-  it("keeps the v119 Node-only compiler outside browser bundles", () => {
+  it("keeps the v120 Node-only compiler outside browser bundles", () => {
     const nextConfig = readFileSync("next.config.mjs", "utf8");
     const sdkPackage = JSON.parse(readFileSync("node_modules/@receiz/sdk/package.json", "utf8")) as {
       exports?: Record<string, unknown>;
@@ -120,7 +125,7 @@ describe("Receiz v119 dependency contract", () => {
     assert.doesNotMatch(nextConfig, /NormalModuleReplacementPlugin|"fs\/promises": false/);
   });
 
-  it("exposes canonical v119 verification, global coordination, projections, capabilities, errors, emulator, and zero-network conformance", async () => {
+  it("exposes canonical v120 verification, living subjects, global coordination, projections, and zero-network conformance", async () => {
     assert.equal(typeof describeReceizCapabilities, "function");
     assert.equal(typeof describeReceizError, "function");
     assert.equal(typeof createReceizEmulator, "function");
@@ -141,20 +146,30 @@ describe("Receiz v119 dependency contract", () => {
     assert.equal(typeof createPublicProofProjection, "function");
     assert.equal(typeof verifyReceizArtifactAdmission, "function");
     assert.equal(typeof digestReceizAuthority, "function");
+    assert.equal(typeof createReceizLivingSubjectRuntime, "function");
+    assert.equal(typeof runReceizLivingSubjectConformanceV120, "function");
 
     const descriptor = describeReceizCapabilities();
     assert.equal(descriptor.schema, "receiz.sdk.capability_descriptor.v1");
-    assert.equal(descriptor.packageCompatibility.sdk, ">=119.0.0 <120.0.0");
+    assert.equal(descriptor.packageCompatibility.sdk, ">=120.0.0 <121.0.0");
     assert.equal(RECEIZ_V113_GLOBAL_COMMIT_DOMAIN.value, "receiz.com/global/v1");
     assert.equal(RECEIZ_V114_PROTOCOL_LIMITS.reconciliationAdditions, 64);
 
     const report = await runReceizConformance();
     assert.equal(report.schema, "receiz.sdk.conformance_report.v1");
-    // The official v119 package retains the v112 conformance-vector schema for compatibility.
-    assert.equal(report.sdkVersion, "112.0.0");
+    assert.equal(report.sdkVersion, "120.0.0");
     assert.equal(report.ok, true);
     assert.equal(report.summary.failed, 0);
     assert.equal(report.summary.networkCalls, 0);
     assert.equal(report.summary.dbCalls, 0);
+
+    const livingReport = await runReceizLivingSubjectConformanceV120();
+    assert.equal(livingReport.schema, "receiz.living-subject.conformance.v120");
+    assert.equal(livingReport.ok, true);
+    assert.equal(livingReport.summary.passed, 19);
+    assert.equal(livingReport.summary.failed, 0);
+    assert.equal(livingReport.summary.writesOnFailure, 0);
+    assert.equal(livingReport.summary.networkCalls, 0);
+    assert.equal(livingReport.summary.dbCalls, 0);
   });
 });

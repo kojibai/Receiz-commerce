@@ -2,6 +2,15 @@
 
 All notable changes to Receiz Commerce Kit will be documented here.
 
+## 4.11.0 - Receiz v120 Living Proof Subjects
+
+- Upgraded the SDK, MCP server, and AI-skills distribution to the exact public `120.0.0` packages with published integrity and lockfile parity.
+- Expanded the application contract from sixteen to thirty canonical operations, adding proof-native subject resolution, complete proof-brain retrieval, subject Twins, bounded mandates, deterministic world commands, atomic multi-subject transactions, event-derived memory, durable runtime jobs, and one-time bearer transfer.
+- Adopted the canonical v120 registry digest `0728651789b26e1d10c1991ec1c06c1ea4a576f0c6520537b250b171f8857073`, operation-matrix digest `1c779ee5ade4b877ae9c6922ab02ba96fffffeb7580f1cf105a59fbb4424f351`, and living-subject reducer digest `5694662e2acc8b886ac9697ffad202b411d7e66c5f26f9106ee0768df7c7b8c8`.
+- Added thirty-seven typed living-subject MCP tools and synchronized all thirty-nine AI skills, including seven new skills for living subjects, subject Twins, event memory, autonomous mandates, world runtime, multi-subject transactions, and live proof characters.
+- Added a nineteen-law living-subject conformance gate proving zero-write failure, non-authoritative model output, event-cited memory, retry safety, replay equivalence, exact namespace preservation, and transfer revocation in the deterministic SDK runtime.
+- Preserved all historical sealed artifacts and proof history; this repository release performs no production data migration, deployment, external package publication, or claim of legal personhood or sovereignty.
+
 ## 4.10.0 - Receiz v119 Coordinated Release
 
 - Upgraded the SDK, MCP server, and all thirty-two AI skills to exact public `119.0.0` packages with published integrity and lockfile parity.

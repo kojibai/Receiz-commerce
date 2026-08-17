@@ -5,9 +5,9 @@ import { join } from "node:path";
 import { describe, it } from "node:test";
 
 const root = process.cwd();
-const verifier = join(root, "scripts", "receiz-v119-migration-verify.mjs");
+const verifier = join(root, "scripts", "receiz-v120-migration-verify.mjs");
 
-describe("Receiz v119 CLI lifecycle", () => {
+describe("Receiz v120 CLI lifecycle", () => {
   it("verifies the audited proof-preserving application upgrade", () => {
     const result = spawnSync(process.execPath, [verifier, "--root", root], {
       cwd: root,
@@ -23,7 +23,7 @@ describe("Receiz v119 CLI lifecycle", () => {
     };
 
     assert.equal(report.ok, true);
-    assert.equal(report.schema, "receiz.repository.v118-v119.migration-verification.v1");
+    assert.equal(report.schema, "receiz.repository.v119-v120.migration-verification.v1");
     assert.equal(report.historyRewritten, false);
     assert.ok(report.checks.length > 0);
     assert.ok(report.checks.every((check) => check.ok));
@@ -36,7 +36,7 @@ describe("Receiz v119 CLI lifecycle", () => {
 
     assert.equal(
       pkg.scripts["receiz:migrate:verify"],
-      "node scripts/receiz-v119-migration-verify.mjs --root ."
+      "node scripts/receiz-v120-migration-verify.mjs --root ."
     );
     assert.equal(pkg.scripts["receiz:cli:check"], "node scripts/receiz-cli-check.mjs");
   });

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Receiz Event-Derived Memory"
+  short_description: "Project cited memories from admitted events"
+  default_prompt: "Use $receiz-event-derived-memory to rebuild a subject memory with exact event citations."

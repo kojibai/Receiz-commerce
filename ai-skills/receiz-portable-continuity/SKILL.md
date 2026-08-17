@@ -67,13 +67,13 @@ Use `receiz_artifact_verify` for the carried bytes, `receiz_artifact_admit` for 
 
 ## Emulator fixture
 
-Run the current identity-artifact helper, native artifact round-trip, and artifact-substitution rejection contracts. Historical obsolete-versioned reconciliation fixtures are archival evidence only and are not a current v119 operation contract.
+Run the current identity-artifact helper, native artifact round-trip, and artifact-substitution rejection contracts. Historical obsolete-versioned reconciliation fixtures are archival evidence only and are not a current v120 operation contract.
 
-## v119 continuity recovery
+## v120 continuity recovery
 
 Use `verifyReceizArtifact`, profile admission, and `planArtifactAppend` to preserve parent-linked verified history and project the latest authorized state offline. Report transition and plan digests, prior and next head, complete provenance, explicit actions, and the non-authoritative receipt. Reconnect may append verified descendants only; it may not rewrite prior history or unknown namespaces.
 
-## v119 artifact-derived authority
+## v120 artifact-derived authority
 
 Engineers remain free to build whatever they choose, but conforming Receiz receivers recognize authority only when every authority-bearing value is provably derived from independently verified artifact truth. Custom JavaScript objects, callbacks, normalized histories, local receipts, server rows, sessions, MCP memory, and AI explanations remain application data or inspection material; their shape never creates Receiz authority.
 
@@ -81,4 +81,10 @@ Admission begins from runtime-custodied verification of the exact enclosing arti
 
 Deterministic plan identity and unique execution-attempt identity are separate. MCP may reuse a confirmation digest only while the identical attempt is actively pending; committed and failed attempts are terminal and require a fresh confirmation. Expected authority failures are structured, immutable, machine-readable, and report zero writes.
 
-Historical sealed proof objects remain exact-byte verifiable evidence. Historical runtime admissions, histories, actors, capabilities, plans, candidates, stores, or confirmations cannot authorize a current v119 receiver; exact bytes crossing a process require `reverify-exact-bytes`, followed by current profile admission and `same-runtime-custody` through plan, capability, seal, stage, independent byte resolution, atomic named-domain acceptance, and report-only receipt.
+Historical sealed proof objects remain exact-byte verifiable evidence. Historical runtime admissions, histories, actors, capabilities, plans, candidates, stores, or confirmations cannot authorize a current v120 receiver; exact bytes crossing a process require `reverify-exact-bytes`, followed by current profile admission and `same-runtime-custody` through plan, capability, seal, stage, independent byte resolution, atomic named-domain acceptance, and report-only receipt.
+
+## v120 living-subject contract
+
+Use canonical head → entire proof history → bounded index retrieval → exact primary-object resolution → reasoning → provenance. The 96-object window is working context, never history truncation. AI speech and performance remain non-authoritative. Consequential actions require typed deterministic command admission; meetings, relationships, trades, gifts, and battles require atomic multi-subject transactions. Autonomous execution requires a current digest-bound mandate at lease time. Bearer transfer preserves identity, full history, memory policy, inventory disposition, and unknown namespace bytes while immediately revoking former-owner authority.
+
+Concrete v120 evidence must include: a creature speaking from exact long-form proof memory; absent-owner exploration inside a mandate; a mutual relationship; a bounded autonomous trade; an atomic battle; exact device restoration; queued-action revocation; partition convergence without history replacement; rejection of an AI-invented event; and cross-application subject continuity.

@@ -2,17 +2,17 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 
-describe("Receiz v119 application contract", () => {
-  it("compiles the complete app contract through the v119 SDK", async () => {
+describe("Receiz v120 application contract", () => {
+  it("compiles the complete app contract through the v120 SDK", async () => {
     const compiler = await import("@receiz/sdk/compiler");
     assert.equal(typeof compiler.defineReceizApp, "function");
     assert.equal(typeof compiler.compileReceizAppContract, "function");
 
     const input = JSON.parse(readFileSync("receiz.app.json", "utf8"));
     const contract = compiler.defineReceizApp(input);
-    const plan = compiler.compileReceizAppContract(contract, { targetSdkVersion: "119.0.0" });
+    const plan = compiler.compileReceizAppContract(contract, { targetSdkVersion: "120.0.0" });
 
-    assert.equal(plan.targetSdkVersion, "119.0.0");
+    assert.equal(plan.targetSdkVersion, "120.0.0");
     assert.deepEqual(contract.features, [
       "identity",
       "proof",
@@ -25,13 +25,13 @@ describe("Receiz v119 application contract", () => {
     ]);
     assert.equal(contract.authority.mode, "artifact-first");
     assert.equal(contract.authority.allowDatabaseAuthority, false);
-    assert.deepEqual(contract.operations, compiler.RECEIZ_V119_APPLICATION_OPERATION_MATRIX);
-    assert.equal(contract.operations.length, 16);
-    assert.equal(compiler.RECEIZ_CURRENT_APPLICATION_OPERATION_MATRIX_DIGEST, "53cf9d6862b2396e2fe7864f8607c00c4e3b6e31b082ab5c5c8dff088fcb52c1");
+    assert.deepEqual(contract.operations, compiler.RECEIZ_V120_APPLICATION_OPERATION_MATRIX);
+    assert.equal(contract.operations.length, 30);
+    assert.equal(compiler.RECEIZ_CURRENT_APPLICATION_OPERATION_MATRIX_DIGEST, "1c779ee5ade4b877ae9c6922ab02ba96fffffeb7580f1cf105a59fbb4424f351");
     assert.ok(plan.verificationCommands.length > 0);
   });
 
-  it("passes the v119 integration check with verified production rails", async () => {
+  it("passes the v120 integration check with verified production rails", async () => {
     const compiler = await import("@receiz/sdk/compiler");
     const generated = JSON.parse(readFileSync("receiz.generated.json", "utf8"));
 
@@ -43,7 +43,7 @@ describe("Receiz v119 application contract", () => {
 
     const result = await compiler.checkReceizIntegration({
       root: process.cwd(),
-      targetSdkVersion: "119.0.0",
+      targetSdkVersion: "120.0.0",
     });
     assert.deepEqual(result.blockingFindings, []);
     assert.equal(result.ok, true);

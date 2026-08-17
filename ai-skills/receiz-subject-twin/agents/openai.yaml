@@ -1,0 +1,4 @@
+interface:
+  display_name: "Receiz Subject Twin"
+  short_description: "Ground a subject Twin in exact proof"
+  default_prompt: "Use $receiz-subject-twin to answer from complete subject proof history with provenance."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Receiz Multi-Subject Transaction"
+  short_description: "Commit atomic multi-subject effects"
+  default_prompt: "Use $receiz-multi-subject-transaction to model an atomic meeting, trade, or battle."

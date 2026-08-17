@@ -1,0 +1,10 @@
+{
+  "schema": "receiz.ai-skill-tests.v120",
+  "skill": "receiz-world-event-runtime",
+  "registryDigest": "0728651789b26e1d10c1991ec1c06c1ea4a576f0c6520537b250b171f8857073",
+  "required": [
+    "retry_cannot_duplicate_event",
+    "failed_decision_writes_zero_including_kai",
+    "independent_replay_produces_same_heads"
+  ]
+}

@@ -88,6 +88,12 @@ Resources:
 - [Action confirmation rules](resources/action-confirmation-rules.md)
 - [Response templates](resources/response-templates.md)
 
-## v119 artifact recovery tools
+## v120 artifact recovery tools
 
 Use exactly `receiz_artifact_verify`, `receiz_artifact_admit`, `receiz_artifact_append_plan`, `receiz_artifact_transition_seal_and_stage`, and `receiz_artifact_transition_commit`. Never put an admission, history, actor, plan, verified capability, candidate, or store in MCP JSON; same-runtime custody is mandatory and exact bytes crossing a process require `reverify-exact-bytes`.
+
+## v120 living-subject contract
+
+Use canonical head → entire proof history → bounded index retrieval → exact primary-object resolution → reasoning → provenance. The 96-object window is working context, never history truncation. AI speech and performance remain non-authoritative. Consequential actions require typed deterministic command admission; meetings, relationships, trades, gifts, and battles require atomic multi-subject transactions. Autonomous execution requires a current digest-bound mandate at lease time. Bearer transfer preserves identity, full history, memory policy, inventory disposition, and unknown namespace bytes while immediately revoking former-owner authority.
+
+Concrete v120 evidence must include: a creature speaking from exact long-form proof memory; absent-owner exploration inside a mandate; a mutual relationship; a bounded autonomous trade; an atomic battle; exact device restoration; queued-action revocation; partition convergence without history replacement; rejection of an AI-invented event; and cross-application subject continuity.

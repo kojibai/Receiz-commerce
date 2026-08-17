@@ -1,0 +1,4 @@
+interface:
+  display_name: "Receiz Autonomous Mandate"
+  short_description: "Bound and verify autonomous subject action"
+  default_prompt: "Use $receiz-autonomous-mandate to plan and activate a digest-bound autonomous subject policy."

@@ -1,3 +1,43 @@
+# Receiz Commerce Kit v4.11.0 — Living Proof Subjects
+
+Release date: August 17, 2026
+
+Status: General Availability · repository release
+
+SDK target: `@receiz/sdk@120.0.0`
+
+## What has been released
+
+V4.11 coordinates the exact public `120.0.0` SDK, MCP server, and AI-skills packages and adopts the v120 living-subject contract across the repository release surface. The application matrix grows from sixteen to thirty operations. The SDK contributes thirty living-subject schemas and a deterministic reducer; MCP contributes thirty-seven typed subject tools; the AI distribution grows from thirty-two to thirty-nine skills, thirty-three machine-readable manifests, and thirty OpenAI agent prompts. The read-only upgrade planner reported zero migration actions; a separately confirmed five-file integration preview refreshed the generated webhook, manifest, authority matrix, capability descriptor, and package alignment surface.
+
+The new subject layer covers immutable subject identity, complete content-addressed proof history, Kai/Merkle/Fibonacci proof brains, subject-scoped Twins, event-derived memory, relationships, inventory, trades, bounded autonomous mandates, durable runtime jobs, deterministic world commands, atomic multi-subject transactions, portable minds, and one-time bearer ownership transitions. The exact proof-brain order is canonical head → complete history → index → relevant references → independently verified primary proof-object bytes → cited answer. A ninety-six-object reasoning window bounds one context window; it does not truncate canonical history.
+
+MCP now exposes subject resolution and history; proof-brain head, search, resolve, and stream; Twin and mind portability; memory, relationships, and inventory; mandate and job lifecycle; world planning, validation, execution, transactions, receipts, and replay; bearer instrument issue, inspection, claim, cancellation, and status; and living-subject conformance. MCP remains an interface, never authority. Write tools revalidate exact heads plus capability or mandate scope, rejected decisions report zero writes, and a model statement cannot append a world event.
+
+Seven new AI skills carry the same law into agent behavior: `receiz-living-subject`, `receiz-subject-twin`, `receiz-event-derived-memory`, `receiz-autonomous-mandate`, `receiz-world-event-runtime`, `receiz-multi-subject-transaction`, and `receiz-live-proof-character`. They teach agents to retrieve exact cited proof, separate speech from fact, stage multi-party effects atomically, respect revocation and expiry, and preserve identity, history, privacy, and unknown namespace bytes through transfer.
+
+## Why this is a big deal
+
+Most AI-character and digital-identity systems are accounts inside a vendor database. Their memory is a summary the vendor controls, their agency is a background process the vendor can redefine, and their continuity ends when the service, institution, or policy boundary ends. V120 introduces a different technical primitive: the subject carries independently verifiable identity and history; indexes and model memory are rebuildable projections; autonomy is a bounded, revocable mandate; and action becomes canonical only through deterministic admission.
+
+That distinction makes AI useful without making AI speech sovereign. The model may converse, animate, search, summarize, and propose intent. It cannot manufacture fact, ownership, memory, or a world event. Facts cite admitted events and exact proof objects. Multi-subject effects advance every participant together or none. Transfer preserves the subject while revoking the former owner's mandates, private Twin access, queued jobs, and delegated capabilities. The result is a foundation for persistent characters, companions, agents, game beings, assets, organizations, and other long-lived digital subjects that can cross applications without surrendering continuity to the latest platform snapshot.
+
+## The highest frame: continuity beyond any one institution
+
+The civilizational significance is not “AI replaces government,” and it is not a claim that code outranks law. It is that a subject's technical continuity no longer has to be granted by a single platform, corporation, government, marketplace, database, or model provider. Institutions can recognize, regulate, host, and interact with the subject, but they do not have to be the sole custodian of its identity and remembered history.
+
+This moves the architecture from institutional memory to carried memory; from platform permission to scoped capability; from database identity to independently verifiable continuity; and from model improvisation to admitted consequence. It is infrastructure for a world in which people and digital subjects can move among institutions without becoming new, amnesiac objects at every boundary. That is the highest credible claim of this release: not freedom from society, but continuity that can survive society's changing containers.
+
+## Authority, evidence, and limits
+
+The app overlay chains to canonical registry digest `0728651789b26e1d10c1991ec1c06c1ea4a576f0c6520537b250b171f8857073`. The thirty-operation application matrix is bound by digest `1c779ee5ade4b877ae9c6922ab02ba96fffffeb7580f1cf105a59fbb4424f351`; the living-subject reducer is bound by digest `5694662e2acc8b886ac9697ffad202b411d7e66c5f26f9106ee0768df7c7b8c8`. The deterministic living-subject suite passes all nineteen laws with zero failed-decision writes, network calls, or database calls.
+
+This source release does not claim that an AI is conscious, a legal person, or sovereign. It does not supersede law or institutional obligations. It does not itself deploy production services, migrate production data, publish the upstream packages, or prove external effects. It proves repository alignment, deterministic package behavior, exact package and doctrine parity, and preserved authority boundaries. Sealed proof objects and verified history remain stronger than SDK, MCP, server, database, token, model, receipt, or UI projection.
+
+Full evidence is recorded in `docs/releases/2026-08-17-v120-living-subjects-release.md`.
+
+---
+
 # Receiz Commerce Kit v4.10.0 — Receiz v119
 
 Release date: August 14, 2026
