@@ -52,7 +52,7 @@ On `username_taken`, keep the same account and request another username. Preserv
 
 ## Result verification
 
-Require `status === "updated"`, an `accountUid` equal to the authenticated actor, the returned profile projection, and a `/u/` profile path. The current v120 outcome has no caller proof-head or receipt prerequisite.
+Require `status === "updated"`, an `accountUid` equal to the authenticated actor, the returned profile projection, and a `/u/` profile path. The current v121 outcome has no caller proof-head or receipt prerequisite.
 
 ## User confirmation
 
@@ -68,7 +68,7 @@ Run `username-race`. Require one commit-time winner, unchanged account UID, and 
 
 ## v120 identity recovery
 
-Identity-profile admission is identity continuity evidence from a verified enclosing artifact. It reports profile admission and a runtime-custodied actor reference; it does not grant publishing, transfer, settlement, or append authority. Operation authority still requires the exact v120 plan, verified plan-bound capability, and atomic commitment boundary.
+Identity-profile admission is identity continuity evidence from a verified enclosing artifact. It reports profile admission and a runtime-custodied actor reference; it does not grant publishing, transfer, settlement, or append authority. Operation authority still requires the exact v121 plan, verified plan-bound capability, and atomic commitment boundary.
 
 ## v120 artifact-derived authority
 
@@ -78,4 +78,4 @@ Admission begins from runtime-custodied verification of the exact enclosing arti
 
 Deterministic plan identity and unique execution-attempt identity are separate. MCP may reuse a confirmation digest only while the identical attempt is actively pending; committed and failed attempts are terminal and require a fresh confirmation. Expected authority failures are structured, immutable, machine-readable, and report zero writes.
 
-Historical sealed proof objects remain exact-byte verifiable evidence. Historical runtime admissions, histories, actors, capabilities, plans, candidates, stores, or confirmations cannot authorize a current v120 receiver; exact bytes crossing a process require `reverify-exact-bytes`, followed by current profile admission and `same-runtime-custody` through plan, capability, seal, stage, independent byte resolution, atomic named-domain acceptance, and report-only receipt.
+Historical sealed proof objects remain exact-byte verifiable evidence. Historical runtime admissions, histories, actors, capabilities, plans, candidates, stores, or confirmations cannot authorize a current v121 receiver; exact bytes crossing a process require `reverify-exact-bytes`, followed by current profile admission and `same-runtime-custody` through plan, capability, seal, stage, independent byte resolution, atomic named-domain acceptance, and report-only receipt.

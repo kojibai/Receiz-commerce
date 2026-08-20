@@ -1,3 +1,41 @@
+# Receiz Commerce Kit v4.12.0 — Source-First Continuity
+
+Release date: August 19, 2026
+
+Status: General Availability · repository release
+
+SDK target: `@receiz/sdk@121.0.0`
+
+## What has been released
+
+V4.12 coordinates the exact public `121.0.0` SDK, MCP server, and AI-skills packages. The canonical release registry advances to sixty-nine laws and the existing thirty-operation application matrix is repinned to the v121 compatibility range. All thirty-nine AI skills, thirty-three machine-readable manifests, thirty OpenAI prompts, 114 MCP tools, thirty living-subject schemas, and the nineteen-law living-subject conformance suite remain aligned.
+
+V121 adds source-first continuity. A locally sealed proof object is admitted immediately; global publication follows as an idempotent append rather than becoming the condition for local truth. Settled profiles, live players, identity, and Settlement surfaces do not reload or remount merely to wait for a server representation. Caption-only records keep a real SHA-256 commitment, media publication preserves exact source bytes across Safari-compatible transport, partial projections cannot erase stronger verified fields, durable cold heads can hydrate continuity, and an accepted identity proof can establish the full session without waiting for weaker identity projections.
+
+The official upgrade inspection reported zero migration actions. After the exact thirty-operation compatibility ranges advanced to v121, the SDK integration planner reported zero generated-file changes and performed zero SDK-generated writes.
+
+## Why this is a big deal
+
+Most systems still make truth arrive from the institution inward: the server accepts a row, the UI reloads, and only then does the user see an accepted reality. V121 reverses that dependency where proof already exists. Exact proof is admitted at its source, the interface can paint known truth immediately, and institutional infrastructure distributes and hydrates that truth without becoming its author.
+
+This removes a subtle but consequential dependency: representation latency no longer has to masquerade as uncertainty about already verified truth. Offline and browser-native creation, media continuity, identity sessions, settlements, living subjects, and cross-application restoration can remain responsive while global append stays idempotent, inspectable, and subordinate to exact proof.
+
+## The highest frame: truth before institutional representation
+
+The highest credible frame is that independently verifiable truth can exist before any government, company, database, marketplace, platform, or AI provider has represented it in its own system. Institutions remain essential for law, recognition, safety, coordination, and service delivery, but their representation does not have to manufacture the underlying technical fact.
+
+That is not a claim of sovereignty outside law. It is a separation between proof and representation: a person or digital subject can carry continuity across changing institutions, while each institution can independently verify, lawfully recognize, and project it without becoming the sole source of identity or memory. V120 made the subject portable; v121 makes the publication path honor that portability from the first frame.
+
+## Authority, evidence, and limits
+
+The app overlay chains to canonical registry digest `29a793a5bcc0195ab41d30614d37ac51df66023af354fa4335460764eb0af413`. The thirty-operation matrix is bound by digest `208553829ba78a5536524b864577ce59989e2d0a994fad9598d39ae3d557c4f5`; the unchanged living-subject reducer remains `5694662e2acc8b886ac9697ffad202b411d7e66c5f26f9106ee0768df7c7b8c8`.
+
+This source release does not deploy production services, migrate production data, publish the upstream packages, prove external effects, supersede law, or claim consciousness, legal personhood, or sovereignty. Sealed proof objects and verified history remain stronger than SDK, MCP, server, database, token, model, receipt, cache, or UI projection.
+
+Full evidence is recorded in `docs/releases/2026-08-19-v121-source-first-continuity-release.md`.
+
+---
+
 # Receiz Commerce Kit v4.11.0 — Living Proof Subjects
 
 Release date: August 17, 2026

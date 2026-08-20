@@ -9,7 +9,7 @@ Follow canonical head to the complete segmented index, retrieve relevant referen
 
 ## Constitutional workflow
 
-1. Resolve the exact v120 registry, reducer, subject, ownership, world, and Kai heads.
+1. Resolve the exact v121 registry, reducer, subject, ownership, world, and Kai heads.
 2. Inspect the source primitive and exact artifact bytes before using an index or projection.
 3. Plan every consequential mutation and require the exact capability, mandate, or confirmation digest.
 4. Execute through SDK command or transaction admission only.
@@ -21,7 +21,7 @@ Read [manifest.json](manifest.json) before acting. Read [SDK map](references/sdk
 
 ## Quick reference
 
-| Boundary | v120 rule |
+| Boundary | v121 rule |
 |---|---|
 | Proof | Indexes locate; exact primary proof-object bytes verify. |
 | AI | AI speaks and proposes. A model response is never a world event. |

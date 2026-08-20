@@ -73,7 +73,7 @@ if (reconciliationBoundary.effectsDeliveredByAcceptance) throw new Error("effect
 
 Report the commit domain, exact artifact digest, verified history head, relation, addition count, plan digest, capability verification result, immutable staged reference digest, atomic acceptance result, warnings, and effect status. State explicitly that receipts and reports are non-authoritative.
 
-## v120 living-subject contract
+## v121 living-subject contract
 
 Use canonical head → entire proof history → bounded index retrieval → exact primary-object resolution → reasoning → provenance. The 96-object window is working context, never history truncation. AI speech and performance remain non-authoritative. Consequential actions require typed deterministic command admission; meetings, relationships, trades, gifts, and battles require atomic multi-subject transactions. Autonomous execution requires a current digest-bound mandate at lease time. Bearer transfer preserves identity, full history, memory policy, inventory disposition, and unknown namespace bytes while immediately revoking former-owner authority.
 

@@ -2,6 +2,15 @@
 
 All notable changes to Receiz Commerce Kit will be documented here.
 
+## 4.12.0 - Receiz v121 Source-First Continuity
+
+- Upgraded the SDK, MCP server, and AI-skills distribution to the exact public `121.0.0` packages with published integrity and lockfile parity.
+- Adopted canonical v121 registry digest `29a793a5bcc0195ab41d30614d37ac51df66023af354fa4335460764eb0af413`, thirty-operation matrix digest `208553829ba78a5536524b864577ce59989e2d0a994fad9598d39ae3d557c4f5`, and all sixty-nine release laws.
+- Added eight source-first laws: local proof admission before representation, idempotent global append, no settled-surface remount, exact media-byte commitment, stronger-field preservation, durable cold-head hydration, known settlement first paint, and accepted-proof full identity sessions.
+- Synchronized all thirty-nine v121 AI skills and retained all 114 MCP tools, including the thirty-seven living-subject tools and nineteen-law deterministic living-subject conformance suite.
+- Confirmed the official v121 upgrade inspection and integration preview require zero SDK-generated source actions and zero SDK-generated writes after the exact application-matrix range update.
+- Preserved historical sealed artifacts, accepted heads, registries, attestations, and proof history without production data migration, deployment, or external package publication.
+
 ## 4.11.0 - Receiz v120 Living Proof Subjects
 
 - Upgraded the SDK, MCP server, and AI-skills distribution to the exact public `120.0.0` packages with published integrity and lockfile parity.

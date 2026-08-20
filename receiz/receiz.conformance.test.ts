@@ -8,5 +8,5 @@ test("Receiz authority remains artifact-first", () => {
   assert.equal(contract.authority.mode, "artifact-first");
   assert.equal(contract.authority.allowDatabaseAuthority, false);
   assert.equal(contract.operations.length, 30);
-  assert.equal(contract.operations[0].compatibleSdkRange, ">=120.0.0 <121.0.0");
+  assert.equal(contract.operations[0].compatibleSdkRange, ">=121.0.0 <122.0.0");
 });

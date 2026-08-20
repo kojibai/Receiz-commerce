@@ -20,7 +20,7 @@ Label every byte sequence before cross-app use:
 
 ## Required SDK artifact workflow
 
-The exact v120 application-operation inventory is `receiz.artifact.verify`, `receiz.artifact.admit`, `receiz.artifact.append.plan`, `receiz.identity.capability.sign`, `receiz.artifact.transition.seal`, `receiz.artifact.transition.stage`, `receiz.artifact.transition.commit`, `receiz.admission.command.execute`, `receiz.public-proof.projection.locate`, `receiz.artifact.global.resolve`, `receiz.artifact.offline.reconcile`, `receiz.profile-showcase.genesis.plan`, `receiz.profile-showcase.append.plan`, `receiz.economy-showcase.genesis.plan`, `receiz.economy-showcase.append.plan`, `receiz.economy-showcase.merge.plan`, `receiz.subject.resolve`, `receiz.subject.brain.retrieve`, `receiz.subject.twin.message`, `receiz.subject.mandate.activate`, `receiz.world.command.plan`, `receiz.world.command.execute`, `receiz.world.transaction.plan`, `receiz.world.transaction.execute`, `receiz.subject.runtime.enqueue`, `receiz.subject.memory.project`, `receiz.bearer.transfer.plan`, `receiz.bearer.instrument.issue`, `receiz.bearer.instrument.claim`, `receiz.bearer.transfer.cancel`. These identifiers describe the application authority matrix; they do not create authority.
+The exact v121 application-operation inventory is `receiz.artifact.verify`, `receiz.artifact.admit`, `receiz.artifact.append.plan`, `receiz.identity.capability.sign`, `receiz.artifact.transition.seal`, `receiz.artifact.transition.stage`, `receiz.artifact.transition.commit`, `receiz.admission.command.execute`, `receiz.public-proof.projection.locate`, `receiz.artifact.global.resolve`, `receiz.artifact.offline.reconcile`, `receiz.profile-showcase.genesis.plan`, `receiz.profile-showcase.append.plan`, `receiz.economy-showcase.genesis.plan`, `receiz.economy-showcase.append.plan`, `receiz.economy-showcase.merge.plan`, `receiz.subject.resolve`, `receiz.subject.brain.retrieve`, `receiz.subject.twin.message`, `receiz.subject.mandate.activate`, `receiz.world.command.plan`, `receiz.world.command.execute`, `receiz.world.transaction.plan`, `receiz.world.transaction.execute`, `receiz.subject.runtime.enqueue`, `receiz.subject.memory.project`, `receiz.bearer.transfer.plan`, `receiz.bearer.instrument.issue`, `receiz.bearer.instrument.claim`, `receiz.bearer.transfer.cancel`. These identifiers describe the application authority matrix; they do not create authority.
 
 ```ts
 const payload = { bytes: applicationPayload, mimeType: applicationMimeType };
@@ -107,6 +107,10 @@ import { createReceizClient } from "@receiz/sdk";
 const receiz = createReceizClient({ accessToken });
 const identityFile = await receiz.identity.readArtifact(identityArtifactFile);
 const account = await receiz.identity.projectAccount(identityFile);
+if (!account.completeAtSealedHead || account.authority !== "verified-identity-portable-state") {
+  throw new Error("identity_portable_state_not_verified");
+}
+renderAccountImmediately(account.verifiedState); // the sealed head requires no database read
 const carried = await receiz.artifacts.verifyAndOpen(crossAppStateArtifactFile);
 
 const next = await receiz.assets.createProofObject(
@@ -135,7 +139,7 @@ Bind idempotency to the application namespace, prior artifact digest, next paylo
 
 ## Offline behavior
 
-Project verified portable state immediately in the destination application. Persist the exact artifact bytes. Background synchronization may append verified additions later without remounting or downgrading the settled surface.
+Verify the enclosing Identity Seal or Identity Record, then project its verified portable state immediately in the destination application. The verified artifact is the source and carries the complete account at its sealed head: identity, profile, showcase/counts, wallet/Reserve/activity, calendar, sports, Signal Vault cards and realized art, media, preferences, proof history, and preserved unknown namespaces when present. Persist the exact artifact bytes. Database and server rails distribute and index verified additions; they are not continuity prerequisites. Background synchronization may append verified additions later without remounting, rediscovering sealed truth, or downgrading the settled surface.
 
 ## Conflict behavior
 
@@ -191,4 +195,4 @@ Admission begins from runtime-custodied verification of the exact enclosing arti
 
 Deterministic plan identity and unique execution-attempt identity are separate. MCP may reuse a confirmation digest only while the identical attempt is actively pending; committed and failed attempts are terminal and require a fresh confirmation. Expected authority failures are structured, immutable, machine-readable, and report zero writes.
 
-Historical sealed proof objects remain exact-byte verifiable evidence. Historical runtime admissions, histories, actors, capabilities, plans, candidates, stores, or confirmations cannot authorize a current v120 receiver; exact bytes crossing a process require `reverify-exact-bytes`, followed by current profile admission and `same-runtime-custody` through plan, capability, seal, stage, independent byte resolution, atomic named-domain acceptance, and report-only receipt.
+Historical sealed proof objects remain exact-byte verifiable evidence. Historical runtime admissions, histories, actors, capabilities, plans, candidates, stores, or confirmations cannot authorize a current v121 receiver; exact bytes crossing a process require `reverify-exact-bytes`, followed by current profile admission and `same-runtime-custody` through plan, capability, seal, stage, independent byte resolution, atomic named-domain acceptance, and report-only receipt.

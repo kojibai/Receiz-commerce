@@ -1,6 +1,6 @@
 # Receiz AI Skills
 
-The `120.0.0` package is a registry-bound operating-contract distribution beneath Receiz proof authority. AI instructions, MCP confirmations, JSON objects, database rows, staging references, and receipts never become proof or runtime authority.
+The `121.0.0` package is a registry-bound operating-contract distribution beneath Receiz proof authority. AI instructions, MCP confirmations, JSON objects, database rows, staging references, and receipts never become proof or runtime authority.
 
 ## V120 artifact authority chain
 
@@ -27,9 +27,9 @@ Receiz applications. Fifteen focused constitutional skills supply architecture,
 domain, law, command, authority, replay, offline, causal, artifact, migration,
 performance, observability, testing, and release contracts. The earlier nine
 domain skill names remain packaged for compatibility. Seven operation skill names first introduced in obsolete-versioned now
-describe current v120 outcomes for identity profiles, portable continuity, bearer ownership, offline transport,
+describe current v121 outcomes for identity profiles, portable continuity, bearer ownership, offline transport,
 proof media, cross-app state, and admission evidence. Their retired obsolete-versioned mechanisms are not active defaults.
-One dedicated `receiz-global-reconciliation` skill governs accepted-head resolution, verified offline reconciliation, structural divergence, first paint, indeterminate recovery, and effects. Every current manifest uses package version `120.0.0`, requires SDK/MCP `>=120.0.0 <121.0.0`, and binds ruleset `120.0.0` to registry digest `0728651789b26e1d10c1991ec1c06c1ea4a576f0c6520537b250b171f8857073` and operation-matrix digest `1c779ee5ade4b877ae9c6922ab02ba96fffffeb7580f1cf105a59fbb4424f351` from SDK source.
+One dedicated `receiz-global-reconciliation` skill governs accepted-head resolution, verified offline reconciliation, structural divergence, first paint, indeterminate recovery, and effects. Every current manifest uses package version `121.0.0`, requires SDK/MCP `>=121.0.0 <122.0.0`, and binds ruleset `121.0.0` to registry digest `29a793a5bcc0195ab41d30614d37ac51df66023af354fa4335460764eb0af413` and operation-matrix digest `208553829ba78a5536524b864577ce59989e2d0a994fad9598d39ae3d557c4f5` from SDK source.
 
 This package teaches AI agents how to understand, verify, build with, and operate Receiz from the existing repository surfaces.
 
@@ -81,7 +81,7 @@ When SDK or MCP changes:
 - Generated apps must preserve Receiz proof semantics.
 - Generated apps should not require a traditional database unless the user explicitly asks for one.
 
-## v120 living-subject skills
+## v121 living-subject skills
 
 - `receiz-living-subject` governs immutable subject identity, byte-preserved namespaces, ownership continuity, state, history, additions, and portable proof artifacts.
 - `receiz-subject-twin` governs subject-scoped profile, exact-head messaging, complete proof-brain retrieval, portable mind export/import, memory summaries, and the separation between speech, intentions, facts, memories, and performance.
@@ -91,6 +91,6 @@ When SDK or MCP changes:
 - `receiz-event-derived-memory` governs factual memories with admitted event citations and rebuildable AI summaries/projections.
 - `receiz-live-proof-character` governs streamed reply, audio, viseme, gaze, blink, breath, emotion, gesture, proposed intention, and completion events as non-authoritative performance over exact proof context.
 
-Every living-subject skill carries its SDK map, MCP map, authority rules, examples, tests, manifest, OpenAI metadata, and the exact v120 registry and operation-matrix digests. The skills teach the same sequence as the implementation: canonical head → entire proof history → compact indexes → relevant references → exact primary proof objects → reasoning → cited answer. They never authorize a world event, transfer, mandate, or release claim by prose.
+Every living-subject skill carries its SDK map, MCP map, authority rules, examples, tests, manifest, OpenAI metadata, and the exact v121 registry and operation-matrix digests. The skills teach the same sequence as the implementation: canonical head → entire proof history → compact indexes → relevant references → exact primary proof objects → reasoning → cited answer. They never authorize a world event, transfer, mandate, or release claim by prose.
 
 The updated constitutional skills bind living-subject behavior into app building, command construction, deterministic replay, causal sync, global reconciliation, portable continuity, authority/security, MCP operation, testing, release, constitutional law, and offline-first operation. Their examples cover exact proof-memory speech, absent-owner exploration, mutual relationship formation, bounded trade, atomic battle, cross-device restoration, mandate revocation during a queued action, partition convergence, rejection of an AI-invented event, and cross-application subject continuity.

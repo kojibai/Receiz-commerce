@@ -149,7 +149,7 @@ const currentMcpLivingSubjectTools = skillsIndex.currentMcpLivingSubjectTools;
 const historicalV112McpArtifactTools = skillsIndex.historicalV112McpArtifactTools;
 const currentVersion = skillsIndex.version;
 const currentRange = `>=${Number(currentVersion.split(".")[0])}.0.0 <${Number(currentVersion.split(".")[0]) + 1}.0.0`;
-const currentSchema = "receiz.ai-skill-contract.v120";
+const currentSchema = `receiz.ai-skill-contract.v${Number(currentVersion.split(".")[0])}`;
 const currentForbiddenOperations = [
     "last-write-wins", "timestamp-as-head-authority", "connect-token-as-proof-authority",
     "local-receipt-as-global-authority", "projection-as-current-owner", "silent-divergence-resolution",
@@ -425,7 +425,7 @@ function assertOperationSkill(name) {
                 fail(`${name}/manifest.json missing ${required}`);
         }
         if (/identity\.getProfile|identity\.restoreAccount|identity\.appendAccountState|continuity\.reconcile|continuity\.commit|offline\.createCommandQueue|offline\.executeOrQueue|proofHead\.get|receipts\.verify|identityKeyId|expectedOwnershipHead|claimantKeyId|receiz_proof_head_get|receiz_receipt_verify|receiz_continuity_sync_plan|receiz_continuity_sync_execute|media\.publishIdentityImage/.test(text + serialized)) {
-            fail(`${name} retains a retired obsolete-versioned prerequisite in the active v120 outcome`);
+            fail(`${name} retains a retired obsolete-versioned prerequisite in the active v121 outcome`);
         }
         if (/## Required proof head|## Receipt verification/.test(text)) {
             fail(`${name}/SKILL.md retains a retired obsolete-versioned current-outcome section`);
@@ -466,7 +466,7 @@ function assertArtifactSkill(name) {
         fail(`${name}/SKILL.md must refuse production-ready completion without evidence`);
     }
     if (manifest.schema !== currentSchema || manifest.name !== name || manifest.version !== currentVersion) {
-        fail(`${name}/manifest.json has invalid v120 schema, name, or version`);
+        fail(`${name}/manifest.json has invalid v121 schema, name, or version`);
     }
     if (requires?.ruleset !== currentVersion || requires.registryDigest !== artifactRegistryDigest || requires.operationMatrixDigest !== operationMatrixDigest) {
         fail(`${name}/manifest.json has artifact registry or ruleset skew`);
@@ -508,7 +508,7 @@ function assertGlobalReconciliationSkill() {
     const text = read(skillFile);
     const manifest = JSON.parse(read(manifestFile));
     if (manifest.schema !== currentSchema || manifest.version !== currentVersion || manifest.name !== name)
-        fail(`${name}/manifest.json has invalid v120 identity`);
+        fail(`${name}/manifest.json has invalid v121 identity`);
     for (const required of [artifactRegistryDigest, operationMatrixDigest, currentRange])
         if (!JSON.stringify(manifest).includes(required))
             fail(`${name}/manifest.json missing ${required}`);
@@ -520,7 +520,7 @@ function assertCurrentManifest(name) {
         return;
     const manifest = JSON.parse(read(manifestFile));
     if (manifest.schema !== currentSchema || manifest.version !== currentVersion || manifest.name !== name)
-        fail(`${name}/manifest.json is not current v120`);
+        fail(`${name}/manifest.json is not current v121`);
     const requires = manifest.requires ?? {};
     if (requires.sdk !== currentRange || requires.mcp !== currentRange
         || requires.ruleset !== currentVersion || requires.registryDigest !== artifactRegistryDigest
@@ -552,7 +552,7 @@ function assertLivingSubjectSkill(name) {
     for (const section of ["## Constitutional workflow", "## Machine contract", "## Quick reference", "## Common mistakes", "## Completion refusal", "## Authority rule"])
         if (!text.includes(section)) fail(`${name}/SKILL.md missing section ${section}`);
     if (manifest.schema !== currentSchema || manifest.name !== name || manifest.version !== currentVersion)
-        fail(`${name}/manifest.json has invalid v120 identity`);
+        fail(`${name}/manifest.json has invalid v121 identity`);
     for (const field of ["laws", "sdkOperations", "allowedTools", "requiredScopes", "emulatorFixtures", "forbiddenOperations", "requiredEvidence"])
         if (!Array.isArray(manifest[field]) || manifest[field].length === 0) fail(`${name}/manifest.json missing ${field}`);
     for (const required of ["model-output-as-world-event", "index-as-proof-authority", "latest-snapshot-wins", "failed-decision-with-writes"])
