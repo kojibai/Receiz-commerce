@@ -61,29 +61,25 @@ Create `tests/receiz-v122-constitution.test.ts` from the v121 test and replace i
 
 ```ts
 import {
-  RECEIZ_GENERATED_V122_REGISTRY_DIGEST,
-  RECEIZ_SDK_VERSION,
-} from "@receiz/sdk";
-import {
   RECEIZ_MCP_TOOLS,
   RECEIZ_V122_MCP_TOOL_NAMES,
 } from "@receiz/mcp-server";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 
 const V122_REGISTRY = "ed65956a16dd5f0d76d04db2f4a651fc43eb0a71cef64afd53576aa782dc9896";
 const V122_MATRIX = "bd1d7ccf1543e2484df68e3025c7376f8ae37cafe1ca0d7c9cd9f52f6342b325";
 
 describe("Receiz v122 coordinated identity", () => {
-  it("pins SDK, registry, matrix, MCP, and AI skills to one current identity", async () => {
-    const compiler = await import("@receiz/sdk/compiler");
-    const skills = await import("../ai-skills/skills.json", { with: { type: "json" } });
+  it("pins SDK, registry, matrix, MCP, and AI skills to one current identity", () => {
+    const skills = JSON.parse(readFileSync("ai-skills/skills.json", "utf8"));
     assert.equal(RECEIZ_SDK_VERSION, "122.0.0");
     assert.equal(RECEIZ_GENERATED_V122_REGISTRY_DIGEST, V122_REGISTRY);
-    assert.equal(compiler.RECEIZ_CURRENT_APPLICATION_OPERATION_MATRIX_DIGEST, V122_MATRIX);
-    assert.equal(skills.default.version, "122.0.0");
-    assert.equal(skills.default.registryDigest, V122_REGISTRY);
-    assert.equal(skills.default.operationMatrixDigest, V122_MATRIX);
+    assert.equal(RECEIZ_CURRENT_APPLICATION_OPERATION_MATRIX_DIGEST, V122_MATRIX);
+    assert.equal(skills.version, "122.0.0");
+    assert.equal(skills.registryDigest, V122_REGISTRY);
+    assert.equal(skills.operationMatrixDigest, V122_MATRIX);
     assert.equal(RECEIZ_V122_MCP_TOOL_NAMES.length, 19);
     const names = new Set(RECEIZ_MCP_TOOLS.map((tool) => tool.name));
     for (const name of RECEIZ_V122_MCP_TOOL_NAMES) assert.equal(names.has(name), true, name);
@@ -91,9 +87,11 @@ describe("Receiz v122 coordinated identity", () => {
 });
 ```
 
+Add static named imports for `RECEIZ_GENERATED_V122_REGISTRY_DIGEST` and `RECEIZ_SDK_VERSION` from the v122 root runtime entrypoint, and `RECEIZ_CURRENT_APPLICATION_OPERATION_MATRIX_DIGEST` from the v122 compiler entrypoint. Keeping the compiler symbol on the compiler entrypoint is part of the assertion.
+
 - [ ] **Step 2: Run the focused test and observe the version failure**
 
-Run: `npx tsx --test tests/receiz-v122-constitution.test.ts`
+Run: `node --import tsx --test tests/receiz-v122-constitution.test.ts`
 
 Expected: FAIL because `RECEIZ_SDK_VERSION` is `121.0.0` or the v122 export is absent.
 
@@ -156,7 +154,7 @@ Implement `scripts/receiz-v122-migration-verify.mjs` by adapting the v121 verifi
 Run:
 
 ```bash
-npx tsx --test tests/receiz-v122-constitution.test.ts tests/receiz-app-contract.test.ts
+node --import tsx --test tests/receiz-v122-constitution.test.ts tests/receiz-app-contract.test.ts
 pnpm validate:ai-skills
 pnpm receiz:migrate:verify
 ```
@@ -214,7 +212,7 @@ describe("Receiz v122 representation boundary", () => {
 
 - [ ] **Step 2: Run the focused tests and observe missing-module failures**
 
-Run: `npx tsx --test tests/receiz-v122-contract.test.ts`
+Run: `node --import tsx --test tests/receiz-v122-contract.test.ts`
 
 Expected: FAIL because `src/lib/receiz/v122/contract.ts` does not exist.
 
@@ -223,8 +221,6 @@ Expected: FAIL because `src/lib/receiz/v122/contract.ts` does not exist.
 `contract.ts` must import current identities from the packages and freeze the exact tool inventory:
 
 ```ts
-import { RECEIZ_GENERATED_V122_REGISTRY_DIGEST, RECEIZ_SDK_VERSION } from "@receiz/sdk";
-import { RECEIZ_CURRENT_APPLICATION_OPERATION_MATRIX_DIGEST } from "@receiz/sdk/compiler";
 import { RECEIZ_V122_MCP_TOOL_NAMES } from "@receiz/mcp-server";
 
 export const RECEIZ_V122_CONTRACT = Object.freeze({
@@ -239,6 +235,8 @@ export const RECEIZ_V122_CONTRACT = Object.freeze({
   }),
 });
 ```
+
+Use static named imports for `RECEIZ_GENERATED_V122_REGISTRY_DIGEST` and `RECEIZ_SDK_VERSION` from the root runtime entrypoint, and for `RECEIZ_CURRENT_APPLICATION_OPERATION_MATRIX_DIGEST` from the compiler entrypoint. Do not use a namespace, default, or dynamic SDK import.
 
 `authority-report.ts` must use a closed union and never accept an authority object from callers:
 
@@ -277,7 +275,7 @@ export const zeroWriteReport = (primitive: string, denialCode: string): ReceizAu
 
 - [ ] **Step 4: Run tests and commit**
 
-Run: `npx tsx --test tests/receiz-v122-contract.test.ts`
+Run: `node --import tsx --test tests/receiz-v122-contract.test.ts`
 
 Expected: PASS.
 
@@ -319,7 +317,7 @@ it("exposes every v122 primitive through the sole SDK client boundary", () => {
 
 - [ ] **Step 2: Run the test and observe `v122` is absent**
 
-Run: `npx tsx --test tests/receiz-v122-adapter.test.ts`
+Run: `node --import tsx --test tests/receiz-v122-adapter.test.ts`
 
 Expected: FAIL because `adapter.v122` is undefined.
 
@@ -343,7 +341,7 @@ Construct `v122` with wrappers such as `admit: (input) => client.subjects.admit(
 Run:
 
 ```bash
-npx tsx --test tests/receiz-v122-adapter.test.ts tests/receiz-capabilities.test.ts
+node --import tsx --test tests/receiz-v122-adapter.test.ts tests/receiz-capabilities.test.ts
 pnpm typecheck
 ```
 
@@ -396,7 +394,7 @@ it("creates an encrypted edge kit while returning only the public binding for pu
 
 - [ ] **Step 2: Run the test and observe the missing edge module**
 
-Run: `npx tsx --test tests/receiz-v122-edge-custody.test.ts`
+Run: `node --import tsx --test tests/receiz-v122-edge-custody.test.ts`
 
 Expected: FAIL because `edge-custody.ts` does not exist.
 
@@ -405,8 +403,6 @@ Expected: FAIL because `edge-custody.ts` does not exist.
 Use `createReceizSubjectAccessKeyV122` directly for local cryptography. Export only the public binding to network callers. Store the encrypted kit in IndexedDB through a small `ReceizEdgeCustodyStore` interface; do not place it in application state, server routes, logs, or the browser admission ledger.
 
 ```ts
-import { createReceizSubjectAccessKeyV122 } from "@receiz/sdk";
-
 export const edgeKitStorageKey = (subjectId: string) => `receiz:v122:edge-access-kit:${subjectId}`;
 
 export const createEdgeAccessKit = createReceizSubjectAccessKeyV122;
@@ -416,6 +412,8 @@ export type ReceizEdgeCustodyStore = Readonly<{
   get(subjectId: string): Promise<string | null>;
 }>;
 ```
+
+Import `createReceizSubjectAccessKeyV122` as a static named root-runtime symbol in the production file.
 
 - [ ] **Step 4: Write failing subject-route tests for authenticated owner binding and zero-write conflicts**
 
@@ -453,7 +451,7 @@ The account surface displays:
 Run:
 
 ```bash
-npx tsx --test tests/receiz-v122-edge-custody.test.ts tests/receiz-v122-subject-route.test.ts
+node --import tsx --test tests/receiz-v122-edge-custody.test.ts tests/receiz-v122-subject-route.test.ts
 pnpm typecheck
 ```
 
@@ -485,7 +483,6 @@ git commit -m "feat: add v122 living-subject edge continuity"
 
 ```ts
 import assert from "node:assert/strict";
-import { createReceizSubjectMandateV122 } from "@receiz/sdk";
 import { it } from "node:test";
 import { validateWildsMandateUse } from "../src/features/play/receiz-v122-world";
 
@@ -520,9 +517,11 @@ it("revocation-head mismatch rejects autonomous execution with zero writes", asy
 });
 ```
 
+Import `createReceizSubjectMandateV122` as a static named root-runtime symbol in the test file.
+
 - [ ] **Step 2: Run the mandate test and capture the exact SDK denial code**
 
-Run: `npx tsx --test tests/receiz-v122-mandates.test.ts`
+Run: `node --import tsx --test tests/receiz-v122-mandates.test.ts`
 
 Expected: FAIL only if the published SDK denial code differs; update the expected literal to the exact SDK output, never normalize the SDK result.
 
@@ -560,7 +559,7 @@ The recovery helper must return `committed` or `zero-write` directly and resolve
 Run:
 
 ```bash
-npx tsx --test tests/receiz-v122-mandates.test.ts tests/receiz-v122-world.test.ts
+node --import tsx --test tests/receiz-v122-mandates.test.ts tests/receiz-v122-world.test.ts
 pnpm typecheck
 ```
 
@@ -624,7 +623,7 @@ describe("Receiz v122 value rails", () => {
 
 - [ ] **Step 2: Run the tests and observe the missing value planner**
 
-Run: `npx tsx --test tests/receiz-v122-value-rails.test.ts`
+Run: `node --import tsx --test tests/receiz-v122-value-rails.test.ts`
 
 Expected: FAIL because `value-request.ts` does not exist.
 
@@ -643,7 +642,7 @@ The account component labels Settlement and Reserve separately, shows Phi as the
 Run:
 
 ```bash
-npx tsx --test tests/receiz-v122-value-rails.test.ts tests/receiz-settlement.test.ts tests/checkout-authority.test.ts
+node --import tsx --test tests/receiz-v122-value-rails.test.ts tests/receiz-settlement.test.ts tests/checkout-authority.test.ts
 pnpm typecheck
 ```
 
@@ -693,7 +692,7 @@ it("rejects representation used as source authority", () => {
 
 - [ ] **Step 2: Run the scanner test and observe the missing script**
 
-Run: `npx tsx --test tests/receiz-v122-authority-scan.test.ts`
+Run: `node --import tsx --test tests/receiz-v122-authority-scan.test.ts`
 
 Expected: FAIL because the scanner module does not exist.
 
@@ -722,7 +721,7 @@ Run:
 ```bash
 pnpm receiz:authority-scan
 pnpm lint
-npx tsx --test tests/receiz-v122-authority-scan.test.ts tests/receiz-capabilities.test.ts
+node --import tsx --test tests/receiz-v122-authority-scan.test.ts tests/receiz-capabilities.test.ts
 ```
 
 Expected: PASS with zero blocking findings.
@@ -771,7 +770,7 @@ it("teaches every v122 MCP operation with source-first evidence", () => {
 
 - [ ] **Step 2: Run the doctrine test and observe the missing module**
 
-Run: `npx tsx --test tests/receiz-v122-doctrine.test.ts`
+Run: `node --import tsx --test tests/receiz-v122-doctrine.test.ts`
 
 Expected: FAIL because `doctrine.ts` does not exist.
 
@@ -808,7 +807,7 @@ Keep `/admin` role-gated through existing middleware. The public doctrine page i
 Run:
 
 ```bash
-npx tsx --test tests/receiz-v122-doctrine.test.ts tests/receiz-v122-operations-ui.test.ts tests/account-route-session.test.ts
+node --import tsx --test tests/receiz-v122-doctrine.test.ts tests/receiz-v122-operations-ui.test.ts tests/account-route-session.test.ts
 pnpm typecheck
 ```
 
@@ -855,7 +854,7 @@ for (const marker of [
 
 - [ ] **Step 2: Run the release test and observe the missing audit**
 
-Run: `npx tsx --test tests/release-guard.test.ts`
+Run: `node --import tsx --test tests/release-guard.test.ts`
 
 Expected: FAIL because the v122 release audit does not exist.
 
