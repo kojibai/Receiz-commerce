@@ -15,6 +15,7 @@ export type ReceizValuePlanInput = Readonly<{
   expectedDestinationHead: string;
   usdPerPhiMicrocents: string;
   priceBasis: unknown;
+  idempotencyKey?: string;
 }>;
 
 function positiveDecimal(value: unknown, field: string): string {
@@ -40,6 +41,7 @@ export async function planReceizValue(input: ReceizValuePlanInput): Promise<Rece
     expectedDestinationHead: required(input.expectedDestinationHead, "expectedDestinationHead"),
     usdPerPhiMicrocents: positiveDecimal(input.usdPerPhiMicrocents, "usdPerPhiMicrocents"),
     priceBasis: input.priceBasis,
+    ...(input.idempotencyKey ? { idempotencyKey: required(input.idempotencyKey, "idempotencyKey") } : {}),
   });
   const intent = input.rail === "settlement"
     ? await planReceizSettlementV122(planInput)

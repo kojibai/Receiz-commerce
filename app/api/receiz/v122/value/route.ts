@@ -9,7 +9,7 @@ export const runtime = "nodejs";
 const headers = { "cache-control": "no-store" };
 const fields = new Set([
   "rail", "amountPhiMicro", "sourceProofObjectId", "sourceValueHead", "destinationSubjectId",
-  "expectedDestinationHead", "usdPerPhiMicrocents", "priceBasis",
+  "expectedDestinationHead", "usdPerPhiMicrocents", "priceBasis", "idempotencyKey",
 ]);
 
 export async function POST(request: NextRequest) {

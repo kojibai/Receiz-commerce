@@ -2,6 +2,15 @@
 
 All notable changes to Receiz Commerce Kit will be documented here.
 
+## 5.1.0 - Receiz v123 Lawful Action
+
+- Upgraded the SDK, MCP server, and AI-skills distribution to exact public `123.0.0` packages and their published lockfile integrities.
+- Adopted canonical registry digest `945a581d1fc49c2dc18fbe8c129771ef464b8a58b96188bce561e88ae8b6ceeb`, the 36-operation matrix digest `e08cec3e3ad22c20ddd6c08169ece19f094c366214d6d6b4dc432cd97558e2c5`, all 141 MCP tools, and the exact 42-skill tree.
+- Added explicit-consent, application-bound proof-authority exchange at the browser edge with local identity-artifact reading, SDK-derived scopes, exact grant introspection, memory-only bearer custody, and no server proof-authority endpoint.
+- Added SDK-canonical world command and transaction planning, exact-head namespace resolution, exact Phi Settlement/Reserve execution, canonical intent persistence before action, semantic idempotency, and outcome lookup before retry.
+- Added public developer doctrine, operator evidence, migration verification, negative authority scanning, and a 103-check v123 release lock that keep every SDK, MCP, AI, server, database, receipt, cache, and UI representation beneath the proof object.
+- Preserved historical proof and v122 behavior without rewriting production data or claiming legal sovereignty; v123 establishes institution-independent verification as a technical boundary, not exemption from applicable law.
+
 ## 4.12.0 - Receiz v121 Source-First Continuity
 
 - Upgraded the SDK, MCP server, and AI-skills distribution to the exact public `121.0.0` packages with published integrity and lockfile parity.

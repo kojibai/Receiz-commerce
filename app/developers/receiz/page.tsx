@@ -1,46 +1,50 @@
-import { RECEIZ_MCP_TOOLS } from "@receiz/mcp-server";
-import { RECEIZ_V122_CONTRACT } from "@/lib/receiz/v122/contract";
-import { RECEIZ_V122_DOCTRINE, RECEIZ_V122_EXAMPLES } from "@/lib/receiz/v122/doctrine";
+import { RECEIZ_V123_CONTRACT } from "@/lib/receiz/v123/contract";
+import { RECEIZ_V123_DOCTRINE, RECEIZ_V123_EXAMPLES } from "@/lib/receiz/v123/doctrine";
 
 export const metadata = {
-  title: "Receiz v122 source-first developer doctrine",
-  description: "Executable integration doctrine for Receiz v122 SDK, MCP, and AI skills.",
+  title: "Receiz v123 source-first developer doctrine",
+  description: "Executable integration doctrine for Receiz v123 SDK, MCP, and AI skills.",
 };
-
-const artifactTools = RECEIZ_MCP_TOOLS.filter((tool) => tool.name.startsWith("receiz_artifact_")).slice(0, 9);
 
 export default function ReceizDeveloperDoctrinePage() {
   return (
     <main className="legal-page">
       <header className="legal-hero">
-        <p className="eyebrow">Receiz v122 · executable doctrine</p>
+        <p className="eyebrow">Receiz v123 · lawful action</p>
         <h1>Representation must never outrank the source.</h1>
-        <p>A sealed proof object and independently admitted continuity remain stronger than governments, institutions, corporations, databases, servers, SDKs, MCP, AI, receipts, caches, and interfaces—not by institutional claim, but because the source carries its own verifiable evidence.</p>
+        <p>A proof object carries verifiable evidence across institutional boundaries. Governments, platforms, companies, databases, MCP tools, AI systems, receipts, and interfaces may recognize or represent that evidence; none can become the source by describing it.</p>
+        <p>This is institution-independent verification, not a claim of immunity from law or institutional process. The highest frame is simpler: truth remains attached to its evidence wherever that evidence travels.</p>
       </header>
 
       <section className="panel">
-        <h2>Authority hierarchy</h2>
+        <h2>The v123 authority boundary</h2>
         <ol>
-          <li>Exact native Record → Seal proof-object bytes.</li>
-          <li>Independent verification and admitted append-only history.</li>
-          <li>Typed SDK plans and atomic execution bound to exact heads.</li>
+          <li>Exact proof-object bytes and authenticated continuity.</li>
+          <li>Explicit human consent and live, scoped proof authority held only at the edge.</li>
+          <li>SDK-generated plans, exact persisted intents, and atomic outcomes.</li>
           <li>MCP, AI, server, database, receipt, cache, and UI representations—always non-authoritative.</li>
         </ol>
-        <p><strong>SDK:</strong> {RECEIZ_V122_CONTRACT.sdkVersion}</p>
-        <p><strong>Registry:</strong> <code>{RECEIZ_V122_CONTRACT.registryDigest}</code></p>
-        <p><strong>Operation matrix:</strong> <code>{RECEIZ_V122_CONTRACT.operationMatrixDigest}</code></p>
+        <p><strong>SDK:</strong> {RECEIZ_V123_CONTRACT.sdkVersion}</p>
+        <p><strong>Registry:</strong> <code>{RECEIZ_V123_CONTRACT.registryDigest}</code></p>
+        <p><strong>Operation matrix:</strong> <code>{RECEIZ_V123_CONTRACT.operationMatrixDigest}</code></p>
       </section>
 
       <section className="panel">
-        <h2>The 19 maintained v122 outcomes</h2>
-        <p>Every row maps the SDK, MCP, and AI skill while preserving <code>mcpAuthority: false</code>.</p>
+        <h2>What shipped</h2>
+        <p><strong>36 operations</strong> in the canonical application matrix, <strong>141 MCP tools</strong> in the complete server, and <strong>42 AI skills</strong> in the exact published skill tree.</p>
+        <p>The eight v123 outcomes add canonical world planners, exact-head namespace resolution, proof-authority exchange, granted-scope introspection, exact Phi Settlement and Reserve execution, and lookup-before-retry outcome recovery.</p>
+      </section>
+
+      <section className="panel">
+        <h2>The 8 mapped v123 outcomes</h2>
+        <p>Every row preserves <code>mcpAuthority: false</code>. A named AI skill is shown only when its published manifest explicitly allows the corresponding v123 MCP tool.</p>
         <div style={{ overflowX: "auto" }}>
           <table>
-            <thead><tr><th>Domain</th><th>MCP tool</th><th>SDK operation</th><th>Strongest source</th><th>Required evidence</th></tr></thead>
-            <tbody>{RECEIZ_V122_DOCTRINE.map((entry) => (
+            <thead><tr><th>Domain</th><th>MCP tool</th><th>SDK operation</th><th>AI skill</th><th>Required evidence</th></tr></thead>
+            <tbody>{RECEIZ_V123_DOCTRINE.map((entry) => (
               <tr key={entry.mcpTool}>
                 <td>{entry.domain}</td><td><code>{entry.mcpTool}</code></td><td><code>{entry.sdkOperation}</code></td>
-                <td>{entry.strongestSource}</td><td>{entry.requiredEvidence.join(" · ")}</td>
+                <td>{entry.aiSkill ?? "No tool-specific manifest grant"}</td><td>{entry.requiredEvidence.join(" · ")}</td>
               </tr>
             ))}</tbody>
           </table>
@@ -48,21 +52,14 @@ export default function ReceizDeveloperDoctrinePage() {
       </section>
 
       <section className="panel">
-        <h2>Continuity already inherited</h2>
-        <p>The nine artifact MCP tools remain below exact artifact verification. The inherited subject, Twin, world, memory, mandate, transaction, runtime, and bearer families retain command-only mutation, exact-head binding, zero-write failure, and append-only history.</p>
-        <p><strong>Artifact tools represented:</strong> {artifactTools.map((tool) => tool.name).join(", ")}</p>
-        <p><strong>Canonical language:</strong> plan is not commit; receipt is report-only; projection is not proof; model output is intent; unknown is unresolved; Settlement is not Reserve; USD is display-only; private plaintext stays at the edge.</p>
+        <h2>Implementation law</h2>
+        <p>Private identity bytes stay local. Consent is explicit. Bearer authority is memory-only. Generated digests and identities belong to the SDK. Value moves in exact Phi, never USD. Intent is persisted before execution. An unknown outcome requires lookup before retry. Failed authority or exact-head checks produce zero writes.</p>
       </section>
 
       <section className="panel">
         <h2>Copy-safe examples</h2>
-        <h3>SDK</h3><pre><code>{RECEIZ_V122_EXAMPLES.sdk}</code></pre>
-        <h3>MCP</h3><pre><code>{RECEIZ_V122_EXAMPLES.mcp}</code></pre>
-      </section>
-
-      <section className="panel">
-        <h2>Release evidence</h2>
-        <p>Release is blocked unless exact package identities, registry and matrix digests, 40 AI skills, all 19 MCP operations, static authority scanning, negative law tests, migration verification, and the final release lock agree.</p>
+        <h3>SDK</h3><pre><code>{RECEIZ_V123_EXAMPLES.sdk}</code></pre>
+        <h3>MCP</h3><pre><code>{RECEIZ_V123_EXAMPLES.mcp}</code></pre>
       </section>
     </main>
   );

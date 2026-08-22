@@ -1,0 +1,4 @@
+interface:
+  display_name: "Receiz Proof Authority"
+  short_description: "Exchange proof for narrow embedded authority"
+  default_prompt: "Use $receiz-proof-authority to exchange an independently verified proof object for narrow application authority without a website redirect."

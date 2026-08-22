@@ -73,14 +73,14 @@ describe("Next runtime release guard", () => {
   });
 });
 
-describe("Receiz v122 release evidence", () => {
+describe("Receiz v123 release evidence", () => {
   it("documents the exact constitutional release identity and measured authority boundaries", () => {
-    const releaseText = readFileSync("docs/releases/2026-08-21-v122-constitutional-core-release.md", "utf8");
+    const releaseText = readFileSync("docs/releases/2026-08-22-v123-lawful-action-release.md", "utf8");
     for (const marker of [
-      "5.0.0",
-      "122.0.0",
-      "ed65956a16dd5f0d76d04db2f4a651fc43eb0a71cef64afd53576aa782dc9896",
-      "bd1d7ccf1543e2484df68e3025c7376f8ae37cafe1ca0d7c9cd9f52f6342b325",
+      "5.1.0",
+      "123.0.0",
+      "945a581d1fc49c2dc18fbe8c129771ef464b8a58b96188bce561e88ae8b6ceeb",
+      "e08cec3e3ad22c20ddd6c08169ece19f094c366214d6d6b4dc432cd97558e2c5",
       "Representation never outranks source",
       "Network calls during independent verification: `0`",
       "MCP authority: `false`",

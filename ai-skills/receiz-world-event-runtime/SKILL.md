@@ -10,10 +10,11 @@ Propose intent, construct command, validate exact heads, verify authority, decid
 ## Constitutional workflow
 
 1. Resolve authenticated participant and world heads plus pinned registry/reducer digests.
-2. For private/invited events, call `client.world.planPrivateCommand` at the edge. Only the minimal public exterior, ciphertext, nonce, AAD digest, envelope digest, and recipient wraps may reach production.
-3. Persist the exact planned transaction bytes before execution and call `client.world.validateTransaction`.
-4. Execute once. After timeout/crash, call `client.world.execution` or `executionByIdempotencyKey` before any retry; never replan a known committed or zero-write transaction.
-5. Decrypt authorized additions only at the viewer edge. Revocation removes future envelope delivery without rewriting creation history.
+2. For public v122 world commands and transactions, use `client.world.planCommandV122(...)` and `client.world.planTransactionV122(...)`; applications and models must never manufacture canonical command bytes, authority digests, plan digests, transaction IDs, or transaction digests.
+3. For private/invited events, call `client.world.planPrivateCommand` at the edge. Only the minimal public exterior, ciphertext, nonce, AAD digest, envelope digest, and recipient wraps may reach production.
+4. Persist the exact planned transaction bytes before execution and call `client.world.validateTransaction`.
+5. Execute once. After timeout/crash, call `client.world.execution` or `executionByIdempotencyKey` before any retry; never replan a known committed or zero-write transaction.
+6. Decrypt authorized additions only at the viewer edge. Revocation removes future envelope delivery without rewriting creation history.
 
 ## Machine contract
 
@@ -21,7 +22,7 @@ Read [manifest.json](manifest.json) before acting. Read [SDK map](references/sdk
 
 ## Quick reference
 
-| Boundary | v122 rule |
+| Boundary | v123 rule |
 |---|---|
 | Proof | Indexes locate; exact primary proof-object bytes verify. |
 | AI | AI speaks and proposes. A model response is never a world event. |

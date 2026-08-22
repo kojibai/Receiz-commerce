@@ -10,7 +10,7 @@ Build validate-authorize-decide-append-project-receipt pipelines with stable com
 ## Constitutional workflow
 
 1. Inspect the repository and installed SDK version.
-2. Load the active canonical v122 registry and applicable constitutional laws.
+2. Load the active canonical v123 registry and applicable constitutional laws.
 3. Identify every authority boundary affected by the change.
 4. Write the implementation contract before implementation.
 5. Implement canonical changes only through SDK commands.

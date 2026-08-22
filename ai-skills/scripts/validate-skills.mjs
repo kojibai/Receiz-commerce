@@ -156,7 +156,7 @@ const currentForbiddenOperations = [
     "remote-reconciliation-before-first-paint", "unverified-server-artifact-render",
     "environment-player-token-fallback", "accepted-means-effects-delivered", "indeterminate-means-failed",
 ];
-const v122AdditiveSkills = new Set(["receiz-value-rails"]);
+const currentFocusedSkills = new Set(["receiz-value-rails", "receiz-value-execution", "receiz-proof-authority"]);
 const artifactEvidence = [
     "exact-artifact-byte-identity", "artifact-digest-match", "payload-digest-binding", "signature-v4",
     "owner-claim-binding", "independent-artifact-verification", "cross-platform-round-trip",
@@ -426,7 +426,7 @@ function assertOperationSkill(name) {
                 fail(`${name}/manifest.json missing ${required}`);
         }
         if (/identity\.getProfile|identity\.restoreAccount|identity\.appendAccountState|continuity\.reconcile|continuity\.commit|offline\.createCommandQueue|offline\.executeOrQueue|proofHead\.get|receipts\.verify|identityKeyId|expectedOwnershipHead|claimantKeyId|receiz_proof_head_get|receiz_receipt_verify|receiz_continuity_sync_plan|receiz_continuity_sync_execute|media\.publishIdentityImage/.test(text + serialized)) {
-            fail(`${name} retains a retired obsolete-versioned prerequisite in the active v121 outcome`);
+        fail(`${name} retains a retired obsolete-versioned prerequisite in the active current outcome`);
         }
         if (/## Required proof head|## Receipt verification/.test(text)) {
             fail(`${name}/SKILL.md retains a retired obsolete-versioned current-outcome section`);
@@ -467,7 +467,7 @@ function assertArtifactSkill(name) {
         fail(`${name}/SKILL.md must refuse production-ready completion without evidence`);
     }
     if (manifest.schema !== currentSchema || manifest.name !== name || manifest.version !== currentVersion) {
-        fail(`${name}/manifest.json has invalid v121 schema, name, or version`);
+        fail(`${name}/manifest.json has invalid current schema, name, or version`);
     }
     if (requires?.ruleset !== currentVersion || requires.registryDigest !== artifactRegistryDigest || requires.operationMatrixDigest !== operationMatrixDigest) {
         fail(`${name}/manifest.json has artifact registry or ruleset skew`);
@@ -509,7 +509,7 @@ function assertGlobalReconciliationSkill() {
     const text = read(skillFile);
     const manifest = JSON.parse(read(manifestFile));
     if (manifest.schema !== currentSchema || manifest.version !== currentVersion || manifest.name !== name)
-        fail(`${name}/manifest.json has invalid v121 identity`);
+        fail(`${name}/manifest.json has invalid current identity`);
     for (const required of [artifactRegistryDigest, operationMatrixDigest, currentRange])
         if (!JSON.stringify(manifest).includes(required))
             fail(`${name}/manifest.json missing ${required}`);
@@ -520,15 +520,14 @@ function assertCurrentManifest(name) {
     if (!existsSync(manifestFile))
         return;
     const manifest = JSON.parse(read(manifestFile));
-    if (v122AdditiveSkills.has(name)) {
-        if (manifest.schema !== "receiz.ai-skill-contract.v122" || manifest.version !== "122.0.0" || manifest.name !== name)
-            fail(`${name}/manifest.json has invalid v122 identity`);
+    if (currentFocusedSkills.has(name)) {
+        if (manifest.schema !== currentSchema || manifest.version !== currentVersion || manifest.name !== name)
+            fail(`${name}/manifest.json has invalid focused current identity`);
         for (const field of ["laws", "sdkOperations", "allowedTools", "requiredScopes", "forbiddenOperations", "requiredEvidence"])
             if (!Array.isArray(manifest[field]) || manifest[field].length === 0) fail(`${name}/manifest.json missing ${field}`);
-        return;
     }
     if (manifest.schema !== currentSchema || manifest.version !== currentVersion || manifest.name !== name)
-        fail(`${name}/manifest.json is not current v121`);
+        fail(`${name}/manifest.json is not current`);
     const requires = manifest.requires ?? {};
     if (requires.sdk !== currentRange || requires.mcp !== currentRange
         || requires.ruleset !== currentVersion || requires.registryDigest !== artifactRegistryDigest
@@ -560,7 +559,7 @@ function assertLivingSubjectSkill(name) {
     for (const section of ["## Constitutional workflow", "## Machine contract", "## Quick reference", "## Common mistakes", "## Completion refusal", "## Authority rule"])
         if (!text.includes(section)) fail(`${name}/SKILL.md missing section ${section}`);
     if (manifest.schema !== currentSchema || manifest.name !== name || manifest.version !== currentVersion)
-        fail(`${name}/manifest.json has invalid v121 identity`);
+        fail(`${name}/manifest.json has invalid current identity`);
     for (const field of ["laws", "sdkOperations", "allowedTools", "requiredScopes", "emulatorFixtures", "forbiddenOperations", "requiredEvidence"])
         if (!Array.isArray(manifest[field]) || manifest[field].length === 0) fail(`${name}/manifest.json missing ${field}`);
     for (const required of ["model-output-as-world-event", "index-as-proof-authority", "latest-snapshot-wins", "failed-decision-with-writes"])
@@ -570,9 +569,9 @@ function assertLivingSubjectSkill(name) {
 assertPath(join(root, "README.md"));
 assertPath(join(root, "SKILLS.md"));
 assertPath(join(root, "skills.json"));
-if (skillsIndex.skills?.length !== 40 || skillsIndex.skills?.filter((entry) => entry.manifest).length !== 34
-    || skillsIndex.skills?.filter((entry) => entry.agent).length !== 31)
-    fail("skills.json must preserve 40 skills, 34 manifests, and 31 OpenAI agent prompts");
+if (skillsIndex.skills?.length !== 42 || skillsIndex.skills?.filter((entry) => entry.manifest).length !== 36
+    || skillsIndex.skills?.filter((entry) => entry.agent).length !== 33)
+    fail("skills.json must preserve 42 skills, 36 manifests, and 33 OpenAI agent prompts");
 for (const skill of skills)
     assertSkill(skill);
 for (const skill of constitutionalSkills)

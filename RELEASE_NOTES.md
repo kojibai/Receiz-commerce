@@ -1,3 +1,21 @@
+# Receiz Commerce Kit v5.1.0 — v123 Lawful Action
+
+Release date: August 22, 2026
+
+Status: General Availability · repository release
+
+SDK target: `@receiz/sdk@123.0.0`
+
+V5.1 makes proof-native action an end-to-end application ceremony. The exact identity artifact and application challenge stay at the browser edge; the user gives explicit consent; the SDK signs and exchanges proof authority; the short-lived bearer remains in memory; required scopes come from the SDK and must equal the introspected grant. Canonical world planners reject caller-generated security fields, namespace resolution requires the exact subject head, and separate Settlement/Reserve rails persist exact Phi intent before execution and look up ambiguous outcomes before retry.
+
+The release aligns the exact public SDK, MCP, and AI-skills packages at `123.0.0`: canonical registry `945a581d1fc49c2dc18fbe8c129771ef464b8a58b96188bce561e88ae8b6ceeb`, 36-operation matrix `e08cec3e3ad22c20ddd6c08169ece19f094c366214d6d6b4dc432cd97558e2c5`, 141 MCP tools, and 42 AI skills. Static authority scanning, migration verification, exact skill-tree parity, negative tests, retained conformance, and the v123 release lock make forbidden shortcuts release-blocking.
+
+The highest frame is institution-independent verification: a government, company, platform, database, MCP tool, AI system, receipt, or interface can recognize evidence without becoming its source. This is a technical separation between proof and representation, not legal sovereignty or exemption from applicable law. Representation never outranks source.
+
+Full evidence is recorded in `docs/releases/2026-08-22-v123-lawful-action-release.md`.
+
+---
+
 # Receiz Commerce Kit v4.12.0 — Source-First Continuity
 
 Release date: August 19, 2026

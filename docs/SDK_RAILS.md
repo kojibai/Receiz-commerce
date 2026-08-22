@@ -102,7 +102,7 @@ SDK rails:
 - `merchants.profile`
 - `merchants.capabilities`
 
-These rails are exposed in `@receiz/sdk@122.0.0`. The app treats customer accounts as tenant-scoped storefront projections over Receiz proof. The same proof-bearing Receiz identity can be used across multiple stores, but orders, rewards, assets, and permissions are projected for the active subdomain or custom domain. SDK `doctor()` reports delegated-token, tenant, customer, merchant, commerce, media, domain, public-store, and coordination requirements directly.
+These rails are exposed in `@receiz/sdk@123.0.0`. The app treats customer accounts as tenant-scoped storefront projections over Receiz proof. The same proof-bearing Receiz identity can be used across multiple stores, but orders, rewards, assets, and permissions are projected for the active subdomain or custom domain. SDK `doctor()` reports delegated-token, tenant, customer, merchant, commerce, media, domain, public-store, and coordination requirements directly.
 
 ## Merchant Settlement
 
@@ -246,7 +246,7 @@ Receiz Twin/World buttons are hidden unless both are true:
 - The relevant `NEXT_PUBLIC_RECEIZ_*_ENABLED` flag is set.
 - The installed `@receiz/sdk` client exposes the matching namespace.
 
-With `@receiz/sdk@122.0.0`, typed app-state, signed public-store publish, source-first local proof admission, idempotent global append, durable cold-head hydration, subject edge bundles and encrypted access kits, private-world envelopes, exact execution recovery, bounded mandates, atomic multi-world transactions, and distinct Settlement/Reserve Phi plans are exposed through the browser-safe universal runtime. Node-only compiler APIs remain at `@receiz/sdk/compiler`; deterministic emulator and conformance APIs live at `@receiz/sdk/testing`. `receiz.constitution.json` is validated at `src/lib/receiz/constitution.ts` as an app overlay chained to the package-embedded canonical v122 registry digest used by MCP and every current AI-skill manifest. Coordination requires an explicitly supplied Connect token, independently reverifies remote bytes, preserves structural divergence, and separates acceptance from effect delivery. Exact bytes must be reverified at process boundaries; runtime admissions, plans, capabilities, candidates, stores, staged references, receipts, model output, MCP output, and acceptance reports cannot be serialized into authority. Existing sealed proof and accepted artifact history stay stronger than all projections.
+With `@receiz/sdk@123.0.0`, typed app-state, signed public-store publish, source-first local proof admission, idempotent global append, durable cold-head hydration, subject edge bundles and encrypted access kits, private-world envelopes, bounded mandates, atomic multi-world transactions, explicit proof authority, exact-head namespace resolution, canonical world planning, and exact Settlement/Reserve execution are exposed through the browser-safe universal runtime. Node-only compiler APIs remain at `@receiz/sdk/compiler`; deterministic emulator and conformance APIs live at `@receiz/sdk/testing`. `receiz.constitution.json` is validated at `src/lib/receiz/constitution.ts` as an app overlay chained to the package-embedded canonical v123 registry digest used by MCP and every current AI-skill manifest. Exact bytes must be reverified at process boundaries; runtime admissions, plans, capabilities, candidates, stores, bearer grants, staged references, receipts, model output, MCP output, and acceptance reports cannot be serialized into authority. Existing sealed proof and accepted artifact history stay stronger than all projections.
 
 ## V122 Constitutional Rails
 
@@ -254,5 +254,15 @@ With `@receiz/sdk@122.0.0`, typed app-state, signed public-store publish, source
 - `adapter.v122.mandates`: bounded issue, current state, and revocation. Every autonomous use binds the current owner, worker, and revocation heads and writes zero on denial.
 - `adapter.v122.world`: private planning at the edge, exact transaction validation and atomic execution, execution lookup before retry, causal additions, and all-or-nothing multi-world planning/execution.
 - `adapter.v122.value`: Settlement and Reserve remain separate. `amountPhiMicro` is the moved quantity; USD is a deterministic display projection pinned to its price basis.
-- `/developers/receiz`: public, read-only executable doctrine for all nineteen v122 MCP outcomes.
+- `/developers/receiz`: public, read-only executable doctrine for the current v123 outcomes and inherited source-first law.
 - `pnpm receiz:authority-scan`: release-blocking static checks that prevent representation, model output, private plaintext, USD, or unauthorized SDK clients from being promoted into source authority.
+
+## V123 Lawful-Action Rails
+
+- `adapter.v123.identity.exchangeProofAuthority`: exchanges a locally read proof object and exact application challenge only after explicit consent. The bearer is held in a closure and never returned to UI, JSON, storage, logs, or server routes.
+- `adapter.v123.auth`: derives required rail scopes with the SDK and compares them to exact granted scopes. Requested scope or interface state is never treated as a grant.
+- `adapter.v123.world`: canonical command and transaction planners reject caller-supplied digests, identities, ordering, and authority fields; the SDK creates them.
+- `adapter.v123.subjects.resolveNamespaces`: resolves normalized namespaces only at an exact authenticated subject head and performs no write on mismatch.
+- `adapter.v123.value`: executes exact Phi Settlement and Reserve intents only after canonical intent persistence and supports outcome lookup by the original semantic idempotency key before retry.
+- `/api/receiz/v123/world` is plan-only; `/api/receiz/v123/subjects/namespaces` is authenticated exact-head resolution; `/api/receiz/v123/value` is authenticated GET-only recovery. No server route accepts proof authority or performs v123 value execution.
+- `receiz-proof-authority` and `receiz-value-execution` are the only published v123 AI skills with explicit tool grants for their corresponding MCP outcomes. The world-planning and namespace rows are documented without inventing a skill-specific grant.

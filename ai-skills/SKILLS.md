@@ -1,52 +1,37 @@
-# Receiz AI Skills v120
+# Receiz AI Skills v123
 
-V120 preserves sealed proof/object authority and adds
-`receiz.native_capture.v1` plus
-`receiz.pbi.proof-object-authorship.v1`. Native Capture binds dedicated camera
-ceremony bytes. PBI authorship requires canonical predecessor verification,
-appends ordered history, settles locally before optional publication, and does
-not transfer ownership.
+## Intent Becomes Lawful Action
 
-This package ships 39 skills, 33 machine-readable manifests, and 30 OpenAI agent prompts. Every current manifest binds registry digest `29a793a5bcc0195ab41d30614d37ac51df66023af354fa4335460764eb0af413` and application-operation-matrix digest `208553829ba78a5536524b864577ce59989e2d0a994fad9598d39ae3d557c4f5` from the v120 SDK source.
+The object is authority. The v123 distribution teaches agents to verify and retain proof at the edge, obtain explicit in-application consent, request minimum scopes, plan canonical bytes through the SDK, execute one exact mutation, and resolve committed, zero-write, or unknown before retry. A server performs scoped execution; a database provides projection, sync and recovery beneath admitted proof truth.
 
-## Current MCP artifact inventory: nine tools
+This package ships 42 skills, 36 machine-readable manifests, and 33 OpenAI agent prompts. Every current manifest binds ruleset `123.0.0`, SDK/MCP range `>=123.0.0 <124.0.0`, registry digest `945a581d1fc49c2dc18fbe8c129771ef464b8a58b96188bce561e88ae8b6ceeb`, and operation-matrix digest `e08cec3e3ad22c20ddd6c08169ece19f094c366214d6d6b4dc432cd97558e2c5`.
 
-The single current inventory is:
+## V123 completion skills
 
-1. `receiz_artifact_verify`
-2. `receiz_artifact_admit`
-3. `receiz_artifact_append_plan`
-4. `receiz_artifact_transition_seal_and_stage`
-5. `receiz_artifact_transition_commit`
-6. `receiz_artifact_global_resolve`
-7. `receiz_artifact_reconcile_plan`
-8. `receiz_artifact_reconcile_stage`
-9. `receiz_artifact_reconcile_commit`
+- `receiz-value-execution`: live Phi execution on exactly one Settlement or Reserve rail; USD is display-only; exact heads, idempotency, receipts, and lookup-before-retry are mandatory.
+- `receiz-proof-authority`: embedded proof-to-authority exchange after independent edge verification and explicit consent, without redirecting the person to receiz.com; grants are short-lived, non-refreshable, minimum-scope mechanics beneath the identity artifact.
+- `receiz-world-event-runtime`: SDK-owned v122 public planners remain the stable protocol identifiers used by v123 to generate canonical command and transaction bytes.
+- `receiz-living-subject`: resolves named namespaces at one exact authenticated head with pinned registry and reducer digests.
 
-The first five tools are also the historical v112 compatibility inventory. That historical label preserves the v112 contract; it does not define a second current surface.
+## Current MCP inventories
 
-## Current MCP living-subject inventory: 37 tools
+The package maps the nine artifact tools, 37 living-subject tools, 19 stable v122 protocol tools, and eight v123 completion tools to the canonical SDK. The v123 tools are:
 
-The exact v121 living-subject inventory covers `receiz_subject_resolve`, `receiz_subject_state`, `receiz_subject_history`, `receiz_subject_memory_query`, `receiz_subject_relationships`, `receiz_subject_inventory`, `receiz_subject_twin_profile`, `receiz_subject_twin_message`, `receiz_subject_twin_mind_export`, `receiz_subject_twin_mind_import_plan`, `receiz_subject_mandate_get`, `receiz_subject_mandate_plan`, `receiz_subject_mandate_activate`, `receiz_subject_mandate_pause`, `receiz_subject_mandate_revoke`, `receiz_world_additions`, `receiz_world_command_plan`, `receiz_world_command_validate`, `receiz_world_command_execute`, `receiz_world_transaction_plan`, `receiz_world_transaction_execute`, `receiz_world_receipt`, `receiz_world_replay`, `receiz_subject_runtime_enqueue`, `receiz_subject_runtime_status`, `receiz_subject_runtime_cancel`, `receiz_living_subject_conformance`, `receiz_subject_brain_head`, `receiz_subject_brain_search`, `receiz_subject_brain_resolve`, `receiz_subject_brain_stream`, `receiz_bearer_transfer_preview`, `receiz_bearer_instrument_issue`, `receiz_bearer_instrument_inspect`, `receiz_bearer_instrument_claim`, `receiz_bearer_transfer_cancel`, and `receiz_bearer_transfer_status`.
+1. `receiz_v123_world_plan_command_v122`
+2. `receiz_v123_world_plan_transaction_v122`
+3. `receiz_v123_value_execute_settlement`
+4. `receiz_v123_value_execute_reserve`
+5. `receiz_v123_value_execution_by_idempotency`
+6. `receiz_v123_subject_resolve_namespaces`
+7. `receiz_v123_identity_exchange_proof_authority`
+8. `receiz_v123_auth_granted_scopes`
 
-Every tool calls the SDK primitive named by its skill map, returns the source primitive and v120 registry/reducer digests, requires exact plan/permit/instrument confirmation for writes, resolves exact bytes before commit, and returns structured zero-write failure. MCP and skill prose never become authority.
+MCP confirms mutations, redacts bearer material, and never becomes proof, identity, ownership, or settlement authority.
 
 ## Skill inventory
 
-The canonical machine-readable index is [skills.json](skills.json). Start with `receiz-build-production-system` for multi-domain work, `receiz-global-reconciliation` for named-domain head resolution and offline reconciliation, or a focused primitive skill for narrower work.
+The canonical machine-readable index is [skills.json](skills.json). Start with `receiz-build-production-system` for multi-domain work, `receiz-global-reconciliation` for named-domain coordination, `receiz-value-execution` for live Phi movement, or `receiz-proof-authority` for embedded consent and scopes.
 
-## Forbidden AI operations
+All current skills forbid last-write-wins, timestamp-as-head authority, connect-token-as-proof authority, projection-as-current-owner, silent divergence resolution, remote reconciliation before first paint, unverified server artifacts, retry-before-lookup, rail collapse, and USD-as-moved-value.
 
-All current skills forbid: `last-write-wins`, `timestamp-as-head-authority`, `connect-token-as-proof-authority`, `local-receipt-as-global-authority`, `projection-as-current-owner`, `silent-divergence-resolution`, `remote-reconciliation-before-first-paint`, `unverified-server-artifact-render`, `environment-player-token-fallback`, `accepted-means-effects-delivered`, and `indeterminate-means-failed`.
-
-These instructions remain beneath exact sealed artifact bytes, independently verified history, verified identity evidence, plan-bound capability authority, and atomic named-domain acceptance.
-
-## v121 living-subject skills
-
-- `receiz-living-subject`: immutable identity, byte-preserved namespaces, ownership continuity, state, history, additions, and portable artifacts.
-- `receiz-subject-twin`: complete exact-head proof retrieval, speech/intention/fact/memory separation, subject mind portability, and provenance.
-- `receiz-autonomous-mandate`: owner-confirmed digest scope, runtime re-verification, expiration, pause, and revocation.
-- `receiz-world-event-runtime`: typed command admission, deterministic receipts, durable ticks, retries, replay, and zero-write failure.
-- `receiz-multi-subject-transaction`: atomic meetings, relationships, battles, gifts, inventory, and trades.
-- `receiz-event-derived-memory`: admitted-event citations and rebuildable projections.
-- `receiz-live-proof-character`: streamed voice and performance cues that never become canonical fact.
+Historical protocol and schema identifiers remain documented only where current compatibility requires them. They do not define a second current authority surface.

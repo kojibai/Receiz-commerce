@@ -14,6 +14,7 @@ Move Phi through exactly one explicit rail: Settlement or Reserve. USD is never 
 3. Express movement only as `amountPhiMicro`. A live canonical deterministic USD price may be displayed, but it cannot replace the Phi amount.
 4. Pin `usdPerPhiMicrocents`, `quotedUsdCents`, and `priceBasisDigest` in the committed receipt so historic display remains reproducible.
 5. Validate and execute the value intent atomically with the world transaction. Any ledger, head, rail, price-basis, or receipt mismatch must produce zero writes.
+6. For live remote movement, persist the exact intent, execute once through the named rail, and use execution lookup before retry after any ambiguous response. Read [Receiz Value Execution](../receiz-value-execution/SKILL.md).
 
 Read [SDK map](references/sdk-map.md), [MCP map](references/mcp-map.md), and [examples](references/examples.md) when using those surfaces.
 
@@ -27,6 +28,8 @@ The exact machine-readable requirements are in [tests/contracts.json](tests/cont
 - Reserve: `client.value.planReserve(...)`
 - Moved authority: `amountPhiMicro`
 - Display projection: canonical deterministic USD quote pinned in the receipt
+- Live execution: `client.value.executeSettlement(...)` or `client.value.executeReserve(...)`
+- Ambiguous recovery: `client.value.executionByIdempotencyKey(...)`
 
 ## Common mistakes
 

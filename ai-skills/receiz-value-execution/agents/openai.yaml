@@ -1,0 +1,4 @@
+interface:
+  display_name: "Receiz Value Execution"
+  short_description: "Execute and recover exact Phi rail movement"
+  default_prompt: "Use $receiz-value-execution to execute or recover a proof-native Phi movement through exactly one named value rail."

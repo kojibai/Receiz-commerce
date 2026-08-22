@@ -7,7 +7,7 @@ async function read(path: string) {
   return readFile(resolve(process.cwd(), path), "utf8");
 }
 
-test("the repository identifies the shipped release as 5.0.0 on the public Receiz v122 graph", async () => {
+test("the repository identifies the shipped release as 5.1.0 on the public Receiz v123 graph", async () => {
   const packageJson = JSON.parse(await read("package.json")) as {
     version?: string;
     dependencies?: Record<string, string>;
@@ -15,15 +15,15 @@ test("the repository identifies the shipped release as 5.0.0 on the public Recei
   };
   const lockfile = await read("pnpm-lock.yaml");
 
-  assert.equal(packageJson.version, "5.0.0");
-  assert.equal(packageJson.dependencies?.["@receiz/sdk"], "122.0.0");
-  assert.equal(packageJson.dependencies?.["@receiz/mcp-server"], "122.0.0");
-  assert.equal(packageJson.dependencies?.["@receiz/ai-skills"], "122.0.0");
-  assert.equal(packageJson.scripts?.["receiz:check"], "receiz app check --target 122.0.0 --json");
+  assert.equal(packageJson.version, "5.1.0");
+  assert.equal(packageJson.dependencies?.["@receiz/sdk"], "123.0.0");
+  assert.equal(packageJson.dependencies?.["@receiz/mcp-server"], "123.0.0");
+  assert.equal(packageJson.dependencies?.["@receiz/ai-skills"], "123.0.0");
+  assert.equal(packageJson.scripts?.["receiz:check"], "receiz app check --target 123.0.0 --json");
   assert.doesNotMatch(lockfile, /file:vendor\/receiz-(?:sdk|mcp-server|ai-skills)-113\.0\.0\.tgz/);
-  assert.match(lockfile, /@receiz\/sdk@122\.0\.0/);
-  assert.match(lockfile, /@receiz\/mcp-server@122\.0\.0/);
-  assert.match(lockfile, /@receiz\/ai-skills@122\.0\.0/);
+  assert.match(lockfile, /@receiz\/sdk@123\.0\.0/);
+  assert.match(lockfile, /@receiz\/mcp-server@123\.0\.0/);
+  assert.match(lockfile, /@receiz\/ai-skills@123\.0\.0/);
 });
 
 test("the v4 release preserves prior evidence and adds a complete v3-to-v4 qualification record", async () => {
@@ -42,7 +42,7 @@ test("the v4 release preserves prior evidence and adds a complete v3-to-v4 quali
   ]);
   const v106MigrationAttestation = JSON.parse(v106MigrationAttestationText) as { planDigest: string };
 
-  assert.match(readme, /Current release:\s*`5\.0\.0`/);
+  assert.match(readme, /Current release:\s*`5\.1\.0`/);
   assert.match(changelog, /## 4\.6\.0 - Receiz v113 Global Coordination/);
   assert.match(changelog, /## 4\.5\.0 - Receiz v112 Artifact Transition Custody/);
   assert.match(changelog, /## 4\.4\.1 - Canonical Store Projection Authority/);

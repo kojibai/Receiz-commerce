@@ -1,13 +1,13 @@
 {
-  "schema": "receiz.ai-skill-contract.v122",
+  "schema": "receiz.ai-skill-contract.v123",
   "name": "receiz-portable-continuity",
-  "version": "122.0.0",
+  "version": "123.0.0",
   "requires": {
-    "sdk": ">=122.0.0 <123.0.0",
-    "mcp": ">=122.0.0 <123.0.0",
-    "ruleset": "122.0.0",
-    "registryDigest": "ed65956a16dd5f0d76d04db2f4a651fc43eb0a71cef64afd53576aa782dc9896",
-    "operationMatrixDigest": "bd1d7ccf1543e2484df68e3025c7376f8ae37cafe1ca0d7c9cd9f52f6342b325"
+    "sdk": ">=123.0.0 <124.0.0",
+    "mcp": ">=123.0.0 <124.0.0",
+    "ruleset": "123.0.0",
+    "registryDigest": "945a581d1fc49c2dc18fbe8c129771ef464b8a58b96188bce561e88ae8b6ceeb",
+    "operationMatrixDigest": "e08cec3e3ad22c20ddd6c08169ece19f094c366214d6d6b4dc432cd97558e2c5"
   },
   "laws": [
     "receiz.identity.portable",
@@ -116,7 +116,7 @@
     "current-registry-payload-digest-equality"
   ],
   "maximumAutonomousAuthority": "inspect-plan-simulate",
-  "artifactLawVersion": "122.0.0",
+  "artifactLawVersion": "123.0.0",
   "artifactLaws": [
     "ARTIFACT-001",
     "ARTIFACT-002",
@@ -161,7 +161,7 @@
       "outputAuthority": "verified-artifact-runtime",
       "processBoundary": "reverify-exact-bytes",
       "namespacePolicy": "not-applicable",
-      "compatibleSdkRange": ">=122.0.0 <123.0.0"
+      "compatibleSdkRange": ">=123.0.0 <124.0.0"
     },
     {
       "operation": "artifact.admit",
@@ -175,7 +175,7 @@
       "outputAuthority": "verified-admission-runtime",
       "processBoundary": "same-runtime-custody",
       "namespacePolicy": "not-applicable",
-      "compatibleSdkRange": ">=122.0.0 <123.0.0"
+      "compatibleSdkRange": ">=123.0.0 <124.0.0"
     },
     {
       "operation": "artifact.append.plan",
@@ -197,7 +197,7 @@
       "outputAuthority": "sdk-plan-runtime",
       "processBoundary": "same-runtime-custody",
       "namespacePolicy": "preserve-all-non-target",
-      "compatibleSdkRange": ">=122.0.0 <123.0.0"
+      "compatibleSdkRange": ">=123.0.0 <124.0.0"
     },
     {
       "operation": "identity.capability.sign",
@@ -210,7 +210,7 @@
       "outputAuthority": "signed-capability-claim-not-yet-verified",
       "processBoundary": "local-identity-key-custody",
       "namespacePolicy": "not-applicable",
-      "compatibleSdkRange": ">=122.0.0 <123.0.0"
+      "compatibleSdkRange": ">=123.0.0 <124.0.0"
     },
     {
       "operation": "artifact.transition.seal",
@@ -227,7 +227,7 @@
       "outputAuthority": "sealed-candidate-proof-object-not-accepted-head",
       "processBoundary": "same-runtime-custody",
       "namespacePolicy": "preserve-all-non-target",
-      "compatibleSdkRange": ">=122.0.0 <123.0.0"
+      "compatibleSdkRange": ">=123.0.0 <124.0.0"
     },
     {
       "operation": "artifact.transition.stage",
@@ -244,7 +244,7 @@
       "outputAuthority": "staged-candidate-locator-non-authoritative",
       "processBoundary": "same-runtime-custody",
       "namespacePolicy": "preserve-all-non-target",
-      "compatibleSdkRange": ">=122.0.0 <123.0.0"
+      "compatibleSdkRange": ">=123.0.0 <124.0.0"
     },
     {
       "operation": "artifact.transition.commit",
@@ -263,7 +263,7 @@
       "outputAuthority": "accepted-artifact-history-with-report-only-receipt",
       "processBoundary": "same-runtime-custody",
       "namespacePolicy": "preserve-all-non-target",
-      "compatibleSdkRange": ">=122.0.0 <123.0.0"
+      "compatibleSdkRange": ">=123.0.0 <124.0.0"
     },
     {
       "operation": "admission.command.execute",
@@ -284,7 +284,7 @@
       "outputAuthority": "admission-receipt-non-authoritative",
       "processBoundary": "same-runtime-custody",
       "namespacePolicy": "not-applicable",
-      "compatibleSdkRange": ">=122.0.0 <123.0.0"
+      "compatibleSdkRange": ">=123.0.0 <124.0.0"
     },
     {
       "operation": "public-proof.projection.locate",
@@ -298,7 +298,7 @@
       "outputAuthority": "exact-artifact-bytes-not-yet-verified",
       "processBoundary": "projection-only",
       "namespacePolicy": "not-applicable",
-      "compatibleSdkRange": ">=122.0.0 <123.0.0"
+      "compatibleSdkRange": ">=123.0.0 <124.0.0"
     },
     {
       "operation": "artifact.global.resolve",
@@ -314,7 +314,7 @@
       "outputAuthority": "exact-artifact-bytes-not-yet-verified",
       "processBoundary": "reverify-exact-bytes",
       "namespacePolicy": "not-applicable",
-      "compatibleSdkRange": ">=122.0.0 <123.0.0"
+      "compatibleSdkRange": ">=123.0.0 <124.0.0"
     },
     {
       "operation": "artifact.offline.reconcile",
@@ -337,7 +337,7 @@
       "outputAuthority": "accepted-artifact-history-with-report-only-receipt",
       "processBoundary": "reverify-exact-bytes",
       "namespacePolicy": "preserve-all-non-target",
-      "compatibleSdkRange": ">=122.0.0 <123.0.0"
+      "compatibleSdkRange": ">=123.0.0 <124.0.0"
     },
     {
       "operation": "profile-showcase.genesis.plan",
@@ -361,7 +361,7 @@
       "outputAuthority": "sdk-plan-runtime",
       "processBoundary": "same-runtime-custody",
       "namespacePolicy": "preserve-all-non-target",
-      "compatibleSdkRange": ">=122.0.0 <123.0.0"
+      "compatibleSdkRange": ">=123.0.0 <124.0.0"
     },
     {
       "operation": "profile-showcase.append.plan",
@@ -387,7 +387,7 @@
       "outputAuthority": "sdk-plan-runtime",
       "processBoundary": "same-runtime-custody",
       "namespacePolicy": "preserve-all-non-target",
-      "compatibleSdkRange": ">=122.0.0 <123.0.0"
+      "compatibleSdkRange": ">=123.0.0 <124.0.0"
     },
     {
       "operation": "economy-showcase.genesis.plan",
@@ -411,7 +411,7 @@
       "outputAuthority": "sdk-plan-runtime",
       "processBoundary": "same-runtime-custody",
       "namespacePolicy": "preserve-all-non-target",
-      "compatibleSdkRange": ">=122.0.0 <123.0.0"
+      "compatibleSdkRange": ">=123.0.0 <124.0.0"
     },
     {
       "operation": "economy-showcase.append.plan",
@@ -438,7 +438,7 @@
       "outputAuthority": "sdk-plan-runtime",
       "processBoundary": "same-runtime-custody",
       "namespacePolicy": "preserve-all-non-target",
-      "compatibleSdkRange": ">=122.0.0 <123.0.0"
+      "compatibleSdkRange": ">=123.0.0 <124.0.0"
     },
     {
       "operation": "economy-showcase.merge.plan",
@@ -466,7 +466,7 @@
       "outputAuthority": "sdk-plan-runtime",
       "processBoundary": "same-runtime-custody",
       "namespacePolicy": "preserve-all-non-target",
-      "compatibleSdkRange": ">=122.0.0 <123.0.0"
+      "compatibleSdkRange": ">=123.0.0 <124.0.0"
     },
     {
       "operation": "subject.resolve",
@@ -486,7 +486,7 @@
       "outputAuthority": "verified-subject-runtime",
       "processBoundary": "reverify-exact-bytes",
       "namespacePolicy": "preserve-all-non-target",
-      "compatibleSdkRange": ">=122.0.0 <123.0.0"
+      "compatibleSdkRange": ">=123.0.0 <124.0.0"
     },
     {
       "operation": "subject.brain.retrieve",
@@ -506,7 +506,7 @@
       "outputAuthority": "proof-context-non-authoritative",
       "processBoundary": "reverify-exact-bytes",
       "namespacePolicy": "preserve-all-non-target",
-      "compatibleSdkRange": ">=122.0.0 <123.0.0"
+      "compatibleSdkRange": ">=123.0.0 <124.0.0"
     },
     {
       "operation": "subject.twin.message",
@@ -524,7 +524,7 @@
       "outputAuthority": "model-intent-non-authoritative",
       "processBoundary": "same-runtime-custody",
       "namespacePolicy": "preserve-all-non-target",
-      "compatibleSdkRange": ">=122.0.0 <123.0.0"
+      "compatibleSdkRange": ">=123.0.0 <124.0.0"
     },
     {
       "operation": "subject.mandate.activate",
@@ -543,7 +543,7 @@
       "outputAuthority": "active-mandate-runtime",
       "processBoundary": "same-runtime-custody",
       "namespacePolicy": "preserve-all-non-target",
-      "compatibleSdkRange": ">=122.0.0 <123.0.0"
+      "compatibleSdkRange": ">=123.0.0 <124.0.0"
     },
     {
       "operation": "world.command.plan",
@@ -563,7 +563,7 @@
       "outputAuthority": "world-command-plan-runtime",
       "processBoundary": "same-runtime-custody",
       "namespacePolicy": "not-applicable",
-      "compatibleSdkRange": ">=122.0.0 <123.0.0"
+      "compatibleSdkRange": ">=123.0.0 <124.0.0"
     },
     {
       "operation": "world.command.execute",
@@ -584,7 +584,7 @@
       "outputAuthority": "accepted-world-event-with-report-only-receipt",
       "processBoundary": "same-runtime-custody",
       "namespacePolicy": "preserve-all-non-target",
-      "compatibleSdkRange": ">=122.0.0 <123.0.0"
+      "compatibleSdkRange": ">=123.0.0 <124.0.0"
     },
     {
       "operation": "world.transaction.plan",
@@ -603,7 +603,7 @@
       "outputAuthority": "world-transaction-plan-runtime",
       "processBoundary": "same-runtime-custody",
       "namespacePolicy": "not-applicable",
-      "compatibleSdkRange": ">=122.0.0 <123.0.0"
+      "compatibleSdkRange": ">=123.0.0 <124.0.0"
     },
     {
       "operation": "world.transaction.execute",
@@ -624,7 +624,7 @@
       "outputAuthority": "accepted-world-event-with-report-only-receipt",
       "processBoundary": "same-runtime-custody",
       "namespacePolicy": "preserve-all-non-target",
-      "compatibleSdkRange": ">=122.0.0 <123.0.0"
+      "compatibleSdkRange": ">=123.0.0 <124.0.0"
     },
     {
       "operation": "subject.runtime.enqueue",
@@ -643,7 +643,7 @@
       "outputAuthority": "runtime-job-non-authoritative",
       "processBoundary": "same-runtime-custody",
       "namespacePolicy": "not-applicable",
-      "compatibleSdkRange": ">=122.0.0 <123.0.0"
+      "compatibleSdkRange": ">=123.0.0 <124.0.0"
     },
     {
       "operation": "subject.memory.project",
@@ -661,7 +661,7 @@
       "outputAuthority": "event-memory-projection-non-authoritative",
       "processBoundary": "same-runtime-custody",
       "namespacePolicy": "preserve-all-non-target",
-      "compatibleSdkRange": ">=122.0.0 <123.0.0"
+      "compatibleSdkRange": ">=123.0.0 <124.0.0"
     },
     {
       "operation": "bearer.transfer.plan",
@@ -680,7 +680,7 @@
       "outputAuthority": "bearer-transfer-plan-runtime",
       "processBoundary": "same-runtime-custody",
       "namespacePolicy": "preserve-all-non-target",
-      "compatibleSdkRange": ">=122.0.0 <123.0.0"
+      "compatibleSdkRange": ">=123.0.0 <124.0.0"
     },
     {
       "operation": "bearer.instrument.issue",
@@ -699,7 +699,7 @@
       "outputAuthority": "bearer-instrument-not-ownership",
       "processBoundary": "same-runtime-custody",
       "namespacePolicy": "preserve-all-non-target",
-      "compatibleSdkRange": ">=122.0.0 <123.0.0"
+      "compatibleSdkRange": ">=123.0.0 <124.0.0"
     },
     {
       "operation": "bearer.instrument.claim",
@@ -719,7 +719,7 @@
       "outputAuthority": "ownership-transition-with-sealed-artifact",
       "processBoundary": "reverify-exact-bytes",
       "namespacePolicy": "preserve-all-non-target",
-      "compatibleSdkRange": ">=122.0.0 <123.0.0"
+      "compatibleSdkRange": ">=123.0.0 <124.0.0"
     },
     {
       "operation": "bearer.transfer.cancel",
@@ -737,7 +737,117 @@
       "outputAuthority": "ownership-transition-with-sealed-artifact",
       "processBoundary": "same-runtime-custody",
       "namespacePolicy": "preserve-all-non-target",
-      "compatibleSdkRange": ">=122.0.0 <123.0.0"
+      "compatibleSdkRange": ">=123.0.0 <124.0.0"
+    },
+    {
+      "operation": "identity.proof-authority.exchange",
+      "authorityProfiles": [
+        "artifact-local",
+        "global-shared"
+      ],
+      "inputAuthority": "proof-authority-challenge",
+      "requiredEvidence": [
+        "exact-artifact-bytes",
+        "pinned-verifier-roots",
+        "application-bound-challenge",
+        "explicit-consent",
+        "minimum-scope-set"
+      ],
+      "outputAuthority": "scoped-proof-capability-not-proof-authority",
+      "processBoundary": "reverify-exact-bytes",
+      "namespacePolicy": "not-applicable",
+      "compatibleSdkRange": ">=123.0.0 <124.0.0"
+    },
+    {
+      "operation": "authorization.scopes.introspect",
+      "authorityProfiles": [
+        "projection-only"
+      ],
+      "inputAuthority": "rail-scope-query",
+      "requiredEvidence": [
+        "minimum-scope-set"
+      ],
+      "outputAuthority": "granted-scope-projection-non-authoritative",
+      "processBoundary": "projection-only",
+      "namespacePolicy": "not-applicable",
+      "compatibleSdkRange": ">=123.0.0 <124.0.0"
+    },
+    {
+      "operation": "subject.namespaces.resolve",
+      "authorityProfiles": [
+        "artifact-local",
+        "global-shared",
+        "projection-only"
+      ],
+      "inputAuthority": "subject-proof-reference",
+      "requiredEvidence": [
+        "exact-subject-head",
+        "exact-subject-artifact-bytes",
+        "registry-digest",
+        "reducer-digest",
+        "byte-exact-namespaces"
+      ],
+      "outputAuthority": "exact-head-namespace-projection-non-authoritative",
+      "processBoundary": "reverify-exact-bytes",
+      "namespacePolicy": "preserve-all-non-target",
+      "compatibleSdkRange": ">=123.0.0 <124.0.0"
+    },
+    {
+      "operation": "value.settlement.execute",
+      "authorityProfiles": [
+        "artifact-local",
+        "global-shared"
+      ],
+      "inputAuthority": "value-intent-runtime",
+      "requiredEvidence": [
+        "exact-subject-head",
+        "owner-capability",
+        "rail-identity",
+        "amount-phi-micro",
+        "persisted-canonical-intent",
+        "idempotency-identity"
+      ],
+      "outputAuthority": "accepted-phi-movement-with-report-only-receipt",
+      "processBoundary": "same-runtime-custody",
+      "namespacePolicy": "preserve-all-non-target",
+      "compatibleSdkRange": ">=123.0.0 <124.0.0"
+    },
+    {
+      "operation": "value.reserve.execute",
+      "authorityProfiles": [
+        "artifact-local",
+        "global-shared"
+      ],
+      "inputAuthority": "value-intent-runtime",
+      "requiredEvidence": [
+        "exact-subject-head",
+        "owner-capability",
+        "rail-identity",
+        "amount-phi-micro",
+        "persisted-canonical-intent",
+        "idempotency-identity"
+      ],
+      "outputAuthority": "accepted-phi-movement-with-report-only-receipt",
+      "processBoundary": "same-runtime-custody",
+      "namespacePolicy": "preserve-all-non-target",
+      "compatibleSdkRange": ">=123.0.0 <124.0.0"
+    },
+    {
+      "operation": "value.execution.resolve",
+      "authorityProfiles": [
+        "artifact-local",
+        "global-shared",
+        "projection-only"
+      ],
+      "inputAuthority": "value-intent-runtime",
+      "requiredEvidence": [
+        "idempotency-identity",
+        "exact-execution-outcome"
+      ],
+      "outputAuthority": "execution-outcome-projection-non-authoritative",
+      "processBoundary": "projection-only",
+      "namespacePolicy": "not-applicable",
+      "compatibleSdkRange": ">=123.0.0 <124.0.0"
     }
   ],
   "currentMcpArtifactTools": [
@@ -796,5 +906,15 @@
     "receiz_bearer_instrument_claim",
     "receiz_bearer_transfer_cancel",
     "receiz_bearer_transfer_status"
+  ],
+  "currentMcpV123Tools": [
+    "receiz_v123_world_plan_command_v122",
+    "receiz_v123_world_plan_transaction_v122",
+    "receiz_v123_value_execute_settlement",
+    "receiz_v123_value_execute_reserve",
+    "receiz_v123_value_execution_by_idempotency",
+    "receiz_v123_subject_resolve_namespaces",
+    "receiz_v123_identity_exchange_proof_authority",
+    "receiz_v123_auth_granted_scopes"
   ]
 }

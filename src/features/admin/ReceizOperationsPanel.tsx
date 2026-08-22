@@ -1,17 +1,19 @@
 "use client";
 
 import { Panel, SectionHeader, StatusPill } from "@/components/ui";
-import { RECEIZ_V122_CONTRACT } from "@/lib/receiz/v122/contract";
-import { RECEIZ_V122_DOCTRINE } from "@/lib/receiz/v122/doctrine";
+import { RECEIZ_V123_CONTRACT } from "@/lib/receiz/v123/contract";
+import { RECEIZ_V123_DOCTRINE } from "@/lib/receiz/v123/doctrine";
 
 export function ReceizOperationsPanel() {
   return (
     <Panel className="admin-panel">
-      <SectionHeader title="Receiz v122 constitutional operations" action={<StatusPill tone="green">19 mapped</StatusPill>} />
+      <SectionHeader title="Receiz v123 constitutional operations" action={<StatusPill tone="green">8 mapped</StatusPill>} />
       <p><strong>Operator UI is not proof authority.</strong> Every write waits until the exact plan, tool, input, effects, heads, and confirmation digest are visible.</p>
       <div className="settings-list">
-        <div><span>SDK</span><strong>{RECEIZ_V122_CONTRACT.sdkVersion}</strong></div>
-        <div><span>MCP parity</span><strong>{RECEIZ_V122_DOCTRINE.length}/19 · non-authoritative</strong></div>
+        <div><span>SDK</span><strong>{RECEIZ_V123_CONTRACT.sdkVersion}</strong></div>
+        <div><span>v123 MCP parity</span><strong>{RECEIZ_V123_DOCTRINE.length}/8 · non-authoritative</strong></div>
+        <div><span>Application matrix</span><strong>{RECEIZ_V123_CONTRACT.applicationOperationCount} operations</strong></div>
+        <div><span>AI skills</span><strong>{RECEIZ_V123_CONTRACT.aiSkillCount} exact published skills</strong></div>
         <div><span>Package skew</span><strong>Release blocked on mismatch</strong></div>
         <div><span>Plans and stages</span><strong>Report-only until atomic acceptance</strong></div>
         <div><span>Denials</span><strong>Exact code · zero writes</strong></div>
@@ -20,7 +22,7 @@ export function ReceizOperationsPanel() {
       </div>
       <details>
         <summary>Exact plan and confirmation inventory</summary>
-        <ul>{RECEIZ_V122_DOCTRINE.map((entry) => <li key={entry.mcpTool}><code>{entry.mcpTool}</code> → {entry.sdkOperation}</li>)}</ul>
+        <ul>{RECEIZ_V123_DOCTRINE.map((entry) => <li key={entry.mcpTool}><code>{entry.mcpTool}</code> → {entry.sdkOperation}</li>)}</ul>
       </details>
     </Panel>
   );

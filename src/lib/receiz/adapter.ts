@@ -110,6 +110,13 @@ export type ReceizCommerceAdapter = {
     world: Readonly<Pick<ReceizClient["world"], "planPrivateCommand" | "planAccessAppend" | "validateTransaction" | "executeTransactionV122" | "execution" | "executionByIdempotencyKey" | "additionsV122" | "planMultiWorldTransaction" | "executeMultiWorldTransaction">>;
     value: Readonly<Pick<ReceizClient["value"], "planSettlement" | "planReserve" | "quoteDisplayUsd" | "validateDisplayPrice" | "validateIntent">>;
   }>;
+  v123: Readonly<{
+    identity: Readonly<Pick<ReceizClient["identity"], "exchangeProofAuthority">>;
+    auth: Readonly<Pick<ReceizClient["auth"], "grantedScopes" | "scopesForRails" | "missingScopesForRails" | "canUseRails">>;
+    world: Readonly<Pick<ReceizClient["world"], "planCommandV122" | "planTransactionV122">>;
+    subjects: Readonly<Pick<ReceizClient["subjects"], "resolveNamespaces">>;
+    value: Readonly<Pick<ReceizClient["value"], "executeSettlement" | "executeReserve" | "executionByIdempotencyKey">>;
+  }>;
   capabilities(options?: ReceizCapabilitiesOptions): Promise<ReceizCapabilities>;
   doctor(options?: ReceizCapabilitiesOptions): Promise<ReceizDoctorReport>;
   connectReceiz(): Promise<ReceizRailsStatus>;
@@ -446,10 +453,35 @@ export function createReceizCommerceAdapter(
     }),
   });
 
+  const v123: ReceizCommerceAdapter["v123"] = Object.freeze({
+    identity: Object.freeze({
+      exchangeProofAuthority: boundCall(client.identity.exchangeProofAuthority.bind(client.identity)),
+    }),
+    auth: Object.freeze({
+      grantedScopes: boundCall(client.auth.grantedScopes.bind(client.auth)),
+      scopesForRails: boundCall(client.auth.scopesForRails.bind(client.auth)),
+      missingScopesForRails: boundCall(client.auth.missingScopesForRails.bind(client.auth)),
+      canUseRails: boundCall(client.auth.canUseRails.bind(client.auth)),
+    }),
+    world: Object.freeze({
+      planCommandV122: boundCall(client.world.planCommandV122.bind(client.world)),
+      planTransactionV122: boundCall(client.world.planTransactionV122.bind(client.world)),
+    }),
+    subjects: Object.freeze({
+      resolveNamespaces: boundCall(client.subjects.resolveNamespaces.bind(client.subjects)),
+    }),
+    value: Object.freeze({
+      executeSettlement: boundCall(client.value.executeSettlement.bind(client.value)),
+      executeReserve: boundCall(client.value.executeReserve.bind(client.value)),
+      executionByIdempotencyKey: boundCall(client.value.executionByIdempotencyKey.bind(client.value)),
+    }),
+  });
+
   return {
     sdkVersion: RECEIZ_SDK_VERSION,
     client,
     v122,
+    v123,
     capabilities(options) {
       return client.capabilities(options);
     },
