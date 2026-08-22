@@ -1,10 +1,10 @@
 # MCP map
 
-- `receiz_world_additions`
-- `receiz_world_command_plan`
-- `receiz_world_command_validate`
-- `receiz_world_command_execute`
-- `receiz_world_receipt`
-- `receiz_world_replay`
+- `receiz_v122_world_plan_private`
+- `receiz_v122_world_validate_transaction`
+- `receiz_v122_world_execute_transaction`
+- `receiz_v122_world_execution`
+- `receiz_v122_world_execution_by_idempotency`
+- `receiz_v122_world_additions`
 
-Every result must expose its source SDK primitive, registry digest, reducer digest, and `mcpAuthority: false`. Writes require exact digest confirmation.
+MCP persists exact plans through caller-selected custody and never sends private plaintext to a production execution endpoint.

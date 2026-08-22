@@ -1,0 +1,4 @@
+interface:
+  display_name: "Receiz Value Rails"
+  short_description: "Move Phi through Settlement or Reserve"
+  default_prompt: "Use $receiz-value-rails to plan proof-native Phi movement while keeping Settlement and Reserve distinct and USD display-only."

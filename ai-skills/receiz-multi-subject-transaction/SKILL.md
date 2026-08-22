@@ -9,11 +9,11 @@ Stage every participant at exact expected heads, validate every command and auth
 
 ## Constitutional workflow
 
-1. Resolve the exact v121 registry, reducer, subject, ownership, world, and Kai heads.
-2. Inspect the source primitive and exact artifact bytes before using an index or projection.
-3. Plan every consequential mutation and require the exact capability, mandate, or confirmation digest.
-4. Execute through SDK command or transaction admission only.
-5. Verify receipts, replay, byte preservation, zero-write failures, and deterministic first paint.
+1. Resolve the exact participant set and authenticated head for every participant and world.
+2. Require identical world IDs/expected world heads across member commands, exact command bytes and plan digests, actor authority/mandates, causal parents, registry, and reducer pins.
+3. Persist exact planned bytes before execution. Extra/missing participants or heads are failures, not normalization opportunities.
+4. Use `client.world.planMultiWorldTransaction` and `executeMultiWorldTransaction`; world locks are canonical world-ID order and all worlds commit or none do.
+5. Lookup the exact outcome before retry. Reject cross-region work with zero writes when atomic multi-world execution is unavailable or any member is stale.
 
 ## Machine contract
 
@@ -21,13 +21,14 @@ Read [manifest.json](manifest.json) before acting. Read [SDK map](references/sdk
 
 ## Quick reference
 
-| Boundary | v121 rule |
+| Boundary | v122 rule |
 |---|---|
 | Proof | Indexes locate; exact primary proof-object bytes verify. |
 | AI | AI speaks and proposes. A model response is never a world event. |
 | Mutation | Typed command or atomic transaction admission only. |
 | Scale | Complete content-addressed history; bounded retrieval window. |
 | Transfer | Preserve identity/history/namespaces; revoke former-owner authority. |
+| Atomicity | Every world and participant advances, or writes remain zero. |
 
 ## Common mistakes
 

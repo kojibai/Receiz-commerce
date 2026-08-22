@@ -1,0 +1,38 @@
+{
+  "schema": "receiz.repository.v121-v122.migration-attestation.v1",
+  "sourceVersion": "121.0.0",
+  "targetVersion": "122.0.0",
+  "canonicalRegistryDigest": "ed65956a16dd5f0d76d04db2f4a651fc43eb0a71cef64afd53576aa782dc9896",
+  "operationMatrixDigest": "bd1d7ccf1543e2484df68e3025c7376f8ae37cafe1ca0d7c9cd9f52f6342b325",
+  "appRegistryDigest": "caa058755f8199b1132add02d2ea4452e86656709e20c40e4f6f89a22ae50122",
+  "livingSubjectReducerDigest": "5694662e2acc8b886ac9697ffad202b411d7e66c5f26f9106ee0768df7c7b8c8",
+  "applicationReleaseVersion": "5.0.0",
+  "upgradePlanActions": 0,
+  "integrationPreviewChanges": 4,
+  "integrationWritesPerformed": 4,
+  "generatorPreviewConfirmed": true,
+  "generatorPreviewDigest": "c3c537122ea5778355a3575e7665619caa0b39b9fac8707023a47902de40171c",
+  "postApplyConstitutionalCorrections": [
+    "restore-exact-sdk-package-pin",
+    "remove-duplicate-mcp-development-dependency",
+    "restore-explicit-v122-application-check-target",
+    "restore-inspector-safe-named-import-order",
+    "disclose-non-operative-generated-v121-descriptor-label"
+  ],
+  "historyRewritten": false,
+  "productionDataMigrated": false,
+  "representationCanOutrankSource": false,
+  "privateWorldPlaintextLeavesEdge": false,
+  "failedDecisionsWriteZero": true,
+  "settlementAndReserveRemainDistinct": true,
+  "usdIsMovedAuthority": false,
+  "strongerTruth": "sealed-receiz-proof-object",
+  "databaseManufacturesArtifactTruth": false,
+  "mcpAuthority": false,
+  "modelOutputIsAuthority": false,
+  "publicPackageIntegrities": {
+    "@receiz/sdk": "sha512-z29p3Q67L++p+gSClu+cz4m6Knf7e/Cl3vXzCE8LwK0/vm8Lx7hPWi1J7ZG2h7C43RetXzGYGjkkRC1tx/L+zQ==",
+    "@receiz/mcp-server": "sha512-WwnrAJmL9eg6tzBDs7ZluIABt0IPeaLkDVsPT2SvMUvQIcMfkPFlX4T87fkqwDerXNnrW1VwVUMPHXoVW2DC5g==",
+    "@receiz/ai-skills": "sha512-5s1exUwz8WLEu0nTS0wQ0d4iwoHgr4hs/QKreBldrEbpI7Ff1foZi977hNa/SQK7qcXXcts3ORaZoNQ1y0xI8Q=="
+  }
+}

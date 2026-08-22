@@ -5,6 +5,10 @@ import { platform } from "@/lib/platform";
 export function middleware(request: NextRequest) {
   const { nextUrl } = request;
 
+  if (nextUrl.pathname === "/developers/receiz" || nextUrl.pathname.startsWith("/developers/receiz/")) {
+    return NextResponse.next();
+  }
+
   if (shouldBypassTenantRouting(nextUrl.pathname)) {
     return NextResponse.next();
   }

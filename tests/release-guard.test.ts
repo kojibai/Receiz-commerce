@@ -72,3 +72,20 @@ describe("Next runtime release guard", () => {
     assert.equal(pkg.scripts["release:check"], "node scripts/release-check.mjs");
   });
 });
+
+describe("Receiz v122 release evidence", () => {
+  it("documents the exact constitutional release identity and measured authority boundaries", () => {
+    const releaseText = readFileSync("docs/releases/2026-08-21-v122-constitutional-core-release.md", "utf8");
+    for (const marker of [
+      "5.0.0",
+      "122.0.0",
+      "ed65956a16dd5f0d76d04db2f4a651fc43eb0a71cef64afd53576aa782dc9896",
+      "bd1d7ccf1543e2484df68e3025c7376f8ae37cafe1ca0d7c9cd9f52f6342b325",
+      "Representation never outranks source",
+      "Network calls during independent verification: `0`",
+      "MCP authority: `false`",
+      "Failed-decision writes: `0`",
+      "Settlement and Reserve remain distinct",
+    ]) assert.equal(releaseText.includes(marker), true, marker);
+  });
+});

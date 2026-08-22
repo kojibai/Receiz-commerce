@@ -1,11 +1,12 @@
 # SDK map
 
-- `receiz.world.planCommand`
-- `receiz.world.validateCommand`
-- `receiz.world.executeCommand`
-- `receiz.world.receipt`
-- `receiz.world.replay`
-- `receiz.world.additions`
-- `receiz.world.subscribe`
+- `client.world.planPrivateCommand`
+- `client.world.validateTransaction`
+- `client.world.executeTransactionV122`
+- `client.world.execution`
+- `client.world.executionByIdempotencyKey`
+- `client.world.additionsV122`
+- `persistReceizExactPlannedTransaction`
+- `restoreReceizExactPlannedTransaction`
 
-Every call remains beneath exact artifact, head, registry, reducer, and authority verification.
+Private planning/encryption is edge-only. Lookup precedes retry or replan.

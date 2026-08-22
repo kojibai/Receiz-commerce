@@ -9,11 +9,11 @@ Propose intent, construct command, validate exact heads, verify authority, decid
 
 ## Constitutional workflow
 
-1. Resolve the exact v121 registry, reducer, subject, ownership, world, and Kai heads.
-2. Inspect the source primitive and exact artifact bytes before using an index or projection.
-3. Plan every consequential mutation and require the exact capability, mandate, or confirmation digest.
-4. Execute through SDK command or transaction admission only.
-5. Verify receipts, replay, byte preservation, zero-write failures, and deterministic first paint.
+1. Resolve authenticated participant and world heads plus pinned registry/reducer digests.
+2. For private/invited events, call `client.world.planPrivateCommand` at the edge. Only the minimal public exterior, ciphertext, nonce, AAD digest, envelope digest, and recipient wraps may reach production.
+3. Persist the exact planned transaction bytes before execution and call `client.world.validateTransaction`.
+4. Execute once. After timeout/crash, call `client.world.execution` or `executionByIdempotencyKey` before any retry; never replan a known committed or zero-write transaction.
+5. Decrypt authorized additions only at the viewer edge. Revocation removes future envelope delivery without rewriting creation history.
 
 ## Machine contract
 
@@ -21,13 +21,15 @@ Read [manifest.json](manifest.json) before acting. Read [SDK map](references/sdk
 
 ## Quick reference
 
-| Boundary | v121 rule |
+| Boundary | v122 rule |
 |---|---|
 | Proof | Indexes locate; exact primary proof-object bytes verify. |
 | AI | AI speaks and proposes. A model response is never a world event. |
 | Mutation | Typed command or atomic transaction admission only. |
 | Scale | Complete content-addressed history; bounded retrieval window. |
 | Transfer | Preserve identity/history/namespaces; revoke former-owner authority. |
+| Privacy | Private plaintext never enters a globally distributed event. |
+| Recovery | Outcomes are exactly `committed`, `zero-write`, or `unknown`. |
 
 ## Common mistakes
 

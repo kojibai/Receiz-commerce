@@ -6,6 +6,25 @@ import type { WildsWorldCommand } from "./wilds-world-service";
 import { WILDS_WORLD_ID } from "./wilds-world-event";
 import type { WildsWorldProjection } from "./wilds-world-state";
 import type { WildsRaidIntent } from "./wilds-raid-encounter";
+import { confirmWildsExactExecution, type WildsModelIntent } from "./receiz-v122-world";
+
+export function buildWildsV122ExecutionRequest(input: Readonly<{
+  modelIntent: WildsModelIntent;
+  transaction: Readonly<{ transactionDigest: string }>;
+  mandateDigest: string | null;
+  confirmedTransactionDigest: string;
+  confirmedMandateDigest: string | null;
+}>) {
+  const confirmation = confirmWildsExactExecution(
+    { transactionDigest: input.transaction.transactionDigest, mandateDigest: input.mandateDigest },
+    { transactionDigest: input.confirmedTransactionDigest, mandateDigest: input.confirmedMandateDigest },
+  );
+  return Object.freeze({
+    modelIntent: Object.freeze({ ...input.modelIntent, modelAuthority: false as const }),
+    transaction: input.transaction,
+    confirmation,
+  });
+}
 
 export function acceptWildsWorldSnapshot(current: WildsWorldProjection | null, incoming: WildsWorldProjection) {
   return current && current.revision > incoming.revision ? current : incoming;

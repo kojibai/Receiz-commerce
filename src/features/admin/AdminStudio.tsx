@@ -19,6 +19,7 @@ import { PublishChecklist } from "@/features/admin/PublishChecklist";
 import { ReceizIdentityPanel } from "@/features/admin/ReceizIdentityPanel";
 import { EmbeddedReceizPayment } from "@/features/payments/EmbeddedReceizPayment";
 import { RewardsRulesPanel } from "@/features/admin/RewardsRulesPanel";
+import { ReceizOperationsPanel } from "@/features/admin/ReceizOperationsPanel";
 import type { ActionFeedbackMap } from "@/types/action-feedback";
 import type { StorefrontHomepageMode } from "@/types/domain";
 
@@ -121,6 +122,7 @@ export function AdminStudio() {
               products={state.products}
             />
             <RewardsRulesPanel rules={state.rewardRules} />
+            <ReceizOperationsPanel />
             <HostingDomainsPanel
               customDomainFeedback={actionFeedback["domains.customDomain"]}
               hosting={state.hosting}

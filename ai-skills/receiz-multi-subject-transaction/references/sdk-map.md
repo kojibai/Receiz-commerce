@@ -1,10 +1,11 @@
 # SDK map
 
-- `receiz.world.planTransaction`
-- `receiz.world.executeTransaction`
-- `receiz.subjects.relationships.propose`
-- `receiz.subjects.relationships.respond`
-- `receiz.subjects.trades.preview`
-- `receiz.subjects.trades.execute`
+- `client.world.validateTransaction`
+- `client.world.planMultiWorldTransaction`
+- `client.world.executeMultiWorldTransaction`
+- `client.world.execution`
+- `client.world.executionByIdempotencyKey`
+- `equalReceizExactHeadMaps`
+- `validateReceizExactTransactionBytes`
 
-Every call remains beneath exact artifact, head, registry, reducer, and authority verification.
+Every participant and member world advances atomically or writes remain zero.

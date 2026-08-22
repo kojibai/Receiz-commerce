@@ -9,11 +9,11 @@ Obtain one owner confirmation for the exact mandate digest, then reverify scope,
 
 ## Constitutional workflow
 
-1. Resolve the exact v121 registry, reducer, subject, ownership, world, and Kai heads.
-2. Inspect the source primitive and exact artifact bytes before using an index or projection.
-3. Plan every consequential mutation and require the exact capability, mandate, or confirmation digest.
-4. Execute through SDK command or transaction admission only.
-5. Verify receipts, replay, byte preservation, zero-write failures, and deterministic first paint.
+1. Verify owner and worker proof objects plus current subject heads.
+2. Create the exact mandate binding owner/worker subjects, command kinds, world/region scope, Phi resource limit, geometry limit, expiration, nonce, subject heads, and revocation head.
+3. Issue through `client.subjectMandates.issue`; use `state` before offline work and include the exact mandate digest in planning/execution.
+4. Recheck every bound limit and head at execution time. A mandate supplements owner authority; it never replaces the owner proof object.
+5. Revoke with `client.subjectMandates.revoke`. Revocation is an append and blocks future execution with zero writes.
 
 ## Machine contract
 
@@ -21,13 +21,14 @@ Read [manifest.json](manifest.json) before acting. Read [SDK map](references/sdk
 
 ## Quick reference
 
-| Boundary | v121 rule |
+| Boundary | v122 rule |
 |---|---|
 | Proof | Indexes locate; exact primary proof-object bytes verify. |
 | AI | AI speaks and proposes. A model response is never a world event. |
 | Mutation | Typed command or atomic transaction admission only. |
 | Scale | Complete content-addressed history; bounded retrieval window. |
 | Transfer | Preserve identity/history/namespaces; revoke former-owner authority. |
+| Mandate | Exact digest and revocation head are mandatory for delegated execution. |
 
 ## Common mistakes
 

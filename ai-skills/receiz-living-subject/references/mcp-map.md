@@ -1,11 +1,10 @@
 # MCP map
 
-- `receiz_subject_resolve`
-- `receiz_subject_state`
-- `receiz_subject_history`
-- `receiz_bearer_transfer_preview`
-- `receiz_bearer_instrument_issue`
-- `receiz_bearer_instrument_inspect`
-- `receiz_bearer_instrument_claim`
+- `receiz_v122_subject_admit`
+- `receiz_v122_subject_state`
+- `receiz_v122_subject_export_edge_bundle`
+- `receiz_v122_subject_import_edge_bundle`
+- `receiz_v122_subject_access_binding`
+- `receiz_v122_subject_access_key_publish`
 
-Every result must expose its source SDK primitive, registry digest, reducer digest, and `mcpAuthority: false`. Writes require exact digest confirmation.
+Every result must preserve `mcpAuthority: false`; MCP cannot synthesize proof authority or replace edge verification.

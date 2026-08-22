@@ -1,12 +1,7 @@
 # MCP map
 
-- `receiz_subject_mandate_get`
-- `receiz_subject_mandate_plan`
-- `receiz_subject_mandate_activate`
-- `receiz_subject_mandate_pause`
-- `receiz_subject_mandate_revoke`
-- `receiz_subject_runtime_enqueue`
-- `receiz_subject_runtime_status`
-- `receiz_subject_runtime_cancel`
+- `receiz_v122_mandate_issue`
+- `receiz_v122_mandate_state`
+- `receiz_v122_mandate_revoke`
 
-Every result must expose its source SDK primitive, registry digest, reducer digest, and `mcpAuthority: false`. Writes require exact digest confirmation.
+MCP is not mandate or ownership authority. It projects exact SDK operations and preserves zero-write failures.

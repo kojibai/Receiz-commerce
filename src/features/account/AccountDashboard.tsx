@@ -26,6 +26,8 @@ import type { HostContext } from "@/lib/hosting/host-context";
 import { ReceizAccountManagementPills, ReceizRecoveryPills } from "@/features/storefront/ReceizRecoveryPills";
 import { ShippingDetailsForm } from "@/features/storefront/ShippingDetailsForm";
 import { EmbeddedReceizPayment } from "@/features/payments/EmbeddedReceizPayment";
+import { ReceizSubjectContinuity } from "@/features/account/ReceizSubjectContinuity";
+import { ReceizValueRails } from "@/features/account/ReceizValueRails";
 
 export function AccountDashboard({
   initialHostContext,
@@ -352,6 +354,10 @@ export function AccountDashboard({
             )}
           </div>
         </Panel>
+
+        <ReceizSubjectContinuity connected={state.auth.receizId.connected} />
+
+        <ReceizValueRails connected={state.auth.receizId.connected} />
 
         <Panel>
           <SectionHeader title="Proof trail" action={<StatusPill tone="green">Live</StatusPill>} />

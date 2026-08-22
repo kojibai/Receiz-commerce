@@ -1,8 +1,8 @@
 {
-  "schema": "receiz.ai-skills-index.v121",
-  "version": "121.0.0",
-  "registryDigest": "29a793a5bcc0195ab41d30614d37ac51df66023af354fa4335460764eb0af413",
-  "operationMatrixDigest": "208553829ba78a5536524b864577ce59989e2d0a994fad9598d39ae3d557c4f5",
+  "schema": "receiz.ai-skills-index.v122",
+  "version": "122.0.0",
+  "registryDigest": "ed65956a16dd5f0d76d04db2f4a651fc43eb0a71cef64afd53576aa782dc9896",
+  "operationMatrixDigest": "bd1d7ccf1543e2484df68e3025c7376f8ae37cafe1ca0d7c9cd9f52f6342b325",
   "currentMcpArtifactTools": [
     "receiz_artifact_verify",
     "receiz_artifact_admit",
@@ -22,9 +22,9 @@
     "receiz_artifact_transition_commit"
   ],
   "counts": {
-    "skills": 39,
-    "manifests": 33,
-    "openaiAgentPrompts": 30
+    "skills": 40,
+    "manifests": 34,
+    "openaiAgentPrompts": 31
   },
   "skills": [
     {
@@ -254,6 +254,12 @@
       "skill": "receiz-testing/SKILL.md",
       "manifest": "receiz-testing/manifest.json",
       "agent": "receiz-testing/agents/openai.yaml"
+    },
+    {
+      "name": "receiz-value-rails",
+      "skill": "receiz-value-rails/SKILL.md",
+      "manifest": "receiz-value-rails/manifest.json",
+      "agent": "receiz-value-rails/agents/openai.yaml"
     },
     {
       "name": "receiz-world-event-runtime",

@@ -11,6 +11,24 @@ const eslintConfig = [
   {
     ignores: [".next/**", "node_modules/**", "out/**", "dist/**", "next-env.d.ts"]
   },
+  {
+    files: ["app/**/*.{js,jsx,ts,tsx}", "src/features/**/*.{js,jsx,ts,tsx}"],
+    rules: {
+      "no-restricted-imports": ["error", {
+        paths: [{
+          name: "@receiz/sdk",
+          importNames: [
+            "commitArtifactTransition",
+            "createReceizClient",
+            "createReceizVerifiedCapability",
+            "sealArtifactTransitionCandidate",
+            "signReceizCapability"
+          ],
+          message: "Authority-bearing Receiz operations must enter through src/lib/receiz/adapter.ts; representations never authorize mutation."
+        }]
+      }]
+    }
+  },
   ...compat.extends("next/core-web-vitals")
 ];
 

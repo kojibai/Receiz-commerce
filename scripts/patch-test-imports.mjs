@@ -19,6 +19,7 @@ function patchSpecifier(file, specifier) {
     return rewritten.startsWith(".") ? rewritten : `./${rewritten}`;
   }
   if (!specifier.startsWith(".")) return specifier;
+  if (specifier.startsWith("../scripts/") && extname(specifier)) return `../${specifier}`;
   if (extname(specifier)) return specifier;
 
   const candidate = resolve(dirname(file), `${specifier}.js`);

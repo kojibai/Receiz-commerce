@@ -1,12 +1,9 @@
 # SDK map
 
-- `receiz.subjects.mandates.get`
-- `receiz.subjects.mandates.plan`
-- `receiz.subjects.mandates.activate`
-- `receiz.subjects.mandates.pause`
-- `receiz.subjects.mandates.revoke`
-- `receiz.subjects.mandates.explain`
-- `receiz.subjects.runtime.enqueueTick`
-- `receiz.subjects.runtime.catchUp`
+- `createReceizSubjectMandateV122`
+- `validateReceizMandateUseV122`
+- `client.subjectMandates.issue`
+- `client.subjectMandates.state`
+- `client.subjectMandates.revoke`
 
-Every call remains beneath exact artifact, head, registry, reducer, and authority verification.
+Mandate digests are mandatory and bind owner/worker heads, scope, limits, expiry, nonce, and revocation head.

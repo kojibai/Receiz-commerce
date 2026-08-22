@@ -1,0 +1,5 @@
+{
+  "schema": "receiz.ai-skill-tests.v122",
+  "skill": "receiz-value-rails",
+  "required": ["phi_is_only_moved_amount", "exactly_settlement_or_reserve", "usd_is_display_only", "receipt_pins_price_basis", "world_and_value_are_atomic"]
+}

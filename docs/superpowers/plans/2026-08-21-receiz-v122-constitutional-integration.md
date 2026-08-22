@@ -103,7 +103,7 @@ Update `package.json`:
 
 ```json
 {
-  "version": "4.13.0",
+  "version": "5.0.0",
   "scripts": {
     "receiz:check": "receiz app check --target 122.0.0 --json",
     "receiz:migrate:verify": "node scripts/receiz-v122-migration-verify.mjs --root .",

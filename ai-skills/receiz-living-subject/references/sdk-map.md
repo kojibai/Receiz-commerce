@@ -1,14 +1,13 @@
 # SDK map
 
-- `receiz.subjects.resolve`
-- `receiz.subjects.verify`
-- `receiz.subjects.state`
-- `receiz.subjects.history`
-- `receiz.subjects.additions`
-- `receiz.subjects.subscribe`
-- `receiz.bearer.previewTransfer`
-- `receiz.bearer.issueTransferInstrument`
-- `receiz.bearer.inspectInstrument`
-- `receiz.bearer.claimInstrument`
+- `client.subjects.admit`
+- `client.subjects.createAccessKey`
+- `client.subjects.publishAccessKey`
+- `client.subjects.accessBinding`
+- `client.subjects.state`
+- `client.subjects.exportEdgeBundle`
+- `client.subjects.importEdgeBundle`
+- `createReceizSemanticIdempotencyKey`
+- `deriveReceizSubjectIdV122`
 
-Every call remains beneath exact artifact, head, registry, reducer, and authority verification.
+Production admission is remote and durable. The enclosing proof object remains authority; the state/API/DB projection is authenticated coordination and recovery state.

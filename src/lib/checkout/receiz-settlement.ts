@@ -6,6 +6,17 @@ import type {
 import type { ReceizCommerceAdapter } from "@/lib/receiz/adapter";
 import type { Order } from "@/types/domain";
 
+export const RECEIZ_CHECKOUT_VALUE_AUTHORITY_NOTICE =
+  "USD checkout is a commerce quote. Proof-native value movement requires an explicit Phi intent bound to its source proof and head." as const;
+
+export type ReceizProofNativeValueMovement = Readonly<{
+  amountPhiMicro: string;
+  sourceProofObjectId: string;
+  sourceValueHead: string;
+  valueIntentDigest: string;
+  rail: "settlement" | "reserve";
+}>;
+
 export type WalletFirstFunding = {
   strategy: "receiz_wallet_first";
   totalUsdCents: number;

@@ -104,6 +104,12 @@ import { receizOidcScopesFromEnv } from "./oauth-scopes";
 export type ReceizCommerceAdapter = {
   sdkVersion: string;
   client: ReceizClient;
+  v122: Readonly<{
+    subjects: Readonly<Pick<ReceizClient["subjects"], "admit" | "state" | "exportEdgeBundle" | "importEdgeBundle" | "accessBinding" | "publishAccessKey">>;
+    mandates: Readonly<Pick<ReceizClient["subjectMandates"], "issue" | "state" | "revoke">>;
+    world: Readonly<Pick<ReceizClient["world"], "planPrivateCommand" | "planAccessAppend" | "validateTransaction" | "executeTransactionV122" | "execution" | "executionByIdempotencyKey" | "additionsV122" | "planMultiWorldTransaction" | "executeMultiWorldTransaction">>;
+    value: Readonly<Pick<ReceizClient["value"], "planSettlement" | "planReserve" | "quoteDisplayUsd" | "validateDisplayPrice" | "validateIntent">>;
+  }>;
   capabilities(options?: ReceizCapabilitiesOptions): Promise<ReceizCapabilities>;
   doctor(options?: ReceizCapabilitiesOptions): Promise<ReceizDoctorReport>;
   connectReceiz(): Promise<ReceizRailsStatus>;
@@ -403,9 +409,47 @@ export function createReceizCommerceAdapter(
     return proofEvent;
   };
 
+  const boundCall = <TArgs extends unknown[], TResult>(call: (...args: TArgs) => TResult) =>
+    (...args: TArgs): TResult => call(...args);
+
+  const v122: ReceizCommerceAdapter["v122"] = Object.freeze({
+    subjects: Object.freeze({
+      admit: boundCall(client.subjects.admit.bind(client.subjects)),
+      state: boundCall(client.subjects.state.bind(client.subjects)),
+      exportEdgeBundle: boundCall(client.subjects.exportEdgeBundle.bind(client.subjects)),
+      importEdgeBundle: boundCall(client.subjects.importEdgeBundle.bind(client.subjects)),
+      accessBinding: boundCall(client.subjects.accessBinding.bind(client.subjects)),
+      publishAccessKey: boundCall(client.subjects.publishAccessKey.bind(client.subjects)),
+    }),
+    mandates: Object.freeze({
+      issue: boundCall(client.subjectMandates.issue.bind(client.subjectMandates)),
+      state: boundCall(client.subjectMandates.state.bind(client.subjectMandates)),
+      revoke: boundCall(client.subjectMandates.revoke.bind(client.subjectMandates)),
+    }),
+    world: Object.freeze({
+      planPrivateCommand: boundCall(client.world.planPrivateCommand.bind(client.world)),
+      planAccessAppend: boundCall(client.world.planAccessAppend.bind(client.world)),
+      validateTransaction: boundCall(client.world.validateTransaction.bind(client.world)),
+      executeTransactionV122: boundCall(client.world.executeTransactionV122.bind(client.world)),
+      execution: boundCall(client.world.execution.bind(client.world)),
+      executionByIdempotencyKey: boundCall(client.world.executionByIdempotencyKey.bind(client.world)),
+      additionsV122: boundCall(client.world.additionsV122.bind(client.world)),
+      planMultiWorldTransaction: boundCall(client.world.planMultiWorldTransaction.bind(client.world)),
+      executeMultiWorldTransaction: boundCall(client.world.executeMultiWorldTransaction.bind(client.world)),
+    }),
+    value: Object.freeze({
+      planSettlement: boundCall(client.value.planSettlement.bind(client.value)),
+      planReserve: boundCall(client.value.planReserve.bind(client.value)),
+      quoteDisplayUsd: boundCall(client.value.quoteDisplayUsd.bind(client.value)),
+      validateDisplayPrice: boundCall(client.value.validateDisplayPrice.bind(client.value)),
+      validateIntent: boundCall(client.value.validateIntent.bind(client.value)),
+    }),
+  });
+
   return {
     sdkVersion: RECEIZ_SDK_VERSION,
     client,
+    v122,
     capabilities(options) {
       return client.capabilities(options);
     },

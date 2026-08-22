@@ -156,6 +156,7 @@ const currentForbiddenOperations = [
     "remote-reconciliation-before-first-paint", "unverified-server-artifact-render",
     "environment-player-token-fallback", "accepted-means-effects-delivered", "indeterminate-means-failed",
 ];
+const v122AdditiveSkills = new Set(["receiz-value-rails"]);
 const artifactEvidence = [
     "exact-artifact-byte-identity", "artifact-digest-match", "payload-digest-binding", "signature-v4",
     "owner-claim-binding", "independent-artifact-verification", "cross-platform-round-trip",
@@ -519,6 +520,13 @@ function assertCurrentManifest(name) {
     if (!existsSync(manifestFile))
         return;
     const manifest = JSON.parse(read(manifestFile));
+    if (v122AdditiveSkills.has(name)) {
+        if (manifest.schema !== "receiz.ai-skill-contract.v122" || manifest.version !== "122.0.0" || manifest.name !== name)
+            fail(`${name}/manifest.json has invalid v122 identity`);
+        for (const field of ["laws", "sdkOperations", "allowedTools", "requiredScopes", "forbiddenOperations", "requiredEvidence"])
+            if (!Array.isArray(manifest[field]) || manifest[field].length === 0) fail(`${name}/manifest.json missing ${field}`);
+        return;
+    }
     if (manifest.schema !== currentSchema || manifest.version !== currentVersion || manifest.name !== name)
         fail(`${name}/manifest.json is not current v121`);
     const requires = manifest.requires ?? {};
@@ -562,9 +570,9 @@ function assertLivingSubjectSkill(name) {
 assertPath(join(root, "README.md"));
 assertPath(join(root, "SKILLS.md"));
 assertPath(join(root, "skills.json"));
-if (skillsIndex.skills?.length !== 39 || skillsIndex.skills?.filter((entry) => entry.manifest).length !== 33
-    || skillsIndex.skills?.filter((entry) => entry.agent).length !== 30)
-    fail("skills.json must preserve 39 skills, 33 manifests, and 30 OpenAI agent prompts");
+if (skillsIndex.skills?.length !== 40 || skillsIndex.skills?.filter((entry) => entry.manifest).length !== 34
+    || skillsIndex.skills?.filter((entry) => entry.agent).length !== 31)
+    fail("skills.json must preserve 40 skills, 34 manifests, and 31 OpenAI agent prompts");
 for (const skill of skills)
     assertSkill(skill);
 for (const skill of constitutionalSkills)

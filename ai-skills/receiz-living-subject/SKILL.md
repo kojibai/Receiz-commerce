@@ -5,15 +5,16 @@ description: Use when creating, resolving, transferring, exporting, importing, o
 
 # receiz-living-subject
 
-Bind one subject identity to its sealed proof object, exact namespace bytes, complete history head, ownership head, portable mind, and append-only transitions.
+Bind one immutable subject identity to its enclosing sealed proof object, exact namespace bytes, owner/head state, portable edge bundle, and append-only transitions.
 
 ## Constitutional workflow
 
-1. Resolve the exact v121 registry, reducer, subject, ownership, world, and Kai heads.
-2. Inspect the source primitive and exact artifact bytes before using an index or projection.
-3. Plan every consequential mutation and require the exact capability, mandate, or confirmation digest.
-4. Execute through SDK command or transaction admission only.
-5. Verify receipts, replay, byte preservation, zero-write failures, and deterministic first paint.
+1. Verify the enclosing proof object locally. The object is authority; an embedded hash, API receipt, MCP result, or database row is not.
+2. Call `client.subjects.admit({ proofObject, ownerReceizId, idempotencyKey, expectedAbsent: true })`. Never substitute the emulator for production admission.
+3. For private worlds, call `client.subjects.createAccessKey({ subjectId, edgeWrappingKey })`. Only the public binding is appended remotely; the encrypted private access kit remains at the edge. Share or resolve recipient public bindings with `client.subjects.accessBinding(subjectId)`.
+4. On timeout, repeat the exact bytes and idempotency key. A conflict must report `writes: 0`.
+5. Export an edge bundle carrying proof, owner evidence, heads, append chain, registry/reducers, mandates, and value-proof references. Keep the encrypted access kit alongside it in edge custody; the server never receives that kit. DB state is sync, coordination, and recovery beneath edge-held truth.
+6. Restore and verify the edge bundle before using a weaker remote snapshot.
 
 ## Machine contract
 
@@ -21,13 +22,15 @@ Read [manifest.json](manifest.json) before acting. Read [SDK map](references/sdk
 
 ## Quick reference
 
-| Boundary | v121 rule |
+| Boundary | v122 rule |
 |---|---|
 | Proof | Indexes locate; exact primary proof-object bytes verify. |
 | AI | AI speaks and proposes. A model response is never a world event. |
 | Mutation | Typed command or atomic transaction admission only. |
 | Scale | Complete content-addressed history; bounded retrieval window. |
 | Transfer | Preserve identity/history/namespaces; revoke former-owner authority. |
+| Admission | Subject ID derives only from the admitted enclosing proof digest. |
+| Recovery | The edge bundle is sufficient to verify held state without a network round trip. |
 
 ## Common mistakes
 
@@ -42,7 +45,7 @@ Refuse completion when exact heads, artifact bytes, authority, event citations, 
 
 ## Example
 
-Move the same creature into another Receiz application. Verify the exact artifact, preserve identity/genesis/history/unknown namespaces, append the application namespace, and retain conflicts as forks.
+Capture a creature, verify its creature-card proof object, derive a stable semantic idempotency key, admit it remotely, persist the exact returned edge bundle, and verify the same subject/owner/head after offline restore.
 
 ## Authority rule
 
