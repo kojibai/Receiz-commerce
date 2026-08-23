@@ -1,5 +1,7 @@
 # MCP Tool Map
 
+The exact universal V124 production-runtime adapters, SDK methods, fixed and conditional scopes, and process-local custody rules are defined in the [V124 runtime tool map](v124-runtime-tool-map.md). That 22-tool surface composes with the inherited inventories below; it does not replace or reinterpret them.
+
 ## V120 Application Compiler
 
 | Need | Tool | Mutation |
@@ -22,20 +24,20 @@ verification verdict or proof authority.
 
 Source: `packages/receiz-mcp-server/src/index.ts`.
 
-## V120 Current Profile And Ownership Outcomes
+## Current SDK-Only Profile And Ownership Outcomes
 
-| Need | Tool | Mutation |
+The current MCP runtime exposes no direct profile-mutation or bearer-claim adapters. Use the canonical SDK operations instead:
+
+| Need | Canonical SDK operation | Boundary |
 |---|---|---|
-| Plan authenticated profile update | `receiz_identity_profile_update_plan` | Read-only plan; accepts `{ profile }` only |
-| Execute authenticated profile update | `receiz_identity_profile_update_execute` | Exact confirmation; calls `client.profile.update(profile)` and requires the same-UID result |
-| Plan bearer ownership claim | `receiz_bearer_asset_claim_plan` | Accepts `{ artifactBase64, filename, mimeType }` for the complete sealed artifact |
-| Execute bearer ownership claim | `receiz_bearer_asset_claim_execute` | Exact confirmation; returns the newly claimed complete native artifact bytes and evidence |
+| Authenticated profile update | `client.profile.update(profile)` | Requires the returned UID to remain the authenticated actor UID; performs no identity/profile pre-read |
+| Bearer ownership claim | `client.artifacts.verifyAndOpen(completeFile)`, then `client.ownership.claimBearerAsset({ artifact: opened.sealedArtifact })` | Accepts the complete sealed artifact and returns the new native Record -> Seal artifact |
 
-The profile plan performs no profile read and accepts no account selector, key, caller head, or idempotency field. The authenticated session/OIDC actor is the account, and execution requires the returned UID to remain unchanged.
+The profile operation accepts no caller-selected account UID, identity key, or proof head. The authenticated session/OIDC actor is the account.
 
-The bearer plan verifies the complete sealed artifact with `client.artifacts.verifyAndOpen`. Execution passes only `opened.sealedArtifact` to `client.ownership.claimBearerAsset` and returns the new native Record -> Seal artifact. Prior ownership comes from the verified carried proof. MCP never accepts a detached payload, caller owner, claim key, or caller head.
+The bearer operation passes only the runtime-issued sealed-artifact handle into the claim. Prior ownership comes from the verified carried proof. Never accept a detached payload, caller owner, claim key, or caller head, and never invent an MCP tool name or substitute an unrelated MCP mutation.
 
-A verified proof object is not limited to the platform that created it. Any lawful platform may append authenticated ownership and history only while preserving the same immutable object identity, payload, provenance root, prior history, and unknown namespaces, then returning a complete verified proof object. These MCP tools invoke that same SDK continuity and never create an origin-platform lock or parallel chain.
+A verified proof object is not limited to the platform that created it. Any lawful platform may append authenticated ownership and history only while preserving the same immutable object identity, payload, provenance root, prior history, and unknown namespaces, then returning a complete verified proof object. The SDK workflow preserves that continuity and creates neither an origin-platform lock nor a parallel chain.
 
 ## V120 Current Artifact Coordination
 

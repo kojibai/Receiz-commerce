@@ -2,13 +2,38 @@ import {
   RECEIZ_DEFAULT_BASE_URL,
   RECEIZ_SDK_VERSION,
   appendReceizIdentityArtifactTrailerToPng,
+  createReceizPortableExecutionAuthorityEventV124,
+  createReceizPortableExecutionAuthorityIdentityChallengeV124,
+  createReceizProofAuthorityChallenge,
+  createReceizPublicRecipientLocatorReferenceV124,
+  createReceizTransportBindingV124,
+  createReceizWorldExecutionEventV124,
   commitArtifactTransition,
   createReceizBrowserAdmissionStore,
   createReceizClient,
   loadReceizCurrentRegistry,
+  normalizeReceizPublicRecipientAliasV124,
+  planReceizLocatorBoundValueIntentV124,
+  planReceizMultiWorldCompositeOperationV124,
+  planReceizMultiWorldExecutionProjectionV124,
+  planReceizWorldCompositeOperationV124,
+  planReceizWorldExecutionProjectionV124,
   planArtifactAppend,
+  readReceizSignedTransportEnvelopeV124,
+  receizKaiNow,
+  recoverReceizPortableExecutionTransitionSetV124,
   sealArtifactTransitionCandidate,
   signReceizCapability,
+  transportReceizSealedArtifactV124,
+  validateReceizLocatorBoundValueIntentV124,
+  validateReceizMultiWorldCompositeOperationV124,
+  validateReceizMultiWorldExecutionProjectionV124,
+  validateReceizPublicRecipientLocatorReferenceV124,
+  validateReceizWorldCompositeOperationV124,
+  validateReceizWorldExecutionProjectionV124,
+  verifyReceizPortableExecutionAuthorityEvidenceV124,
+  verifyReceizPortableExecutionTransitionSetV124,
+  verifyReceizTransportBindingV124,
   type ActionLedgerFeed,
   type CheckoutRequest,
   type CheckoutSessionResponse,
@@ -116,6 +141,49 @@ export type ReceizCommerceAdapter = {
     world: Readonly<Pick<ReceizClient["world"], "planCommandV122" | "planTransactionV122">>;
     subjects: Readonly<Pick<ReceizClient["subjects"], "resolveNamespaces">>;
     value: Readonly<Pick<ReceizClient["value"], "executeSettlement" | "executeReserve" | "executionByIdempotencyKey">>;
+  }>;
+  v124: Readonly<{
+    kai: Readonly<{ now: typeof receizKaiNow }>;
+    proofAuthority: Readonly<{ createChallenge: typeof createReceizProofAuthorityChallenge }>;
+    execution: Readonly<Pick<ReceizClient["execution"], "planAtomicOperationV124" | "stage" | "stagePrepared" | "execute" | "resolve" | "resolveByIdempotencyKey" | "cancel">>;
+    runtime: Readonly<Pick<ReceizClient["runtime"], "openAuthoritySessionV124" | "refreshAuthoritySessionV124" | "closeAuthoritySessionV124" | "qualifyV124">>;
+    domains: Readonly<Pick<ReceizClient["domains"], "verifiedAdditionsV124" | "verifiedReplayV124" | "verifiedCheckpointV124" | "verifiedPrivateAdditionsV124" | "exportVerifiedReplayProofObjectV124" | "restoreVerifiedReplayProofObjectV124">>;
+    subjects: Readonly<Pick<ReceizClient["subjects"], "resolveNamespacesV124">>;
+    identity: Readonly<Pick<ReceizClient["identity"], "resolvePublicRecipientV124">>;
+    sources: Readonly<Pick<ReceizClient["sources"], "publishSealedSourceV124">>;
+    value: Readonly<{
+      planLocatorBoundIntent: typeof planReceizLocatorBoundValueIntentV124;
+      validateLocatorBoundIntent: typeof validateReceizLocatorBoundValueIntentV124;
+    }>;
+    recipient: Readonly<{
+      normalizeAlias: typeof normalizeReceizPublicRecipientAliasV124;
+      createLocatorReference: typeof createReceizPublicRecipientLocatorReferenceV124;
+      validateLocatorReference: typeof validateReceizPublicRecipientLocatorReferenceV124;
+    }>;
+    world: Readonly<{
+      planCompositeOperation: typeof planReceizWorldCompositeOperationV124;
+      planMultiWorldCompositeOperation: typeof planReceizMultiWorldCompositeOperationV124;
+      planExecutionProjection: typeof planReceizWorldExecutionProjectionV124;
+      planMultiWorldExecutionProjection: typeof planReceizMultiWorldExecutionProjectionV124;
+      createExecutionEvent: typeof createReceizWorldExecutionEventV124;
+      validateCompositeOperation: typeof validateReceizWorldCompositeOperationV124;
+      validateMultiWorldCompositeOperation: typeof validateReceizMultiWorldCompositeOperationV124;
+      validateExecutionProjection: typeof validateReceizWorldExecutionProjectionV124;
+      validateMultiWorldExecutionProjection: typeof validateReceizMultiWorldExecutionProjectionV124;
+    }>;
+    transport: Readonly<{
+      createBinding: typeof createReceizTransportBindingV124;
+      verifyBinding: typeof verifyReceizTransportBindingV124;
+      readSignedEnvelope: typeof readReceizSignedTransportEnvelopeV124;
+    }>;
+    portable: Readonly<{
+      createAuthorityEvent: typeof createReceizPortableExecutionAuthorityEventV124;
+      createIdentityChallenge: typeof createReceizPortableExecutionAuthorityIdentityChallengeV124;
+      verifyAuthorityEvidence: typeof verifyReceizPortableExecutionAuthorityEvidenceV124;
+      verifyTransitionSet: typeof verifyReceizPortableExecutionTransitionSetV124;
+      recoverTransitionSet: typeof recoverReceizPortableExecutionTransitionSetV124;
+      transportSealedArtifact: typeof transportReceizSealedArtifactV124;
+    }>;
   }>;
   capabilities(options?: ReceizCapabilitiesOptions): Promise<ReceizCapabilities>;
   doctor(options?: ReceizCapabilitiesOptions): Promise<ReceizDoctorReport>;
@@ -477,11 +545,82 @@ export function createReceizCommerceAdapter(
     }),
   });
 
+  const v124: ReceizCommerceAdapter["v124"] = Object.freeze({
+    kai: Object.freeze({ now: receizKaiNow }),
+    proofAuthority: Object.freeze({ createChallenge: createReceizProofAuthorityChallenge }),
+    execution: Object.freeze({
+      planAtomicOperationV124: client.execution.planAtomicOperationV124,
+      stage: boundCall(client.execution.stage.bind(client.execution)),
+      stagePrepared: boundCall(client.execution.stagePrepared.bind(client.execution)),
+      execute: boundCall(client.execution.execute.bind(client.execution)),
+      resolve: boundCall(client.execution.resolve.bind(client.execution)),
+      resolveByIdempotencyKey: boundCall(client.execution.resolveByIdempotencyKey.bind(client.execution)),
+      cancel: boundCall(client.execution.cancel.bind(client.execution)),
+    }),
+    runtime: Object.freeze({
+      openAuthoritySessionV124: boundCall(client.runtime.openAuthoritySessionV124.bind(client.runtime)),
+      refreshAuthoritySessionV124: boundCall(client.runtime.refreshAuthoritySessionV124.bind(client.runtime)),
+      closeAuthoritySessionV124: boundCall(client.runtime.closeAuthoritySessionV124.bind(client.runtime)),
+      qualifyV124: boundCall(client.runtime.qualifyV124.bind(client.runtime)),
+    }),
+    domains: Object.freeze({
+      verifiedAdditionsV124: boundCall(client.domains.verifiedAdditionsV124.bind(client.domains)),
+      verifiedReplayV124: boundCall(client.domains.verifiedReplayV124.bind(client.domains)),
+      verifiedCheckpointV124: boundCall(client.domains.verifiedCheckpointV124.bind(client.domains)),
+      verifiedPrivateAdditionsV124: boundCall(client.domains.verifiedPrivateAdditionsV124.bind(client.domains)),
+      exportVerifiedReplayProofObjectV124: boundCall(client.domains.exportVerifiedReplayProofObjectV124.bind(client.domains)),
+      restoreVerifiedReplayProofObjectV124: boundCall(client.domains.restoreVerifiedReplayProofObjectV124.bind(client.domains)),
+    }),
+    subjects: Object.freeze({
+      resolveNamespacesV124: boundCall(client.subjects.resolveNamespacesV124.bind(client.subjects)),
+    }),
+    identity: Object.freeze({
+      resolvePublicRecipientV124: boundCall(client.identity.resolvePublicRecipientV124.bind(client.identity)),
+    }),
+    sources: Object.freeze({
+      publishSealedSourceV124: boundCall(client.sources.publishSealedSourceV124.bind(client.sources)),
+    }),
+    value: Object.freeze({
+      planLocatorBoundIntent: planReceizLocatorBoundValueIntentV124,
+      validateLocatorBoundIntent: validateReceizLocatorBoundValueIntentV124,
+    }),
+    recipient: Object.freeze({
+      normalizeAlias: normalizeReceizPublicRecipientAliasV124,
+      createLocatorReference: createReceizPublicRecipientLocatorReferenceV124,
+      validateLocatorReference: validateReceizPublicRecipientLocatorReferenceV124,
+    }),
+    world: Object.freeze({
+      planCompositeOperation: planReceizWorldCompositeOperationV124,
+      planMultiWorldCompositeOperation: planReceizMultiWorldCompositeOperationV124,
+      planExecutionProjection: planReceizWorldExecutionProjectionV124,
+      planMultiWorldExecutionProjection: planReceizMultiWorldExecutionProjectionV124,
+      createExecutionEvent: createReceizWorldExecutionEventV124,
+      validateCompositeOperation: validateReceizWorldCompositeOperationV124,
+      validateMultiWorldCompositeOperation: validateReceizMultiWorldCompositeOperationV124,
+      validateExecutionProjection: validateReceizWorldExecutionProjectionV124,
+      validateMultiWorldExecutionProjection: validateReceizMultiWorldExecutionProjectionV124,
+    }),
+    transport: Object.freeze({
+      createBinding: createReceizTransportBindingV124,
+      verifyBinding: verifyReceizTransportBindingV124,
+      readSignedEnvelope: readReceizSignedTransportEnvelopeV124,
+    }),
+    portable: Object.freeze({
+      createAuthorityEvent: createReceizPortableExecutionAuthorityEventV124,
+      createIdentityChallenge: createReceizPortableExecutionAuthorityIdentityChallengeV124,
+      verifyAuthorityEvidence: verifyReceizPortableExecutionAuthorityEvidenceV124,
+      verifyTransitionSet: verifyReceizPortableExecutionTransitionSetV124,
+      recoverTransitionSet: recoverReceizPortableExecutionTransitionSetV124,
+      transportSealedArtifact: transportReceizSealedArtifactV124,
+    }),
+  });
+
   return {
     sdkVersion: RECEIZ_SDK_VERSION,
     client,
     v122,
     v123,
+    v124,
     capabilities(options) {
       return client.capabilities(options);
     },

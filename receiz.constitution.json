@@ -1,9 +1,9 @@
 {
   "schema": "receiz.constitution.registry.v1",
-  "version": "123.0.0",
-  "previousRegistryDigest": "945a581d1fc49c2dc18fbe8c129771ef464b8a58b96188bce561e88ae8b6ceeb",
-  "effectiveKai": "13732000",
-  "createdAt": "2026-08-22T13:00:00.000Z",
+  "version": "124.0.0",
+  "previousRegistryDigest": "d02429151b0bcebdaeb89485792e377afc55130f9a25e07982c1c88221314247",
+  "effectiveKai": "13770000",
+  "createdAt": "2026-08-23T13:00:00.000Z",
   "predicateLanguageVersion": "receiz-law-expression.v1",
   "authority": {
     "registryPayloadIsAuthority": false,
@@ -4255,7 +4255,95 @@
       }
     },
     {
-      "id": "release.current-version.v113",
+      "id": "v124.representation-never-outranks-source",
+      "version": 1,
+      "phases": ["command", "event", "admission", "merge", "migration"],
+      "denyWhen": {
+        "op": "equal",
+        "left": { "op": "path", "value": "proposed.representationOutranksSealedSource" },
+        "right": { "op": "literal", "value": true }
+      },
+      "denial": {
+        "code": "V124_REPRESENTATION_AUTHORITY_FORBIDDEN",
+        "safeAlternatives": ["resolve-exact-sealed-source", "reverify-exact-bytes", "rebuild-subordinate-projection"]
+      }
+    },
+    {
+      "id": "v124.json-cannot-mint-runtime-custody",
+      "version": 1,
+      "phases": ["command", "admission", "migration"],
+      "denyWhen": {
+        "op": "equal",
+        "left": { "op": "path", "value": "proposed.reconstructsAuthoritySessionOrExecutionHandleFromJson" },
+        "right": { "op": "literal", "value": true }
+      },
+      "denial": {
+        "code": "V124_RUNTIME_CUSTODY_RECONSTRUCTION_FORBIDDEN",
+        "safeAlternatives": ["use-custodied-sdk-runtime-object", "refresh-persisted-session-through-canonical-sdk", "resolve-durable-execution"]
+      }
+    },
+    {
+      "id": "v124.qualification-before-mutation",
+      "version": 1,
+      "phases": ["command", "admission"],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          { "op": "equal", "left": { "op": "path", "value": "operation.kind" }, "right": { "op": "literal", "value": "v124-runtime-mutation" } },
+          { "op": "not", "value": { "op": "equal", "left": { "op": "path", "value": "evidence.operationalQualification" }, "right": { "op": "literal", "value": "available" } } }
+        ]
+      },
+      "denial": {
+        "code": "V124_OPERATION_NOT_QUALIFIED",
+        "safeAlternatives": ["qualify-exact-operation", "repair-runtime-dependency", "perform-no-write"]
+      }
+    },
+    {
+      "id": "v124.unknown-outcome-resolve-before-retry",
+      "version": 1,
+      "phases": ["command", "admission"],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          { "op": "equal", "left": { "op": "path", "value": "operation.kind" }, "right": { "op": "literal", "value": "v124-execution-retry" } },
+          { "op": "not", "value": { "op": "equal", "left": { "op": "path", "value": "evidence.priorOutcomeResolved" }, "right": { "op": "literal", "value": true } } }
+        ]
+      },
+      "denial": {
+        "code": "V124_LOOKUP_BEFORE_RETRY_REQUIRED",
+        "safeAlternatives": ["resolve-by-execution-id", "resolve-by-semantic-idempotency-key", "preserve-original-plan"]
+      }
+    },
+    {
+      "id": "v124.replay-candidate-must-be-sealed",
+      "version": 1,
+      "phases": ["command", "admission", "migration"],
+      "denyWhen": {
+        "op": "equal",
+        "left": { "op": "path", "value": "proposed.restoresUnsealedReplayCandidate" },
+        "right": { "op": "literal", "value": true }
+      },
+      "denial": {
+        "code": "V124_SEALED_REPLAY_PROOF_OBJECT_REQUIRED",
+        "safeAlternatives": ["record-exact-candidate-bytes", "seal-canonical-proof-object", "admit-and-restore-sealed-source"]
+      }
+    },
+    {
+      "id": "v124.private-additions-trusted-host-only",
+      "version": 1,
+      "phases": ["command", "admission", "migration"],
+      "denyWhen": {
+        "op": "equal",
+        "left": { "op": "path", "value": "proposed.exposesExactPrivateAdditionsToModelOrPublicClient" },
+        "right": { "op": "literal", "value": true }
+      },
+      "denial": {
+        "code": "V124_PRIVATE_ADDITIONS_CUSTODY_VIOLATION",
+        "safeAlternatives": ["retain-exact-result-in-trusted-host", "return-safe-counts-and-digests", "recheck-session-grant"]
+      }
+    },
+    {
+      "id": "release.current-version.v124",
       "version": 1,
       "phases": [
         "command",
@@ -4286,7 +4374,7 @@
               },
               "right": {
                 "op": "literal",
-                "value": "113.0.0"
+                "value": "124.0.1"
               }
             }
           }
@@ -4295,7 +4383,7 @@
       "denial": {
         "code": "STALE_CURRENT_RELEASE_VERSION",
         "safeAlternatives": [
-          "use-v113-current-default",
+          "use-v124-current-default",
           "retain-historical-proof-as-non-executable-evidence"
         ]
       }

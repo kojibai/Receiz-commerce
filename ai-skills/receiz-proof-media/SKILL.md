@@ -61,7 +61,7 @@ Show the source media, artifact filename, proof-object type, public URL if one i
 
 ## MCP parity
 
-Use the SDK artifact-custody workflow for media Record -> Seal; the active default MCP surface does not introduce a parallel media authority. To project an already verified media URL, call `receiz_identity_profile_update_plan` with `{ profile }`, require exact confirmation, then call `receiz_identity_profile_update_execute` with `{ planDigest, confirmation }`.
+Use the SDK artifact-custody workflow for media Record -> Seal; the current MCP runtime does not introduce a parallel media authority or a direct profile-mutation adapter. Project an already verified media URL through the canonical SDK `receiz.profile.update(profile)` operation and require the same-UID result. Never substitute an unrelated MCP tool or a model-carried projection for the sealed media proof object.
 
 ## Emulator fixture
 

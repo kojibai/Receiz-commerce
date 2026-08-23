@@ -1,3 +1,21 @@
+# Receiz Commerce Kit v5.2.0 — v124 Reality Becomes Infrastructure
+
+Release date: August 23, 2026
+
+Status: General Availability · repository release
+
+SDK target: `@receiz/sdk@124.0.1` · ruleset: `124.0.0`
+
+V5.2 is the production runtime for verified civilization. Canonical Kai and proof challenges can now open short-lived trusted-host authority sessions; those sessions can qualify, durably stage, atomically execute, recover, or cancel exact operations spanning subjects, worlds, inventory, access, ownership, Settlement, and Reserve. Authenticated replay, checkpoints, access-filtered private additions, sealed replay portability, exact namespaces, privacy-safe recipient locators, locator-bound Phi intent, and sealed-source publication are implemented end to end.
+
+The coordinated source set contains 53 application operations, 163 MCP tools including all 22 v124 tools, 42 AI skills, 36 manifests, and 33 OpenAI prompts. The app rejects JSON-reconstructed custody, blocks mutation until dependencies are operational, resolves unknown outcomes before retry, withholds exact private additions from models, and requires canonical Record → Seal before replay restore.
+
+The highest frame is that independently verifiable reality can cross governments, companies, applications, databases, and AI systems without any institution's representation becoming the source. That is institution-independent technical verification—not legal sovereignty, exemption, or a claim that institutions do not matter. Representation never outranks source.
+
+Full evidence is recorded in `docs/releases/2026-08-23-v124-production-runtime-release.md`.
+
+---
+
 # Receiz Commerce Kit v5.1.0 — v123 Lawful Action
 
 Release date: August 22, 2026

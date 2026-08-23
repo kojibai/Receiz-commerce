@@ -60,9 +60,7 @@ Show the source artifact identity, verified current custody, authenticated desti
 
 ## MCP parity
 
-Call `receiz_bearer_asset_claim_plan` with `{ artifactBase64, filename, mimeType }`, where the bytes are the complete sealed artifact. Require the exact confirmation digest, then call `receiz_bearer_asset_claim_execute` with `{ planDigest, confirmation }`.
-
-The active MCP path calls `client.artifacts.verifyAndOpen(completeFile)`, then `client.ownership.claimBearerAsset({ artifact: opened.sealedArtifact })`. It returns the newly claimed complete sealed artifact bytes and evidence, never the extracted payload.
+The current MCP runtime does not expose a direct bearer-claim adapter. Use the canonical SDK workflow: call `receiz.artifacts.verifyAndOpen(completeFile)`, then `receiz.ownership.claimBearerAsset({ artifact: opened.sealedArtifact })`. Preserve and return the newly claimed complete sealed artifact bytes and evidence, never the extracted payload. Do not invent an MCP tool name or route the claim through an unrelated mutation adapter.
 
 ## Emulator fixture
 

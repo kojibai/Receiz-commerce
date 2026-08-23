@@ -10,7 +10,7 @@ Coordinate the complete production workflow across architecture, domains, laws, 
 ## Constitutional workflow
 
 1. Inspect the repository and installed SDK version.
-2. Load the active canonical v123 registry and applicable constitutional laws.
+2. Load the active canonical v124 registry and applicable constitutional laws.
 3. Identify every authority boundary affected by the change.
 4. Write the implementation contract before implementation.
 5. Implement canonical changes only through SDK commands.
@@ -101,3 +101,9 @@ Admission begins from runtime-custodied verification of the exact enclosing arti
 Deterministic plan identity and unique execution-attempt identity are separate. MCP may reuse a confirmation digest only while the identical attempt is actively pending; committed and failed attempts are terminal and require a fresh confirmation. Expected authority failures are structured, immutable, machine-readable, and report zero writes.
 
 Historical sealed proof objects remain exact-byte verifiable evidence. Historical runtime admissions, histories, actors, capabilities, plans, candidates, stores, or confirmations cannot authorize a current v121 receiver; exact bytes crossing a process require `reverify-exact-bytes`, followed by current profile admission and `same-runtime-custody` through plan, capability, seal, stage, independent byte resolution, atomic named-domain acceptance, and report-only receipt.
+
+## v124 production-runtime MCP contract
+
+Production composition uses the exact 22 adapters in the [universal V124 runtime tool map](../receiz-mcp-agent-skill/resources/v124-runtime-tool-map.md). The map binds every tool to its canonical SDK method, fixed or conditional scope contract, action class, process-local handle rule, and trusted-host material/session custody. Tool presence alone is not operational evidence; `receiz_v124_runtime_qualify` must report every required dependency operational.
+
+The sealed proof object and authenticated heads remain authority. The Receiz identity artifact remains identity authority. Grants, bearers, authority sessions, handles, MCP references, responses, and database rows remain subordinate execution, synchronization, or recovery mechanics. MCP must never reconstruct SDK authority from JSON.

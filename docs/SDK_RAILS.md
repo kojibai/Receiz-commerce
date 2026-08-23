@@ -40,6 +40,21 @@ The proof object is the authority. Receiz Key, Identity Record, Identity Seal, s
 
 The SDK is convenience and typed transport around that truth. It verifies, projects, admits into proof memory, publishes public-store/app-state records, and calls remote rails when delegated permission is needed. Receiz MCP is agent-callable tooling over the SDK/API surface; it does not create, replace, or outrank proof truth. Connect/OIDC access tokens authorize scoped remote calls after proof, but they are permission artifacts, not the identity proof root.
 
+## V124 Production Runtime
+
+The exact public pair is `@receiz/sdk@124.0.1`, `@receiz/mcp-server@124.0.1`, and `@receiz/ai-skills@124.0.1`; constitutional ruleset `124.0.0` is verified separately.
+
+- `v124.kai` and `v124.proofAuthority` create canonical time and consent coordinates.
+- `v124.runtime` opens, refreshes, closes, and qualifies short-lived authority sessions.
+- `v124.execution` plans, durably stages, executes, resolves, and cancels atomic multi-domain operations.
+- `v124.domains` authenticates additions, replay, checkpoints, private additions, and portable replay proof objects.
+- `v124.subjects` resolves exact-head namespaces; `v124.identity` resolves privacy-safe recipients.
+- `v124.value` binds exact Phi intent to a one-use encrypted locator.
+- `v124.sources` publishes already sealed subject, replay-segment, or checkpoint sources.
+- `v124.world`, `v124.transport`, and `v124.portable` expose canonical local composite, signed-binding, and cross-runtime verification helpers.
+
+All remote mutation flows go through `src/lib/receiz/v124/production-runtime.ts`. Its references are process-identity objects held in `WeakMap` custody; a JSON copy is unusable. Mutation is qualified first. Unknown execution is resolved, never replayed. Private exact additions never enter model/browser projections. Replay exports are unsealed candidates until canonical Record → Seal creates the sealed artifact accepted by restore or publication.
+
 Kai-Klok is the deterministic state machine behind the proof coordinate. Storefront state must be ordered only by the Kai pulse carried by the append/proof object. Do not rank store truth by server timestamps, response arrival order, cache freshness, localStorage writes, Vercel memory, Stripe/Shopify state, or any non-Receiz system. If a needed coordinate is missing from the SDK/MCP rail, treat that as a missing Receiz contract and fail the path visibly.
 
 ## Identity
@@ -102,7 +117,7 @@ SDK rails:
 - `merchants.profile`
 - `merchants.capabilities`
 
-These rails are exposed in `@receiz/sdk@123.0.0`. The app treats customer accounts as tenant-scoped storefront projections over Receiz proof. The same proof-bearing Receiz identity can be used across multiple stores, but orders, rewards, assets, and permissions are projected for the active subdomain or custom domain. SDK `doctor()` reports delegated-token, tenant, customer, merchant, commerce, media, domain, public-store, and coordination requirements directly.
+These rails are exposed in `@receiz/sdk@124.0.1`. The app treats customer accounts as tenant-scoped storefront projections over Receiz proof. The same proof-bearing Receiz identity can be used across multiple stores, but orders, rewards, assets, and permissions are projected for the active subdomain or custom domain. SDK `doctor()` reports delegated-token, tenant, customer, merchant, commerce, media, domain, public-store, and coordination requirements directly.
 
 ## Merchant Settlement
 

@@ -30,7 +30,7 @@ Receiz MCP is an agent-callable tool layer beneath Receiz proof truth. It can ca
 
 ## Required Behavior
 
-1. Choose a tool from [resources/mcp-tool-map.md](resources/mcp-tool-map.md).
+1. Choose a tool from [resources/mcp-tool-map.md](resources/mcp-tool-map.md). For production-runtime operations, use the exact [V124 runtime tool map](resources/v124-runtime-tool-map.md).
 2. Validate required inputs before calling.
 3. Classify the action as read-only, preview-only, delegated write, settlement-risk, ownership-risk, or public-proof-risk.
 4. Ask for confirmation before write or settlement-affecting actions.
@@ -47,7 +47,7 @@ Receiz MCP is an agent-callable tool layer beneath Receiz proof truth. It can ca
 
 ## MCP Usage Rules
 
-Read [resources/safe-tool-calling.md](resources/safe-tool-calling.md) before executing tools. Read [resources/auth-boundaries.md](resources/auth-boundaries.md) before delegated actions. Read [resources/action-confirmation-rules.md](resources/action-confirmation-rules.md) before any publish, append, transfer, checkout, or settlement action.
+Read [resources/safe-tool-calling.md](resources/safe-tool-calling.md) before executing tools. Read [resources/auth-boundaries.md](resources/auth-boundaries.md) before delegated actions. Read [resources/action-confirmation-rules.md](resources/action-confirmation-rules.md) before any publish, append, transfer, checkout, settlement, V124 execution, or authority-session action. Use the [V124 runtime tool map](resources/v124-runtime-tool-map.md) for exact SDK mappings, scopes, references, process-local handles, and trusted-host custody.
 
 ## SDK Usage Rules
 
@@ -82,6 +82,8 @@ Agents may acquire scoped delegated access through Receiz Connect/OIDC Authoriza
 Resources:
 
 - [MCP tool map](resources/mcp-tool-map.md)
+- [V124 runtime tool map](resources/v124-runtime-tool-map.md)
+- [Machine-readable V124 runtime map](resources/v124-runtime-tool-map.json)
 - [Agent operating rules](resources/agent-operating-rules.md)
 - [Safe tool calling](resources/safe-tool-calling.md)
 - [Auth boundaries](resources/auth-boundaries.md)
@@ -97,3 +99,7 @@ Use exactly `receiz_artifact_verify`, `receiz_artifact_admit`, `receiz_artifact_
 Use canonical head → entire proof history → bounded index retrieval → exact primary-object resolution → reasoning → provenance. The 96-object window is working context, never history truncation. AI speech and performance remain non-authoritative. Consequential actions require typed deterministic command admission; meetings, relationships, trades, gifts, and battles require atomic multi-subject transactions. Autonomous execution requires a current digest-bound mandate at lease time. Bearer transfer preserves identity, full history, memory policy, inventory disposition, and unknown namespace bytes while immediately revoking former-owner authority.
 
 Concrete v120 evidence must include: a creature speaking from exact long-form proof memory; absent-owner exploration inside a mandate; a mutual relationship; a bounded autonomous trade; an atomic battle; exact device restoration; queued-action revocation; partition convergence without history replacement; rejection of an AI-invented event; and cross-application subject continuity.
+
+## v124 production-runtime contract
+
+Use only the 22 exact `receiz_v124_*` adapters in the [V124 runtime tool map](resources/v124-runtime-tool-map.md). `handleRef` is a non-authoritative process-local reference. `sessionRef` may resolve a local session or a trusted-host `persistedSessionRef`, but the canonical SDK/server path must re-verify it before use. Execute and cancel require the process-local handle plus the re-verified session. Refresh rotates session custody; close consumes it. Replay export returns an unsealed non-authoritative candidate with `exactBytesB64u`; canonically Record -> Seal those exact bytes before admitting `sealedReplayProofObjectRef` for restore. Exact private additions remain in trusted-host custody under `privateAdditionsRef` and never enter model output. `applicationId` and `audience` are runtime-pinned and never tool inputs. Never reconstruct authority from MCP JSON.

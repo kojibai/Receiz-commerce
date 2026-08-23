@@ -16,7 +16,7 @@ The object is authority. An application may exchange explicit consent bound to a
 5. Keep the returned bearer capability short-lived, non-refreshable, secret, and confined to the application and granted scopes.
 6. Use granted-scope introspection before planning or executing a protected operation.
 
-Read the [SDK map](references/sdk-map.md) for exact method boundaries.
+Read the [SDK map](references/sdk-map.md) and [MCP map](references/mcp-map.md) for exact method, scope, and custody boundaries.
 
 ## Machine contract
 
@@ -25,6 +25,9 @@ The edge performs independent verification and remains usable with its proof obj
 ## Quick reference
 
 - Exchange: `client.identity.exchangeProofAuthority(...)`
+- Live Kai: `receizKaiNow()`
+- Canonical challenge: `createReceizProofAuthorityChallenge(...)`
+- Session: `client.runtime.openAuthoritySessionV124(...)`, `refreshAuthoritySessionV124(...)`, `closeAuthoritySessionV124(...)`
 - Rail scopes: `client.auth.scopesForRails(...)`
 - Granted scopes: `client.auth.grantedScopes(...)`
 - Redirect requirement: none; the consent ceremony remains inside the developer's application.
@@ -35,6 +38,7 @@ The edge performs independent verification and remains usable with its proof obj
 - Requesting broad scopes rather than minimum scopes.
 - Moving proof verification entirely to the server.
 - Persisting a bearer capability as durable identity or attempting to refresh it.
+- Reconstructing an authority session from MCP JSON rather than resolving a local or trusted-host-persisted reference through the canonical SDK/server verification path.
 
 ## Completion refusal
 

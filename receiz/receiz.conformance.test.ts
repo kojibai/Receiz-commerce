@@ -7,6 +7,6 @@ import contract from "../receiz.app.json" with { type: "json" };
 test("Receiz authority remains artifact-first", () => {
   assert.equal(contract.authority.mode, "artifact-first");
   assert.equal(contract.authority.allowDatabaseAuthority, false);
-  assert.equal(contract.operations.length, 30);
-  assert.equal(contract.operations[0].compatibleSdkRange, ">=121.0.0 <122.0.0");
+  assert.equal(contract.operations.length, 53);
+  assert.equal(contract.operations[0].compatibleSdkRange, ">=124.0.0 <125.0.0");
 });

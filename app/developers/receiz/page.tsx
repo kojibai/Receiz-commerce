@@ -1,50 +1,55 @@
-import { RECEIZ_V123_CONTRACT } from "@/lib/receiz/v123/contract";
-import { RECEIZ_V123_DOCTRINE, RECEIZ_V123_EXAMPLES } from "@/lib/receiz/v123/doctrine";
+import { RECEIZ_V124_CONTRACT } from "@/lib/receiz/v124/contract";
+import { RECEIZ_V124_DEVELOPER_SEQUENCE, RECEIZ_V124_DOCTRINE, RECEIZ_V124_EXAMPLES } from "@/lib/receiz/v124/doctrine";
 
 export const metadata = {
-  title: "Receiz v123 source-first developer doctrine",
-  description: "Executable integration doctrine for Receiz v123 SDK, MCP, and AI skills.",
+  title: "Receiz v124 production-runtime developer doctrine",
+  description: "Complete source-first SDK, MCP, and AI-skill doctrine for Receiz v124.0.1.",
 };
 
 export default function ReceizDeveloperDoctrinePage() {
   return (
     <main className="legal-page">
       <header className="legal-hero">
-        <p className="eyebrow">Receiz v123 · lawful action</p>
-        <h1>Representation must never outrank the source.</h1>
-        <p>A proof object carries verifiable evidence across institutional boundaries. Governments, platforms, companies, databases, MCP tools, AI systems, receipts, and interfaces may recognize or represent that evidence; none can become the source by describing it.</p>
-        <p>This is institution-independent verification, not a claim of immunity from law or institutional process. The highest frame is simpler: truth remains attached to its evidence wherever that evidence travels.</p>
+        <p className="eyebrow">Receiz v124 · Reality Becomes Infrastructure</p>
+        <h1>The production runtime for verified civilization.</h1>
+        <p>V124 turns independently verifiable source truth into durable, atomic, privacy-preserving operations that can cross applications and institutions without making any government, company, platform, database, SDK, MCP tool, agent, receipt, or interface the source of that truth.</p>
+        <p><strong>Representation must never outrank the source.</strong> This is an institution-independent technical verification boundary—not immunity from applicable law, legitimate process, or human responsibility.</p>
       </header>
 
       <section className="panel">
-        <h2>The v123 authority boundary</h2>
-        <ol>
-          <li>Exact proof-object bytes and authenticated continuity.</li>
-          <li>Explicit human consent and live, scoped proof authority held only at the edge.</li>
-          <li>SDK-generated plans, exact persisted intents, and atomic outcomes.</li>
-          <li>MCP, AI, server, database, receipt, cache, and UI representations—always non-authoritative.</li>
-        </ol>
-        <p><strong>SDK:</strong> {RECEIZ_V123_CONTRACT.sdkVersion}</p>
-        <p><strong>Registry:</strong> <code>{RECEIZ_V123_CONTRACT.registryDigest}</code></p>
-        <p><strong>Operation matrix:</strong> <code>{RECEIZ_V123_CONTRACT.operationMatrixDigest}</code></p>
+        <h2>What v124 makes possible</h2>
+        <p>Canonical Kai and proof challenges now feed short-lived server-custodied authority sessions. Those sessions can authorize qualification-gated, durably staged atomic operations across subjects, worlds, inventory, access, ownership, Settlement, and Reserve. Unknown outcomes are recoverable without replaying intent.</p>
+        <p>Authenticated replay and checkpoints can travel as sealed proof objects. Private additions remain access-filtered in trusted-host custody. Recipient lookup produces a one-use encrypted locator instead of exposing destination identity or head coordinates. Exact Phi intent can bind to that locator before execution.</p>
       </section>
 
       <section className="panel">
-        <h2>What shipped</h2>
-        <p><strong>36 operations</strong> in the canonical application matrix, <strong>141 MCP tools</strong> in the complete server, and <strong>42 AI skills</strong> in the exact published skill tree.</p>
-        <p>The eight v123 outcomes add canonical world planners, exact-head namespace resolution, proof-authority exchange, granted-scope introspection, exact Phi Settlement and Reserve execution, and lookup-before-retry outcome recovery.</p>
+        <h2>Exact release identity</h2>
+        <p>The coordinated release contains 53 application operations, 163 MCP tools, and 42 AI skills.</p>
+        <p><strong>Application:</strong> {RECEIZ_V124_CONTRACT.applicationVersion} · <strong>SDK/MCP/skills:</strong> {RECEIZ_V124_CONTRACT.sdkVersion} · <strong>Ruleset:</strong> {RECEIZ_V124_CONTRACT.rulesetVersion}</p>
+        <p><strong>Registry:</strong> <code>{RECEIZ_V124_CONTRACT.registryDigest}</code></p>
+        <p><strong>Operation matrix:</strong> <code>{RECEIZ_V124_CONTRACT.operationMatrixDigest}</code></p>
+        <p><strong>Inventory:</strong> {RECEIZ_V124_CONTRACT.operationCount} app operations · {RECEIZ_V124_CONTRACT.mcpToolCount} MCP tools ({RECEIZ_V124_CONTRACT.v124McpToolCount} new v124 tools) · {RECEIZ_V124_CONTRACT.aiSkillCount} AI skills · {RECEIZ_V124_CONTRACT.aiManifestCount} manifests · {RECEIZ_V124_CONTRACT.openAiPromptCount} OpenAI prompts.</p>
+        <p>Package release <code>124.0.1</code> and constitutional ruleset <code>124.0.0</code> are separate coordinates. Never derive one from the other.</p>
       </section>
 
       <section className="panel">
-        <h2>The 8 mapped v123 outcomes</h2>
-        <p>Every row preserves <code>mcpAuthority: false</code>. A named AI skill is shown only when its published manifest explicitly allows the corresponding v123 MCP tool.</p>
+        <h2>The non-negotiable sequence</h2>
+        <ol>{RECEIZ_V124_DEVELOPER_SEQUENCE.map((step) => <li key={step}>{step}</li>)}</ol>
+        <p>A failed decision writes zero. A staged handle, session projection, qualification report, recipient locator, database row, MCP reference, and terminal receipt are all subordinate representations.</p>
+      </section>
+
+      <section className="panel">
+        <h2>All 22 v124 runtime tools</h2>
+        <p>Every MCP row is explicitly non-authoritative. AI skills are listed only where the published manifest grants that exact tool.</p>
         <div style={{ overflowX: "auto" }}>
           <table>
-            <thead><tr><th>Domain</th><th>MCP tool</th><th>SDK operation</th><th>AI skill</th><th>Required evidence</th></tr></thead>
-            <tbody>{RECEIZ_V123_DOCTRINE.map((entry) => (
+            <thead><tr><th>MCP tool</th><th>Canonical SDK method</th><th>Published AI skill grants</th><th>Custody and outcome</th></tr></thead>
+            <tbody>{RECEIZ_V124_DOCTRINE.map((entry) => (
               <tr key={entry.mcpTool}>
-                <td>{entry.domain}</td><td><code>{entry.mcpTool}</code></td><td><code>{entry.sdkOperation}</code></td>
-                <td>{entry.aiSkill ?? "No tool-specific manifest grant"}</td><td>{entry.requiredEvidence.join(" · ")}</td>
+                <td><code>{entry.mcpTool}</code></td>
+                <td><code>{entry.sdkMethod}</code></td>
+                <td>{entry.aiSkills.join(" · ")}</td>
+                <td>{entry.outcome}</td>
               </tr>
             ))}</tbody>
           </table>
@@ -52,14 +57,22 @@ export default function ReceizDeveloperDoctrinePage() {
       </section>
 
       <section className="panel">
-        <h2>Implementation law</h2>
-        <p>Private identity bytes stay local. Consent is explicit. Bearer authority is memory-only. Generated digests and identities belong to the SDK. Value moves in exact Phi, never USD. Intent is persisted before execution. An unknown outcome requires lookup before retry. Failed authority or exact-head checks produce zero writes.</p>
+        <h2>Impossible-by-construction boundaries</h2>
+        <ul>
+          <li>JSON copies cannot mint session, plan, handle, private-addition, replay-candidate, or sealed-source custody.</li>
+          <li>Mutation is blocked until the exact operation reports healthy and available.</li>
+          <li>An unknown outcome can only be resolved by its original execution or semantic-idempotency coordinate.</li>
+          <li>An exported replay candidate cannot restore until canonical Record → Seal creates a verified sealed source.</li>
+          <li>Exact private additions never leave trusted-host custody or enter model context.</li>
+          <li>Recipient identity and destination head stay server-side behind a one-use purpose-bound encrypted locator.</li>
+        </ul>
       </section>
 
       <section className="panel">
-        <h2>Copy-safe examples</h2>
-        <h3>SDK</h3><pre><code>{RECEIZ_V123_EXAMPLES.sdk}</code></pre>
-        <h3>MCP</h3><pre><code>{RECEIZ_V123_EXAMPLES.mcp}</code></pre>
+        <h2>Copy-safe integration</h2>
+        <h3>SDK runtime</h3><pre><code>{RECEIZ_V124_EXAMPLES.sdk}</code></pre>
+        <h3>MCP and AI skills</h3><pre><code>{RECEIZ_V124_EXAMPLES.mcp}</code></pre>
+        <p>Read-only operational status is available at <code>/api/receiz/v124/runtime</code>. It intentionally strips exact scopes and dependency heads, and its report is never proof or operational authority.</p>
       </section>
     </main>
   );

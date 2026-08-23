@@ -7,7 +7,7 @@ import {
   RECEIZ_V114_PROTOCOL_LIMITS,
   RECEIZ_LIVING_SUBJECT_REDUCER_DIGEST,
   RECEIZ_LIVING_SUBJECT_SCHEMAS,
-  RECEIZ_V123_REGISTRY_DIGEST,
+  RECEIZ_V124_REGISTRY_DIGEST,
   admitReceizArtifact,
   commitArtifactTransition,
   createPublicProofProjection,
@@ -33,25 +33,25 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 
-describe("Receiz v123 dependency contract", () => {
-  it("pins the supported public v123 SDK, MCP, AI skills, and registry contract", () => {
+describe("Receiz v124 dependency contract", () => {
+  it("pins the supported public v124 SDK, MCP, AI skills, and registry contract", () => {
     const pkg = JSON.parse(readFileSync("package.json", "utf8")) as {
       dependencies: Record<string, string>;
       scripts?: Record<string, string>;
       pnpm?: { overrides?: Record<string, string> };
     };
 
-    assert.equal(RECEIZ_SDK_VERSION, "123.0.0");
-    assert.equal(RECEIZ_RELEASE_VERSION, "123.0.0");
-    assert.equal(RECEIZ_RULESET_VERSION, "123.0.0");
-    assert.equal(RECEIZ_V123_REGISTRY_DIGEST, "945a581d1fc49c2dc18fbe8c129771ef464b8a58b96188bce561e88ae8b6ceeb");
+    assert.equal(RECEIZ_SDK_VERSION, "124.0.1");
+    assert.equal(RECEIZ_RELEASE_VERSION, "124.0.1");
+    assert.equal(RECEIZ_RULESET_VERSION, "124.0.0");
+    assert.equal(RECEIZ_V124_REGISTRY_DIGEST, "d02429151b0bcebdaeb89485792e377afc55130f9a25e07982c1c88221314247");
     assert.equal(RECEIZ_LIVING_SUBJECT_REDUCER_DIGEST, "5694662e2acc8b886ac9697ffad202b411d7e66c5f26f9106ee0768df7c7b8c8");
     assert.equal(Object.keys(RECEIZ_LIVING_SUBJECT_SCHEMAS).length, 30);
     assert.deepEqual(RECEIZ_V112_ARTIFACT_LAWS, Array.from({ length: 30 }, (_, index) => `ARTIFACT-${String(index + 1).padStart(3, "0")}`));
-    assert.equal(pkg.dependencies["@receiz/sdk"], "123.0.0");
-    assert.equal(pkg.dependencies["@receiz/mcp-server"], "123.0.0");
-    assert.equal(pkg.dependencies["@receiz/ai-skills"], "123.0.0");
-    assert.equal(pkg.scripts?.["receiz:check"], "receiz app check --target 123.0.0 --json");
+    assert.equal(pkg.dependencies["@receiz/sdk"], "124.0.1");
+    assert.equal(pkg.dependencies["@receiz/mcp-server"], "124.0.1");
+    assert.equal(pkg.dependencies["@receiz/ai-skills"], "124.0.1");
+    assert.equal(pkg.scripts?.["receiz:check"], "receiz app check --target 124.0.1 --json");
     assert.equal(pkg.scripts?.["receiz:conformance"], "receiz conformance");
     assert.equal(pkg.scripts?.["validate:ai-skills"], "node ai-skills/scripts/validate-skills.mjs");
     assert.equal(pkg.pnpm?.overrides?.postcss, ">=8.5.10");
@@ -60,7 +60,7 @@ describe("Receiz v123 dependency contract", () => {
     assert.equal(pkg.pnpm?.overrides?.["@receiz/ai-skills"], undefined);
   });
 
-  it("mirrors the published v123 AI-skills contract into the repository", () => {
+  it("mirrors the published v124 AI-skills contract into the repository", () => {
     const skillsIndex = JSON.parse(readFileSync("ai-skills/skills.json", "utf8")) as {
       schema?: string;
       version?: string;
@@ -69,10 +69,10 @@ describe("Receiz v123 dependency contract", () => {
       skills?: unknown[];
     };
 
-    assert.equal(skillsIndex.schema, "receiz.ai-skills-index.v123");
-    assert.equal(skillsIndex.version, "123.0.0");
-    assert.equal(skillsIndex.registryDigest, "945a581d1fc49c2dc18fbe8c129771ef464b8a58b96188bce561e88ae8b6ceeb");
-    assert.equal(skillsIndex.operationMatrixDigest, "e08cec3e3ad22c20ddd6c08169ece19f094c366214d6d6b4dc432cd97558e2c5");
+    assert.equal(skillsIndex.schema, "receiz.ai-skills-index.v124");
+    assert.equal(skillsIndex.version, "124.0.1");
+    assert.equal(skillsIndex.registryDigest, "d02429151b0bcebdaeb89485792e377afc55130f9a25e07982c1c88221314247");
+    assert.equal(skillsIndex.operationMatrixDigest, "540d1c1bf39f1b288b257c79a6e020bdcc5e587fc9b7dbf6b7aaa5d082e20ad5");
     assert.equal(skillsIndex.skills?.length, 42);
   });
 
@@ -83,10 +83,10 @@ describe("Receiz v123 dependency contract", () => {
     const mcpToolMap = readFileSync("ai-skills/receiz-mcp-agent-skill/resources/mcp-tool-map.md", "utf8");
     const adapter = readFileSync("src/lib/receiz/adapter.ts", "utf8");
 
-    assert.match(readme, /@receiz\/mcp-server@123\.0\.0/);
-    assert.match(readme, /@receiz\/ai-skills@123\.0\.0/);
+    assert.match(readme, /@receiz\/mcp-server@124\.0\.1/);
+    assert.match(readme, /@receiz\/ai-skills@124\.0\.1/);
     assert.match(readme, /Publish theme/);
-    assert.match(rails, /@receiz\/sdk@123\.0\.0/);
+    assert.match(rails, /@receiz\/sdk@124\.0\.1/);
     assert.match(rails, /signed public-store append/);
     assert.match(rails, /native Record projection before sealing/);
     assert.match(skillsReadme, /published as `@receiz\/ai-skills`/);
@@ -112,7 +112,7 @@ describe("Receiz v123 dependency contract", () => {
     assert.doesNotMatch(adapter, /\bsealArtifact\(/);
   });
 
-  it("keeps the v123 Node-only compiler outside browser bundles", () => {
+  it("keeps the v124 Node-only compiler outside browser bundles", () => {
     const nextConfig = readFileSync("next.config.mjs", "utf8");
     const sdkPackage = JSON.parse(readFileSync("node_modules/@receiz/sdk/package.json", "utf8")) as {
       exports?: Record<string, unknown>;
@@ -125,7 +125,7 @@ describe("Receiz v123 dependency contract", () => {
     assert.doesNotMatch(nextConfig, /NormalModuleReplacementPlugin|"fs\/promises": false/);
   });
 
-  it("exposes canonical v123 runtime verification while retaining the upstream conformance schema label", async () => {
+  it("exposes canonical v124 runtime verification while retaining the upstream conformance schema label", async () => {
     assert.equal(typeof describeReceizCapabilities, "function");
     assert.equal(typeof describeReceizError, "function");
     assert.equal(typeof createReceizEmulator, "function");
@@ -151,7 +151,7 @@ describe("Receiz v123 dependency contract", () => {
 
     const descriptor = describeReceizCapabilities();
     assert.equal(descriptor.schema, "receiz.sdk.capability_descriptor.v1");
-    assert.equal(descriptor.packageCompatibility.sdk, ">=123.0.0 <124.0.0");
+    assert.equal(descriptor.packageCompatibility.sdk, ">=124.0.0 <125.0.0");
     assert.equal(RECEIZ_V113_GLOBAL_COMMIT_DOMAIN.value, "receiz.com/global/v1");
     assert.equal(RECEIZ_V114_PROTOCOL_LIMITS.reconciliationAdditions, 64);
 

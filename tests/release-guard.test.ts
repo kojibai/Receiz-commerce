@@ -73,19 +73,21 @@ describe("Next runtime release guard", () => {
   });
 });
 
-describe("Receiz v123 release evidence", () => {
+describe("Receiz v124 release evidence", () => {
   it("documents the exact constitutional release identity and measured authority boundaries", () => {
-    const releaseText = readFileSync("docs/releases/2026-08-22-v123-lawful-action-release.md", "utf8");
+    const releaseText = readFileSync("docs/releases/2026-08-23-v124-production-runtime-release.md", "utf8");
     for (const marker of [
-      "5.1.0",
-      "123.0.0",
-      "945a581d1fc49c2dc18fbe8c129771ef464b8a58b96188bce561e88ae8b6ceeb",
-      "e08cec3e3ad22c20ddd6c08169ece19f094c366214d6d6b4dc432cd97558e2c5",
+      "5.2.0",
+      "124.0.1",
+      "124.0.0",
+      "d02429151b0bcebdaeb89485792e377afc55130f9a25e07982c1c88221314247",
+      "540d1c1bf39f1b288b257c79a6e020bdcc5e587fc9b7dbf6b7aaa5d082e20ad5",
       "Representation never outranks source",
       "Network calls during independent verification: `0`",
       "MCP authority: `false`",
       "Failed-decision writes: `0`",
       "Settlement and Reserve remain distinct",
+      "JSON reconstruction cannot mint custody",
     ]) assert.equal(releaseText.includes(marker), true, marker);
   });
 });

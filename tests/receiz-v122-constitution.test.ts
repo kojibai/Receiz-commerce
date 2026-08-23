@@ -5,8 +5,8 @@ import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 import { createReceizCommerceAdapter } from "../src/lib/receiz/adapter";
 
-const V123_REGISTRY = "945a581d1fc49c2dc18fbe8c129771ef464b8a58b96188bce561e88ae8b6ceeb";
-const V123_MATRIX = "e08cec3e3ad22c20ddd6c08169ece19f094c366214d6d6b4dc432cd97558e2c5";
+const V124_REGISTRY = "d02429151b0bcebdaeb89485792e377afc55130f9a25e07982c1c88221314247";
+const V124_MATRIX = "540d1c1bf39f1b288b257c79a6e020bdcc5e587fc9b7dbf6b7aaa5d082e20ad5";
 const V123_MCP_TOOLS = [
   "receiz_v123_world_plan_command_v122",
   "receiz_v123_world_plan_transaction_v122",
@@ -18,7 +18,7 @@ const V123_MCP_TOOLS = [
   "receiz_v123_auth_granted_scopes",
 ] as const;
 
-describe("Receiz v123 coordinated identity", () => {
+describe("Receiz v124 coordinated identity", () => {
   it("rejects a partial upgrade across SDK, registry, matrix, MCP, and AI skills", () => {
     const adapter = createReceizCommerceAdapter({ baseUrl: "https://receiz.invalid" });
     const skills = JSON.parse(readFileSync("ai-skills/skills.json", "utf8")) as {
@@ -29,11 +29,11 @@ describe("Receiz v123 coordinated identity", () => {
     };
     const toolNames = new Set(RECEIZ_MCP_TOOLS.map((tool) => tool.name));
 
-    assert.equal(adapter.sdkVersion, "123.0.0");
-    assert.equal(RECEIZ_CURRENT_APPLICATION_OPERATION_MATRIX_DIGEST, V123_MATRIX);
-    assert.equal(skills.version, "123.0.0");
-    assert.equal(skills.registryDigest, V123_REGISTRY);
-    assert.equal(skills.operationMatrixDigest, V123_MATRIX);
+    assert.equal(adapter.sdkVersion, "124.0.1");
+    assert.equal(RECEIZ_CURRENT_APPLICATION_OPERATION_MATRIX_DIGEST, V124_MATRIX);
+    assert.equal(skills.version, "124.0.1");
+    assert.equal(skills.registryDigest, V124_REGISTRY);
+    assert.equal(skills.operationMatrixDigest, V124_MATRIX);
     assert.equal(skills.counts.skills, 42);
     assert.equal(V123_MCP_TOOLS.length, 8);
     for (const name of V123_MCP_TOOLS) assert.equal(toolNames.has(name), true, name);

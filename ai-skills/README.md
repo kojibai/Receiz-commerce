@@ -1,12 +1,12 @@
 # Receiz AI Skills
 
-The `123.0.0` package is a registry-bound operating-contract distribution beneath Receiz proof authority. AI instructions, MCP confirmations, OAuth/OIDC grants, JSON objects, database rows, staging references, and receipts never become proof or runtime authority.
+The `124.0.1` package at release coordinate `v124.0.1` is a registry-bound operating-contract distribution beneath Receiz proof authority. AI instructions, MCP confirmations, OAuth/OIDC grants, JSON objects, database rows, staging references, and receipts never become proof or runtime authority.
 
-## V123 — Intent Becomes Lawful Action
+## V124 — Reality Becomes Infrastructure
 
-The object is authority. V123 gives every application the canonical completion rails required to turn object-carried intent into deterministic remote action: live Phi execution through distinct Settlement and Reserve rails; canonical public world planning; authoritative rail scopes; exact-head subject namespaces; and short-lived proof-to-authority exchange after explicit in-application consent without redirecting the person to receiz.com.
+**The Production Runtime for Verified Civilization.** V124 teaches every application to compose the canonical Kai clock, proof-authority challenges, server-custodied short-lived sessions, durable staged execution, exact recovery, verified replay/checkpoints, access-filtered private additions, atomic multi-domain mutations, privacy-safe recipient resolution, and evidence-based runtime qualification.
 
-The edge verifies and retains the proof object. The server independently gates the requested append or execution. Database state provides projection, sync and recovery beneath admitted proof heads. Phi is moved value; USD is display-only from the canonical deterministic price. Ambiguous execution resolves exactly as committed, zero-write, or unknown before retry.
+The edge verifies and retains the sealed proof object. Exact authenticated subject, domain, namespace, access-key, and revocation heads bind every remote projection. Server and database state provide subordinate coordination, compare-and-swap, indexing, sync, and recovery. A response is rejected unless authenticated and bound to its request; method presence never means a production dependency is operational.
 
 ## Established artifact authority chain
 
@@ -28,6 +28,8 @@ The same package carries 37 inherited living-subject MCP tools: subject resolve/
 
 The inherited v122 protocol adds 19 MCP operations for durable remote proof-object admission and authenticated subject state; edge-held proof bundles and append-only public access-key bindings; locally encrypted private/invited world commands; exact validation, execution, outcome recovery, and filtered additions; first-class mandate issue/state/revoke; atomic multi-world planning/execution; and explicit Phi Settlement/Reserve planning. Its stable v122 protocol identifiers remain intentionally unchanged in v123.
 
+V124 adds 22 universal production-runtime MCP adapters for live Kai, canonical proof-authority challenges, durable atomic execution, authority-session lifecycle, operational qualification, verified public/private additions and replay/checkpoints, unsealed replay-candidate export followed by canonical seal and sealed restore, namespace resolution, privacy-safe recipient resolution, and sealed-source publication. The exact names, SDK methods, fixed/conditional scopes, input/output references, process-local handles, and trusted-host custody rules are published in the [V124 runtime tool map](receiz-mcp-agent-skill/resources/v124-runtime-tool-map.md).
+
 `client.admission.browserStore` is durable admission coordination only: it stores no proof object or sealed artifact bytes and never blocks known-artifact first paint. V120 production reconciliation preserves the provider-neutral `client.coordination` rail and never exposes Supabase mechanics. Receiz-generated files retain declared ownership, while `receiz.extensions.ts` is developer-owned and must never be overwritten.
 
 `receiz-build-production-system` remains the constitutional orchestration skill for substantial
@@ -37,7 +39,7 @@ performance, observability, testing, and release contracts. The earlier nine
 domain skill names remain packaged for compatibility. Seven operation skill names first introduced in obsolete-versioned now
 describe current outcomes for identity profiles, portable continuity, bearer ownership, offline transport,
 proof media, cross-app state, and admission evidence. Their retired obsolete-versioned mechanisms are not active defaults.
-One dedicated `receiz-global-reconciliation` skill governs accepted-head resolution, verified offline reconciliation, structural divergence, first paint, indeterminate recovery, and effects. `receiz-value-execution` governs exact live Phi execution and retry recovery; `receiz-proof-authority` governs edge verification, explicit consent, and minimum-scope embedded authority. Every current manifest uses package version `123.0.0`, requires SDK/MCP `>=123.0.0 <124.0.0`, and binds ruleset `123.0.0` to registry digest `945a581d1fc49c2dc18fbe8c129771ef464b8a58b96188bce561e88ae8b6ceeb` and operation-matrix digest `e08cec3e3ad22c20ddd6c08169ece19f094c366214d6d6b4dc432cd97558e2c5` from SDK source.
+One dedicated `receiz-global-reconciliation` skill governs accepted-head resolution, verified offline reconciliation, structural divergence, first paint, indeterminate recovery, and effects. `receiz-value-execution` governs exact live Phi execution and retry recovery; `receiz-proof-authority` governs edge verification, explicit consent, and minimum-scope embedded authority. Every current manifest uses package version `124.0.1`, requires SDK/MCP `>=124.0.0 <125.0.0`, and binds ruleset `124.0.0` to registry digest `d02429151b0bcebdaeb89485792e377afc55130f9a25e07982c1c88221314247` and operation-matrix digest `540d1c1bf39f1b288b257c79a6e020bdcc5e587fc9b7dbf6b7aaa5d082e20ad5` from SDK source.
 
 This package teaches AI agents how to understand, verify, build with, and operate Receiz from the existing repository surfaces.
 
@@ -50,14 +52,14 @@ A verified proof object is not limited to the platform that created it. Any lawf
 ## SDK, MCP, And Skills
 
 - SDK: `@receiz/sdk` is the universal runtime; `@receiz/sdk/react` is React-only; `@receiz/sdk/compiler` is Node-only; `@receiz/sdk/testing` is browser-safe sandbox and conformance support.
-- MCP: `@receiz/mcp-server` is for agent tool access. Its current nine artifact tools, 37 inherited living-subject tools, 19 stable v122 protocol tools, and eight v123 completion tools expose transition, reconciliation, proof-brain, Twin, mandate, runtime, world, memory, social, inventory, bearer, remote admission, canonical planning, embedded authority, exact-head namespaces, exact recovery, and live Phi execution through the same SDK authority types.
+- MCP: `@receiz/mcp-server` is for agent tool access. Its current nine artifact tools, 37 inherited living-subject tools, 19 stable v122 protocol tools, eight v123 completion tools, and 22 V124 production-runtime tools expose transition, reconciliation, proof-brain, Twin, mandate, runtime, world, memory, social, inventory, bearer, remote admission, canonical planning, embedded authority, exact-head namespaces, exact recovery, live Phi execution, authenticated replay/checkpoints, durable orchestration, and privacy-safe resolution through the same SDK authority types.
 - Skills: this package is operating doctrine. It tells an AI which Receiz primitive is active, which source of truth wins, which SDK or MCP rail to use, and what must never be assumed.
 
 Agents may acquire scoped delegated access through the official Receiz Connect/OIDC Authorization Code + PKCE flow or through the MCP delegated-agent setup path exposed by `receiz_mcp_login`. That acquired access is permission to call scoped SDK/MCP rails after user consent. It is not proof authority and must never outrank artifact truth.
 
 ## How Agents Should Use This Package
 
-Start with `receiz-build-production-system` when work spans multiple constitutional domains and `receiz-global-reconciliation` for named-domain coordination. Machine-readable manifests require the exact active canonical v123 registry and operation-matrix digests, command-only mutation, independent verification, MCP conformance, and a passing release lock. Use a focused operation skill for SDK/MCP implementation and a constitutional skill for broader system law. Stable obsolete-versioned wire schemas remain available only through the explicit historical `@receiz/sdk/obsolete-versioned` package entry; current skills never teach their key, head, receipt, reconcile, or signed-command mechanics as a current outcome.
+Start with `receiz-build-production-system` when work spans multiple constitutional domains and `receiz-global-reconciliation` for named-domain coordination. Machine-readable manifests require the exact active canonical v124 registry and operation-matrix digests, command-only mutation, independent verification, MCP conformance, and a passing release lock. Use a focused operation skill for SDK/MCP implementation and a constitutional skill for broader system law. Stable obsolete-versioned wire schemas remain available only through the explicit historical `@receiz/sdk/obsolete-versioned` package entry; current skills never teach their key, head, receipt, reconcile, or signed-command mechanics as a current outcome.
 
 The current operation skills are executable contracts. Current profile work uses the neutral authenticated same-UID profile operation. Current bearer ownership accepts a complete verified artifact, derives prior ownership from carried proof, and returns a native Record -> Seal artifact. Proof media uses the same native artifact custody and projects only a verified URL beneath it. These outcomes have no active identity-key, caller-head, claim-key, or receipt prerequisite. MCP calls the same SDK outcomes and never creates a parallel authority.
 
@@ -72,7 +74,7 @@ Install `@receiz/sdk`, `@receiz/mcp-server`, or `@receiz/ai-skills` directly. Re
 When SDK or MCP changes:
 
 1. Inspect `packages/receiz-sdk/src/index.ts`, `packages/receiz-sdk/src/identity.ts`, `packages/receiz-sdk/src/react.ts`, and `packages/receiz-mcp-server/src/index.ts`.
-2. Update `receiz-proof-skill/resources/sdk-reference.md` and both MCP tool maps.
+2. Update `receiz-proof-skill/resources/sdk-reference.md`, the inherited MCP maps, and `receiz-mcp-agent-skill/resources/v124-runtime-tool-map.{md,json}`.
 3. Update domain skills only when the changed rail affects their primitive.
 4. Run `pnpm validate:ai-skills`.
 5. Run package tests when the SDK or MCP behavior changed.
@@ -99,6 +101,6 @@ When SDK or MCP changes:
 - `receiz-event-derived-memory` governs factual memories with admitted event citations and rebuildable AI summaries/projections.
 - `receiz-live-proof-character` governs streamed reply, audio, viseme, gaze, blink, breath, emotion, gesture, proposed intention, and completion events as non-authoritative performance over exact proof context.
 
-Every living-subject skill carries its SDK map, MCP map, authority rules, examples, tests, manifest, OpenAI metadata, and the exact current v123 registry and operation-matrix digests. The skills teach the same sequence as the implementation: canonical head → entire proof history → compact indexes → relevant references → exact primary proof objects → reasoning → cited answer. They never authorize a world event, transfer, mandate, or release claim by prose.
+Every living-subject skill carries its SDK map, MCP map, authority rules, examples, tests, manifest, OpenAI metadata, and the exact current v124 registry and operation-matrix digests. The skills teach the same sequence as the implementation: canonical head → entire proof history → compact indexes → relevant references → exact primary proof objects → reasoning → cited answer. They never authorize a world event, transfer, mandate, or release claim by prose.
 
 The updated constitutional skills bind living-subject behavior into app building, command construction, deterministic replay, causal sync, global reconciliation, portable continuity, authority/security, MCP operation, testing, release, constitutional law, and offline-first operation. Their examples cover exact proof-memory speech, absent-owner exploration, mutual relationship formation, bounded trade, atomic battle, cross-device restoration, mandate revocation during a queued action, partition convergence, rejection of an AI-invented event, and cross-application subject continuity.

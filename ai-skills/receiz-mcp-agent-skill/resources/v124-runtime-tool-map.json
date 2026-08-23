@@ -1,0 +1,375 @@
+{
+  "schema": "receiz.ai-skills.v124-mcp-tool-map.v1",
+  "authority": {
+    "mcpIsAuthority": false,
+    "grantIsIdentityAuthority": false,
+    "bearerIsIdentityAuthority": false,
+    "strongerTruth": "sealed-receiz-proof-object",
+    "identityAuthority": "receiz-identity-artifact",
+    "databaseRole": "sync-and-recovery-only"
+  },
+  "runtimePinnedCoordinates": [
+    "applicationId",
+    "audience"
+  ],
+  "custodyRules": [
+    "handleRef-is-process-local-and-non-authoritative",
+    "sessionRef-is-local-or-trusted-host-persisted-and-non-authoritative",
+    "trusted-host-persisted-session-is-reverified-by-the-canonical-sdk-server-path",
+    "execute-and-cancel-require-custodied-handle-and-session",
+    "refresh-rotates-and-close-consumes-session-custody",
+    "replay-export-is-an-unsealed-non-authoritative-candidate",
+    "replay-candidate-must-be-canonically-sealed-before-restore",
+    "restore-accepts-only-sealedReplayProofObjectRef",
+    "private-additions-remain-in-trusted-host-custody-behind-privateAdditionsRef",
+    "private-additions-exact-result-is-never-returned-to-the-model",
+    "mcp-never-reconstructs-sdk-authority-from-json"
+  ],
+  "tools": [
+    {
+      "name": "receiz_v124_kai_now",
+      "sdkMethod": "receizKaiNow",
+      "scopeMode": "none",
+      "fixedScopes": [],
+      "conditionalScopes": [],
+      "inputRefs": [],
+      "outputRefs": [],
+      "actionClass": "read-only",
+      "custody": "No authority object is created; the SDK returns the genesis-derived Kai pulse coordinate."
+    },
+    {
+      "name": "receiz_v124_proof_authority_challenge_create",
+      "sdkMethod": "createReceizProofAuthorityChallenge",
+      "scopeMode": "requested-exact",
+      "fixedScopes": [],
+      "conditionalScopes": [
+        "exact-requested-scopes-within-registered-application-grant"
+      ],
+      "inputRefs": [],
+      "outputRefs": [],
+      "actionClass": "confirmed-identity-bound-challenge",
+      "custody": "The canonical signable challenge is not identity authority and must remain exact through local artifact signing."
+    },
+    {
+      "name": "receiz_v124_execution_plan_atomic_operation",
+      "sdkMethod": "client.execution.planAtomicOperationV124",
+      "scopeMode": "none",
+      "fixedScopes": [],
+      "conditionalScopes": [],
+      "inputRefs": [],
+      "outputRefs": [
+        "planRef"
+      ],
+      "actionClass": "plan-only",
+      "custody": "The SDK plan is a deterministic execution projection, not proof or commit authority."
+    },
+    {
+      "name": "receiz_v124_execution_stage",
+      "sdkMethod": "client.execution.stage",
+      "scopeMode": "fixed-all",
+      "fixedScopes": [
+        "receiz:domains.write"
+      ],
+      "conditionalScopes": [],
+      "inputRefs": [
+        "planRef"
+      ],
+      "outputRefs": [
+        "handleRef"
+      ],
+      "actionClass": "confirmed-mutation",
+      "custody": "The MCP runtime holds the exact SDK handle and returns only a process-local non-authoritative handleRef."
+    },
+    {
+      "name": "receiz_v124_execution_stage_prepared",
+      "sdkMethod": "client.execution.stagePrepared",
+      "scopeMode": "fixed-all",
+      "fixedScopes": [
+        "receiz:domains.write"
+      ],
+      "conditionalScopes": [],
+      "inputRefs": [
+        "planRef",
+        "transitionSetRef"
+      ],
+      "outputRefs": [
+        "handleRef"
+      ],
+      "actionClass": "confirmed-mutation",
+      "custody": "The MCP runtime holds the exact SDK handle and returns only a process-local non-authoritative handleRef."
+    },
+    {
+      "name": "receiz_v124_execution_execute",
+      "sdkMethod": "client.execution.execute",
+      "scopeMode": "active-session-route-and-category-rail",
+      "fixedScopes": [
+        "receiz:domains.write"
+      ],
+      "conditionalScopes": [
+        "exact-stored-granted-scopes",
+        "settlement-or-reserve-granted-rail-when-operation-category-requires-it"
+      ],
+      "inputRefs": [
+        "handleRef",
+        "sessionRef"
+      ],
+      "outputRefs": [
+        "planRef"
+      ],
+      "actionClass": "confirmed-mutation",
+      "custody": "Requires the process-local exact handle plus a local or trusted-host-persisted authority session; the canonical SDK/server path re-verifies the session and JSON reconstruction is rejected."
+    },
+    {
+      "name": "receiz_v124_execution_resolve",
+      "sdkMethod": "client.execution.resolve",
+      "scopeMode": "fixed-all",
+      "fixedScopes": [
+        "receiz:domains.read"
+      ],
+      "conditionalScopes": [],
+      "inputRefs": [],
+      "outputRefs": [
+        "planRef"
+      ],
+      "actionClass": "read-only",
+      "custody": "Reads the durable authenticated execution projection through the SDK; the projection does not become proof authority."
+    },
+    {
+      "name": "receiz_v124_execution_resolve_by_idempotency",
+      "sdkMethod": "client.execution.resolveByIdempotencyKey",
+      "scopeMode": "fixed-all",
+      "fixedScopes": [
+        "receiz:domains.read"
+      ],
+      "conditionalScopes": [],
+      "inputRefs": [],
+      "outputRefs": [
+        "planRef"
+      ],
+      "actionClass": "read-only-recovery",
+      "custody": "Resolves the durable semantic idempotency coordinate without manufacturing or replaying a replacement plan."
+    },
+    {
+      "name": "receiz_v124_execution_cancel",
+      "sdkMethod": "client.execution.cancel",
+      "scopeMode": "active-session-route-and-category-rail",
+      "fixedScopes": [
+        "receiz:domains.write"
+      ],
+      "conditionalScopes": [
+        "exact-stored-granted-scopes",
+        "settlement-or-reserve-granted-rail-when-operation-category-requires-it"
+      ],
+      "inputRefs": [
+        "handleRef",
+        "sessionRef"
+      ],
+      "outputRefs": [
+        "planRef"
+      ],
+      "actionClass": "confirmed-mutation",
+      "custody": "Requires the process-local exact handle plus a local or trusted-host-persisted authority session; the canonical SDK/server path re-verifies terminal authorization."
+    },
+    {
+      "name": "receiz_v124_runtime_authority_session_open",
+      "sdkMethod": "client.runtime.openAuthoritySessionV124",
+      "scopeMode": "challenge-session-plus-requested-rail-write",
+      "fixedScopes": [],
+      "conditionalScopes": [
+        "exact-signed-challenge-scopes",
+        "receiz:<requested-rail>.write"
+      ],
+      "inputRefs": [
+        "identityArtifactRef",
+        "subjectSourceArtifactRef",
+        "signedChallengeRef"
+      ],
+      "outputRefs": [
+        "sessionRef",
+        "persistedSessionRef"
+      ],
+      "actionClass": "confirmed-session-mutation",
+      "custody": "Returns a non-authoritative local sessionRef and, when configured, a trusted-host persistedSessionRef; every later use is re-verified by the canonical SDK/server path."
+    },
+    {
+      "name": "receiz_v124_runtime_authority_session_refresh",
+      "sdkMethod": "client.runtime.refreshAuthoritySessionV124",
+      "scopeMode": "challenge-session-plus-requested-rail-write",
+      "fixedScopes": [],
+      "conditionalScopes": [
+        "exact-signed-challenge-scopes",
+        "exact-stored-session-scopes",
+        "receiz:<requested-rail>.write"
+      ],
+      "inputRefs": [
+        "sessionRef",
+        "identityArtifactRef",
+        "signedChallengeRef"
+      ],
+      "outputRefs": [
+        "sessionRef",
+        "persistedSessionRef"
+      ],
+      "actionClass": "confirmed-session-mutation",
+      "custody": "Refresh re-verifies a local sessionRef or trusted-host persistedSessionRef supplied as sessionRef, rotates custody, and returns new local and optional persisted references."
+    },
+    {
+      "name": "receiz_v124_runtime_authority_session_close",
+      "sdkMethod": "client.runtime.closeAuthoritySessionV124",
+      "scopeMode": "stored-session-grant",
+      "fixedScopes": [],
+      "conditionalScopes": [
+        "exact-stored-session-scopes"
+      ],
+      "inputRefs": [
+        "sessionRef"
+      ],
+      "outputRefs": [],
+      "actionClass": "confirmed-session-mutation",
+      "custody": "Close re-verifies a local or trusted-host-persisted session reference and consumes the active session custody."
+    },
+    {
+      "name": "receiz_v124_runtime_qualify",
+      "sdkMethod": "client.runtime.qualifyV124",
+      "scopeMode": "application-bound-bearer",
+      "fixedScopes": [],
+      "conditionalScopes": [
+        "application-bound-bearer"
+      ],
+      "inputRefs": [],
+      "outputRefs": [],
+      "actionClass": "read-only",
+      "custody": "Capability descriptors report operational dependencies but cannot establish proof, identity, or execution authority."
+    },
+    {
+      "name": "receiz_v124_domain_verified_additions",
+      "sdkMethod": "client.domains.verifiedAdditionsV124",
+      "scopeMode": "fixed-all",
+      "fixedScopes": [
+        "receiz:domains.read"
+      ],
+      "conditionalScopes": [],
+      "inputRefs": [],
+      "outputRefs": [],
+      "actionClass": "read-only-verified",
+      "custody": "The SDK authenticates transport and verifies additions against the exact predecessor before admission into its replay context."
+    },
+    {
+      "name": "receiz_v124_domain_verified_replay",
+      "sdkMethod": "client.domains.verifiedReplayV124",
+      "scopeMode": "fixed-all",
+      "fixedScopes": [
+        "receiz:domains.read"
+      ],
+      "conditionalScopes": [],
+      "inputRefs": [],
+      "outputRefs": [],
+      "actionClass": "read-only-verified",
+      "custody": "Verified replay custody belongs to the canonical SDK client runtime, never to an MCP property bag."
+    },
+    {
+      "name": "receiz_v124_domain_verified_checkpoint",
+      "sdkMethod": "client.domains.verifiedCheckpointV124",
+      "scopeMode": "fixed-all",
+      "fixedScopes": [
+        "receiz:domains.read"
+      ],
+      "conditionalScopes": [],
+      "inputRefs": [],
+      "outputRefs": [],
+      "actionClass": "read-only-verified",
+      "custody": "Checkpoint creation consumes SDK-held verified replay custody and binds the authenticated exact head."
+    },
+    {
+      "name": "receiz_v124_domain_verified_private_additions",
+      "sdkMethod": "client.domains.verifiedPrivateAdditionsV124",
+      "scopeMode": "active-session-route-and-stored-grant",
+      "fixedScopes": [
+        "receiz:world.private"
+      ],
+      "conditionalScopes": [
+        "exact-stored-granted-scopes"
+      ],
+      "inputRefs": [
+        "sessionRef"
+      ],
+      "outputRefs": [
+        "privateAdditionsRef"
+      ],
+      "actionClass": "private-read-verified",
+      "custody": "The exact authenticated private-additions result remains in trusted host custody behind privateAdditionsRef; the model receives only safe coordinates, counts, and digests."
+    },
+    {
+      "name": "receiz_v124_domain_replay_proof_object_export",
+      "sdkMethod": "client.domains.exportVerifiedReplayProofObjectV124",
+      "scopeMode": "none",
+      "fixedScopes": [],
+      "conditionalScopes": [],
+      "inputRefs": [],
+      "outputRefs": [],
+      "actionClass": "local-custody-export",
+      "custody": "Returns an unsealed non-authoritative candidate containing exactBytesB64u. It must pass the canonical Record -> Seal ceremony before admission as sealedReplayProofObjectRef."
+    },
+    {
+      "name": "receiz_v124_domain_replay_proof_object_restore",
+      "sdkMethod": "client.domains.restoreVerifiedReplayProofObjectV124",
+      "scopeMode": "none",
+      "fixedScopes": [],
+      "conditionalScopes": [],
+      "inputRefs": [
+        "sealedReplayProofObjectRef"
+      ],
+      "outputRefs": [],
+      "actionClass": "local-custody-restore",
+      "custody": "Accepts only sealedReplayProofObjectRef, resolves the exact sealed artifact in trusted host custody, and requires canonical SDK verification before restoring replay custody."
+    },
+    {
+      "name": "receiz_v124_subject_namespaces_resolve",
+      "sdkMethod": "client.subjects.resolveNamespacesV124",
+      "scopeMode": "fixed-all",
+      "fixedScopes": [
+        "receiz:subjects.read"
+      ],
+      "conditionalScopes": [],
+      "inputRefs": [],
+      "outputRefs": [],
+      "actionClass": "read-only",
+      "custody": "Returns authenticated namespace projections bound to exact heads; projections cannot replace sealed subject truth."
+    },
+    {
+      "name": "receiz_v124_identity_public_recipient_resolve",
+      "sdkMethod": "client.identity.resolvePublicRecipientV124",
+      "scopeMode": "active-session-route-and-stored-grant",
+      "fixedScopes": [
+        "receiz:subjects.read"
+      ],
+      "conditionalScopes": [
+        "exact-stored-granted-scopes"
+      ],
+      "inputRefs": [
+        "sessionRef"
+      ],
+      "outputRefs": [],
+      "actionClass": "rate-limited-read-only",
+      "custody": "Returns only the privacy-safe public recipient projection needed for transfer planning; it is not identity authority."
+    },
+    {
+      "name": "receiz_v124_source_publish_sealed",
+      "sdkMethod": "client.sources.publishSealedSourceV124",
+      "scopeMode": "source-kind-and-stored-grant",
+      "fixedScopes": [],
+      "conditionalScopes": [
+        "subject:receiz:subjects.write:no-session",
+        "replay-segment:receiz:domains.write:exact-stored-granted-scopes",
+        "checkpoint:receiz:domains.write:exact-stored-granted-scopes"
+      ],
+      "inputRefs": [
+        "sealedSourceArtifactRef",
+        "sessionRef"
+      ],
+      "outputRefs": [],
+      "actionClass": "confirmed-mutation",
+      "custody": "The exact sealedSourceArtifactRef stays in trusted host custody. Subject publication needs no session; replay-segment/checkpoint publication re-verifies a local or persisted session's exact stored grant."
+    }
+  ]
+}

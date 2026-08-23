@@ -60,7 +60,7 @@ Show the exact profile fields and username consequence before mutation. Do not r
 
 ## MCP parity
 
-Call `receiz_identity_profile_update_plan` with `{ profile }` only. Show the plan consequences, require the exact confirmation digest, then call `receiz_identity_profile_update_execute` with `{ planDigest, confirmation }`. The active MCP path calls `client.profile.update(profile)` and verifies the same-UID result; it performs no identity/profile pre-read.
+The current MCP runtime does not expose a direct profile-mutation adapter. Use the canonical SDK `receiz.profile.update(profile)` operation and require the same-UID result. Do not invent an MCP tool name, route profile mutation through an unrelated adapter, or add an identity/profile pre-read that could outrank the admitted actor.
 
 ## Emulator fixture
 

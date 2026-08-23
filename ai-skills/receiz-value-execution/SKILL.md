@@ -16,7 +16,7 @@ Execute an already verified Phi intent through exactly one named rail: Settlemen
 5. Accept only `committed`, `zero-write`, or `unknown` as execution outcomes.
 6. On timeout, crash, or an ambiguous response, perform lookup before retry with `client.value.executionByIdempotencyKey(...)`. Never replan an intent that may already have committed.
 
-Read the [SDK map](references/sdk-map.md) for exact method boundaries.
+Read the [SDK map](references/sdk-map.md) and [MCP map](references/mcp-map.md) for exact method, route-scope, plan-scope, process-local handle, and trusted-host session custody boundaries.
 
 ## Machine contract
 
@@ -27,6 +27,9 @@ The proof object and its admitted append remain authority. The remote execution 
 - Settlement execution: `client.value.executeSettlement(intent, authority)`
 - Reserve execution: `client.value.executeReserve(intent, authority)`
 - Recovery: `client.value.executionByIdempotencyKey(key, authority)`
+- Atomic planning: `client.execution.planAtomicOperationV124(input)`
+- Durable staging/execution: `client.execution.stage(...)`, `stagePrepared(...)`, `execute(...)`
+- Durable resolution: `client.execution.resolve(...)`, `resolveByIdempotencyKey(...)`
 - Moved value: Phi micro-units
 - Display only: canonical deterministic USD value
 
@@ -36,6 +39,7 @@ The proof object and its admitted append remain authority. The remote execution 
 - Treating Settlement and Reserve as interchangeable rails.
 - Replanning after an ambiguous timeout.
 - Trusting a database row, server response, or UI projection over the verified proof object and receipt.
+- Reconstructing a V124 execution handle or authority session from MCP JSON instead of using a process-local handle and canonically re-verified local/persisted session.
 
 ## Completion refusal
 

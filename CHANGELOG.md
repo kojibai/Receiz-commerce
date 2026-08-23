@@ -2,6 +2,15 @@
 
 All notable changes to Receiz Commerce Kit will be documented here.
 
+## 5.2.0 - Receiz v124 Reality Becomes Infrastructure
+
+- Pinned SDK, MCP server, and AI-skills packages to exact public `124.0.1` artifacts while independently binding constitutional ruleset `124.0.0`.
+- Adopted canonical registry `d02429151b0bcebdaeb89485792e377afc55130f9a25e07982c1c88221314247`, 53-operation matrix `540d1c1bf39f1b288b257c79a6e020bdcc5e587fc9b7dbf6b7aaa5d082e20ad5`, all 163 MCP tools, all 22 v124 runtime tools, and the exact 42-skill distribution.
+- Implemented canonical Kai and challenges, short-lived trusted-host authority sessions, operational qualification, durable atomic stage/execute/recovery/cancel, world composites, signed transport bindings, and portable execution authority.
+- Implemented authenticated replay/checkpoints/private additions, canonical sealed replay portability, exact-head namespaces, privacy-safe one-use recipient locators, locator-bound exact Phi intent, and sealed-source publication.
+- Made JSON authority reconstruction, unqualified mutation, unknown-outcome replay, unsealed replay restoration, and private-result/model leakage release-blocking through process-identity custody, application laws, negative scans, tests, migration verification, and a v124 release lock.
+- Published the complete 22-tool SDK/MCP/AI mapping and the highest credible frame: institution-independent verification lets representations cross institutions without outranking sealed source truth; it does not claim legal sovereignty or exemption from law.
+
 ## 5.1.0 - Receiz v123 Lawful Action
 
 - Upgraded the SDK, MCP server, and AI-skills distribution to exact public `123.0.0` packages and their published lockfile integrities.

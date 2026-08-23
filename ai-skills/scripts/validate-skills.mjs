@@ -38,6 +38,8 @@ const skills = [
         name: "receiz-mcp-agent-skill",
         resources: [
             "mcp-tool-map.md",
+            "v124-runtime-tool-map.md",
+            "v124-runtime-tool-map.json",
             "agent-operating-rules.md",
             "safe-tool-calling.md",
             "auth-boundaries.md",
@@ -146,8 +148,30 @@ const artifactLaws = Array.from({ length: 30 }, (_, index) => `ARTIFACT-${String
 const artifactSdkOperations = skillsIndex.operationAuthorityMatrix.map((row) => row.operation);
 const currentMcpArtifactTools = skillsIndex.currentMcpArtifactTools;
 const currentMcpLivingSubjectTools = skillsIndex.currentMcpLivingSubjectTools;
+const currentMcpTools = skillsIndex.currentMcpTools;
+const currentMcpV122Tools = skillsIndex.currentMcpV122Tools;
+const currentMcpV123Tools = skillsIndex.currentMcpV123Tools;
+const currentMcpV124Tools = skillsIndex.currentMcpV124Tools;
 const historicalV112McpArtifactTools = skillsIndex.historicalV112McpArtifactTools;
+const machineAllowedTools = new Set();
+const requiredNewMachineAllowedTools = Object.freeze([
+    "receiz_webhook_events_catalog",
+    "receiz_webhook_register_endpoint",
+    "receiz_webhook_rotate_secret",
+    "receiz_webhook_send_test_event",
+    "receiz_webhook_receiver_scaffold",
+    "receiz_webhook_verify_payload",
+    "receiz_mcp_append_event",
+    "receiz_mcp_commit_atomic_projection",
+]);
+const removedMachineTools = Object.freeze([
+    "receiz_identity_profile_update_plan",
+    "receiz_identity_profile_update_execute",
+    "receiz_bearer_asset_claim_plan",
+    "receiz_bearer_asset_claim_execute",
+]);
 const currentVersion = skillsIndex.version;
+const currentRulesetVersion = skillsIndex.rulesetVersion;
 const currentRange = `>=${Number(currentVersion.split(".")[0])}.0.0 <${Number(currentVersion.split(".")[0]) + 1}.0.0`;
 const currentSchema = `receiz.ai-skill-contract.v${Number(currentVersion.split(".")[0])}`;
 const currentForbiddenOperations = [
@@ -157,6 +181,70 @@ const currentForbiddenOperations = [
     "environment-player-token-fallback", "accepted-means-effects-delivered", "indeterminate-means-failed",
 ];
 const currentFocusedSkills = new Set(["receiz-value-rails", "receiz-value-execution", "receiz-proof-authority"]);
+const v124McpToolContracts = Object.freeze([
+    ["receiz_v124_kai_now", "receizKaiNow", "none", []],
+    ["receiz_v124_proof_authority_challenge_create", "createReceizProofAuthorityChallenge", "requested-exact", []],
+    ["receiz_v124_execution_plan_atomic_operation", "client.execution.planAtomicOperationV124", "none", []],
+    ["receiz_v124_execution_stage", "client.execution.stage", "fixed-all", ["receiz:domains.write"]],
+    ["receiz_v124_execution_stage_prepared", "client.execution.stagePrepared", "fixed-all", ["receiz:domains.write"]],
+    ["receiz_v124_execution_execute", "client.execution.execute", "active-session-route-and-category-rail", ["receiz:domains.write"]],
+    ["receiz_v124_execution_resolve", "client.execution.resolve", "fixed-all", ["receiz:domains.read"]],
+    ["receiz_v124_execution_resolve_by_idempotency", "client.execution.resolveByIdempotencyKey", "fixed-all", ["receiz:domains.read"]],
+    ["receiz_v124_execution_cancel", "client.execution.cancel", "active-session-route-and-category-rail", ["receiz:domains.write"]],
+    ["receiz_v124_runtime_authority_session_open", "client.runtime.openAuthoritySessionV124", "challenge-session-plus-requested-rail-write", []],
+    ["receiz_v124_runtime_authority_session_refresh", "client.runtime.refreshAuthoritySessionV124", "challenge-session-plus-requested-rail-write", []],
+    ["receiz_v124_runtime_authority_session_close", "client.runtime.closeAuthoritySessionV124", "stored-session-grant", []],
+    ["receiz_v124_runtime_qualify", "client.runtime.qualifyV124", "application-bound-bearer", []],
+    ["receiz_v124_domain_verified_additions", "client.domains.verifiedAdditionsV124", "fixed-all", ["receiz:domains.read"]],
+    ["receiz_v124_domain_verified_replay", "client.domains.verifiedReplayV124", "fixed-all", ["receiz:domains.read"]],
+    ["receiz_v124_domain_verified_checkpoint", "client.domains.verifiedCheckpointV124", "fixed-all", ["receiz:domains.read"]],
+    ["receiz_v124_domain_verified_private_additions", "client.domains.verifiedPrivateAdditionsV124", "active-session-route-and-stored-grant", ["receiz:world.private"]],
+    ["receiz_v124_domain_replay_proof_object_export", "client.domains.exportVerifiedReplayProofObjectV124", "none", []],
+    ["receiz_v124_domain_replay_proof_object_restore", "client.domains.restoreVerifiedReplayProofObjectV124", "none", []],
+    ["receiz_v124_subject_namespaces_resolve", "client.subjects.resolveNamespacesV124", "fixed-all", ["receiz:subjects.read"]],
+    ["receiz_v124_identity_public_recipient_resolve", "client.identity.resolvePublicRecipientV124", "active-session-route-and-stored-grant", ["receiz:subjects.read"]],
+    ["receiz_v124_source_publish_sealed", "client.sources.publishSealedSourceV124", "source-kind-and-stored-grant", []],
+]);
+const v124McpConditionalScopeContracts = Object.freeze({
+    receiz_v124_proof_authority_challenge_create: ["exact-requested-scopes-within-registered-application-grant"],
+    receiz_v124_execution_execute: ["exact-stored-granted-scopes", "settlement-or-reserve-granted-rail-when-operation-category-requires-it"],
+    receiz_v124_execution_cancel: ["exact-stored-granted-scopes", "settlement-or-reserve-granted-rail-when-operation-category-requires-it"],
+    receiz_v124_runtime_authority_session_open: ["exact-signed-challenge-scopes", "receiz:<requested-rail>.write"],
+    receiz_v124_runtime_authority_session_refresh: ["exact-signed-challenge-scopes", "exact-stored-session-scopes", "receiz:<requested-rail>.write"],
+    receiz_v124_runtime_authority_session_close: ["exact-stored-session-scopes"],
+    receiz_v124_runtime_qualify: ["application-bound-bearer"],
+    receiz_v124_domain_verified_private_additions: ["exact-stored-granted-scopes"],
+    receiz_v124_identity_public_recipient_resolve: ["exact-stored-granted-scopes"],
+    receiz_v124_source_publish_sealed: [
+        "subject:receiz:subjects.write:no-session",
+        "replay-segment:receiz:domains.write:exact-stored-granted-scopes",
+        "checkpoint:receiz:domains.write:exact-stored-granted-scopes",
+    ],
+});
+const v124McpReferenceContracts = Object.freeze({
+    receiz_v124_kai_now: [[], []],
+    receiz_v124_proof_authority_challenge_create: [[], []],
+    receiz_v124_execution_plan_atomic_operation: [[], ["planRef"]],
+    receiz_v124_execution_stage: [["planRef"], ["handleRef"]],
+    receiz_v124_execution_stage_prepared: [["planRef", "transitionSetRef"], ["handleRef"]],
+    receiz_v124_execution_execute: [["handleRef", "sessionRef"], ["planRef"]],
+    receiz_v124_execution_resolve: [[], ["planRef"]],
+    receiz_v124_execution_resolve_by_idempotency: [[], ["planRef"]],
+    receiz_v124_execution_cancel: [["handleRef", "sessionRef"], ["planRef"]],
+    receiz_v124_runtime_authority_session_open: [["identityArtifactRef", "subjectSourceArtifactRef", "signedChallengeRef"], ["sessionRef", "persistedSessionRef"]],
+    receiz_v124_runtime_authority_session_refresh: [["sessionRef", "identityArtifactRef", "signedChallengeRef"], ["sessionRef", "persistedSessionRef"]],
+    receiz_v124_runtime_authority_session_close: [["sessionRef"], []],
+    receiz_v124_runtime_qualify: [[], []],
+    receiz_v124_domain_verified_additions: [[], []],
+    receiz_v124_domain_verified_replay: [[], []],
+    receiz_v124_domain_verified_checkpoint: [[], []],
+    receiz_v124_domain_verified_private_additions: [["sessionRef"], ["privateAdditionsRef"]],
+    receiz_v124_domain_replay_proof_object_export: [[], []],
+    receiz_v124_domain_replay_proof_object_restore: [["sealedReplayProofObjectRef"], []],
+    receiz_v124_subject_namespaces_resolve: [[], []],
+    receiz_v124_identity_public_recipient_resolve: [["sessionRef"], []],
+    receiz_v124_source_publish_sealed: [["sealedSourceArtifactRef", "sessionRef"], []],
+});
 const artifactEvidence = [
     "exact-artifact-byte-identity", "artifact-digest-match", "payload-digest-binding", "signature-v4",
     "owner-claim-binding", "independent-artifact-verification", "cross-platform-round-trip",
@@ -469,10 +557,10 @@ function assertArtifactSkill(name) {
     if (manifest.schema !== currentSchema || manifest.name !== name || manifest.version !== currentVersion) {
         fail(`${name}/manifest.json has invalid current schema, name, or version`);
     }
-    if (requires?.ruleset !== currentVersion || requires.registryDigest !== artifactRegistryDigest || requires.operationMatrixDigest !== operationMatrixDigest) {
+    if (requires?.ruleset !== currentRulesetVersion || requires.registryDigest !== artifactRegistryDigest || requires.operationMatrixDigest !== operationMatrixDigest) {
         fail(`${name}/manifest.json has artifact registry or ruleset skew`);
     }
-    if (manifest.artifactLawVersion !== currentVersion || JSON.stringify(manifest.artifactLaws) !== JSON.stringify(artifactLaws)) {
+    if (manifest.artifactLawVersion !== currentRulesetVersion || JSON.stringify(manifest.artifactLaws) !== JSON.stringify(artifactLaws)) {
         fail(`${name}/manifest.json has artifact law version or law-set skew`);
     }
     const evidence = Array.isArray(manifest.requiredEvidence) ? manifest.requiredEvidence : [];
@@ -515,11 +603,71 @@ function assertGlobalReconciliationSkill() {
             fail(`${name}/manifest.json missing ${required}`);
     assertMarkdownLinks(skillFile, text);
 }
+function assertV124McpToolMap() {
+    const mapFile = join(root, "receiz-mcp-agent-skill", "resources", "v124-runtime-tool-map.json");
+    assertPath(mapFile);
+    if (!existsSync(mapFile)) return;
+    const map = JSON.parse(read(mapFile));
+    const expectedNames = v124McpToolContracts.map(([name]) => name);
+    if (JSON.stringify(currentMcpV124Tools) !== JSON.stringify(expectedNames))
+        fail("skills.json current V124 MCP inventory mismatch");
+    if (map.schema !== "receiz.ai-skills.v124-mcp-tool-map.v1")
+        fail("v124 MCP tool map has invalid schema");
+    if (map.authority?.mcpIsAuthority !== false
+        || map.authority?.grantIsIdentityAuthority !== false
+        || map.authority?.bearerIsIdentityAuthority !== false
+        || map.authority?.strongerTruth !== "sealed-receiz-proof-object"
+        || map.authority?.identityAuthority !== "receiz-identity-artifact"
+        || map.authority?.databaseRole !== "sync-and-recovery-only")
+        fail("v124 MCP tool map weakens the proof/identity authority hierarchy");
+    for (const pinned of ["applicationId", "audience"])
+        if (!map.runtimePinnedCoordinates?.includes(pinned)) fail(`v124 MCP tool map must runtime-pin ${pinned}`);
+    for (const custodyRule of [
+        "handleRef-is-process-local-and-non-authoritative",
+        "sessionRef-is-local-or-trusted-host-persisted-and-non-authoritative",
+        "trusted-host-persisted-session-is-reverified-by-the-canonical-sdk-server-path",
+        "execute-and-cancel-require-custodied-handle-and-session",
+        "refresh-rotates-and-close-consumes-session-custody",
+        "replay-export-is-an-unsealed-non-authoritative-candidate",
+        "replay-candidate-must-be-canonically-sealed-before-restore",
+        "restore-accepts-only-sealedReplayProofObjectRef",
+        "private-additions-remain-in-trusted-host-custody-behind-privateAdditionsRef",
+        "private-additions-exact-result-is-never-returned-to-the-model",
+        "mcp-never-reconstructs-sdk-authority-from-json",
+    ]) if (!map.custodyRules?.includes(custodyRule)) fail(`v124 MCP tool map missing custody rule ${custodyRule}`);
+    if (!Array.isArray(map.tools) || map.tools.length !== v124McpToolContracts.length) {
+        fail("v124 MCP tool map must contain exactly 22 tools");
+        return;
+    }
+    if (JSON.stringify(map.tools.map((tool) => tool.name)) !== JSON.stringify(currentMcpV124Tools))
+        fail("v124 MCP tool map and skills.json current inventory mismatch");
+    for (let index = 0; index < v124McpToolContracts.length; index += 1) {
+        const [name, sdkMethod, scopeMode, fixedScopes] = v124McpToolContracts[index];
+        const tool = map.tools[index];
+        if (tool?.name !== name) fail(`v124 MCP tool map missing exact ordered tool ${name}`);
+        if (tool?.sdkMethod !== sdkMethod) fail(`v124 MCP tool map has wrong SDK mapping for ${name}`);
+        if (tool?.scopeMode !== scopeMode || JSON.stringify(tool?.fixedScopes) !== JSON.stringify(fixedScopes))
+            fail(`v124 MCP tool map has wrong fixed scope contract for ${name}`);
+        const conditionalScopes = v124McpConditionalScopeContracts[name] ?? [];
+        if (JSON.stringify(tool?.conditionalScopes) !== JSON.stringify(conditionalScopes))
+            fail(`v124 MCP tool map has wrong conditional scopes for ${name}`);
+        const [inputRefs, outputRefs] = v124McpReferenceContracts[name];
+        if (JSON.stringify(tool?.inputRefs) !== JSON.stringify(inputRefs))
+            fail(`v124 MCP tool map has wrong input references for ${name}`);
+        if (JSON.stringify(tool?.outputRefs) !== JSON.stringify(outputRefs))
+            fail(`v124 MCP tool map has wrong output references for ${name}`);
+        if (typeof tool?.custody !== "string" || tool.custody.length === 0)
+            fail(`v124 MCP tool map missing custody boundary for ${name}`);
+        if (typeof tool?.actionClass !== "string" || tool.actionClass.length === 0)
+            fail(`v124 MCP tool map missing action class for ${name}`);
+    }
+}
 function assertCurrentManifest(name) {
     const manifestFile = join(root, name, "manifest.json");
     if (!existsSync(manifestFile))
         return;
     const manifest = JSON.parse(read(manifestFile));
+    for (const tool of manifest.allowedTools ?? []) machineAllowedTools.add(tool);
     if (currentFocusedSkills.has(name)) {
         if (manifest.schema !== currentSchema || manifest.version !== currentVersion || manifest.name !== name)
             fail(`${name}/manifest.json has invalid focused current identity`);
@@ -530,15 +678,25 @@ function assertCurrentManifest(name) {
         fail(`${name}/manifest.json is not current`);
     const requires = manifest.requires ?? {};
     if (requires.sdk !== currentRange || requires.mcp !== currentRange
-        || requires.ruleset !== currentVersion || requires.registryDigest !== artifactRegistryDigest
+        || requires.ruleset !== currentRulesetVersion || requires.registryDigest !== artifactRegistryDigest
         || requires.operationMatrixDigest !== operationMatrixDigest)
         fail(`${name}/manifest.json current source binding mismatch`);
+    if (manifest.artifactLawVersion !== currentRulesetVersion)
+        fail(`${name}/manifest.json current artifact law version mismatch`);
     if (JSON.stringify(manifest.operationAuthorityMatrix?.map((row) => row.operation)) !== JSON.stringify(artifactSdkOperations))
         fail(`${name}/manifest.json current operation matrix mismatch`);
     if (JSON.stringify(manifest.currentMcpArtifactTools) !== JSON.stringify(currentMcpArtifactTools))
         fail(`${name}/manifest.json current nine-tool MCP inventory mismatch`);
     if (JSON.stringify(manifest.currentMcpLivingSubjectTools) !== JSON.stringify(currentMcpLivingSubjectTools))
         fail(`${name}/manifest.json current living-subject MCP inventory mismatch`);
+    if (JSON.stringify(manifest.currentMcpTools) !== JSON.stringify(currentMcpTools))
+        fail(`${name}/manifest.json complete current MCP inventory mismatch`);
+    if (JSON.stringify(manifest.currentMcpV122Tools) !== JSON.stringify(currentMcpV122Tools))
+        fail(`${name}/manifest.json current V122 MCP inventory mismatch`);
+    if (JSON.stringify(manifest.currentMcpV123Tools) !== JSON.stringify(currentMcpV123Tools))
+        fail(`${name}/manifest.json current V123 MCP inventory mismatch`);
+    if (JSON.stringify(manifest.currentMcpV124Tools) !== JSON.stringify(currentMcpV124Tools))
+        fail(`${name}/manifest.json current V124 MCP inventory mismatch`);
     if (JSON.stringify(manifest.historicalV112McpArtifactTools) !== JSON.stringify(historicalV112McpArtifactTools))
         fail(`${name}/manifest.json historical v112 five-tool inventory mismatch`);
     for (const forbidden of currentForbiddenOperations)
@@ -569,6 +727,21 @@ function assertLivingSubjectSkill(name) {
 assertPath(join(root, "README.md"));
 assertPath(join(root, "SKILLS.md"));
 assertPath(join(root, "skills.json"));
+if (!Array.isArray(currentMcpTools) || currentMcpTools.length !== 163 || new Set(currentMcpTools).size !== 163)
+    fail("skills.json must carry exactly 163 unique current MCP tools");
+for (const [label, inventory, exactLength] of [
+    ["artifact", currentMcpArtifactTools, 9],
+    ["living-subject", currentMcpLivingSubjectTools, 37],
+    ["V122", currentMcpV122Tools, 19],
+    ["V123", currentMcpV123Tools, 8],
+    ["V124", currentMcpV124Tools, 22],
+    ["historical V112", historicalV112McpArtifactTools, 5],
+]) {
+    if (!Array.isArray(inventory) || inventory.length !== exactLength)
+        fail(`skills.json ${label} MCP inventory must contain exactly ${exactLength} tools`);
+    for (const tool of inventory ?? [])
+        if (!currentMcpTools?.includes(tool)) fail(`skills.json ${label} MCP tool is not current: ${tool}`);
+}
 if (skillsIndex.skills?.length !== 42 || skillsIndex.skills?.filter((entry) => entry.manifest).length !== 36
     || skillsIndex.skills?.filter((entry) => entry.agent).length !== 33)
     fail("skills.json must preserve 42 skills, 36 manifests, and 33 OpenAI agent prompts");
@@ -581,10 +754,17 @@ for (const skill of operationSkills)
 for (const skill of artifactSkills)
     assertArtifactSkill(skill);
 assertGlobalReconciliationSkill();
+assertV124McpToolMap();
 for (const skill of livingSubjectSkills)
     assertLivingSubjectSkill(skill);
 for (const entry of skillsIndex.skills ?? [])
     assertCurrentManifest(entry.name);
+for (const tool of machineAllowedTools)
+    if (!currentMcpTools?.includes(tool)) fail(`AI manifest admits unknown MCP tool ${tool}`);
+for (const tool of requiredNewMachineAllowedTools)
+    if (!machineAllowedTools.has(tool)) fail(`AI manifest machine allowances missing current MCP tool ${tool}`);
+for (const tool of removedMachineTools)
+    if (machineAllowedTools.has(tool)) fail(`AI manifest still admits removed MCP tool ${tool}`);
 for (const file of markdownFiles(root)) {
     const text = read(file);
     const rel = relative(process.cwd(), file);
