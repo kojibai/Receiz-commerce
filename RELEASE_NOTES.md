@@ -1,3 +1,21 @@
+# Receiz Commerce Kit v5.2.1 — v124.0.3 Portable Material
+
+Release date: August 25, 2026
+
+Status: General Availability · repository release
+
+SDK target: `@receiz/sdk@124.0.3` · ruleset: `124.0.0`
+
+V5.2.1 makes a sealed proof object directly playable without turning a media host, database, CDN, SDK, MCP tool, or UI into its authority. Fully inline `rma2` proof URLs verify offline. Compact `rmc1` heads stay within 4,096 URL characters while committed segments reconstruct the complete capsule and enclosing proof object before playback. The app now renders verified image, audio, video, PDF, text, or binary material at `/verify#material=…` and always exposes the canonical Receiz proof URL.
+
+The release also adds deterministic Kai moment projection from an already sealed creation pulse. Live clock freshness remains separate and cannot reconstruct or alter an existing identity glyph. The coordinated source set retains the v124 ruleset, registry, 53-operation matrix, and 22 runtime tools while growing to 165 MCP tools and synchronizing all 42 AI skills at `124.0.3`.
+
+Representation never outranks source: the same independently verifiable material can be presented by governments, companies, applications, and developer-owned domains without any wrapper becoming the underlying fact. This remains a technical verification boundary, not legal sovereignty or exemption from applicable law.
+
+Full evidence is recorded in `docs/releases/2026-08-25-v124.0.3-portable-material-release.md`.
+
+---
+
 # Receiz Commerce Kit v5.2.0 — v124 Reality Becomes Infrastructure
 
 Release date: August 23, 2026

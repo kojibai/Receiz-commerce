@@ -4,7 +4,7 @@
 
 Receiz Commerce Kit is a full working commerce product and a forkable SDK kernel for building proof-sealed applications with `@receiz/sdk` and Receiz MCP.
 
-Current release: `5.2.0` · SDK target: `@receiz/sdk@124.0.1` · ruleset: `124.0.0`
+Current release: `5.2.1` · SDK target: `@receiz/sdk@124.0.3` · ruleset: `124.0.0`
 
 It ships as a Next.js App Router application with a public storefront, customer account area, no-code merchant admin, Receiz ID, checkout, wallet projection, rewards, Receized assets, domain hosting, media upload, proof memory, publish recovery, webhook verification, release diagnostics, and an AI operator layer built around Receiz MCP, Twin, World, and SDK doctor workflows. You can run it as the Receiz.app Commerce Cloud product, or clone it and build your own commerce, rewards, marketplace, game, content, or agent-operated SaaS on top of the same primitives.
 
@@ -31,7 +31,7 @@ This repository is intentionally two things at once:
 - **A working product:** a mobile-first commerce cloud where a merchant can create or restore Receiz ID, customize a storefront, add products and content, activate rewards, publish to a free `*.receiz.app` subdomain, connect a custom domain, and run Receiz checkout.
 - **A developer kernel:** a production-shaped reference for using one typed SDK boundary to build identity, proof, payments, wallet, rewards, domains, media, public app state, webhooks, release checks, and agent tooling without scattering SDK calls through the UI.
 
-The release unit is the repository, not an npm package. `package.json` remains `private: true` to prevent accidental application publishing to npm. Version 5.2 advances the living-world foundation onto Receiz v124: canonical Kai, proof challenges, short-lived server-custodied authority sessions, qualification-gated atomic execution, durable staging and recovery, authenticated replay/checkpoints/private additions, privacy-safe recipient resolution, locator-bound exact Phi intent, and sealed-source publication.
+The release unit is the repository, not an npm package. `package.json` remains `private: true` to prevent accidental application publishing to npm. Version 5.2 advances the living-world foundation onto Receiz v124: canonical Kai, proof challenges, short-lived server-custodied authority sessions, qualification-gated atomic execution, durable staging and recovery, authenticated replay/checkpoints/private additions, privacy-safe recipient resolution, locator-bound exact Phi intent, sealed-source publication, and verified playable material carried by proof URLs.
 
 The highest frame is continuity that travels with the subject. A platform, company, government, game, marketplace, or AI provider may recognize and operate on that continuity, but none has to be its sole keeper. This is not a claim of legal sovereignty and it does not supersede applicable law; it is a technical architecture in which identity, memory, relationships, and provenance can outlive any one institution while remaining independently verifiable.
 
@@ -62,9 +62,9 @@ pnpm install
 pnpm dev
 ```
 
-The v124 Receiz toolchain is pinned exactly as `@receiz/sdk@124.0.1`, `@receiz/mcp-server@124.0.1`, and `@receiz/ai-skills@124.0.1` from the public npm registry. The lockfile pins their published integrity values with no Receiz package override. The local 42-skill `ai-skills/` tree is byte-aligned with the published doctrine, excluding only the npm package manifest, and can be checked with `pnpm validate:ai-skills`.
+The v124 Receiz toolchain is pinned exactly as `@receiz/sdk@124.0.3`, `@receiz/mcp-server@124.0.3`, and `@receiz/ai-skills@124.0.3` from the public npm registry. The lockfile pins their published integrity values with no Receiz package override. The local 42-skill `ai-skills/` tree is byte-aligned with the published doctrine, excluding only the npm package manifest, and can be checked with `pnpm validate:ai-skills`.
 
-`receiz.app.json` declares the complete 53-operation v124 authority matrix, while `receiz.constitution.json` is the app law overlay chained to the package-embedded canonical v124 registry digest. The MCP server exposes 163 tools, including all 22 v124 production-runtime outcomes; the AI package exposes 42 skills, 36 manifests, and 33 agent prompts. The package release is `124.0.1`, while its constitutional ruleset is `124.0.0`; the app verifies both independently. JSON cannot mint session, plan, handle, private-result, replay-candidate, or sealed-source custody. Run `pnpm receiz:check`, `pnpm receiz:conformance`, `pnpm receiz:authority-scan`, and `pnpm receiz:release-lock` for the complete evidence chain.
+`receiz.app.json` declares the complete 53-operation v124 authority matrix, while `receiz.constitution.json` is the app law overlay chained to the package-embedded canonical v124 registry digest. The MCP server exposes 165 tools, including all 22 v124 production-runtime outcomes plus verified material opening and sealed-pulse Kai projection; the AI package exposes 42 skills, 36 manifests, and 33 agent prompts. The package release is `124.0.3`, while its constitutional ruleset is `124.0.0`; the app verifies both independently. JSON cannot mint session, plan, handle, private-result, replay-candidate, or sealed-source custody. Run `pnpm receiz:check`, `pnpm receiz:conformance`, `pnpm receiz:authority-scan`, and `pnpm receiz:release-lock` for the complete evidence chain.
 
 Open:
 
@@ -204,7 +204,7 @@ startup_timeout_sec = 120
 RECEIZ_BASE_URL = "https://receiz.com"
 ```
 
-The local command resolves the pnpm-pinned `@receiz/mcp-server@124.0.1`. Use the matching `@receiz/ai-skills@124.0.1` doctrine from `node_modules/@receiz/ai-skills` or the aligned local `ai-skills/` directory. V124 retains every inherited surface and adds 22 production-runtime tools for Kai, proof challenges, authority-session lifecycle, atomic stage/execute/recovery/cancel, operational qualification, verified public/private replay and checkpoints, sealed replay portability, exact namespaces, privacy-safe recipients, and sealed-source publication. The app exposes all of them through the SDK adapter and enforces their published trusted-host custody in `src/lib/receiz/v124/production-runtime.ts`. The complete executable mapping is at `/developers/receiz`.
+The local command resolves the pnpm-pinned `@receiz/mcp-server@124.0.3`. Use the matching `@receiz/ai-skills@124.0.3` doctrine from `node_modules/@receiz/ai-skills` or the aligned local `ai-skills/` directory. V124 retains every inherited surface and adds 22 production-runtime tools for Kai, proof challenges, authority-session lifecycle, atomic stage/execute/recovery/cancel, operational qualification, verified public/private replay and checkpoints, sealed replay portability, exact namespaces, privacy-safe recipients, and sealed-source publication. V124.0.3 adds `receiz_material_url_open` and `receiz_sealed_kai_moment`; the app verifies and plays `rma2` or `rmc1` material at `/verify#material=…`, exposes the canonical proof link, and never lets transport or presentation outrank the sealed object. The complete executable mapping is at `/developers/receiz`.
 
 Brand edits preview immediately in the merchant workspace. `Publish theme` uses the same signed publication transaction as `Publish changes`: success means the authoritative public-store revision was accepted and adopted by the workspace. A pending or failed publication remains visibly unresolved and is never presented as globally saved. Other open merchant tabs adopt the updated workspace through scoped storage synchronization, while storefront subdomains and custom domains continue to resolve from the published Receiz projection.
 

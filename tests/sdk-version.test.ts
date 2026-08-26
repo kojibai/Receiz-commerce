@@ -41,17 +41,17 @@ describe("Receiz v124 dependency contract", () => {
       pnpm?: { overrides?: Record<string, string> };
     };
 
-    assert.equal(RECEIZ_SDK_VERSION, "124.0.1");
-    assert.equal(RECEIZ_RELEASE_VERSION, "124.0.1");
+    assert.equal(RECEIZ_SDK_VERSION, "124.0.3");
+    assert.equal(RECEIZ_RELEASE_VERSION, "124.0.3");
     assert.equal(RECEIZ_RULESET_VERSION, "124.0.0");
     assert.equal(RECEIZ_V124_REGISTRY_DIGEST, "d02429151b0bcebdaeb89485792e377afc55130f9a25e07982c1c88221314247");
     assert.equal(RECEIZ_LIVING_SUBJECT_REDUCER_DIGEST, "5694662e2acc8b886ac9697ffad202b411d7e66c5f26f9106ee0768df7c7b8c8");
     assert.equal(Object.keys(RECEIZ_LIVING_SUBJECT_SCHEMAS).length, 30);
     assert.deepEqual(RECEIZ_V112_ARTIFACT_LAWS, Array.from({ length: 30 }, (_, index) => `ARTIFACT-${String(index + 1).padStart(3, "0")}`));
-    assert.equal(pkg.dependencies["@receiz/sdk"], "124.0.1");
-    assert.equal(pkg.dependencies["@receiz/mcp-server"], "124.0.1");
-    assert.equal(pkg.dependencies["@receiz/ai-skills"], "124.0.1");
-    assert.equal(pkg.scripts?.["receiz:check"], "receiz app check --target 124.0.1 --json");
+    assert.equal(pkg.dependencies["@receiz/sdk"], "124.0.3");
+    assert.equal(pkg.dependencies["@receiz/mcp-server"], "124.0.3");
+    assert.equal(pkg.dependencies["@receiz/ai-skills"], "124.0.3");
+    assert.equal(pkg.scripts?.["receiz:check"], "receiz app check --target 124.0.3 --json");
     assert.equal(pkg.scripts?.["receiz:conformance"], "receiz conformance");
     assert.equal(pkg.scripts?.["validate:ai-skills"], "node ai-skills/scripts/validate-skills.mjs");
     assert.equal(pkg.pnpm?.overrides?.postcss, ">=8.5.10");
@@ -70,7 +70,7 @@ describe("Receiz v124 dependency contract", () => {
     };
 
     assert.equal(skillsIndex.schema, "receiz.ai-skills-index.v124");
-    assert.equal(skillsIndex.version, "124.0.1");
+    assert.equal(skillsIndex.version, "124.0.3");
     assert.equal(skillsIndex.registryDigest, "d02429151b0bcebdaeb89485792e377afc55130f9a25e07982c1c88221314247");
     assert.equal(skillsIndex.operationMatrixDigest, "540d1c1bf39f1b288b257c79a6e020bdcc5e587fc9b7dbf6b7aaa5d082e20ad5");
     assert.equal(skillsIndex.skills?.length, 42);
@@ -83,10 +83,10 @@ describe("Receiz v124 dependency contract", () => {
     const mcpToolMap = readFileSync("ai-skills/receiz-mcp-agent-skill/resources/mcp-tool-map.md", "utf8");
     const adapter = readFileSync("src/lib/receiz/adapter.ts", "utf8");
 
-    assert.match(readme, /@receiz\/mcp-server@124\.0\.1/);
-    assert.match(readme, /@receiz\/ai-skills@124\.0\.1/);
+    assert.match(readme, /@receiz\/mcp-server@124\.0\.3/);
+    assert.match(readme, /@receiz\/ai-skills@124\.0\.3/);
     assert.match(readme, /Publish theme/);
-    assert.match(rails, /@receiz\/sdk@124\.0\.1/);
+    assert.match(rails, /@receiz\/sdk@124\.0\.3/);
     assert.match(rails, /signed public-store append/);
     assert.match(rails, /native Record projection before sealing/);
     assert.match(skillsReadme, /published as `@receiz\/ai-skills`/);

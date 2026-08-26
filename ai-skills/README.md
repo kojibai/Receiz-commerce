@@ -1,6 +1,6 @@
 # Receiz AI Skills
 
-The `124.0.1` package at release coordinate `v124.0.1` is a registry-bound operating-contract distribution beneath Receiz proof authority. AI instructions, MCP confirmations, OAuth/OIDC grants, JSON objects, database rows, staging references, and receipts never become proof or runtime authority.
+The `124.0.3` package at release coordinate `v124.0.3` is a registry-bound operating-contract distribution beneath Receiz proof authority. AI instructions, MCP confirmations, OAuth/OIDC grants, JSON objects, database rows, staging references, and receipts never become proof or runtime authority.
 
 ## V124 — Reality Becomes Infrastructure
 
@@ -39,7 +39,7 @@ performance, observability, testing, and release contracts. The earlier nine
 domain skill names remain packaged for compatibility. Seven operation skill names first introduced in obsolete-versioned now
 describe current outcomes for identity profiles, portable continuity, bearer ownership, offline transport,
 proof media, cross-app state, and admission evidence. Their retired obsolete-versioned mechanisms are not active defaults.
-One dedicated `receiz-global-reconciliation` skill governs accepted-head resolution, verified offline reconciliation, structural divergence, first paint, indeterminate recovery, and effects. `receiz-value-execution` governs exact live Phi execution and retry recovery; `receiz-proof-authority` governs edge verification, explicit consent, and minimum-scope embedded authority. Every current manifest uses package version `124.0.1`, requires SDK/MCP `>=124.0.0 <125.0.0`, and binds ruleset `124.0.0` to registry digest `d02429151b0bcebdaeb89485792e377afc55130f9a25e07982c1c88221314247` and operation-matrix digest `540d1c1bf39f1b288b257c79a6e020bdcc5e587fc9b7dbf6b7aaa5d082e20ad5` from SDK source.
+One dedicated `receiz-global-reconciliation` skill governs accepted-head resolution, verified offline reconciliation, structural divergence, first paint, indeterminate recovery, and effects. `receiz-value-execution` governs exact live Phi execution and retry recovery; `receiz-proof-authority` governs edge verification, explicit consent, and minimum-scope embedded authority. Every current manifest uses package version `124.0.3`, requires SDK/MCP `>=124.0.0 <125.0.0`, and binds ruleset `124.0.0` to registry digest `d02429151b0bcebdaeb89485792e377afc55130f9a25e07982c1c88221314247` and operation-matrix digest `540d1c1bf39f1b288b257c79a6e020bdcc5e587fc9b7dbf6b7aaa5d082e20ad5` from SDK source.
 
 This package teaches AI agents how to understand, verify, build with, and operate Receiz from the existing repository surfaces.
 

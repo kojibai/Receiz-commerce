@@ -2,6 +2,14 @@
 
 All notable changes to Receiz Commerce Kit will be documented here.
 
+## 5.2.1 - Receiz v124.0.3 Portable Material
+
+- Pinned SDK, MCP server, and AI skills to exact public `124.0.3` artifacts while preserving constitutional ruleset `124.0.0`, the canonical registry, and the 53-operation matrix.
+- Added verified `rma2` inline material URLs and compact `rmc1` segmented transport with a 4,096-character public-head bound that never truncates sealed proof bytes.
+- Added a `/verify#material=…` player for locally verified images, audio, video, PDF, text, and binary payloads with canonical proof links and object-URL cleanup.
+- Added deterministic sealed-pulse Kai projection for existing identity moments; live device or browser time cannot redefine a sealed creation coordinate.
+- Adopted all 165 MCP tools, including `receiz_material_url_open` and `receiz_sealed_kai_moment`, and mirrored the exact 42-skill `124.0.3` doctrine.
+
 ## 5.2.0 - Receiz v124 Reality Becomes Infrastructure
 
 - Pinned SDK, MCP server, and AI-skills packages to exact public `124.0.1` artifacts while independently binding constitutional ruleset `124.0.0`.

@@ -12,6 +12,9 @@ it("publishes the complete v124 source-first developer doctrine", () => {
   assert.match(page, /Representation must never outrank the source/);
   assert.match(page, /not immunity from applicable law/i);
   assert.match(page, /All 22 v124 runtime tools/);
+  assert.match(page, /Portable proof presentation/);
+  assert.match(page, /receiz_material_url_open/);
+  assert.match(page, /receiz_sealed_kai_moment/);
   for (const tool of RECEIZ_V124_MCP_TOOLS) assert.match(contract, new RegExp(tool));
   assert.match(doctrine, /RECEIZ_V124_MCP_TOOLS\.map/);
   assert.match(runtime, /WeakMap/);

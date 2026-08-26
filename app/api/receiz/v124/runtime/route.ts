@@ -1,3 +1,4 @@
+import { RECEIZ_RULESET_VERSION, RECEIZ_SDK_VERSION } from "@receiz/sdk";
 import { NextResponse } from "next/server";
 import { createReceizCommerceAdapter } from "@/lib/receiz/adapter";
 import { projectReceizV124Qualification } from "@/lib/receiz/v124/authority-report";
@@ -30,16 +31,16 @@ export async function GET(request: Request) {
     const report = await runtime.qualify(operations);
     return NextResponse.json({
       ok: report.results.every((result) => result.status === "available"),
-      sdkVersion: "124.0.1",
-      rulesetVersion: "124.0.0",
+      sdkVersion: RECEIZ_SDK_VERSION,
+      rulesetVersion: RECEIZ_RULESET_VERSION,
       kai: runtime.kaiNow(),
       qualification: projectReceizV124Qualification(report),
     }, { status: report.results.some((result) => result.status === "unavailable") ? 503 : 200 });
   } catch (error) {
     return NextResponse.json({
       ok: false,
-      sdkVersion: "124.0.1",
-      rulesetVersion: "124.0.0",
+      sdkVersion: RECEIZ_SDK_VERSION,
+      rulesetVersion: RECEIZ_RULESET_VERSION,
       error: "RECEIZ_V124_RUNTIME_QUALIFICATION_UNAVAILABLE",
       detail: error instanceof Error ? error.message : "unknown",
       authority: {

@@ -21,6 +21,7 @@ import {
   planArtifactAppend,
   readReceizSignedTransportEnvelopeV124,
   receizKaiNow,
+  receizKaiMomentFromSealedPulse,
   recoverReceizPortableExecutionTransitionSetV124,
   sealArtifactTransitionCandidate,
   signReceizCapability,
@@ -125,6 +126,7 @@ import type { GameResult, Product, ProofEvent, ReceizedAsset, Reward, VerifiedOb
 import { makeId } from "@/lib/utils";
 import { platform } from "@/lib/platform";
 import { receizOidcScopesFromEnv } from "./oauth-scopes";
+import { RECEIZ_V124_MATERIAL, type ReceizV124MaterialAdapter } from "./v124/material";
 
 export type ReceizCommerceAdapter = {
   sdkVersion: string;
@@ -143,7 +145,11 @@ export type ReceizCommerceAdapter = {
     value: Readonly<Pick<ReceizClient["value"], "executeSettlement" | "executeReserve" | "executionByIdempotencyKey">>;
   }>;
   v124: Readonly<{
-    kai: Readonly<{ now: typeof receizKaiNow }>;
+    kai: Readonly<{
+      now: typeof receizKaiNow;
+      fromSealedPulse: typeof receizKaiMomentFromSealedPulse;
+    }>;
+    material: ReceizV124MaterialAdapter;
     proofAuthority: Readonly<{ createChallenge: typeof createReceizProofAuthorityChallenge }>;
     execution: Readonly<Pick<ReceizClient["execution"], "planAtomicOperationV124" | "stage" | "stagePrepared" | "execute" | "resolve" | "resolveByIdempotencyKey" | "cancel">>;
     runtime: Readonly<Pick<ReceizClient["runtime"], "openAuthoritySessionV124" | "refreshAuthoritySessionV124" | "closeAuthoritySessionV124" | "qualifyV124">>;
@@ -546,7 +552,8 @@ export function createReceizCommerceAdapter(
   });
 
   const v124: ReceizCommerceAdapter["v124"] = Object.freeze({
-    kai: Object.freeze({ now: receizKaiNow }),
+    kai: Object.freeze({ now: receizKaiNow, fromSealedPulse: receizKaiMomentFromSealedPulse }),
+    material: RECEIZ_V124_MATERIAL,
     proofAuthority: Object.freeze({ createChallenge: createReceizProofAuthorityChallenge }),
     execution: Object.freeze({
       planAtomicOperationV124: client.execution.planAtomicOperationV124,

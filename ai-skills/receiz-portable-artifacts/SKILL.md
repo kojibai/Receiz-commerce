@@ -37,6 +37,10 @@ if (opened.verifiedPayload.sha256 !== sealedArtifact.payloadSha256) throw new Er
 
 Independently hash the saved bytes and require equality with `sealedArtifact.artifactSha256`. Require `verification.ok`, `integrity.ok`, carrier `native-record-seal`, Signature V4, owner, claim, and verify-path agreement. Reopen the exact saved file with `verifyAndOpen`, then prove a different Receiz application preserves identity, cards, history, receipts, and unknown namespaces. Current exports use native Record -> Seal; verified legacy artifacts remain read-compatible only.
 
+## Content-bearing proof URLs
+
+Portable playback uses either a fully inline `rma2` capsule or compact `rmc1` proof-object append segmentation. An `rmc1` public head is hard-bounded to 4,096 URL characters and commits the complete ordered append sequence that reconstructs the same exact capsule bytes without navigating to a giant textual URL. That bound applies only to the head and never truncates or limits lawful sealed truth. Consumers must verify segment order, length, digest, Merkle root, Fibonacci checkpoints, complete capsule digest, enclosing artifact digest, and the sealed proof object before rendering a browser-local media URL. Append transport, storage, SDK, MCP, server, and UI projections remain subordinate to the enclosing sealed artifact.
+
 ## Twelve-step artifact workflow
 
 1. Label the input bytes as `payload`; never call them an artifact.

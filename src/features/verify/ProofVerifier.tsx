@@ -4,6 +4,7 @@ import type { ReceizArtifactVerificationResult } from "@receiz/sdk";
 import { useState } from "react";
 import { createReceizCommerceAdapter } from "@/lib/receiz/adapter";
 import { Button, Panel, StatusPill } from "@/components/ui";
+import { MaterialProofViewer } from "./MaterialProofViewer";
 
 export function ProofVerifier({ claim, pulse }: { claim?: string; pulse?: string }) {
   const [result, setResult] = useState<ReceizArtifactVerificationResult | null>(null);
@@ -12,6 +13,7 @@ export function ProofVerifier({ claim, pulse }: { claim?: string; pulse?: string
 
   return (
     <Panel className="verify-surface-panel">
+      <MaterialProofViewer />
       <div className="section-heading">
         <div>
           <StatusPill tone={verified ? "green" : "neutral"}>{verified ? "Verified" : "Local verification"}</StatusPill>

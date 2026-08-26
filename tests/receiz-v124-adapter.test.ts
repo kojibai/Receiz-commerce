@@ -16,11 +16,34 @@ describe("Receiz v124 SDK adapter", () => {
   it("exposes canonical local Kai, challenge, world, value, transport, recipient, and portable helpers", () => {
     const v124 = createReceizCommerceAdapter({ fetchImpl: async () => new Response() }).v124;
     assert.equal(typeof v124.kai.now, "function");
+    assert.equal(typeof v124.kai.fromSealedPulse, "function");
     assert.equal(typeof v124.proofAuthority.createChallenge, "function");
     assert.equal(typeof v124.value.planLocatorBoundIntent, "function");
     assert.equal(typeof v124.recipient.normalizeAlias, "function");
     assert.equal(Object.keys(v124.world).length, 9);
     assert.equal(Object.keys(v124.transport).length, 3);
     assert.equal(Object.keys(v124.portable).length, 6);
+  });
+
+  it("exposes the complete public material URL and composite transport surface", () => {
+    const material = createReceizCommerceAdapter({ fetchImpl: async () => new Response() }).v124.material;
+    assert.deepEqual(Object.keys(material), [
+      "encodeCapsuleBytes",
+      "encodeCapsule",
+      "decodeCapsuleBytes",
+      "decodeCapsule",
+      "readCapsuleFromUrl",
+      "presentedLinkForVerification",
+      "openVerifiedUrl",
+      "createPlayableObjectUrl",
+      "buildCompositeTransport",
+      "verifyCompositeManifest",
+      "reconstructCompositeCapsule",
+      "readCompositePackageDigest",
+      "assertCompositeHeadUrl",
+      "publishCompositeTransport",
+      "resolveCompositeTransport",
+      "createCompositePresentationUrl",
+    ]);
   });
 });

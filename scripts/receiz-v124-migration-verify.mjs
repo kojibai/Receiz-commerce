@@ -16,17 +16,17 @@ import { createHash } from "node:crypto";
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join, resolve } from "node:path";
 
-const PACKAGE_VERSION = "124.0.1";
+const PACKAGE_VERSION = "124.0.3";
 const RULESET_VERSION = "124.0.0";
-const APPLICATION_VERSION = "5.2.0";
+const APPLICATION_VERSION = "5.2.1";
 const RANGE = ">=124.0.0 <125.0.0";
 const REGISTRY = "d02429151b0bcebdaeb89485792e377afc55130f9a25e07982c1c88221314247";
 const MATRIX = "540d1c1bf39f1b288b257c79a6e020bdcc5e587fc9b7dbf6b7aaa5d082e20ad5";
-const APP_REGISTRY = "f8f76ecf9b7c7803cbd2a18a4b97a5ba406bfb217a80d76d311167f70ee5e5f9";
+const APP_REGISTRY = "d11659fd5d1b8c6a218e1cb68afb777bb1695f90dbbf4baf502a364addb7b660";
 const INTEGRITIES = Object.freeze({
-  "@receiz/sdk": "sha512-Q6C/R2fMSisQsdWLiaYp98kk1iEthFYtx2WMYrspz7xwq0EP5LLE26NvTW6ddsNKdP3AUcTrmkWDDKCac1NCgQ==",
-  "@receiz/mcp-server": "sha512-BG+U6gZw+Mnz9ClRez36524uXfzYEs6LSLVJgB9vDRTx51VkyCmgJB1E4mpuzcdG34dZUuBRfJ3MncPP5jyt1w==",
-  "@receiz/ai-skills": "sha512-CCEaO/tmxCt7rpQbwoHI77BiA1PS9ca7q/vgn27/M+PiXC0aUE7z3OYaGsHIVU9gZamxBgi9xF7CU8DYnYWBGQ==",
+  "@receiz/sdk": "sha512-kdJicDfB+tcODBVtxdKdmxCV7NKzWhTHPKJcJPiYOadxkNx5LdmUxMuwjhiuRSMLRIEKo0YfPYcIjPzilrERtA==",
+  "@receiz/mcp-server": "sha512-dxtpqkW46mC/2DHG+Voxr4wUmSD4wj3Jxq0g2GMyBaYU7dt17l2ZBY/SIFpvRt28VpLB9esTD1io0ptspDwKkg==",
+  "@receiz/ai-skills": "sha512-iTSplhw5J/+kCtjZjRNA/dg1/SIEzTCIBDkrhRK+0zp7W9FWECXUpq1nemQ16gIyR0dHZbTZPnjUV3RqdmoV1Q==",
 });
 
 const optionValue = (args, option) => { const index = args.indexOf(option); return index === -1 ? undefined : args[index + 1]; };
@@ -55,7 +55,8 @@ const pkg = json("package.json");
 const registry = json("receiz.constitution.json");
 const app = json("receiz.app.json");
 const generated = json("receiz.generated.json");
-const attestation = json("receiz.migration.v123-v124.json");
+const attestation = json("receiz.migration.v124.0.1-v124.0.3.json");
+const upstreamGaps = json("receiz.upstream-gaps.json");
 const skills = json("ai-skills/skills.json");
 const lockfile = readFileSync(join(root, "pnpm-lock.yaml"), "utf8");
 const appRegistryDigest = await digestReceizConstitution(registry);
@@ -68,11 +69,12 @@ const checks = [
   { id: "registry", ok: validateReceizConstitutionRegistry(registry).ok && registry.version === RULESET_VERSION && registry.previousRegistryDigest === REGISTRY && RECEIZ_CURRENT_REGISTRY_DIGEST === REGISTRY && RECEIZ_V124_REGISTRY_DIGEST === REGISTRY },
   { id: "app-registry", ok: appRegistryDigest === APP_REGISTRY && attestation.appRegistryDigest === APP_REGISTRY },
   { id: "matrix", ok: RECEIZ_CURRENT_APPLICATION_OPERATION_MATRIX.length === 53 && RECEIZ_CURRENT_APPLICATION_OPERATION_MATRIX_DIGEST === MATRIX && JSON.stringify(app.operations) === JSON.stringify(RECEIZ_CURRENT_APPLICATION_OPERATION_MATRIX) && JSON.stringify(generated.operationAuthorityMatrix) === JSON.stringify(RECEIZ_CURRENT_APPLICATION_OPERATION_MATRIX) },
-  { id: "mcp", ok: RECEIZ_MCP_TOOLS.length === 163 && RECEIZ_V124_MCP_TOOL_NAMES.length === 22 && RECEIZ_V124_MCP_TOOL_NAMES.every((name) => toolNames.has(name)) },
+  { id: "mcp", ok: RECEIZ_MCP_TOOLS.length === 165 && RECEIZ_V124_MCP_TOOL_NAMES.length === 22 && RECEIZ_V124_MCP_TOOL_NAMES.every((name) => toolNames.has(name) && ["receiz_material_url_open", "receiz_sealed_kai_moment"].every((tool) => toolNames.has(tool))) },
   { id: "ai-skills", ok: skills.schema === "receiz.ai-skills-index.v124" && skills.version === PACKAGE_VERSION && skills.rulesetVersion === RULESET_VERSION && skills.registryDigest === REGISTRY && skills.operationMatrixDigest === MATRIX && skills.counts?.skills === 42 && skills.counts?.manifests === 36 && skills.counts?.openaiAgentPrompts === 33 },
   { id: "ai-tree-parity", ok: treeDigest(join(root, "ai-skills")) === treeDigest(join(root, "node_modules", "@receiz", "ai-skills")) },
   { id: "integrities", ok: Object.entries(INTEGRITIES).every(([name, integrity]) => attestation.publicPackageIntegrities?.[name] === integrity && lockfile.includes(`integrity: ${integrity}`)) },
-  { id: "authority", ok: attestation.representationCanOutrankSource === false && attestation.jsonCanMintRuntimeCustody === false && attestation.mutationRequiresOperationalQualification === true && attestation.unknownOutcomeRequiresLookupBeforeRetry === true && attestation.exactPrivateAdditionsLeaveTrustedHost === false && attestation.sealedReplayProofObjectRequiredForRestore === true },
+  { id: "authority", ok: attestation.representationCanOutrankSource === false && attestation.transportIsProofAuthority === false && attestation.presentationIsProofAuthority === false && attestation.deviceClockIsCreationAuthority === false && attestation.publicHeadLimitTruncatesSealedTruth === false },
+  { id: "upstream-gap-tracked", ok: upstreamGaps.gaps?.some((gap) => gap.id === "sdk.streaming-verifier-public-export" && gap.observedPackage === "@receiz/sdk@124.0.3" && gap.nextReleaseRequired === true && gap.publicDocumentation === false) },
   { id: "history", ok: attestation.historyRewritten === false && attestation.productionDataMigrated === false },
   { id: "living-subject-reducer-retained", ok: attestation.livingSubjectReducerDigest === RECEIZ_LIVING_SUBJECT_REDUCER_DIGEST },
   { id: "compatible-range", ok: generated.compatibleSdkRange === RANGE },
@@ -80,14 +82,14 @@ const checks = [
 
 const report = {
   ok: checks.every((check) => check.ok),
-  schema: "receiz.repository.v123-v124.migration-verification.v1",
+  schema: "receiz.repository.v124-patch-migration-verification.v1",
   packageVersion: PACKAGE_VERSION,
   rulesetVersion: RULESET_VERSION,
   registryDigest: REGISTRY,
   operationMatrixDigest: MATRIX,
   appRegistryDigest,
   operations: 53,
-  mcpTools: 163,
+  mcpTools: 165,
   v124McpTools: 22,
   aiSkills: 42,
   historyRewritten: false,

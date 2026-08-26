@@ -75,10 +75,10 @@ describe("Next runtime release guard", () => {
 
 describe("Receiz v124 release evidence", () => {
   it("documents the exact constitutional release identity and measured authority boundaries", () => {
-    const releaseText = readFileSync("docs/releases/2026-08-23-v124-production-runtime-release.md", "utf8");
+    const releaseText = readFileSync("docs/releases/2026-08-25-v124.0.3-portable-material-release.md", "utf8");
     for (const marker of [
-      "5.2.0",
-      "124.0.1",
+      "5.2.1",
+      "124.0.3",
       "124.0.0",
       "d02429151b0bcebdaeb89485792e377afc55130f9a25e07982c1c88221314247",
       "540d1c1bf39f1b288b257c79a6e020bdcc5e587fc9b7dbf6b7aaa5d082e20ad5",

@@ -1,0 +1,30 @@
+{
+  "schema": "receiz.app.upstream-gaps.v1",
+  "visibility": "internal-release-engineering",
+  "gaps": [
+    {
+      "id": "sdk.streaming-verifier-public-export",
+      "status": "confirmed-upstream-gap",
+      "observedPackage": "@receiz/sdk@124.0.3",
+      "nextReleaseRequired": true,
+      "publicDocumentation": false,
+      "evidence": {
+        "implementation": [
+          "dist/verifier/canonical.js#verifyReceizTrailerFileStreaming",
+          "dist/verifier/canonical.js#validateReceizExactByteVerification"
+        ],
+        "types": "dist/verifier/canonical.d.ts",
+        "rootTypesExported": false,
+        "verifierSubpathExported": false,
+        "publicConvenienceContiguousMaterializationBytes": 16777216
+      },
+      "requiredResolution": [
+        "Export both streaming-verifier functions and their public types from the package root or a declared ./verifier subpath.",
+        "Prove a clean outside-consumer import using only declared package exports.",
+        "Verify a valid trailer artifact larger than 16 MiB with bounded memory and exact artifact and payload hashes.",
+        "Retain operational denial rather than invalid-artifact classification when the convenience verifier cannot materialize an otherwise protocol-valid file."
+      ],
+      "forbiddenWorkaround": "Do not deep-import undeclared dist paths or copy canonical verifier implementation into this app."
+    }
+  ]
+}

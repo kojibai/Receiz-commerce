@@ -29,9 +29,9 @@ describe("Receiz v124 coordinated identity", () => {
     };
     const toolNames = new Set(RECEIZ_MCP_TOOLS.map((tool) => tool.name));
 
-    assert.equal(adapter.sdkVersion, "124.0.1");
+    assert.equal(adapter.sdkVersion, "124.0.3");
     assert.equal(RECEIZ_CURRENT_APPLICATION_OPERATION_MATRIX_DIGEST, V124_MATRIX);
-    assert.equal(skills.version, "124.0.1");
+    assert.equal(skills.version, "124.0.3");
     assert.equal(skills.registryDigest, V124_REGISTRY);
     assert.equal(skills.operationMatrixDigest, V124_MATRIX);
     assert.equal(skills.counts.skills, 42);

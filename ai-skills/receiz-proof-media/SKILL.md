@@ -47,6 +47,12 @@ Use `assets.createProofObject` to run native Record -> Seal and `artifacts.downl
 
 Store and render the known verified artifact immediately when available. Do not claim a new Record -> Seal or profile projection succeeded while offline. Later sync may append a verified public projection without replacing the artifact.
 
+Content-bearing Receiz proof URLs carry exact sealed material either fully inline as `#material=rma2:...` or through a compact `#material=rmc1:...` proof-object append-segmentation head. Open both forms with `openVerifiedReceizMaterialUrl(url)`. Inline capsules open fully offline. Composite heads are hard-bounded to 4,096 URL characters and resolve and verify their ordered append segments, reconstruct the exact original capsule locally, then verify the enclosing sealed proof object with the pinned canonical verifier before exposing native payload bytes. The 4,096-character boundary applies only to the public head: it never truncates the artifact or its append segments and is never a truth-size limit. Render the returned `payloadBytes` according to `playableKind` and `payloadMimeType`; `createReceizPlayableMaterialObjectUrl(verified)` creates a browser-local image, audio, video, PDF, text, or download URL. Append transport never outranks the sealed proof object.
+
+Developers may carry the same `#material` coordinate on their own domain and render it there. The external route is a presentation wrapper only: reconstruct the inline capsule or committed proof-object append sequence, verify the enclosing artifact locally, render the returned exact payload, and expose `canonicalReceizUrl` as the direct link back to the Receiz public proof surface. Do not let an upload, database row, media CDN, SDK, or server response become proof authority.
+
+For identity artwork and sigil projection, use `receizKaiMomentFromSealedPulse(accountCreationPulse)`. The sealed account-creation pulse is creation authority. Device clock, browser clock, process uptime, SDK state, session state, device-enrollment time, and PBI evidence cannot replace or reinterpret it. `receizKaiNow()` is only the live freshness coordinate for short-lived challenges and must never be used to reconstruct an existing identity glyph.
+
 ## Conflict behavior
 
 If Record, Seal, or enclosing verification fails, return no new media artifact. If the profile projection fails, preserve the already sealed media proof object and leave the prior profile projection unchanged.
@@ -61,7 +67,7 @@ Show the source media, artifact filename, proof-object type, public URL if one i
 
 ## MCP parity
 
-Use the SDK artifact-custody workflow for media Record -> Seal; the current MCP runtime does not introduce a parallel media authority or a direct profile-mutation adapter. Project an already verified media URL through the canonical SDK `receiz.profile.update(profile)` operation and require the same-UID result. Never substitute an unrelated MCP tool or a model-carried projection for the sealed media proof object.
+Use `receiz_material_url_open` to verify and reconstruct a content-bearing proof URL locally. Set `includePayloadBytes: true` only when the agent host needs exact base64url payload bytes for rendering or playback. `rma2` needs no transport lookup. `rmc1` resolves only committed proof-object append segments, reconstructs exact capsule bytes locally, and rejects substitutions before canonical proof verification. Use `receiz_sealed_kai_moment` with the verified account-creation pulse when rendering identity artwork; never use the live-clock tool for an existing proof object. Neither media form may use device time to re-project an existing proof object. Use the SDK artifact-custody workflow for media Record -> Seal; MCP does not introduce a parallel media authority or a direct profile-mutation adapter. Project an already verified media URL through the canonical SDK `receiz.profile.update(profile)` operation and require the same-UID result. Never substitute an unrelated MCP tool or a model-carried projection for the sealed media proof object.
 
 ## Emulator fixture
 

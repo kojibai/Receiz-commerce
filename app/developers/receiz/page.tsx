@@ -3,7 +3,7 @@ import { RECEIZ_V124_DEVELOPER_SEQUENCE, RECEIZ_V124_DOCTRINE, RECEIZ_V124_EXAMP
 
 export const metadata = {
   title: "Receiz v124 production-runtime developer doctrine",
-  description: "Complete source-first SDK, MCP, and AI-skill doctrine for Receiz v124.0.1.",
+  description: "Complete source-first SDK, MCP, and AI-skill doctrine for Receiz v124.0.3.",
 };
 
 export default function ReceizDeveloperDoctrinePage() {
@@ -20,16 +20,24 @@ export default function ReceizDeveloperDoctrinePage() {
         <h2>What v124 makes possible</h2>
         <p>Canonical Kai and proof challenges now feed short-lived server-custodied authority sessions. Those sessions can authorize qualification-gated, durably staged atomic operations across subjects, worlds, inventory, access, ownership, Settlement, and Reserve. Unknown outcomes are recoverable without replaying intent.</p>
         <p>Authenticated replay and checkpoints can travel as sealed proof objects. Private additions remain access-filtered in trusted-host custody. Recipient lookup produces a one-use encrypted locator instead of exposing destination identity or head coordinates. Exact Phi intent can bind to that locator before execution.</p>
+        <p>V124.0.3 also makes sealed media directly playable from a proof-bearing URL. Fully inline <code>rma2</code> capsules verify without transport lookup; compact <code>rmc1</code> heads reconstruct committed segments before the enclosing artifact is verified. The 4,096-character limit applies only to the public coordinate, never to the sealed truth.</p>
       </section>
 
       <section className="panel">
         <h2>Exact release identity</h2>
-        <p>The coordinated release contains 53 application operations, 163 MCP tools, and 42 AI skills.</p>
+        <p>The coordinated release contains 53 application operations, 165 MCP tools, and 42 AI skills.</p>
         <p><strong>Application:</strong> {RECEIZ_V124_CONTRACT.applicationVersion} · <strong>SDK/MCP/skills:</strong> {RECEIZ_V124_CONTRACT.sdkVersion} · <strong>Ruleset:</strong> {RECEIZ_V124_CONTRACT.rulesetVersion}</p>
         <p><strong>Registry:</strong> <code>{RECEIZ_V124_CONTRACT.registryDigest}</code></p>
         <p><strong>Operation matrix:</strong> <code>{RECEIZ_V124_CONTRACT.operationMatrixDigest}</code></p>
         <p><strong>Inventory:</strong> {RECEIZ_V124_CONTRACT.operationCount} app operations · {RECEIZ_V124_CONTRACT.mcpToolCount} MCP tools ({RECEIZ_V124_CONTRACT.v124McpToolCount} new v124 tools) · {RECEIZ_V124_CONTRACT.aiSkillCount} AI skills · {RECEIZ_V124_CONTRACT.aiManifestCount} manifests · {RECEIZ_V124_CONTRACT.openAiPromptCount} OpenAI prompts.</p>
-        <p>Package release <code>124.0.1</code> and constitutional ruleset <code>124.0.0</code> are separate coordinates. Never derive one from the other.</p>
+        <p>Package release <code>124.0.3</code> and constitutional ruleset <code>124.0.0</code> are separate coordinates. Never derive one from the other.</p>
+      </section>
+
+      <section className="panel">
+        <h2>Portable proof presentation</h2>
+        <p><code>receiz_material_url_open</code> reconstructs and verifies URL-carried sealed material before returning playable image, audio, video, PDF, text, or binary payload bytes. The app applies that path at <code>/verify#material=…</code> and exposes the canonical Receiz proof link beside the local projection.</p>
+        <p><code>receiz_sealed_kai_moment</code> derives a deterministic identity moment only from an already sealed creation pulse. Device time, browser time, process uptime, session state, and live <code>receiz_v124_kai_now</code> freshness cannot redefine an existing identity glyph.</p>
+        <p>Both tools, composite transport, developer-owned presentation domains, object URLs, SDK results, MCP responses, and UI remain representations beneath the sealed proof object.</p>
       </section>
 
       <section className="panel">

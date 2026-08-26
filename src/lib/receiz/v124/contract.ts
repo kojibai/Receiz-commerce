@@ -23,23 +23,30 @@ export const RECEIZ_V124_MCP_TOOLS = Object.freeze([
   "receiz_v124_source_publish_sealed",
 ] as const);
 
+export const RECEIZ_V124_PORTABLE_PRESENTATION_MCP_TOOLS = Object.freeze([
+  "receiz_material_url_open",
+  "receiz_sealed_kai_moment",
+] as const);
+
 export const RECEIZ_V124_CONTRACT = Object.freeze({
-  applicationVersion: "5.2.0",
-  sdkVersion: "124.0.1",
-  releaseVersion: "124.0.1",
+  applicationVersion: "5.2.1",
+  sdkVersion: "124.0.3",
+  releaseVersion: "124.0.3",
   rulesetVersion: "124.0.0",
   compatibleRange: ">=124.0.0 <125.0.0",
   registryDigest: "d02429151b0bcebdaeb89485792e377afc55130f9a25e07982c1c88221314247",
   operationMatrixDigest: "540d1c1bf39f1b288b257c79a6e020bdcc5e587fc9b7dbf6b7aaa5d082e20ad5",
-  appRegistryDigest: "f8f76ecf9b7c7803cbd2a18a4b97a5ba406bfb217a80d76d311167f70ee5e5f9",
+  appRegistryDigest: "d11659fd5d1b8c6a218e1cb68afb777bb1695f90dbbf4baf502a364addb7b660",
   operationCount: 53,
-  mcpToolCount: 163,
+  mcpToolCount: 165,
   v124McpToolCount: 22,
+  portablePresentationMcpToolCount: 2,
   aiSkillCount: 42,
   aiManifestCount: 36,
   openAiPromptCount: 33,
   domainReplaySegmentCapacity: 128,
   mcpTools: RECEIZ_V124_MCP_TOOLS,
+  portablePresentationMcpTools: RECEIZ_V124_PORTABLE_PRESENTATION_MCP_TOOLS,
   authority: Object.freeze({
     sealedSourceIsStrongestTruth: true,
     representationCanOutrankSource: false,

@@ -20,7 +20,7 @@ function mockAdapter(status: "available" | "unavailable" = "available") {
   const report = (operations: readonly string[]) => ({
     schema: "receiz.operational-capability-report.v124", applicationId: "app", requestedOperations: operations,
     qualifiedAtKaiUPulse: 1, reportDigest: hash("r"), runtimeReceiptDigest: hash("s"),
-    results: operations.map((operation) => ({ operation, status, actualGrantedScopes: [], serviceVersion: "124.0.1",
+    results: operations.map((operation) => ({ operation, status, actualGrantedScopes: [], serviceVersion: "124.0.3",
       registryVersion: "124.0.0", reducerVersion: "124.0.0", publicDependencyHeads: {},
       dependencyHealth: status === "available" ? "healthy" : "unhealthy", reasonCode: status === "available" ? null : "DEPENDENCY_UNHEALTHY",
       retry: { strategy: "none", retryAfterKaiUPulse: null }, evidence: { runtime: status === "available" ? "ready" : "unavailable", registry: "compatible", reducer: "compatible", publicHeads: "current", distributedLimiter: "not-required" },

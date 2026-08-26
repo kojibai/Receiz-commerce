@@ -727,8 +727,8 @@ function assertLivingSubjectSkill(name) {
 assertPath(join(root, "README.md"));
 assertPath(join(root, "SKILLS.md"));
 assertPath(join(root, "skills.json"));
-if (!Array.isArray(currentMcpTools) || currentMcpTools.length !== 163 || new Set(currentMcpTools).size !== 163)
-    fail("skills.json must carry exactly 163 unique current MCP tools");
+if (!Array.isArray(currentMcpTools) || currentMcpTools.length !== 165 || new Set(currentMcpTools).size !== 165)
+    fail("skills.json must carry exactly 165 unique current MCP tools");
 for (const [label, inventory, exactLength] of [
     ["artifact", currentMcpArtifactTools, 9],
     ["living-subject", currentMcpLivingSubjectTools, 37],

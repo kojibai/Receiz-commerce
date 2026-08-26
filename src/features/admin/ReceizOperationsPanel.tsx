@@ -12,6 +12,7 @@ export function ReceizOperationsPanel() {
       <div className="settings-list">
         <div><span>SDK / ruleset</span><strong>{RECEIZ_V124_CONTRACT.sdkVersion} / {RECEIZ_V124_CONTRACT.rulesetVersion}</strong></div>
         <div><span>v124 MCP parity</span><strong>{RECEIZ_V124_DOCTRINE.length}/22 · non-authoritative</strong></div>
+        <div><span>Portable proof presentation</span><strong>{RECEIZ_V124_CONTRACT.portablePresentationMcpToolCount}/2 · verify before play</strong></div>
         <div><span>Application matrix</span><strong>{RECEIZ_V124_CONTRACT.operationCount} operations</strong></div>
         <div><span>AI skills</span><strong>{RECEIZ_V124_CONTRACT.aiSkillCount} exact published skills</strong></div>
         <div><span>Package skew</span><strong>Release blocked on mismatch</strong></div>

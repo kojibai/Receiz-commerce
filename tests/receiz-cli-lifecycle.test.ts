@@ -23,7 +23,7 @@ describe("Receiz v124 CLI lifecycle", () => {
     };
 
     assert.equal(report.ok, true);
-    assert.equal(report.schema, "receiz.repository.v123-v124.migration-verification.v1");
+    assert.equal(report.schema, "receiz.repository.v124-patch-migration-verification.v1");
     assert.equal(report.historyRewritten, false);
     assert.ok(report.checks.length > 0);
     assert.ok(report.checks.every((check) => check.ok));
@@ -40,7 +40,7 @@ describe("Receiz v124 CLI lifecycle", () => {
     );
     assert.equal(pkg.scripts["receiz:cli:check"], "node scripts/receiz-cli-check.mjs");
     const cliCheck = readFileSync(join(root, "scripts", "receiz-cli-check.mjs"), "utf8");
-    assert.match(cliCheck, /"--target", "124\.0\.1"/);
+    assert.match(cliCheck, /"--target", "124\.0\.3"/);
     assert.match(cliCheck, /receiz-v124-migration-verify\.mjs/);
     assert.doesNotMatch(cliCheck, /"--target", "122\.0\.0"/);
   });

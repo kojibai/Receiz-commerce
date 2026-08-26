@@ -1,0 +1,50 @@
+{
+  "schema": "receiz.repository.v124-patch-migration-attestation.v1",
+  "sourceVersion": "124.0.1",
+  "targetVersion": "124.0.3",
+  "rulesetVersion": "124.0.0",
+  "applicationReleaseVersion": "5.2.1",
+  "canonicalRegistryDigest": "d02429151b0bcebdaeb89485792e377afc55130f9a25e07982c1c88221314247",
+  "operationMatrixDigest": "540d1c1bf39f1b288b257c79a6e020bdcc5e587fc9b7dbf6b7aaa5d082e20ad5",
+  "appRegistryDigest": "d11659fd5d1b8c6a218e1cb68afb777bb1695f90dbbf4baf502a364addb7b660",
+  "livingSubjectReducerDigest": "5694662e2acc8b886ac9697ffad202b411d7e66c5f26f9106ee0768df7c7b8c8",
+  "applicationOperationCount": 53,
+  "mcpToolCount": 165,
+  "mcpV124ToolCount": 22,
+  "aiSkillCount": 42,
+  "aiManifestCount": 36,
+  "openAiAgentPromptCount": 33,
+  "publicPackageIntegrities": {
+    "@receiz/sdk": "sha512-kdJicDfB+tcODBVtxdKdmxCV7NKzWhTHPKJcJPiYOadxkNx5LdmUxMuwjhiuRSMLRIEKo0YfPYcIjPzilrERtA==",
+    "@receiz/mcp-server": "sha512-dxtpqkW46mC/2DHG+Voxr4wUmSD4wj3Jxq0g2GMyBaYU7dt17l2ZBY/SIFpvRt28VpLB9esTD1io0ptspDwKkg==",
+    "@receiz/ai-skills": "sha512-iTSplhw5J/+kCtjZjRNA/dg1/SIEzTCIBDkrhRK+0zp7W9FWECXUpq1nemQ16gIyR0dHZbTZPnjUV3RqdmoV1Q=="
+  },
+  "officialUpgradePlanActions": 0,
+  "officialUpgradeInspectionSatisfied": true,
+  "historyRewritten": false,
+  "productionDataMigrated": false,
+  "registryChanged": false,
+  "operationMatrixChanged": false,
+  "newPublicSdkPrimitives": [
+    "openVerifiedReceizMaterialUrl",
+    "createReceizPlayableMaterialObjectUrl",
+    "buildReceizMaterialCompositeTransport",
+    "receizKaiMomentFromSealedPulse"
+  ],
+  "newMcpTools": [
+    "receiz_material_url_open",
+    "receiz_sealed_kai_moment"
+  ],
+  "strongerTruth": "sealed-receiz-proof-object",
+  "representationCanOutrankSource": false,
+  "transportIsProofAuthority": false,
+  "presentationIsProofAuthority": false,
+  "sdkAuthority": false,
+  "mcpAuthority": false,
+  "modelOutputIsAuthority": false,
+  "databaseAuthority": false,
+  "deviceClockIsCreationAuthority": false,
+  "publicHeadLimitTruncatesSealedTruth": false,
+  "settlementAndReserveRemainDistinct": true,
+  "institutionIndependentVerificationIsLegalSovereignty": false
+}

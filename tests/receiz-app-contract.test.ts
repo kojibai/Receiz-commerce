@@ -10,9 +10,9 @@ describe("Receiz v124 application contract", () => {
 
     const input = JSON.parse(readFileSync("receiz.app.json", "utf8"));
     const contract = compiler.defineReceizApp(input);
-    const plan = compiler.compileReceizAppContract(contract, { targetSdkVersion: "124.0.1" });
+    const plan = compiler.compileReceizAppContract(contract, { targetSdkVersion: "124.0.3" });
 
-    assert.equal(plan.targetSdkVersion, "124.0.1");
+    assert.equal(plan.targetSdkVersion, "124.0.3");
     assert.deepEqual(contract.features, [
       "identity",
       "proof",
@@ -43,7 +43,7 @@ describe("Receiz v124 application contract", () => {
 
     const result = await compiler.checkReceizIntegration({
       root: process.cwd(),
-      targetSdkVersion: "124.0.1",
+      targetSdkVersion: "124.0.3",
     });
     assert.deepEqual(result.blockingFindings, []);
     assert.equal(result.ok, true);

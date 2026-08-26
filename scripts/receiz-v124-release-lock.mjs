@@ -17,17 +17,17 @@ import { createHash } from "node:crypto";
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { scanReceizV124Repository } from "./receiz-v124-authority-scan.mjs";
 
-const PACKAGE_VERSION = "124.0.1";
+const PACKAGE_VERSION = "124.0.3";
 const RULESET_VERSION = "124.0.0";
-const APP_VERSION = "5.2.0";
+const APP_VERSION = "5.2.1";
 const RANGE = ">=124.0.0 <125.0.0";
 const REGISTRY = "d02429151b0bcebdaeb89485792e377afc55130f9a25e07982c1c88221314247";
 const MATRIX = "540d1c1bf39f1b288b257c79a6e020bdcc5e587fc9b7dbf6b7aaa5d082e20ad5";
-const APP_REGISTRY = "f8f76ecf9b7c7803cbd2a18a4b97a5ba406bfb217a80d76d311167f70ee5e5f9";
+const APP_REGISTRY = "d11659fd5d1b8c6a218e1cb68afb777bb1695f90dbbf4baf502a364addb7b660";
 const INTEGRITIES = Object.freeze({
-  "@receiz/sdk": "sha512-Q6C/R2fMSisQsdWLiaYp98kk1iEthFYtx2WMYrspz7xwq0EP5LLE26NvTW6ddsNKdP3AUcTrmkWDDKCac1NCgQ==",
-  "@receiz/mcp-server": "sha512-BG+U6gZw+Mnz9ClRez36524uXfzYEs6LSLVJgB9vDRTx51VkyCmgJB1E4mpuzcdG34dZUuBRfJ3MncPP5jyt1w==",
-  "@receiz/ai-skills": "sha512-CCEaO/tmxCt7rpQbwoHI77BiA1PS9ca7q/vgn27/M+PiXC0aUE7z3OYaGsHIVU9gZamxBgi9xF7CU8DYnYWBGQ==",
+  "@receiz/sdk": "sha512-kdJicDfB+tcODBVtxdKdmxCV7NKzWhTHPKJcJPiYOadxkNx5LdmUxMuwjhiuRSMLRIEKo0YfPYcIjPzilrERtA==",
+  "@receiz/mcp-server": "sha512-dxtpqkW46mC/2DHG+Voxr4wUmSD4wj3Jxq0g2GMyBaYU7dt17l2ZBY/SIFpvRt28VpLB9esTD1io0ptspDwKkg==",
+  "@receiz/ai-skills": "sha512-iTSplhw5J/+kCtjZjRNA/dg1/SIEzTCIBDkrhRK+0zp7W9FWECXUpq1nemQ16gIyR0dHZbTZPnjUV3RqdmoV1Q==",
 });
 const checks = [];
 const check = (id, ok, detail) => checks.push({ id, ok: Boolean(ok), detail });
@@ -73,7 +73,8 @@ const boundaries = readFileSync("receiz/receiz.boundaries.ts", "utf8");
 check("matrix:boundaries", (boundaries.match(/>=124\.0\.0 <125\.0\.0/g) ?? []).length === 53, String((boundaries.match(/>=124\.0\.0 <125\.0\.0/g) ?? []).length));
 
 const toolNames = new Set(RECEIZ_MCP_TOOLS.map((tool) => tool.name));
-check("mcp:inventory", RECEIZ_MCP_TOOLS.length === 163 && RECEIZ_V124_MCP_TOOL_NAMES.length === 22 && RECEIZ_V124_MCP_TOOL_NAMES.every((name) => toolNames.has(name)), `${RECEIZ_MCP_TOOLS.length}:${RECEIZ_V124_MCP_TOOL_NAMES.length}`);
+check("mcp:inventory", RECEIZ_MCP_TOOLS.length === 165 && RECEIZ_V124_MCP_TOOL_NAMES.length === 22 && RECEIZ_V124_MCP_TOOL_NAMES.every((name) => toolNames.has(name)), `${RECEIZ_MCP_TOOLS.length}:${RECEIZ_V124_MCP_TOOL_NAMES.length}`);
+check("mcp:portable-presentation", ["receiz_material_url_open", "receiz_sealed_kai_moment"].every((name) => toolNames.has(name)), "2");
 check("mcp:v123-retained", RECEIZ_V123_MCP_TOOL_NAMES.length === 8 && RECEIZ_V123_MCP_TOOL_NAMES.every((name) => toolNames.has(name)), String(RECEIZ_V123_MCP_TOOL_NAMES.length));
 const toolMap = json("ai-skills/receiz-mcp-agent-skill/resources/v124-runtime-tool-map.json");
 check("mcp:tool-map", JSON.stringify(toolMap.tools.map((tool) => tool.name)) === JSON.stringify(RECEIZ_V124_MCP_TOOL_NAMES) && toolMap.authority.mcpIsAuthority === false && toolMap.custodyRules.includes("mcp-never-reconstructs-sdk-authority-from-json"), String(toolMap.tools?.length));
@@ -90,8 +91,11 @@ for (const entry of skills.skills ?? []) {
 const allowedV124 = (name) => json(`ai-skills/${name}/manifest.json`).allowedTools.filter((tool) => tool.startsWith("receiz_v124_"));
 check("skills:build-grants", JSON.stringify(allowedV124("receiz-build-production-system")) === JSON.stringify(RECEIZ_V124_MCP_TOOL_NAMES), String(allowedV124("receiz-build-production-system").length));
 check("skills:focused-grants", allowedV124("receiz-proof-authority").length === 6 && allowedV124("receiz-value-execution").length === 7 && allowedV124("receiz-deterministic-replay").length === 6, "6/7/6");
+const proofMediaTools = json("ai-skills/receiz-proof-media/manifest.json").allowedTools;
+check("skills:portable-presentation-grants", ["receiz_material_url_open", "receiz_sealed_kai_moment"].every((tool) => proofMediaTools.includes(tool)), "receiz-proof-media:2");
 
 const adapter = readFileSync("src/lib/receiz/adapter.ts", "utf8");
+const materialAdapter = readFileSync("src/lib/receiz/v124/material.ts", "utf8");
 const runtime = readFileSync("src/lib/receiz/v124/production-runtime.ts", "utf8");
 const publicRoute = readFileSync("app/api/receiz/v124/runtime/route.ts", "utf8");
 for (const method of toolMap.tools.map((tool) => tool.sdkMethod.split(".").at(-1))) check(`adapter:${method}`, adapter.includes(method) || runtime.includes(method), method);
@@ -100,6 +104,11 @@ check("runtime:qualification-gate", runtime.indexOf("await qualifyForMutation") 
 check("runtime:private-projection", runtime.includes("exactPrivateAdditionsLeaveTrustedHost: false") && !/privateAdditionsRef[\s\S]{0,160}\badditions\s*:/.test(runtime), "trusted-host only");
 check("runtime:sealed-replay", runtime.includes("candidateForCanonicalSeal") && runtime.includes("RECEIZ_V124_SEALED_REPLAY_SOURCE_REQUIRED"), "Record -> Seal required");
 check("route:sanitized-report", publicRoute.includes("projectReceizV124Qualification") && !publicRoute.includes("actualGrantedScopes") && !publicRoute.includes("publicDependencyHeads"), "no scopes or heads");
+check("material:adapter", ["openVerifiedReceizMaterialUrl", "createReceizPlayableMaterialObjectUrl", "buildReceizMaterialCompositeTransport"].every((method) => materialAdapter.includes(method)) && adapter.includes("receizKaiMomentFromSealedPulse"), "4");
+const materialViewer = readFileSync("src/features/verify/MaterialProofViewer.tsx", "utf8");
+check("material:verify-before-play", materialViewer.indexOf("openVerifiedUrl(window.location.href)") < materialViewer.indexOf("createPlayableObjectUrl(verified)") && materialViewer.includes("playable.revoke()") && materialViewer.includes("canonicalReceizUrl"), "verified local projection");
+const upstreamGaps = json("receiz.upstream-gaps.json");
+check("upstream:streaming-verifier-export-gap", upstreamGaps.gaps?.some((gap) => gap.id === "sdk.streaming-verifier-public-export" && gap.observedPackage === "@receiz/sdk@124.0.3" && gap.nextReleaseRequired === true && gap.publicDocumentation === false), "private next-release gate");
 
 const scan = scanReceizV124Repository();
 check("authority-scan", scan.ok && scan.findings.length === 0, JSON.stringify(scan.findings));
@@ -112,6 +121,8 @@ const focusedTests = [
   "tests/receiz-v124-production-runtime.test.ts",
   "tests/receiz-v124-authority-scan.test.ts",
   "tests/receiz-v124-developer-ui.test.ts",
+  "tests/receiz-v124-material-ui.test.ts",
+  "tests/receiz-v124-upstream-export-gap.test.ts",
   "tests/receiz-app-contract.test.ts",
   "tests/receiz-v123-proof-authority.test.ts",
   "tests/receiz-v123-value-execution.test.ts",
@@ -120,7 +131,7 @@ const focusedTests = [
 const focused = spawnSync(process.execPath, ["--import", "tsx", "--test", ...focusedTests], { encoding: "utf8", maxBuffer: 64 * 1024 * 1024 });
 check("tests:focused", focused.status === 0, focused.status === 0 ? "passed" : focused.stderr || focused.stdout);
 
-const auditPath = "docs/releases/2026-08-23-v124-production-runtime-release.md";
+const auditPath = "docs/releases/2026-08-25-v124.0.3-portable-material-release.md";
 check("release:audit", existsSync(auditPath), auditPath);
 if (existsSync(auditPath)) {
   const audit = readFileSync(auditPath, "utf8");
