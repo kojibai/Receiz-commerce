@@ -1,6 +1,6 @@
 # MCP Tool Map
 
-The exact universal V124 production-runtime adapters, SDK methods, fixed and conditional scopes, and process-local custody rules are defined in the [V124 runtime tool map](v124-runtime-tool-map.md). That 22-tool surface composes with the inherited inventories below; it does not replace or reinterpret them.
+The exact retained V124/V124.1 production-runtime adapters, SDK methods, fixed and conditional scopes, and process-local custody rules are defined in the [V124 runtime tool map](v124-runtime-tool-map.md). That 26-tool surface composes with the inherited inventories below; it does not replace or reinterpret them.
 
 ## V120 Application Compiler
 
@@ -24,9 +24,9 @@ verification verdict or proof authority.
 
 Source: `packages/receiz-mcp-server/src/index.ts`.
 
-## Current SDK-Only Profile And Ownership Outcomes
+## SDK-direct Profile And Ownership Outcomes
 
-The current MCP runtime exposes no direct profile-mutation or bearer-claim adapters. Use the canonical SDK operations instead:
+The complete SDK capability inventory exposed by `receiz_capabilities` includes these outcomes, while the MCP runtime intentionally exposes no direct profile-mutation or bearer-claim adapter that could serialize same-runtime proof custody. Use the canonical SDK operations instead:
 
 | Need | Canonical SDK operation | Boundary |
 |---|---|---|

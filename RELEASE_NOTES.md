@@ -1,3 +1,11 @@
+# Receiz v126 dependency upgrade
+
+SDK, MCP server, and AI skills are pinned to `126.0.0`. The app now uses the v126 registry and 60-operation matrix, with 221 MCP tools and the exact published 43-skill bundle. Existing runtime integrations remain supported.
+
+See [upgrade evidence and published-package discrepancies](docs/releases/2026-09-08-v126-sdk-upgrade.md).
+
+---
+
 # Receiz Commerce Kit v5.2.1 — v124.0.3 Portable Material
 
 Release date: August 25, 2026

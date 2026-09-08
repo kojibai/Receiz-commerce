@@ -5,7 +5,7 @@
     {
       "id": "sdk.streaming-verifier-public-export",
       "status": "confirmed-upstream-gap",
-      "observedPackage": "@receiz/sdk@124.0.3",
+      "observedPackage": "@receiz/sdk@126.0.0",
       "nextReleaseRequired": true,
       "publicDocumentation": false,
       "evidence": {
@@ -25,6 +25,42 @@
         "Retain operational denial rather than invalid-artifact classification when the convenience verifier cannot materialize an otherwise protocol-valid file."
       ],
       "forbiddenWorkaround": "Do not deep-import undeclared dist paths or copy canonical verifier implementation into this app."
+    },
+    {
+      "id": "sdk.integration-scanner-published-inventory",
+      "status": "confirmed-upstream-false-positive",
+      "observedPackage": "@receiz/sdk@126.0.0",
+      "publicDocumentation": true,
+      "evidence": {
+        "paths": [
+          "ai-skills/resources/sdk-public-functions.json",
+          "ai-skills/resources/sdk-public-functions.md",
+          "ai-skills/skills.json"
+        ],
+        "review": "scripts/receiz-v126-inspection.mjs",
+        "restriction": "Exact finding/path combinations and published byte parity only."
+      }
+    },
+    {
+      "id": "ai-skills.stale-summary-counts",
+      "status": "confirmed-upstream-metadata-gap",
+      "observedPackage": "@receiz/ai-skills@126.0.0",
+      "publicDocumentation": true,
+      "evidence": {
+        "declared": {
+          "skills": 42,
+          "manifests": 36,
+          "openaiAgentPrompts": 33
+        },
+        "enumerated": {
+          "skills": 43,
+          "manifests": 37,
+          "openaiAgentPrompts": 34
+        }
+      },
+      "requiredResolution": [
+        "Regenerate the published summary counts from the skill entries."
+      ]
     }
   ]
 }

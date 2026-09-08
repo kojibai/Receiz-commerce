@@ -42,7 +42,7 @@ The SDK is convenience and typed transport around that truth. It verifies, proje
 
 ## V124 Production Runtime
 
-The exact public source set is `@receiz/sdk@124.0.3`, `@receiz/mcp-server@124.0.3`, and `@receiz/ai-skills@124.0.3`; constitutional ruleset `124.0.0` is verified separately.
+The exact public source set is `@receiz/sdk@126.0.0`, `@receiz/mcp-server@126.0.0`, and `@receiz/ai-skills@126.0.0`; constitutional ruleset `126.0.0` is verified separately.
 
 - `v124.kai` creates live challenge freshness and deterministic sealed-pulse moments; `v124.proofAuthority` creates canonical consent coordinates.
 - `v124.material` verifies inline or composite content-bearing proof URLs, reconstructs exact payload bytes, produces browser-local playable URLs, and exposes the canonical proof link.
@@ -120,7 +120,7 @@ SDK rails:
 - `merchants.profile`
 - `merchants.capabilities`
 
-These rails are exposed in `@receiz/sdk@124.0.3`. The app treats customer accounts as tenant-scoped storefront projections over Receiz proof. The same proof-bearing Receiz identity can be used across multiple stores, but orders, rewards, assets, and permissions are projected for the active subdomain or custom domain. SDK `doctor()` reports delegated-token, tenant, customer, merchant, commerce, media, domain, public-store, and coordination requirements directly.
+These rails are exposed in `@receiz/sdk@126.0.0`. The app treats customer accounts as tenant-scoped storefront projections over Receiz proof. The same proof-bearing Receiz identity can be used across multiple stores, but orders, rewards, assets, and permissions are projected for the active subdomain or custom domain. SDK `doctor()` reports delegated-token, tenant, customer, merchant, commerce, media, domain, public-store, and coordination requirements directly.
 
 ## Merchant Settlement
 

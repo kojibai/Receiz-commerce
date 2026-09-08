@@ -12,9 +12,9 @@ const rootTypes = readFileSync(join(packageRoot, "dist/index.d.ts"), "utf8");
 const canonicalTypes = readFileSync(join(packageRoot, "dist/verifier/canonical.d.ts"), "utf8");
 const verificationLimits = readFileSync(join(packageRoot, "dist/verificationLimits.js"), "utf8");
 
-describe("Receiz v124.0.3 upstream streaming-verifier export gap", () => {
+describe("Receiz v126.0.0 upstream streaming-verifier export gap", () => {
   it("records the confirmed package boundary as a private next-release requirement", () => {
-    assert.equal(packageJson.version, "124.0.3");
+    assert.equal(packageJson.version, "126.0.0");
     assert.match(canonicalTypes, /verifyReceizTrailerFileStreaming/);
     assert.match(canonicalTypes, /validateReceizExactByteVerification/);
     assert.doesNotMatch(rootTypes, /verifyReceizTrailerFileStreaming/);
@@ -24,7 +24,7 @@ describe("Receiz v124.0.3 upstream streaming-verifier export gap", () => {
 
     const tracker = JSON.parse(readFileSync("receiz.upstream-gaps.json", "utf8"));
     const gap = tracker.gaps.find((entry: { id: string }) => entry.id === "sdk.streaming-verifier-public-export");
-    assert.equal(gap.observedPackage, "@receiz/sdk@124.0.3");
+    assert.equal(gap.observedPackage, "@receiz/sdk@126.0.0");
     assert.equal(gap.nextReleaseRequired, true);
     assert.equal(gap.publicDocumentation, false);
   });

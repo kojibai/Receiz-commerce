@@ -8,7 +8,7 @@ it("publishes v124 SDK, MCP, and AI doctrine beneath source authority", () => {
   assert.match(publicPage, /RECEIZ_V124_DOCTRINE/);
   assert.match(publicPage, /operationCount/);
   assert.match(publicPage, /mcpToolCount/);
-  assert.match(publicPage, /42 AI skills/);
+  assert.match(publicPage, /43 AI skills/);
   assert.match(publicPage, /institution-independent/i);
   assert.match(publicPage, /representation.*never.*outrank/i);
   assert.match(operator, /Receiz v12[34]/);

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Receiz Attestation Lifecycle"
+  short_description: "Build and verify portable trust lifecycles"
+  default_prompt: "Use $receiz-attestation-lifecycle to build or verify a generic Receiz attestation, credential, selective presentation, or external execution without exposing private proof material."

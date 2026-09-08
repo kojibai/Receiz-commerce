@@ -1,7 +1,7 @@
 import registryPayload from "../../../receiz.constitution.json" with { type: "json" };
 import {
   RECEIZ_RULESET_VERSION,
-  RECEIZ_V124_REGISTRY_DIGEST,
+  RECEIZ_CURRENT_REGISTRY_DIGEST,
   createReceizCausalCheckpoint,
   createReceizAdmissionEngine,
   createReceizCausalHistory,
@@ -29,8 +29,8 @@ export async function verifyReceizAppConstitution(): Promise<Readonly<{
 }>> {
   const registryDigest = await digestReceizConstitution(RECEIZ_APP_CONSTITUTION);
   return {
-    ok: RECEIZ_APP_CONSTITUTION.previousRegistryDigest === RECEIZ_V124_REGISTRY_DIGEST && RECEIZ_APP_CONSTITUTION.version === RECEIZ_RULESET_VERSION,
-    registryDigest: RECEIZ_V124_REGISTRY_DIGEST,
+    ok: RECEIZ_APP_CONSTITUTION.previousRegistryDigest === RECEIZ_CURRENT_REGISTRY_DIGEST && RECEIZ_APP_CONSTITUTION.version === RECEIZ_RULESET_VERSION,
+    registryDigest: RECEIZ_CURRENT_REGISTRY_DIGEST,
     appRegistryDigest: registryDigest,
     rulesetVersion: RECEIZ_RULESET_VERSION,
   };
@@ -58,7 +58,7 @@ export function createReceizAppAdmissionEngine(
 export function createReceizAppCausalHistory(
   options: Omit<Parameters<typeof createReceizCausalHistory>[0], "registryDigest">,
 ) {
-  return createReceizCausalHistory({ ...options, registryDigest: RECEIZ_V124_REGISTRY_DIGEST });
+  return createReceizCausalHistory({ ...options, registryDigest: RECEIZ_CURRENT_REGISTRY_DIGEST });
 }
 
 export function checkpointReceizAppCausalHistory(

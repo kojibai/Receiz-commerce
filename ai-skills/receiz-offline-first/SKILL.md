@@ -10,7 +10,7 @@ Admit verified local truth immediately, queue idempotent appends, and let networ
 ## Constitutional workflow
 
 1. Inspect the repository and installed SDK version.
-2. Load the active canonical v124 registry and applicable constitutional laws.
+2. Load the active canonical v126 registry and applicable constitutional laws.
 3. Identify every authority boundary affected by the change.
 4. Write the implementation contract before implementation.
 5. Implement canonical changes only through SDK commands.
@@ -66,3 +66,9 @@ Historical sealed proof objects remain exact-byte verifiable evidence. Historica
 Use canonical head → entire proof history → bounded index retrieval → exact primary-object resolution → reasoning → provenance. The 96-object window is working context, never history truncation. AI speech and performance remain non-authoritative. Consequential actions require typed deterministic command admission; meetings, relationships, trades, gifts, and battles require atomic multi-subject transactions. Autonomous execution requires a current digest-bound mandate at lease time. Bearer transfer preserves identity, full history, memory policy, inventory disposition, and unknown namespace bytes while immediately revoking former-owner authority.
 
 Concrete v120 evidence must include: a creature speaking from exact long-form proof memory; absent-owner exploration inside a mandate; a mutual relationship; a bounded autonomous trade; an atomic battle; exact device restoration; queued-action revocation; partition convergence without history replacement; rejection of an AI-invented event; and cross-application subject continuity.
+
+<!-- receiz-v124.1-capability-map:start -->
+## V124.1 callable capability bindings
+
+- **portable-account-continuity.** Seal, verify, and immediately project complete account truth—including profile, showcase, wallet, market positions/history, media, and proof history—without waiting on a server or database. SDK: `appendReceizIdentityPortableState`, `verifyReceizIdentityPortableStateProof`, `projectReceizIdentityAccount`. MCP: none: private SDK boundary. Boundary: The verified Identity Seal, Identity Record, or Receiz Key carries account truth. Private portable state is not exposed through MCP; server synchronization may append verified additions only after immediate local projection.
+<!-- receiz-v124.1-capability-map:end -->

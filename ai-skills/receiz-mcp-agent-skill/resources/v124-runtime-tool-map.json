@@ -23,7 +23,11 @@
     "restore-accepts-only-sealedReplayProofObjectRef",
     "private-additions-remain-in-trusted-host-custody-behind-privateAdditionsRef",
     "private-additions-exact-result-is-never-returned-to-the-model",
-    "mcp-never-reconstructs-sdk-authority-from-json"
+    "source-carried-replay-exact-sources-stay-in-trusted-host-custody",
+    "mcp-never-reconstructs-sdk-authority-from-json",
+    "conversation-source-exact-sources-stay-in-trusted-host-custody",
+    "conversation-epoch-secret-never-enters-model-output",
+    "material-source-locators-and-bytes-stay-in-trusted-host-custody"
   ],
   "tools": [
     {
@@ -322,6 +326,59 @@
       "outputRefs": [],
       "actionClass": "local-custody-restore",
       "custody": "Accepts only sealedReplayProofObjectRef, resolves the exact sealed artifact in trusted host custody, and requires canonical SDK verification before restoring replay custody."
+    },
+    {
+      "name": "receiz_source_carried_replay_open",
+      "sdkMethod": "openReceizSourceCarriedReplayFamilyV124 + projectReceizSourceCarriedReplayBranchesV124",
+      "scopeMode": "none",
+      "fixedScopes": [],
+      "conditionalScopes": [],
+      "inputRefs": [
+        "sealedSourceArtifactRefs"
+      ],
+      "outputRefs": [],
+      "actionClass": "local-held-read-only",
+      "custody": "Resolves exact sealed replay sources through trusted-host references, preserves every valid branch, and returns only stable coordinates and counts. Exact source bytes are never returned or persisted by MCP."
+    },
+    {
+      "name": "receiz_conversation_source_family_open",
+      "sdkMethod": "openReceizConversationSourceFamilyV1",
+      "scopeMode": "none",
+      "fixedScopes": [],
+      "conditionalScopes": [],
+      "inputRefs": [
+        "sealedSourceArtifactRefs"
+      ],
+      "outputRefs": [],
+      "actionClass": "local-held-read-only",
+      "custody": "Resolves exact sealed conversation replay sources through trusted-host references, preserves every valid sibling branch, and returns member, epoch, message-digest, and head coordinates only. Exact sources and clear message bodies never enter model output."
+    },
+    {
+      "name": "receiz_conversation_epoch_grants_plan",
+      "sdkMethod": "planReceizConversationEpochGrantBatchesV1",
+      "scopeMode": "none",
+      "fixedScopes": [],
+      "conditionalScopes": [],
+      "inputRefs": [
+        "epochSecretRef",
+        "recipientSetRef"
+      ],
+      "outputRefs": [],
+      "actionClass": "local-bounded-private-plan",
+      "custody": "Resolves the exact epoch secret and complete recipient binding set through trusted-host references, emits at most 128 encrypted recipient grants per call, and returns no clear epoch secret. Repeat nextRecipientOffset without a total membership cap."
+    },
+    {
+      "name": "receiz_material_source_parts_open",
+      "sdkMethod": "openReceizMaterialSourceParts",
+      "scopeMode": "none",
+      "fixedScopes": [],
+      "conditionalScopes": [],
+      "inputRefs": [
+        "materialSourceFamilyRef"
+      ],
+      "outputRefs": [],
+      "actionClass": "local-held-read-only",
+      "custody": "Resolves and verifies the complete held material source family, then returns at most 256 segment coordinates per call. Exact material bytes and content-bearing locators never enter model output."
     },
     {
       "name": "receiz_v124_subject_namespaces_resolve",

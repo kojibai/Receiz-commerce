@@ -7,6 +7,10 @@ description: Use when qualifying, locking, packaging, attesting, or preparing pu
 
 Require package, registry, verifier, migration, conformance, security, performance, documentation, and attestation parity. Receiz is a proof-native artifact system; this skill operates beneath sealed proof and verified local history.
 
+## KKSv1.0 release lock
+
+Read [the shared KKSv1.0 temporal-authority contract](../resources/kks-v1-temporal-authority.md). A release fails if runtime, SDK, MCP, AI skills, examples, or schemas derive proof Kai from `createdAt`, require an external clock lookup, or allow Chronos to order or override carried Kai. Require the SDK, MCP, manifest, documentation, and temporal conformance gates to agree before attestation.
+
 ## Binding v120 artifact law
 
 A Receiz artifact is the exact byte sequence returned by native Record -> Seal. The inner payload is never an acceptable substitute.
@@ -35,7 +39,7 @@ if (opened.sealedArtifact.artifactSha256 !== sealedArtifact.artifactSha256) thro
 if (opened.verifiedPayload.sha256 !== sealedArtifact.payloadSha256) throw new Error("payload_binding_mismatch");
 ```
 
-Independently hash the saved bytes and require equality with `sealedArtifact.artifactSha256`. Require `verification.ok`, `integrity.ok`, carrier `native-record-seal`, Signature V4, owner, claim, and verify-path agreement. Reopen the exact saved file with `verifyAndOpen`, then prove a different Receiz application preserves identity, cards, history, receipts, and unknown namespaces. Require SDK, MCP, and AI packages to report the same v120 registry digest and artifact-law version before release qualification.
+Independently hash the saved bytes and require equality with `sealedArtifact.artifactSha256`. Require `verification.ok`, `integrity.ok`, carrier `native-record-seal`, Signature V4, owner, claim, and verify-path agreement. Reopen the exact saved file with `verifyAndOpen`, then prove a different Receiz application preserves identity, cards, history, receipts, and unknown namespaces. Require SDK, MCP, and AI packages to report the same v126 registry digest and artifact-law version before release qualification.
 
 ## Twelve-step artifact workflow
 
@@ -126,7 +130,7 @@ Atomic commit result:
 ## Constitutional workflow
 
 1. Inspect the repository and installed SDK version.
-2. Load the active canonical v124 registry and applicable constitutional laws.
+2. Load the active canonical v126 registry and applicable constitutional laws.
 3. Identify every authority boundary affected by the change.
 4. Write the implementation contract before implementation.
 5. Implement canonical changes only through SDK commands.
@@ -182,3 +186,7 @@ Historical sealed proof objects remain exact-byte verifiable evidence. Historica
 Use canonical head → entire proof history → bounded index retrieval → exact primary-object resolution → reasoning → provenance. The 96-object window is working context, never history truncation. AI speech and performance remain non-authoritative. Consequential actions require typed deterministic command admission; meetings, relationships, trades, gifts, and battles require atomic multi-subject transactions. Autonomous execution requires a current digest-bound mandate at lease time. Bearer transfer preserves identity, full history, memory policy, inventory disposition, and unknown namespace bytes while immediately revoking former-owner authority.
 
 Concrete v120 evidence must include: a creature speaking from exact long-form proof memory; absent-owner exploration inside a mandate; a mutual relationship; a bounded autonomous trade; an atomic battle; exact device restoration; queued-action revocation; partition convergence without history replacement; rejection of an AI-invented event; and cross-application subject continuity.
+
+## v126 complete SDK reference
+
+Read [all public SDK function signatures](../resources/sdk-public-functions.json) and [the entry-point index](../resources/sdk-public-functions.md), including compiler, testing, and React exports. Client capabilities and executable MCP adapters remain separately identified; inventory membership never substitutes for an implemented adapter or SDK proof admission.

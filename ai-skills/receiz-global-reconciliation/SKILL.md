@@ -27,6 +27,12 @@ Use monotonic known-head catch-up. Reject a returned ancestor with `REMOTE_HEAD_
 
 Read [divergence-and-recovery.md](resources/divergence-and-recovery.md) for contention and indeterminate attempt recovery.
 
+## Held source-family reconciliation
+
+When both sides carry sealed replay-segment proof objects, open and verify each held family before remote coordination. Diff exact artifact membership, transfer only missing sealed sources, reopen the union, and preserve every valid head. The deterministic family set digest is a comparison coordinate only; it cannot replace any enclosing artifact, authenticated head, or admitted history.
+
+Use `receiz_source_carried_replay_open` to inspect trusted-host `sealedSourceArtifactRefs` without returning or persisting exact bytes. Missing predecessors, conflicts, cycles, or identity/registry/reducer drift are structural divergence and must fail closed. A server head may append a verified source beneath the held family; it may not erase locally verified truth or delay its first paint.
+
 ## Ownership succession
 
 For portable bearer artifacts, derive current ownership from the latest lawfully admitted `ownership.transition` in verified causal order while retaining every earlier owner. Verify each historical owner-to-successor authorization independently. The final reconciliation capability authorizes submission, not prior handoffs.
@@ -78,3 +84,9 @@ Report the commit domain, exact artifact digest, verified history head, relation
 Use canonical head → entire proof history → bounded index retrieval → exact primary-object resolution → reasoning → provenance. The 96-object window is working context, never history truncation. AI speech and performance remain non-authoritative. Consequential actions require typed deterministic command admission; meetings, relationships, trades, gifts, and battles require atomic multi-subject transactions. Autonomous execution requires a current digest-bound mandate at lease time. Bearer transfer preserves identity, full history, memory policy, inventory disposition, and unknown namespace bytes while immediately revoking former-owner authority.
 
 Concrete v120 evidence must include: a creature speaking from exact long-form proof memory; absent-owner exploration inside a mandate; a mutual relationship; a bounded autonomous trade; an atomic battle; exact device restoration; queued-action revocation; partition convergence without history replacement; rejection of an AI-invented event; and cross-application subject continuity.
+
+<!-- receiz-v124.1-capability-map:start -->
+## V124.1 callable capability bindings
+
+- **source-carried-replay.** Open, compare, merge, and project every verified replay branch from exact sealed sources without a database or last-write-wins collapse. SDK: `openReceizSourceCarriedReplayFamilyV124`, `diffReceizSourceCarriedReplayFamiliesV124`, `mergeReceizSourceCarriedReplayFamiliesV124`, `projectReceizSourceCarriedReplayBranchesV124`. MCP: `receiz_source_carried_replay_open`. Boundary: Each sealed replay source is verified independently. Family and branch projections coordinate exact admitted sources but never replace the enclosing proof objects.
+<!-- receiz-v124.1-capability-map:end -->

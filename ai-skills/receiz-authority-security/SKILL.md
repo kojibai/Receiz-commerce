@@ -7,10 +7,14 @@ description: Use when work touches capabilities, identity, PBI, tenancy, ownersh
 
 Audit actors, tenants, capabilities, proof domains, confused-deputy paths, escalation, and cross-boundary effects. Receiz is a proof-native artifact system; this skill operates beneath sealed proof and verified local history.
 
+## KKSv1.0 temporal authority
+
+Read [the shared KKSv1.0 temporal-authority contract](../resources/kks-v1-temporal-authority.md). Reject any proof, authorization, ordering, expiry, or causal decision that derives Kai from `createdAt`, server time, database time, or a network clock. New Kai is computed locally from Genesis and the canonical frequency; existing Kai must be carried by the verified sealed proof object.
+
 ## Constitutional workflow
 
 1. Inspect the repository and installed SDK version.
-2. Load the active canonical v124 registry and applicable constitutional laws.
+2. Load the active canonical v126 registry and applicable constitutional laws.
 3. Identify every authority boundary affected by the change.
 4. Write the implementation contract before implementation.
 5. Implement canonical changes only through SDK commands.

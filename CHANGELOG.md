@@ -2,6 +2,13 @@
 
 All notable changes to Receiz Commerce Kit will be documented here.
 
+## Unreleased — Receiz v126
+
+- Upgrade the coordinated SDK, MCP, and AI packages to `126.0.0` with exact lockfile integrity.
+- Adopt the current registry and 60-operation matrix while preserving custom runtime laws.
+- Sync the 43-skill published bundle and update release verification for 221 MCP tools.
+- Document and narrowly verify upstream inventory scanner exceptions and stale count metadata.
+
 ## 5.2.1 - Receiz v124.0.3 Portable Material
 
 - Pinned SDK, MCP server, and AI skills to exact public `124.0.3` artifacts while preserving constitutional ruleset `124.0.0`, the canonical registry, and the 53-operation matrix.

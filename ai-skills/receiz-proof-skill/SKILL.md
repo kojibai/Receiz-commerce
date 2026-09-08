@@ -7,6 +7,10 @@ description: Use when an agent must verify, inspect, explain, or report on Recei
 
 Receiz proof inspection starts from the artifact, manifest, proof bundle, verified append, or admitted local register. Do not start from a database row, marketplace card, UI state, or model memory.
 
+## KKSv1.0 temporal authority
+
+Read [the shared KKSv1.0 temporal-authority contract](../resources/kks-v1-temporal-authority.md). For an existing proof object, only its verified carried Kai coordinate is temporal authority. Project Chronos from Kai for display after verification. If Kai is absent, do not reconstruct it from `createdAt`; fail closed or omit the temporal proof claim.
+
 ## Binding v120 artifact law
 
 A Receiz artifact is the exact byte sequence returned by native Record -> Seal. The inner payload is never an acceptable substitute.

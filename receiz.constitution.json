@@ -1,32 +1,13 @@
 {
   "schema": "receiz.constitution.registry.v1",
-  "version": "124.0.0",
-  "previousRegistryDigest": "d02429151b0bcebdaeb89485792e377afc55130f9a25e07982c1c88221314247",
-  "effectiveKai": "13770000",
-  "createdAt": "2026-08-23T13:00:00.000Z",
+  "version": "126.0.0",
+  "previousRegistryDigest": "80137c2e6f294050ef36ff75e4daac15c7790b7f04d9a91fab9d1970fa3c0b09",
+  "effectiveKai": "14038643",
+  "createdAt": "2026-09-08T01:27:14.807Z",
   "predicateLanguageVersion": "receiz-law-expression.v1",
   "authority": {
     "registryPayloadIsAuthority": false,
     "strongerTruth": "sealed-receiz-proof-object"
-  },
-  "protocolLimits": {
-    "exactArtifactBytes": 524288000,
-    "archiveEntries": 5000,
-    "singleDecompressedEntryBytes": 1073741824,
-    "totalDecompressedBytes": 2147483648,
-    "rootArchiveContainerDepth": 1,
-    "embeddedArchiveNesting": 0,
-    "perEntryCompressionRatio": 200,
-    "aggregateCompressionRatio": 100,
-    "canonicalArchivePathBytes": 1024,
-    "archiveEntryNameBytes": 255,
-    "manifestBytes": 16777216,
-    "verifiedHistoryNodes": 4096,
-    "reconciliationAdditions": 64,
-    "remotePredecessorFetches": 256,
-    "artifactNamespaces": 256,
-    "reducerOperations": 4096,
-    "lawExpressionOperations": 4096
   },
   "laws": [
     {
@@ -4255,95 +4236,3791 @@
       }
     },
     {
+      "id": "receiz.profile-showcase.carrier.v114@1",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "profile-showcase-admission"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "proposed.carrier.schema"
+              },
+              "right": {
+                "op": "literal",
+                "value": "receiz.profile-showcase-carrier.v114"
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "PROFILE_SHOWCASE_CARRIER_REQUIRED",
+        "safeAlternatives": [
+          "use-registered-v114-showcase-carrier"
+        ]
+      }
+    },
+    {
+      "id": "receiz.namespace.profile-showcase-append.v114@1",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "profile-showcase-append"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "proposed.namespaceLawVersion"
+              },
+              "right": {
+                "op": "literal",
+                "value": "receiz.namespace.profile-showcase-append.v114@1"
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "PROFILE_SHOWCASE_NAMESPACE_LAW_REQUIRED",
+        "safeAlternatives": [
+          "use-registered-profile-showcase-namespace-law"
+        ]
+      }
+    },
+    {
+      "id": "receiz.namespace.profile-showcase.reducer.v1",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "profile-showcase-append"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "proposed.namespaceReducerVersion"
+              },
+              "right": {
+                "op": "literal",
+                "value": "receiz.namespace.profile-showcase.reducer.v1"
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "PROFILE_SHOWCASE_REDUCER_REQUIRED",
+        "safeAlternatives": [
+          "use-registered-profile-showcase-reducer"
+        ]
+      }
+    },
+    {
+      "id": "profile-showcase.genesis.effects-derived",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "profile-showcase-genesis"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "proposed.effects.source"
+              },
+              "right": {
+                "op": "literal",
+                "value": "registered-showcase-reducer"
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "PROFILE_SHOWCASE_GENESIS_EFFECTS_MUST_BE_DERIVED",
+        "safeAlternatives": [
+          "derive-genesis-effects-with-registered-showcase-reducer"
+        ]
+      }
+    },
+    {
+      "id": "profile-showcase.append.effects-derived",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "profile-showcase-append"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "proposed.effects.source"
+              },
+              "right": {
+                "op": "literal",
+                "value": "registered-showcase-reducer"
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "PROFILE_SHOWCASE_APPEND_EFFECTS_MUST_BE_DERIVED",
+        "safeAlternatives": [
+          "derive-append-effects-with-registered-showcase-reducer"
+        ]
+      }
+    },
+    {
+      "id": "profile-showcase.literal-stable-identity",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "profile-showcase-append"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "proposed.artifactId"
+              },
+              "right": {
+                "op": "path",
+                "value": "current.artifactId"
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "PROFILE_SHOWCASE_IDENTITY_CHANGE_FORBIDDEN",
+        "safeAlternatives": [
+          "preserve-literal-profile-showcase-owner-identity"
+        ]
+      }
+    },
+    {
+      "id": "profile-showcase.carried-history-required",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "profile-showcase-append"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "proposed.receizProofHistory.schema"
+              },
+              "right": {
+                "op": "literal",
+                "value": "receiz.carried-proof-history.v113"
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "PROFILE_SHOWCASE_CARRIED_HISTORY_REQUIRED",
+        "safeAlternatives": [
+          "seal-successor-history-in-showcase-carrier"
+        ]
+      }
+    },
+    {
+      "id": "receiz.economy-showcase.carrier.v114@1",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "economy-showcase-admission"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "proposed.carrier.schema"
+              },
+              "right": {
+                "op": "literal",
+                "value": "receiz.economy-showcase-carrier.v114"
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "ECONOMY_SHOWCASE_CARRIER_REQUIRED",
+        "safeAlternatives": [
+          "use-registered-v114-economy-showcase-carrier"
+        ]
+      }
+    },
+    {
+      "id": "receiz.namespace.economy-showcase-append.v114@1",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "economy-showcase-append"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "proposed.namespaceLawVersion"
+              },
+              "right": {
+                "op": "literal",
+                "value": "receiz.namespace.economy-showcase-append.v114@1"
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "ECONOMY_SHOWCASE_NAMESPACE_LAW_REQUIRED",
+        "safeAlternatives": [
+          "use-registered-economy-showcase-namespace-law"
+        ]
+      }
+    },
+    {
+      "id": "receiz.namespace.economy-showcase.reducer.v1",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "economy-showcase-append"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "proposed.namespaceReducerVersion"
+              },
+              "right": {
+                "op": "literal",
+                "value": "receiz.namespace.economy-showcase.reducer.v1"
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "ECONOMY_SHOWCASE_REDUCER_REQUIRED",
+        "safeAlternatives": [
+          "use-registered-economy-showcase-reducer"
+        ]
+      }
+    },
+    {
+      "id": "economy-showcase.genesis.effects-derived",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "economy-showcase-genesis"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "proposed.effects.source"
+              },
+              "right": {
+                "op": "literal",
+                "value": "registered-economy-showcase-reducer"
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "ECONOMY_SHOWCASE_GENESIS_EFFECTS_MUST_BE_DERIVED",
+        "safeAlternatives": [
+          "derive-genesis-effects-with-registered-economy-showcase-reducer"
+        ]
+      }
+    },
+    {
+      "id": "economy-showcase.append.effects-derived",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "economy-showcase-append"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "proposed.effects.source"
+              },
+              "right": {
+                "op": "literal",
+                "value": "registered-economy-showcase-reducer"
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "ECONOMY_SHOWCASE_APPEND_EFFECTS_MUST_BE_DERIVED",
+        "safeAlternatives": [
+          "derive-append-effects-with-registered-economy-showcase-reducer"
+        ]
+      }
+    },
+    {
+      "id": "economy-showcase.merge.effects-derived",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "economy-showcase-merge"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "proposed.effects.source"
+              },
+              "right": {
+                "op": "literal",
+                "value": "registered-economy-showcase-reducer"
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "ECONOMY_SHOWCASE_MERGE_EFFECTS_MUST_BE_DERIVED",
+        "safeAlternatives": [
+          "derive-merge-effects-with-registered-economy-showcase-reducer"
+        ]
+      }
+    },
+    {
+      "id": "economy-showcase.literal-stable-identity",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "economy-showcase-append"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "proposed.artifactId"
+              },
+              "right": {
+                "op": "literal",
+                "value": "economy-showcase:receiz.com"
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "ECONOMY_SHOWCASE_IDENTITY_CHANGE_FORBIDDEN",
+        "safeAlternatives": [
+          "preserve-literal-global-economy-showcase-identity"
+        ]
+      }
+    },
+    {
+      "id": "economy-showcase.carried-history-head-required",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "economy-showcase-append"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "proposed.receizProofHistory.schema"
+              },
+              "right": {
+                "op": "literal",
+                "value": "receiz.carried-proof-history-head.v114"
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "ECONOMY_SHOWCASE_CARRIED_HISTORY_HEAD_REQUIRED",
+        "safeAlternatives": [
+          "seal-bounded-successor-history-in-economy-showcase-carrier"
+        ]
+      }
+    },
+    {
+      "id": "receiz.native-capture.schema.v115@1",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "native-capture-admission"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "proposed.nativeCapture.schema"
+              },
+              "right": {
+                "op": "literal",
+                "value": "receiz.native_capture.v1"
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "NATIVE_CAPTURE_SCHEMA_REQUIRED",
+        "safeAlternatives": [
+          "use-receiz-native-capture-v1"
+        ]
+      }
+    },
+    {
+      "id": "receiz.native-capture.camera-ceremony.v115@1",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "native-capture-admission"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "proposed.nativeCapture.source"
+              },
+              "right": {
+                "op": "literal",
+                "value": "camera"
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "NATIVE_CAPTURE_CAMERA_CEREMONY_REQUIRED",
+        "safeAlternatives": [
+          "admit-only-dedicated-native-camera-ceremony-bytes"
+        ]
+      }
+    },
+    {
+      "id": "receiz.pbi-proof-object-authorship.schema.v115@1",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "proof-object-authorship-append"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "proposed.authorship.schema"
+              },
+              "right": {
+                "op": "literal",
+                "value": "receiz.pbi.proof-object-authorship.v1"
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "PBI_PROOF_OBJECT_AUTHORSHIP_SCHEMA_REQUIRED",
+        "safeAlternatives": [
+          "use-receiz-pbi-proof-object-authorship-v1"
+        ]
+      }
+    },
+    {
+      "id": "receiz.pbi-proof-object-authorship.canonical-predecessor.v115@1",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "proof-object-authorship-append"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "proposed.predecessorAuthority"
+              },
+              "right": {
+                "op": "literal",
+                "value": "canonical-verified-enclosing-artifact"
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "CANONICAL_PREDECESSOR_VERIFICATION_REQUIRED",
+        "safeAlternatives": [
+          "verify-the-enclosing-predecessor-artifact-first"
+        ]
+      }
+    },
+    {
+      "id": "receiz.pbi-proof-object-authorship.media-preserved.v115@1",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "proof-object-authorship-append"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "proposed.mediaSha256"
+              },
+              "right": {
+                "op": "path",
+                "value": "current.mediaSha256"
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "PBI_AUTHORSHIP_MEDIA_CHANGE_FORBIDDEN",
+        "safeAlternatives": [
+          "append-authorship-without-changing-media-truth"
+        ]
+      }
+    },
+    {
+      "id": "receiz.pbi-proof-object-authorship.ownership-non-transfer.v115@1",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "proof-object-authorship-append"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "proposed.ownerReceizId"
+              },
+              "right": {
+                "op": "path",
+                "value": "current.ownerReceizId"
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "PBI_AUTHORSHIP_OWNERSHIP_TRANSFER_FORBIDDEN",
+        "safeAlternatives": [
+          "keep-authorship-distinct-from-ownership-transfer"
+        ]
+      }
+    },
+    {
+      "id": "receiz.pbi-proof-object-authorship.ordered-append.v115@1",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "proof-object-authorship-append"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "proposed.position"
+              },
+              "right": {
+                "op": "path",
+                "value": "current.authorshipCount"
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "PBI_AUTHORSHIP_ORDER_REQUIRED",
+        "safeAlternatives": [
+          "append-after-the-current-verified-authorship-head"
+        ]
+      }
+    },
+    {
+      "id": "receiz.recursive-continuity.head-selection.v119",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "merge",
+        "migration",
+        "admission"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "recursive-head-selection"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "proposed.head.highestValidKaiSelected"
+              },
+              "right": {
+                "op": "literal",
+                "value": true
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "HIGHEST_VALID_KAI_HEAD_REQUIRED",
+        "safeAlternatives": [
+          "retain-stronger-held-head",
+          "append-verified-higher-kai-successor"
+        ]
+      }
+    },
+    {
+      "id": "receiz.recursive-continuity.roles.v119",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "merge",
+        "migration",
+        "admission"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "recursive-proof-append"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "proposed.recursiveRolesExact"
+              },
+              "right": {
+                "op": "literal",
+                "value": true
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "RECURSIVE_PROOF_ROLES_REQUIRED",
+        "safeAlternatives": [
+          "kai-selects-head",
+          "merkle-commits-append",
+          "fibonacci-carries-sparse-ancestry"
+        ]
+      }
+    },
+    {
+      "id": "receiz.sports-card-proof-object.admission.v119",
+      "version": 1,
+      "phases": [
+        "admission",
+        "migration"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "sports-card-head-admission"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "proposed.enclosingCardProofVerified"
+              },
+              "right": {
+                "op": "literal",
+                "value": true
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "VERIFIED_SPORTS_CARD_PROOF_REQUIRED",
+        "safeAlternatives": [
+          "verify-enclosing-sports-card-proof-object",
+          "reject-unbound-card-subpayload"
+        ]
+      }
+    },
+    {
+      "id": "receiz.global-economy.recursive-append.v119",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "merge",
+        "admission"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "global-proof-object-append"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "proposed.childAdmissionVerified"
+              },
+              "right": {
+                "op": "literal",
+                "value": true
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "VERIFIED_CHILD_ADMISSION_REQUIRED",
+        "safeAlternatives": [
+          "verify-enclosing-domain-proof-object",
+          "append-sdk-custodied-child-reference"
+        ]
+      }
+    },
+    {
+      "id": "receiz.subject.identity-immutable.v120",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission",
+        "migration"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "subject-transition"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "proposed.subject.identityAndGenesisPreserved"
+              },
+              "right": {
+                "op": "literal",
+                "value": true
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "SUBJECT_IDENTITY_CONTINUITY_REQUIRED",
+        "safeAlternatives": [
+          "preserve-subject-identity-digest",
+          "preserve-genesis-and-proof-history"
+        ]
+      }
+    },
+    {
+      "id": "receiz.subject.namespace-byte-preservation.v120",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission",
+        "migration"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "subject-transition"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "proposed.subject.unknownNamespacesByteExact"
+              },
+              "right": {
+                "op": "literal",
+                "value": true
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "SUBJECT_NAMESPACE_BYTE_PRESERVATION_REQUIRED",
+        "safeAlternatives": [
+          "copy-unknown-namespace-bytes-verbatim",
+          "reject-transition-with-zero-writes"
+        ]
+      }
+    },
+    {
+      "id": "receiz.subject.complete-proof-brain.v120",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission",
+        "migration"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "subject-reason"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "proposed.subject.exactPrimaryObjectsResolvedAtHead"
+              },
+              "right": {
+                "op": "literal",
+                "value": true
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "SUBJECT_PRIMARY_PROOF_RESOLUTION_REQUIRED",
+        "safeAlternatives": [
+          "search-bounded-index-at-exact-head",
+          "resolve-and-verify-primary-proof-object-bytes"
+        ]
+      }
+    },
+    {
+      "id": "receiz.subject.model-output-non-authority.v120",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission",
+        "migration"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "model-response"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "proposed.modelOutputRequiresCommandAdmission"
+              },
+              "right": {
+                "op": "literal",
+                "value": true
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "MODEL_OUTPUT_CANNOT_CREATE_WORLD_EVENT",
+        "safeAlternatives": [
+          "return-structured-intent",
+          "plan-and-admit-deterministic-command"
+        ]
+      }
+    },
+    {
+      "id": "receiz.world.command-only-event-admission.v120",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission",
+        "migration"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "world-event-append"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "proposed.event.hasValidatedAuthorizedCommand"
+              },
+              "right": {
+                "op": "literal",
+                "value": true
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "WORLD_COMMAND_ADMISSION_REQUIRED",
+        "safeAlternatives": [
+          "plan-command-with-exact-heads",
+          "reject-event-with-zero-writes"
+        ]
+      }
+    },
+    {
+      "id": "receiz.world.zero-write-failure.v120",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission",
+        "migration"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "world-decision-failure"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "proposed.failure.zeroWritesIncludingKai"
+              },
+              "right": {
+                "op": "literal",
+                "value": true
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "FAILED_DECISION_MUST_WRITE_ZERO",
+        "safeAlternatives": [
+          "prevalidate-before-kai-advance",
+          "return-structured-zero-write-failure"
+        ]
+      }
+    },
+    {
+      "id": "receiz.world.multi-subject-atomicity.v120",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission",
+        "migration"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "multi-subject-effect"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "proposed.transaction.allParticipantHeadsAtomic"
+              },
+              "right": {
+                "op": "literal",
+                "value": true
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "MULTI_SUBJECT_ATOMIC_TRANSACTION_REQUIRED",
+        "safeAlternatives": [
+          "stage-every-participant-before-admission",
+          "rollback-before-admission"
+        ]
+      }
+    },
+    {
+      "id": "receiz.subject.mandate-runtime-reverification.v120",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission",
+        "migration"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "autonomous-execution"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "proposed.runtime.currentMandateReverified"
+              },
+              "right": {
+                "op": "literal",
+                "value": true
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "ACTIVE_BOUNDED_MANDATE_REQUIRED",
+        "safeAlternatives": [
+          "reject-expired-or-revoked-mandate",
+          "require-new-owner-authorization"
+        ]
+      }
+    },
+    {
+      "id": "receiz.subject.event-derived-memory.v120",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission",
+        "migration"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "factual-memory-project"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "proposed.memory.everyFactCitesAdmittedEvent"
+              },
+              "right": {
+                "op": "literal",
+                "value": true
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "FACTUAL_MEMORY_EVENT_CITATIONS_REQUIRED",
+        "safeAlternatives": [
+          "retain-ai-summary-as-derived-projection",
+          "rebuild-from-admitted-events"
+        ]
+      }
+    },
+    {
+      "id": "receiz.bearer.atomic-subject-transfer.v120",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission",
+        "migration"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "subject-ownership-transfer"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "proposed.transfer.identityHistoryAndCustodyAtomic"
+              },
+              "right": {
+                "op": "literal",
+                "value": true
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "ATOMIC_SUBJECT_OWNERSHIP_TRANSITION_REQUIRED",
+        "safeAlternatives": [
+          "bind-exact-ownership-head",
+          "reject-stale-or-replayed-instrument"
+        ]
+      }
+    },
+    {
+      "id": "receiz.bearer.former-owner-revocation.v120",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission",
+        "migration"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "subject-ownership-transfer"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "proposed.transfer.formerOwnerAuthorityRevoked"
+              },
+              "right": {
+                "op": "literal",
+                "value": true
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "FORMER_OWNER_AUTHORITY_REVOCATION_REQUIRED",
+        "safeAlternatives": [
+          "revoke-mandates-and-delegated-capabilities",
+          "cancel-queued-autonomous-jobs"
+        ]
+      }
+    },
+    {
+      "id": "receiz.subject.portable-mind-complete-history.v120",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission",
+        "migration"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "subject-mind-export"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "proposed.mind.completeHistoryContentAddressBound"
+              },
+              "right": {
+                "op": "literal",
+                "value": true
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "PORTABLE_SUBJECT_HISTORY_BINDING_REQUIRED",
+        "safeAlternatives": [
+          "bind-subject-and-prior-mind-head",
+          "preserve-conflicting-fork"
+        ]
+      }
+    },
+    {
+      "id": "receiz.subject.performance-noncanonical.v120",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission",
+        "migration"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "subject-performance-stream"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "proposed.performance.animationIsNotCanonicalFact"
+              },
+              "right": {
+                "op": "literal",
+                "value": true
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "PERFORMANCE_EVENT_CANNOT_MUTATE_CANONICAL_STATE",
+        "safeAlternatives": [
+          "emit-non-authoritative-animation-instructions",
+          "preserve-canonical-head-on-stream-failure"
+        ]
+      }
+    },
+    {
+      "id": "receiz.proof-publication.source-before-representation.v121",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission",
+        "migration"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "profile-proof-publish"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "proposed.publication.sealedProofRemainsAuthority"
+              },
+              "right": {
+                "op": "literal",
+                "value": true
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "SEALED_PROOF_OBJECT_AUTHORITY_REQUIRED",
+        "safeAlternatives": [
+          "publish-sealed-proof-without-server-authority",
+          "retry-global-indexing-beneath-sealed-proof"
+        ]
+      }
+    },
+    {
+      "id": "receiz.proof-publication.global-append.v121",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission",
+        "migration"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "profile-proof-publish"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "proposed.publication.verifiedAppendGloballyDiscoverable"
+              },
+              "right": {
+                "op": "literal",
+                "value": true
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "VERIFIED_GLOBAL_APPEND_REQUIRED",
+        "safeAlternatives": [
+          "append-to-public-composite-head",
+          "retain-durable-outbox-until-indexed"
+        ]
+      }
+    },
+    {
+      "id": "receiz.proof-publication.no-settled-remount.v121",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission",
+        "migration"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "profile-proof-publish"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "proposed.publication.settledSurfacePreserved"
+              },
+              "right": {
+                "op": "literal",
+                "value": true
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "SETTLED_SURFACE_REMOUNT_FORBIDDEN",
+        "safeAlternatives": [
+          "project-sealed-proof-locally",
+          "sync-global-index-in-background"
+        ]
+      }
+    },
+    {
+      "id": "receiz.proof-media.byte-commitment-preserved.v121",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission",
+        "migration"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "profile-proof-project"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "proposed.projection.mediaSha256Preserved"
+              },
+              "right": {
+                "op": "literal",
+                "value": true
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "PROOF_MEDIA_COMMITMENT_REQUIRED",
+        "safeAlternatives": [
+          "project-sealed-media-sha256",
+          "derive-caption-only-artifact-sha256"
+        ]
+      }
+    },
+    {
+      "id": "receiz.proof-projection.strong-fields-preserved.v121",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission",
+        "migration"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "profile-proof-project"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "proposed.projection.strongerKnownFieldsPreserved"
+              },
+              "right": {
+                "op": "literal",
+                "value": true
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "STRONGER_PROOF_FIELD_DOWNGRADE_FORBIDDEN",
+        "safeAlternatives": [
+          "merge-by-strongest-known-proof",
+          "reject-weaker-partial-projection"
+        ]
+      }
+    },
+    {
+      "id": "receiz.profile-hydration.durable-cold-head.v121",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission",
+        "migration"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "profile-showcase-hydrate"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "proposed.hydration.verifiedAdditionsBecomeDurableColdTruth"
+              },
+              "right": {
+                "op": "literal",
+                "value": true
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "VERIFIED_HYDRATION_DURABILITY_REQUIRED",
+        "safeAlternatives": [
+          "persist-verified-composite-head",
+          "append-new-lawful-proof-objects"
+        ]
+      }
+    },
+    {
+      "id": "receiz.settlement.known-truth-first-paint.v121",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission",
+        "migration"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "settlement-project"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "proposed.settlement.knownVerifiedValuePaintsImmediately"
+              },
+              "right": {
+                "op": "literal",
+                "value": true
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "KNOWN_SETTLEMENT_FIRST_PAINT_REQUIRED",
+        "safeAlternatives": [
+          "project-verified-local-settlement",
+          "append-newer-verified-ledger-state-in-background"
+        ]
+      }
+    },
+    {
+      "id": "receiz.identity.accepted-proof-full-session.v121",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission",
+        "migration"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "identity-proof-accept"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "proposed.identity.fullAccountProjectsImmediately"
+              },
+              "right": {
+                "op": "literal",
+                "value": true
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "ACCEPTED_IDENTITY_HALF_SESSION_FORBIDDEN",
+        "safeAlternatives": [
+          "project-verified-account-immediately",
+          "run-import-bind-sync-behind-settled-session"
+        ]
+      }
+    },
+    {
+      "id": "receiz.subject.remote-admission.object-authority.v122",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission",
+        "migration"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "subject-admit"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "proposed.subject.enclosingProofObjectVerifiedFirst"
+              },
+              "right": {
+                "op": "literal",
+                "value": true
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "ENCLOSING_PROOF_OBJECT_REQUIRED",
+        "safeAlternatives": [
+          "verify-enclosing-proof-object",
+          "reject-with-zero-writes"
+        ]
+      }
+    },
+    {
+      "id": "receiz.world.private-envelope.edge-encryption.v122",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission",
+        "migration"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "world-private-command"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "proposed.world.privatePlaintextRemainsAtEdge"
+              },
+              "right": {
+                "op": "literal",
+                "value": true
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "PRIVATE_PLAINTEXT_GLOBAL_DISTRIBUTION_FORBIDDEN",
+        "safeAlternatives": [
+          "encrypt-at-edge",
+          "distribute-subject-scoped-ciphertext"
+        ]
+      }
+    },
+    {
+      "id": "receiz.world.execution.exact-outcome.v122",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission",
+        "migration"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "world-execute"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "proposed.world.exactOutcomeRecoverable"
+              },
+              "right": {
+                "op": "literal",
+                "value": true
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "EXACT_EXECUTION_OUTCOME_REQUIRED",
+        "safeAlternatives": [
+          "lookup-by-transaction-id",
+          "lookup-by-idempotency-key"
+        ]
+      }
+    },
+    {
+      "id": "receiz.value.phi-two-rails.v122",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission",
+        "migration"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "value-move"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "proposed.value.phiWithExplicitSettlementOrReserveRail"
+              },
+              "right": {
+                "op": "literal",
+                "value": true
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "PHI_EXPLICIT_RAIL_REQUIRED",
+        "safeAlternatives": [
+          "use-settlement-rail",
+          "use-reserve-rail",
+          "display-canonical-usd-without-moving-usd"
+        ]
+      }
+    },
+    {
+      "id": "receiz.identity.proof-authority.object-first.v123",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission",
+        "migration"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "proof-authority-exchange"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "proposed.identity.enclosingProofObjectVerifiedFirst"
+              },
+              "right": {
+                "op": "literal",
+                "value": true
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "ENCLOSING_PROOF_OBJECT_REQUIRED",
+        "safeAlternatives": [
+          "verify-exact-enclosing-artifact-at-edge",
+          "reject-capability-exchange"
+        ]
+      }
+    },
+    {
+      "id": "receiz.identity.proof-authority.explicit-consent.v123",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission",
+        "migration"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "proof-authority-exchange"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "proposed.identity.explicitApplicationBoundConsent"
+              },
+              "right": {
+                "op": "literal",
+                "value": true
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "EXPLICIT_APPLICATION_CONSENT_REQUIRED",
+        "safeAlternatives": [
+          "obtain-in-application-consent",
+          "request-minimum-registered-scopes"
+        ]
+      }
+    },
+    {
+      "id": "receiz.value.live-execution.exact-outcome.v123",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission",
+        "migration"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "value-execute"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "proposed.value.exactOutcomeRecoverable"
+              },
+              "right": {
+                "op": "literal",
+                "value": true
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "EXACT_VALUE_EXECUTION_OUTCOME_REQUIRED",
+        "safeAlternatives": [
+          "persist-exact-intent",
+          "lookup-by-idempotency-key-before-retry"
+        ]
+      }
+    },
+    {
+      "id": "receiz.value.live-execution.phi-explicit-rail.v123",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission",
+        "migration"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "value-execute"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "proposed.value.phiWithExplicitSettlementOrReserveRail"
+              },
+              "right": {
+                "op": "literal",
+                "value": true
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "PHI_EXPLICIT_RAIL_REQUIRED",
+        "safeAlternatives": [
+          "execute-settlement",
+          "execute-reserve",
+          "display-usd-without-moving-usd"
+        ]
+      }
+    },
+    {
+      "id": "receiz.subject.namespace.exact-head.v123",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission",
+        "migration"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "subject-namespace-resolve"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "proposed.subject.exactHeadAndDigestsPinned"
+              },
+              "right": {
+                "op": "literal",
+                "value": true
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "EXACT_SUBJECT_HEAD_REQUIRED",
+        "safeAlternatives": [
+          "resolve-at-exact-head",
+          "reject-stale-subject-claim"
+        ]
+      }
+    },
+    {
+      "id": "receiz.world.public-planner.sdk-canonical.v123",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission",
+        "migration"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "world-plan"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "proposed.world.sdkGeneratedCanonicalSecurityValues"
+              },
+              "right": {
+                "op": "literal",
+                "value": true
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "SDK_CANONICAL_PLANNER_REQUIRED",
+        "safeAlternatives": [
+          "use-planCommandV122",
+          "use-planTransactionV122"
+        ]
+      }
+    },
+    {
+      "id": "receiz.runtime.proof-object-storage-authority.v124",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission",
+        "migration"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "runtime-state-recover"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "proposed.runtime.sealedProofObjectRemainsStorageAuthority"
+              },
+              "right": {
+                "op": "literal",
+                "value": true
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "SEALED_PROOF_OBJECT_STORAGE_AUTHORITY_REQUIRED",
+        "safeAlternatives": [
+          "recover-from-verified-proof-object",
+          "reject-weaker-server-projection"
+        ]
+      }
+    },
+    {
+      "id": "receiz.time.live-kai-genesis-phi-bridge.v124",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission",
+        "migration"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "kai-now"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "proposed.time.usesFrozenGenesisPhiExactBridge"
+              },
+              "right": {
+                "op": "literal",
+                "value": true
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "CANONICAL_KAI_BRIDGE_REQUIRED",
+        "safeAlternatives": [
+          "use-receizKaiNow",
+          "reject-snapshot-uptime-or-override-clock"
+        ]
+      }
+    },
+    {
+      "id": "receiz.runtime.authenticated-request-bound-response.v124",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission",
+        "migration"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "runtime-response-admit"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "proposed.runtime.responseBoundToAuthenticatedRequestAndHeads"
+              },
+              "right": {
+                "op": "literal",
+                "value": true
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "AUTHENTICATED_REQUEST_BOUND_RESPONSE_REQUIRED",
+        "safeAlternatives": [
+          "verify-enclosing-proof-and-exact-heads",
+          "fail-closed"
+        ]
+      }
+    },
+    {
+      "id": "receiz.execution.exactly-once-recovery.v124",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission",
+        "migration"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "durable-execution"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "proposed.execution.planPersistedAndOutcomeRecoverable"
+              },
+              "right": {
+                "op": "literal",
+                "value": true
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "EXACTLY_ONCE_RECOVERY_REQUIRED",
+        "safeAlternatives": [
+          "stage-exact-plan",
+          "resolve-by-idempotency-before-retry"
+        ]
+      }
+    },
+    {
+      "id": "receiz.domain.verified-replay-closed-shape.v124",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission",
+        "migration"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "domain-replay-admit"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "proposed.domain.replayAuthenticatedAndFullyValidated"
+              },
+              "right": {
+                "op": "literal",
+                "value": true
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "VERIFIED_REPLAY_REQUIRED",
+        "safeAlternatives": [
+          "verify-replay-and-checkpoint",
+          "reject-unknown-discriminator"
+        ]
+      }
+    },
+    {
+      "id": "receiz.domain.private-additions-filter-before-response.v124",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission",
+        "migration"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "private-additions-resolve"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "proposed.domain.privateCoordinatesFilteredBeforeResponse"
+              },
+              "right": {
+                "op": "literal",
+                "value": true
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "PRIVATE_COORDINATE_DISCLOSURE_FORBIDDEN",
+        "safeAlternatives": [
+          "return-indistinguishable-private-failure",
+          "verify-current-grant-and-access-key-heads"
+        ]
+      }
+    },
+    {
+      "id": "receiz.execution.atomic-multi-domain-zero-write.v124",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission",
+        "migration"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "atomic-domain-execution"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "proposed.execution.allParticipantsCompareAndSwapAtomically"
+              },
+              "right": {
+                "op": "literal",
+                "value": true
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "ATOMIC_MULTI_DOMAIN_EXECUTION_REQUIRED",
+        "safeAlternatives": [
+          "bind-all-exact-participant-heads",
+          "write-zero-on-any-failure"
+        ]
+      }
+    },
+    {
+      "id": "receiz.identity.public-recipient-privacy.v124",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission",
+        "migration"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "public-recipient-resolve"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "proposed.identity.privacySafeRateLimitedOneUseLocator"
+              },
+              "right": {
+                "op": "literal",
+                "value": true
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "PUBLIC_RECIPIENT_PRIVACY_REQUIRED",
+        "safeAlternatives": [
+          "return-one-use-purpose-bound-locator",
+          "return-indistinguishable-failure"
+        ]
+      }
+    },
+    {
+      "id": "receiz.runtime.operational-capability-evidence.v124",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission",
+        "migration"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "runtime-capability-qualify"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "proposed.runtime.requiredDependenciesOperational"
+              },
+              "right": {
+                "op": "literal",
+                "value": true
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "OPERATIONAL_DEPENDENCY_EVIDENCE_REQUIRED",
+        "safeAlternatives": [
+          "report-degraded-or-unavailable",
+          "bind-authenticated-dependency-heads"
+        ]
+      }
+    },
+    {
+      "id": "release.current-version.v126",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission",
+        "migration"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "release-current-default"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "proposed.release.isV126"
+              },
+              "right": {
+                "op": "literal",
+                "value": true
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "STALE_CURRENT_RELEASE_VERSION",
+        "safeAlternatives": [
+          "use-v126-current-default",
+          "retain-v125-as-historical-evidence"
+        ]
+      }
+    },
+    {
+      "id": "release.coordinated-identity.v126",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission",
+        "migration"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "release-package-publish"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "proposed.release.coordinatedIdentityVerified"
+              },
+              "right": {
+                "op": "literal",
+                "value": true
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "COORDINATED_RELEASE_IDENTITY_REQUIRED",
+        "safeAlternatives": [
+          "regenerate-v126-sdk-mcp-ai-projections",
+          "rerun-v126-release-lock"
+        ]
+      }
+    },
+    {
+      "id": "receiz.action.enclosing-proof-first.v125",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission",
+        "migration"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "lawful-action-proof-verify"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "proposed.action.enclosingProofVerifiedFirst"
+              },
+              "right": {
+                "op": "literal",
+                "value": true
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "ENCLOSING_PROOF_FIRST_REQUIRED",
+        "safeAlternatives": [
+          "verify-enclosing-proof-object",
+          "reject-subpayload"
+        ]
+      }
+    },
+    {
+      "id": "receiz.action.current-registry-law.v125",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission",
+        "migration"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "lawful-action-plan"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "proposed.action.currentRegistryLawBound"
+              },
+              "right": {
+                "op": "literal",
+                "value": true
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "CURRENT_ACTION_LAW_REQUIRED",
+        "safeAlternatives": [
+          "resolve-current-registry-law",
+          "reject-unregistered-action"
+        ]
+      }
+    },
+    {
+      "id": "receiz.action.causal-completion-witness.v125",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission",
+        "migration"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "lawful-action-admit"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "proposed.action.causalCompletionWitnessVerified"
+              },
+              "right": {
+                "op": "literal",
+                "value": true
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "CAUSAL_COMPLETION_WITNESS_REQUIRED",
+        "safeAlternatives": [
+          "verify-preconditions-and-completion",
+          "write-zero"
+        ]
+      }
+    },
+    {
+      "id": "receiz.action.replay-duplicate-zero-write.v125",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission",
+        "migration"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "lawful-action-admit"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "proposed.action.replayDuplicateWritesZero"
+              },
+              "right": {
+                "op": "literal",
+                "value": true
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "ACTION_REPLAY_ZERO_WRITE_REQUIRED",
+        "safeAlternatives": [
+          "resolve-existing-outcome",
+          "write-zero"
+        ]
+      }
+    },
+    {
+      "id": "receiz.value.universal-deterministic-kai.v125",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission",
+        "migration"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "lawful-action-value-derive"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "proposed.value.universalKaiLawUsed"
+              },
+              "right": {
+                "op": "literal",
+                "value": true
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "UNIVERSAL_KAI_VALUE_LAW_REQUIRED",
+        "safeAlternatives": [
+          "derive-from-sealed-kai-coordinates",
+          "reject-developer-amount"
+        ]
+      }
+    },
+    {
+      "id": "receiz.value.one-spendable-membership.v125",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission",
+        "migration"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "lawful-action-value-derive"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "proposed.value.oneCanonicalOwnerMembership"
+              },
+              "right": {
+                "op": "literal",
+                "value": true
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "ONE_SPENDABLE_MEMBERSHIP_REQUIRED",
+        "safeAlternatives": [
+          "bind-canonical-current-owner",
+          "preserve-witness-as-provenance"
+        ]
+      }
+    },
+    {
+      "id": "receiz.value.explicit-settlement-execution.v125",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission",
+        "migration"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "lawful-action-settlement-execute"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "proposed.value.explicitSettlementExecution"
+              },
+              "right": {
+                "op": "literal",
+                "value": true
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "EXPLICIT_SETTLEMENT_EXECUTION_REQUIRED",
+        "safeAlternatives": [
+          "stage-exact-settlement-plan",
+          "resolve-outcome-before-retry"
+        ]
+      }
+    },
+    {
+      "id": "receiz.action.institution-non-exemption.v125",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission",
+        "migration"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "lawful-action-proof-verify"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "proposed.action.institutionSubjectToSameProofLaw"
+              },
+              "right": {
+                "op": "literal",
+                "value": true
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "INSTITUTION_PROOF_EXEMPTION_FORBIDDEN",
+        "safeAlternatives": [
+          "verify-same-enclosing-proof",
+          "reject-institutional-claim"
+        ]
+      }
+    },
+    {
+      "id": "receiz.economy.global-activation-no-mint.v125",
+      "version": 1,
+      "phases": [
+        "command",
+        "event",
+        "admission",
+        "migration"
+      ],
+      "denyWhen": {
+        "op": "all",
+        "values": [
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "glyph-economy-activate"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "proposed.economy.visibilityFlipNoMint"
+              },
+              "right": {
+                "op": "literal",
+                "value": true
+              }
+            }
+          }
+        ]
+      },
+      "denial": {
+        "code": "GLOBAL_ACTIVATION_MINT_FORBIDDEN",
+        "safeAlternatives": [
+          "recognize-current-deterministic-value",
+          "abort-activation"
+        ]
+      }
+    },
+    {
       "id": "v124.representation-never-outranks-source",
       "version": 1,
-      "phases": ["command", "event", "admission", "merge", "migration"],
+      "phases": [
+        "command",
+        "event",
+        "admission",
+        "merge",
+        "migration"
+      ],
       "denyWhen": {
         "op": "equal",
-        "left": { "op": "path", "value": "proposed.representationOutranksSealedSource" },
-        "right": { "op": "literal", "value": true }
+        "left": {
+          "op": "path",
+          "value": "proposed.representationOutranksSealedSource"
+        },
+        "right": {
+          "op": "literal",
+          "value": true
+        }
       },
       "denial": {
         "code": "V124_REPRESENTATION_AUTHORITY_FORBIDDEN",
-        "safeAlternatives": ["resolve-exact-sealed-source", "reverify-exact-bytes", "rebuild-subordinate-projection"]
+        "safeAlternatives": [
+          "resolve-exact-sealed-source",
+          "reverify-exact-bytes",
+          "rebuild-subordinate-projection"
+        ]
       }
     },
     {
       "id": "v124.json-cannot-mint-runtime-custody",
       "version": 1,
-      "phases": ["command", "admission", "migration"],
+      "phases": [
+        "command",
+        "admission",
+        "migration"
+      ],
       "denyWhen": {
         "op": "equal",
-        "left": { "op": "path", "value": "proposed.reconstructsAuthoritySessionOrExecutionHandleFromJson" },
-        "right": { "op": "literal", "value": true }
+        "left": {
+          "op": "path",
+          "value": "proposed.reconstructsAuthoritySessionOrExecutionHandleFromJson"
+        },
+        "right": {
+          "op": "literal",
+          "value": true
+        }
       },
       "denial": {
         "code": "V124_RUNTIME_CUSTODY_RECONSTRUCTION_FORBIDDEN",
-        "safeAlternatives": ["use-custodied-sdk-runtime-object", "refresh-persisted-session-through-canonical-sdk", "resolve-durable-execution"]
+        "safeAlternatives": [
+          "use-custodied-sdk-runtime-object",
+          "refresh-persisted-session-through-canonical-sdk",
+          "resolve-durable-execution"
+        ]
       }
     },
     {
       "id": "v124.qualification-before-mutation",
       "version": 1,
-      "phases": ["command", "admission"],
+      "phases": [
+        "command",
+        "admission"
+      ],
       "denyWhen": {
         "op": "all",
         "values": [
-          { "op": "equal", "left": { "op": "path", "value": "operation.kind" }, "right": { "op": "literal", "value": "v124-runtime-mutation" } },
-          { "op": "not", "value": { "op": "equal", "left": { "op": "path", "value": "evidence.operationalQualification" }, "right": { "op": "literal", "value": "available" } } }
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "v124-runtime-mutation"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "evidence.operationalQualification"
+              },
+              "right": {
+                "op": "literal",
+                "value": "available"
+              }
+            }
+          }
         ]
       },
       "denial": {
         "code": "V124_OPERATION_NOT_QUALIFIED",
-        "safeAlternatives": ["qualify-exact-operation", "repair-runtime-dependency", "perform-no-write"]
+        "safeAlternatives": [
+          "qualify-exact-operation",
+          "repair-runtime-dependency",
+          "perform-no-write"
+        ]
       }
     },
     {
       "id": "v124.unknown-outcome-resolve-before-retry",
       "version": 1,
-      "phases": ["command", "admission"],
+      "phases": [
+        "command",
+        "admission"
+      ],
       "denyWhen": {
         "op": "all",
         "values": [
-          { "op": "equal", "left": { "op": "path", "value": "operation.kind" }, "right": { "op": "literal", "value": "v124-execution-retry" } },
-          { "op": "not", "value": { "op": "equal", "left": { "op": "path", "value": "evidence.priorOutcomeResolved" }, "right": { "op": "literal", "value": true } } }
+          {
+            "op": "equal",
+            "left": {
+              "op": "path",
+              "value": "operation.kind"
+            },
+            "right": {
+              "op": "literal",
+              "value": "v124-execution-retry"
+            }
+          },
+          {
+            "op": "not",
+            "value": {
+              "op": "equal",
+              "left": {
+                "op": "path",
+                "value": "evidence.priorOutcomeResolved"
+              },
+              "right": {
+                "op": "literal",
+                "value": true
+              }
+            }
+          }
         ]
       },
       "denial": {
         "code": "V124_LOOKUP_BEFORE_RETRY_REQUIRED",
-        "safeAlternatives": ["resolve-by-execution-id", "resolve-by-semantic-idempotency-key", "preserve-original-plan"]
+        "safeAlternatives": [
+          "resolve-by-execution-id",
+          "resolve-by-semantic-idempotency-key",
+          "preserve-original-plan"
+        ]
       }
     },
     {
       "id": "v124.replay-candidate-must-be-sealed",
       "version": 1,
-      "phases": ["command", "admission", "migration"],
+      "phases": [
+        "command",
+        "admission",
+        "migration"
+      ],
       "denyWhen": {
         "op": "equal",
-        "left": { "op": "path", "value": "proposed.restoresUnsealedReplayCandidate" },
-        "right": { "op": "literal", "value": true }
+        "left": {
+          "op": "path",
+          "value": "proposed.restoresUnsealedReplayCandidate"
+        },
+        "right": {
+          "op": "literal",
+          "value": true
+        }
       },
       "denial": {
         "code": "V124_SEALED_REPLAY_PROOF_OBJECT_REQUIRED",
-        "safeAlternatives": ["record-exact-candidate-bytes", "seal-canonical-proof-object", "admit-and-restore-sealed-source"]
+        "safeAlternatives": [
+          "record-exact-candidate-bytes",
+          "seal-canonical-proof-object",
+          "admit-and-restore-sealed-source"
+        ]
       }
     },
     {
       "id": "v124.private-additions-trusted-host-only",
       "version": 1,
-      "phases": ["command", "admission", "migration"],
+      "phases": [
+        "command",
+        "admission",
+        "migration"
+      ],
       "denyWhen": {
         "op": "equal",
-        "left": { "op": "path", "value": "proposed.exposesExactPrivateAdditionsToModelOrPublicClient" },
-        "right": { "op": "literal", "value": true }
+        "left": {
+          "op": "path",
+          "value": "proposed.exposesExactPrivateAdditionsToModelOrPublicClient"
+        },
+        "right": {
+          "op": "literal",
+          "value": true
+        }
       },
       "denial": {
         "code": "V124_PRIVATE_ADDITIONS_CUSTODY_VIOLATION",
-        "safeAlternatives": ["retain-exact-result-in-trusted-host", "return-safe-counts-and-digests", "recheck-session-grant"]
+        "safeAlternatives": [
+          "retain-exact-result-in-trusted-host",
+          "return-safe-counts-and-digests",
+          "recheck-session-grant"
+        ]
       }
     },
     {
-      "id": "release.current-version.v124",
+      "id": "app.release.current-package.v126",
       "version": 1,
       "phases": [
         "command",
@@ -4374,7 +8051,7 @@
               },
               "right": {
                 "op": "literal",
-                "value": "124.0.3"
+                "value": "126.0.0"
               }
             }
           }
@@ -4383,10 +8060,29 @@
       "denial": {
         "code": "STALE_CURRENT_RELEASE_VERSION",
         "safeAlternatives": [
-          "use-v124-current-default",
+          "use-v126-current-default",
           "retain-historical-proof-as-non-executable-evidence"
         ]
       }
     }
-  ]
+  ],
+  "protocolLimits": {
+    "exactArtifactBytes": 524288000,
+    "archiveEntries": 5000,
+    "singleDecompressedEntryBytes": 1073741824,
+    "totalDecompressedBytes": 2147483648,
+    "rootArchiveContainerDepth": 1,
+    "embeddedArchiveNesting": 0,
+    "perEntryCompressionRatio": 200,
+    "aggregateCompressionRatio": 100,
+    "canonicalArchivePathBytes": 1024,
+    "archiveEntryNameBytes": 255,
+    "manifestBytes": 16777216,
+    "verifiedHistoryNodes": 4096,
+    "reconciliationAdditions": 64,
+    "remotePredecessorFetches": 256,
+    "artifactNamespaces": 256,
+    "reducerOperations": 4096,
+    "lawExpressionOperations": 4096
+  }
 }

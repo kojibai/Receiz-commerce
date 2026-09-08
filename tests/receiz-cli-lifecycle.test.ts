@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { describe, it } from "node:test";
 
 const root = process.cwd();
-const verifier = join(root, "scripts", "receiz-v124-migration-verify.mjs");
+const verifier = join(root, "scripts", "receiz-v126-migration-verify.mjs");
 
 describe("Receiz v124 CLI lifecycle", () => {
   it("verifies the audited proof-preserving application upgrade", () => {
@@ -23,7 +23,7 @@ describe("Receiz v124 CLI lifecycle", () => {
     };
 
     assert.equal(report.ok, true);
-    assert.equal(report.schema, "receiz.repository.v124-patch-migration-verification.v1");
+    assert.equal(report.schema, "receiz.repository.v126-migration-verification.v1");
     assert.equal(report.historyRewritten, false);
     assert.ok(report.checks.length > 0);
     assert.ok(report.checks.every((check) => check.ok));
@@ -36,12 +36,12 @@ describe("Receiz v124 CLI lifecycle", () => {
 
     assert.equal(
       pkg.scripts["receiz:migrate:verify"],
-      "node scripts/receiz-v124-migration-verify.mjs --root ."
+      "node scripts/receiz-v126-migration-verify.mjs --root ."
     );
     assert.equal(pkg.scripts["receiz:cli:check"], "node scripts/receiz-cli-check.mjs");
     const cliCheck = readFileSync(join(root, "scripts", "receiz-cli-check.mjs"), "utf8");
-    assert.match(cliCheck, /"--target", "124\.0\.3"/);
-    assert.match(cliCheck, /receiz-v124-migration-verify\.mjs/);
+    assert.match(cliCheck, /receiz-v126-inspection\.mjs/);
+    assert.match(cliCheck, /receiz-v126-migration-verify\.mjs/);
     assert.doesNotMatch(cliCheck, /"--target", "122\.0\.0"/);
   });
 });

@@ -3,7 +3,7 @@ import { RECEIZ_V124_DEVELOPER_SEQUENCE, RECEIZ_V124_DOCTRINE, RECEIZ_V124_EXAMP
 
 export const metadata = {
   title: "Receiz v124 production-runtime developer doctrine",
-  description: "Complete source-first SDK, MCP, and AI-skill doctrine for Receiz v124.0.3.",
+  description: "Complete source-first SDK, MCP, and AI-skill doctrine for Receiz v126.0.0.",
 };
 
 export default function ReceizDeveloperDoctrinePage() {
@@ -25,12 +25,12 @@ export default function ReceizDeveloperDoctrinePage() {
 
       <section className="panel">
         <h2>Exact release identity</h2>
-        <p>The coordinated release contains 53 application operations, 165 MCP tools, and 42 AI skills.</p>
+        <p>The coordinated release contains 60 application operations, 221 MCP tools, and 43 AI skills.</p>
         <p><strong>Application:</strong> {RECEIZ_V124_CONTRACT.applicationVersion} · <strong>SDK/MCP/skills:</strong> {RECEIZ_V124_CONTRACT.sdkVersion} · <strong>Ruleset:</strong> {RECEIZ_V124_CONTRACT.rulesetVersion}</p>
         <p><strong>Registry:</strong> <code>{RECEIZ_V124_CONTRACT.registryDigest}</code></p>
         <p><strong>Operation matrix:</strong> <code>{RECEIZ_V124_CONTRACT.operationMatrixDigest}</code></p>
-        <p><strong>Inventory:</strong> {RECEIZ_V124_CONTRACT.operationCount} app operations · {RECEIZ_V124_CONTRACT.mcpToolCount} MCP tools ({RECEIZ_V124_CONTRACT.v124McpToolCount} new v124 tools) · {RECEIZ_V124_CONTRACT.aiSkillCount} AI skills · {RECEIZ_V124_CONTRACT.aiManifestCount} manifests · {RECEIZ_V124_CONTRACT.openAiPromptCount} OpenAI prompts.</p>
-        <p>Package release <code>124.0.3</code> and constitutional ruleset <code>124.0.0</code> are separate coordinates. Never derive one from the other.</p>
+        <p><strong>Inventory:</strong> {RECEIZ_V124_CONTRACT.operationCount} app operations · {RECEIZ_V124_CONTRACT.mcpToolCount} MCP tools ({RECEIZ_V124_CONTRACT.v124McpToolCount} integrated v124 tools) · {RECEIZ_V124_CONTRACT.aiSkillCount} AI skills · {RECEIZ_V124_CONTRACT.aiManifestCount} manifests · {RECEIZ_V124_CONTRACT.openAiPromptCount} OpenAI prompts.</p>
+        <p>Package release <code>126.0.0</code> and constitutional ruleset <code>126.0.0</code> are separate coordinates. Never derive one from the other.</p>
       </section>
 
       <section className="panel">

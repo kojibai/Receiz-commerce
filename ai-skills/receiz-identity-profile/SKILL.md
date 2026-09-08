@@ -79,3 +79,9 @@ Admission begins from runtime-custodied verification of the exact enclosing arti
 Deterministic plan identity and unique execution-attempt identity are separate. MCP may reuse a confirmation digest only while the identical attempt is actively pending; committed and failed attempts are terminal and require a fresh confirmation. Expected authority failures are structured, immutable, machine-readable, and report zero writes.
 
 Historical sealed proof objects remain exact-byte verifiable evidence. Historical runtime admissions, histories, actors, capabilities, plans, candidates, stores, or confirmations cannot authorize a current v121 receiver; exact bytes crossing a process require `reverify-exact-bytes`, followed by current profile admission and `same-runtime-custody` through plan, capability, seal, stage, independent byte resolution, atomic named-domain acceptance, and report-only receipt.
+
+<!-- receiz-v124.1-capability-map:start -->
+## V124.1 callable capability bindings
+
+- **portable-account-continuity.** Seal, verify, and immediately project complete account truth—including profile, showcase, wallet, market positions/history, media, and proof history—without waiting on a server or database. SDK: `appendReceizIdentityPortableState`, `verifyReceizIdentityPortableStateProof`, `projectReceizIdentityAccount`. MCP: none: private SDK boundary. Boundary: The verified Identity Seal, Identity Record, or Receiz Key carries account truth. Private portable state is not exposed through MCP; server synchronization may append verified additions only after immediate local projection.
+<!-- receiz-v124.1-capability-map:end -->

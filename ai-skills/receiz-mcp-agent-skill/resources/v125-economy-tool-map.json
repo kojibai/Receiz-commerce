@@ -1,0 +1,618 @@
+{
+  "schema": "receiz.mcp.v125-economy-tool-map.v1",
+  "version": "126.0.0",
+  "transactionLocation": "sender-and-receiver-edge",
+  "serverRole": "global-sync-only",
+  "databaseRole": "global-sync-only",
+  "tools": [
+    {
+      "name": "receiz_v125_lawful_action_law_register",
+      "sdkMethod": "lawfulActions.registerLaw",
+      "scopes": [
+        "receiz:lawful-actions.laws.write"
+      ],
+      "inputRefs": [
+        "proofReference"
+      ],
+      "outputRefs": [],
+      "custody": "Trusted host resolves the enclosing sealed law artifact after exact confirmation; proof bytes never enter model context."
+    },
+    {
+      "name": "receiz_v125_lawful_action_admit",
+      "sdkMethod": "lawfulActions.admit",
+      "scopes": [
+        "receiz:lawful-actions.write"
+      ],
+      "inputRefs": [
+        "proofReference"
+      ],
+      "outputRefs": [],
+      "custody": "Trusted host resolves the enclosing sealed action artifact after exact confirmation; the embedded portable execution-authority proof is reverified and proof bytes never enter model context."
+    },
+    {
+      "name": "receiz_v125_lawful_action_value_head_derive",
+      "sdkMethod": "lawfulActions.deriveValueHead",
+      "scopes": [
+        "receiz:lawful-actions.value.write"
+      ],
+      "inputRefs": [],
+      "outputRefs": [],
+      "custody": "The canonical service recomputes value from admitted proof/Kai coordinates; the model cannot supply Phi."
+    },
+    {
+      "name": "receiz_v125_edge_value_plan_settlement",
+      "sdkMethod": "client.value.edge.planSettlement",
+      "scopes": [],
+      "inputRefs": [],
+      "outputRefs": [
+        "planRef"
+      ],
+      "custody": "Canonical local planning returns safe coordinates; exact plan bytes remain trusted-host or same-runtime material."
+    },
+    {
+      "name": "receiz_v125_edge_value_plan_reserve",
+      "sdkMethod": "client.value.edge.planReserve",
+      "scopes": [],
+      "inputRefs": [],
+      "outputRefs": [
+        "planRef"
+      ],
+      "custody": "Canonical local planning returns safe coordinates; exact plan bytes remain trusted-host or same-runtime material."
+    },
+    {
+      "name": "receiz_v125_edge_value_plan_inspect",
+      "sdkMethod": "client.value.edge.inspect",
+      "scopes": [],
+      "inputRefs": [
+        "planRef"
+      ],
+      "outputRefs": [],
+      "custody": "The exact held plan is independently revalidated for one sender or receiver participant."
+    },
+    {
+      "name": "receiz_v125_edge_value_transition_set_verify",
+      "sdkMethod": "client.value.edge.verifyTransitionSet",
+      "scopes": [],
+      "inputRefs": [
+        "transitionSetRef"
+      ],
+      "outputRefs": [
+        "verifiedTransitionSetRef"
+      ],
+      "custody": "Portable input may resolve through the host; the verified SDK object remains same-runtime-custodied."
+    },
+    {
+      "name": "receiz_v125_edge_value_commit_set_prepare",
+      "sdkMethod": "client.value.edge.prepareCommitSet",
+      "scopes": [],
+      "inputRefs": [
+        "verifiedTransitionSetRef"
+      ],
+      "outputRefs": [
+        "preparedCommitSetRef"
+      ],
+      "custody": "Verified and prepared SDK objects remain same-runtime; exact commit units never enter model output."
+    },
+    {
+      "name": "receiz_v125_edge_value_recovery_create",
+      "sdkMethod": "client.value.edge.createRecovery",
+      "scopes": [],
+      "inputRefs": [
+        "transitionSetRef",
+        "committedTransitionsRef"
+      ],
+      "outputRefs": [
+        "recoveryRef"
+      ],
+      "custody": "Committed transitions must retain SDK-issued same-runtime custody; the resulting recovery is portable."
+    },
+    {
+      "name": "receiz_v125_edge_value_settlement_send_confirm",
+      "sdkMethod": "client.value.edge.confirmSettlementSend",
+      "scopes": [],
+      "inputRefs": [
+        "recoveryRef"
+      ],
+      "outputRefs": [],
+      "custody": "Sender independently reverifies the complete recovery at the edge after content-bound confirmation."
+    },
+    {
+      "name": "receiz_v125_edge_value_settlement_receive",
+      "sdkMethod": "client.value.edge.receiveSettlement",
+      "scopes": [],
+      "inputRefs": [
+        "recoveryRef"
+      ],
+      "outputRefs": [],
+      "custody": "Receiver independently reverifies the complete recovery at the edge after content-bound confirmation."
+    },
+    {
+      "name": "receiz_v125_edge_value_reserve_send_confirm",
+      "sdkMethod": "client.value.edge.confirmReserveSend",
+      "scopes": [],
+      "inputRefs": [
+        "recoveryRef"
+      ],
+      "outputRefs": [],
+      "custody": "Sender independently reverifies the complete recovery at the edge after content-bound confirmation."
+    },
+    {
+      "name": "receiz_v125_edge_value_reserve_receive",
+      "sdkMethod": "client.value.edge.receiveReserve",
+      "scopes": [],
+      "inputRefs": [
+        "recoveryRef"
+      ],
+      "outputRefs": [],
+      "custody": "Receiver independently reverifies the complete recovery at the edge after content-bound confirmation."
+    },
+    {
+      "name": "receiz_v125_attestation_domain_resolve",
+      "sdkMethod": "client.attestations.createAuthority",
+      "scopes": [
+        "receiz:proof.read"
+      ],
+      "inputRefs": [
+        "proofReference"
+      ],
+      "outputRefs": [],
+      "custody": "The trusted host resolves and verifies the enclosing sealed Receiz proof object; exact bytes, private claims, identity secrets, and raw provider evidence never enter model context, and MCP never becomes authority."
+    },
+    {
+      "name": "receiz_v125_attestation_application_plan",
+      "sdkMethod": "client.attestations.planInitialSource",
+      "scopes": [
+        "receiz:proof.write"
+      ],
+      "inputRefs": [
+        "proofReference"
+      ],
+      "outputRefs": [],
+      "custody": "The trusted host resolves and verifies the enclosing sealed Receiz proof object; exact bytes, private claims, identity secrets, and raw provider evidence never enter model context, and MCP never becomes authority."
+    },
+    {
+      "name": "receiz_v125_attestation_application_apply",
+      "sdkMethod": "client.attestations.applyInitialSource",
+      "scopes": [
+        "receiz:proof.write"
+      ],
+      "inputRefs": [
+        "proofReference"
+      ],
+      "outputRefs": [],
+      "custody": "The trusted host resolves and verifies the enclosing sealed Receiz proof object; exact bytes, private claims, identity secrets, and raw provider evidence never enter model context, and MCP never becomes authority."
+    },
+    {
+      "name": "receiz_v125_attestation_workflow_plan",
+      "sdkMethod": "client.attestations.planEvent",
+      "scopes": [
+        "receiz:proof.write"
+      ],
+      "inputRefs": [
+        "proofReference"
+      ],
+      "outputRefs": [],
+      "custody": "The trusted host resolves and verifies the enclosing sealed Receiz proof object; exact bytes, private claims, identity secrets, and raw provider evidence never enter model context, and MCP never becomes authority."
+    },
+    {
+      "name": "receiz_v125_attestation_workflow_apply",
+      "sdkMethod": "client.attestations.applyEvent",
+      "scopes": [
+        "receiz:proof.write"
+      ],
+      "inputRefs": [
+        "proofReference"
+      ],
+      "outputRefs": [],
+      "custody": "The trusted host resolves and verifies the enclosing sealed Receiz proof object; exact bytes, private claims, identity secrets, and raw provider evidence never enter model context, and MCP never becomes authority."
+    },
+    {
+      "name": "receiz_v125_attestation_evidence_plan",
+      "sdkMethod": "client.attestations.planEvent",
+      "scopes": [
+        "receiz:proof.write"
+      ],
+      "inputRefs": [
+        "proofReference"
+      ],
+      "outputRefs": [],
+      "custody": "The trusted host resolves and verifies the enclosing sealed Receiz proof object; exact bytes, private claims, identity secrets, and raw provider evidence never enter model context, and MCP never becomes authority."
+    },
+    {
+      "name": "receiz_v125_attestation_evidence_apply",
+      "sdkMethod": "client.attestations.applyEvent",
+      "scopes": [
+        "receiz:proof.write"
+      ],
+      "inputRefs": [
+        "proofReference"
+      ],
+      "outputRefs": [],
+      "custody": "The trusted host resolves and verifies the enclosing sealed Receiz proof object; exact bytes, private claims, identity secrets, and raw provider evidence never enter model context, and MCP never becomes authority."
+    },
+    {
+      "name": "receiz_v125_attestation_evaluation_plan",
+      "sdkMethod": "client.attestations.planEvent",
+      "scopes": [
+        "receiz:proof.write"
+      ],
+      "inputRefs": [
+        "proofReference"
+      ],
+      "outputRefs": [],
+      "custody": "The trusted host resolves and verifies the enclosing sealed Receiz proof object; exact bytes, private claims, identity secrets, and raw provider evidence never enter model context, and MCP never becomes authority."
+    },
+    {
+      "name": "receiz_v125_attestation_evaluation_apply",
+      "sdkMethod": "client.attestations.applyEvent",
+      "scopes": [
+        "receiz:proof.write"
+      ],
+      "inputRefs": [
+        "proofReference"
+      ],
+      "outputRefs": [],
+      "custody": "The trusted host resolves and verifies the enclosing sealed Receiz proof object; exact bytes, private claims, identity secrets, and raw provider evidence never enter model context, and MCP never becomes authority."
+    },
+    {
+      "name": "receiz_v125_attestation_review_plan",
+      "sdkMethod": "client.attestations.planEvent",
+      "scopes": [
+        "receiz:proof.write"
+      ],
+      "inputRefs": [
+        "proofReference"
+      ],
+      "outputRefs": [],
+      "custody": "The trusted host resolves and verifies the enclosing sealed Receiz proof object; exact bytes, private claims, identity secrets, and raw provider evidence never enter model context, and MCP never becomes authority."
+    },
+    {
+      "name": "receiz_v125_attestation_review_apply",
+      "sdkMethod": "client.attestations.applyEvent",
+      "scopes": [
+        "receiz:proof.write"
+      ],
+      "inputRefs": [
+        "proofReference"
+      ],
+      "outputRefs": [],
+      "custody": "The trusted host resolves and verifies the enclosing sealed Receiz proof object; exact bytes, private claims, identity secrets, and raw provider evidence never enter model context, and MCP never becomes authority."
+    },
+    {
+      "name": "receiz_v125_attestation_approval_plan",
+      "sdkMethod": "client.attestations.planEvent",
+      "scopes": [
+        "receiz:proof.write"
+      ],
+      "inputRefs": [
+        "proofReference"
+      ],
+      "outputRefs": [],
+      "custody": "The trusted host resolves and verifies the enclosing sealed Receiz proof object; exact bytes, private claims, identity secrets, and raw provider evidence never enter model context, and MCP never becomes authority."
+    },
+    {
+      "name": "receiz_v125_attestation_approval_apply",
+      "sdkMethod": "client.attestations.applyEvent",
+      "scopes": [
+        "receiz:proof.write"
+      ],
+      "inputRefs": [
+        "proofReference"
+      ],
+      "outputRefs": [],
+      "custody": "The trusted host resolves and verifies the enclosing sealed Receiz proof object; exact bytes, private claims, identity secrets, and raw provider evidence never enter model context, and MCP never becomes authority."
+    },
+    {
+      "name": "receiz_v125_credential_issue_plan",
+      "sdkMethod": "client.credentials.planInitialSource",
+      "scopes": [
+        "receiz:proof.write"
+      ],
+      "inputRefs": [
+        "proofReference"
+      ],
+      "outputRefs": [],
+      "custody": "The trusted host resolves and verifies the enclosing sealed Receiz proof object; exact bytes, private claims, identity secrets, and raw provider evidence never enter model context, and MCP never becomes authority."
+    },
+    {
+      "name": "receiz_v125_credential_issue_apply",
+      "sdkMethod": "client.credentials.applyInitialSource",
+      "scopes": [
+        "receiz:proof.write"
+      ],
+      "inputRefs": [
+        "proofReference"
+      ],
+      "outputRefs": [],
+      "custody": "The trusted host resolves and verifies the enclosing sealed Receiz proof object; exact bytes, private claims, identity secrets, and raw provider evidence never enter model context, and MCP never becomes authority."
+    },
+    {
+      "name": "receiz_v125_credential_lifecycle_plan",
+      "sdkMethod": "client.credentials.planLifecycle",
+      "scopes": [
+        "receiz:proof.write"
+      ],
+      "inputRefs": [
+        "proofReference"
+      ],
+      "outputRefs": [],
+      "custody": "The trusted host resolves and verifies the enclosing sealed Receiz proof object; exact bytes, private claims, identity secrets, and raw provider evidence never enter model context, and MCP never becomes authority."
+    },
+    {
+      "name": "receiz_v125_credential_lifecycle_apply",
+      "sdkMethod": "client.credentials.applyLifecycle",
+      "scopes": [
+        "receiz:proof.write"
+      ],
+      "inputRefs": [
+        "proofReference"
+      ],
+      "outputRefs": [],
+      "custody": "The trusted host resolves and verifies the enclosing sealed Receiz proof object; exact bytes, private claims, identity secrets, and raw provider evidence never enter model context, and MCP never becomes authority."
+    },
+    {
+      "name": "receiz_v125_credential_currentness_resolve",
+      "sdkMethod": "client.credentials.resolveCurrentness",
+      "scopes": [
+        "receiz:proof.read"
+      ],
+      "inputRefs": [
+        "proofReference"
+      ],
+      "outputRefs": [],
+      "custody": "The trusted host resolves and verifies the enclosing sealed Receiz proof object; exact bytes, private claims, identity secrets, and raw provider evidence never enter model context, and MCP never becomes authority."
+    },
+    {
+      "name": "receiz_v125_pbi_ceremony_challenge_create",
+      "sdkMethod": "client.presentations.createChallenge",
+      "scopes": [
+        "receiz:proof.write"
+      ],
+      "inputRefs": [
+        "proofReference"
+      ],
+      "outputRefs": [],
+      "custody": "The trusted host resolves and verifies the enclosing sealed Receiz proof object; exact bytes, private claims, identity secrets, and raw provider evidence never enter model context, and MCP never becomes authority."
+    },
+    {
+      "name": "receiz_v125_pbi_ceremony_approve",
+      "sdkMethod": "client.presentations.approveChallenge",
+      "scopes": [
+        "receiz:proof.write"
+      ],
+      "inputRefs": [
+        "proofReference"
+      ],
+      "outputRefs": [],
+      "custody": "The trusted host resolves and verifies the enclosing sealed Receiz proof object; exact bytes, private claims, identity secrets, and raw provider evidence never enter model context, and MCP never becomes authority."
+    },
+    {
+      "name": "receiz_v125_pbi_ceremony_receipt_issue",
+      "sdkMethod": "client.presentations.issuePresenceReceipt",
+      "scopes": [
+        "receiz:proof.write"
+      ],
+      "inputRefs": [
+        "proofReference"
+      ],
+      "outputRefs": [],
+      "custody": "The trusted host resolves and verifies the enclosing sealed Receiz proof object; exact bytes, private claims, identity secrets, and raw provider evidence never enter model context, and MCP never becomes authority."
+    },
+    {
+      "name": "receiz_v125_pbi_ceremony_receipt_verify",
+      "sdkMethod": "client.presentations.verifyPresenceReceipt",
+      "scopes": [
+        "receiz:proof.read"
+      ],
+      "inputRefs": [
+        "proofReference"
+      ],
+      "outputRefs": [],
+      "custody": "The trusted host resolves and verifies the enclosing sealed Receiz proof object; exact bytes, private claims, identity secrets, and raw provider evidence never enter model context, and MCP never becomes authority."
+    },
+    {
+      "name": "receiz_v125_pbi_ceremony_challenge_redeem",
+      "sdkMethod": "client.presentations.verifyPresenceReceipt",
+      "scopes": [
+        "receiz:proof.write"
+      ],
+      "inputRefs": [
+        "proofReference"
+      ],
+      "outputRefs": [],
+      "custody": "The trusted host resolves and verifies the enclosing sealed Receiz proof object; exact bytes, private claims, identity secrets, and raw provider evidence never enter model context, and MCP never becomes authority."
+    },
+    {
+      "name": "receiz_v125_credential_presentation_create",
+      "sdkMethod": "client.presentations.create",
+      "scopes": [
+        "receiz:proof.write"
+      ],
+      "inputRefs": [
+        "proofReference"
+      ],
+      "outputRefs": [],
+      "custody": "The trusted host resolves and verifies the enclosing sealed Receiz proof object; exact bytes, private claims, identity secrets, and raw provider evidence never enter model context, and MCP never becomes authority."
+    },
+    {
+      "name": "receiz_v125_credential_presentation_verify",
+      "sdkMethod": "client.presentations.verify",
+      "scopes": [
+        "receiz:proof.read"
+      ],
+      "inputRefs": [
+        "proofReference"
+      ],
+      "outputRefs": [],
+      "custody": "The trusted host resolves and verifies the enclosing sealed Receiz proof object; exact bytes, private claims, identity secrets, and raw provider evidence never enter model context, and MCP never becomes authority."
+    },
+    {
+      "name": "receiz_v125_credential_presentation_handoff_resolve",
+      "sdkMethod": "client.presentations.verify",
+      "scopes": [
+        "receiz:proof.read"
+      ],
+      "inputRefs": [
+        "proofReference"
+      ],
+      "outputRefs": [],
+      "custody": "The trusted host resolves and verifies the enclosing sealed Receiz proof object; exact bytes, private claims, identity secrets, and raw provider evidence never enter model context, and MCP never becomes authority."
+    },
+    {
+      "name": "receiz_v125_subject_relationship_plan",
+      "sdkMethod": "client.subjectCoordination.planRelationship",
+      "scopes": [
+        "receiz:proof.write"
+      ],
+      "inputRefs": [
+        "proofReference"
+      ],
+      "outputRefs": [],
+      "custody": "The trusted host resolves and verifies the enclosing sealed Receiz proof object; exact bytes, private claims, identity secrets, and raw provider evidence never enter model context, and MCP never becomes authority."
+    },
+    {
+      "name": "receiz_v125_subject_relationship_apply",
+      "sdkMethod": "client.subjectCoordination.applyRelationship",
+      "scopes": [
+        "receiz:proof.write"
+      ],
+      "inputRefs": [
+        "proofReference"
+      ],
+      "outputRefs": [],
+      "custody": "The trusted host resolves and verifies the enclosing sealed Receiz proof object; exact bytes, private claims, identity secrets, and raw provider evidence never enter model context, and MCP never becomes authority."
+    },
+    {
+      "name": "receiz_v125_subject_introduction_plan",
+      "sdkMethod": "client.subjectCoordination.planRelationship",
+      "scopes": [
+        "receiz:proof.write"
+      ],
+      "inputRefs": [
+        "proofReference"
+      ],
+      "outputRefs": [],
+      "custody": "The trusted host resolves and verifies the enclosing sealed Receiz proof object; exact bytes, private claims, identity secrets, and raw provider evidence never enter model context, and MCP never becomes authority."
+    },
+    {
+      "name": "receiz_v125_subject_introduction_apply",
+      "sdkMethod": "client.subjectCoordination.applyRelationship",
+      "scopes": [
+        "receiz:proof.write"
+      ],
+      "inputRefs": [
+        "proofReference"
+      ],
+      "outputRefs": [],
+      "custody": "The trusted host resolves and verifies the enclosing sealed Receiz proof object; exact bytes, private claims, identity secrets, and raw provider evidence never enter model context, and MCP never becomes authority."
+    },
+    {
+      "name": "receiz_v125_subject_message_plan",
+      "sdkMethod": "client.subjectCoordination.planMessage",
+      "scopes": [
+        "receiz:proof.write"
+      ],
+      "inputRefs": [
+        "proofReference"
+      ],
+      "outputRefs": [],
+      "custody": "The trusted host resolves and verifies the enclosing sealed Receiz proof object; exact bytes, private claims, identity secrets, and raw provider evidence never enter model context, and MCP never becomes authority."
+    },
+    {
+      "name": "receiz_v125_subject_message_apply",
+      "sdkMethod": "client.subjectCoordination.applyMessage",
+      "scopes": [
+        "receiz:proof.write"
+      ],
+      "inputRefs": [
+        "proofReference"
+      ],
+      "outputRefs": [],
+      "custody": "The trusted host resolves and verifies the enclosing sealed Receiz proof object; exact bytes, private claims, identity secrets, and raw provider evidence never enter model context, and MCP never becomes authority."
+    },
+    {
+      "name": "receiz_v125_subject_presence_plan",
+      "sdkMethod": "client.subjectCoordination.planPresence",
+      "scopes": [
+        "receiz:proof.write"
+      ],
+      "inputRefs": [
+        "proofReference"
+      ],
+      "outputRefs": [],
+      "custody": "The trusted host resolves and verifies the enclosing sealed Receiz proof object; exact bytes, private claims, identity secrets, and raw provider evidence never enter model context, and MCP never becomes authority."
+    },
+    {
+      "name": "receiz_v125_subject_presence_apply",
+      "sdkMethod": "client.subjectCoordination.applyPresence",
+      "scopes": [
+        "receiz:proof.write"
+      ],
+      "inputRefs": [
+        "proofReference"
+      ],
+      "outputRefs": [],
+      "custody": "The trusted host resolves and verifies the enclosing sealed Receiz proof object; exact bytes, private claims, identity secrets, and raw provider evidence never enter model context, and MCP never becomes authority."
+    },
+    {
+      "name": "receiz_v125_subject_discovery_resolve",
+      "sdkMethod": "client.subjectCoordination.discover",
+      "scopes": [
+        "receiz:proof.read"
+      ],
+      "inputRefs": [
+        "proofReference"
+      ],
+      "outputRefs": [],
+      "custody": "The trusted host resolves and verifies the enclosing sealed Receiz proof object; exact bytes, private claims, identity secrets, and raw provider evidence never enter model context, and MCP never becomes authority."
+    },
+    {
+      "name": "receiz_v125_external_execution_plan",
+      "sdkMethod": "client.externalExecution.plan",
+      "scopes": [
+        "receiz:proof.write"
+      ],
+      "inputRefs": [
+        "proofReference"
+      ],
+      "outputRefs": [],
+      "custody": "The trusted host resolves and verifies the enclosing sealed Receiz proof object; exact bytes, private claims, identity secrets, and raw provider evidence never enter model context, and MCP never becomes authority."
+    },
+    {
+      "name": "receiz_v125_external_execution_execute",
+      "sdkMethod": "client.externalExecution.createRuntime",
+      "scopes": [
+        "receiz:proof.write"
+      ],
+      "inputRefs": [
+        "proofReference"
+      ],
+      "outputRefs": [],
+      "custody": "The trusted host resolves and verifies the enclosing sealed Receiz proof object; exact bytes, private claims, identity secrets, and raw provider evidence never enter model context, and MCP never becomes authority."
+    },
+    {
+      "name": "receiz_v125_external_execution_resolve",
+      "sdkMethod": "client.externalExecution.createRuntime",
+      "scopes": [
+        "receiz:proof.read"
+      ],
+      "inputRefs": [
+        "proofReference"
+      ],
+      "outputRefs": [],
+      "custody": "The trusted host resolves and verifies the enclosing sealed Receiz proof object; exact bytes, private claims, identity secrets, and raw provider evidence never enter model context, and MCP never becomes authority."
+    },
+    {
+      "name": "receiz_v125_external_execution_verify",
+      "sdkMethod": "client.externalExecution.verifyOutcome",
+      "scopes": [
+        "receiz:proof.read"
+      ],
+      "inputRefs": [
+        "proofReference"
+      ],
+      "outputRefs": [],
+      "custody": "The trusted host resolves and verifies the enclosing sealed Receiz proof object; exact bytes, private claims, identity secrets, and raw provider evidence never enter model context, and MCP never becomes authority."
+    }
+  ]
+}

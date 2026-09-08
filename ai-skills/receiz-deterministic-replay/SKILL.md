@@ -10,7 +10,7 @@ Recompute admitted history from canonical inputs and prove checkpoint, full repl
 ## Constitutional workflow
 
 1. Inspect the repository and installed SDK version.
-2. Load the active canonical v124 registry and applicable constitutional laws.
+2. Load the active canonical v126 registry and applicable constitutional laws.
 3. Identify every authority boundary affected by the change.
 4. Write the implementation contract before implementation.
 5. Implement canonical changes only through SDK commands.
@@ -72,3 +72,9 @@ Concrete v120 evidence must include: a creature speaking from exact long-form pr
 Use `receiz_v124_domain_verified_additions`, `receiz_v124_domain_verified_replay`, `receiz_v124_domain_verified_checkpoint`, and `receiz_v124_domain_verified_private_additions` only through the canonical SDK verifier and authenticated transport binding. Replay and checkpoint context remains SDK-custodied. Exact private additions remain in trusted-host custody under `privateAdditionsRef` and never enter model output. Across client or process recreation, `receiz_v124_domain_replay_proof_object_export` returns an unsealed non-authoritative candidate containing `exactBytesB64u`; canonically Record -> Seal those exact bytes, admit the result as `sealedReplayProofObjectRef`, and only then call `receiz_v124_domain_replay_proof_object_restore`. Never reconstruct verified custody from MCP JSON, a database row, or a caller-provided object.
 
 Read the [universal V124 runtime tool map](../receiz-mcp-agent-skill/resources/v124-runtime-tool-map.md) for all 22 exact adapters, SDK mappings, fixed/conditional scopes, and custody rules.
+
+<!-- receiz-v124.1-capability-map:start -->
+## V124.1 callable capability bindings
+
+- **source-carried-replay.** Open, compare, merge, and project every verified replay branch from exact sealed sources without a database or last-write-wins collapse. SDK: `openReceizSourceCarriedReplayFamilyV124`, `diffReceizSourceCarriedReplayFamiliesV124`, `mergeReceizSourceCarriedReplayFamiliesV124`, `projectReceizSourceCarriedReplayBranchesV124`. MCP: `receiz_source_carried_replay_open`. Boundary: Each sealed replay source is verified independently. Family and branch projections coordinate exact admitted sources but never replace the enclosing proof objects.
+<!-- receiz-v124.1-capability-map:end -->

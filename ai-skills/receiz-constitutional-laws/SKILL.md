@@ -7,10 +7,14 @@ description: Use when defining, versioning, explaining, covering, or changing ex
 
 Define deterministic predicates, stable denial codes, safe alternatives, version compatibility, and positive and negative fixtures. Receiz is a proof-native artifact system; this skill operates beneath sealed proof and verified local history.
 
+## KKSv1.0 temporal law
+
+Read [the shared KKSv1.0 temporal-authority contract](../resources/kks-v1-temporal-authority.md). Kai pulse monotonically counted from Genesis is temporal authority. Acquire a new coordinate through `createReceizKksV1LiveProofCoordinate()` and read an existing coordinate from its verified sealed proof object. `createdAt` is descriptive Chronos only; never use it to create, recover, order, compare, or override proof truth.
+
 ## Constitutional workflow
 
 1. Inspect the repository and installed SDK version.
-2. Load the active canonical v124 registry and applicable constitutional laws.
+2. Load the active canonical v126 registry and applicable constitutional laws.
 3. Identify every authority boundary affected by the change.
 4. Write the implementation contract before implementation.
 5. Implement canonical changes only through SDK commands.

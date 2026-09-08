@@ -16,14 +16,14 @@ test("the repository identifies the shipped release as 5.2.1 on the public Recei
   const lockfile = await read("pnpm-lock.yaml");
 
   assert.equal(packageJson.version, "5.2.1");
-  assert.equal(packageJson.dependencies?.["@receiz/sdk"], "124.0.3");
-  assert.equal(packageJson.dependencies?.["@receiz/mcp-server"], "124.0.3");
-  assert.equal(packageJson.dependencies?.["@receiz/ai-skills"], "124.0.3");
-  assert.equal(packageJson.scripts?.["receiz:check"], "receiz app check --target 124.0.3 --json");
+  assert.equal(packageJson.dependencies?.["@receiz/sdk"], "126.0.0");
+  assert.equal(packageJson.dependencies?.["@receiz/mcp-server"], "126.0.0");
+  assert.equal(packageJson.dependencies?.["@receiz/ai-skills"], "126.0.0");
+  assert.equal(packageJson.scripts?.["receiz:check"], "node scripts/receiz-v126-inspection.mjs");
   assert.doesNotMatch(lockfile, /file:vendor\/receiz-(?:sdk|mcp-server|ai-skills)-113\.0\.0\.tgz/);
-  assert.match(lockfile, /@receiz\/sdk@124\.0\.3/);
-  assert.match(lockfile, /@receiz\/mcp-server@124\.0\.3/);
-  assert.match(lockfile, /@receiz\/ai-skills@124\.0\.3/);
+  assert.match(lockfile, /@receiz\/sdk@126\.0\.0/);
+  assert.match(lockfile, /@receiz\/mcp-server@126\.0\.0/);
+  assert.match(lockfile, /@receiz\/ai-skills@126\.0\.0/);
 });
 
 test("the v4 release preserves prior evidence and adds a complete v3-to-v4 qualification record", async () => {

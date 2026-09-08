@@ -47,3 +47,9 @@ Open a long-form proof object and let the person narrate it. Resolve the exact l
 ## Authority rule
 
 Never treat a database, server, marketplace, UI, model response, cache, proof index, MCP result, or receipt as final authority. The sealed Receiz proof object and admitted append-only history remain stronger truth.
+
+<!-- receiz-v124.1-capability-map:start -->
+## V124.1 callable capability bindings
+
+- **subject-memory-and-twin.** Resolve complete proof history through bounded cognition windows, cite exact proof objects, and generate local or connected Twin speech without promoting model output into fact or command authority. SDK: `subjects.brain.head`, `subjects.brain.search`, `subjects.brain.resolve`, `subjects.brain.stream`, `subjects.memory.query`, `subjects.memory.project`, `subjects.memory.citations`, `subjects.memory.compact`, `subjects.twin.profile`, `subjects.twin.message`, `subjects.twin.stream`, `subjects.twin.exportMind`, `subjects.twin.importMind`, `subjects.twin.memorySummary`, `subjects.twin.streamPerformance`. MCP: `receiz_subject_memory_query`, `receiz_subject_brain_head`, `receiz_subject_brain_search`, `receiz_subject_brain_resolve`, `receiz_subject_brain_stream`, `receiz_subject_twin_profile`, `receiz_subject_twin_message`, `receiz_subject_twin_mind_export`, `receiz_subject_twin_mind_import_plan`. Boundary: Proof-derived memory cites admitted events and exact primary proof objects. Twin speech, summaries, intent, and performance remain non-authoritative proposals until deterministic command admission accepts a consequential action.
+<!-- receiz-v124.1-capability-map:end -->
