@@ -42,7 +42,7 @@ The SDK is convenience and typed transport around that truth. It verifies, proje
 
 ## V124 Production Runtime
 
-The exact public source set is `@receiz/sdk@126.0.0`, `@receiz/mcp-server@126.0.0`, and `@receiz/ai-skills@126.0.0`; constitutional ruleset `126.0.0` is verified separately.
+The exact public source set is `@receiz/sdk@127.0.0`, `@receiz/mcp-server@127.0.0`, and `@receiz/ai-skills@127.0.0`; constitutional ruleset `127.0.0` is verified separately.
 
 - `v124.kai` creates live challenge freshness and deterministic sealed-pulse moments; `v124.proofAuthority` creates canonical consent coordinates.
 - `v124.material` verifies inline or composite content-bearing proof URLs, reconstructs exact payload bytes, produces browser-local playable URLs, and exposes the canonical proof link.
@@ -120,7 +120,7 @@ SDK rails:
 - `merchants.profile`
 - `merchants.capabilities`
 
-These rails are exposed in `@receiz/sdk@126.0.0`. The app treats customer accounts as tenant-scoped storefront projections over Receiz proof. The same proof-bearing Receiz identity can be used across multiple stores, but orders, rewards, assets, and permissions are projected for the active subdomain or custom domain. SDK `doctor()` reports delegated-token, tenant, customer, merchant, commerce, media, domain, public-store, and coordination requirements directly.
+These rails are exposed in `@receiz/sdk@127.0.0`. The app treats customer accounts as tenant-scoped storefront projections over Receiz proof. The same proof-bearing Receiz identity can be used across multiple stores, but orders, rewards, assets, and permissions are projected for the active subdomain or custom domain. SDK `doctor()` reports delegated-token, tenant, customer, merchant, commerce, media, domain, public-store, and coordination requirements directly.
 
 ## Merchant Settlement
 
@@ -284,3 +284,9 @@ With `@receiz/sdk@123.0.0`, typed app-state, signed public-store publish, source
 - `adapter.v123.value`: executes exact Phi Settlement and Reserve intents only after canonical intent persistence and supports outcome lookup by the original semantic idempotency key before retry.
 - `/api/receiz/v123/world` is plan-only; `/api/receiz/v123/subjects/namespaces` is authenticated exact-head resolution; `/api/receiz/v123/value` is authenticated GET-only recovery. No server route accepts proof authority or performs v123 value execution.
 - `receiz-proof-authority` and `receiz-value-execution` are the only published v123 AI skills with explicit tool grants for their corresponding MCP outcomes. The world-planning and namespace rows are documented without inventing a skill-specific grant.
+
+## V127 release boundaries
+
+The application release is 5.3.0 on SDK/MCP/AI 127.0.0, with 60 operations and 330 MCP tools. The existing adapter forwards `ReceizClientOptions`, including an admitted `subjectRuntime` and explicit compatibility transport options. It does not enable historical transports by default.
+
+Offline sealing, offline Kai proving, and durable Node subject-host entrypoints are installed but require explicit enrollment/resource/identity custody. Keep Node-only imports in trusted host code. See [full release notes](releases/2026-09-23-v127-full-release.md) for availability, migration, rollback, and validation.

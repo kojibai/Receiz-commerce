@@ -10,7 +10,7 @@ Coordinate the complete production workflow across architecture, domains, laws, 
 ## Constitutional workflow
 
 1. Inspect the repository and installed SDK version.
-2. Load the active canonical v126 registry and applicable constitutional laws.
+2. Load the active canonical v127 registry and applicable constitutional laws.
 3. Identify every authority boundary affected by the change.
 4. Write the implementation contract before implementation.
 5. Implement canonical changes only through SDK commands.
@@ -107,3 +107,13 @@ Historical sealed proof objects remain exact-byte verifiable evidence. Historica
 Production composition uses the exact 22 adapters in the [universal V124 runtime tool map](../receiz-mcp-agent-skill/resources/v124-runtime-tool-map.md). The map binds every tool to its canonical SDK method, fixed or conditional scope contract, action class, process-local handle rule, and trusted-host material/session custody. Tool presence alone is not operational evidence; `receiz_v124_runtime_qualify` must report every required dependency operational.
 
 The sealed proof object and authenticated heads remain authority. The Receiz identity artifact remains identity authority. Grants, bearers, authority sessions, handles, MCP references, responses, and database rows remain subordinate execution, synchronization, or recovery mechanics. MCP must never reconstruct SDK authority from JSON.
+
+<!-- v127-local-runtime:start -->
+## Executable local subject host
+
+Read [local subject runtime](../resources/local-subject-runtime.md) and [offline sealing](../resources/offline-sealing.md) before executing local subject work. The [HTTP execution classification](../resources/historical-http.md) distinguishes implemented current routes from explicitly configured historical hosts. A listed SDK method or MCP tool alone does not prove a server route exists. The SDK ships the Node host; MCP uses RECEIZ_SUBJECT_IDENTITY_PATH, RECEIZ_SUBJECT_IDENTITY_PASSPHRASE, RECEIZ_SUBJECT_CUSTODY_DIR and optional RECEIZ_SUBJECT_SNAPSHOT_PATH. Source paths select complete sealed files and cannot supply owner authority.
+
+Use receiz_subject_local_runtime_status, then the admitted subject operations. Exported snapshot JSON is unsealed until receiz_offline_seal_file creates the enclosing proof object with admitted identity ownership. Import only that verified complete source into an empty host. Preserve exact historical V120 identity and history; modern V122 state is a separate protocol. Historical bearer instrument tools require their explicit shared custody host and are not portable-asset claim aliases.
+
+A bare Kai pulse is never temporal authority. Require the existing full KaiSigil Groth16 proof, exact coordinate binding and causal-head admission. Keep planning deadlines separate from verified execution coordinates. Never claim that sealing arbitrary inner JSON proves its claimed temporal history.
+<!-- v127-local-runtime:end -->

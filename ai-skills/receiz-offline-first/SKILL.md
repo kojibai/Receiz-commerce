@@ -10,7 +10,7 @@ Admit verified local truth immediately, queue idempotent appends, and let networ
 ## Constitutional workflow
 
 1. Inspect the repository and installed SDK version.
-2. Load the active canonical v126 registry and applicable constitutional laws.
+2. Load the active canonical v127 registry and applicable constitutional laws.
 3. Identify every authority boundary affected by the change.
 4. Write the implementation contract before implementation.
 5. Implement canonical changes only through SDK commands.
@@ -67,8 +67,26 @@ Use canonical head → entire proof history → bounded index retrieval → exac
 
 Concrete v120 evidence must include: a creature speaking from exact long-form proof memory; absent-owner exploration inside a mandate; a mutual relationship; a bounded autonomous trade; an atomic battle; exact device restoration; queued-action revocation; partition convergence without history replacement; rejection of an AI-invented event; and cross-application subject continuity.
 
+## v127 offline file sealing
+
+For a request to seal files while disconnected, read [the executable offline sealing workflow](resources/offline-sealing.md) first. Use the shipped `@receiz/sdk/offline/node` runtime or the default MCP offline tools. Do not send `assets.createProofObject()` requests or ask the developer to invent a transition sealer.
+
+Enrollment is an explicit one-time online device operation. After enrollment, restart with the same private custody directory and networking disabled; seal, save exact bytes, and verify locally. A successful seal does not admit an ownership transfer or Settlement operation. The device key remains local and the root private key is never distributed.
+
+Offline file sealing uses the explicit enrollment and file-seal workflow above. Plan/permit/execute applies when admitting consequential commands such as ownership transitions or Settlement; an ordinary local file seal does not claim that admission.
+
 <!-- receiz-v124.1-capability-map:start -->
 ## V124.1 callable capability bindings
 
 - **portable-account-continuity.** Seal, verify, and immediately project complete account truth—including profile, showcase, wallet, market positions/history, media, and proof history—without waiting on a server or database. SDK: `appendReceizIdentityPortableState`, `verifyReceizIdentityPortableStateProof`, `projectReceizIdentityAccount`. MCP: none: private SDK boundary. Boundary: The verified Identity Seal, Identity Record, or Receiz Key carries account truth. Private portable state is not exposed through MCP; server synchronization may append verified additions only after immediate local projection.
 <!-- receiz-v124.1-capability-map:end -->
+
+<!-- v127-local-runtime:start -->
+## Executable local subject host
+
+Read [local subject runtime](../resources/local-subject-runtime.md) and [offline sealing](../resources/offline-sealing.md) before executing local subject work. The [HTTP execution classification](../resources/historical-http.md) distinguishes implemented current routes from explicitly configured historical hosts. A listed SDK method or MCP tool alone does not prove a server route exists. The SDK ships the Node host; MCP uses RECEIZ_SUBJECT_IDENTITY_PATH, RECEIZ_SUBJECT_IDENTITY_PASSPHRASE, RECEIZ_SUBJECT_CUSTODY_DIR and optional RECEIZ_SUBJECT_SNAPSHOT_PATH. Source paths select complete sealed files and cannot supply owner authority.
+
+Use receiz_subject_local_runtime_status, then the admitted subject operations. Exported snapshot JSON is unsealed until receiz_offline_seal_file creates the enclosing proof object with admitted identity ownership. Import only that verified complete source into an empty host. Preserve exact historical V120 identity and history; modern V122 state is a separate protocol. Historical bearer instrument tools require their explicit shared custody host and are not portable-asset claim aliases.
+
+A bare Kai pulse is never temporal authority. Require the existing full KaiSigil Groth16 proof, exact coordinate binding and causal-head admission. Keep planning deadlines separate from verified execution coordinates. Never claim that sealing arbitrary inner JSON proves its claimed temporal history.
+<!-- v127-local-runtime:end -->

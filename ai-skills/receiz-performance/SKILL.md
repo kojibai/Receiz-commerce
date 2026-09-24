@@ -10,7 +10,7 @@ Assign numeric fixture budgets and optimize beneath deterministic known-truth pa
 ## Constitutional workflow
 
 1. Inspect the repository and installed SDK version.
-2. Load the active canonical v126 registry and applicable constitutional laws.
+2. Load the active canonical v127 registry and applicable constitutional laws.
 3. Identify every authority boundary affected by the change.
 4. Write the implementation contract before implementation.
 5. Implement canonical changes only through SDK commands.
@@ -50,6 +50,7 @@ Refuse completion when any manifest input, law, test, conformance result, indepe
 Request: Assign numeric fixture budgets and optimize beneath deterministic known-truth paint and verification requirements.
 
 Return a written implementation contract and read-only plan first. Execute only allowed commands after exact confirmation, then report registry digest, laws, authority, tests, independent evidence, release-lock status, and the exact remaining boundary.
+
 
 
 

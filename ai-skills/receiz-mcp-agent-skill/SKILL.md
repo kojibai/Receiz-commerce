@@ -114,6 +114,17 @@ Use only the 26 exact retained adapters in the [V124 runtime tool map](resources
 
 The [V125 economy and trust tool map](resources/v125-economy-tool-map.md) contains the thirteen retained economy tools and 39 canonical trust tools. Use the thirteen economy tools for lawful action and Settlement/Reserve; use the named trust operations for their source-bound families. Lawful-action proof bytes resolve only through the proof host after confirmation. Edge plans and portable transition/recovery materials resolve through the existing material host. Verified transition sets, prepared commit sets, and SDK-issued committed transitions remain same-runtime-custodied. Settlement and Reserve send/receive independently reverify the exact recovery at the respective user edge; server and database state only synchronize the resulting proof globally.
 
+## v127 complete SDK reference
+
+Read [all public SDK function signatures](../resources/sdk-public-functions.json) and [the entry-point index](../resources/sdk-public-functions.md), including compiler, testing, and React exports. Client capabilities and executable MCP adapters remain separately identified; inventory membership never substitutes for an implemented adapter or SDK proof admission.
+
+
+## v127 offline file sealing
+
+For a request to seal files while disconnected, read [the executable offline sealing workflow](resources/offline-sealing.md) first. Use the shipped `@receiz/sdk/offline/node` runtime or the default MCP offline tools. Do not send `assets.createProofObject()` requests or ask the developer to invent a transition sealer.
+
+Enrollment is an explicit one-time online device operation. After enrollment, restart with the same private custody directory and networking disabled; seal, save exact bytes, and verify locally. A successful seal does not admit an ownership transfer or Settlement operation. The device key remains local and the root private key is never distributed.
+
 <!-- receiz-v124.1-capability-map:start -->
 ## V124.1 callable capability bindings
 
@@ -123,7 +134,3 @@ The [V125 economy and trust tool map](resources/v125-economy-tool-map.md) contai
 - **progressive-range-playback.** Start verified first-frame playback from signed range commitments while remaining ranges settle behind the already playing media. SDK: `buildReceizMaterialProgressiveLedger`, `createReceizMaterialProgressiveCommitment`, `coerceReceizMaterialProgressiveLedger`, `coerceReceizMaterialProgressiveCommitment`, `openReceizMaterialSourceRangeReader`. MCP: `receiz_material_source_parts_open`. Boundary: Only a progressive ledger whose complete root is carried by the enclosing Signature-V4 proof can authorize range projection. Unsigned offsets, container metadata, or transport segments cannot.
 - **subject-memory-and-twin.** Resolve complete proof history through bounded cognition windows, cite exact proof objects, and generate local or connected Twin speech without promoting model output into fact or command authority. SDK: `subjects.brain.head`, `subjects.brain.search`, `subjects.brain.resolve`, `subjects.brain.stream`, `subjects.memory.query`, `subjects.memory.project`, `subjects.memory.citations`, `subjects.memory.compact`, `subjects.twin.profile`, `subjects.twin.message`, `subjects.twin.stream`, `subjects.twin.exportMind`, `subjects.twin.importMind`, `subjects.twin.memorySummary`, `subjects.twin.streamPerformance`. MCP: `receiz_subject_memory_query`, `receiz_subject_brain_head`, `receiz_subject_brain_search`, `receiz_subject_brain_resolve`, `receiz_subject_brain_stream`, `receiz_subject_twin_profile`, `receiz_subject_twin_message`, `receiz_subject_twin_mind_export`, `receiz_subject_twin_mind_import_plan`. Boundary: Proof-derived memory cites admitted events and exact primary proof objects. Twin speech, summaries, intent, and performance remain non-authoritative proposals until deterministic command admission accepts a consequential action.
 <!-- receiz-v124.1-capability-map:end -->
-
-## v126 complete SDK reference
-
-Read [all public SDK function signatures](../resources/sdk-public-functions.json) and [the entry-point index](../resources/sdk-public-functions.md), including compiler, testing, and React exports. Client capabilities and executable MCP adapters remain separately identified; inventory membership never substitutes for an implemented adapter or SDK proof admission.

@@ -10,7 +10,7 @@ Map domains, sources of truth, state machines, dependency direction, and cross-d
 ## Constitutional workflow
 
 1. Inspect the repository and installed SDK version.
-2. Load the active canonical v126 registry and applicable constitutional laws.
+2. Load the active canonical v127 registry and applicable constitutional laws.
 3. Identify every authority boundary affected by the change.
 4. Write the implementation contract before implementation.
 5. Implement canonical changes only through SDK commands.
@@ -56,6 +56,7 @@ Refuse completion when any manifest input, law, test, conformance result, indepe
 Request: Map domains, sources of truth, state machines, dependency direction, and cross-domain authority before design or refactoring.
 
 Return a written implementation contract and read-only plan first. Execute only allowed commands after exact confirmation, then report registry digest, laws, authority, tests, independent evidence, release-lock status, and the exact remaining boundary.
+
 
 
 

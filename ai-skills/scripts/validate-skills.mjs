@@ -891,11 +891,11 @@ function assertLivingSubjectSkill(name) {
 assertPath(join(root, "README.md"));
 assertPath(join(root, "SKILLS.md"));
 assertPath(join(root, "skills.json"));
-if (!Array.isArray(currentMcpTools) || currentMcpTools.length !== 221 || new Set(currentMcpTools).size !== 221)
-    fail("skills.json must carry exactly 221 unique current MCP tools");
-if (!Array.isArray(sdkClientCapabilityInventory) || sdkClientCapabilityInventory.length !== 421
-    || new Set(sdkClientCapabilityInventory).size !== 421)
-    fail("skills.json must carry exactly 421 unique public SDK client capabilities");
+if (!Array.isArray(currentMcpTools) || currentMcpTools.length !== 330 || new Set(currentMcpTools).size !== 330)
+    fail("skills.json must carry exactly 330 unique current MCP tools");
+if (!Array.isArray(sdkClientCapabilityInventory) || sdkClientCapabilityInventory.length !== 425
+    || new Set(sdkClientCapabilityInventory).size !== 425)
+    fail("skills.json must carry exactly 425 unique public SDK client capabilities");
 if (createHash("sha256").update(JSON.stringify(sdkClientCapabilityInventory)).digest("hex") !== sdkClientCapabilityInventoryDigest)
     fail("skills.json SDK client capability inventory digest mismatch");
 const expectedHistoricalSdkClientCapabilities = [

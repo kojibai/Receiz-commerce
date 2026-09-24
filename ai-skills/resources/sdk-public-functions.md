@@ -1,8 +1,8 @@
-# Receiz v126.0.0 public SDK functions
+# Receiz v127.0.0 public SDK functions
 
 Generated from the built public entry points. SDK client methods are separately enumerated by `describeReceizSdkClientCapabilityInventory`. Signatures preserve the canonical SDK contract; an inventory entry does not create an MCP execution adapter or serialize proof authority.
 
-663 callable exports across all four entry points. Inventory SHA-256: `c9377fb197a50feaaddb02d3e7f308cf6e46f9724104adef539660a23ff16bac`.
+678 callable exports across all public entry points. Inventory SHA-256: `7b0efbee6e1d8dbe2dd11f065486ac47c3b9f64b1c3596369a6826ca1d689af9`.
 
 | Entry point | Function |
 | --- | --- |
@@ -152,6 +152,7 @@ Generated from the built public entry points. SDK client methods are separately 
 | `@receiz/sdk` | `createReceizLawfulActionAdmissionStoreV125` |
 | `@receiz/sdk` | `createReceizLawfulActionLawV125` |
 | `@receiz/sdk` | `createReceizLivingSubjectRuntime` |
+| `@receiz/sdk` | `createReceizLivingSubjectTemporalExecution` |
 | `@receiz/sdk` | `createReceizLocalStorageOfflineProofQueueStorage` |
 | `@receiz/sdk` | `createReceizLocalStorageProofMemoryStorage` |
 | `@receiz/sdk` | `createReceizMaterialProgressiveCommitment` |
@@ -225,6 +226,7 @@ Generated from the built public entry points. SDK client methods are separately 
 | `@receiz/sdk` | `createReceizV125LawfulActionClient` |
 | `@receiz/sdk` | `createReceizV125LawfulActionTransport` |
 | `@receiz/sdk` | `createReceizV125ReleaseAuthorityBoundary` |
+| `@receiz/sdk` | `createReceizV127SubjectRuntimeAdapter` |
 | `@receiz/sdk` | `createReceizWebhookSignature` |
 | `@receiz/sdk` | `createReceizWorldExecutionEventV124` |
 | `@receiz/sdk` | `createReceizWorldIdempotencyDigestV122` |
@@ -259,6 +261,7 @@ Generated from the built public entry points. SDK client methods are separately 
 | `@receiz/sdk` | `deriveReceizProfileShowcaseNativeOperationDigestV114` |
 | `@receiz/sdk` | `deriveReceizProfileShowcasePersistentHeadDigestV114` |
 | `@receiz/sdk` | `deriveReceizProfileShowcasePersistentMembershipV114` |
+| `@receiz/sdk` | `deriveReceizProfileShowcasePersistentPlacementV114` |
 | `@receiz/sdk` | `deriveReceizProfileShowcasePersistentWindowV114` |
 | `@receiz/sdk` | `deriveReceizRegisteredOperationCasV124` |
 | `@receiz/sdk` | `deriveReceizSportsVaultCheckpointHeadV119` |
@@ -444,6 +447,7 @@ Generated from the built public entry points. SDK client methods are separately 
 | `@receiz/sdk` | `readReceizIdentityArtifact` |
 | `@receiz/sdk` | `readReceizIdentityPublicBinding` |
 | `@receiz/sdk` | `readReceizLegacyProfileShowcaseMigrationPlanCustody` |
+| `@receiz/sdk` | `readReceizLivingSubjectTemporalExecution` |
 | `@receiz/sdk` | `readReceizMaterialCapsuleFromUrl` |
 | `@receiz/sdk` | `readReceizMaterialCompositePackageDigest` |
 | `@receiz/sdk` | `readReceizProfileShowcaseGenesisBody` |
@@ -644,6 +648,14 @@ Generated from the built public entry points. SDK client methods are separately 
 | `@receiz/sdk/compiler` | `sanitizeReceizErrorMessage` |
 | `@receiz/sdk/compiler` | `validateReceizAppContract` |
 | `@receiz/sdk/compiler` | `verifyV105Migration` |
+| `@receiz/sdk/offline` | `createReceizIndexedDbSealStore` |
+| `@receiz/sdk/offline` | `createReceizMemorySealStore` |
+| `@receiz/sdk/offline` | `createReceizOfflineSealer` |
+| `@receiz/sdk/offline` | `verifyReceizOfflineSealedFile` |
+| `@receiz/sdk/offline/kai` | `createReceizOfflineKaiProofFactory` |
+| `@receiz/sdk/offline/kai/node` | `createReceizNodeOfflineKaiProofFactory` |
+| `@receiz/sdk/offline/node` | `createReceizFileSealStore` |
+| `@receiz/sdk/offline/node` | `createReceizNodeOfflineSealer` |
 | `@receiz/sdk/react` | `ReceizCheckoutButton` |
 | `@receiz/sdk/react` | `ReceizDomainConnector` |
 | `@receiz/sdk/react` | `ReceizIdentityButton` |
@@ -654,6 +666,9 @@ Generated from the built public entry points. SDK client methods are separately 
 | `@receiz/sdk/react` | `useReceizCheckout` |
 | `@receiz/sdk/react` | `useReceizIdentity` |
 | `@receiz/sdk/react` | `useReceizMedia` |
+| `@receiz/sdk/subjects/node` | `createReceizV127SubjectRuntimeFileStore` |
+| `@receiz/sdk/subjects/node` | `openReceizV127SubjectRuntimeFromFiles` |
+| `@receiz/sdk/subjects/node` | `readReceizV127SubjectRuntimeSourceFile` |
 | `@receiz/sdk/testing` | `createReceizArtifactTransitionCommitUnitFixture` |
 | `@receiz/sdk/testing` | `createReceizBrowserAdmissionStoreForTesting` |
 | `@receiz/sdk/testing` | `createReceizEmulator` |

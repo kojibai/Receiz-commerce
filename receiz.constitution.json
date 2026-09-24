@@ -1,9 +1,9 @@
 {
   "schema": "receiz.constitution.registry.v1",
-  "version": "126.0.0",
-  "previousRegistryDigest": "80137c2e6f294050ef36ff75e4daac15c7790b7f04d9a91fab9d1970fa3c0b09",
-  "effectiveKai": "14038643",
-  "createdAt": "2026-09-08T01:27:14.807Z",
+  "version": "127.0.0",
+  "previousRegistryDigest": "8d0b5b839d02d9efbd4306cc99410595a183705c2670b76d2567eaaaade99065",
+  "effectiveKai": "14301115",
+  "createdAt": "2026-09-23T23:12:34.929Z",
   "predicateLanguageVersion": "receiz-law-expression.v1",
   "authority": {
     "registryPayloadIsAuthority": false,
@@ -7297,7 +7297,7 @@
       }
     },
     {
-      "id": "release.current-version.v126",
+      "id": "release.current-version.v127",
       "version": 1,
       "phases": [
         "command",
@@ -7325,7 +7325,7 @@
               "op": "equal",
               "left": {
                 "op": "path",
-                "value": "proposed.release.isV126"
+                "value": "proposed.release.isV127"
               },
               "right": {
                 "op": "literal",
@@ -7338,13 +7338,13 @@
       "denial": {
         "code": "STALE_CURRENT_RELEASE_VERSION",
         "safeAlternatives": [
-          "use-v126-current-default",
-          "retain-v125-as-historical-evidence"
+          "use-v127-current-default",
+          "retain-v126-as-historical-evidence"
         ]
       }
     },
     {
-      "id": "release.coordinated-identity.v126",
+      "id": "release.coordinated-identity.v127",
       "version": 1,
       "phases": [
         "command",
@@ -7385,8 +7385,8 @@
       "denial": {
         "code": "COORDINATED_RELEASE_IDENTITY_REQUIRED",
         "safeAlternatives": [
-          "regenerate-v126-sdk-mcp-ai-projections",
-          "rerun-v126-release-lock"
+          "regenerate-v127-sdk-mcp-ai-projections",
+          "rerun-v127-release-lock"
         ]
       }
     },
@@ -8020,7 +8020,7 @@
       }
     },
     {
-      "id": "app.release.current-package.v126",
+      "id": "app.release.current-package.v127",
       "version": 1,
       "phases": [
         "command",
@@ -8051,7 +8051,7 @@
               },
               "right": {
                 "op": "literal",
-                "value": "126.0.0"
+                "value": "127.0.0"
               }
             }
           }
@@ -8060,7 +8060,7 @@
       "denial": {
         "code": "STALE_CURRENT_RELEASE_VERSION",
         "safeAlternatives": [
-          "use-v126-current-default",
+          "use-v127-current-default",
           "retain-historical-proof-as-non-executable-evidence"
         ]
       }

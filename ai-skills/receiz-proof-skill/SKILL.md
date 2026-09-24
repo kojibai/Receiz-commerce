@@ -226,3 +226,10 @@ Admission begins from runtime-custodied verification of the exact enclosing arti
 Deterministic plan identity and unique execution-attempt identity are separate. MCP may reuse a confirmation digest only while the identical attempt is actively pending; committed and failed attempts are terminal and require a fresh confirmation. Expected authority failures are structured, immutable, machine-readable, and report zero writes.
 
 Historical sealed proof objects remain exact-byte verifiable evidence. Historical runtime admissions, histories, actors, capabilities, plans, candidates, stores, or confirmations cannot authorize a current v121 receiver; exact bytes crossing a process require `reverify-exact-bytes`, followed by current profile admission and `same-runtime-custody` through plan, capability, seal, stage, independent byte resolution, atomic named-domain acceptance, and report-only receipt.
+
+
+## v127 offline file sealing
+
+For a request to seal files while disconnected, read [the executable offline sealing workflow](resources/offline-sealing.md) first. Use the shipped `@receiz/sdk/offline/node` runtime or the default MCP offline tools. Do not send `assets.createProofObject()` requests or ask the developer to invent a transition sealer.
+
+Enrollment is an explicit one-time online device operation. After enrollment, restart with the same private custody directory and networking disabled; seal, save exact bytes, and verify locally. A successful seal does not admit an ownership transfer or Settlement operation. The device key remains local and the root private key is never distributed.

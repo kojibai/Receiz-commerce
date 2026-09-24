@@ -1,6 +1,6 @@
 {
   "schema": "receiz.mcp.v125-economy-tool-map.v1",
-  "version": "126.0.0",
+  "version": "127.0.0",
   "transactionLocation": "sender-and-receiver-edge",
   "serverRole": "global-sync-only",
   "databaseRole": "global-sync-only",

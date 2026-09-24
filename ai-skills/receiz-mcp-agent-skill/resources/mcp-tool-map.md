@@ -129,3 +129,15 @@ Emulator output is labeled `sandboxVerified`; never translate it into Receiz ver
 - `receiz_artifact_reconcile_commit` — independently resolves the exact staged version and atomically accepts only the expected head after distinct confirmation.
 
 These are exactly the nine tools in the single current MCP artifact inventory. The first five remain explicitly documented as the historical v112 compatibility inventory only. MCP property bags, confirmations, receipts, and reported actors never become proof, identity, capability, or commit authority.
+
+
+## Offline file operations (v127)
+
+| Tool | Exact input | Result |
+|---|---|---|
+| `receiz_offline_seal_enroll` | `{ "confirmEnrollment": true }` | Canonical enrollment persisted in private local custody; the only online step |
+| `receiz_offline_seal_status` | `{}` | Local signer/resource readiness |
+| `receiz_offline_seal_file` | `{ "inputPath": "report.pdf", "outputPath": "report.receized.pdf", "mimeType": "application/pdf" }` | Exact verified artifact saved locally without overwrite |
+| `receiz_offline_verify_file` | `{ "inputPath": "report.receized.pdf" }` | Canonical complete-byte verification |
+
+Set `RECEIZ_OFFLINE_SEAL_DIRECTORY` and `RECEIZ_OFFLINE_WORKSPACE` on the `receiz-mcp` process. See [offline setup and restart](offline-sealing.md). These tools ship their local sealing host; they do not require transition sealer resolver callbacks.

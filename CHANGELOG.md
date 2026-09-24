@@ -2,7 +2,16 @@
 
 All notable changes to Receiz Commerce Kit will be documented here.
 
-## Unreleased — Receiz v126
+## 5.3.0 - Receiz v127
+
+- Pin SDK, MCP server, and AI skills to the published `127.0.0` packages.
+- Adopt the v127 canonical registry and 60-operation matrix, retain custom runtime laws, and synchronize the complete 330-tool / 43-skill contract.
+- Add v127 migration and release gates with exact package integrity and AI-tree parity checks.
+- Verify explicit historical HTTP transport requirements and new offline/local-host entrypoint boundaries.
+- Resolve stale AI count metadata and track narrowly reviewed upstream documentation scanner findings.
+- Preserve prior proof history, attestations, and runtime interfaces; no automatic device enrollment or production data migration.
+
+## v126 dependency upgrade — unreleased application changes
 
 - Upgrade the coordinated SDK, MCP, and AI packages to `126.0.0` with exact lockfile integrity.
 - Adopt the current registry and 60-operation matrix while preserving custom runtime laws.

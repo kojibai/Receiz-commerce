@@ -10,9 +10,9 @@ describe("Receiz v124 application contract", () => {
 
     const input = JSON.parse(readFileSync("receiz.app.json", "utf8"));
     const contract = compiler.defineReceizApp(input);
-    const plan = compiler.compileReceizAppContract(contract, { targetSdkVersion: "126.0.0" });
+    const plan = compiler.compileReceizAppContract(contract, { targetSdkVersion: "127.0.0" });
 
-    assert.equal(plan.targetSdkVersion, "126.0.0");
+    assert.equal(plan.targetSdkVersion, "127.0.0");
     assert.deepEqual(contract.features, [
       "identity",
       "proof",
@@ -27,7 +27,7 @@ describe("Receiz v124 application contract", () => {
     assert.equal(contract.authority.allowDatabaseAuthority, false);
     assert.deepEqual(contract.operations, compiler.RECEIZ_CURRENT_APPLICATION_OPERATION_MATRIX);
     assert.equal(contract.operations.length, 60);
-    assert.equal(compiler.RECEIZ_CURRENT_APPLICATION_OPERATION_MATRIX_DIGEST, "42c7f0924df91b4ba11c1b891fee2b92abb509430a86b030735c23d055e67949");
+    assert.equal(compiler.RECEIZ_CURRENT_APPLICATION_OPERATION_MATRIX_DIGEST, "eadd171a45fcc51e275a1c57de1eb8e67614757a5723d141793641edf7207a10");
     assert.ok(plan.verificationCommands.length > 0);
   });
 
@@ -43,11 +43,12 @@ describe("Receiz v124 application contract", () => {
 
     const result = await compiler.checkReceizIntegration({
       root: process.cwd(),
-      targetSdkVersion: "126.0.0",
+      targetSdkVersion: "127.0.0",
     });
     assert.equal(result.ok, false); // Upstream scans its own published documentation as code.
     assert.deepEqual(result.blockingFindings.map(finding => ({code:finding.code,files:finding.affectedFiles})), [
-      {code: "deprecated_api", files: ["ai-skills/resources/sdk-public-functions.json", "ai-skills/resources/sdk-public-functions.md", "ai-skills/skills.json"]},
+      {code: "compiler_import_requires_manual_migration", files: ["ai-skills/resources/offline-sealing.md"]},
+      {code: "deprecated_api", files: ["ai-skills/resources/public-capability-catalog.json", "ai-skills/resources/sdk-public-functions.json", "ai-skills/resources/sdk-public-functions.md", "ai-skills/skills.json"]},
       {code: "weak_state_used_as_proof_authority", files: ["ai-skills/resources/sdk-public-functions.json", "ai-skills/skills.json"]},
     ]);
     for (const path of new Set(result.blockingFindings.flatMap(finding => finding.affectedFiles))) {

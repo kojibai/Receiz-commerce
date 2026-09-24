@@ -1,0 +1,1898 @@
+{
+  "version": "127.0.0",
+  "boundary": "Fixed SDK adapters; existing proof admission and delegated permissions remain authoritative",
+  "operations": [
+    {
+      "name": "receiz_twin_market_mandate",
+      "sdkMethod": "twin.marketMandate",
+      "arguments": [],
+      "mutation": false,
+      "requiresDelegated": true,
+      "requiredPayload": [],
+      "executionMode": "current-http",
+      "currentRouteImplemented": true,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/twin/market/mandate",
+          "routeFile": "app/api/connect/twin/market/mandate/route.ts"
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts"
+      ]
+    },
+    {
+      "name": "receiz_twin_market_intents",
+      "sdkMethod": "twin.marketIntents",
+      "arguments": [],
+      "mutation": false,
+      "requiresDelegated": true,
+      "requiredPayload": [],
+      "executionMode": "current-http",
+      "currentRouteImplemented": true,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/twin/market/intents",
+          "routeFile": "app/api/connect/twin/market/intents/route.ts"
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts"
+      ]
+    },
+    {
+      "name": "receiz_twin_import_mind_summary",
+      "sdkMethod": "twin.importMindSummary",
+      "arguments": [],
+      "mutation": false,
+      "requiresDelegated": true,
+      "requiredPayload": [],
+      "executionMode": "current-http",
+      "currentRouteImplemented": true,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/twin/mind/import",
+          "routeFile": "app/api/connect/twin/mind/import/route.ts"
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts"
+      ]
+    },
+    {
+      "name": "receiz_twin_approval",
+      "sdkMethod": "twin.approval",
+      "arguments": [],
+      "mutation": false,
+      "requiresDelegated": true,
+      "requiredPayload": [],
+      "executionMode": "current-http",
+      "currentRouteImplemented": true,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/twin/approval",
+          "routeFile": "app/api/connect/twin/approval/route.ts"
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts"
+      ]
+    },
+    {
+      "name": "receiz_twin_save_market_mandate",
+      "sdkMethod": "twin.saveMarketMandate",
+      "arguments": [
+        "body"
+      ],
+      "mutation": true,
+      "requiresDelegated": true,
+      "requiredPayload": [],
+      "executionMode": "current-http",
+      "currentRouteImplemented": true,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/twin/market/mandate",
+          "routeFile": "app/api/connect/twin/market/mandate/route.ts"
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts"
+      ]
+    },
+    {
+      "name": "receiz_twin_create_market_intent",
+      "sdkMethod": "twin.createMarketIntent",
+      "arguments": [
+        "body"
+      ],
+      "mutation": true,
+      "requiresDelegated": true,
+      "requiredPayload": [
+        "marketItemId",
+        "side"
+      ],
+      "executionMode": "current-http",
+      "currentRouteImplemented": true,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/twin/market/intents",
+          "routeFile": "app/api/connect/twin/market/intents/route.ts"
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts"
+      ]
+    },
+    {
+      "name": "receiz_twin_approve_market_intent",
+      "sdkMethod": "twin.approveMarketIntent",
+      "arguments": [
+        "intentId"
+      ],
+      "mutation": true,
+      "requiresDelegated": true,
+      "requiredPayload": [],
+      "executionMode": "current-http",
+      "currentRouteImplemented": true,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/twin/market/intents/[id]/approve",
+          "routeFile": "app/api/connect/twin/market/intents/[intentId]/approve/route.ts"
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts"
+      ]
+    },
+    {
+      "name": "receiz_twin_approve_promotion",
+      "sdkMethod": "twin.approvePromotion",
+      "arguments": [
+        "body"
+      ],
+      "mutation": true,
+      "requiresDelegated": true,
+      "requiredPayload": [
+        "performance"
+      ],
+      "executionMode": "current-http",
+      "currentRouteImplemented": true,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/twin/approval",
+          "routeFile": "app/api/connect/twin/approval/route.ts"
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts"
+      ]
+    },
+    {
+      "name": "receiz_customers_bootstrap_session",
+      "sdkMethod": "customers.bootstrapSession",
+      "arguments": [
+        "body",
+        "options?"
+      ],
+      "mutation": true,
+      "requiresDelegated": true,
+      "requiredPayload": [
+        "tenantHost"
+      ],
+      "executionMode": "historical-http",
+      "currentRouteImplemented": false,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/customers/session",
+          "routeFile": null
+        },
+        {
+          "pathPattern": "/api/connect/wallet/me",
+          "routeFile": "app/api/connect/wallet/me/route.ts"
+        },
+        {
+          "pathPattern": "/api/connect/customers/portal",
+          "routeFile": null
+        },
+        {
+          "pathPattern": "/api/connect/permissions/roles",
+          "routeFile": null
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts",
+        "packages/receiz-sdk/docs/v107.0.0-v106-sdk-write-inventory.json"
+      ]
+    },
+    {
+      "name": "receiz_customers_bootstrap",
+      "sdkMethod": "customers.bootstrap",
+      "arguments": [
+        "body",
+        "options?"
+      ],
+      "mutation": true,
+      "requiresDelegated": true,
+      "requiredPayload": [
+        "tenantHost"
+      ],
+      "executionMode": "historical-http",
+      "currentRouteImplemented": false,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/customers/session",
+          "routeFile": null
+        },
+        {
+          "pathPattern": "/api/connect/wallet/me",
+          "routeFile": "app/api/connect/wallet/me/route.ts"
+        },
+        {
+          "pathPattern": "/api/connect/customers/portal",
+          "routeFile": null
+        },
+        {
+          "pathPattern": "/api/connect/permissions/roles",
+          "routeFile": null
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts",
+        "packages/receiz-sdk/docs/v107.0.0-v106-sdk-write-inventory.json"
+      ]
+    },
+    {
+      "name": "receiz_customers_session",
+      "sdkMethod": "customers.session",
+      "arguments": [
+        "body",
+        "options?"
+      ],
+      "mutation": true,
+      "requiresDelegated": true,
+      "requiredPayload": [
+        "tenantHost"
+      ],
+      "executionMode": "historical-http",
+      "currentRouteImplemented": false,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/customers/session",
+          "routeFile": null
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts",
+        "packages/receiz-sdk/docs/v107.0.0-v106-sdk-write-inventory.json"
+      ]
+    },
+    {
+      "name": "receiz_customers_portal",
+      "sdkMethod": "customers.portal",
+      "arguments": [
+        "body"
+      ],
+      "mutation": true,
+      "requiresDelegated": true,
+      "requiredPayload": [],
+      "executionMode": "historical-http",
+      "currentRouteImplemented": false,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/customers/portal",
+          "routeFile": null
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts",
+        "packages/receiz-sdk/docs/v107.0.0-v106-sdk-write-inventory.json"
+      ]
+    },
+    {
+      "name": "receiz_customers_orders",
+      "sdkMethod": "customers.orders",
+      "arguments": [
+        "query?"
+      ],
+      "mutation": false,
+      "requiresDelegated": true,
+      "requiredPayload": [],
+      "executionMode": "historical-http",
+      "currentRouteImplemented": false,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/customers/orders",
+          "routeFile": null
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts",
+        "packages/receiz-sdk/docs/v107.0.0-v106-sdk-write-inventory.json"
+      ]
+    },
+    {
+      "name": "receiz_customers_rewards",
+      "sdkMethod": "customers.rewards",
+      "arguments": [
+        "query?"
+      ],
+      "mutation": false,
+      "requiresDelegated": true,
+      "requiredPayload": [],
+      "executionMode": "historical-http",
+      "currentRouteImplemented": false,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/customers/rewards",
+          "routeFile": null
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts",
+        "packages/receiz-sdk/docs/v107.0.0-v106-sdk-write-inventory.json"
+      ]
+    },
+    {
+      "name": "receiz_customers_assets",
+      "sdkMethod": "customers.assets",
+      "arguments": [
+        "query?"
+      ],
+      "mutation": false,
+      "requiresDelegated": true,
+      "requiredPayload": [],
+      "executionMode": "historical-http",
+      "currentRouteImplemented": false,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/customers/assets",
+          "routeFile": null
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts",
+        "packages/receiz-sdk/docs/v107.0.0-v106-sdk-write-inventory.json"
+      ]
+    },
+    {
+      "name": "receiz_merchants_onboard",
+      "sdkMethod": "merchants.onboard",
+      "arguments": [
+        "body",
+        "options?"
+      ],
+      "mutation": true,
+      "requiresDelegated": true,
+      "requiredPayload": [
+        "tenantHost"
+      ],
+      "executionMode": "historical-http",
+      "currentRouteImplemented": false,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/merchants/onboard",
+          "routeFile": null
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts",
+        "packages/receiz-sdk/docs/v107.0.0-v106-sdk-write-inventory.json"
+      ]
+    },
+    {
+      "name": "receiz_merchants_profile",
+      "sdkMethod": "merchants.profile",
+      "arguments": [
+        "query?"
+      ],
+      "mutation": false,
+      "requiresDelegated": true,
+      "requiredPayload": [],
+      "executionMode": "historical-http",
+      "currentRouteImplemented": false,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/merchants/profile",
+          "routeFile": null
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts",
+        "packages/receiz-sdk/docs/v107.0.0-v106-sdk-write-inventory.json"
+      ]
+    },
+    {
+      "name": "receiz_merchants_capabilities",
+      "sdkMethod": "merchants.capabilities",
+      "arguments": [
+        "query?"
+      ],
+      "mutation": false,
+      "requiresDelegated": true,
+      "requiredPayload": [],
+      "executionMode": "historical-http",
+      "currentRouteImplemented": false,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/merchants/capabilities",
+          "routeFile": null
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts",
+        "packages/receiz-sdk/docs/v107.0.0-v106-sdk-write-inventory.json"
+      ]
+    },
+    {
+      "name": "receiz_commerce_one_click_checkout",
+      "sdkMethod": "commerce.oneClickCheckout",
+      "arguments": [
+        "body"
+      ],
+      "mutation": true,
+      "requiresDelegated": true,
+      "requiredPayload": [
+        "tenantHost",
+        "amountUsd"
+      ],
+      "executionMode": "current-http",
+      "currentRouteImplemented": true,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/wallet/me",
+          "routeFile": "app/api/connect/wallet/me/route.ts"
+        },
+        {
+          "pathPattern": "/api/connect/payments/checkout",
+          "routeFile": "app/api/connect/payments/checkout/route.ts"
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts"
+      ],
+      "semanticLimit": "Checkout session creation only. Proposed wallet use requires admitted settlement execution."
+    },
+    {
+      "name": "receiz_commerce_refunds_create",
+      "sdkMethod": "commerce.refunds.create",
+      "arguments": [
+        "body",
+        "options?"
+      ],
+      "mutation": true,
+      "requiresDelegated": true,
+      "requiredPayload": [
+        "tenantHost"
+      ],
+      "executionMode": "historical-http",
+      "currentRouteImplemented": false,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/commerce/refunds",
+          "routeFile": null
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts",
+        "packages/receiz-sdk/docs/v107.0.0-v106-sdk-write-inventory.json"
+      ]
+    },
+    {
+      "name": "receiz_commerce_subscriptions_create",
+      "sdkMethod": "commerce.subscriptions.create",
+      "arguments": [
+        "body",
+        "options?"
+      ],
+      "mutation": true,
+      "requiresDelegated": true,
+      "requiredPayload": [
+        "tenantHost"
+      ],
+      "executionMode": "historical-http",
+      "currentRouteImplemented": false,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/commerce/subscriptions",
+          "routeFile": null
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts",
+        "packages/receiz-sdk/docs/v107.0.0-v106-sdk-write-inventory.json"
+      ]
+    },
+    {
+      "name": "receiz_commerce_shipping_update",
+      "sdkMethod": "commerce.shipping.update",
+      "arguments": [
+        "body",
+        "options?"
+      ],
+      "mutation": true,
+      "requiresDelegated": true,
+      "requiredPayload": [
+        "tenantHost"
+      ],
+      "executionMode": "historical-http",
+      "currentRouteImplemented": false,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/commerce/shipping/update",
+          "routeFile": null
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts",
+        "packages/receiz-sdk/docs/v107.0.0-v106-sdk-write-inventory.json"
+      ]
+    },
+    {
+      "name": "receiz_commerce_discounts_create",
+      "sdkMethod": "commerce.discounts.create",
+      "arguments": [
+        "body",
+        "options?"
+      ],
+      "mutation": true,
+      "requiresDelegated": true,
+      "requiredPayload": [
+        "tenantHost"
+      ],
+      "executionMode": "historical-http",
+      "currentRouteImplemented": false,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/commerce/discounts",
+          "routeFile": null
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts",
+        "packages/receiz-sdk/docs/v107.0.0-v106-sdk-write-inventory.json"
+      ]
+    },
+    {
+      "name": "receiz_commerce_discounts_redeem",
+      "sdkMethod": "commerce.discounts.redeem",
+      "arguments": [
+        "body",
+        "options?"
+      ],
+      "mutation": true,
+      "requiresDelegated": true,
+      "requiredPayload": [
+        "tenantHost"
+      ],
+      "executionMode": "historical-http",
+      "currentRouteImplemented": false,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/commerce/discounts/redeem",
+          "routeFile": null
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts",
+        "packages/receiz-sdk/docs/v107.0.0-v106-sdk-write-inventory.json"
+      ]
+    },
+    {
+      "name": "receiz_commerce_gift_cards_issue",
+      "sdkMethod": "commerce.giftCards.issue",
+      "arguments": [
+        "body",
+        "options?"
+      ],
+      "mutation": true,
+      "requiresDelegated": true,
+      "requiredPayload": [
+        "tenantHost"
+      ],
+      "executionMode": "historical-http",
+      "currentRouteImplemented": false,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/commerce/gift-cards",
+          "routeFile": null
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts",
+        "packages/receiz-sdk/docs/v107.0.0-v106-sdk-write-inventory.json"
+      ]
+    },
+    {
+      "name": "receiz_commerce_gift_cards_redeem",
+      "sdkMethod": "commerce.giftCards.redeem",
+      "arguments": [
+        "body",
+        "options?"
+      ],
+      "mutation": true,
+      "requiresDelegated": true,
+      "requiredPayload": [
+        "tenantHost"
+      ],
+      "executionMode": "historical-http",
+      "currentRouteImplemented": false,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/commerce/gift-cards/redeem",
+          "routeFile": null
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts",
+        "packages/receiz-sdk/docs/v107.0.0-v106-sdk-write-inventory.json"
+      ]
+    },
+    {
+      "name": "receiz_commerce_access_passes_issue",
+      "sdkMethod": "commerce.accessPasses.issue",
+      "arguments": [
+        "body",
+        "options?"
+      ],
+      "mutation": true,
+      "requiresDelegated": true,
+      "requiredPayload": [
+        "tenantHost"
+      ],
+      "executionMode": "historical-http",
+      "currentRouteImplemented": false,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/commerce/access-passes",
+          "routeFile": null
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts",
+        "packages/receiz-sdk/docs/v107.0.0-v106-sdk-write-inventory.json"
+      ]
+    },
+    {
+      "name": "receiz_commerce_inventory_reserve",
+      "sdkMethod": "commerce.inventory.reserve",
+      "arguments": [
+        "body",
+        "options?"
+      ],
+      "mutation": true,
+      "requiresDelegated": true,
+      "requiredPayload": [
+        "tenantHost"
+      ],
+      "executionMode": "historical-http",
+      "currentRouteImplemented": false,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/commerce/inventory/reserve",
+          "routeFile": null
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts",
+        "packages/receiz-sdk/docs/v107.0.0-v106-sdk-write-inventory.json"
+      ]
+    },
+    {
+      "name": "receiz_commerce_inventory_adjust",
+      "sdkMethod": "commerce.inventory.adjust",
+      "arguments": [
+        "body",
+        "options?"
+      ],
+      "mutation": true,
+      "requiresDelegated": true,
+      "requiredPayload": [
+        "tenantHost"
+      ],
+      "executionMode": "historical-http",
+      "currentRouteImplemented": false,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/commerce/inventory/adjust",
+          "routeFile": null
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts",
+        "packages/receiz-sdk/docs/v107.0.0-v106-sdk-write-inventory.json"
+      ]
+    },
+    {
+      "name": "receiz_commerce_fulfillment_update",
+      "sdkMethod": "commerce.fulfillment.update",
+      "arguments": [
+        "body",
+        "options?"
+      ],
+      "mutation": true,
+      "requiresDelegated": true,
+      "requiredPayload": [
+        "tenantHost"
+      ],
+      "executionMode": "historical-http",
+      "currentRouteImplemented": false,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/commerce/fulfillment",
+          "routeFile": null
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts",
+        "packages/receiz-sdk/docs/v107.0.0-v106-sdk-write-inventory.json"
+      ]
+    },
+    {
+      "name": "receiz_commerce_payouts_create",
+      "sdkMethod": "commerce.payouts.create",
+      "arguments": [
+        "body",
+        "options?"
+      ],
+      "mutation": true,
+      "requiresDelegated": true,
+      "requiredPayload": [
+        "tenantHost"
+      ],
+      "executionMode": "historical-http",
+      "currentRouteImplemented": false,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/commerce/payouts",
+          "routeFile": null
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts",
+        "packages/receiz-sdk/docs/v107.0.0-v106-sdk-write-inventory.json"
+      ]
+    },
+    {
+      "name": "receiz_commerce_subscriptions_cancel",
+      "sdkMethod": "commerce.subscriptions.cancel",
+      "arguments": [
+        "subscriptionId",
+        "body",
+        "options?"
+      ],
+      "mutation": true,
+      "requiresDelegated": true,
+      "requiredPayload": [
+        "tenantHost"
+      ],
+      "executionMode": "historical-http",
+      "currentRouteImplemented": false,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/commerce/subscriptions/[id]/cancel",
+          "routeFile": null
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts",
+        "packages/receiz-sdk/docs/v107.0.0-v106-sdk-write-inventory.json"
+      ]
+    },
+    {
+      "name": "receiz_commerce_shipping_quote",
+      "sdkMethod": "commerce.shipping.quote",
+      "arguments": [
+        "body"
+      ],
+      "mutation": false,
+      "requiresDelegated": true,
+      "requiredPayload": [
+        "tenantHost"
+      ],
+      "executionMode": "historical-http",
+      "currentRouteImplemented": false,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/commerce/shipping/quote",
+          "routeFile": null
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts",
+        "packages/receiz-sdk/docs/v107.0.0-v106-sdk-write-inventory.json"
+      ]
+    },
+    {
+      "name": "receiz_commerce_tax_quote",
+      "sdkMethod": "commerce.tax.quote",
+      "arguments": [
+        "body"
+      ],
+      "mutation": false,
+      "requiresDelegated": true,
+      "requiredPayload": [
+        "tenantHost"
+      ],
+      "executionMode": "historical-http",
+      "currentRouteImplemented": false,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/commerce/tax/quote",
+          "routeFile": null
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts",
+        "packages/receiz-sdk/docs/v107.0.0-v106-sdk-write-inventory.json"
+      ]
+    },
+    {
+      "name": "receiz_commerce_access_passes_verify",
+      "sdkMethod": "commerce.accessPasses.verify",
+      "arguments": [
+        "body"
+      ],
+      "mutation": false,
+      "requiresDelegated": true,
+      "requiredPayload": [
+        "tenantHost"
+      ],
+      "executionMode": "historical-http",
+      "currentRouteImplemented": false,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/commerce/access-passes/verify",
+          "routeFile": null
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts",
+        "packages/receiz-sdk/docs/v107.0.0-v106-sdk-write-inventory.json"
+      ]
+    },
+    {
+      "name": "receiz_commerce_payouts_status",
+      "sdkMethod": "commerce.payouts.status",
+      "arguments": [
+        "query?"
+      ],
+      "mutation": false,
+      "requiresDelegated": true,
+      "requiredPayload": [],
+      "executionMode": "historical-http",
+      "currentRouteImplemented": false,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/commerce/payouts/status",
+          "routeFile": null
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts",
+        "packages/receiz-sdk/docs/v107.0.0-v106-sdk-write-inventory.json"
+      ]
+    },
+    {
+      "name": "receiz_domains_reserve_subdomain",
+      "sdkMethod": "domains.reserveSubdomain",
+      "arguments": [
+        "body",
+        "options?"
+      ],
+      "mutation": true,
+      "requiresDelegated": true,
+      "requiredPayload": [],
+      "executionMode": "historical-http",
+      "currentRouteImplemented": false,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/domains/subdomains/reserve",
+          "routeFile": null
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts",
+        "packages/receiz-sdk/docs/v107.0.0-v106-sdk-write-inventory.json"
+      ]
+    },
+    {
+      "name": "receiz_domains_verify_custom_domain",
+      "sdkMethod": "domains.verifyCustomDomain",
+      "arguments": [
+        "body",
+        "options?"
+      ],
+      "mutation": true,
+      "requiresDelegated": true,
+      "requiredPayload": [],
+      "executionMode": "historical-http",
+      "currentRouteImplemented": false,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/domains/custom/verify",
+          "routeFile": null
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts",
+        "packages/receiz-sdk/docs/v107.0.0-v106-sdk-write-inventory.json"
+      ]
+    },
+    {
+      "name": "receiz_domains_status",
+      "sdkMethod": "domains.status",
+      "arguments": [
+        "query?"
+      ],
+      "mutation": false,
+      "requiresDelegated": true,
+      "requiredPayload": [],
+      "executionMode": "historical-http",
+      "currentRouteImplemented": false,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/domains/status",
+          "routeFile": null
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts",
+        "packages/receiz-sdk/docs/v107.0.0-v106-sdk-write-inventory.json"
+      ]
+    },
+    {
+      "name": "receiz_events_subscribe",
+      "sdkMethod": "events.subscribe",
+      "arguments": [
+        "body"
+      ],
+      "mutation": true,
+      "requiresDelegated": true,
+      "requiredPayload": [
+        "types"
+      ],
+      "executionMode": "historical-http",
+      "currentRouteImplemented": false,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/events/subscribe",
+          "routeFile": null
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts",
+        "packages/receiz-sdk/docs/v107.0.0-v106-sdk-write-inventory.json"
+      ]
+    },
+    {
+      "name": "receiz_events_replay",
+      "sdkMethod": "events.replay",
+      "arguments": [
+        "body"
+      ],
+      "mutation": false,
+      "requiresDelegated": true,
+      "requiredPayload": [],
+      "executionMode": "historical-http",
+      "currentRouteImplemented": false,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/events/replay",
+          "routeFile": null
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts",
+        "packages/receiz-sdk/docs/v107.0.0-v106-sdk-write-inventory.json"
+      ]
+    },
+    {
+      "name": "receiz_events_list",
+      "sdkMethod": "events.list",
+      "arguments": [
+        "query?"
+      ],
+      "mutation": false,
+      "requiresDelegated": true,
+      "requiredPayload": [],
+      "executionMode": "historical-http",
+      "currentRouteImplemented": false,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/events",
+          "routeFile": null
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts",
+        "packages/receiz-sdk/docs/v107.0.0-v106-sdk-write-inventory.json"
+      ]
+    },
+    {
+      "name": "receiz_events_ack",
+      "sdkMethod": "events.ack",
+      "arguments": [
+        "eventId",
+        "body?"
+      ],
+      "mutation": true,
+      "requiresDelegated": true,
+      "requiredPayload": [],
+      "executionMode": "historical-http",
+      "currentRouteImplemented": false,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/events/[id]/ack",
+          "routeFile": null
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts",
+        "packages/receiz-sdk/docs/v107.0.0-v106-sdk-write-inventory.json"
+      ]
+    },
+    {
+      "name": "receiz_jobs_enqueue",
+      "sdkMethod": "jobs.enqueue",
+      "arguments": [
+        "body"
+      ],
+      "mutation": true,
+      "requiresDelegated": true,
+      "requiredPayload": [
+        "kind",
+        "payload"
+      ],
+      "executionMode": "historical-http",
+      "currentRouteImplemented": false,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/jobs",
+          "routeFile": null
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts",
+        "packages/receiz-sdk/docs/v107.0.0-v106-sdk-write-inventory.json"
+      ]
+    },
+    {
+      "name": "receiz_jobs_status",
+      "sdkMethod": "jobs.status",
+      "arguments": [
+        "jobId"
+      ],
+      "mutation": false,
+      "requiresDelegated": true,
+      "requiredPayload": [],
+      "executionMode": "historical-http",
+      "currentRouteImplemented": false,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/jobs/[id]",
+          "routeFile": null
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts",
+        "packages/receiz-sdk/docs/v107.0.0-v106-sdk-write-inventory.json"
+      ]
+    },
+    {
+      "name": "receiz_jobs_cancel",
+      "sdkMethod": "jobs.cancel",
+      "arguments": [
+        "jobId",
+        "body?"
+      ],
+      "mutation": true,
+      "requiresDelegated": true,
+      "requiredPayload": [],
+      "executionMode": "historical-http",
+      "currentRouteImplemented": false,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/jobs/[id]/cancel",
+          "routeFile": null
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts",
+        "packages/receiz-sdk/docs/v107.0.0-v106-sdk-write-inventory.json"
+      ]
+    },
+    {
+      "name": "receiz_jobs_list",
+      "sdkMethod": "jobs.list",
+      "arguments": [
+        "query?"
+      ],
+      "mutation": false,
+      "requiresDelegated": true,
+      "requiredPayload": [],
+      "executionMode": "historical-http",
+      "currentRouteImplemented": false,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/jobs",
+          "routeFile": null
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts",
+        "packages/receiz-sdk/docs/v107.0.0-v106-sdk-write-inventory.json"
+      ]
+    },
+    {
+      "name": "receiz_permissions_grant",
+      "sdkMethod": "permissions.grant",
+      "arguments": [
+        "body",
+        "options?"
+      ],
+      "mutation": true,
+      "requiresDelegated": true,
+      "requiredPayload": [
+        "tenantHost",
+        "actorReceizId",
+        "role"
+      ],
+      "executionMode": "historical-http",
+      "currentRouteImplemented": false,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/permissions/grants",
+          "routeFile": null
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts",
+        "packages/receiz-sdk/docs/v107.0.0-v106-sdk-write-inventory.json"
+      ]
+    },
+    {
+      "name": "receiz_permissions_revoke",
+      "sdkMethod": "permissions.revoke",
+      "arguments": [
+        "body",
+        "options?"
+      ],
+      "mutation": true,
+      "requiresDelegated": true,
+      "requiredPayload": [
+        "tenantHost",
+        "actorReceizId",
+        "role"
+      ],
+      "executionMode": "historical-http",
+      "currentRouteImplemented": false,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/permissions/revoke",
+          "routeFile": null
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts",
+        "packages/receiz-sdk/docs/v107.0.0-v106-sdk-write-inventory.json"
+      ]
+    },
+    {
+      "name": "receiz_permissions_check",
+      "sdkMethod": "permissions.check",
+      "arguments": [
+        "body"
+      ],
+      "mutation": false,
+      "requiresDelegated": true,
+      "requiredPayload": [
+        "tenantHost",
+        "actorReceizId",
+        "permission"
+      ],
+      "executionMode": "historical-http",
+      "currentRouteImplemented": false,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/permissions/check",
+          "routeFile": null
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts",
+        "packages/receiz-sdk/docs/v107.0.0-v106-sdk-write-inventory.json"
+      ]
+    },
+    {
+      "name": "receiz_permissions_roles",
+      "sdkMethod": "permissions.roles",
+      "arguments": [
+        "query?"
+      ],
+      "mutation": false,
+      "requiresDelegated": true,
+      "requiredPayload": [],
+      "executionMode": "historical-http",
+      "currentRouteImplemented": false,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/permissions/roles",
+          "routeFile": null
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts",
+        "packages/receiz-sdk/docs/v107.0.0-v106-sdk-write-inventory.json"
+      ]
+    },
+    {
+      "name": "receiz_audit_append",
+      "sdkMethod": "audit.append",
+      "arguments": [
+        "body",
+        "options?"
+      ],
+      "mutation": true,
+      "requiresDelegated": true,
+      "requiredPayload": [
+        "tenantHost",
+        "action"
+      ],
+      "executionMode": "historical-http",
+      "currentRouteImplemented": false,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/audit/events",
+          "routeFile": null
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts",
+        "packages/receiz-sdk/docs/v107.0.0-v106-sdk-write-inventory.json"
+      ]
+    },
+    {
+      "name": "receiz_audit_query",
+      "sdkMethod": "audit.query",
+      "arguments": [
+        "query?"
+      ],
+      "mutation": false,
+      "requiresDelegated": true,
+      "requiredPayload": [],
+      "executionMode": "historical-http",
+      "currentRouteImplemented": false,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/audit/events",
+          "routeFile": null
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts",
+        "packages/receiz-sdk/docs/v107.0.0-v106-sdk-write-inventory.json"
+      ]
+    },
+    {
+      "name": "receiz_audit_export",
+      "sdkMethod": "audit.export",
+      "arguments": [
+        "query?"
+      ],
+      "mutation": false,
+      "requiresDelegated": true,
+      "requiredPayload": [],
+      "executionMode": "historical-http",
+      "currentRouteImplemented": false,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/audit/export",
+          "routeFile": null
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts",
+        "packages/receiz-sdk/docs/v107.0.0-v106-sdk-write-inventory.json"
+      ]
+    },
+    {
+      "name": "receiz_risk_score_payment",
+      "sdkMethod": "risk.scorePayment",
+      "arguments": [
+        "body"
+      ],
+      "mutation": false,
+      "requiresDelegated": true,
+      "requiredPayload": [
+        "tenantHost"
+      ],
+      "executionMode": "historical-http",
+      "currentRouteImplemented": false,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/risk/payment",
+          "routeFile": null
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts",
+        "packages/receiz-sdk/docs/v107.0.0-v106-sdk-write-inventory.json"
+      ]
+    },
+    {
+      "name": "receiz_risk_score_account_recovery",
+      "sdkMethod": "risk.scoreAccountRecovery",
+      "arguments": [
+        "body"
+      ],
+      "mutation": false,
+      "requiresDelegated": true,
+      "requiredPayload": [],
+      "executionMode": "historical-http",
+      "currentRouteImplemented": false,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/risk/account-recovery",
+          "routeFile": null
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts",
+        "packages/receiz-sdk/docs/v107.0.0-v106-sdk-write-inventory.json"
+      ]
+    },
+    {
+      "name": "receiz_risk_velocity",
+      "sdkMethod": "risk.velocity",
+      "arguments": [
+        "body"
+      ],
+      "mutation": false,
+      "requiresDelegated": true,
+      "requiredPayload": [],
+      "executionMode": "historical-http",
+      "currentRouteImplemented": false,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/risk/velocity",
+          "routeFile": null
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts",
+        "packages/receiz-sdk/docs/v107.0.0-v106-sdk-write-inventory.json"
+      ]
+    },
+    {
+      "name": "receiz_risk_proof_activity",
+      "sdkMethod": "risk.proofActivity",
+      "arguments": [
+        "body"
+      ],
+      "mutation": false,
+      "requiresDelegated": true,
+      "requiredPayload": [],
+      "executionMode": "historical-http",
+      "currentRouteImplemented": false,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/risk/proof-activity",
+          "routeFile": null
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts",
+        "packages/receiz-sdk/docs/v107.0.0-v106-sdk-write-inventory.json"
+      ]
+    },
+    {
+      "name": "receiz_compliance_export_orders",
+      "sdkMethod": "compliance.exportOrders",
+      "arguments": [
+        "query"
+      ],
+      "mutation": false,
+      "requiresDelegated": true,
+      "requiredPayload": [],
+      "executionMode": "historical-http",
+      "currentRouteImplemented": false,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/compliance/orders",
+          "routeFile": null
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts",
+        "packages/receiz-sdk/docs/v107.0.0-v106-sdk-write-inventory.json"
+      ]
+    },
+    {
+      "name": "receiz_compliance_export_taxes",
+      "sdkMethod": "compliance.exportTaxes",
+      "arguments": [
+        "query"
+      ],
+      "mutation": false,
+      "requiresDelegated": true,
+      "requiredPayload": [],
+      "executionMode": "historical-http",
+      "currentRouteImplemented": false,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/compliance/taxes",
+          "routeFile": null
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts",
+        "packages/receiz-sdk/docs/v107.0.0-v106-sdk-write-inventory.json"
+      ]
+    },
+    {
+      "name": "receiz_compliance_export_payouts",
+      "sdkMethod": "compliance.exportPayouts",
+      "arguments": [
+        "query"
+      ],
+      "mutation": false,
+      "requiresDelegated": true,
+      "requiredPayload": [],
+      "executionMode": "historical-http",
+      "currentRouteImplemented": false,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/compliance/payouts",
+          "routeFile": null
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts",
+        "packages/receiz-sdk/docs/v107.0.0-v106-sdk-write-inventory.json"
+      ]
+    },
+    {
+      "name": "receiz_compliance_export_customers",
+      "sdkMethod": "compliance.exportCustomers",
+      "arguments": [
+        "query"
+      ],
+      "mutation": false,
+      "requiresDelegated": true,
+      "requiredPayload": [],
+      "executionMode": "historical-http",
+      "currentRouteImplemented": false,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/compliance/customers",
+          "routeFile": null
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts",
+        "packages/receiz-sdk/docs/v107.0.0-v106-sdk-write-inventory.json"
+      ]
+    },
+    {
+      "name": "receiz_compliance_export_audit",
+      "sdkMethod": "compliance.exportAudit",
+      "arguments": [
+        "query"
+      ],
+      "mutation": false,
+      "requiresDelegated": true,
+      "requiredPayload": [],
+      "executionMode": "historical-http",
+      "currentRouteImplemented": false,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/compliance/audit",
+          "routeFile": null
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts",
+        "packages/receiz-sdk/docs/v107.0.0-v106-sdk-write-inventory.json"
+      ]
+    },
+    {
+      "name": "receiz_portability_export_store",
+      "sdkMethod": "portability.exportStore",
+      "arguments": [
+        "query"
+      ],
+      "mutation": false,
+      "requiresDelegated": true,
+      "requiredPayload": [
+        "tenantHost"
+      ],
+      "executionMode": "historical-http",
+      "currentRouteImplemented": false,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/portability/store/export",
+          "routeFile": null
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts",
+        "packages/receiz-sdk/docs/v107.0.0-v106-sdk-write-inventory.json"
+      ]
+    },
+    {
+      "name": "receiz_portability_import_store",
+      "sdkMethod": "portability.importStore",
+      "arguments": [
+        "body",
+        "options?"
+      ],
+      "mutation": true,
+      "requiresDelegated": true,
+      "requiredPayload": [],
+      "executionMode": "historical-http",
+      "currentRouteImplemented": false,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/portability/store/import",
+          "routeFile": null
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts",
+        "packages/receiz-sdk/docs/v107.0.0-v106-sdk-write-inventory.json"
+      ]
+    },
+    {
+      "name": "receiz_search_query",
+      "sdkMethod": "search.query",
+      "arguments": [
+        "body"
+      ],
+      "mutation": false,
+      "requiresDelegated": true,
+      "requiredPayload": [],
+      "executionMode": "historical-http",
+      "currentRouteImplemented": false,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/search/query",
+          "routeFile": null
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts",
+        "packages/receiz-sdk/docs/v107.0.0-v106-sdk-write-inventory.json"
+      ]
+    },
+    {
+      "name": "receiz_search_products",
+      "sdkMethod": "search.products",
+      "arguments": [
+        "body"
+      ],
+      "mutation": false,
+      "requiresDelegated": true,
+      "requiredPayload": [],
+      "executionMode": "historical-http",
+      "currentRouteImplemented": false,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/search/products",
+          "routeFile": null
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts",
+        "packages/receiz-sdk/docs/v107.0.0-v106-sdk-write-inventory.json"
+      ]
+    },
+    {
+      "name": "receiz_search_pages",
+      "sdkMethod": "search.pages",
+      "arguments": [
+        "body"
+      ],
+      "mutation": false,
+      "requiresDelegated": true,
+      "requiredPayload": [],
+      "executionMode": "historical-http",
+      "currentRouteImplemented": false,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/search/pages",
+          "routeFile": null
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts",
+        "packages/receiz-sdk/docs/v107.0.0-v106-sdk-write-inventory.json"
+      ]
+    },
+    {
+      "name": "receiz_search_blog",
+      "sdkMethod": "search.blog",
+      "arguments": [
+        "body"
+      ],
+      "mutation": false,
+      "requiresDelegated": true,
+      "requiredPayload": [],
+      "executionMode": "historical-http",
+      "currentRouteImplemented": false,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/search/blog",
+          "routeFile": null
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts",
+        "packages/receiz-sdk/docs/v107.0.0-v106-sdk-write-inventory.json"
+      ]
+    },
+    {
+      "name": "receiz_search_orders",
+      "sdkMethod": "search.orders",
+      "arguments": [
+        "body"
+      ],
+      "mutation": false,
+      "requiresDelegated": true,
+      "requiredPayload": [],
+      "executionMode": "historical-http",
+      "currentRouteImplemented": false,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/search/orders",
+          "routeFile": null
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts",
+        "packages/receiz-sdk/docs/v107.0.0-v106-sdk-write-inventory.json"
+      ]
+    },
+    {
+      "name": "receiz_search_customers",
+      "sdkMethod": "search.customers",
+      "arguments": [
+        "body"
+      ],
+      "mutation": false,
+      "requiresDelegated": true,
+      "requiredPayload": [],
+      "executionMode": "historical-http",
+      "currentRouteImplemented": false,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/search/customers",
+          "routeFile": null
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts",
+        "packages/receiz-sdk/docs/v107.0.0-v106-sdk-write-inventory.json"
+      ]
+    },
+    {
+      "name": "receiz_search_proof_objects",
+      "sdkMethod": "search.proofObjects",
+      "arguments": [
+        "body"
+      ],
+      "mutation": false,
+      "requiresDelegated": true,
+      "requiredPayload": [],
+      "executionMode": "historical-http",
+      "currentRouteImplemented": false,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/search/proof-objects",
+          "routeFile": null
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts",
+        "packages/receiz-sdk/docs/v107.0.0-v106-sdk-write-inventory.json"
+      ]
+    },
+    {
+      "name": "receiz_notifications_send",
+      "sdkMethod": "notifications.send",
+      "arguments": [
+        "body",
+        "options?"
+      ],
+      "mutation": true,
+      "requiresDelegated": true,
+      "requiredPayload": [],
+      "executionMode": "historical-http",
+      "currentRouteImplemented": false,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/notifications/send",
+          "routeFile": null
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts",
+        "packages/receiz-sdk/docs/v107.0.0-v106-sdk-write-inventory.json"
+      ]
+    },
+    {
+      "name": "receiz_notifications_subscribe",
+      "sdkMethod": "notifications.subscribe",
+      "arguments": [
+        "body",
+        "options?"
+      ],
+      "mutation": true,
+      "requiresDelegated": true,
+      "requiredPayload": [],
+      "executionMode": "historical-http",
+      "currentRouteImplemented": false,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/notifications/subscribe",
+          "routeFile": null
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts",
+        "packages/receiz-sdk/docs/v107.0.0-v106-sdk-write-inventory.json"
+      ]
+    },
+    {
+      "name": "receiz_notifications_templates",
+      "sdkMethod": "notifications.templates",
+      "arguments": [
+        "query?"
+      ],
+      "mutation": false,
+      "requiresDelegated": true,
+      "requiredPayload": [],
+      "executionMode": "historical-http",
+      "currentRouteImplemented": false,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/notifications/templates",
+          "routeFile": null
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts",
+        "packages/receiz-sdk/docs/v107.0.0-v106-sdk-write-inventory.json"
+      ]
+    },
+    {
+      "name": "receiz_releases_pin",
+      "sdkMethod": "releases.pin",
+      "arguments": [
+        "body",
+        "options?"
+      ],
+      "mutation": true,
+      "requiresDelegated": true,
+      "requiredPayload": [
+        "tenantHost",
+        "rails"
+      ],
+      "executionMode": "historical-http",
+      "currentRouteImplemented": false,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/releases/pin",
+          "routeFile": null
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts",
+        "packages/receiz-sdk/docs/v107.0.0-v106-sdk-write-inventory.json"
+      ]
+    },
+    {
+      "name": "receiz_releases_check",
+      "sdkMethod": "releases.check",
+      "arguments": [
+        "query?"
+      ],
+      "mutation": false,
+      "requiresDelegated": true,
+      "requiredPayload": [],
+      "executionMode": "historical-http",
+      "currentRouteImplemented": false,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/releases/check",
+          "routeFile": null
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts",
+        "packages/receiz-sdk/docs/v107.0.0-v106-sdk-write-inventory.json"
+      ]
+    },
+    {
+      "name": "receiz_releases_supported",
+      "sdkMethod": "releases.supported",
+      "arguments": [],
+      "mutation": false,
+      "requiresDelegated": false,
+      "requiredPayload": [],
+      "executionMode": "historical-http",
+      "currentRouteImplemented": false,
+      "routes": [
+        {
+          "pathPattern": "/api/releases/rails/supported",
+          "routeFile": null
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts",
+        "packages/receiz-sdk/docs/v107.0.0-v106-sdk-write-inventory.json"
+      ]
+    },
+    {
+      "name": "receiz_webhook_endpoints_list",
+      "sdkMethod": "webhookEndpoints.list",
+      "arguments": [],
+      "mutation": false,
+      "requiresDelegated": false,
+      "requiredPayload": [],
+      "executionMode": "current-http",
+      "currentRouteImplemented": true,
+      "routes": [
+        {
+          "pathPattern": "/api/developers/webhooks",
+          "routeFile": "app/api/developers/webhooks/route.ts"
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts"
+      ]
+    },
+    {
+      "name": "receiz_webhook_endpoints_update",
+      "sdkMethod": "webhookEndpoints.update",
+      "arguments": [
+        "endpointId",
+        "body"
+      ],
+      "mutation": true,
+      "requiresDelegated": false,
+      "requiredPayload": [],
+      "executionMode": "current-http",
+      "currentRouteImplemented": true,
+      "routes": [
+        {
+          "pathPattern": "/api/developers/webhooks/[id]",
+          "routeFile": "app/api/developers/webhooks/[endpointId]/route.ts"
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts"
+      ]
+    },
+    {
+      "name": "receiz_webhook_endpoints_delete",
+      "sdkMethod": "webhookEndpoints.delete",
+      "arguments": [
+        "endpointId"
+      ],
+      "mutation": true,
+      "requiresDelegated": false,
+      "requiredPayload": [],
+      "executionMode": "current-http",
+      "currentRouteImplemented": true,
+      "routes": [
+        {
+          "pathPattern": "/api/developers/webhooks/[id]",
+          "routeFile": "app/api/developers/webhooks/[endpointId]/route.ts"
+        }
+      ],
+      "evidence": [
+        "477713ae2:packages/receiz-sdk/src/index.ts"
+      ]
+    }
+  ]
+}
