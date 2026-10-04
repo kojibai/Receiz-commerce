@@ -1,0 +1,15 @@
+{
+  "schema": "receiz.app.migration.v128.v1",
+  "fromVersion": "127.0.0",
+  "toVersion": "128.0.0",
+  "rulesetVersion": "127.0.0",
+  "applicationReleaseVersion": "5.4.0",
+  "appRegistryDigest": "81fa7c428f7dc3f33b24c814a503c163995ea689d0f0fa9635d4ffe039bcd6e7",
+  "publicPackageIntegrities": {
+    "@receiz/sdk": "sha512-kS2yyYN6KJm7qdKqwdydk8NWjeUd49b+tx8AY0eD09us1eNfTgpKc3Ldjuh22huL5fvX7yAWkLw2YHT7t9mv5A==",
+    "@receiz/mcp-server": "sha512-c+XmDYYhFaYlgoZ/eRzJHMwGu9kgKBMP3ZrArq+CJNNpyT2sBDT5FlGxt1RpmZEuHOvgBQFyleXoWYlKjAPpDA==",
+    "@receiz/ai-skills": "sha512-6RJElcr5b1465DNt+64RwrIhjtzw4Af29qzuTnkN6bryihoOQ7pYINBQgV8d4MEk4weLrcwAf9F6FXX57CVyDA=="
+  },
+  "historyRewritten": false,
+  "productionDataMigrated": false
+}

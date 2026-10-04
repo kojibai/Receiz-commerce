@@ -891,8 +891,8 @@ function assertLivingSubjectSkill(name) {
 assertPath(join(root, "README.md"));
 assertPath(join(root, "SKILLS.md"));
 assertPath(join(root, "skills.json"));
-if (!Array.isArray(currentMcpTools) || currentMcpTools.length !== 330 || new Set(currentMcpTools).size !== 330)
-    fail("skills.json must carry exactly 330 unique current MCP tools");
+if (!Array.isArray(currentMcpTools) || currentMcpTools.length !== 335 || new Set(currentMcpTools).size !== 335)
+    fail("skills.json must carry exactly 335 unique current MCP tools");
 if (!Array.isArray(sdkClientCapabilityInventory) || sdkClientCapabilityInventory.length !== 425
     || new Set(sdkClientCapabilityInventory).size !== 425)
     fail("skills.json must carry exactly 425 unique public SDK client capabilities");

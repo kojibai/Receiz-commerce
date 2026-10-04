@@ -1,6 +1,6 @@
 {
   "schema": "receiz.public-capability-catalog.v1",
-  "releaseVersion": "127.0.0",
+  "releaseVersion": "128.0.0",
   "source": "Published SDK and MCP capability inventories",
   "scope": "Public callable names; not credentials, private records, deployment configuration, or proof authority.",
   "execution": "SDK exports and client methods are separate from MCP tools. An inventory entry does not grant access or create an MCP adapter. Each operation retains its proof, consent, custody, scope, and environment requirements.",
@@ -10,7 +10,7 @@
     "http": "/developers/openapi",
     "status": "/status",
     "conformance": "/conformance",
-    "release": "https://docs.receiz.com/releases/v127.0.0"
+    "release": "https://docs.receiz.com/releases/v128.0.0"
   },
   "entries": [
     {
@@ -649,6 +649,11 @@
     {
       "kind": "MCP tool",
       "group": "@receiz/mcp-server",
+      "name": "receiz_device_ai_subject_create"
+    },
+    {
+      "kind": "MCP tool",
+      "group": "@receiz/mcp-server",
       "name": "receiz_doctor"
     },
     {
@@ -825,6 +830,21 @@
       "kind": "MCP tool",
       "group": "@receiz/mcp-server",
       "name": "receiz_notifications_templates"
+    },
+    {
+      "kind": "MCP tool",
+      "group": "@receiz/mcp-server",
+      "name": "receiz_offline_artifact_chunk"
+    },
+    {
+      "kind": "MCP tool",
+      "group": "@receiz/mcp-server",
+      "name": "receiz_offline_crystal_append"
+    },
+    {
+      "kind": "MCP tool",
+      "group": "@receiz/mcp-server",
+      "name": "receiz_offline_crystal_open"
     },
     {
       "kind": "MCP tool",
@@ -1815,6 +1835,11 @@
       "kind": "MCP tool",
       "group": "@receiz/mcp-server",
       "name": "receiz_v125_subject_relationship_plan"
+    },
+    {
+      "kind": "MCP tool",
+      "group": "@receiz/mcp-server",
+      "name": "receiz_verify_uploaded_artifact"
     },
     {
       "kind": "MCP tool",
@@ -4744,6 +4769,11 @@
     {
       "kind": "SDK export",
       "group": "@receiz/sdk",
+      "name": "createReceizInitialSubjectStateV122"
+    },
+    {
+      "kind": "SDK export",
+      "group": "@receiz/sdk",
       "name": "createReceizInMemoryAdmissionStore"
     },
     {
@@ -7290,6 +7320,11 @@
       "kind": "SDK export",
       "group": "@receiz/sdk/offline/node",
       "name": "createReceizFileSealStore"
+    },
+    {
+      "kind": "SDK export",
+      "group": "@receiz/sdk/offline/node",
+      "name": "createReceizIdentityDeviceRelaySigner"
     },
     {
       "kind": "SDK export",

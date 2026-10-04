@@ -68,6 +68,8 @@ When MCP is available, use only these current artifact tools; each remains subor
 - `receiz_artifact_reconcile_stage`
 - `receiz_artifact_reconcile_commit`
 
+For private source-carrying workflows, `receiz_offline_seal_file` accepts an authorized uploaded/generated file or exact caller-supplied text and returns a verified sealed proof object. `receiz_offline_crystal_append` carries that verified source and an optional complete predecessor into a new sealed Memory Crystal head under the same device-held signer; `receiz_offline_crystal_open` verifies the complete chain before returning a bounded projection. `receiz_offline_artifact_chunk` is component-only exact-byte transport for a user download, never proof authority or a model-facing source of truth. Keep the prior head and every source file; a reference or summary cannot replace them. Caller-supplied text does not prove authorship or completeness of a conversation. No public or profile append occurs without a separate authorized workflow.
+
 ## Artifact prohibitions
 
 - Never download an unsealed payload fallback.

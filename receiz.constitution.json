@@ -8020,7 +8020,7 @@
       }
     },
     {
-      "id": "app.release.current-package.v127",
+      "id": "app.release.current-package.v128",
       "version": 1,
       "phases": [
         "command",
@@ -8051,7 +8051,7 @@
               },
               "right": {
                 "op": "literal",
-                "value": "127.0.0"
+                "value": "128.0.0"
               }
             }
           }
@@ -8060,7 +8060,7 @@
       "denial": {
         "code": "STALE_CURRENT_RELEASE_VERSION",
         "safeAlternatives": [
-          "use-v127-current-default",
+          "use-v128-current-default",
           "retain-historical-proof-as-non-executable-evidence"
         ]
       }

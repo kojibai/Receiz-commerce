@@ -44,8 +44,9 @@ describe("Receiz v124 constitutional alignment", () => {
     assert.equal(RECEIZ_APP_CONSTITUTION.version, "127.0.0");
   });
 
-  it("accepts the v127 release default and rejects the previous package coordinate", async () => {
-    for (const [version, denied] of [["127.0.0", false], ["126.0.0", true], ["124.0.3", true]] as const) {
+  it("accepts the v128 release default and rejects the previous package coordinate", async () => {
+    // The retained v127 ruleset marker is independent of the v128 package version.
+    for (const [version, denied] of [["128.0.0", false], ["127.0.0", true], ["126.0.0", true], ["124.0.3", true]] as const) {
       const result = await evaluateReceizAppLaws({ phase: "migration", context: {
         operation: { kind: "release-current-default" }, proposed: { release: { version, isV127: true } },
       } });

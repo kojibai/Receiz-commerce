@@ -5,6 +5,10 @@ description: Use when creating, resolving, transferring, exporting, importing, o
 
 # receiz-living-subject
 
+## Private device AI subject creation
+
+Use `receiz_device_ai_subject_create({ name })` to preview a new private AI subject. After explicit consent, repeat the same name with the returned `confirmationDigest` as `confirmation`. The admitted device identity supplies owner authority; the model cannot provide an owner, sealer, temporal override, or output path. Creation seals a distinct source, derives its modern subject identity, attaches the complete canonical KaiSigil proof, and saves both exact artifacts privately under the workspace's `receiz-ai` directory. The returned digest-bound source references support existing verified material operations. Creation performs no public append and does not admit the modern V122/V125 source into the historical V120 local runtime. A missing device host returns unavailable.
+
 Bind one immutable subject identity to its enclosing sealed proof object, exact namespace bytes, owner/head state, portable edge bundle, and append-only transitions.
 
 ## Constitutional workflow

@@ -10,9 +10,9 @@ describe("Receiz v124 application contract", () => {
 
     const input = JSON.parse(readFileSync("receiz.app.json", "utf8"));
     const contract = compiler.defineReceizApp(input);
-    const plan = compiler.compileReceizAppContract(contract, { targetSdkVersion: "127.0.0" });
+    const plan = compiler.compileReceizAppContract(contract, { targetSdkVersion: "128.0.0" });
 
-    assert.equal(plan.targetSdkVersion, "127.0.0");
+    assert.equal(plan.targetSdkVersion, "128.0.0");
     assert.deepEqual(contract.features, [
       "identity",
       "proof",
@@ -27,7 +27,7 @@ describe("Receiz v124 application contract", () => {
     assert.equal(contract.authority.allowDatabaseAuthority, false);
     assert.deepEqual(contract.operations, compiler.RECEIZ_CURRENT_APPLICATION_OPERATION_MATRIX);
     assert.equal(contract.operations.length, 60);
-    assert.equal(compiler.RECEIZ_CURRENT_APPLICATION_OPERATION_MATRIX_DIGEST, "eadd171a45fcc51e275a1c57de1eb8e67614757a5723d141793641edf7207a10");
+    assert.equal(compiler.RECEIZ_CURRENT_APPLICATION_OPERATION_MATRIX_DIGEST, "940c316b5b7d6212240e699d03b3c1fd419cbbecc6ee51ddd7aa7783d9e523b0");
     assert.ok(plan.verificationCommands.length > 0);
   });
 
@@ -43,7 +43,7 @@ describe("Receiz v124 application contract", () => {
 
     const result = await compiler.checkReceizIntegration({
       root: process.cwd(),
-      targetSdkVersion: "127.0.0",
+      targetSdkVersion: "128.0.0",
     });
     assert.equal(result.ok, false); // Upstream scans its own published documentation as code.
     assert.deepEqual(result.blockingFindings.map(finding => ({code:finding.code,files:finding.affectedFiles})), [

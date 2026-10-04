@@ -5,7 +5,7 @@
     {
       "id": "sdk.streaming-verifier-public-export",
       "status": "confirmed-upstream-gap",
-      "observedPackage": "@receiz/sdk@127.0.0",
+      "observedPackage": "@receiz/sdk@128.0.0",
       "nextReleaseRequired": true,
       "publicDocumentation": false,
       "evidence": {
@@ -29,7 +29,7 @@
     {
       "id": "sdk.integration-scanner-published-inventory",
       "status": "confirmed-upstream-false-positive",
-      "observedPackage": "@receiz/sdk@127.0.0",
+      "observedPackage": "@receiz/sdk@128.0.0",
       "publicDocumentation": true,
       "evidence": {
         "paths": [
@@ -39,7 +39,7 @@
           "ai-skills/resources/public-capability-catalog.json",
           "ai-skills/resources/offline-sealing.md"
         ],
-        "review": "scripts/receiz-v127-inspection.mjs",
+        "review": "scripts/receiz-v128-inspection.mjs",
         "restriction": "Exact finding/path combinations and published byte parity only."
       }
     },

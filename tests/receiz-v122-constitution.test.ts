@@ -6,7 +6,7 @@ import { describe, it } from "node:test";
 import { createReceizCommerceAdapter } from "../src/lib/receiz/adapter";
 
 const V124_REGISTRY = "8d0b5b839d02d9efbd4306cc99410595a183705c2670b76d2567eaaaade99065";
-const V124_MATRIX = "eadd171a45fcc51e275a1c57de1eb8e67614757a5723d141793641edf7207a10";
+const V124_MATRIX = "940c316b5b7d6212240e699d03b3c1fd419cbbecc6ee51ddd7aa7783d9e523b0";
 const V123_MCP_TOOLS = [
   "receiz_v123_world_plan_command_v122",
   "receiz_v123_world_plan_transaction_v122",
@@ -29,9 +29,9 @@ describe("Receiz v124 coordinated identity", () => {
     };
     const toolNames = new Set(RECEIZ_MCP_TOOLS.map((tool) => tool.name));
 
-    assert.equal(adapter.sdkVersion, "127.0.0");
+    assert.equal(adapter.sdkVersion, "128.0.0");
     assert.equal(RECEIZ_CURRENT_APPLICATION_OPERATION_MATRIX_DIGEST, V124_MATRIX);
-    assert.equal(skills.version, "127.0.0");
+    assert.equal(skills.version, "128.0.0");
     assert.equal(skills.registryDigest, V124_REGISTRY);
     assert.equal(skills.operationMatrixDigest, V124_MATRIX);
     assert.equal(skills.counts.skills, 43);

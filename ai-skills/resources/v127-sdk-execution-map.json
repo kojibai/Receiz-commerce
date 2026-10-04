@@ -1,5 +1,5 @@
 {
-  "version": "127.0.0",
+  "version": "128.0.0",
   "boundary": "Fixed SDK adapters; existing proof admission and delegated permissions remain authoritative",
   "operations": [
     {

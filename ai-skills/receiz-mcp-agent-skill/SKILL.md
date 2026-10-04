@@ -114,7 +114,7 @@ Use only the 26 exact retained adapters in the [V124 runtime tool map](resources
 
 The [V125 economy and trust tool map](resources/v125-economy-tool-map.md) contains the thirteen retained economy tools and 39 canonical trust tools. Use the thirteen economy tools for lawful action and Settlement/Reserve; use the named trust operations for their source-bound families. Lawful-action proof bytes resolve only through the proof host after confirmation. Edge plans and portable transition/recovery materials resolve through the existing material host. Verified transition sets, prepared commit sets, and SDK-issued committed transitions remain same-runtime-custodied. Settlement and Reserve send/receive independently reverify the exact recovery at the respective user edge; server and database state only synchronize the resulting proof globally.
 
-## v127 complete SDK reference
+## v128 complete SDK reference
 
 Read [all public SDK function signatures](../resources/sdk-public-functions.json) and [the entry-point index](../resources/sdk-public-functions.md), including compiler, testing, and React exports. Client capabilities and executable MCP adapters remain separately identified; inventory membership never substitutes for an implemented adapter or SDK proof admission.
 

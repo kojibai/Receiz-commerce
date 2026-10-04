@@ -2,6 +2,13 @@
 
 All notable changes to Receiz Commerce Kit will be documented here.
 
+## 5.4.0 - Receiz v128
+
+- Upgrade the complete SDK/MCP/AI package set to `128.0.0`; retain constitutional ruleset `127.0.0` and its canonical registry.
+- Regenerate the 60-operation matrix and align 335 MCP tools with the exact 43-skill distribution.
+- Update the app package law, integrity attestation, migration/release gates, developer documentation, and regression checks.
+- Preserve explicit transport/custody requirements, historical proof evidence, and narrowly reviewed upstream scanner exceptions.
+
 ## 5.3.0 - Receiz v127
 
 - Pin SDK, MCP server, and AI skills to the published `127.0.0` packages.

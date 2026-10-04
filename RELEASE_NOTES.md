@@ -1,3 +1,45 @@
+# Receiz Commerce Kit v5.4.0 — Receiz v128
+
+Prepared October 4, 2026. Local update; publication is managed separately.
+
+## Changes
+
+- Pin `@receiz/sdk`, `@receiz/mcp-server`, and `@receiz/ai-skills` to **128.0.0**, including published npm integrity hashes in the lockfile and migration attestation.
+- Keep constitutional ruleset **127.0.0** and its exact canonical registry. Package release and ruleset are independent coordinates. The app retains its six runtime authority laws and updates its current-package law to accept v128 while rejecting older package defaults.
+- Regenerate the complete 60-operation application matrix, SDK boundaries, and capabilities for `>=128.0.0 <129.0.0`.
+- Align the complete **335-tool** MCP inventory, including five added tools: `receiz_device_ai_subject_create`, `receiz_offline_artifact_chunk`, `receiz_offline_crystal_append`, `receiz_offline_crystal_open`, and `receiz_verify_uploaded_artifact`.
+- Mirror the published AI package exactly, excluding its npm manifest: **43 skills, 37 manifests, 34 agent prompts**. Refresh its function and capability catalogs.
+- Add v128 inspection, migration verification, and release-lock scripts; refresh current release tests, developer page, README, and SDK rails documentation. Preserve older release records and migration attestations.
+
+## Exact identity
+
+| Coordinate | Value |
+| --- | --- |
+| Application | `5.4.0` |
+| SDK / MCP / AI | `128.0.0` |
+| Constitutional ruleset | `127.0.0` |
+| Canonical registry | `8d0b5b839d02d9efbd4306cc99410595a183705c2670b76d2567eaaaade99065` |
+| Operation matrix | `940c316b5b7d6212240e699d03b3c1fd419cbbecc6ee51ddd7aa7783d9e523b0` |
+| App registry | `81fa7c428f7dc3f33b24c814a503c163995ea689d0f0fa9635d4ffe039bcd6e7` |
+
+## Compatibility and scope
+
+Existing adapter interfaces, host-held runtime custody, qualification before mutation, idempotent recovery, and verified material playback are retained. Historical Connect HTTP calls still require explicit compatibility configuration and a noncanonical host. Node-only offline and subject-host entrypoints stay outside the browser adapter.
+
+New tools are available in the installed MCP distribution; this update does not invoke them, enroll devices, create identities or subjects, append Memory Crystals, migrate production data, or provision services. Tool availability does not establish custody or consent.
+
+The upstream streaming-verifier public-export gap remains. The raw upstream integration scanner continues to flag its own published tutorial and catalog text. Existing narrowly reviewed exceptions still require exact finding/file combinations and byte equality with the installed package; unknown or changed source findings remain blocking.
+
+## Upgrade and rollback
+
+Run `pnpm install --frozen-lockfile`, then `pnpm release:check`. Preserve existing environment, identity custody, and proof history. To roll back application code, restore the preceding v127 commit and its lockfile in a separate deployment while retaining all subsequently created proof objects and append-only history.
+
+## Verification
+
+`pnpm release:check` passed in full: **814 tests passed, zero failures**, TypeScript, reviewed integration checks, SDK conformance, CLI lifecycle, migration verification, release lock, AI validation, lint, production build (29 pages), and SDK doctor. The final staged-file secret scan passed for 1,181 tracked files; `git diff --cached --check` passed.
+
+Existing nonblocking diagnostics remain: one image-element lint warning in MaterialProofViewer and upstream web-worker dynamic-dependency warnings through snarkjs. The reviewed upstream scanner exceptions are described above. This document records repository readiness, not a published tag, GitHub release, or production deployment.
+
 # Receiz Commerce Kit v5.3.0 — Receiz v127
 
 Release date: September 23, 2026

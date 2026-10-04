@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { it } from "node:test";
 
 it("limits inventory exceptions to exact published bytes and exact finding paths", async () => {
-  const load = new Function("return import(process.cwd() + '/scripts/receiz-v127-inspection.mjs')") as () => Promise<{reviewPublishedInventoryFindings: (findings: unknown[], root?: string) => {reviewed: unknown[]; blocking: unknown[]}}>;
+  const load = new Function("return import(process.cwd() + '/scripts/receiz-v128-inspection.mjs')") as () => Promise<{reviewPublishedInventoryFindings: (findings: unknown[], root?: string) => {reviewed: unknown[]; blocking: unknown[]}}>;
   const { reviewPublishedInventoryFindings: review } = await load();
   const root=mkdtempSync(join(tmpdir(),"receiz-inventory-"));
   const paths=["ai-skills/resources/sdk-public-functions.json","ai-skills/skills.json"];
@@ -23,7 +23,7 @@ it("limits inventory exceptions to exact published bytes and exact finding paths
 });
 
 it("reviews only the exact published offline documentation migration action", async () => {
-  const load = new Function("return import(process.cwd() + '/scripts/receiz-v127-inspection.mjs')") as () => Promise<{reviewPublishedInventoryActions: (actions: unknown[], root?: string) => {reviewed: unknown[]; blocking: unknown[]}}>;
+  const load = new Function("return import(process.cwd() + '/scripts/receiz-v128-inspection.mjs')") as () => Promise<{reviewPublishedInventoryActions: (actions: unknown[], root?: string) => {reviewed: unknown[]; blocking: unknown[]}}>;
   const { reviewPublishedInventoryActions: review } = await load();
   const action={code:"migrate_compiler_import",path:"ai-skills/resources/offline-sealing.md",disposition:"user_decision_required",risk:"medium",manualReview:true,destructive:false};
   assert.equal(review([action]).reviewed.length,1);

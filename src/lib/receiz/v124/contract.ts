@@ -29,16 +29,16 @@ export const RECEIZ_V124_PORTABLE_PRESENTATION_MCP_TOOLS = Object.freeze([
 ] as const);
 
 export const RECEIZ_V124_CONTRACT = Object.freeze({
-  applicationVersion: "5.3.0",
-  sdkVersion: "127.0.0",
-  releaseVersion: "127.0.0",
+  applicationVersion: "5.4.0",
+  sdkVersion: "128.0.0",
+  releaseVersion: "128.0.0",
   rulesetVersion: "127.0.0",
-  compatibleRange: ">=127.0.0 <128.0.0",
+  compatibleRange: ">=128.0.0 <129.0.0",
   registryDigest: "8d0b5b839d02d9efbd4306cc99410595a183705c2670b76d2567eaaaade99065",
-  operationMatrixDigest: "eadd171a45fcc51e275a1c57de1eb8e67614757a5723d141793641edf7207a10",
-  appRegistryDigest: "d1526fce85ba5e5cf259686ba0377d3c72b87040acc99a63a92eea6baf210315",
+  operationMatrixDigest: "940c316b5b7d6212240e699d03b3c1fd419cbbecc6ee51ddd7aa7783d9e523b0",
+  appRegistryDigest: "81fa7c428f7dc3f33b24c814a503c163995ea689d0f0fa9635d4ffe039bcd6e7",
   operationCount: 60,
-  mcpToolCount: 330,
+  mcpToolCount: 335,
   v124McpToolCount: 22,
   portablePresentationMcpToolCount: 2,
   aiSkillCount: 43,

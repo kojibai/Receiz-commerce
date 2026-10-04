@@ -1,8 +1,8 @@
-# Receiz v127.0.0 public SDK functions
+# Receiz v128.0.0 public SDK functions
 
 Generated from the built public entry points. SDK client methods are separately enumerated by `describeReceizSdkClientCapabilityInventory`. Signatures preserve the canonical SDK contract; an inventory entry does not create an MCP execution adapter or serialize proof authority.
 
-678 callable exports across all public entry points. Inventory SHA-256: `7b0efbee6e1d8dbe2dd11f065486ac47c3b9f64b1c3596369a6826ca1d689af9`.
+680 callable exports across all public entry points. Inventory SHA-256: `687bdd064b49bf7df1c32eb4ab3c0f1389c80c8bc90d7cfbec32147db1cc73ad`.
 
 | Entry point | Function |
 | --- | --- |
@@ -145,6 +145,7 @@ Generated from the built public entry points. SDK client methods are separately 
 | `@receiz/sdk` | `createReceizGlobalCoordinationHttpTransport` |
 | `@receiz/sdk` | `createReceizIdentityKeyFile` |
 | `@receiz/sdk` | `createReceizIdIdentity` |
+| `@receiz/sdk` | `createReceizInitialSubjectStateV122` |
 | `@receiz/sdk` | `createReceizInMemoryAdmissionStore` |
 | `@receiz/sdk` | `createReceizInMemoryOfflineProofQueueStorage` |
 | `@receiz/sdk` | `createReceizInMemoryProofMemoryStorage` |
@@ -655,6 +656,7 @@ Generated from the built public entry points. SDK client methods are separately 
 | `@receiz/sdk/offline/kai` | `createReceizOfflineKaiProofFactory` |
 | `@receiz/sdk/offline/kai/node` | `createReceizNodeOfflineKaiProofFactory` |
 | `@receiz/sdk/offline/node` | `createReceizFileSealStore` |
+| `@receiz/sdk/offline/node` | `createReceizIdentityDeviceRelaySigner` |
 | `@receiz/sdk/offline/node` | `createReceizNodeOfflineSealer` |
 | `@receiz/sdk/react` | `ReceizCheckoutButton` |
 | `@receiz/sdk/react` | `ReceizDomainConnector` |
