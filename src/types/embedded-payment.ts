@@ -23,5 +23,7 @@ export type EmbeddedPaymentSession = {
   resumeExchangeShares?: number;
   reserveRequest?: NativeReserveQuote;
   reserveResolutionRequired?: boolean;
+  reserveAttempt?: NativeReserveExecutionTransport;
 };
 import type { NativeReserveQuote } from "../lib/checkout/native-reserve-execution";
+import type { NativeReserveExecutionTransport } from "../lib/checkout/browser-reserve-payment";

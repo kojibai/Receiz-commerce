@@ -123,7 +123,8 @@ export function EmbeddedReceizPayment({
         {paymentError ? <div className="embedded-payment-error" role="alert"><p>{paymentError}</p>
           {session.continuationToken ? <button className="button button-primary" type="button" onClick={() => onComplete()}>Continue original payment</button> : null}
         </div> : null}
-        {session.reserveRequest ? <NativeReservePayment key={session.reserveRequest.idempotencyKey} quote={session.reserveRequest} onReady={onComplete} recoverOnly={session.reserveResolutionRequired} /> : frame ? (
+        {session.reserveRequest ? <NativeReservePayment key={session.reserveRequest.idempotencyKey} quote={session.reserveRequest} onReady={onComplete}
+          recoverOnly={session.reserveResolutionRequired} originalAttempt={session.reserveAttempt} /> : frame ? (
           <iframe
             allow="payment *"
             className="embedded-payment-frame"

@@ -3,10 +3,13 @@
 import { useEffect, useRef, useState } from "react";
 import { ProofFilePicker } from "@/components/ProofFilePicker";
 import { Button } from "@/components/ui";
-import { authorizePreparedReservePayment, type NativeReserveExecutionTransport } from "@/lib/checkout/browser-reserve-payment";
+import { authorizePreparedReservePayment, inspectPreparedReservePaymentForQuote, type NativeReserveExecutionTransport } from "@/lib/checkout/browser-reserve-payment";
 import type { NativeReserveQuote } from "@/lib/checkout/native-reserve-execution";
 
-export function NativeReservePayment({ quote, onReady, recoverOnly = false }: { quote: NativeReserveQuote; onReady: (input: NativeReserveExecutionTransport) => void; recoverOnly?: boolean }) {
+export function NativeReservePayment({ quote, onReady, recoverOnly = false, originalAttempt }: {
+  quote: NativeReserveQuote; onReady: (input: NativeReserveExecutionTransport) => void;
+  recoverOnly?: boolean; originalAttempt?: NativeReserveExecutionTransport;
+}) {
   const fileInput = useRef<HTMLInputElement>(null);
   const passphraseInput = useRef<HTMLInputElement>(null);
   const [filename, setFilename] = useState("");
@@ -15,14 +18,19 @@ export function NativeReservePayment({ quote, onReady, recoverOnly = false }: { 
   const [consent, setConsent] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
+  const hasRetainedAttempt = recoverOnly && Boolean(originalAttempt);
   useEffect(() => { if (passphraseRequired) passphraseInput.current?.focus(); }, [passphraseRequired]);
 
   async function authorize() {
     const file = fileInput.current?.files?.[0];
-    if (!file || (!consent && !recoverOnly) || busy) return;
+    if ((!file && !hasRetainedAttempt) || (!consent && !recoverOnly) || busy) return;
     setBusy(true); setMessage("Verifying the complete Reserve transfer…");
     try {
-      const input = await authorizePreparedReservePayment(file, quote, passphrase || undefined, recoverOnly);
+      let input: NativeReserveExecutionTransport;
+      if (hasRetainedAttempt && originalAttempt) {
+        await inspectPreparedReservePaymentForQuote(originalAttempt, quote);
+        input = { ...originalAttempt, recoverOnly: true };
+      } else input = await authorizePreparedReservePayment(file!, quote, passphrase || undefined, recoverOnly);
       setPassphrase("");
       onReady(input);
     } catch (error) {
@@ -35,9 +43,11 @@ export function NativeReservePayment({ quote, onReady, recoverOnly = false }: { 
   }
 
   return <div className="native-reserve-payment">
-    <p>{recoverOnly ? "Open the original transfer to check its outcome. This check does not submit another Reserve payment." : "Choose the complete Reserve transfer prepared for this purchase. Your purchase and its card remainder stay in this app."}</p>
-    <ProofFilePicker label="Prepared Reserve transfer" fileName={filename} inputRef={fileInput} disabled={busy}
-      onChange={file => { setFilename(file?.name ?? ""); setPassphrase(""); setPassphraseRequired(false); setConsent(false); setMessage(""); }} />
+    <p>{hasRetainedAttempt ? "Your original transfer is saved on this device. Check its outcome to continue this purchase."
+      : recoverOnly ? "Open the original transfer to check its outcome. This check does not submit another Reserve payment."
+      : "Choose the complete Reserve transfer prepared for this purchase. Your purchase and its card remainder stay in this app."}</p>
+    {!hasRetainedAttempt ? <ProofFilePicker label="Prepared Reserve transfer" fileName={filename} inputRef={fileInput} disabled={busy}
+      onChange={file => { setFilename(file?.name ?? ""); setPassphrase(""); setPassphraseRequired(false); setConsent(false); setMessage(""); }} /> : null}
     {passphraseRequired ? <label>Seal passphrase<input type="password" autoComplete="current-password" ref={passphraseInput}
       value={passphrase} onChange={event => setPassphrase(event.target.value)} /></label> : null}
     {!recoverOnly ? <label className="receiz-proof-consent"><input type="checkbox" checked={consent} onChange={event => setConsent(event.target.checked)} />
@@ -46,6 +56,6 @@ export function NativeReservePayment({ quote, onReady, recoverOnly = false }: { 
         {" "}If card payment is interrupted, retain this purchase and continue it to finish.</span>
     </label> : null}
     {message ? <p role="status">{message}</p> : null}
-    <Button variant="primary" disabled={!filename || (!consent && !recoverOnly) || busy} onClick={() => void authorize()}>{busy ? "Verifying…" : recoverOnly ? "Check original Reserve payment" : "Authorize Reserve payment"}</Button>
+    <Button variant="primary" disabled={(!filename && !hasRetainedAttempt) || (!consent && !recoverOnly) || busy} onClick={() => void authorize()}>{busy ? "Verifying…" : recoverOnly ? "Check original Reserve payment" : "Authorize Reserve payment"}</Button>
   </div>;
 }
