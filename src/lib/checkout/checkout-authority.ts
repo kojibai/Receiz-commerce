@@ -49,6 +49,7 @@ export function authoritativeCheckoutQuote(state: CommerceState, cartLines: unkn
   const items = [...quantities].map(([productId, quantity]) => {
     const product = state.products.find((candidate) => candidate.id === productId && candidate.status === "active");
     if (!product) throw new Error("checkout_product_unavailable");
+    if (product.type === "digital" && !product.deliverySource) throw new Error("checkout_digital_source_required: This digital product does not have a delivery file yet.");
     if (product.wildsAsset && quantity !== 1) throw new Error("wilds_card_quantity_invalid");
     const unitPriceCents = centsFromPriceLabel(product.priceLabel);
     const lineTotalCents = unitPriceCents * quantity;
@@ -60,7 +61,8 @@ export function authoritativeCheckoutQuote(state: CommerceState, cartLines: unkn
       unitPriceCents,
       unitPriceUsd: usdFromCents(unitPriceCents),
       lineTotalCents,
-      amountUsd: usdFromCents(lineTotalCents)
+      amountUsd: usdFromCents(lineTotalCents),
+      ...(product.type === "digital" && product.deliverySource ? { deliverySource: structuredClone(product.deliverySource) } : {})
     };
   });
   const totalUsdCents = items.reduce((total, item) => total + item.lineTotalCents, 0);

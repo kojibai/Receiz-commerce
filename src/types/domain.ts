@@ -219,6 +219,19 @@ export type Collection = {
   published: boolean;
 };
 
+/** Encrypted transport of an exact SDK material capsule. This is not proof,
+ * settlement, a license, or ownership authority; delivery reopens the seal. */
+export type ProductDeliverySource = {
+  schema: "receiz.app.product_delivery_source.v1";
+  token: string;
+  artifactSha256: string;
+  payloadSha256: string;
+  ownerReceizId: string;
+  filename: string;
+  mimeType: string;
+  size: number;
+};
+
 export type Product = {
   id: string;
   name: string;
@@ -233,6 +246,7 @@ export type Product = {
   imageUrl?: string | null;
   imageProof?: MediaProofReference | null;
   description?: string;
+  deliverySource?: ProductDeliverySource | null;
   seo?: SeoConfig;
   wildsAsset?: {
     schema: "receiz.wilds_store_product.v1";
@@ -258,6 +272,7 @@ export type Order = {
   totalLabel: string;
   status: "mock_paid" | "pending" | "fulfilled" | "card_required" | "settled" | "refunded";
   itemCount: number;
+  deliveryFiles?: Array<{ productId: string; title: string; filename: string; artifactSha256: string }>;
   sealed: boolean;
   createdAt: string;
   merchantReceizId?: string;

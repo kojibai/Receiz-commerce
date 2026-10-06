@@ -12,7 +12,7 @@ import { createWalletFirstReceizSettlement } from "@/lib/checkout/receiz-settlem
 import { merchantCheckoutUsername } from "@/lib/checkout/payment-contract";
 import { issuePaymentContinuation, readPaymentContinuation, readPaymentStatusContinuation } from "@/lib/checkout/payment-continuation";
 import { receizOAuthSecret } from "@/lib/receiz/oauth-state";
-import { encodeOrderRecoveryCoordinates, readOrderRecoveryCoordinates, assertOrderRecoveryReader, recoverOriginalOrder } from "@/lib/checkout/order-recovery";
+import { encodeOrderRecoveryCoordinates, readOrderRecoveryCoordinates, assertOrderRecoveryReader, recoverOriginalOrder, MAX_ORDER_RECOVERY_TOKEN_LENGTH } from "@/lib/checkout/order-recovery";
 import { hostContextFromHost } from "@/lib/hosting/host-context";
 import { requireActiveHostingRenewal } from "@/lib/hosting/renewal-coordinates";
 import { createReceizCommerceAdapter } from "@/lib/receiz/adapter";
@@ -32,6 +32,7 @@ import {
 } from "@/lib/receiz/store-state-publication";
 import type { CommerceState, Order } from "@/types/domain";
 import { settleSandboxExchangeTrade } from "@/lib/exchange/sandbox-settlement";
+import { openProductDeliverySource } from "@/lib/delivery/native-delivery";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
@@ -303,6 +304,7 @@ async function publishSettledWildsSales(input: {
 }
 
 async function handleCheckout(request: NextRequest) {
+  if (Number(request.headers.get("content-length")) > 3_000_000) return NextResponse.json({ ok: false, error: "checkout_payload_too_large" }, { status: 413 });
   const body = await request.json().catch(() => ({}));
   if (!isRecord(body)) return NextResponse.json({ ok: false, error: "checkout_payload_invalid" }, { status: 400 });
   const requestSession = receizRequestSession(request);
@@ -483,7 +485,7 @@ async function handleCheckout(request: NextRequest) {
       customerEmail: typeof checkoutBody.customerEmail === "string" ? checkoutBody.customerEmail : undefined,
       idempotencyKey,
       cart: {
-        items: quote?.items ?? [{
+        items: quote?.items.map(({ deliverySource: _deliverySource, ...item }) => item) ?? [{
           id: exchangeTrade ? String(body.assetId ?? "") : "receiz-commerce-cart",
           title: exchangeTrade ? "Receiz Exchange trade" : "Receiz.app proof-sealed order",
           quantity: exchangeTrade?.preview.shares ?? 1,
@@ -497,12 +499,22 @@ async function handleCheckout(request: NextRequest) {
       description: checkoutBody.description, shipping, fulfillment: { kind: fulfillmentKind }
     }, createdAt: new Date().toISOString() };
     // Validate and bound the recoverable quote before creating a card session.
-    if (quote) encodeOrderRecoveryCoordinates({ schema: "receiz.app.order_recovery_coordinates.v1", payerUserId: buyerUserId,
+    if (quote) {
+      const boundedRecovery = encodeOrderRecoveryCoordinates({ schema: "receiz.app.order_recovery_coordinates.v1", payerUserId: buyerUserId,
       createdAt: typeof recoveryContext.createdAt === "string" ? recoveryContext.createdAt : new Date().toISOString(),
       payment: continuation ?? { purpose: "storefront_checkout", tenantHost, actorReceizId: actorReceizId || undefined,
         merchantUsername, referenceId: orderId, checkoutSessionId: "awaiting_original_session", amountUsd,
         funding: { totalUsdCents: quote.totalUsdCents, walletBalanceUsdCents: 0, walletAppliedUsdCents: 0, cardDeltaUsdCents: quote.totalUsdCents },
         context: recoveryContext } });
+      // Keep room for the actual provider session coordinates and timestamps.
+      if (!continuation && boundedRecovery.length > MAX_ORDER_RECOVERY_TOKEN_LENGTH - 8192) throw new Error("order_recovery_too_large");
+    }
+    if (quote && !continuation) {
+      for (const item of quote.items) {
+        if (item.deliverySource) await openProductDeliverySource({ receiz, source: item.deliverySource,
+          binding: { merchantReceizId: quote.merchantReceizId, productId: item.id } });
+      }
+    }
     const settlement = await createWalletFirstReceizSettlement(settlementInput);
     const funding = settlement.funding;
     const fulfillment = checkoutFulfillmentForFunding({
@@ -512,6 +524,9 @@ async function handleCheckout(request: NextRequest) {
         status: "payment_required", message: "Payment must settle before fulfillment starts." },
       shipping
     });
+    if (fulfillment && settlement.paid && quote?.items.some(item => item.deliverySource)) {
+      fulfillment.message = `${fulfillment.kind === "mixed" ? fulfillment.message + " " : "Payment confirmed. "}Download your purchased proof files from your account.`;
+    }
     const session = settlement.checkoutSession ?? {
       ok: settlement.ok,
       checkoutSessionId: settlement.walletTransfer?.ledgerEventId ?? settlement.walletTransfer?.transferId ?? `receiz_${Date.now()}`,
@@ -583,6 +598,8 @@ async function handleCheckout(request: NextRequest) {
       mode: "receiz",
       paid: settlement.paid,
       orderRecoveryToken,
+      deliveryFiles: quote?.items.filter(item => item.deliverySource).map(item => ({ productId: item.id, title: item.title,
+        filename: item.deliverySource!.filename, artifactSha256: item.deliverySource!.artifactSha256 })),
       wallet: settlement.wallet,
       walletTransfer: settlement.walletTransfer,
       paymentRails: paymentRails(merchantReceizId),

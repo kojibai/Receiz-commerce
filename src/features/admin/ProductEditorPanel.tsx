@@ -6,6 +6,7 @@ import { Button, ProductVisual, Panel, SectionHeader, StatusPill } from "@/compo
 import { requestTwinAssist } from "@/lib/content/twin-client";
 import { hasReceizTwinCapability } from "@/lib/receiz/capabilities";
 import { ImageUploadField } from "@/features/admin/ImageUploadField";
+import { ProofFilePicker } from "@/components/ProofFilePicker";
 import { verifyPortableCardPng, verifyPortableVaultPng } from "@/features/play/card-export";
 import { registerPublicWildsCard } from "@/features/play/public-card-registry";
 import { wildsStoreProduct } from "@/features/play/wilds-store-product";
@@ -98,10 +99,31 @@ export function ProductEditorPanel({
   const [wildsImportMessage, setWildsImportMessage] = useState("");
   const [wildsImporting, setWildsImporting] = useState(false);
   const wildsInput = useRef<HTMLInputElement>(null);
+  const deliveryInput = useRef<HTMLInputElement>(null);
+  const [deliveryBusy, setDeliveryBusy] = useState(false);
+  const [deliveryMessage, setDeliveryMessage] = useState("");
   const activeProduct = useMemo(
     () => products.find((product) => product.id === activeProductId) ?? products[0] ?? null,
     [activeProductId, products]
   );
+
+  const attachDeliveryFile = async (file: File | null) => {
+    if (!file || !activeProduct || deliveryBusy) return;
+    const productId = activeProduct.id;
+    setDeliveryBusy(true); setDeliveryMessage("Verifying the complete proof file…");
+    try {
+      if (file.size > 256 * 1024) throw new Error("Choose a complete proof file up to 256 KB.");
+      const form = new FormData();
+      form.set("file", file); form.set("productId", productId); form.set("merchantReceizId", merchantReceizId);
+      const response = await fetch("/api/products/delivery", { method: "POST", body: form });
+      const result = await response.json();
+      if (response.status === 401) window.dispatchEvent(new CustomEvent("receiz:permission-required", { detail: { purpose: "store_manage" } }));
+      if (!response.ok || !result.ok) throw new Error(result.message ?? result.error ?? "Could not verify this file.");
+      onUpdateProduct(productId, { deliverySource: result.source });
+      setDeliveryMessage("Proof verified. Publish your store to make this file available after payment.");
+    } catch (error) { setDeliveryMessage(error instanceof Error ? error.message : "Could not attach this proof file."); }
+    finally { setDeliveryBusy(false); if (deliveryInput.current) deliveryInput.current.value = ""; }
+  };
 
   const addProduct = () => {
     const product = newProduct();
@@ -331,6 +353,14 @@ export function ProductEditorPanel({
 
         {activeProduct ? (
           <div className="builder-editor">
+            {activeProduct.type === "digital" ? <div className="product-delivery-editor">
+              <ProofFilePicker label="Delivery proof" fileName={activeProduct.deliverySource?.filename ?? ""}
+                inputRef={deliveryInput} disabled={deliveryBusy} onChange={file => void attachDeliveryFile(file)} />
+              <p>Attach your complete sealed Receiz file. Buyers download it here after payment. Up to 256 KB per file.</p>
+              {activeProduct.deliverySource ? <button className="link-button" type="button" disabled={deliveryBusy}
+                onClick={() => { onUpdateProduct(activeProduct.id, { deliverySource: null }); setDeliveryMessage(""); }}>Remove delivery file</button> : null}
+              {deliveryMessage ? <p aria-live="polite">{deliveryMessage}</p> : null}
+            </div> : null}
             {twinEnabled ? (
               <div className="twin-assist-row">
                 <button disabled={twinLoading} onClick={fillWithTwin} type="button">

@@ -312,7 +312,11 @@ export function AccountDashboard({
                       <button className="link-button" type="button" onClick={() => actions.saveOrderRecovery(order.id)}>Save recovery file</button>
                       <button className="link-button" type="button" disabled={actionFeedback["orders.recovery"]?.status === "pending"}
                         onClick={() => void actions.recoverStoreOrder(order.recoveryToken!)}>Check original payment</button>
+                      {order.deliveryFiles?.length ? <button className="link-button" type="button"
+                        disabled={actionFeedback[`orders.delivery:${order.id}`]?.status === "pending"}
+                        onClick={() => void actions.downloadOrderProofs(order.id)}>Download purchased proof{order.deliveryFiles.length > 1 ? "s" : ""}</button> : null}
                     </div> : null}
+                    <InlineActionFeedback feedback={actionFeedback[`orders.delivery:${order.id}`]} />
                   </div>
                   <StatusPill tone={order.sealed ? "green" : "gold"}>
                     {order.sealed ? "Sealed" : order.settlementStatus === "settled" ? "Payment confirmed" : order.status.replace(/_/g, " ")}

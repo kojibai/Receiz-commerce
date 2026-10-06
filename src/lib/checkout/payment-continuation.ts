@@ -28,11 +28,13 @@ export function issuePaymentContinuation(quote: PaymentContinuation, secret = re
     funding: { totalUsdCents, walletBalanceUsdCents, walletAppliedUsdCents, cardDeltaUsdCents },
     issuedAt: Date.now()
   })).toString("base64url");
-  return `${body}.${signature(body, secret)}`;
+  const token = `${body}.${signature(body, secret)}`;
+  if (token.length > 1_500_000) throw new Error("checkout_continuation_too_large");
+  return token;
 }
 
 function verifiedPaymentContinuation(token: string, secret: string): PaymentContinuation {
-  if (token.length > 64_000) throw new Error("checkout_continuation_invalid");
+  if (token.length > 1_500_000) throw new Error("checkout_continuation_invalid");
   const parts = token.split(".");
   const [body, supplied] = parts;
   const expected = Buffer.from(signature(body ?? "", secret));

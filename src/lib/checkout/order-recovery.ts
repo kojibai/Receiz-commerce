@@ -9,7 +9,7 @@ import { checkoutCompletionState, checkoutOrderFulfillment, validShippingAddress
 import { createWalletFirstReceizSettlement } from "./receiz-settlement";
 
 const PURPOSE = "receiz-storefront-order-coordinates:v1";
-const MAX_TOKEN_LENGTH = 64_000;
+export const MAX_ORDER_RECOVERY_TOKEN_LENGTH = 1_500_000;
 export type OrderRecoveryCoordinates = Readonly<{
   schema: "receiz.app.order_recovery_coordinates.v1";
   payment: PaymentContinuation;
@@ -72,12 +72,12 @@ export function encodeOrderRecoveryCoordinates(value: OrderRecoveryCoordinates, 
   cipher.setAAD(Buffer.from(PURPOSE));
   const ciphertext = Buffer.concat([cipher.update(JSON.stringify(coordinates), "utf8"), cipher.final()]);
   const token = ["or1", iv.toString("base64url"), ciphertext.toString("base64url"), cipher.getAuthTag().toString("base64url")].join(".");
-  if (token.length > MAX_TOKEN_LENGTH) throw new Error("order_recovery_too_large");
+  if (token.length > MAX_ORDER_RECOVERY_TOKEN_LENGTH) throw new Error("order_recovery_too_large");
   return token;
 }
 
 export function readOrderRecoveryCoordinates(token: string, tenantHost: string, secret = receizOAuthSecret()) {
-  if (typeof token !== "string" || token.length > MAX_TOKEN_LENGTH) throw new Error("order_recovery_invalid");
+  if (typeof token !== "string" || token.length > MAX_ORDER_RECOVERY_TOKEN_LENGTH) throw new Error("order_recovery_invalid");
   const parts = token.split(".");
   if (parts.length !== 4 || parts[0] !== "or1" || parts.slice(1).some(part => !/^[A-Za-z0-9_-]+$/.test(part))) throw new Error("order_recovery_invalid");
   let value: unknown;
@@ -128,7 +128,12 @@ export async function recoverOriginalOrder(input: {
     createdAt: coordinates.createdAt, merchantReceizId: quote.merchantReceizId, tenantHost: payment.tenantHost,
     checkoutSessionId: payment.checkoutSessionId, paymentRail: settlement.paymentRail,
     settlementStatus: settlement.settlementStatus, status: completion.orderStatus, sealed: false,
-    funding: settlement.funding, shipping, fulfillment: checkoutOrderFulfillment(completion)
+    funding: settlement.funding, shipping, fulfillment: { ...checkoutOrderFulfillment(completion)!,
+      message: quote.items.some(item => item.deliverySource)
+        ? `${completion.fulfillmentKind === "mixed" ? completion.fulfillmentMessage + " " : "Payment confirmed. "}Download your purchased proof files from your account.`
+        : completion.fulfillmentMessage },
+    deliveryFiles: quote.items.filter(item => item.deliverySource).map(item => ({ productId: item.id, title: item.title,
+      filename: item.deliverySource!.filename, artifactSha256: item.deliverySource!.artifactSha256 }))
   } : null;
   return { role, settlement, quote, order };
 }

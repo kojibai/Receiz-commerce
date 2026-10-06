@@ -4304,6 +4304,22 @@ a {
   margin-top: 10px;
 }
 
+.product-delivery-editor {
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+.product-delivery-editor p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
 .customer-order-card {
   display: flex;
   justify-content: space-between;

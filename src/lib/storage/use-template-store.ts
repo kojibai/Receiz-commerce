@@ -54,6 +54,7 @@ import {
 } from "@/lib/receiz/publish-payload-media";
 import { createReceizCommerceAdapter } from "@/lib/receiz/adapter";
 import { isInAppPermissionPurpose } from "@/lib/receiz/in-app-permission";
+import { downloadPurchasedProofFiles, type DeliveredProofFile } from "@/lib/delivery/browser-delivery";
 import { canonicalReceizVerifyUrl, receizVerifyUrl } from "@/lib/receiz/verify-url";
 import {
   applyBrowserReceizIdSession,
@@ -1836,6 +1837,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
   const pendingBrowserIdentityKeyFileRef = useRef<unknown | null>(null);
   const publishResumeAttemptedRef = useRef(false);
   const checkoutSubmissionRef = useRef(false);
+  const deliverySubmissionsRef = useRef(new Set<string>());
   const hostingPlanSubmissionRef = useRef(false);
 
   const merchantProofKeyFile = useCallback(() => {
@@ -3517,6 +3519,28 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
         });
       },
       recoverStoreOrder,
+      async downloadOrderProofs(orderId: string) {
+        const order = stateRef.current.orders.find(candidate => candidate.id === orderId);
+        if (!order?.recoveryToken || deliverySubmissionsRef.current.has(orderId)) return;
+        deliverySubmissionsRef.current.add(orderId);
+        setActionFeedback(`orders.delivery:${orderId}`, "pending", "Checking payment and verifying your proof files");
+        try {
+          const result = await postJson<{ orderId: string; files: DeliveredProofFile[] }>("/api/orders/delivery", { recoveryToken: order.recoveryToken });
+          if (result.orderId !== orderId) throw new Error("delivery_order_mismatch");
+          const expected = order.deliveryFiles;
+          if (!expected?.length || !order.merchantReceizId || !Array.isArray(result.files) || result.files.length !== expected.length ||
+            new Set(result.files.map(file => file.productId)).size !== expected.length || result.files.some(file =>
+              !expected.some(source => source.productId === file.productId && source.artifactSha256 === file.artifactSha256))) {
+            throw new Error("delivery_purchased_source_mismatch");
+          }
+          await downloadPurchasedProofFiles(result.files, order.merchantReceizId);
+          setActionFeedback(`orders.delivery:${orderId}`, "success", "Verified proof files sent to your downloads.");
+        } catch (error) {
+          setActionFeedback(`orders.delivery:${orderId}`, "error", error instanceof Error ? error.message : "Could not download your purchase.");
+        } finally {
+          deliverySubmissionsRef.current.delete(orderId);
+        }
+      },
       saveOrderRecovery(orderId: string) {
         const order = stateRef.current.orders.find(candidate => candidate.id === orderId);
         if (!order?.recoveryToken) return;
@@ -3525,7 +3549,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
       },
       async restoreOrderRecovery(file: File) {
         try {
-          if (file.size <= 0 || file.size > 70_000) throw new Error("Choose the original order recovery file.");
+          if (file.size <= 0 || file.size > 1_550_000) throw new Error("Choose the original order recovery file.");
           const value = JSON.parse(await file.text());
           if (!value || value.schema !== "receiz.app.order_recovery_file.v1" || typeof value.token !== "string") {
             throw new Error("Choose an order recovery file saved from this app.");
@@ -3624,6 +3648,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
               paid?: boolean;
               continuationToken?: string;
               orderRecoveryToken?: string;
+              deliveryFiles?: Order["deliveryFiles"];
               itemCount?: number;
               purchasedLines?: Array<{ productId: string; quantity: number }>;
               commerceEvent?: { data: { fulfillment?: Order["fulfillment"]; shipping?: Order["shipping"] } };
@@ -3745,6 +3770,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
                 tenantHost: base.hosting.customDomain.domain || base.hosting.subdomain,
                 checkoutSessionId,
                 recoveryToken: result.orderRecoveryToken,
+                deliveryFiles: result.deliveryFiles,
                 paymentRail: railFromFunding(funding),
                 settlementStatus: completion.settlementStatus,
                 funding,
