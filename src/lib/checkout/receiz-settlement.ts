@@ -3,9 +3,12 @@ import type {
   ConnectTransferResponse,
   ConnectWalletResponse
 } from "@receiz/sdk";
+import type { ReceizOpenAuthoritySessionInputV124 } from "@receiz/sdk";
 import type { ReceizCommerceAdapter } from "@/lib/receiz/adapter";
 import type { Order } from "@/types/domain";
 import { reserveBalanceUsdCents } from "./payment-contract";
+import { createNativeReserveExecution, recoverNativeReservePayment, type NativeReservePreparation, type NativeReserveQuote } from "./native-reserve-execution";
+import { encodeNativeReserveCoordinates, readNativeReserveCoordinates } from "./native-reserve-coordinates";
 
 export const RECEIZ_CHECKOUT_VALUE_AUTHORITY_NOTICE =
   "USD checkout is a commerce quote. Proof-native value movement requires an explicit Phi intent bound to its source proof and head." as const;
@@ -40,10 +43,21 @@ export type WalletFirstReceizSettlementInput = {
   buyerAuthenticated: boolean;
   /** Verified payer account from this request's connection, never the payee. */
   buyerUserId?: string;
+  buyerReceizId?: string;
+  /** Only supplied by a server-verified original checkout continuation. */
+  originalReserveQuote?: NativeReserveQuote;
+  reservePaymentToken?: string;
+  nativeReserveExecution?: {
+    preparation: NativeReservePreparation;
+    authority: Omit<ReceizOpenAuthoritySessionInputV124, "applicationId" | "audience">;
+    recoverOnly?: boolean;
+  };
   resume?: {
     checkoutSessionId: string;
     funding: Pick<WalletFirstFunding, "totalUsdCents" | "walletBalanceUsdCents" | "walletAppliedUsdCents" | "cardDeltaUsdCents">;
   };
+  /** Enabled only by an explicit checkout action, never a status/read recovery. */
+  reopenExpiredCard?: boolean;
   idempotencyKey: string;
   note: string;
   orderId?: string;
@@ -66,7 +80,15 @@ export type WalletFirstReceizSettlement = {
   settlementStatus: NonNullable<Order["settlementStatus"]>;
   receiptId?: string;
   proofBundle?: Record<string, unknown> | null;
+  reservePaymentToken?: string;
+  cardError?: string;
 };
+
+export class NativeReserveRequiredError extends Error {
+  constructor(readonly quote: NativeReserveQuote) {
+    super("reserve_checkout_execution_required: Restore the complete Reserve payment source to authorize this purchase in app. No card payment has been created.");
+  }
+}
 
 export function centsFromUsdAmount(value: string | number | undefined | null) {
   const amount = typeof value === "number" ? value : Number(String(value ?? "0").replace(/[^0-9.]/g, ""));
@@ -146,6 +168,20 @@ export async function createWalletFirstReceizSettlement(
   const totalUsdCents = centsFromUsdAmount(input.amountUsd);
   if (!/^\d+(?:\.\d{1,2})?$/.test(input.amountUsd) || !Number.isSafeInteger(totalUsdCents) || totalUsdCents <= 0) throw new Error("checkout_amount_invalid");
   if (input.buyerAuthenticated && !input.buyerUserId?.trim()) throw new Error("checkout_buyer_identity_required");
+  const retainedReserve = input.reservePaymentToken ? readNativeReserveCoordinates(input.reservePaymentToken) : null;
+  const originalReserveQuote = retainedReserve?.quote ?? input.originalReserveQuote;
+  if (originalReserveQuote) {
+    const quote = originalReserveQuote;
+    if (quote.tenantHost !== input.tenantHost || quote.merchantUsername !== input.merchantUsername ||
+      quote.recipientUserId !== input.recipientUserId || quote.referenceId !== (input.orderId ?? input.idempotencyKey) ||
+      quote.idempotencyKey !== input.idempotencyKey ||
+      quote.funding.totalUsdCents !== totalUsdCents ||
+      (input.buyerAuthenticated && (quote.buyerUserId !== input.buyerUserId || quote.buyerReceizId !== input.buyerReceizId))) {
+      throw new Error("reserve_checkout_original_quote_mismatch");
+    }
+    if (input.resume && ["totalUsdCents", "walletBalanceUsdCents", "walletAppliedUsdCents", "cardDeltaUsdCents"].some(key =>
+      input.resume!.funding[key as keyof typeof input.resume.funding] !== quote.funding[key as keyof typeof quote.funding])) throw new Error("checkout_funding_mismatch");
+  }
   if (input.resume) {
     const original = input.resume.funding;
     const expected = walletFirstFunding(totalUsdCents, original.walletBalanceUsdCents);
@@ -154,7 +190,7 @@ export async function createWalletFirstReceizSettlement(
       original.totalUsdCents !== totalUsdCents || original.walletAppliedUsdCents !== expected.walletAppliedUsdCents ||
       original.cardDeltaUsdCents !== expected.cardDeltaUsdCents) throw new Error("checkout_funding_mismatch");
   }
-  const wallet = !input.resume && input.buyerAuthenticated ? await input.receiz.connectWallet() : null;
+  const wallet = !input.resume && !originalReserveQuote && input.buyerAuthenticated ? await input.receiz.connectWallet() : null;
   if (wallet && !wallet.ok) throw new Error("checkout_wallet_read_failed");
   if (wallet) {
     const source = wallet.wallet && typeof wallet.wallet === "object" ? wallet.wallet as Record<string, unknown> : {};
@@ -163,23 +199,81 @@ export async function createWalletFirstReceizSettlement(
   }
   const walletBalanceUsdCents = wallet ? reserveBalanceUsdCents(wallet) : 0;
   if (walletBalanceUsdCents === null) throw new Error("checkout_reserve_balance_unavailable: Your funded Reserve balance could not be verified. Reconnect your Identity Seal and try again. No card payment has been created.");
-  const funding = input.resume
+  const funding = originalReserveQuote ? walletFirstFunding(totalUsdCents, originalReserveQuote.funding.walletBalanceUsdCents) : input.resume
     ? walletFirstFunding(input.resume.funding.totalUsdCents, input.resume.funding.walletBalanceUsdCents)
     : walletFirstFunding(totalUsdCents, walletBalanceUsdCents);
-  if (funding.walletAppliedUsdCents > 0) {
+  if (input.nativeReserveExecution && (!originalReserveQuote || funding.walletAppliedUsdCents <= 0)) {
+    throw new Error("reserve_checkout_original_quote_required");
+  }
+  let reservePaymentToken = input.reservePaymentToken;
+  let nativeReceiptId: string | undefined;
+  if (funding.walletAppliedUsdCents > 0 && retainedReserve) {
+    const recovered = await recoverNativeReservePayment(input.receiz, retainedReserve.quote, retainedReserve.recovery);
+    nativeReceiptId = recovered.valueIntentDigest;
+  } else if (funding.walletAppliedUsdCents > 0 && input.nativeReserveExecution) {
+    if (!input.buyerAuthenticated || !input.buyerReceizId || !input.buyerUserId || !input.merchantUsername) {
+      throw new Error("reserve_checkout_buyer_identity_required");
+    }
+    const quote: NativeReserveQuote = originalReserveQuote ?? { applicationId: process.env.RECEIZ_APPLICATION_ID?.trim() || "receiz-commerce-kit",
+      tenantHost: input.tenantHost, buyerUserId: input.buyerUserId, buyerReceizId: input.buyerReceizId,
+      merchantUsername: input.merchantUsername, recipientUserId: input.recipientUserId,
+      referenceId: input.orderId ?? input.idempotencyKey, idempotencyKey: input.idempotencyKey,
+      funding: { totalUsdCents: funding.totalUsdCents, walletBalanceUsdCents: funding.walletBalanceUsdCents,
+        walletAppliedUsdCents: funding.walletAppliedUsdCents, cardDeltaUsdCents: funding.cardDeltaUsdCents } };
+    const execution = createNativeReserveExecution(input.receiz, quote);
+    if (input.nativeReserveExecution.recoverOnly) await execution.restoreForResolution(input.nativeReserveExecution.preparation);
+    else await execution.prepare(input.nativeReserveExecution.preparation);
+    const result = input.nativeReserveExecution.recoverOnly ? await execution.resolve() : await execution.execute(input.nativeReserveExecution.authority);
+    if (result.status !== "committed") throw new Error(result.status === "unknown"
+      ? "reserve_checkout_resolution_required" : `reserve_checkout_zero_write:${result.reason}`);
+    nativeReceiptId = result.payment.valueIntentDigest;
+    reservePaymentToken = encodeNativeReserveCoordinates({ schema: "receiz.app.native_reserve_coordinates.v1", quote, recovery: result.payment.recovery });
+  } else if (funding.walletAppliedUsdCents > 0) {
+    if (input.buyerReceizId && input.buyerUserId && input.merchantUsername) {
+      throw new NativeReserveRequiredError({ applicationId: process.env.RECEIZ_APPLICATION_ID?.trim() || "receiz-commerce-kit",
+        tenantHost: input.tenantHost, buyerUserId: input.buyerUserId, buyerReceizId: input.buyerReceizId,
+        merchantUsername: input.merchantUsername, recipientUserId: input.recipientUserId,
+        referenceId: input.orderId ?? input.idempotencyKey, idempotencyKey: input.idempotencyKey,
+        funding: { totalUsdCents: funding.totalUsdCents, walletBalanceUsdCents: funding.walletBalanceUsdCents,
+          walletAppliedUsdCents: funding.walletAppliedUsdCents, cardDeltaUsdCents: funding.cardDeltaUsdCents } });
+    }
     throw new Error("reserve_checkout_execution_required: Funded Reserve requires its admitted source proof and atomic sender/receiver edge commit. A wallet response or continuation cannot authorize a debit. No payment has been taken by this attempt.");
   }
   const orderId = input.orderId ?? input.idempotencyKey;
   const walletTransfer: ConnectTransferResponse | null = null;
   let checkoutSession: CheckoutSessionResponse | null = null;
+  let cardError: string | undefined;
+  const verifyCardSession = (session: CheckoutSessionResponse, expectedSessionId?: string) => {
+    if (!session.ok) throw new Error("checkout_session_verification_failed");
+    if (expectedSessionId && session.checkoutSessionId !== expectedSessionId) throw new Error("checkout_session_mismatch");
+    if (session.amountUsdCents !== undefined && centsFromReceizValue(session.amountUsdCents) !== funding.cardDeltaUsdCents) throw new Error("checkout_amount_mismatch");
+    if (session.referenceId && session.referenceId !== orderId) throw new Error("checkout_reference_mismatch");
+    if (input.merchantUsername && session.merchantUsername && session.merchantUsername !== input.merchantUsername) throw new Error("checkout_merchant_mismatch");
+    if (input.merchantUsername && checkoutSessionIsPaid(session) && session.amountUsdCents === undefined) throw new Error("checkout_amount_unverified");
+    if (/^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(input.recipientUserId) && checkoutSessionIsPaid(session) &&
+      session.recipientUserId !== input.recipientUserId) throw new Error("checkout_recipient_mismatch");
+  };
+  let cardIdempotencyKey = `${input.idempotencyKey}:card`;
+  let reopenExpiredCard = false;
 
-  if (input.resume) {
+  if (input.resume && funding.cardDeltaUsdCents > 0) {
     checkoutSession = input.merchantUsername
       ? await input.receiz.merchantCheckoutSession({ checkoutSessionId: input.resume.checkoutSessionId, username: input.merchantUsername })
       : await input.receiz.checkoutSession({ checkoutSessionId: input.resume.checkoutSessionId });
-  } else if (funding.cardDeltaUsdCents > 0) {
-    const cardIdempotencyKey = `${input.idempotencyKey}:card`;
-    checkoutSession = await input.receiz.checkout({
+    verifyCardSession(checkoutSession, input.resume.checkoutSessionId);
+    if (input.reopenExpiredCard && checkoutSession.status?.trim().toLowerCase() === "expired") {
+      // Only an independently verified expired card session can be replaced.
+      // Reserve recovery was already reopened above; neither its amount nor
+      // the original purchase changes, and concurrent retries use one card key.
+      if (checkoutSession.amountUsdCents === undefined || checkoutSession.referenceId !== orderId ||
+        (input.merchantUsername && checkoutSession.merchantUsername !== input.merchantUsername)) throw new Error("checkout_expired_session_unverified");
+      cardIdempotencyKey = `${input.idempotencyKey}:card:expired:${checkoutSession.checkoutSessionId}`;
+      reopenExpiredCard = true;
+    }
+  }
+  if ((!input.resume || reopenExpiredCard) && funding.cardDeltaUsdCents > 0) {
+    try {
+      checkoutSession = await input.receiz.checkout({
       amountUsd: usdAmountFromCents(funding.cardDeltaUsdCents),
       username: input.merchantUsername,
       currency: "usd",
@@ -198,12 +292,19 @@ export async function createWalletFirstReceizSettlement(
       idempotencyKey: cardIdempotencyKey
     });
     checkoutSession = await refreshCheckoutSessionIfNeeded(input.receiz, checkoutSession);
-    if (!checkoutSession?.ok || !checkoutSession.checkoutSessionId) throw new Error("checkout_session_creation_failed");
+      if (!checkoutSession?.ok || !checkoutSession.checkoutSessionId) throw new Error("checkout_session_creation_failed");
+    } catch (error) {
+      if (!reservePaymentToken) throw error;
+      // Reserve has committed: return its exact recovery even when the card
+      // request is ambiguous. Retry the same card key; never debit Reserve again.
+      checkoutSession = null;
+      cardError = "checkout_card_session_recovery_required";
+    }
   }
 
   // An idempotent creation can return an already-paid session. Verify that
   // result through the same merchant status route used by continuation recovery.
-  if (!input.resume && checkoutSessionIsPaid(checkoutSession) && checkoutSession?.checkoutSessionId) {
+  if ((!input.resume || reopenExpiredCard) && checkoutSessionIsPaid(checkoutSession) && checkoutSession?.checkoutSessionId) {
     const originalSessionId = checkoutSession.checkoutSessionId;
     checkoutSession = input.merchantUsername
       ? await input.receiz.merchantCheckoutSession({ checkoutSessionId: originalSessionId, username: input.merchantUsername })
@@ -211,14 +312,7 @@ export async function createWalletFirstReceizSettlement(
     if (checkoutSession.checkoutSessionId !== originalSessionId) throw new Error("checkout_session_mismatch");
   }
   if (checkoutSession) {
-    if (!checkoutSession.ok) throw new Error("checkout_session_verification_failed");
-    if (input.resume && checkoutSession.checkoutSessionId !== input.resume.checkoutSessionId) throw new Error("checkout_session_mismatch");
-    if (checkoutSession.amountUsdCents !== undefined && centsFromReceizValue(checkoutSession.amountUsdCents) !== funding.cardDeltaUsdCents) throw new Error("checkout_amount_mismatch");
-    if (checkoutSession.referenceId && checkoutSession.referenceId !== orderId) throw new Error("checkout_reference_mismatch");
-    if (input.merchantUsername && checkoutSession.merchantUsername && checkoutSession.merchantUsername !== input.merchantUsername) throw new Error("checkout_merchant_mismatch");
-    if (input.merchantUsername && checkoutSessionIsPaid(checkoutSession) && checkoutSession.amountUsdCents === undefined) throw new Error("checkout_amount_unverified");
-    if (/^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(input.recipientUserId) && checkoutSessionIsPaid(checkoutSession) &&
-      checkoutSession.recipientUserId !== input.recipientUserId) throw new Error("checkout_recipient_mismatch");
+    verifyCardSession(checkoutSession);
   }
 
   const cardSettled = !funding.cardRequired || checkoutSessionIsPaid(checkoutSession);
@@ -237,7 +331,9 @@ export async function createWalletFirstReceizSettlement(
     checkoutSession,
     paymentRail,
     settlementStatus: !cardSettled ? "card_required" : paid ? "settled" : "pending",
-    receiptId: checkoutSession?.receiptId,
-    proofBundle
+    receiptId: checkoutSession?.receiptId ?? nativeReceiptId,
+    proofBundle,
+    reservePaymentToken,
+    cardError
   };
 }

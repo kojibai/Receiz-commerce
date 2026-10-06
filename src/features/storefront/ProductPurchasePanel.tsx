@@ -148,11 +148,11 @@ export function ProductPurchasePanel({
     </div>
     <EmbeddedReceizPayment
       onClose={actions.dismissEmbeddedPayment}
-      onComplete={() => {
+      onComplete={(nativeReserveExecution) => {
         const payment = embeddedPayment;
         actions.dismissEmbeddedPayment();
         if (payment?.purpose === "storefront_checkout") {
-          void actions.startCheckout(undefined, payment.resumeReferenceId, payment.continuationToken);
+          void actions.startCheckout(undefined, payment.resumeReferenceId, payment.continuationToken, nativeReserveExecution);
         }
       }}
       session={embeddedPayment}

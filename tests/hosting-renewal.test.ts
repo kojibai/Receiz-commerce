@@ -68,6 +68,12 @@ it("rejects altered ciphertext, wrong recipients of recovery, and mismatched ser
   assert.throws(() => platformOperationFromContinuation(value.quote, { ...value.quote.context.operation as PlatformOperationIntent, period: oneHostingMonth("2026-11-01T14:00:00.000Z") }), /platform_payment_continuation_mismatch/);
 });
 
+it("refuses a month whose complete recovery exceeds the read transport limit", () => {
+  const value = coordinates();
+  value.quote.context.excessiveCompleteSource = "x".repeat(2_100_000);
+  assert.throws(() => encodeHostingRenewalCoordinates(value, secret), /hosting_recovery_too_large/);
+});
+
 it("rechecks only the original SDK session after reload without a new charge or a 24-hour recovery limit", async () => {
   const attempt = recover(coordinates());
   const first = await attempt.result;

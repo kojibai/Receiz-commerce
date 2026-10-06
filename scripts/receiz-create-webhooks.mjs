@@ -26,11 +26,19 @@ function originFromEnv() {
     process.env.RECEIZ_WEBHOOK_PUBLIC_ORIGIN ||
     process.env.NEXT_PUBLIC_SITE_URL ||
     process.env.VERCEL_PROJECT_PRODUCTION_URL ||
-    process.env.VERCEL_URL ||
-    "https://receiz.app";
+    process.env.VERCEL_URL;
+
+  if (!raw) {
+    throw new Error("Configure your own public origin before registering webhooks.");
+  }
 
   const withProtocol = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
-  return new URL(withProtocol).origin;
+  const url = new URL(withProtocol);
+  if (url.protocol !== "https:" || url.username || url.password ||
+      url.hostname === "localhost" || url.hostname === "127.0.0.1" || url.hostname === "[::1]") {
+    throw new Error("Webhook registration requires your deployed HTTPS origin.");
+  }
+  return url.origin;
 }
 
 function tenantHostFromOrigin(origin) {

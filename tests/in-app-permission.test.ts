@@ -70,7 +70,11 @@ describe("in-app Receiz proof permission", () => {
       { challenge: { ...challenge, consent: { ...challenge.consent, approved: false } } }]) {
       await assert.rejects(requireInAppPermissionConsent({ ...input, ...change }), /explicit_permission_consent_required/);
     }
-    assert.equal(inAppPermissionScopes("platform_billing").some((scope) => scope.includes(".write") || scope.includes("transfer")), false);
+    assert.equal(inAppPermissionScopes("platform_billing").includes("receiz:reserve.write"), true);
+    assert.equal(inAppPermissionScopes("platform_billing").includes("receiz:domains.read"), true);
+    assert.equal(inAppPermissionScopes("platform_billing").includes("receiz:domains.write"), true);
+    assert.equal(inAppPermissionScopes("platform_billing").includes("receiz:wallet.transfer"), false);
+    assert.equal(inAppPermissionScopes("store_manage").includes("receiz:reserve.write"), false);
   });
 
   it("rejects cross-origin permission exchange before reading any artifact", async () => {
@@ -112,7 +116,7 @@ describe("in-app Receiz proof permission", () => {
       if (path.endsWith("/auth/granted-scopes")) {
         assert.equal(new Headers(init?.headers).get("authorization"), "Bearer fixture-private-bearer");
         return Response.json({ schema: "receiz.auth.granted-scopes.v123",
-          grantedScopes: inflatedScopes ? [...prepared.scopes, "receiz:reserve.write"] : prepared.scopes });
+          grantedScopes: inflatedScopes ? [...prepared.scopes, "receiz:wallet.transfer"] : prepared.scopes });
       }
       throw new Error(`Unexpected request: ${path}`);
     }) as typeof fetch;

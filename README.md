@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/kojibai/Receiz-commerce/actions/workflows/ci.yml/badge.svg)](https://github.com/kojibai/Receiz-commerce/actions/workflows/ci.yml)
 
-Receiz Commerce Kit is a full working commerce product and a forkable SDK kernel for building proof-sealed applications with `@receiz/sdk` and Receiz MCP.
+Receiz Commerce Kit is a commerce application and a forkable SDK kernel for building proof-sealed applications with `@receiz/sdk`, Receiz MCP and Receiz AI skills.
 
 Current release: `5.4.0` · SDK target: `@receiz/sdk@128.0.0` · ruleset: `127.0.0`
 
@@ -28,7 +28,7 @@ The core verb is **seal**. Products, orders, rewards, assets, storefront state, 
 
 This repository is intentionally two things at once:
 
-- **A working product:** a mobile-first commerce cloud where a merchant can create or restore Receiz ID, customize a storefront, add products and content, activate rewards, publish to a free `*.receiz.app` subdomain, connect a custom domain, and run Receiz checkout.
+- **A commerce application:** a mobile-first commerce cloud where a merchant can create or restore Receiz ID, customize a storefront, add products and content, activate rewards, publish to a subdomain of the operator's configured platform, connect a custom domain, and use Receiz checkout. See the current payment boundary in [fork setup](docs/FORK_SETUP.md).
 - **A developer kernel:** a production-shaped reference for using one typed SDK boundary to build identity, proof, payments, wallet, rewards, domains, media, public app state, webhooks, release checks, and agent tooling without scattering SDK calls through the UI.
 
 The release unit is the repository, not an npm package. `package.json` remains `private: true` to prevent accidental application publishing to npm. Version 5.2 advances the living-world foundation onto Receiz v124: canonical Kai, proof challenges, short-lived server-custodied authority sessions, qualification-gated atomic execution, durable staging and recovery, authenticated replay/checkpoints/private additions, privacy-safe recipient resolution, locator-bound exact Phi intent, sealed-source publication, and verified playable material carried by proof URLs.
@@ -61,6 +61,8 @@ V124’s highest frame is **Reality Becomes Infrastructure**: independently veri
 pnpm install
 pnpm dev
 ```
+
+For an independent deployment, follow [Fork setup](docs/FORK_SETUP.md). Use your own Receiz client registration, platform receiving account, domain and Vercel project. The example environment does not select a platform fee receiver. Current payment support and the remaining automatic Reserve preparation work are documented in [Payment integration status](docs/payment-integration-status.md).
 
 The v128 Receiz toolchain is pinned exactly as `@receiz/sdk@128.0.0`, `@receiz/mcp-server@128.0.0`, and `@receiz/ai-skills@128.0.0` from the public npm registry. The lockfile pins their published integrity values with no Receiz package override. The local 43-skill `ai-skills/` tree is byte-aligned with the published doctrine, excluding only the npm package manifest, and can be checked with `pnpm validate:ai-skills`.
 
@@ -177,7 +179,7 @@ Storefront publish follows the proof-first law:
 After publishing, verify the public tenant projection:
 
 ```bash
-curl -sS https://your-subdomain.receiz.app/api/store
+curl -sS https://your-subdomain.your-platform.example/api/store
 ```
 
 The response should show saved brand/content, `source: "published"`, `publishedState: true`, and `proofMemory.entries` greater than `0`.
@@ -237,13 +239,13 @@ RECEIZ_CLIENT_ID=
 RECEIZ_CLIENT_SECRET=
 ```
 
-Required Receiz ID/OIDC callback:
+In-app Receiz ID permission and your own deployment's compatibility callback:
 
 ```bash
 NEXT_PUBLIC_AUTH_MODE=receiz_id
 RECEIZ_AUTH_MODE=receiz_id
-RECEIZ_ID_CALLBACK_URL=https://receiz.app/api/auth/receiz/callback
-NEXT_PUBLIC_SITE_URL=https://receiz.app
+RECEIZ_ID_CALLBACK_URL=https://commerce.example/api/auth/receiz/callback
+NEXT_PUBLIC_SITE_URL=https://commerce.example
 ```
 
 Enable live checkout:
@@ -257,7 +259,9 @@ Hosted commerce settings:
 
 ```bash
 NEXT_PUBLIC_HOSTING_MODE=receiz_hosted
-NEXT_PUBLIC_DEFAULT_SUBDOMAIN=boost.receiz.app
+NEXT_PUBLIC_PLATFORM_NAME=Example Commerce
+NEXT_PUBLIC_PLATFORM_DOMAIN=commerce.example
+NEXT_PUBLIC_DEFAULT_SUBDOMAIN=demo.commerce.example
 RECEIZ_ACCOUNT_STATE_MODE=receiz
 ```
 
@@ -277,7 +281,7 @@ VERCEL_TEAM_ID=
 VERCEL_TEAM_SLUG=
 VERCEL_PROJECT_ID=
 VERCEL_API_TOKEN=
-RECEIZ_CUSTOM_DOMAIN_CNAME_TARGET=custom.receiz.app
+RECEIZ_CUSTOM_DOMAIN_CNAME_TARGET=<your deployment's DNS target>
 VERCEL_CNAME_TARGET=cname.vercel-dns-0.com
 VERCEL_APEX_A_RECORD=76.76.21.21
 ```
@@ -287,6 +291,7 @@ Platform fee settlement:
 ```bash
 RECEIZ_PLATFORM_BILLING_MODE=sandbox
 RECEIZ_PLATFORM_ACCOUNT_ID=
+RECEIZ_PLATFORM_USERNAME=
 RECEIZ_PRO_PLAN_USD=49.00
 RECEIZ_SCALE_PLAN_USD=199.00
 RECEIZ_CUSTOM_DOMAIN_SETUP_USD=0.00
@@ -324,12 +329,13 @@ Recommended Vercel settings:
 
 For free subdomains:
 
-1. Add `receiz.app` to the Vercel project.
-2. Add `*.receiz.app` to the Vercel project.
-3. Point wildcard DNS `*.receiz.app` to `cname.vercel-dns-0.com`.
+1. Set `NEXT_PUBLIC_PLATFORM_DOMAIN` to a root domain you own and add it to your Vercel project.
+2. Add `*.<your platform domain>` to that project.
+3. Configure wildcard DNS using the records provided by your deployment.
 4. Set `VERCEL_API_TOKEN` and `VERCEL_PROJECT_ID` so `/api/hosting` can add and verify custom domains.
+5. Set `RECEIZ_CUSTOM_DOMAIN_CNAME_TARGET` to your deployment's custom-domain target.
 
-The app routes tenant hosts through `middleware.ts`. A request to `boost.receiz.app` is served by the same deployment with `tenant=boost`; a verified custom domain is served by the same deployment with `domain=thebrand.com`.
+The app routes tenant hosts through `middleware.ts`. With `NEXT_PUBLIC_PLATFORM_DOMAIN=commerce.example`, a request to `boost.commerce.example` is served by the same deployment with `tenant=boost`; a verified custom domain is served by the same deployment with `domain=thebrand.com`. See [fork setup](docs/FORK_SETUP.md) for independent receiving-account, identity and webhook configuration.
 
 ## Release Standard
 
@@ -344,7 +350,7 @@ Then complete the manual release gates in `docs/OPEN_SOURCE_RELEASE.md`:
 
 - Mobile admin visual QA at 390px and 430px.
 - Tenant storefront QA on a subdomain host.
-- Platform admin QA on `receiz.app`.
+- Platform admin QA on your configured platform root.
 - Checkout QA for customer proof, wallet-first funding, card fallback metadata, merchant settlement, and admin projections.
 - Domain QA for free subdomain, custom domain, missing DNS instructions, and published `/api/store` recovery.
 - Docs QA for `.env.example`, README, SDK rails, MCP setup, and no static token requirement.

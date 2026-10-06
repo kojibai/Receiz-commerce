@@ -37,12 +37,7 @@ export function ReceizProofPermission() {
     try {
       if (artifact.size > 2_000_000) throw new Error("This Identity Seal is too large. Choose the original identity file.");
       const bytes = new Uint8Array(await artifact.arrayBuffer());
-      const identity = await readInAppPermissionIdentity(bytes);
-      if (identity.crypto.privateKeyPkcs8CiphertextB64u && !passphrase) {
-        setPassphraseRequired(true);
-        setMessage("This Identity Seal needs its passphrase to connect.");
-        return;
-      }
+      await readInAppPermissionIdentity(bytes);
       const artifactDigest = await sha256ReceizBytes(bytes);
       const challengeResponse = await fetch(`/api/auth/receiz/proof?${new URLSearchParams({ purpose, artifactDigest })}`, { cache: "no-store" });
       const permission = await challengeResponse.json() as Awaited<ReturnType<typeof inAppPermissionChallenge>> & { ok: boolean; error?: string };
@@ -77,7 +72,7 @@ export function ReceizProofPermission() {
           onChange={(file) => { setSelectedFileName(file?.name ?? ""); setPassphrase(""); setPassphraseRequired(false); setConsent(false); setMessage(""); }} />
         {passphraseRequired ? <label>Seal passphrase<input ref={passphraseInput} autoComplete="current-password" type="password" value={passphrase} onChange={(event) => setPassphrase(event.target.value)} /></label> : null}
         <label className="receiz-proof-consent"><input type="checkbox" checked={consent} onChange={(event) => setConsent(event.target.checked)} />
-          <span>I allow this app to read my identity {purpose === "store_manage" ? "and publish my store records" : "and wallet balance"} for this connection.</span>
+          <span>I allow this app to read my identity {purpose === "store_manage" ? "and publish my store records" : "and wallet balance, and submit and recover purchases I separately authorize with my seal"} for this connection.</span>
         </label>
         {message ? <p role="status">{message}</p> : null}
         <div className="receiz-proof-permission-actions">

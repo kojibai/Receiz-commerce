@@ -4,6 +4,8 @@ import { createReceizCommerceAdapter } from "@/lib/receiz/adapter";
 import { loadReceizConnectProfile } from "@/lib/receiz/connect-profile";
 import { receizRequestSession } from "@/lib/receiz/session";
 import { hostContextFromHost } from "@/lib/hosting/host-context";
+import { createWalletFirstReceizSettlement } from "@/lib/checkout/receiz-settlement";
+import { reserveContext, isPendingReserveSession } from "@/lib/checkout/native-reserve-request";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -27,14 +29,19 @@ export async function POST(request: NextRequest) {
       tenantHost: body.purpose === "storefront_checkout" ? host.tenantHost ?? host.host : undefined
     });
     const receiz = createReceizCommerceAdapter({ baseUrl: process.env.RECEIZ_BASE_URL });
-    const payment = await receiz.merchantCheckoutSession({ checkoutSessionId: continuation.checkoutSessionId, username: continuation.merchantUsername });
-    const paid = payment.ok === true && payment.status === "paid" && payment.checkoutSessionId === continuation.checkoutSessionId &&
-      String(payment.amountUsdCents) === String(continuation.funding.cardDeltaUsdCents) &&
-      continuation.funding.walletAppliedUsdCents === 0 &&
-      continuation.funding.cardDeltaUsdCents === continuation.funding.totalUsdCents &&
-      (!payment.referenceId || payment.referenceId === continuation.referenceId) &&
-      (!payment.merchantUsername || payment.merchantUsername === continuation.merchantUsername);
-    return NextResponse.json({ ok: true, paid, status: payment.status }, { headers });
+    if (isPendingReserveSession(continuation.checkoutSessionId)) {
+      return NextResponse.json({ ok: true, paid: false, status: "reserve_pending" }, { headers });
+    }
+    const quote = continuation.context.quote as { recipientUserId?: string } | undefined;
+    const operation = continuation.context.operation as { recipientUserId?: string } | undefined;
+    const reserve = reserveContext(continuation);
+    const settlement = await createWalletFirstReceizSettlement({ receiz, amountUsd: continuation.amountUsd,
+      tenantHost: continuation.tenantHost, merchantUsername: continuation.merchantUsername,
+      recipientUserId: quote?.recipientUserId ?? operation?.recipientUserId ?? continuation.merchantUsername,
+      orderId: continuation.referenceId, idempotencyKey: reserve.originalReserveQuote?.idempotencyKey ?? continuation.referenceId, buyerAuthenticated: false,
+      note: "Inspect the original payment", ...reserve,
+      resume: { checkoutSessionId: continuation.checkoutSessionId, funding: continuation.funding } });
+    return NextResponse.json({ ok: true, paid: settlement.paid, status: settlement.checkoutSession?.status ?? settlement.settlementStatus }, { headers });
   } catch {
     return NextResponse.json({ ok: false, error: "payment_status_unavailable" }, { status: 409, headers });
   }

@@ -199,6 +199,14 @@ export function createReceizV124ProductionRuntime(input: Readonly<{
       },
     }),
     execution: Object.freeze({
+      async admitPreparedPlan(transitionSet: ReceizPortableExecutionTransitionSetV124) {
+        const verified = await adapter.v125.value.edge.verifyTransitionSet(transitionSet, { audience });
+        requireApplication(verified.operationPlan.applicationId, applicationId);
+        await adapter.v125.value.edge.prepareCommitSet(verified);
+        const planRef: ReceizV124PlanRef = opaque("receiz.app.execution-plan-ref.v124");
+        plans.set(planRef, verified.operationPlan);
+        return Object.freeze({ planRef, projection: verified.operationPlan });
+      },
       async plan(planInput: Omit<ReceizAtomicOperationInputV124, "applicationId">) {
         const plan = await adapter.v124.execution.planAtomicOperationV124({ ...planInput, applicationId });
         const planRef: ReceizV124PlanRef = opaque("receiz.app.execution-plan-ref.v124");

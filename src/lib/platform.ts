@@ -1,12 +1,16 @@
+import { resolvePlatformConfiguration } from "./platform-config";
+
+const configuredPlatform = resolvePlatformConfiguration({
+  name: process.env.NEXT_PUBLIC_PLATFORM_NAME,
+  domain: process.env.NEXT_PUBLIC_PLATFORM_DOMAIN,
+  defaultSubdomain: process.env.NEXT_PUBLIC_DEFAULT_SUBDOMAIN,
+});
+
 export const platform = {
-  name: "Receiz.app",
-  productName: "Receiz.app Commerce Cloud",
+  ...configuredPlatform,
   studioName: "Launch Studio",
-  domain: "receiz.app",
-  defaultSubdomain: "boost.receiz.app",
   repoLabel: "Clone template",
   tagline: "Launch proof-sealed ecommerce in seconds.",
-  freeSubdomainLabel: "Free Receiz.app subdomain",
   customDomainLabel: "Paid custom domain hosting",
   systemOfRecord: "Receiz proof objects",
   rails: [

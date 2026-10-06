@@ -243,11 +243,11 @@ export function AdminStudio() {
     </AdminShell>
     <EmbeddedReceizPayment
       onClose={actions.dismissEmbeddedPayment}
-      onComplete={() => {
+      onComplete={(nativeReserveExecution) => {
         const payment = embeddedPayment;
         actions.dismissEmbeddedPayment();
-        if (payment?.resumePlan) void actions.selectHostingPlan(payment.resumePlan, payment.continuationToken);
-        if (payment?.resumeDomain) void actions.connectCustomDomain(payment.resumeDomain, payment.continuationToken);
+        if (payment?.resumePlan) void actions.selectHostingPlan(payment.resumePlan, payment.continuationToken, false, nativeReserveExecution);
+        if (payment?.resumeDomain) void actions.connectCustomDomain(payment.resumeDomain, payment.continuationToken, nativeReserveExecution);
       }}
       session={embeddedPayment}
     />

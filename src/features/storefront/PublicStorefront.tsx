@@ -600,11 +600,11 @@ export function PublicStorefront({
     </main>
     <EmbeddedReceizPayment
       onClose={actions.dismissEmbeddedPayment}
-      onComplete={() => {
+      onComplete={(nativeReserveExecution) => {
         const payment = embeddedPayment;
         actions.dismissEmbeddedPayment();
         if (payment?.purpose === "storefront_checkout") {
-          void actions.startCheckout(undefined, payment.resumeReferenceId, payment.continuationToken);
+          void actions.startCheckout(undefined, payment.resumeReferenceId, payment.continuationToken, nativeReserveExecution);
         } else if (
           payment?.purpose === "exchange_trade" &&
           payment.resumeExchangeAssetId &&

@@ -4,7 +4,7 @@ Use this before tagging or announcing Receiz Commerce Kit.
 
 This repo has two audiences:
 
-- **Operators and merchants** evaluating a working Receiz.app Commerce Cloud product.
+- **Operators and merchants** evaluating the commerce application and its verified payment capabilities.
 - **Developers** cloning the repo as a kernel for SDK/MCP-powered products.
 
 The release should make both paths obvious.
@@ -13,8 +13,8 @@ The release should make both paths obvious.
 
 Public framing:
 
-- This is a complete working product, not a screenshot demo.
-- This is also a forkable SDK kernel, not a black-box hosted app.
+- This is a commerce application with a forkable SDK kernel.
+- Describe completed payment behavior using the evidence in [payment integration status](payment-integration-status.md). Automatic Reserve preparation, native private journals, compensation and live acceptance must pass before advertising the full payment flow.
 - Receiz proof objects are the source of truth.
 - `@receiz/sdk` is the typed application boundary.
 - Receiz MCP is agent tooling over the SDK/API surface.
@@ -79,7 +79,7 @@ Verify on a subdomain host:
 
 ### Platform Admin QA
 
-Verify on `receiz.app`:
+Verify on the operator's configured platform root:
 
 - Platform/admin state is not reused as buyer authority on tenant storefronts.
 - Launch readiness describes both audiences.
@@ -90,12 +90,19 @@ Verify on `receiz.app`:
 
 Verify:
 
-- Customer without proof is sent to Receiz ID continue/restore.
-- Customer with a verified proof object or continued Receiz ID proof can use the tenant checkout.
-- Wallet-first checkout request includes card fallback metadata.
-- Merchant settlement metadata points to the merchant Receiz ID or settlement recipient.
-- Orders, customers, payment rail, fulfillment, and settlement projections appear in admin.
+- Guest card checkout remains in the app. A purchase requiring connected identity opens the in-app Identity Seal ceremony.
+- The passphrase field appears only when consuming the selected seal requires it.
+- Independently recover a Reserve-only purchase at both participants from complete SDK sources, without creating a card session.
+- Independently recover a split purchase, with only the exact remainder paid through Receiz's embedded card form.
+- Recover ambiguous attempts by their original idempotency coordinates and test abandoned-card compensation.
+- Verify store customers pay the published merchant and platform upgrades pay the configured platform receiver.
+- Recover merchant orders, fulfillment and account entitlement from admitted proof history after browser closure and a server restart.
+- Renew one month explicitly in the app and independently recover the original payment before granting access.
 - Checkout/proof writes are not queued offline by the PWA.
+
+### Independent Fork QA
+
+Follow [fork setup](FORK_SETUP.md) with a second operator's own application registration, receiving account, public domain and deployment. Verify new merchant URLs use that domain, paid upgrades cannot inherit the original operator's receiver, webhook registration uses the fork's deployed origin, and secrets and custody files remain outside Git. Application configuration does not replace each participant's admitted source authority or the MCP host's qualification.
 
 ### Domain QA
 

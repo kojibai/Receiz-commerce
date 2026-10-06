@@ -19,6 +19,8 @@ import { BASE_STORAGE_KEY, currentHostContext, hostContextFromHost, type HostCon
 import { merchantProofAuthorityRequirement, type MerchantAuthorityAction } from "@/lib/hosting/merchant-proof-authority";
 import { validateHostingRenewalPeriod } from "@/lib/hosting/renewal-period";
 import { checkoutTenantHost } from "@/lib/checkout/checkout-request";
+import type { NativeReserveExecutionTransport } from "@/lib/checkout/browser-reserve-payment";
+import type { NativeReserveQuote } from "@/lib/checkout/native-reserve-execution";
 import {
   checkoutCompletionState,
   checkoutFulfillmentKind,
@@ -1333,6 +1335,7 @@ class ReceizAuthorityRequiredError extends Error {
 }
 
 type ReceizCheckoutSessionPayload = {
+  reserveRequest?: NativeReserveQuote;
   checkoutUrl?: string;
   checkoutSessionId?: string;
   clientSecret?: string;
@@ -1363,6 +1366,17 @@ function clearPendingPayment(purpose: EmbeddedPaymentPurpose) {
   safeRemoveLocalStorage(window.localStorage, pendingPaymentKey(purpose));
 }
 
+function retainReserveAttempt(purpose: EmbeddedPaymentPurpose, input?: NativeReserveExecutionTransport) {
+  if (!input) return undefined;
+  const pending = pendingPayment(purpose);
+  if (!pending?.reserveRequest) throw new Error("reserve_checkout_original_quote_required");
+  const recovering = input.recoverOnly || pending.reserveResolutionRequired === true;
+  const write = safeSetLocalStorage(window.localStorage, pendingPaymentKey(purpose),
+    JSON.stringify({ ...pending, reserveResolutionRequired: true }));
+  if (!write.ok) throw new Error("Save the original payment coordinates on this device before authorizing Reserve.");
+  return { ...input, recoverOnly: recovering };
+}
+
 class ReceizPaymentRequiredError extends Error {
   payload: Record<string, unknown>;
 
@@ -1386,6 +1400,7 @@ function checkoutSessionFromPayload(payload: unknown): ReceizCheckoutSessionPayl
   if (!session) return undefined;
 
   return {
+    reserveRequest: isRecord(payload.reserveRequest) ? payload.reserveRequest as NativeReserveQuote : undefined,
     checkoutUrl: typeof session.checkoutUrl === "string" ? session.checkoutUrl : undefined,
     checkoutSessionId: typeof session.checkoutSessionId === "string" ? session.checkoutSessionId : undefined,
     clientSecret: typeof session.clientSecret === "string" ? session.clientSecret : undefined,
@@ -1887,7 +1902,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
       clientSecret: session.clientSecret ?? previous?.clientSecret,
       paymentOrigin: session.paymentOrigin ?? previous?.paymentOrigin,
       merchantUsername: session.merchantUsername ?? previous?.merchantUsername } : undefined;
-    if (!session?.checkoutUrl && !session?.clientSecret) return false;
+    if (!session?.checkoutUrl && !session?.clientSecret && !session?.continuationToken) return false;
 
     const payment: EmbeddedPaymentSession = {
       purpose,
@@ -1903,6 +1918,8 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
       servicePeriodLabel: session.servicePeriodLabel,
       walletAppliedLabel: session.walletAppliedLabel,
       cardDeltaLabel: session.cardDeltaLabel,
+      reserveRequest: session.reserveRequest,
+      reserveResolutionRequired: previous?.reserveResolutionRequired,
       ...resume
     };
     if (payment.continuationToken) safeSetLocalStorage(window.localStorage, pendingPaymentKey(purpose), JSON.stringify(payment));
@@ -2415,7 +2432,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
           }));
         }
       },
-      async connectCustomDomain(domain: string, continuationToken?: string) {
+      async connectCustomDomain(domain: string, continuationToken?: string, nativeReserveExecution?: NativeReserveExecutionTransport) {
         let normalizedDomain = "";
 
         try {
@@ -2459,7 +2476,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
           const snapshot = stateRef.current;
           const result = await postJson<{ hosting: CommerceState["hosting"]; storeStateSync?: StoreStateSyncResponse }>(
             "/api/hosting",
-            await prepareHostingStoreStateRequestBody("custom_domain", snapshot, merchantProof(snapshot), { domain: normalizedDomain, continuationToken }),
+            await prepareHostingStoreStateRequestBody("custom_domain", snapshot, merchantProof(snapshot), { domain: normalizedDomain, continuationToken, nativeReserveExecution: retainReserveAttempt("custom_domain", nativeReserveExecution) }),
             { maxBodyChars: HOSTING_PUBLISH_REQUEST_BODY_MAX_CHARS }
           );
           const syncError = storeStateSyncError(result.storeStateSync);
@@ -2506,7 +2523,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
               "domains.customDomain",
               opened || session?.clientSecret ? "pending" : "error",
               opened
-                ? "Opening card payment"
+                ? session?.reserveRequest ? "Opening Reserve authorization" : "Opening card payment"
                 : session?.clientSecret
                   ? "Card payment session ready. Complete the card delta before the domain connects."
                   : error.message
@@ -2665,7 +2682,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
           setActionFeedback("billing.status", "error", error instanceof Error ? error.message : "Could not check hosting payment");
         }
       },
-      async selectHostingPlan(plan: CommerceState["hosting"]["plan"], continuationToken?: string, renew = false) {
+      async selectHostingPlan(plan: CommerceState["hosting"]["plan"], continuationToken?: string, renew = false, nativeReserveExecution?: NativeReserveExecutionTransport) {
         if (hostingPlanSubmissionRef.current) return;
         hostingPlanSubmissionRef.current = true;
         const pending = pendingPayment("hosting_plan");
@@ -2693,6 +2710,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
             billing: CommerceState["billing"];
           }>("/api/hosting", {
             action: "plan",
+            nativeReserveExecution: retainReserveAttempt("hosting_plan", nativeReserveExecution),
             plan,
             paymentReference,
             continuationToken,
@@ -2746,7 +2764,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
               "billing.plan",
               opened || session?.clientSecret ? "pending" : "error",
               opened
-                ? "Opening card payment"
+                ? session?.reserveRequest ? "Opening Reserve authorization" : "Opening card payment"
                 : session?.clientSecret
                   ? "Card payment session ready. Complete the card delta before the plan changes."
                   : error.message
@@ -3560,7 +3578,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
           return false;
         }
       },
-      async startCheckout(productId?: string, referenceId?: string, continuationToken?: string) {
+      async startCheckout(productId?: string, referenceId?: string, continuationToken?: string, nativeReserveExecution?: NativeReserveExecutionTransport) {
         if (checkoutSubmissionRef.current) return;
         checkoutSubmissionRef.current = true;
         try {
@@ -3646,6 +3664,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
             const checkoutReferenceId = referenceId ?? `order-${Date.now()}`;
             const result = await postJson<{
               paid?: boolean;
+              cardError?: string;
               continuationToken?: string;
               orderRecoveryToken?: string;
               deliveryFiles?: Order["deliveryFiles"];
@@ -3672,6 +3691,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
               } | null;
             }>("/api/checkout", {
               cartLines: checkoutSnapshot.cart.lines,
+              nativeReserveExecution: retainReserveAttempt("storefront_checkout", nativeReserveExecution),
               customerId: checkoutSnapshot.auth.customer.id,
               customerEmail: checkoutSnapshot.auth.customer.email,
               customerName: checkoutSnapshot.auth.customer.name,
@@ -3715,7 +3735,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
                 };
               });
 
-              if (checkoutUrl || result.session?.clientSecret || pending?.clientSecret) {
+              if (checkoutUrl || result.session?.clientSecret || result.continuationToken) {
                 setActionFeedback("checkout", "pending", "Card payment ready");
                 beginEmbeddedPayment({ ...result.session, continuationToken: result.continuationToken ?? continuationToken,
                   recoveryToken: result.orderRecoveryToken ?? pending?.recoveryToken,
@@ -3797,6 +3817,16 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
             });
             setActionFeedback("checkout", "success", "Payment recorded");
           } catch (error) {
+            if (error instanceof ReceizPaymentRequiredError) {
+              const session = checkoutSessionFromPayload(error.payload);
+              if (session) {
+                session.recoveryToken = typeof error.payload.orderRecoveryToken === "string" ? error.payload.orderRecoveryToken : undefined;
+                beginEmbeddedPayment(session, "storefront_checkout", "Pay with Reserve", { resumeReferenceId: referenceId ?? String(error.payload.reserveRequest &&
+                  (error.payload.reserveRequest as NativeReserveQuote).referenceId || "") });
+              }
+              setActionFeedback("checkout", "pending", error.message);
+              return;
+            }
             if (error instanceof ReceizAuthorityRequiredError) {
               setState((current) => {
                 const base = identity.apply(current);

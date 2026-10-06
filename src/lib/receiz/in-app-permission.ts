@@ -1,5 +1,5 @@
 import { createReceizProofAuthorityChallenge, digestReceizCanonicalV122, readReceizIdentityArtifact,
-  verifyReceizIdentityPortableStateProof, type ReceizProofAuthorityChallengeV123 } from "@receiz/sdk";
+  verifyReceizIdentityPortableStateProof, receizOidcScopesForRails, type ReceizProofAuthorityChallengeV123 } from "@receiz/sdk";
 
 export type InAppPermissionPurpose = "wallet_checkout" | "platform_billing" | "store_manage";
 export function isInAppPermissionPurpose(value: unknown): value is InAppPermissionPurpose {
@@ -13,7 +13,8 @@ export function inAppPermissionEntryPath(purpose: InAppPermissionPurpose): strin
   return `${path}?${new URLSearchParams({ receiz_identity: "required", receiz_purpose: purpose })}`;
 }
 export function inAppPermissionScopes(purpose: InAppPermissionPurpose): readonly string[] {
-  return Object.freeze(["openid", "profile", "email", ...(purpose === "store_manage" ? ["receiz:record"] : ["receiz:wallet.read"])].sort());
+  return Object.freeze(["openid", "profile", "email", ...(purpose === "store_manage" ? ["receiz:record"]
+    : ["receiz:wallet.read", ...receizOidcScopesForRails("reserve", "domains")])].sort());
 }
 
 export async function readInAppPermissionIdentity(artifact: Uint8Array) {

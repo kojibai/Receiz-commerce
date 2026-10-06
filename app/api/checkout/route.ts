@@ -8,9 +8,10 @@ import {
 } from "@/lib/checkout/checkout-authority";
 import { mockCheckout } from "@/lib/checkout/mock-checkout";
 import { checkoutModeForAuthority, checkoutWalletAuthority } from "@/lib/checkout/wallet-authority";
-import { createWalletFirstReceizSettlement } from "@/lib/checkout/receiz-settlement";
+import { createWalletFirstReceizSettlement, NativeReserveRequiredError } from "@/lib/checkout/receiz-settlement";
+import { isPendingReserveSession, reserveContext, readNativeReserveExecutionRequest } from "@/lib/checkout/native-reserve-request";
 import { merchantCheckoutUsername } from "@/lib/checkout/payment-contract";
-import { issuePaymentContinuation, readPaymentContinuation, readPaymentStatusContinuation } from "@/lib/checkout/payment-continuation";
+import { issuePaymentContinuation, readPaymentContinuation, readPaymentStatusContinuation, type PaymentContinuation } from "@/lib/checkout/payment-continuation";
 import { receizOAuthSecret } from "@/lib/receiz/oauth-state";
 import { encodeOrderRecoveryCoordinates, readOrderRecoveryCoordinates, assertOrderRecoveryReader, recoverOriginalOrder, MAX_ORDER_RECOVERY_TOKEN_LENGTH } from "@/lib/checkout/order-recovery";
 import { hostContextFromHost } from "@/lib/hosting/host-context";
@@ -479,7 +480,12 @@ async function handleCheckout(request: NextRequest) {
       merchantUsername,
       buyerAuthenticated: hasScopedReceizAccess,
       buyerUserId,
-      resume: continuation ? { checkoutSessionId: continuation.checkoutSessionId, funding: continuation.funding } : undefined,
+      buyerReceizId: actorReceizId,
+      ...reserveContext(continuation),
+      reopenExpiredCard: true,
+      nativeReserveExecution: await readNativeReserveExecutionRequest(body.nativeReserveExecution),
+      resume: continuation && !isPendingReserveSession(continuation.checkoutSessionId)
+        ? { checkoutSessionId: continuation.checkoutSessionId, funding: continuation.funding } : undefined,
       note: String(checkoutBody.description ?? "Receiz.app order"),
       description: String(checkoutBody.description ?? "Receiz.app order"),
       customerEmail: typeof checkoutBody.customerEmail === "string" ? checkoutBody.customerEmail : undefined,
@@ -507,7 +513,10 @@ async function handleCheckout(request: NextRequest) {
         funding: { totalUsdCents: quote.totalUsdCents, walletBalanceUsdCents: 0, walletAppliedUsdCents: 0, cardDeltaUsdCents: quote.totalUsdCents },
         context: recoveryContext } });
       // Keep room for the actual provider session coordinates and timestamps.
-      if (!continuation && boundedRecovery.length > MAX_ORDER_RECOVERY_TOKEN_LENGTH - 8192) throw new Error("order_recovery_too_large");
+      const reserveOverhead = settlementInput.nativeReserveExecution && !settlementInput.reservePaymentToken ? 1_020_000 : 8192;
+      if ((!continuation || settlementInput.nativeReserveExecution) && boundedRecovery.length > MAX_ORDER_RECOVERY_TOKEN_LENGTH - reserveOverhead) {
+        throw new Error("order_recovery_too_large");
+      }
     }
     if (quote && !continuation) {
       for (const item of quote.items) {
@@ -515,7 +524,20 @@ async function handleCheckout(request: NextRequest) {
           binding: { merchantReceizId: quote.merchantReceizId, productId: item.id } });
       }
     }
-    const settlement = await createWalletFirstReceizSettlement(settlementInput);
+    let settlement: Awaited<ReturnType<typeof createWalletFirstReceizSettlement>>;
+    try { settlement = await createWalletFirstReceizSettlement(settlementInput); }
+    catch (error) {
+      if (!(error instanceof NativeReserveRequiredError) || !quote) throw error;
+      const reserveQuote = { purpose: "storefront_checkout" as const, tenantHost, actorReceizId,
+        merchantUsername, referenceId: orderId, checkoutSessionId: `reserve-pending:${orderId}`, amountUsd,
+        funding: error.quote.funding, context: { ...recoveryContext, nativeReserveQuote: error.quote } };
+      const continuationToken = issuePaymentContinuation(reserveQuote);
+      const orderRecoveryToken = encodeOrderRecoveryCoordinates({ schema: "receiz.app.order_recovery_coordinates.v1",
+        payerUserId: buyerUserId, createdAt: String(recoveryContext.createdAt), payment: reserveQuote });
+      return NextResponse.json({ ok: false, error: "reserve_checkout_source_required", message: error.message,
+        reserveRequest: error.quote, continuationToken, orderRecoveryToken, funding: error.quote.funding,
+        session: { checkoutSessionId: reserveQuote.checkoutSessionId, status: "reserve_required", merchantUsername } }, { status: 402 });
+    }
     const funding = settlement.funding;
     const fulfillment = checkoutFulfillmentForFunding({
       paid: settlement.paid,
@@ -529,14 +551,15 @@ async function handleCheckout(request: NextRequest) {
     }
     const session = settlement.checkoutSession ?? {
       ok: settlement.ok,
-      checkoutSessionId: settlement.walletTransfer?.ledgerEventId ?? settlement.walletTransfer?.transferId ?? `receiz_${Date.now()}`,
+      checkoutSessionId: `${settlement.paid ? "reserve-settled" : "reserve-card-pending"}:${orderId}`,
       status: settlement.settlementStatus
     };
-    const originalPayment = continuation ?? (quote && session.checkoutSessionId ? {
+    const originalPayment: PaymentContinuation | null = quote && session.checkoutSessionId ? {
       purpose: "storefront_checkout" as const, tenantHost, actorReceizId: actorReceizId || undefined,
       merchantUsername, referenceId: orderId, checkoutSessionId: session.checkoutSessionId,
-      amountUsd, funding, context: recoveryContext
-    } : null);
+      amountUsd, funding, context: { ...recoveryContext,
+        ...(settlement.reservePaymentToken ? { reservePaymentToken: settlement.reservePaymentToken } : {}) }
+    } : null;
     const orderRecoveryToken = originalPayment ? encodeOrderRecoveryCoordinates({
       schema: "receiz.app.order_recovery_coordinates.v1", payment: originalPayment,
       payerUserId: buyerUserId, createdAt: typeof originalPayment.context.createdAt === "string"
@@ -597,6 +620,7 @@ async function handleCheckout(request: NextRequest) {
       ok: true,
       mode: "receiz",
       paid: settlement.paid,
+      cardError: settlement.cardError,
       orderRecoveryToken,
       deliveryFiles: quote?.items.filter(item => item.deliverySource).map(item => ({ productId: item.id, title: item.title,
         filename: item.deliverySource!.filename, artifactSha256: item.deliverySource!.artifactSha256 })),
@@ -608,7 +632,7 @@ async function handleCheckout(request: NextRequest) {
       itemCount: quote?.itemCount,
       session,
       continuationToken: session.checkoutSessionId && !settlement.paid && !exchangeTrade
-        ? continuation ? body.continuationToken : issuePaymentContinuation({
+        ? issuePaymentContinuation({
           purpose: "storefront_checkout", tenantHost, actorReceizId: actorReceizId || undefined,
           merchantUsername, referenceId: orderId, checkoutSessionId: session.checkoutSessionId,
           amountUsd, funding, context: originalPayment!.context

@@ -1,6 +1,7 @@
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:crypto";
 import type { PaymentContinuation } from "../checkout/payment-continuation";
 import { createWalletFirstReceizSettlement } from "../checkout/receiz-settlement";
+import { reserveContext } from "../checkout/native-reserve-request";
 import type { ReceizCommerceAdapter } from "../receiz/adapter";
 import { receizOAuthSecret } from "../receiz/oauth-state";
 import type { BillingConfig, HostingConfig } from "../../types/domain";
@@ -9,6 +10,7 @@ import { platformOperationFromContinuation } from "./platform-operation";
 import { hostingBillingFromPlatformPayment } from "./platform-billing";
 
 const PURPOSE = "receiz-hosting-renewal-coordinates:v1";
+export const MAX_HOSTING_RECOVERY_TOKEN_LENGTH = 2_100_000;
 export type HostingRenewalCoordinates = Readonly<{
   schema: "receiz.app.hosting_renewal_coordinates.v1";
   quote: PaymentContinuation;
@@ -61,11 +63,13 @@ export function encodeHostingRenewalCoordinates(value: HostingRenewalCoordinates
   const cipher = createCipheriv("aes-256-gcm", key(secret), iv);
   cipher.setAAD(Buffer.from(PURPOSE));
   const ciphertext = Buffer.concat([cipher.update(JSON.stringify(validated), "utf8"), cipher.final()]);
-  return ["hr1", iv.toString("base64url"), ciphertext.toString("base64url"), cipher.getAuthTag().toString("base64url")].join(".");
+  const token = ["hr1", iv.toString("base64url"), ciphertext.toString("base64url"), cipher.getAuthTag().toString("base64url")].join(".");
+  if (token.length > MAX_HOSTING_RECOVERY_TOKEN_LENGTH) throw new Error("hosting_recovery_too_large");
+  return token;
 }
 
 export function readHostingRenewalCoordinates(token: string, binding: { merchantReceizId: string; payerUserId?: string; plan?: HostingConfig["plan"] }, secret = receizOAuthSecret()) {
-  if (typeof token !== "string" || token.length > 64_000) throw new Error("hosting_recovery_invalid");
+  if (typeof token !== "string" || token.length > MAX_HOSTING_RECOVERY_TOKEN_LENGTH) throw new Error("hosting_recovery_invalid");
   const parts = token.split(".");
   if (parts.length !== 4 || parts[0] !== "hr1" || parts.slice(1).some(part => !/^[A-Za-z0-9_-]+$/.test(part))) throw new Error("hosting_recovery_invalid");
   let value: unknown;
@@ -86,14 +90,16 @@ export function readHostingRenewalCoordinates(token: string, binding: { merchant
 
 async function verifyOriginalPayment(receiz: ReceizCommerceAdapter, coordinates: HostingRenewalCoordinates) {
   const { quote } = coordinates;
+  const reserve = reserveContext(quote);
   const operation = platformOperationFromContinuation(quote, {
     id: quote.referenceId, kind: "hosting_plan", merchantReceizId: quote.actorReceizId!, tenantHost: quote.tenantHost, plan: coordinates.plan,
   });
   return createWalletFirstReceizSettlement({
     receiz, amountUsd: quote.amountUsd, tenantHost: quote.tenantHost,
     recipientUserId: operation.recipientUserId, merchantUsername: quote.merchantUsername,
-    buyerAuthenticated: false, idempotencyKey: quote.referenceId, orderId: quote.referenceId,
+    buyerAuthenticated: false, idempotencyKey: reserve.originalReserveQuote?.idempotencyKey ?? quote.referenceId, orderId: quote.referenceId,
     note: "Recover the original hosting month", resume: { checkoutSessionId: quote.checkoutSessionId, funding: quote.funding },
+    ...reserve,
   });
 }
 

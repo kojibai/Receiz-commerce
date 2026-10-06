@@ -46,9 +46,10 @@ import { receizAuthorityRequired, receizRequestSession } from "@/lib/receiz/sess
 import { prepareStoreStateMediaForPublish } from "@/lib/receiz/media-publication";
 import { mockStorage } from "@/lib/storage/mock-storage";
 import type { DomainStatus, HostingConfig } from "@/types/domain";
-import { createWalletFirstReceizSettlement } from "@/lib/checkout/receiz-settlement";
+import { createWalletFirstReceizSettlement, NativeReserveRequiredError, centsFromUsdAmount } from "@/lib/checkout/receiz-settlement";
+import { reserveContext, isPendingReserveSession, readNativeReserveExecutionRequest } from "@/lib/checkout/native-reserve-request";
 import { canonicalOrderId } from "@/lib/checkout/checkout-authority";
-import { encodeHostingRenewalCoordinates, readHostingRenewalCoordinates, recoverHostingRenewal, projectRecoveredHostingRenewal, requireActiveHostingRenewal, type HostingRenewalCoordinates } from "@/lib/hosting/renewal-coordinates";
+import { encodeHostingRenewalCoordinates, readHostingRenewalCoordinates, recoverHostingRenewal, projectRecoveredHostingRenewal, requireActiveHostingRenewal, MAX_HOSTING_RECOVERY_TOKEN_LENGTH, type HostingRenewalCoordinates } from "@/lib/hosting/renewal-coordinates";
 import { nextHostingRenewalPeriod, validateHostingRenewalPeriod } from "@/lib/hosting/renewal-period";
 import type { PaymentContinuation } from "@/lib/checkout/payment-continuation";
 
@@ -259,6 +260,7 @@ async function chargePlatformFee(
     operation: Omit<PlatformOperationIntent, "amountUsd" | "recipientUserId">;
     continuationToken?: string;
     retainedQuote?: PaymentContinuation;
+    nativeReserveExecution?: Awaited<ReturnType<typeof readNativeReserveExecutionRequest>>;
   }
 ) {
   const liveBilling = process.env.RECEIZ_PLATFORM_BILLING_MODE === "live";
@@ -327,7 +329,12 @@ async function chargePlatformFee(
       merchantUsername,
       buyerAuthenticated: true,
       buyerUserId: input.buyerUserId,
-      resume: continuation ? { checkoutSessionId: continuation.checkoutSessionId, funding: continuation.funding } : undefined,
+      buyerReceizId: input.operation.merchantReceizId,
+      ...reserveContext(continuation),
+      reopenExpiredCard: true,
+      nativeReserveExecution: input.nativeReserveExecution,
+      resume: continuation && !isPendingReserveSession(continuation.checkoutSessionId)
+        ? { checkoutSessionId: continuation.checkoutSessionId, funding: continuation.funding } : undefined,
       orderId: input.operation.id,
       idempotencyKey: input.idempotencyKey,
       note: input.note,
@@ -350,16 +357,14 @@ async function chargePlatformFee(
         ]
       }
     });
-    if (settlement.checkoutSession?.status === "expired") {
-      return { ok: false, status: 402, error: "checkout_session_expired",
-        message: "The card session expired without payment. Select the plan or domain again to start a new payment." };
-    }
-
-    const quote: PaymentContinuation | undefined = settlement.checkoutSession?.checkoutSessionId ? continuation ?? {
+    const quote: PaymentContinuation = {
       purpose: input.operation.kind, tenantHost: input.tenantHost, actorReceizId: input.operation.merchantReceizId,
-      merchantUsername, referenceId: input.operation.id, checkoutSessionId: settlement.checkoutSession.checkoutSessionId,
-      amountUsd: operation.amountUsd, funding: settlement.funding, context: { operation }, issuedAt: Date.now(),
-    } : undefined;
+      merchantUsername, referenceId: input.operation.id,
+      checkoutSessionId: settlement.checkoutSession?.checkoutSessionId ?? `${settlement.paid ? "reserve-settled" : "reserve-card-pending"}:${input.operation.id}`,
+      amountUsd: operation.amountUsd, funding: settlement.funding,
+      context: { ...(continuation?.context ?? {}), operation,
+        ...(settlement.reservePaymentToken ? { reservePaymentToken: settlement.reservePaymentToken } : {}) }, issuedAt: Date.now(),
+    };
     return {
       ok: true,
       mode: "live",
@@ -370,8 +375,8 @@ async function chargePlatformFee(
       wallet: settlement.wallet,
       transfer: settlement.walletTransfer,
       checkoutSession: settlement.checkoutSession,
-      continuationToken: settlement.checkoutSession?.checkoutSessionId && !settlement.paid
-        ? input.continuationToken ?? issuePaymentContinuation(quote!) : undefined,
+      continuationToken: !settlement.paid ? issuePaymentContinuation(quote) : undefined,
+      cardError: settlement.cardError,
       receiptId: settlement.receiptId,
       proofBundle: settlement.proofBundle,
       paymentRail: settlement.paymentRail,
@@ -387,6 +392,20 @@ async function chargePlatformFee(
         : "Card payment is required for the remaining Receiz billing delta."
     };
   } catch (error) {
+    if (error instanceof NativeReserveRequiredError) {
+      const held = input.retainedQuote ?? (input.continuationToken ? readPaymentContinuation(input.continuationToken, {
+        purpose: input.operation.kind, actorReceizId: input.operation.merchantReceizId, tenantHost: input.tenantHost }) : null);
+      const operation = held ? platformOperationFromContinuation(held, input.operation) : {
+        ...input.operation, amountUsd: input.amountUsd, recipientUserId: recipientUserId! };
+      const quote: PaymentContinuation = { purpose: input.operation.kind, tenantHost: input.tenantHost,
+        actorReceizId: input.operation.merchantReceizId, merchantUsername: error.quote.merchantUsername,
+        referenceId: input.operation.id, checkoutSessionId: `reserve-pending:${input.operation.id}`,
+        amountUsd: operation.amountUsd, funding: error.quote.funding,
+        context: { operation, nativeReserveQuote: error.quote } };
+      return { ok: false, status: 402, error: "reserve_checkout_source_required", message: error.message,
+        reserveRequest: error.quote, continuationToken: issuePaymentContinuation(quote), funding: error.quote.funding,
+        checkoutSession: { checkoutSessionId: quote.checkoutSessionId, status: "reserve_required", merchantUsername: quote.merchantUsername } };
+    }
     return {
       ok: false,
       status: 402,
@@ -600,9 +619,32 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: false, error: "hosting_renewal_unavailable",
         message: errorMessage(error) === "hosting_renewal_too_early" ? "Renewal opens 14 days before your paid-through date. Your current month is still active." : errorMessage(error) }, { status: 409 });
     }
+    // Bound both the new month and the currently active month's complete
+    // recovery before executing Reserve or creating a card payment.
+    if (plan !== "starter" && period && merchantAuthority.profile?.id) {
+      const prior = previous?.coordinates ?? retained?.previous;
+      const provisionalQuote: PaymentContinuation = original ?? {
+        purpose: "hosting_plan", tenantHost, actorReceizId: merchantAuthority.handle,
+        merchantUsername: merchantCheckoutUsername(process.env.RECEIZ_PLATFORM_USERNAME ?? ""),
+        referenceId: operationId, checkoutSessionId: "awaiting_original_session", amountUsd: amountForPlan(plan),
+        funding: { totalUsdCents: centsFromUsdAmount(amountForPlan(plan)), walletBalanceUsdCents: 0,
+          walletAppliedUsdCents: 0, cardDeltaUsdCents: centsFromUsdAmount(amountForPlan(plan)) },
+        context: { operation: { id: operationId, kind: "hosting_plan", merchantReceizId: merchantAuthority.handle,
+          tenantHost, plan, period, amountUsd: amountForPlan(plan),
+          recipientUserId: process.env.RECEIZ_PLATFORM_ACCOUNT_ID ?? process.env.RECEIZ_PLATFORM_USER_ID ?? process.env.RECEIZ_PLATFORM_USERNAME } },
+      };
+      const provisional = encodeHostingRenewalCoordinates({ schema: "receiz.app.hosting_renewal_coordinates.v1", plan,
+        payerUserId: merchantAuthority.profile.id, period, quote: provisionalQuote,
+        ...(prior && prior.plan === plan && prior.period.paidThrough === period.startsAt ? {
+          previous: { schema: prior.schema, quote: prior.quote, plan: prior.plan, payerUserId: prior.payerUserId, period: prior.period },
+        } : {}) });
+      const reserveOverhead = body.nativeReserveExecution && !original?.context.reservePaymentToken ? 1_020_000 : 8192;
+      if (provisional.length > MAX_HOSTING_RECOVERY_TOKEN_LENGTH - reserveOverhead) throw new Error("hosting_recovery_too_large");
+    }
     const platformBilling = await chargePlatformFee(payerAccessToken, {
       amountUsd: amountForPlan(plan),
       buyerUserId: merchantAuthority.profile?.id,
+      nativeReserveExecution: await readNativeReserveExecutionRequest(body.nativeReserveExecution),
       note: `${platform.productName} ${plan} hosting plan`,
       idempotencyKey: operationId,
       continuationToken: typeof body.continuationToken === "string" ? body.continuationToken : undefined,
@@ -627,8 +669,8 @@ export async function POST(request: NextRequest) {
 
     let renewalToken = typeof body.recoveryToken === "string" ? body.recoveryToken : undefined;
     if (plan !== "starter" && period && "quote" in platformBilling && platformBilling.quote && merchantAuthority.profile?.id) {
-      const previousCoordinate = previous?.coordinates;
-      renewalToken ??= encodeHostingRenewalCoordinates({
+      const previousCoordinate = previous?.coordinates ?? retained?.previous;
+      renewalToken = encodeHostingRenewalCoordinates({
         schema: "receiz.app.hosting_renewal_coordinates.v1", plan, payerUserId: merchantAuthority.profile.id,
         quote: platformBilling.quote, period,
         ...(previousCoordinate && previousCoordinate.plan === plan && previousCoordinate.period.paidThrough === period.startsAt ? {
@@ -724,6 +766,7 @@ export async function POST(request: NextRequest) {
     const platformBilling = await chargePlatformFee(payerAccessToken, {
       amountUsd: process.env.RECEIZ_CUSTOM_DOMAIN_SETUP_USD ?? "0.00",
       buyerUserId: merchantAuthority.profile?.id,
+      nativeReserveExecution: await readNativeReserveExecutionRequest(body.nativeReserveExecution),
       note: `${platform.productName} custom domain setup for ${domain}`,
       idempotencyKey: operationId,
       continuationToken: typeof body.continuationToken === "string" ? body.continuationToken : undefined,

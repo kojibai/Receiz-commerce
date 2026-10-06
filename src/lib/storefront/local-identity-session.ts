@@ -1,5 +1,6 @@
 import type { CommerceState, CustomerAccount, ReceizIdState } from "@/types/domain";
 import type { BrowserReceizIdSession } from "@/lib/storefront/tenant-customer-session";
+import { platform } from "@/lib/platform";
 
 export type LocalReceizIdentitySessionInput = {
   accountImageLabel?: string;
@@ -55,7 +56,7 @@ function platformMerchantWorkspace(
 ): CommerceState {
   const displayName = input.displayName || "New Receiz Store";
   const tenantSlug = ownerSlugFromHandle(input.handle, displayName);
-  const subdomain = `${tenantSlug}.receiz.app`;
+  const subdomain = `${tenantSlug}.${platform.domain}`;
   const customer: CustomerAccount = {
     id: current.auth.customer.id || "customer-receiz-owner",
     name: displayName,
@@ -105,7 +106,7 @@ function platformMerchantWorkspace(
         verified: false,
         dnsResolved: false,
         liveUrl: `https://${subdomain}`,
-        message: "Free Receiz.app subdomain ready to claim"
+        message: `${platform.freeSubdomainLabel} ready to claim`
       },
       customDomain: {
         ...current.hosting.customDomain,

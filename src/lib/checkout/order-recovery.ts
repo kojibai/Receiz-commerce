@@ -7,6 +7,7 @@ import type { authoritativeCheckoutQuote } from "./checkout-authority";
 import { merchantCheckoutUsername } from "./payment-contract";
 import { checkoutCompletionState, checkoutOrderFulfillment, validShippingAddress } from "./customer-purchase";
 import { createWalletFirstReceizSettlement } from "./receiz-settlement";
+import { reserveContext } from "./native-reserve-request";
 
 const PURPOSE = "receiz-storefront-order-coordinates:v1";
 export const MAX_ORDER_RECOVERY_TOKEN_LENGTH = 1_500_000;
@@ -111,10 +112,12 @@ export async function recoverOriginalOrder(input: {
   const role = assertOrderRecoveryReader(coordinates, input.reader);
   const payment = coordinates.payment;
   const quote = payment.context.quote as ReturnType<typeof authoritativeCheckoutQuote>;
+  const reserve = reserveContext(payment);
   const settlement = await createWalletFirstReceizSettlement({
     receiz: input.receiz, tenantHost: payment.tenantHost, merchantUsername: payment.merchantUsername,
     recipientUserId: quote.recipientUserId, amountUsd: payment.amountUsd, orderId: payment.referenceId,
-    idempotencyKey: payment.referenceId, buyerAuthenticated: false, note: "Recover the original store order",
+    idempotencyKey: reserve.originalReserveQuote?.idempotencyKey ?? payment.referenceId, buyerAuthenticated: false, note: "Recover the original store order",
+    ...reserve,
     resume: { checkoutSessionId: payment.checkoutSessionId, funding: payment.funding }
   });
   const customer = payment.context.customer as Record<string, unknown>;

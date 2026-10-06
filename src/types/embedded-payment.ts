@@ -21,4 +21,7 @@ export type EmbeddedPaymentSession = {
   resumeExchangeAssetId?: string;
   resumeExchangeSide?: "buy" | "sell";
   resumeExchangeShares?: number;
+  reserveRequest?: NativeReserveQuote;
+  reserveResolutionRequired?: boolean;
 };
+import type { NativeReserveQuote } from "../lib/checkout/native-reserve-execution";

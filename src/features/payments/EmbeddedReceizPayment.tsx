@@ -5,6 +5,8 @@ import { acceptsPaymentMessage, embeddedCheckoutFrame } from "@/lib/checkout/pay
 import { Icons } from "@/components/icons";
 import { StatusPill } from "@/components/ui";
 import type { EmbeddedPaymentSession } from "@/types/embedded-payment";
+import { NativeReservePayment } from "./NativeReservePayment";
+import type { NativeReserveExecutionTransport } from "@/lib/checkout/browser-reserve-payment";
 
 export function EmbeddedReceizPayment({
   onClose,
@@ -12,7 +14,7 @@ export function EmbeddedReceizPayment({
   session
 }: {
   onClose: () => void;
-  onComplete: () => void;
+  onComplete: (nativeReserveExecution?: NativeReserveExecutionTransport) => void;
   session: EmbeddedPaymentSession | null;
 }) {
   const closeButtonRef = useRef<HTMLButtonElement>(null);
@@ -44,7 +46,7 @@ export function EmbeddedReceizPayment({
             return;
           }
           if (!cancelled && status.status === "expired") {
-            setPaymentError("This card session expired without payment. Close this panel and start checkout again.");
+            setPaymentError("The card form expired. Continue this original payment to reopen the remaining amount. Any confirmed Reserve payment stays applied.");
             return;
           }
         }
@@ -67,7 +69,7 @@ export function EmbeddedReceizPayment({
         }
       } else if (event.origin === expectedOrigin && event.data?.source === "receiz-pay-embed" &&
         event.data?.sessionId === session.checkoutSessionId && event.data?.type === "checkout-error") {
-        setPaymentError("The card form could not complete payment. Your order is still pending. Close and retry this payment.");
+        setPaymentError("The card form could not complete payment. Your purchase is still pending. Continue this original payment to check its outcome.");
       }
     };
     window.addEventListener("message", handleMessage);
@@ -107,7 +109,7 @@ export function EmbeddedReceizPayment({
             <StatusPill tone="green">Secure payment</StatusPill>
             <h2 id="embedded-payment-title">{session.title}</h2>
             <p id="embedded-payment-description">
-              Enter card details for the amount shown below without leaving this app.
+              {session.reserveRequest ? "Authorize the wallet portion of this purchase without leaving this app." : "Enter card details for the amount shown below without leaving this app."}
             </p>
           </div>
           <button aria-label="Close payment" className="button button-ghost" onClick={onClose} ref={closeButtonRef} type="button">
@@ -118,8 +120,10 @@ export function EmbeddedReceizPayment({
         {session.walletAppliedLabel && session.cardDeltaLabel ? (
           <p className="embedded-payment-funding">Reserve {session.walletAppliedLabel} · Card {session.cardDeltaLabel}</p>
         ) : null}
-        {paymentError ? <p role="alert">{paymentError}</p> : null}
-        {frame ? (
+        {paymentError ? <div className="embedded-payment-error" role="alert"><p>{paymentError}</p>
+          {session.continuationToken ? <button className="button button-primary" type="button" onClick={() => onComplete()}>Continue original payment</button> : null}
+        </div> : null}
+        {session.reserveRequest ? <NativeReservePayment key={session.reserveRequest.idempotencyKey} quote={session.reserveRequest} onReady={onComplete} recoverOnly={session.reserveResolutionRequired} /> : frame ? (
           <iframe
             allow="payment *"
             className="embedded-payment-frame"
@@ -153,11 +157,12 @@ export function EmbeddedReceizPayment({
             <Icons.creditCard size={28} />
             <strong>The secure card form could not load.</strong>
             <span>The payment session is still open. Close this panel and retry; no plan, domain, or order has been activated.</span>
+            {session.continuationToken ? <button className="button button-primary" type="button" onClick={() => onComplete()}>Continue original payment</button> : null}
           </div>
         )}
         <footer>
           <Icons.lock size={16} />
-          <span>Card data is handled by the Receiz payment rail. This app receives settlement status and proof only.</span>
+          <span>{session.reserveRequest ? "Your signing key and seal passphrase stay on your device." : "Card data is handled by the Receiz payment rail. This app receives settlement status and proof only."}</span>
         </footer>
       </section>
     </div>
