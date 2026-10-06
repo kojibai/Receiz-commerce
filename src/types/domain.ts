@@ -263,6 +263,8 @@ export type Order = {
   merchantReceizId?: string;
   tenantHost?: string;
   checkoutSessionId?: string;
+  /** Private original-session coordinates. This is not a sealed receipt. */
+  recoveryToken?: string;
   paymentRail?: "receiz_wallet" | "card_fallback" | "receiz_checkout" | "sandbox" | "wallet_card_split";
   settlementStatus?: "wallet_reserved" | "card_required" | "pending" | "settled" | "refunded" | "sandbox";
   funding?: {
@@ -285,7 +287,7 @@ export type Order = {
   };
   fulfillment?: {
     kind: "physical_shipping" | "digital_delivery" | "mixed";
-    status: "payment_required" | "shipping_required" | "ready_to_ship" | "delivery_queued" | "fulfilled";
+    status: "payment_required" | "shipping_required" | "ready_to_ship" | "delivery_pending" | "delivery_queued" | "fulfilled";
     message: string;
     deliveryRails?: Array<"receiz_communications" | "email">;
     updatedAt?: string;

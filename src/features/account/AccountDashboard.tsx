@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { ProofFilePicker } from "@/components/ProofFilePicker";
 import { InlineActionFeedback } from "@/components/ActionFeedback";
 import { Icons } from "@/components/icons";
 import {
@@ -57,6 +58,8 @@ export function AccountDashboard({
       : "Receiz rails ready"
     : state.auth.receizId.statusLabel;
   const autoAdmittedRef = useRef(false);
+  const orderRecoveryInput = useRef<HTMLInputElement>(null);
+  const [orderRecoveryFile, setOrderRecoveryFile] = useState<File | null>(null);
   const continueWithReceizId = async () => {
     const connected = await actions.connectExistingReceizId();
     if (!connected && !tenantSurface) {
@@ -268,7 +271,7 @@ export function AccountDashboard({
             ) : (
               <div>
                 <strong>Collected during checkout</strong>
-                <span>Shipping details stay attached to this store account and sealed order history.</span>
+                <span>Shipping details stay attached to your order in this store account.</span>
               </div>
             )}
           </div>
@@ -284,6 +287,13 @@ export function AccountDashboard({
 
         <Panel>
           <SectionHeader title="Orders" action={<StatusPill tone="neutral">{orders.length}</StatusPill>} />
+          <div className="order-recovery-controls">
+            <ProofFilePicker label="Order recovery" fileName={orderRecoveryFile?.name ?? ""} inputRef={orderRecoveryInput}
+              accept="application/json,.json" disabled={actionFeedback["orders.recovery"]?.status === "pending"} onChange={setOrderRecoveryFile} />
+            <Button type="button" disabled={!orderRecoveryFile || actionFeedback["orders.recovery"]?.status === "pending"}
+              onClick={() => orderRecoveryFile && void actions.restoreOrderRecovery(orderRecoveryFile)}>Recover original order</Button>
+            <InlineActionFeedback feedback={actionFeedback["orders.recovery"]} />
+          </div>
           <div className="customer-order-list">
             {orders.length ? (
               orders.map((order) => (
@@ -297,9 +307,15 @@ export function AccountDashboard({
                         Wallet {order.funding.walletAppliedLabel} · Card delta {order.funding.cardDeltaLabel}
                       </span>
                     ) : null}
+                    {order.fulfillment?.message ? <span>{order.fulfillment.message}</span> : null}
+                    {order.recoveryToken ? <div className="order-recovery-actions">
+                      <button className="link-button" type="button" onClick={() => actions.saveOrderRecovery(order.id)}>Save recovery file</button>
+                      <button className="link-button" type="button" disabled={actionFeedback["orders.recovery"]?.status === "pending"}
+                        onClick={() => void actions.recoverStoreOrder(order.recoveryToken!)}>Check original payment</button>
+                    </div> : null}
                   </div>
                   <StatusPill tone={order.sealed ? "green" : "gold"}>
-                    {order.sealed ? "Sealed" : order.status.replace(/_/g, " ")}
+                    {order.sealed ? "Sealed" : order.settlementStatus === "settled" ? "Payment confirmed" : order.status.replace(/_/g, " ")}
                   </StatusPill>
                 </div>
               ))

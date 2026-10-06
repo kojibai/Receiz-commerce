@@ -429,11 +429,9 @@ function eventOrder(state: CommerceState, event: CommerceEventRecord): Order {
       : fulfillmentStatus === "payment_required"
         ? "card_required"
         : orderStatusFromEvent(event);
-  const sealed =
-    fulfillmentStatus === "ready_to_ship" ||
-    fulfillmentStatus === "delivery_queued" ||
-    fulfillmentStatus === "fulfilled" ||
-    (!fulfillmentStatus && (event.type === "checkout.settled" || event.type === "order.fulfilled"));
+  // A commerce event is a rebuildable projection. Payment status and shipping
+  // do not establish custody of an independently verified enclosing order seal.
+  const sealed = false;
 
   return {
     id: orderId,

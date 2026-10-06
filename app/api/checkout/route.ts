@@ -12,6 +12,7 @@ import { createWalletFirstReceizSettlement } from "@/lib/checkout/receiz-settlem
 import { merchantCheckoutUsername } from "@/lib/checkout/payment-contract";
 import { issuePaymentContinuation, readPaymentContinuation, readPaymentStatusContinuation } from "@/lib/checkout/payment-continuation";
 import { receizOAuthSecret } from "@/lib/receiz/oauth-state";
+import { encodeOrderRecoveryCoordinates, readOrderRecoveryCoordinates, assertOrderRecoveryReader, recoverOriginalOrder } from "@/lib/checkout/order-recovery";
 import { hostContextFromHost } from "@/lib/hosting/host-context";
 import { requireActiveHostingRenewal } from "@/lib/hosting/renewal-coordinates";
 import { createReceizCommerceAdapter } from "@/lib/receiz/adapter";
@@ -123,9 +124,8 @@ function checkoutFulfillmentForFunding(input: {
 
   return {
     kind,
-    status: "delivery_queued",
-    message: "Digital delivery queued through Receiz communications and email.",
-    deliveryRails: deliveryRails?.length ? deliveryRails : ["receiz_communications", "email"]
+    status: "delivery_pending",
+    message: "Payment received. Your purchased content is awaiting merchant delivery."
   };
 }
 
@@ -343,6 +343,28 @@ async function handleCheckout(request: NextRequest) {
       accessToken: hasScopedReceizAccess ? accessToken : undefined
     });
     const tenantHost = hostContext.tenantHost ?? hostContext.host;
+    if (body.commerceAction === "recover_order") {
+      const token = typeof body.recoveryToken === "string" ? body.recoveryToken : "";
+      const coordinates = readOrderRecoveryCoordinates(token, tenantHost);
+      const profile = hasScopedReceizAccess ? await loadReceizConnectProfile(accessToken).catch(() => null) : null;
+      const reader = { handle: profile?.handle, userId: profile?.id };
+      try { assertOrderRecoveryReader(coordinates, reader); } catch {
+        return NextResponse.json({ ...receizAuthorityRequired(returnToFromRequest(request), "wallet_checkout"),
+          message: "Open the Identity Seal for the original buyer or receiving merchant to recover this order." }, { status: 401 });
+      }
+      const recovered = await recoverOriginalOrder({ receiz, coordinates, reader });
+      const order = recovered.order;
+      if (order) await recordCheckoutCommerceEvent({
+        ...order, orderId: order.id, proofBundle: recovered.settlement.proofBundle,
+        receiptId: recovered.settlement.receiptId, tenantHost, createdAt: coordinates.createdAt
+      });
+      // Recovery has no dependency on today's catalog, current hosting plan,
+      // wallet balance, or a server process retaining the earlier projection.
+      return NextResponse.json({ ok: true, paid: recovered.settlement.paid, role: recovered.role,
+        order: recovered.order ? { ...recovered.order, recoveryToken: token } : null,
+        session: recovered.settlement.checkoutSession,
+        purchasedLines: recovered.quote.items.map(item => ({ productId: item.id, quantity: item.quantity })) });
+    }
     let published: Awaited<ReturnType<typeof publishedCheckoutState>>;
     let actorReceizId = "";
     let buyerUserId: string | undefined;
@@ -470,6 +492,17 @@ async function handleCheckout(request: NextRequest) {
       },
       metadata: { orderId, tenantHost, merchantReceizId, totalUsdCents: String(quote?.totalUsdCents ?? 0) }
     };
+    const recoveryContext = continuation?.context ?? { quote, customer: {
+      customerEmail: checkoutBody.customerEmail, customerName: checkoutBody.customerName,
+      description: checkoutBody.description, shipping, fulfillment: { kind: fulfillmentKind }
+    }, createdAt: new Date().toISOString() };
+    // Validate and bound the recoverable quote before creating a card session.
+    if (quote) encodeOrderRecoveryCoordinates({ schema: "receiz.app.order_recovery_coordinates.v1", payerUserId: buyerUserId,
+      createdAt: typeof recoveryContext.createdAt === "string" ? recoveryContext.createdAt : new Date().toISOString(),
+      payment: continuation ?? { purpose: "storefront_checkout", tenantHost, actorReceizId: actorReceizId || undefined,
+        merchantUsername, referenceId: orderId, checkoutSessionId: "awaiting_original_session", amountUsd,
+        funding: { totalUsdCents: quote.totalUsdCents, walletBalanceUsdCents: 0, walletAppliedUsdCents: 0, cardDeltaUsdCents: quote.totalUsdCents },
+        context: recoveryContext } });
     const settlement = await createWalletFirstReceizSettlement(settlementInput);
     const funding = settlement.funding;
     const fulfillment = checkoutFulfillmentForFunding({
@@ -484,6 +517,16 @@ async function handleCheckout(request: NextRequest) {
       checkoutSessionId: settlement.walletTransfer?.ledgerEventId ?? settlement.walletTransfer?.transferId ?? `receiz_${Date.now()}`,
       status: settlement.settlementStatus
     };
+    const originalPayment = continuation ?? (quote && session.checkoutSessionId ? {
+      purpose: "storefront_checkout" as const, tenantHost, actorReceizId: actorReceizId || undefined,
+      merchantUsername, referenceId: orderId, checkoutSessionId: session.checkoutSessionId,
+      amountUsd, funding, context: recoveryContext
+    } : null);
+    const orderRecoveryToken = originalPayment ? encodeOrderRecoveryCoordinates({
+      schema: "receiz.app.order_recovery_coordinates.v1", payment: originalPayment,
+      payerUserId: buyerUserId, createdAt: typeof originalPayment.context.createdAt === "string"
+        ? originalPayment.context.createdAt : new Date().toISOString()
+    }) : undefined;
     const commerceProjection = await recordCheckoutCommerceEvent({
       checkoutSessionId: session.checkoutSessionId,
       customerEmail: stringFromBody(checkoutBody, "customerEmail"),
@@ -539,6 +582,7 @@ async function handleCheckout(request: NextRequest) {
       ok: true,
       mode: "receiz",
       paid: settlement.paid,
+      orderRecoveryToken,
       wallet: settlement.wallet,
       walletTransfer: settlement.walletTransfer,
       paymentRails: paymentRails(merchantReceizId),
@@ -550,10 +594,7 @@ async function handleCheckout(request: NextRequest) {
         ? continuation ? body.continuationToken : issuePaymentContinuation({
           purpose: "storefront_checkout", tenantHost, actorReceizId: actorReceizId || undefined,
           merchantUsername, referenceId: orderId, checkoutSessionId: session.checkoutSessionId,
-          amountUsd, funding, context: { quote, customer: {
-            customerEmail: checkoutBody.customerEmail, customerName: checkoutBody.customerName,
-            description: checkoutBody.description, shipping, fulfillment
-          } }
+          amountUsd, funding, context: originalPayment!.context
         }) : undefined,
       commerceEvent: commerceProjection?.event,
       exchange,

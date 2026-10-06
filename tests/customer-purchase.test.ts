@@ -80,7 +80,7 @@ describe("customer purchase completion", () => {
     assert.equal(state.fulfillmentStatus, "shipping_required");
   });
 
-  it("seals physical orders when payment and shipping both exist", () => {
+  it("makes physical orders ready to ship without claiming an enclosing proof seal", () => {
     const state = checkoutCompletionState({
       funding: funding(false),
       products: [product("physical")],
@@ -89,24 +89,25 @@ describe("customer purchase completion", () => {
 
     assert.equal(state.stage, "physical_ready");
     assert.equal(state.canRecordPaidOrder, true);
-    assert.equal(state.sealed, true);
+    assert.equal(state.sealed, false);
     assert.equal(state.orderStatus, "settled");
     assert.equal(state.settlementStatus, "settled");
     assert.equal(state.fulfillmentStatus, "ready_to_ship");
   });
 
-  it("queues digital delivery through Receiz communications and email after payment", () => {
+  it("keeps digital delivery pending until purchased content is actually delivered", () => {
     const state = checkoutCompletionState({
       funding: funding(false),
       products: [product("digital")]
     });
 
-    assert.equal(state.stage, "digital_delivery_queued");
+    assert.equal(state.stage, "digital_delivery_pending");
     assert.equal(state.canRecordPaidOrder, true);
-    assert.equal(state.sealed, true);
+    assert.equal(state.sealed, false);
     assert.equal(state.orderStatus, "settled");
     assert.equal(state.settlementStatus, "settled");
-    assert.deepEqual(state.deliveryRails, ["receiz_communications", "email"]);
+    assert.equal(state.fulfillmentStatus, "delivery_pending");
+    assert.equal(state.deliveryRails, undefined);
   });
 
   it("does not treat placeholder shipping copy as a real address", () => {

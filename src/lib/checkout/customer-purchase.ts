@@ -4,13 +4,13 @@ export type CheckoutCompletionStage =
   | "card_required"
   | "shipping_required"
   | "physical_ready"
-  | "digital_delivery_queued";
+  | "digital_delivery_pending";
 
 export type CheckoutFulfillmentStatus =
   | "payment_required"
   | "shipping_required"
   | "ready_to_ship"
-  | "delivery_queued";
+  | "delivery_pending";
 
 export type CheckoutCompletionState = {
   stage: CheckoutCompletionStage;
@@ -108,7 +108,7 @@ export function checkoutCompletionState(input: {
       shouldOpenCardPayment: false,
       orderStatus: "settled",
       settlementStatus: "settled",
-      sealed: true,
+      sealed: false,
       fulfillmentKind,
       fulfillmentStatus: "ready_to_ship",
       fulfillmentMessage: "Payment and shipping are attached. Merchant fulfillment is ready."
@@ -116,16 +116,15 @@ export function checkoutCompletionState(input: {
   }
 
   return {
-    stage: "digital_delivery_queued",
+    stage: "digital_delivery_pending",
     canRecordPaidOrder: true,
     shouldOpenCardPayment: false,
     orderStatus: "settled",
     settlementStatus: "settled",
-    sealed: true,
+    sealed: false,
     fulfillmentKind,
-    fulfillmentStatus: "delivery_queued",
-    fulfillmentMessage: "Digital delivery queued through Receiz communications and email.",
-    deliveryRails: ["receiz_communications", "email"]
+    fulfillmentStatus: "delivery_pending",
+    fulfillmentMessage: "Payment received. Your purchased content is awaiting merchant delivery."
   };
 }
 

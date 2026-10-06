@@ -720,11 +720,11 @@ async function createIdentitySealImageBytes(keyFile: unknown, receizId: Commerce
   return createReceizCommerceAdapter().appendIdentityArtifactTrailerToPng(pngBytes, keyFile as ReceizKeyFile);
 }
 
-function downloadIdentitySealBytes(bytes: Uint8Array, filename: string) {
+function downloadIdentitySealBytes(bytes: Uint8Array, filename: string, mimeType = "image/png") {
   const payload = new ArrayBuffer(bytes.byteLength);
   new Uint8Array(payload).set(bytes);
 
-  const blob = new Blob([payload], { type: "image/png" });
+  const blob = new Blob([payload], { type: mimeType });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
 
@@ -1907,6 +1907,42 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
     setEmbeddedPayment(payment);
     return true;
   }, []);
+
+  const recoverStoreOrder = useCallback(async (token: string) => {
+    setActionFeedback("orders.recovery", "pending", "Checking the original payment");
+    try {
+      const result = await postJson<{ paid: boolean; order: Order | null; role: "buyer" | "merchant";
+        purchasedLines: Array<{ productId: string; quantity: number }> }>("/api/checkout", {
+        commerceAction: "recover_order", recoveryToken: token
+      });
+      if (!result.paid || !result.order) {
+        setActionFeedback("orders.recovery", "error", "The original payment has not settled. Your recovery file is retained; no new payment was created.");
+        return false;
+      }
+      const recovered = result.order;
+      const recoveringPending = pendingPayment("storefront_checkout")?.recoveryToken === token;
+      setState(current => {
+        const order = result.role === "buyer" ? { ...recovered, customerId: current.auth.customer.id } : recovered;
+        const existing = current.orders.find(candidate => candidate.id === order.id);
+        return { ...current,
+          orders: [{ ...existing, ...order }, ...current.orders.filter(candidate => candidate.id !== order.id)],
+          cart: result.role === "buyer" && recoveringPending
+            ? { lines: current.cart.lines.flatMap(line => {
+              const purchased = result.purchasedLines.find(item => item.productId === line.productId)?.quantity ?? 0;
+              return line.quantity > purchased ? [{ ...line, quantity: line.quantity - purchased }] : [];
+            }) } : current.cart,
+          customers: result.role === "buyer" ? upsertCheckoutCustomer(current.customers, current.auth.customer, order.id) : current.customers
+        };
+      });
+      if (recoveringPending) clearPendingPayment("storefront_checkout");
+      setEmbeddedPayment(current => current?.purpose === "storefront_checkout" && current.recoveryToken === token ? null : current);
+      setActionFeedback("orders.recovery", "success", "Original payment confirmed. Order restored.");
+      return true;
+    } catch (error) {
+      setActionFeedback("orders.recovery", "error", error instanceof Error ? error.message : "Could not recover this order");
+      return false;
+    }
+  }, [setActionFeedback]);
 
   useEffect(() => {
     const payment = window.location.pathname.startsWith("/admin")
@@ -3480,6 +3516,26 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
           };
         });
       },
+      recoverStoreOrder,
+      saveOrderRecovery(orderId: string) {
+        const order = stateRef.current.orders.find(candidate => candidate.id === orderId);
+        if (!order?.recoveryToken) return;
+        const bytes = new TextEncoder().encode(JSON.stringify({ schema: "receiz.app.order_recovery_file.v1", token: order.recoveryToken }));
+        downloadIdentitySealBytes(bytes, `order-${order.id.replace(/[^a-zA-Z0-9._-]/g, "_")}-recovery.json`, "application/json");
+      },
+      async restoreOrderRecovery(file: File) {
+        try {
+          if (file.size <= 0 || file.size > 70_000) throw new Error("Choose the original order recovery file.");
+          const value = JSON.parse(await file.text());
+          if (!value || value.schema !== "receiz.app.order_recovery_file.v1" || typeof value.token !== "string") {
+            throw new Error("Choose an order recovery file saved from this app.");
+          }
+          return await recoverStoreOrder(value.token);
+        } catch (error) {
+          setActionFeedback("orders.recovery", "error", error instanceof Error ? error.message : "Could not read the order recovery file");
+          return false;
+        }
+      },
       async startCheckout(productId?: string, referenceId?: string, continuationToken?: string) {
         if (checkoutSubmissionRef.current) return;
         checkoutSubmissionRef.current = true;
@@ -3567,6 +3623,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
             const result = await postJson<{
               paid?: boolean;
               continuationToken?: string;
+              orderRecoveryToken?: string;
               itemCount?: number;
               purchasedLines?: Array<{ productId: string; quantity: number }>;
               commerceEvent?: { data: { fulfillment?: Order["fulfillment"]; shipping?: Order["shipping"] } };
@@ -3636,6 +3693,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
               if (checkoutUrl || result.session?.clientSecret || pending?.clientSecret) {
                 setActionFeedback("checkout", "pending", "Card payment ready");
                 beginEmbeddedPayment({ ...result.session, continuationToken: result.continuationToken ?? continuationToken,
+                  recoveryToken: result.orderRecoveryToken ?? pending?.recoveryToken,
                   walletAppliedLabel: funding.walletAppliedLabel, cardDeltaLabel: funding.cardDeltaLabel }, "storefront_checkout", "Complete card funding", {
                   resumeProductId: productId,
                   resumeReferenceId: checkoutReferenceId
@@ -3686,6 +3744,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
                 merchantReceizId: result.paymentRails?.merchantReceizId ?? base.hosting.merchantReceizId,
                 tenantHost: base.hosting.customDomain.domain || base.hosting.subdomain,
                 checkoutSessionId,
+                recoveryToken: result.orderRecoveryToken,
                 paymentRail: railFromFunding(funding),
                 settlementStatus: completion.settlementStatus,
                 funding,
@@ -3730,7 +3789,14 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
             }
 
             setActionFeedback("checkout", "error", error instanceof Error ? error.message : "Receiz checkout failed");
-            if (error instanceof Error && error.message === "checkout_continuation_expired") clearPendingPayment("storefront_checkout");
+            if (error instanceof Error && error.message === "checkout_continuation_expired") {
+              const original = pendingPayment("storefront_checkout");
+              if (original?.recoveryToken) {
+                await recoverStoreOrder(original.recoveryToken);
+                return;
+              }
+              setActionFeedback("checkout", "error", "The continuation expired. Keep the original session and check its payment status before starting another purchase.");
+            }
             setState((latest) => ({
               ...latest,
               proofEvents: [
@@ -3760,7 +3826,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
             ...order,
             shipping,
             status: order.status === "pending" ? ("settled" as const) : order.status,
-            sealed: order.settlementStatus !== "card_required",
+            sealed: order.sealed,
             fulfillment: {
               kind: order.fulfillment?.kind ?? "physical_shipping",
               status: "ready_to_ship" as const,
@@ -3831,7 +3897,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
         }));
       }
     }),
-    [beginEmbeddedPayment, ensureMerchantProofAuthority, merchantProof, publishWorkspace, setActionFeedback]
+    [beginEmbeddedPayment, ensureMerchantProofAuthority, merchantProof, publishWorkspace, recoverStoreOrder, setActionFeedback]
   );
 
   useEffect(() => {

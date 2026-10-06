@@ -775,6 +775,18 @@ describe("Receiz proof commerce state", () => {
     assert.equal(second.state.proofEvents.length, 1);
   });
 
+  it("never promotes paid, shipping, delivery, or fulfillment projections into enclosing order seals", () => {
+    for (const fulfillmentStatus of [undefined, "ready_to_ship", "delivery_pending", "delivery_queued", "fulfilled"] as const) {
+      const event = {
+        schema: COMMERCE_EVENT_SCHEMA, id: `unsealed-${fulfillmentStatus ?? "payment"}`, type: "checkout.settled" as const,
+        createdAt: "2026-10-06T14:00:00.000Z", tenantHost: "boost.receiz.app", merchantReceizId: "boost.receiz.id",
+        data: { orderId: "original-order", settlementStatus: "settled" as const,
+          fulfillment: fulfillmentStatus ? { kind: "digital_delivery" as const, status: fulfillmentStatus, message: "Projection" } : undefined }
+      } as const;
+      assert.equal(admitCommerceEvent(baseState(), event).state.orders[0]?.sealed, false);
+    }
+  });
+
   it("normalizes Receiz payment webhooks into settled commerce events", () => {
     const event = commerceEventFromUnknown(
       {

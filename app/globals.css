@@ -4291,6 +4291,19 @@ a {
   gap: 10px;
 }
 
+.order-recovery-controls {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.order-recovery-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  margin-top: 10px;
+}
+
 .customer-order-card {
   display: flex;
   justify-content: space-between;
