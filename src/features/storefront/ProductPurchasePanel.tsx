@@ -152,7 +152,7 @@ export function ProductPurchasePanel({
         const payment = embeddedPayment;
         actions.dismissEmbeddedPayment();
         if (payment?.purpose === "storefront_checkout") {
-          void actions.startCheckout(payment.resumeProductId, payment.resumeReferenceId);
+          void actions.startCheckout(undefined, payment.resumeReferenceId, payment.continuationToken);
         }
       }}
       session={embeddedPayment}

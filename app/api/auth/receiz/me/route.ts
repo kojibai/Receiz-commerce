@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       ok: true,
-      connected: true,
+      connected: false,
       scope: hostContext.storageKey,
       sessionSource: cookieScopeMismatch ? "delegated" : session.source,
       surface: hostContext.surface,

@@ -68,8 +68,10 @@ export function checkoutCompletionState(input: {
   funding: NonNullable<Order["funding"]>;
   products: Product[];
   shipping?: Order["shipping"];
+  fulfillmentKind?: NonNullable<Order["fulfillment"]>["kind"];
 }): CheckoutCompletionState {
-  const fulfillmentKind = checkoutFulfillmentKind(input.products);
+  const fulfillmentKind = input.fulfillmentKind ?? checkoutFulfillmentKind(input.products);
+  const physical = fulfillmentKind === "physical_shipping" || fulfillmentKind === "mixed";
 
   if (input.funding.cardRequired) {
     return {
@@ -85,7 +87,7 @@ export function checkoutCompletionState(input: {
     };
   }
 
-  if (checkoutHasPhysicalProducts(input.products) && !validShippingAddress(input.shipping)) {
+  if (physical && !validShippingAddress(input.shipping)) {
     return {
       stage: "shipping_required",
       canRecordPaidOrder: true,
@@ -99,7 +101,7 @@ export function checkoutCompletionState(input: {
     };
   }
 
-  if (checkoutHasPhysicalProducts(input.products)) {
+  if (physical) {
     return {
       stage: "physical_ready",
       canRecordPaidOrder: true,

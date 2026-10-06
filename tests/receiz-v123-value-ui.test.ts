@@ -2,18 +2,10 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { it } from "node:test";
 
-it("ships the complete edge-held v123 value ceremony in the account", () => {
+it("keeps manual heads, invented pricing, and financial submission out of held-proof verification", () => {
   const source = readFileSync("src/features/account/ReceizValueRails.tsx", "utf8");
-  assert.match(source, /Exact identity proof object/);
-  assert.match(source, /Exact application challenge/);
-  assert.match(source, /explicit consent/i);
-  assert.match(source, /createReceizProofAuthoritySessionV123/);
-  assert.match(source, /createReceizValueExecutionCoordinatorV123/);
-  assert.match(source, /signReceizProofAuthorityChallengeAtEdgeV123/);
-  assert.match(source, /Execute exact Phi/);
-  assert.match(source, /Recover exact outcome/);
-  assert.match(source, /Authority held in memory only/);
-  assert.doesNotMatch(source, /localStorage\.setItem\([^)]*(?:accessToken|authority)/);
-  assert.doesNotMatch(source, /accessToken/);
-  assert.doesNotMatch(source, /JSON\.stringify\(authoritySummary/);
+  const verifier = readFileSync("src/lib/checkout/held-payment-proof.ts", "utf8");
+  assert.doesNotMatch(source, /(?:setSourceValueHead|setAmountPhiMicro|account-explicit-preview|usdPerPhiMicrocents|Execute exact Phi)/);
+  assert.doesNotMatch(source + verifier, /(?:\.executeReserve\(|\.executeSettlement\(|\.planReserve\(|\.planSettlement\()/);
+  assert.doesNotMatch(source + verifier, /(?:localStorage\.setItem|accessToken|JSON\.stringify\(authoritySummary)/);
 });

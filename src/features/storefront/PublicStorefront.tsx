@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { InlineActionFeedback } from "@/components/ActionFeedback";
 import { Icons } from "@/components/icons";
@@ -604,7 +604,7 @@ export function PublicStorefront({
         const payment = embeddedPayment;
         actions.dismissEmbeddedPayment();
         if (payment?.purpose === "storefront_checkout") {
-          void actions.startCheckout(payment.resumeProductId, payment.resumeReferenceId);
+          void actions.startCheckout(undefined, payment.resumeReferenceId, payment.continuationToken);
         } else if (
           payment?.purpose === "exchange_trade" &&
           payment.resumeExchangeAssetId &&
@@ -752,6 +752,8 @@ function StorefrontProductDetail({
   tenantSurface: boolean;
 }) {
   const model = buildProductPurchaseModel(state, product);
+  const detailsRef = useRef<HTMLDialogElement>(null);
+  const detailsTitleId = useId();
 
   return (
     <>
@@ -764,7 +766,15 @@ function StorefrontProductDetail({
             {product.sealed ? "Proof sealed" : "Ready to seal"}
           </StatusPill>
           <h1>{product.name}</h1>
-          <p>{product.description ?? product.subtitle}</p>
+          <button
+            aria-haspopup="dialog"
+            className="product-description-preview"
+            onClick={() => detailsRef.current?.showModal()}
+            type="button"
+          >
+            <span>{product.description ?? product.subtitle}</span>
+            <strong>View details <Icons.chevronRight size={14} /></strong>
+          </button>
           <div className="product-purchase-panel">
             <div className="product-purchase-card">
               <div>
@@ -807,31 +817,35 @@ function StorefrontProductDetail({
                 Back to store
               </button>
             </div>
-            <div className="product-purchase-facts">
-              {model.proofFacts.map((fact) => (
-                <div key={fact.label}>
-                  <span>{fact.label}</span>
-                  <strong>{fact.value}</strong>
-                </div>
-              ))}
-            </div>
           </div>
         </div>
       </section>
-      <section className="detail-proof-band">
-        <div>
-          <strong>Receiz proof object</strong>
-          <span>{product.type.replace("_", " ")} · rewards {product.rewardEligible ? "eligible" : "off"}</span>
+      <dialog
+        aria-labelledby={detailsTitleId}
+        className="product-information-popover"
+        onClick={(event) => { if (event.target === event.currentTarget) detailsRef.current?.close(); }}
+        ref={detailsRef}
+      >
+        <header>
+          <div><span>Product details</span><h2 id={detailsTitleId}>{product.name}</h2></div>
+          <button aria-label="Close product details" className="icon-button" onClick={() => detailsRef.current?.close()} type="button">
+            <Icons.close size={18} />
+          </button>
+        </header>
+        <div className="product-information-content">
+          <p>{product.description ?? product.subtitle}</p>
+          <div className="product-purchase-facts">
+            {model.proofFacts.map((fact) => (
+              <div key={fact.label}><span>{fact.label}</span><strong>{fact.value}</strong></div>
+            ))}
+          </div>
+          <section className="detail-proof-band">
+            <div><strong>Receiz proof object</strong><span>{product.type.replace("_", " ")} · rewards {product.rewardEligible ? "eligible" : "off"}</span></div>
+            <div><strong>Settlement</strong><span>{state.hosting.merchantReceizId}</span></div>
+            <div><strong>Store</strong><span>{state.hosting.customDomain.domain || state.hosting.subdomain}</span></div>
+          </section>
         </div>
-        <div>
-          <strong>Settlement</strong>
-          <span>{state.hosting.merchantReceizId}</span>
-        </div>
-        <div>
-          <strong>Store</strong>
-          <span>{state.hosting.customDomain.domain || state.hosting.subdomain}</span>
-        </div>
-      </section>
+      </dialog>
     </>
   );
 }
@@ -855,8 +869,18 @@ function ProductPagePopover({
   state: CommerceState;
   tenantSurface: boolean;
 }) {
+  const closeRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !document.querySelector(".product-information-popover[open]")) onClose();
+    };
+    closeRef.current?.focus();
+    window.addEventListener("keydown", handleKeyDown);
+    return () => { window.removeEventListener("keydown", handleKeyDown); previous?.focus(); };
+  }, [onClose]);
   return (
-    <div aria-modal="true" className="product-page-popover" role="dialog">
+    <div aria-label={product.name} aria-modal="true" className="product-page-popover" role="dialog">
       <div className="product-page-popover-shell">
         <div className="product-page-popover-topbar">
           <button aria-label="Back to store" className="icon-button" onClick={onClose} type="button">
@@ -866,7 +890,7 @@ function ProductPagePopover({
             <span>{state.hosting.customDomain.domain || state.hosting.subdomain}</span>
             <strong>{product.name}</strong>
           </div>
-          <button aria-label="Close product" className="icon-button" onClick={onClose} type="button">
+          <button aria-label="Close product" className="icon-button" onClick={onClose} ref={closeRef} type="button">
             <Icons.close size={18} />
           </button>
         </div>

@@ -1,0 +1,16 @@
+.git
+.vercel
+.env*
+.next
+.test-build
+.worktrees
+.superpowers
+.playwright-cli
+.codex
+.agents
+.aws
+.pnpm-store
+node_modules
+tmp
+output
+*.tsbuildinfo

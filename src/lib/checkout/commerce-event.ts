@@ -37,7 +37,8 @@ function eventTypeForSettlement(status: Order["settlementStatus"] | undefined): 
 function stableEventId(input: CheckoutCommerceEventInput) {
   const tenantHost = cleanHost(input.tenantHost) || "tenant";
   const checkoutId = input.checkoutSessionId || input.orderId || `${Date.now()}`;
-  return `checkout:${tenantHost}:${checkoutId}`;
+  const terminal = input.settlementStatus === "settled" || input.settlementStatus === "refunded" ? `:${input.settlementStatus}` : "";
+  return `checkout:${tenantHost}:${checkoutId}${terminal}`;
 }
 
 export function checkoutCommerceEvent(input: CheckoutCommerceEventInput): CommerceEventRecord {

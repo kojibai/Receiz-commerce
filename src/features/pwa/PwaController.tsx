@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Icons } from "@/components/icons";
 
 type BeforeInstallPromptEvent = Event & {
@@ -13,6 +13,7 @@ export function PwaController() {
   const [offline, setOffline] = useState(false);
   const [updateReady, setUpdateReady] = useState(false);
   const [waitingWorker, setWaitingWorker] = useState<ServiceWorker | null>(null);
+  const reloadForUpdateRef = useRef(false);
 
   useEffect(() => {
     setOffline(!navigator.onLine);
@@ -23,6 +24,11 @@ export function PwaController() {
       event.preventDefault();
       setInstallPrompt(event as BeforeInstallPromptEvent);
     };
+    const handleControllerChange = () => {
+      // Installing a worker must not interrupt checkout or discard a response
+      // that has not yet been saved. Reload only after an explicit update.
+      if (reloadForUpdateRef.current) window.location.reload();
+    };
 
     window.addEventListener("online", handleOnline);
     window.addEventListener("offline", handleOffline);
@@ -30,6 +36,7 @@ export function PwaController() {
 
     if ("serviceWorker" in navigator) {
       void navigator.serviceWorker.register("/sw.js", { scope: "/" }).then((registration) => {
+        if (!registration) return;
         const watchWorker = (worker: ServiceWorker | null) => {
           if (!worker) return;
           worker.addEventListener("statechange", () => {
@@ -42,17 +49,16 @@ export function PwaController() {
 
         watchWorker(registration.installing);
         registration.addEventListener("updatefound", () => watchWorker(registration.installing));
-      });
+      }).catch(() => undefined);
 
-      navigator.serviceWorker.addEventListener("controllerchange", () => {
-        window.location.reload();
-      });
+      navigator.serviceWorker.addEventListener("controllerchange", handleControllerChange);
     }
 
     return () => {
       window.removeEventListener("online", handleOnline);
       window.removeEventListener("offline", handleOffline);
       window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+      navigator.serviceWorker?.removeEventListener("controllerchange", handleControllerChange);
     };
   }, []);
 
@@ -64,6 +70,7 @@ export function PwaController() {
   };
 
   const update = () => {
+    reloadForUpdateRef.current = true;
     waitingWorker?.postMessage({ type: "SKIP_WAITING" });
   };
 

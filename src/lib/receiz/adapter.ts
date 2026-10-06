@@ -122,6 +122,7 @@ import {
   type ReceizWebhookEvent,
   type WalletLedgerFeed
 } from "@receiz/sdk";
+import { normalizeCheckoutSession } from "@/lib/checkout/payment-contract";
 import type { GameResult, Product, ProofEvent, ReceizedAsset, Reward, VerifiedObject } from "@/types/domain";
 import { makeId } from "@/lib/utils";
 import { platform } from "@/lib/platform";
@@ -143,6 +144,9 @@ export type ReceizCommerceAdapter = {
     world: Readonly<Pick<ReceizClient["world"], "planCommandV122" | "planTransactionV122">>;
     subjects: Readonly<Pick<ReceizClient["subjects"], "resolveNamespaces">>;
     value: Readonly<Pick<ReceizClient["value"], "executeSettlement" | "executeReserve" | "executionByIdempotencyKey">>;
+  }>;
+  v125: Readonly<{
+    value: Readonly<{ edge: ReceizClient["value"]["edge"] }>;
   }>;
   v124: Readonly<{
     kai: Readonly<{
@@ -307,6 +311,7 @@ export type ReceizCommerceAdapter = {
   merchantCapabilities(query?: { tenantHost?: string }): Promise<JsonObject>;
   checkout(body: CheckoutRequest): Promise<CheckoutSessionResponse>;
   checkoutSession(query: { checkoutSessionId?: string; sessionId?: string }): Promise<CheckoutSessionResponse>;
+  merchantCheckoutSession(query: { checkoutSessionId: string; username: string }): Promise<CheckoutSessionResponse>;
   connectWallet(): Promise<ConnectWalletResponse>;
   connectTransfer(body: ConnectTransferRequest, idempotencyKey?: string): Promise<ConnectTransferResponse>;
   connectRecord(body: JsonObject): Promise<JsonObject>;
@@ -480,7 +485,8 @@ function defaultDoctorOptions(): ReceizCapabilitiesOptions {
 export function createReceizCommerceAdapter(
   options: ReceizClientOptions = receizClientOptionsFromEnv()
 ): ReceizCommerceAdapter {
-  const client = createReceizClient(options);
+  const applicationId = options.applicationId ?? (process.env.RECEIZ_APPLICATION_ID?.trim() || undefined);
+  const client = createReceizClient({ ...options, ...(applicationId ? { applicationId } : {}) });
   const hasAccessToken = Boolean(options.accessToken);
   const hasWebhookSecret = Boolean(process.env.RECEIZ_WEBHOOK_SECRET);
   const trail: ProofEvent[] = [];
@@ -622,12 +628,20 @@ export function createReceizCommerceAdapter(
     }),
   });
 
+  // These are the installed SDK's local edge primitives. Their application
+  // namespace is carried in the exact plan; OAuth client IDs remain separate
+  // inputs to the v123 transport-permission exchange.
+  const v125: ReceizCommerceAdapter["v125"] = Object.freeze({
+    value: Object.freeze({ edge: Object.freeze({ ...client.value.edge }) }),
+  });
+
   return {
     sdkVersion: RECEIZ_SDK_VERSION,
     client,
     v122,
     v123,
     v124,
+    v125,
     capabilities(options) {
       return client.capabilities(options);
     },
@@ -896,11 +910,19 @@ export function createReceizCommerceAdapter(
     merchantCapabilities(query) {
       return client.merchants.capabilities(query);
     },
-    checkout(body) {
-      return client.connect.checkout(body);
+    async checkout(body) {
+      const response = typeof body.username === "string"
+        ? await client.payments.embeddedCheckout(body)
+        : await client.connect.checkout(body);
+      return { ...normalizeCheckoutSession(response), paymentOrigin: client.baseUrl,
+        merchantUsername: typeof body.username === "string" ? body.username : undefined };
     },
-    checkoutSession(query) {
-      return client.connect.checkoutSession(query);
+    async checkoutSession(query) {
+      return normalizeCheckoutSession(await client.connect.checkoutSession({ sessionId: query.sessionId ?? query.checkoutSessionId }));
+    },
+    async merchantCheckoutSession(query) {
+      const params = new URLSearchParams({ session_id: query.checkoutSessionId, merchant: query.username });
+      return normalizeCheckoutSession(await client.request(`/api/payments/embed/checkout/session?${params}`, { method: "GET" }));
     },
     connectWallet() {
       return client.connect.wallet();

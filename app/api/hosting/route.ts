@@ -25,8 +25,10 @@ import {
   hostingPlanUpdateFromPlatformPayment,
   platformPaymentConfirmed
 } from "@/lib/hosting/platform-billing";
-import { platformOperationMetadata, type PlatformOperationIntent } from "@/lib/hosting/platform-operation";
-import { createWalletFirstReceizSettlement } from "@/lib/checkout/receiz-settlement";
+import { platformOperationFromContinuation, platformOperationMetadata, type PlatformOperationIntent } from "@/lib/hosting/platform-operation";
+import { merchantCheckoutUsername } from "@/lib/checkout/payment-contract";
+import { issuePaymentContinuation, readPaymentContinuation } from "@/lib/checkout/payment-continuation";
+import { receizOAuthSecret } from "@/lib/receiz/oauth-state";
 import { platform } from "@/lib/platform";
 import { getRequestOrigin } from "@/lib/url";
 import { createReceizCommerceAdapter } from "@/lib/receiz/adapter";
@@ -44,6 +46,11 @@ import { receizAuthorityRequired, receizRequestSession } from "@/lib/receiz/sess
 import { prepareStoreStateMediaForPublish } from "@/lib/receiz/media-publication";
 import { mockStorage } from "@/lib/storage/mock-storage";
 import type { DomainStatus, HostingConfig } from "@/types/domain";
+import { createWalletFirstReceizSettlement } from "@/lib/checkout/receiz-settlement";
+import { canonicalOrderId } from "@/lib/checkout/checkout-authority";
+import { encodeHostingRenewalCoordinates, readHostingRenewalCoordinates, recoverHostingRenewal, projectRecoveredHostingRenewal, requireActiveHostingRenewal, type HostingRenewalCoordinates } from "@/lib/hosting/renewal-coordinates";
+import { nextHostingRenewalPeriod, validateHostingRenewalPeriod } from "@/lib/hosting/renewal-period";
+import type { PaymentContinuation } from "@/lib/checkout/payment-continuation";
 
 export const runtime = "nodejs";
 
@@ -123,7 +130,7 @@ async function requireMerchantAuthority(
     ok: false as const,
     response: NextResponse.json(
       {
-        ...receizAuthorityRequired(returnTo),
+        ...receizAuthorityRequired(returnTo, action === "publish" ? "store_manage" : "platform_billing"),
         message: "Connect the merchant Receiz ID on this domain before changing billing, domains, or published state."
       },
       { status: 401 }
@@ -195,7 +202,20 @@ function amountForPlan(plan: HostingConfig["plan"]) {
   return process.env.RECEIZ_PRO_PLAN_USD ?? "49.00";
 }
 
+function configuredBilling() {
+  const billing = mockHosting.getBillingStatus();
+  return { ...billing, plans: billing.plans.map(plan => {
+    const amount = amountForPlan(plan.id);
+    let priceLabel = "Pricing unavailable";
+    try { if (isPositiveAmount(amount) || plan.id === "starter") priceLabel = `$${Number(amount).toFixed(2)}/mo`; } catch { /* Invalid configured prices cannot create a charge. */ }
+    return { ...plan, priceLabel };
+  }) };
+}
+
 function isPositiveAmount(amountUsd: string) {
+  if (!/^\d+(?:\.\d{1,2})?$/.test(amountUsd) || !Number.isSafeInteger(Math.round(Number(amountUsd) * 100))) {
+    throw new Error("platform_fee_amount_invalid");
+  }
   return Number(amountUsd) > 0;
 }
 
@@ -230,17 +250,20 @@ async function chargePlatformFee(
   accessToken: string | undefined,
   input: {
     amountUsd: string;
+    buyerUserId?: string;
     note: string;
     idempotencyKey: string;
     tenantHost: string;
     successUrl?: string;
     cancelUrl?: string;
     operation: Omit<PlatformOperationIntent, "amountUsd" | "recipientUserId">;
+    continuationToken?: string;
+    retainedQuote?: PaymentContinuation;
   }
 ) {
   const liveBilling = process.env.RECEIZ_PLATFORM_BILLING_MODE === "live";
 
-  if (!isPositiveAmount(input.amountUsd)) {
+  if (!input.continuationToken && !input.retainedQuote && !isPositiveAmount(input.amountUsd)) {
     return {
       ok: true,
       mode: "no_charge",
@@ -250,7 +273,7 @@ async function chargePlatformFee(
     };
   }
 
-  if (!liveBilling) {
+  if (!liveBilling && !input.continuationToken && !input.retainedQuote) {
     return {
       ok: true,
       mode: "sandbox",
@@ -260,48 +283,52 @@ async function chargePlatformFee(
     };
   }
 
-  const recipientUserId = process.env.RECEIZ_PLATFORM_ACCOUNT_ID ?? process.env.RECEIZ_PLATFORM_USER_ID;
-  if (!recipientUserId) {
+  const platformUsername = process.env.RECEIZ_PLATFORM_USERNAME;
+  const recipientUserId = process.env.RECEIZ_PLATFORM_ACCOUNT_ID ?? process.env.RECEIZ_PLATFORM_USER_ID ?? platformUsername;
+  if ((!recipientUserId || !platformUsername) && !input.continuationToken && !input.retainedQuote) {
     return {
       ok: false,
       status: 428,
       error: "missing_platform_receiz_account",
-      message: "Set RECEIZ_PLATFORM_ACCOUNT_ID to collect platform/custom-domain fees into your Receiz account."
+      message: "Set RECEIZ_PLATFORM_USERNAME to the public Receiz username receiving upgrade and hosting payments."
     };
   }
 
   if (!accessToken) {
     return {
-      ...receizAuthorityRequired("/admin"),
+      ...receizAuthorityRequired("/admin", "platform_billing"),
       status: 401,
       message: "Connect Receiz ID before billing so Receiz can move wallet funds and open card payment for any delta."
     };
   }
 
   try {
+    receizOAuthSecret();
+    const continuation = input.retainedQuote ?? (input.continuationToken ? readPaymentContinuation(input.continuationToken, {
+      purpose: input.operation.kind, tenantHost: input.tenantHost, actorReceizId: input.operation.merchantReceizId
+    }) : null);
+    const operation = continuation ? platformOperationFromContinuation(continuation, input.operation) : {
+      ...input.operation,
+      amountUsd: input.amountUsd,
+      recipientUserId: recipientUserId!
+    } satisfies PlatformOperationIntent;
+    const merchantUsername = continuation?.merchantUsername ?? merchantCheckoutUsername(platformUsername!);
     const receiz = createReceizCommerceAdapter({
       baseUrl: process.env.RECEIZ_BASE_URL,
       accessToken
     });
-    const operation = {
-      ...input.operation,
-      amountUsd: input.amountUsd,
-      recipientUserId
-    } satisfies PlatformOperationIntent;
-    const intentRecord = await receiz.connectRecord({
-      schema: "receiz.app.platform_operation.v1",
-      event: "platform.operation.intent.created",
-      recordedAt: new Date().toISOString(),
-      data: platformOperationMetadata(operation)
-    });
-    if (isRecord(intentRecord) && intentRecord.ok === false) {
-      throw new Error(String(intentRecord.error ?? "Receiz platform operation intent could not be recorded."));
-    }
+    // Connect record creates a time proof, not an application billing intent.
+    // Bind the operation to the original payment through the signed continuation.
     const settlement = await createWalletFirstReceizSettlement({
       receiz,
-      amountUsd: input.amountUsd,
+      amountUsd: operation.amountUsd,
       tenantHost: input.tenantHost,
-      recipientUserId,
+      recipientUserId: operation.recipientUserId,
+      merchantUsername,
+      buyerAuthenticated: true,
+      buyerUserId: input.buyerUserId,
+      resume: continuation ? { checkoutSessionId: continuation.checkoutSessionId, funding: continuation.funding } : undefined,
+      orderId: input.operation.id,
       idempotencyKey: input.idempotencyKey,
       note: input.note,
       description: input.note,
@@ -318,21 +345,33 @@ async function chargePlatformFee(
             id: input.idempotencyKey,
             title: input.note,
             quantity: 1,
-            amountUsd: input.amountUsd
+            amountUsd: operation.amountUsd
           }
         ]
       }
     });
+    if (settlement.checkoutSession?.status === "expired") {
+      return { ok: false, status: 402, error: "checkout_session_expired",
+        message: "The card session expired without payment. Select the plan or domain again to start a new payment." };
+    }
 
+    const quote: PaymentContinuation | undefined = settlement.checkoutSession?.checkoutSessionId ? continuation ?? {
+      purpose: input.operation.kind, tenantHost: input.tenantHost, actorReceizId: input.operation.merchantReceizId,
+      merchantUsername, referenceId: input.operation.id, checkoutSessionId: settlement.checkoutSession.checkoutSessionId,
+      amountUsd: operation.amountUsd, funding: settlement.funding, context: { operation }, issuedAt: Date.now(),
+    } : undefined;
     return {
       ok: true,
       mode: "live",
-      amountUsd: input.amountUsd,
+      amountUsd: operation.amountUsd,
       paid: settlement.paid,
+      quote,
       funding: settlement.funding,
       wallet: settlement.wallet,
       transfer: settlement.walletTransfer,
       checkoutSession: settlement.checkoutSession,
+      continuationToken: settlement.checkoutSession?.checkoutSessionId && !settlement.paid
+        ? input.continuationToken ?? issuePaymentContinuation(quote!) : undefined,
       receiptId: settlement.receiptId,
       proofBundle: settlement.proofBundle,
       paymentRail: settlement.paymentRail,
@@ -341,10 +380,10 @@ async function chargePlatformFee(
         preferred: "receiz_wallet",
         fallback: "credit_card",
         settlement: "platform_receiz_reserve",
-        recipientUserId
+        recipientUserId: operation.recipientUserId
       },
       message: settlement.paid
-        ? "Receiz wallet settlement completed."
+        ? "Platform payment confirmed."
         : "Card payment is required for the remaining Receiz billing delta."
     };
   } catch (error) {
@@ -467,7 +506,7 @@ export async function GET() {
   return NextResponse.json({
     ok: true,
     hosting: mockHosting.getHostingStatus(),
-    billing: mockHosting.getBillingStatus(),
+    billing: configuredBilling(),
     checklist: mockHosting.getPublishChecklist(),
     platform: {
       domain: platform.domain,
@@ -475,7 +514,7 @@ export async function GET() {
       vercelDomainAutomation: hasVercelDomainConfig(),
       receizPlatformBilling: process.env.RECEIZ_PLATFORM_BILLING_MODE === "live"
     }
-  });
+  }, { headers: { "cache-control": "no-store" } });
 }
 
 export async function POST(request: NextRequest) {
@@ -491,13 +530,30 @@ export async function POST(request: NextRequest) {
   if (action !== "publish" && (!payerAccessToken || requestSession.sessionScope !== hostContext.storageKey)) {
     return NextResponse.json(
       {
-        ...receizAuthorityRequired(returnTo),
+        ...receizAuthorityRequired(returnTo, "platform_billing"),
         message: "Connect the merchant Receiz ID on this domain before changing hosting."
       },
       { status: 401 }
     );
   }
   const accessToken = hasScopedMerchantSession ? payerAccessToken : undefined;
+
+  if (action === "billing_status") {
+    const merchantAuthority = await requireMerchantAuthority(payerAccessToken, "billing", returnTo);
+    if (!merchantAuthority.ok) return merchantAuthority.response;
+    try {
+      const hosting = hostingFromRequest(body.hosting);
+      const token = typeof body.recoveryToken === "string" ? body.recoveryToken : hosting.pendingBillingRenewalToken ?? hosting.billingRenewalToken;
+      if (!token) return NextResponse.json({ ok: false, error: "hosting_month_not_found", message: "Select a plan to pay for your first month." }, { status: 402 });
+      const recovered = await recoverHostingRenewal({
+        receiz: createReceizCommerceAdapter({ baseUrl: process.env.RECEIZ_BASE_URL }), token,
+        merchantReceizId: merchantAuthority.handle, payerUserId: merchantAuthority.profile?.id,
+      });
+      return NextResponse.json({ ok: true, action, status: recovered.status, paymentPending: !recovered.settlement.paid,
+        ...projectRecoveredHostingRenewal(hosting, configuredBilling(), recovered, token),
+      }, { headers: { "cache-control": "no-store" } });
+    } catch (error) { return badRequest(error); }
+  }
 
   if (action === "plan") {
     const plan = String(body.plan ?? "pro") as HostingConfig["plan"];
@@ -512,12 +568,45 @@ export async function POST(request: NextRequest) {
     if (!merchantAuthority.ok) return merchantAuthority.response;
 
     const currentHosting = hostingFromRequest(isRecord(body) ? body.hosting ?? (isRecord(body.state) ? body.state.hosting : null) : null);
-    const tenantHost = currentHosting.customDomain.domain || currentHosting.subdomain;
-    const operationId = `receiz-app:hosting-plan:${merchantAuthority.handle}:${plan}`;
+    let tenantHost = currentHosting.customDomain.domain || currentHosting.subdomain;
+    let original: ReturnType<typeof readPaymentContinuation> | null;
+    let retained: HostingRenewalCoordinates | undefined;
+    let previous: Awaited<ReturnType<typeof recoverHostingRenewal>> | undefined;
+    try {
+      if (typeof body.recoveryToken === "string") {
+        retained = readHostingRenewalCoordinates(body.recoveryToken, { merchantReceizId: merchantAuthority.handle, payerUserId: merchantAuthority.profile?.id, plan });
+        tenantHost = retained.quote.tenantHost;
+      }
+      original = retained?.quote ?? (typeof body.continuationToken === "string" ? readPaymentContinuation(body.continuationToken, {
+        purpose: "hosting_plan", tenantHost, actorReceizId: merchantAuthority.handle
+      }) : null);
+      if (!original && currentHosting.billingRenewalToken) {
+        previous = await recoverHostingRenewal({ receiz: createReceizCommerceAdapter({ baseUrl: process.env.RECEIZ_BASE_URL }),
+          token: currentHosting.billingRenewalToken, merchantReceizId: merchantAuthority.handle, payerUserId: merchantAuthority.profile?.id });
+        if (previous.status === "active" && previous.coordinates.plan === plan && body.renew !== true) {
+          return NextResponse.json({ ok: true, action, alreadyActive: true,
+            ...projectRecoveredHostingRenewal(currentHosting, configuredBilling(), previous, currentHosting.billingRenewalToken) });
+        }
+      }
+    } catch (error) { return badRequest(error); }
+    const operationId = original?.referenceId ?? `receiz-app:hosting-plan:${canonicalOrderId(body.paymentReference)}`;
+    let period;
+    try {
+      const carriedPeriod = original?.context.operation && isRecord(original.context.operation) ? original.context.operation.period : undefined;
+      if (plan !== "starter" && !original && !isPositiveAmount(amountForPlan(plan))) throw new Error("platform_fee_amount_invalid");
+      period = plan === "starter" ? undefined : retained?.period ?? (original ? validateHostingRenewalPeriod(carriedPeriod)
+        : nextHostingRenewalPeriod(previous?.settlement.paid && previous.coordinates.plan === plan ? previous.coordinates.period : undefined));
+    } catch (error) {
+      return NextResponse.json({ ok: false, error: "hosting_renewal_unavailable",
+        message: errorMessage(error) === "hosting_renewal_too_early" ? "Renewal opens 14 days before your paid-through date. Your current month is still active." : errorMessage(error) }, { status: 409 });
+    }
     const platformBilling = await chargePlatformFee(payerAccessToken, {
       amountUsd: amountForPlan(plan),
+      buyerUserId: merchantAuthority.profile?.id,
       note: `${platform.productName} ${plan} hosting plan`,
       idempotencyKey: operationId,
+      continuationToken: typeof body.continuationToken === "string" ? body.continuationToken : undefined,
+      retainedQuote: retained?.quote,
       tenantHost,
       successUrl: `${origin}/admin?billing=success&plan=${encodeURIComponent(plan)}`,
       cancelUrl: `${origin}/admin?billing=cancel&plan=${encodeURIComponent(plan)}`,
@@ -526,13 +615,27 @@ export async function POST(request: NextRequest) {
         kind: "hosting_plan",
         merchantReceizId: merchantAuthority.handle,
         tenantHost,
-        plan
+        plan,
+        period,
       }
     });
 
     if (!platformBilling.ok) {
       const status = Number(platformBilling.status ?? 402);
       return NextResponse.json(platformBilling, { status });
+    }
+
+    let renewalToken = typeof body.recoveryToken === "string" ? body.recoveryToken : undefined;
+    if (plan !== "starter" && period && "quote" in platformBilling && platformBilling.quote && merchantAuthority.profile?.id) {
+      const previousCoordinate = previous?.coordinates;
+      renewalToken ??= encodeHostingRenewalCoordinates({
+        schema: "receiz.app.hosting_renewal_coordinates.v1", plan, payerUserId: merchantAuthority.profile.id,
+        quote: platformBilling.quote, period,
+        ...(previousCoordinate && previousCoordinate.plan === plan && previousCoordinate.period.paidThrough === period.startsAt ? {
+          previous: { schema: previousCoordinate.schema, quote: previousCoordinate.quote, plan: previousCoordinate.plan,
+            payerUserId: previousCoordinate.payerUserId, period: previousCoordinate.period },
+        } : {}),
+      });
     }
 
     const planUpdate = hostingPlanUpdateFromPlatformPayment(currentHosting, plan, platformBilling);
@@ -543,24 +646,35 @@ export async function POST(request: NextRequest) {
           error: "hosting_plan_payment_required",
           message: planUpdate.message,
           platformBilling,
-          hosting: planUpdate.hosting,
-          billing: mockHosting.getBillingStatus()
+          hosting: { ...planUpdate.hosting, pendingBillingRenewalToken: renewalToken, pendingBillingPlan: plan, pendingBillingPeriod: period },
+          recoveryToken: renewalToken,
+          period,
+          billing: configuredBilling()
         },
         { status: 402 }
       );
     }
 
-    const result = mockHosting.selectHostingPlan(plan);
-    const hosting = planUpdate.hosting;
-    const billing = mockHosting.updateBilling(hostingBillingFromPlatformPayment(result.billing, plan, platformBilling));
-    await recordReceizHostingEvent(accessToken, "hosting.plan.selected", {
-      plan,
-      platformBilling,
-      hosting,
-      billing
+    if (plan !== "starter") {
+      if (!renewalToken) return NextResponse.json({ ok: false, error: "hosting_recovery_missing", message: "The original payment coordinates are required to recover this hosting month." }, { status: 502 });
+      try {
+        const recovered = await recoverHostingRenewal({ receiz: createReceizCommerceAdapter({ baseUrl: process.env.RECEIZ_BASE_URL }),
+          token: renewalToken, merchantReceizId: merchantAuthority.handle, payerUserId: merchantAuthority.profile?.id, plan });
+        if (!recovered.settlement.paid) return NextResponse.json({ ok: false, error: "hosting_payment_recovery_required",
+          message: "The original payment is still pending. Check its status before starting another payment.", recoveryToken: renewalToken,
+          platformBilling, period }, { status: 402 });
+        return NextResponse.json({ ok: true, action, platformBilling, status: recovered.status,
+          ...projectRecoveredHostingRenewal(currentHosting, configuredBilling(), recovered, renewalToken) });
+      } catch (error) {
+        return NextResponse.json({ ok: false, error: "hosting_payment_recovery_required", message: errorMessage(error),
+          recoveryToken: renewalToken, platformBilling, period }, { status: 402 });
+      }
+    }
+    const hosting = { ...planUpdate.hosting, billingRenewalToken: undefined, pendingBillingRenewalToken: undefined, pendingBillingPlan: undefined, pendingBillingPeriod: undefined };
+    const billing = hostingBillingFromPlatformPayment(configuredBilling(), plan, {
+      ...platformBilling, period, referenceId: operationId,
     });
-
-    return NextResponse.json({ ok: true, action, platformBilling, ...result, hosting, billing });
+    return NextResponse.json({ ok: true, action, platformBilling, hosting, billing });
   }
 
   if (action === "payment") {
@@ -571,12 +685,21 @@ export async function POST(request: NextRequest) {
     );
     if (!merchantAuthority.ok) return merchantAuthority.response;
 
-    const billing = mockHosting.updateBilling({
+    const hosting = hostingFromRequest(body.hosting);
+    const token = hosting.billingRenewalToken;
+    if (token) {
+      try {
+        const recovered = await recoverHostingRenewal({ receiz: createReceizCommerceAdapter({ baseUrl: process.env.RECEIZ_BASE_URL }), token,
+          merchantReceizId: merchantAuthority.handle, payerUserId: merchantAuthority.profile?.id });
+        return NextResponse.json({ ok: true, action, ...projectRecoveredHostingRenewal(hosting, configuredBilling(), recovered, token) });
+      } catch (error) { return badRequest(error); }
+    }
+    const billing = {
+      ...configuredBilling(),
       status: "trial",
       paymentMethodLabel: "Receiz wallet + card fallback connected",
       trialEndsAt: "Select a paid plan to collect payment"
-    });
-    await recordReceizHostingEvent(accessToken, "hosting.billing.connected", { billing });
+    };
     return NextResponse.json({ ok: true, action, billing });
   }
 
@@ -600,8 +723,10 @@ export async function POST(request: NextRequest) {
     const operationId = `receiz-app:custom-domain:${merchantAuthority.handle}:${domain}`;
     const platformBilling = await chargePlatformFee(payerAccessToken, {
       amountUsd: process.env.RECEIZ_CUSTOM_DOMAIN_SETUP_USD ?? "0.00",
+      buyerUserId: merchantAuthority.profile?.id,
       note: `${platform.productName} custom domain setup for ${domain}`,
       idempotencyKey: operationId,
+      continuationToken: typeof body.continuationToken === "string" ? body.continuationToken : undefined,
       tenantHost: domain,
       successUrl: `${origin}/admin?domain=${encodeURIComponent(domain)}&billing=success`,
       cancelUrl: `${origin}/admin?domain=${encodeURIComponent(domain)}&billing=cancel`,
@@ -730,7 +855,7 @@ export async function POST(request: NextRequest) {
       published: true,
       lastPublishedAt: "now"
     };
-    const state = buildPublishedCommerceState(mockStorage.getState(), {
+    let state = buildPublishedCommerceState(mockStorage.getState(), {
       ...(isRecord(body.state) ? body.state : {}),
       hosting: submittedHosting
     }, {
@@ -739,6 +864,17 @@ export async function POST(request: NextRequest) {
       merchantReceizId: merchantAuthority.handle,
       tenantSlug: publishOwner?.subdomain
     });
+    if (process.env.RECEIZ_PLATFORM_BILLING_MODE === "live" && (state.hosting.plan !== "starter" || state.hosting.billingRenewalToken)) {
+      try {
+        const recovered = await requireActiveHostingRenewal({ receiz: createReceizCommerceAdapter({ baseUrl: process.env.RECEIZ_BASE_URL }),
+          hosting: state.hosting, merchantReceizId: merchantAuthority.handle, payerUserId: publishOwner?.id });
+        const projection = projectRecoveredHostingRenewal(state.hosting, configuredBilling(), recovered, state.hosting.billingRenewalToken!);
+        state = { ...state, ...projection };
+      } catch (error) {
+        return NextResponse.json({ ok: false, error: "hosting_month_renewal_required",
+          message: `Renew your hosting month in this app before publishing a paid plan. ${errorMessage(error)}` }, { status: 402 });
+      }
+    }
     const actorReceizId = state.hosting.merchantReceizId || state.auth.receizId.handle;
     const tenantHost = state.hosting.customDomain.domain || state.hosting.subdomain;
     let publishState = state;

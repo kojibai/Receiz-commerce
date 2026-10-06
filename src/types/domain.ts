@@ -118,6 +118,11 @@ export type HostingConfig = {
   published: boolean;
   lastPublishedAt: string;
   storeProofHead?: ReceizStoreProofHead;
+  /** Opaque recovery coordinates; the SDK payment is rechecked by the server. */
+  billingRenewalToken?: string;
+  pendingBillingRenewalToken?: string;
+  pendingBillingPlan?: "pro" | "scale";
+  pendingBillingPeriod?: { startsAt: string; paidThrough: string };
 };
 
 export type HostingPlan = {
@@ -130,10 +135,14 @@ export type HostingPlan = {
 };
 
 export type BillingConfig = {
+  plan?: HostingConfig["plan"];
   status: "trial" | "active" | "past_due";
   paymentMethodLabel: string;
   monthlyTotalLabel: string;
   trialEndsAt: string;
+  renewalMode?: "in_app";
+  periodStartsAt?: string;
+  paidThrough?: string;
   invoices: Array<{
     id: string;
     dateLabel: string;

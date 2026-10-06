@@ -1,3 +1,4 @@
+import { sha256ReceizBytes } from "@receiz/sdk";
 import type {
   ReceizClientOptions,
   ReceizProofAuthorityChallengeV123,
@@ -8,6 +9,7 @@ import type {
   ReceizWorldValueIntentV122,
 } from "@receiz/sdk";
 import { createReceizCommerceAdapter } from "../adapter";
+import { readInAppPermissionIdentity, requireInAppPermissionConsent, type InAppPermissionPurpose } from "../in-app-permission";
 import {
   unwrapReceizPersistedValueIntentV123,
   type ReceizPersistedValueIntentV123,
@@ -180,4 +182,33 @@ export function createReceizProofAuthorityEdgeRuntimeV123(
       return edge.v123.value.executionByIdempotencyKey(idempotencyKey, authority);
     },
   });
+}
+
+/** Exact-byte permission admission. The HTTP route may install only the narrow
+ * transport capability; it never reconstructs an authority from browser JSON. */
+export async function admitReceizInAppPermissionV123(input: Readonly<{
+  artifact: Uint8Array;
+  applicationId: string;
+  challenge: ReceizProofAuthorityChallengeV123;
+  purpose: InAppPermissionPurpose;
+  tenantHost: string;
+}>, options: ReceizClientOptions, installTransport: (capability: Readonly<{ accessToken: string; expiresIn: number }>) => void) {
+  const identity = await readInAppPermissionIdentity(input.artifact);
+  const artifactDigest = await sha256ReceizBytes(input.artifact);
+  const scopes = await requireInAppPermissionConsent({ ...input, artifactDigest });
+  const runtime = createReceizProofAuthorityEdgeRuntimeV123({ ...options, accessToken: undefined });
+  const authority = await runtime.exchangeProofAuthority({ artifact: input.artifact, applicationId: input.applicationId,
+    challenge: input.challenge, scopes });
+  if (authority.applicationId !== input.applicationId || authority.keyId !== identity.keyId ||
+    authority.artifactDigest !== artifactDigest || authority.nonce !== input.challenge.nonce ||
+    authority.refreshable !== false || authority.authority.grantIsIdentityAuthority !== false ||
+    authority.authority.strongerTruth !== "receiz-identity-artifact" || !Number.isSafeInteger(authority.expiresIn) ||
+    authority.expiresIn <= 0 || authority.expiresIn > 300 || !sameScopes(authority.grantedScopes, scopes)) {
+    throw new TypeError("V123_EDGE_PROOF_AUTHORITY_INVALID");
+  }
+  if (!sameScopes(await runtime.grantedScopes(authority.accessToken), scopes)) {
+    throw new TypeError("V123_EDGE_PROOF_AUTHORITY_SCOPE_MISMATCH");
+  }
+  installTransport(Object.freeze({ accessToken: authority.accessToken, expiresIn: authority.expiresIn }));
+  return Object.freeze({ ...summarize(authority), expiresIn: authority.expiresIn });
 }

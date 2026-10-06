@@ -3,6 +3,12 @@ import { describe, it } from "node:test";
 import { checkoutCommerceEvent } from "../src/lib/checkout/commerce-event.js";
 
 describe("checkout commerce events", () => {
+  it("admits payment confirmation separately from the pending checkout", () => {
+    const pending = checkoutCommerceEvent({ checkoutSessionId: "cs_1", tenantHost: "seller.receiz.app", settlementStatus: "card_required" });
+    const settled = checkoutCommerceEvent({ checkoutSessionId: "cs_1", tenantHost: "seller.receiz.app", settlementStatus: "settled" });
+    assert.notEqual(pending.id, settled.id);
+    assert.equal(settled.type, "checkout.settled");
+  });
   it("builds a tenant-scoped event that preserves customer, funding, and order identity", () => {
     const event = checkoutCommerceEvent({
       checkoutSessionId: "in_app_123",

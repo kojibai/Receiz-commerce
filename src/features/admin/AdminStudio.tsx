@@ -96,6 +96,9 @@ export function AdminStudio() {
               merchantReceizAccount={merchantReceizAccount}
               onAddPayment={actions.addBillingMethod}
               onSelectPlan={actions.selectHostingPlan}
+              onRenew={(plan) => { void actions.selectHostingPlan(plan, undefined, true); }}
+              onCheckPayment={actions.recoverHostingBilling}
+              statusFeedback={actionFeedback["billing.status"]}
               paymentFeedback={actionFeedback["billing.payment"]}
               planFeedback={actionFeedback["billing.plan"]}
             />
@@ -243,8 +246,8 @@ export function AdminStudio() {
       onComplete={() => {
         const payment = embeddedPayment;
         actions.dismissEmbeddedPayment();
-        if (payment?.resumePlan) void actions.selectHostingPlan(payment.resumePlan);
-        if (payment?.resumeDomain) void actions.connectCustomDomain(payment.resumeDomain);
+        if (payment?.resumePlan) void actions.selectHostingPlan(payment.resumePlan, payment.continuationToken);
+        if (payment?.resumeDomain) void actions.connectCustomDomain(payment.resumeDomain, payment.continuationToken);
       }}
       session={embeddedPayment}
     />
@@ -671,6 +674,9 @@ function MobileAdminConsole({
             merchantReceizAccount={currentMerchantReceizAccount(state)}
             onAddPayment={actions.addBillingMethod}
             onSelectPlan={actions.selectHostingPlan}
+            onRenew={(plan) => { void actions.selectHostingPlan(plan, undefined, true); }}
+            onCheckPayment={actions.recoverHostingBilling}
+            statusFeedback={actionFeedback["billing.status"]}
             paymentFeedback={actionFeedback["billing.payment"]}
             planFeedback={actionFeedback["billing.plan"]}
           />

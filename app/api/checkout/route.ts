@@ -9,7 +9,11 @@ import {
 import { mockCheckout } from "@/lib/checkout/mock-checkout";
 import { checkoutModeForAuthority, checkoutWalletAuthority } from "@/lib/checkout/wallet-authority";
 import { createWalletFirstReceizSettlement } from "@/lib/checkout/receiz-settlement";
+import { merchantCheckoutUsername } from "@/lib/checkout/payment-contract";
+import { issuePaymentContinuation, readPaymentContinuation, readPaymentStatusContinuation } from "@/lib/checkout/payment-continuation";
+import { receizOAuthSecret } from "@/lib/receiz/oauth-state";
 import { hostContextFromHost } from "@/lib/hosting/host-context";
+import { requireActiveHostingRenewal } from "@/lib/hosting/renewal-coordinates";
 import { createReceizCommerceAdapter } from "@/lib/receiz/adapter";
 import { loadReceizConnectProfile } from "@/lib/receiz/connect-profile";
 import { getServerProofStateStore } from "@/lib/receiz/proof-state-store";
@@ -82,6 +86,7 @@ function fulfillmentFromBody(value: unknown): Order["fulfillment"] | undefined {
 }
 
 function checkoutFulfillmentForFunding(input: {
+  paid: boolean;
   funding: NonNullable<Order["funding"]>;
   submitted?: Order["fulfillment"];
   shipping?: Order["shipping"];
@@ -89,7 +94,7 @@ function checkoutFulfillmentForFunding(input: {
   const kind = input.submitted?.kind ?? "digital_delivery";
   const deliveryRails = input.submitted?.deliveryRails;
 
-  if (input.funding.cardRequired) {
+  if (!input.paid) {
     return {
       kind,
       status: "payment_required",
@@ -297,8 +302,9 @@ async function publishSettledWildsSales(input: {
   };
 }
 
-export async function POST(request: NextRequest) {
+async function handleCheckout(request: NextRequest) {
   const body = await request.json().catch(() => ({}));
+  if (!isRecord(body)) return NextResponse.json({ ok: false, error: "checkout_payload_invalid" }, { status: 400 });
   const requestSession = receizRequestSession(request);
   const accessToken = requestSession.cookieAccessToken;
   const sessionScope = requestSession.sessionScope;
@@ -322,10 +328,10 @@ export async function POST(request: NextRequest) {
     proofObjectAuthorized: walletAuthority.ok && walletAuthority.source === "proof_object"
   });
   if (checkoutMode === "receiz" || checkoutMode === "live") {
-    if (!hasScopedReceizAccess || !accessToken) {
+    if (body.commerceAction === "exchange_trade" && (!hasScopedReceizAccess || !accessToken)) {
       return NextResponse.json(
         {
-          ...receizAuthorityRequired(returnToFromRequest(request)),
+          ...receizAuthorityRequired(returnToFromRequest(request), "wallet_checkout"),
           message: "Connect Receiz ID before checkout so Receiz can move wallet funds and open card payment for any delta."
         },
         { status: 401 }
@@ -334,27 +340,51 @@ export async function POST(request: NextRequest) {
 
     const receiz = createReceizCommerceAdapter({
       baseUrl: process.env.RECEIZ_BASE_URL,
-      accessToken
+      accessToken: hasScopedReceizAccess ? accessToken : undefined
     });
     const tenantHost = hostContext.tenantHost ?? hostContext.host;
     let published: Awaited<ReturnType<typeof publishedCheckoutState>>;
-    let actorReceizId: string;
+    let actorReceizId = "";
+    let buyerUserId: string | undefined;
     try {
       const [publishedState, profile] = await Promise.all([
         publishedCheckoutState(tenantHost),
-        loadReceizConnectProfile(accessToken)
+        loadReceizConnectProfile(hasScopedReceizAccess ? accessToken : undefined).catch(() => null)
       ]);
-      if (!profile?.handle) throw new Error("checkout_identity_unavailable");
+      if (hasScopedReceizAccess && (!profile?.handle || !profile.id)) throw new Error("checkout_identity_unavailable");
       published = publishedState;
-      actorReceizId = profile.handle;
+      actorReceizId = profile?.handle ?? "";
+      buyerUserId = profile?.id || undefined;
     } catch (error) {
+      if (error instanceof Error && error.message === "checkout_identity_unavailable") {
+        return NextResponse.json({ ...receizAuthorityRequired(returnToFromRequest(request), "wallet_checkout"),
+          message: "Reconnect your Identity Seal in this app before finishing this purchase. Your original payment will be retained." }, { status: 401 });
+      }
       return NextResponse.json(
         { ok: false, error: error instanceof Error ? error.message : "checkout_authority_unavailable" },
         { status: 409 }
       );
     }
     const merchantReceizId = published.state.hosting.merchantReceizId.trim();
-    const orderId = canonicalOrderId(body.referenceId ?? body.orderId);
+    if (typeof body.continuationToken === "string") {
+      const held = readPaymentStatusContinuation(body.continuationToken, { purpose: "storefront_checkout", tenantHost });
+      if (held.actorReceizId && held.actorReceizId !== actorReceizId) {
+        return NextResponse.json({ ...receizAuthorityRequired(returnToFromRequest(request), "wallet_checkout"),
+          message: "Reconnect the Receiz identity that started this purchase to finish the original payment." }, { status: 401 });
+      }
+    }
+    const continuation = typeof body.continuationToken === "string"
+      ? readPaymentContinuation(body.continuationToken, { purpose: "storefront_checkout", tenantHost, actorReceizId })
+      : null;
+    if (!continuation && process.env.RECEIZ_PLATFORM_BILLING_MODE === "live" && body.commerceAction !== "exchange_trade") {
+      try {
+        await requireActiveHostingRenewal({ receiz, hosting: published.state.hosting, merchantReceizId });
+      } catch {
+        return NextResponse.json({ ok: false, error: "merchant_hosting_renewal_required",
+          message: "This store's checkout is paused while the merchant renews hosting. No payment has been taken." }, { status: 409 });
+      }
+    }
+    const orderId = continuation?.referenceId ?? canonicalOrderId(body.referenceId ?? body.orderId);
     const commerceAction = stringFromBody(body, "commerceAction");
     const exchangeSide = body.side === "sell" ? "sell" : "buy";
     let exchangeTrade: Awaited<ReturnType<typeof canonicalExchangeTrade>> | null = null;
@@ -381,7 +411,10 @@ export async function POST(request: NextRequest) {
     }
     let quote: ReturnType<typeof authoritativeCheckoutQuote> | null = null;
     try {
-      quote = exchangeTrade ? null : authoritativeCheckoutQuote(published.state, body.cartLines);
+      quote = exchangeTrade ? null : continuation
+        ? continuation.context.quote as ReturnType<typeof authoritativeCheckoutQuote>
+        : authoritativeCheckoutQuote(published.state, body.cartLines);
+      if (quote && quote.merchantReceizId !== merchantReceizId) throw new Error("checkout_merchant_changed");
     } catch (error) {
       return NextResponse.json(
         { ok: false, error: error instanceof Error ? error.message : "checkout_quote_invalid" },
@@ -390,6 +423,15 @@ export async function POST(request: NextRequest) {
     }
     const amountUsd = exchangeTrade ? (exchangeTrade.preview.totalCents / 100).toFixed(2) : quote!.amountUsd;
     const recipientUserId = exchangeTrade?.preview.counterpartyReceizId ?? quote!.recipientUserId;
+    if (quote?.wildsAssets.length && !hasScopedReceizAccess) {
+      return NextResponse.json({ ...receizAuthorityRequired(returnToFromRequest(request), "wallet_checkout"),
+        message: "Connect your Receiz ID before buying a collectible so ownership can be delivered to you."
+      }, { status: 401 });
+    }
+    const merchantUsername = merchantCheckoutUsername(exchangeTrade?.preview.counterpartyReceizId ?? merchantReceizId);
+    if (continuation && continuation.merchantUsername !== merchantUsername) throw new Error("checkout_recipient_changed");
+    const checkoutBody = continuation ? continuation.context.customer as Record<string, unknown> : body;
+    receizOAuthSecret(); // Validate continuation configuration before creating a charge.
     const idempotencyKey = settlementIdempotencyKey({
       actorReceizId,
       amountUsd,
@@ -399,17 +441,24 @@ export async function POST(request: NextRequest) {
       recipientUserId,
       tenantHost
     });
-    const settlement = await createWalletFirstReceizSettlement({
+    const shipping = shippingFromBody(checkoutBody.shipping);
+    const fulfillmentProducts = published.state.products.filter((product) => quote?.items.some((item) => item.id === product.id));
+    const fulfillmentKind = continuation ? fulfillmentFromBody(checkoutBody.fulfillment)?.kind ?? "digital_delivery" :
+      fulfillmentProducts.some((product) => product.type === "physical") ?
+        fulfillmentProducts.some((product) => product.type !== "physical") ? "mixed" : "physical_shipping" : "digital_delivery";
+    const settlementInput = {
       receiz,
       tenantHost,
       orderId,
       amountUsd,
       recipientUserId,
-      note: String(body.description ?? "Receiz.app proof-sealed order"),
-      description: String(body.description ?? "Receiz.app proof-sealed order"),
-      customerEmail: typeof body.customerEmail === "string" ? body.customerEmail : undefined,
-      successUrl: typeof body.successUrl === "string" ? body.successUrl : undefined,
-      cancelUrl: typeof body.cancelUrl === "string" ? body.cancelUrl : undefined,
+      merchantUsername,
+      buyerAuthenticated: hasScopedReceizAccess,
+      buyerUserId,
+      resume: continuation ? { checkoutSessionId: continuation.checkoutSessionId, funding: continuation.funding } : undefined,
+      note: String(checkoutBody.description ?? "Receiz.app order"),
+      description: String(checkoutBody.description ?? "Receiz.app order"),
+      customerEmail: typeof checkoutBody.customerEmail === "string" ? checkoutBody.customerEmail : undefined,
       idempotencyKey,
       cart: {
         items: quote?.items ?? [{
@@ -418,13 +467,16 @@ export async function POST(request: NextRequest) {
           quantity: exchangeTrade?.preview.shares ?? 1,
           amountUsd
         }]
-      }
-    });
+      },
+      metadata: { orderId, tenantHost, merchantReceizId, totalUsdCents: String(quote?.totalUsdCents ?? 0) }
+    };
+    const settlement = await createWalletFirstReceizSettlement(settlementInput);
     const funding = settlement.funding;
-    const shipping = shippingFromBody(body.shipping);
     const fulfillment = checkoutFulfillmentForFunding({
+      paid: settlement.paid,
       funding,
-      submitted: fulfillmentFromBody(body.fulfillment),
+      submitted: { ...fulfillmentFromBody(checkoutBody.fulfillment), kind: fulfillmentKind,
+        status: "payment_required", message: "Payment must settle before fulfillment starts." },
       shipping
     });
     const session = settlement.checkoutSession ?? {
@@ -434,13 +486,13 @@ export async function POST(request: NextRequest) {
     };
     const commerceProjection = await recordCheckoutCommerceEvent({
       checkoutSessionId: session.checkoutSessionId,
-      customerEmail: stringFromBody(body, "customerEmail"),
-      customerId: stringFromBody(body, "customerId"),
-      customerName: stringFromBody(body, "customerName"),
+      customerEmail: stringFromBody(checkoutBody, "customerEmail"),
+      customerId: actorReceizId || `guest:${orderId}`,
+      customerName: stringFromBody(checkoutBody, "customerName"),
       funding,
       itemCount: quote?.itemCount ?? exchangeTrade?.preview.shares ?? 1,
       merchantReceizId,
-      orderId: stringFromBody(body, "referenceId") ?? stringFromBody(body, "orderId") ?? session.checkoutSessionId,
+      orderId,
       paymentRail: settlement.paymentRail,
       proofBundle: settlement.proofBundle,
       receiptId: settlement.receiptId,
@@ -458,7 +510,7 @@ export async function POST(request: NextRequest) {
       orderId;
     const exchange = exchangeTrade && settlement.paid
       ? await publishSettledExchangeTrade({
-          accessToken,
+          accessToken: accessToken!,
           actorReceizId,
           assetId: String(body.assetId ?? ""),
           merchantReceizId,
@@ -472,7 +524,7 @@ export async function POST(request: NextRequest) {
       : null;
     const wildsOwnership = !exchangeTrade && settlement.paid && quote?.wildsAssets.length
       ? await publishSettledWildsSales({
-          accessToken,
+          accessToken: accessToken!,
           actorReceizId,
           merchantReceizId,
           proofStore: published.proofStore,
@@ -491,7 +543,18 @@ export async function POST(request: NextRequest) {
       walletTransfer: settlement.walletTransfer,
       paymentRails: paymentRails(merchantReceizId),
       funding,
+      purchasedLines: quote?.items.map((item) => ({ productId: item.id, quantity: item.quantity })),
+      itemCount: quote?.itemCount,
       session,
+      continuationToken: session.checkoutSessionId && !settlement.paid && !exchangeTrade
+        ? continuation ? body.continuationToken : issuePaymentContinuation({
+          purpose: "storefront_checkout", tenantHost, actorReceizId: actorReceizId || undefined,
+          merchantUsername, referenceId: orderId, checkoutSessionId: session.checkoutSessionId,
+          amountUsd, funding, context: { quote, customer: {
+            customerEmail: checkoutBody.customerEmail, customerName: checkoutBody.customerName,
+            description: checkoutBody.description, shipping, fulfillment
+          } }
+        }) : undefined,
       commerceEvent: commerceProjection?.event,
       exchange,
       wildsOwnership,
@@ -558,6 +621,7 @@ export async function POST(request: NextRequest) {
     paymentRail: "sandbox",
     settlementStatus: "sandbox",
     fulfillment: checkoutFulfillmentForFunding({
+      paid: true,
       funding: {
         strategy: "receiz_wallet_first",
         totalLabel: order.totalLabel,
@@ -579,4 +643,15 @@ export async function POST(request: NextRequest) {
     commerceEvent: commerceProjection?.event,
     proofMemory: commerceProjection?.proofMemory
   });
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const response = await handleCheckout(request);
+    response.headers.set("cache-control", "no-store");
+    return response;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Checkout could not complete. Retry the existing payment.";
+    return NextResponse.json({ ok: false, error: "checkout_failed", message }, { status: 409, headers: { "cache-control": "no-store" } });
+  }
 }

@@ -357,7 +357,7 @@ export function AccountDashboard({
 
         <ReceizSubjectContinuity connected={state.auth.receizId.connected} />
 
-        <ReceizValueRails connected={state.auth.receizId.connected} />
+        <ReceizValueRails />
 
         <Panel>
           <SectionHeader title="Proof trail" action={<StatusPill tone="green">Live</StatusPill>} />
@@ -383,7 +383,7 @@ export function AccountDashboard({
         const payment = embeddedPayment;
         actions.dismissEmbeddedPayment();
         if (payment?.purpose === "storefront_checkout") {
-          void actions.startCheckout(payment.resumeProductId, payment.resumeReferenceId);
+          void actions.startCheckout(undefined, payment.resumeReferenceId, payment.continuationToken);
         }
       }}
       session={embeddedPayment}

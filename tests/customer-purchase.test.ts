@@ -41,6 +41,18 @@ const shipping: Order["shipping"] = {
 };
 
 describe("customer purchase completion", () => {
+  it("keeps the original physical order requirements when the cart changes during card payment", () => {
+    const input = {
+      funding: funding(false),
+      products: [product("digital")],
+      fulfillmentKind: "physical_shipping" as const
+    };
+    const state = checkoutCompletionState(input);
+    assert.equal(state.stage, "shipping_required");
+    assert.equal(state.fulfillmentKind, "physical_shipping");
+    assert.equal(state.sealed, false);
+  });
+
   it("stops at card payment before creating a completed order", () => {
     const state = checkoutCompletionState({
       funding: funding(true),

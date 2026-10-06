@@ -1,4 +1,5 @@
 import type { BillingConfig, HostingConfig } from "@/types/domain";
+import { hostingPeriodStatus, type HostingRenewalPeriod } from "./renewal-period";
 
 export type PlatformBillingReceipt = {
   ok: boolean;
@@ -6,6 +7,8 @@ export type PlatformBillingReceipt = {
   paid?: boolean;
   amountUsd?: string;
   message?: string;
+  referenceId?: string;
+  period?: HostingRenewalPeriod;
 };
 
 export function platformPaymentConfirmed(receipt: PlatformBillingReceipt) {
@@ -33,20 +36,27 @@ export function hostingBillingFromPlatformPayment(
   const paid = platformPaymentConfirmed(receipt);
   const invoiceAmount = amountLabel(receipt.amountUsd);
   const invoiceStatus = paid ? "paid" as const : "open" as const;
+  const invoiceId = receipt.referenceId ? `inv-${receipt.referenceId}` : `inv-${plan}-${Date.now()}`;
+  const period = paid ? receipt.period : undefined;
 
   return {
     ...current,
-    status: paid ? "active" : "trial",
+    plan,
+    monthlyTotalLabel: plan === "starter" ? "$0/mo" : `${invoiceAmount}/mo`,
+    status: paid ? period && hostingPeriodStatus(period) === "past_due" ? "past_due" : "active" : "trial",
     paymentMethodLabel: paymentMethodLabel(receipt),
-    trialEndsAt: paid ? "Active subscription" : receipt.message ?? "Payment not collected",
+    trialEndsAt: paid ? period ? "Renew in this app before your paid-through date" : "Paid plan active" : receipt.message ?? "Payment not collected",
+    renewalMode: period ? "in_app" : undefined,
+    periodStartsAt: period?.startsAt,
+    paidThrough: period?.paidThrough,
     invoices: [
       {
-        id: `inv-${plan}-${Date.now()}`,
+        id: invoiceId,
         dateLabel: "Today",
         amountLabel: invoiceAmount,
         status: invoiceStatus
       },
-      ...current.invoices.filter((invoice) => invoice.id !== `inv-${plan}`)
+      ...current.invoices.filter((invoice) => invoice.id !== invoiceId && invoice.id !== `inv-${plan}`)
     ]
   };
 }

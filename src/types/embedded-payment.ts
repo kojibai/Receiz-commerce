@@ -7,6 +7,13 @@ export type EmbeddedPaymentSession = {
   checkoutUrl?: string;
   clientSecret?: string;
   status?: string;
+  paymentOrigin?: string;
+  merchantUsername?: string;
+  continuationToken?: string;
+  recoveryToken?: string;
+  servicePeriodLabel?: string;
+  walletAppliedLabel?: string;
+  cardDeltaLabel?: string;
   resumeDomain?: string;
   resumePlan?: "starter" | "pro" | "scale";
   resumeProductId?: string;

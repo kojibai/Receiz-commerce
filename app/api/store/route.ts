@@ -14,7 +14,7 @@ import {
   summarizeStoreStateRecord
 } from "@/lib/receiz/store-state-publication";
 import { loadReceizConnectProfile } from "@/lib/receiz/connect-profile";
-import { receizAccessTokenFromRequest, receizAuthorityRequired } from "@/lib/receiz/session";
+import { receizAccessTokenFromRequest, receizAuthorityRequired, receizRequestSession } from "@/lib/receiz/session";
 import { createReceizCommerceAdapter } from "@/lib/receiz/adapter";
 import { prepareStoreStateMediaForPublish } from "@/lib/receiz/media-publication";
 import { mockStorage } from "@/lib/storage/mock-storage";
@@ -181,6 +181,16 @@ export async function GET(request: NextRequest) {
     projectionHostContext.surface === "tenant"
       ? tenantFallbackState(proofStore.projectHost(mockStorage.getState(), tenantHost), projectionHostContext, { trustedPublishedState })
       : mockStorage.getState();
+  const requestSession = receizRequestSession(request);
+  const owner = await loadPublishOwner(requestSession.sessionScope === hostContext.storageKey ? requestSession.cookieAccessToken : undefined);
+  const isOwner = owner?.handle === projectedState.hosting.merchantReceizId;
+  let orders: CommerceState["orders"] = [];
+  let customers: CommerceState["customers"] = [];
+  if (isOwner) {
+    orders = projectedState.orders.filter((order) => order.merchantReceizId === owner.handle && order.tenantHost === tenantHost);
+    customers = projectedState.customers.filter((customer) => orders.some((order) => order.customerId === customer.id));
+
+  }
 
   return NextResponse.json(
     {
@@ -206,9 +216,8 @@ export async function GET(request: NextRequest) {
       game: projectedState.game,
       checkout: projectedState.checkout,
       receiz: projectedState.receiz,
-      orders: projectedState.orders,
-      customers: projectedState.customers,
-      proofEvents: projectedState.proofEvents,
+      ...(isOwner ? { orders, customers } : {}),
+      proofEvents: projectedState.proofEvents.filter((event) => !event.title.includes("ORDER") && !event.title.includes("CHECKOUT") && !event.title.includes("PAYMENT")),
       hosting: projectedState.hosting,
       proofMemory: {
         knownHead: proofStore.knownHead(100),

@@ -85,4 +85,71 @@ describe("Receiz v123 exact Phi execution custody", () => {
     assert.equal(result.recoveryPerformed, true);
     await assert.rejects(() => coordinator.execute(planned), /RETRY_REQUIRES_RECOVERY/);
   });
+
+  it("recovers a persisted attempt after reload before permitting another submission", async () => {
+    const store = memoryStore();
+    const planned = await intent();
+    await persistReceizExactValueIntentV123(store, planned);
+    const calls: string[] = [];
+    const coordinator = createReceizValueExecutionCoordinatorV123(store, {
+      async execute() { calls.push("execute"); return { status: "unknown" }; },
+      async recover(key) { assert.equal(key, planned.idempotencyKey); calls.push("recover"); return { status: "unknown" }; }
+    });
+    const result = await coordinator.execute(planned);
+    assert.equal(result.recoveryPerformed, true);
+    assert.deepEqual(calls, ["recover"]);
+    assert.deepEqual(store.order, ["persist"]);
+  });
+
+  it("cannot overwrite an exact persisted intent with a different price basis at the same coordinate", async () => {
+    const store = memoryStore();
+    const planned = await intent();
+    const held = await persistReceizExactValueIntentV123(store, planned);
+    const changed = await planReceizSettlementV122({ ...planned, usdPerPhiMicrocents: "3", priceBasis: { source: "different" } });
+    await assert.rejects(persistReceizExactValueIntentV123(store, changed), /IDEMPOTENCY_INTENT_CHANGED/);
+    assert.equal(store.values.get(held.storageKey), held.exactIntentJson);
+  });
+
+  it("blocks concurrent submissions before either storage read finishes", async () => {
+    const store = memoryStore();
+    const planned = await intent();
+    let release: (() => void) | undefined;
+    const held = new Promise<void>((resolve) => { release = resolve; });
+    const originalGet = store.get;
+    const delayedStore = { ...store, get: async (key: string) => { await held; return originalGet(key); } };
+    let executions = 0;
+    const coordinator = createReceizValueExecutionCoordinatorV123(delayedStore, {
+      async execute() { executions += 1; return { status: "unknown" }; },
+      async recover() { return { status: "unknown" }; }
+    });
+    const attempts = [coordinator.execute(planned), coordinator.execute(planned)];
+    release!();
+    const results = await Promise.allSettled(attempts);
+    assert.equal(executions, 1);
+    assert.equal(results.filter((result) => result.status === "fulfilled").length, 1);
+    const rejected = results.find((result) => result.status === "rejected") as PromiseRejectedResult;
+    assert.match(String(rejected.reason), /RETRY_REQUIRES_RECOVERY/);
+  });
+
+  it("does not recover an outcome without the retained exact intent", async () => {
+    const coordinator = createReceizValueExecutionCoordinatorV123(memoryStore(), {
+      async execute() { throw new Error("unexpected execute"); },
+      async recover() { throw new Error("unexpected recovery"); }
+    });
+    await assert.rejects(coordinator.recover("missing"), /PERSISTED_INTENT_REQUIRED/);
+  });
+
+  it("rejects a different canonical intent returned for the held idempotency coordinate", async () => {
+    const store = memoryStore();
+    const planned = await intent();
+    await persistReceizExactValueIntentV123(store, planned);
+    const other = await planReceizSettlementV122({ ...planned, amountPhiMicro: "600000", priceBasis: { source: "canonical", atKai: 100 } });
+    const substituted = { status: "committed", intent: other } as ReceizValueExecutionOutcomeV123;
+    const coordinator = createReceizValueExecutionCoordinatorV123(store, {
+      async execute() { throw new Error("unexpected execute"); },
+      async recover() { return substituted; }
+    });
+    await assert.rejects(coordinator.execute(planned), /RECOVERED_INTENT_MISMATCH/);
+    await assert.rejects(coordinator.recover(planned.idempotencyKey!), /RECOVERED_INTENT_MISMATCH/);
+  });
 });

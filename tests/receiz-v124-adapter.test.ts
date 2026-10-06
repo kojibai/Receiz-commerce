@@ -3,6 +3,37 @@ import { describe, it } from "node:test";
 import { createReceizCommerceAdapter } from "../src/lib/receiz/adapter";
 
 describe("Receiz v124 SDK adapter", () => {
+  it("binds native namespace resolution to the configured app while preserving an explicit SDK application binding", async () => {
+    const previous = process.env.RECEIZ_APPLICATION_ID;
+    process.env.RECEIZ_APPLICATION_ID = "configured-receiz-app";
+    try {
+      for (const explicit of [undefined, "explicit-receiz-app"]) {
+        const expected = explicit ?? "configured-receiz-app";
+        let called = false;
+        const adapter = createReceizCommerceAdapter({
+          baseUrl: "https://receiz.test", ...(explicit ? { applicationId: explicit } : {}),
+          fetchImpl: async (url, init) => {
+            called = true;
+            assert.equal(new URL(String(url)).pathname, "/api/sdk/v1/subjects/namespaces/resolve");
+            assert.equal(new URL(String(url)).searchParams.get("applicationId"), expected);
+            const body = JSON.parse(String(init?.body));
+            assert.equal(body.applicationId, expected);
+            throw new Error("stop_before_receipt_admission");
+          }
+        });
+        await assert.rejects(adapter.v124.subjects.resolveNamespacesV124({
+          subjectId: "fixture-subject", atHead: "a".repeat(64), names: ["wallet"],
+          expectedAdmittedProofDigest: "b".repeat(64), expectedOwnershipHead: "c".repeat(64),
+          expectedRegistryDigest: "d".repeat(64), expectedReducerDigest: "e".repeat(64)
+        }), /stop_before_receipt_admission/);
+        assert.equal(called, true);
+      }
+    } finally {
+      if (previous === undefined) delete process.env.RECEIZ_APPLICATION_ID;
+      else process.env.RECEIZ_APPLICATION_ID = previous;
+    }
+  });
+
   it("exposes every published remote production-runtime rail", () => {
     const v124 = createReceizCommerceAdapter({ fetchImpl: async () => new Response() }).v124;
     assert.deepEqual(Object.keys(v124.execution), ["planAtomicOperationV124", "stage", "stagePrepared", "execute", "resolve", "resolveByIdempotencyKey", "cancel"]);

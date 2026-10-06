@@ -60,7 +60,10 @@ export async function persistReceizExactValueIntentV123(
 ): Promise<ReceizPersistedValueIntentV123> {
   const intent = await validateIntent(value);
   const exactIntentJson = canonicalizeReceizV122(intent);
-  await store.put(storageKey(intent.idempotencyKey!), exactIntentJson);
+  const key = storageKey(intent.idempotencyKey!);
+  const existing = await store.get(key);
+  if (existing !== null && existing !== exactIntentJson) throw new TypeError("V123_VALUE_IDEMPOTENCY_INTENT_CHANGED");
+  if (existing === null) await store.put(key, exactIntentJson);
   return custody(intent, exactIntentJson);
 }
 
@@ -96,26 +99,41 @@ export function createReceizValueExecutionCoordinatorV123(
   session: ReceizValueAuthoritySessionV123,
 ) {
   const submittedKeys = new Set<string>();
+  const bindOutcome = (outcome: ReceizValueExecutionOutcomeV123, exactIntentJson: string) => {
+    if (outcome.status === "committed" && canonicalizeReceizV122(outcome.intent) !== exactIntentJson) {
+      throw new TypeError("V123_VALUE_RECOVERED_INTENT_MISMATCH");
+    }
+    return outcome;
+  };
   return Object.freeze({
     async execute(value: unknown): Promise<Readonly<{
       outcome: ReceizValueExecutionOutcomeV123;
       recoveryPerformed: boolean;
     }>> {
-      const candidate = value as Partial<ReceizWorldValueIntentV122>;
-      const key = candidate?.idempotencyKey;
-      if (typeof key === "string" && submittedKeys.has(key)) {
+      const candidate = await validateIntent(value);
+      const key = candidate.idempotencyKey!;
+      if (submittedKeys.has(key)) {
         throw new TypeError("V123_VALUE_RETRY_REQUIRES_RECOVERY");
       }
-      const persisted = await persistReceizExactValueIntentV123(store, value);
-      submittedKeys.add(persisted.intent.idempotencyKey!);
-      const outcome = await session.execute(persisted);
+      // Claim this coordinate before any storage await so two clicks cannot
+      // both pass the submission guard. Restored custody always resolves first.
+      submittedKeys.add(key);
+      const restored = await restoreReceizExactValueIntentV123(store, key);
+      if (restored) {
+        if (restored.exactIntentJson !== canonicalizeReceizV122(candidate)) throw new TypeError("V123_VALUE_IDEMPOTENCY_INTENT_CHANGED");
+        return Object.freeze({ outcome: bindOutcome(await session.recover(key), restored.exactIntentJson), recoveryPerformed: true });
+      }
+      const persisted = await persistReceizExactValueIntentV123(store, candidate);
+      const outcome = bindOutcome(await session.execute(persisted), persisted.exactIntentJson);
       if (outcome.status !== "unknown") return Object.freeze({ outcome, recoveryPerformed: false });
-      const recovered = await session.recover(persisted.intent.idempotencyKey!);
+      const recovered = bindOutcome(await session.recover(key), persisted.exactIntentJson);
       return Object.freeze({ outcome: recovered, recoveryPerformed: true });
     },
 
-    recover(idempotencyKey: string) {
-      return session.recover(idempotencyKey);
+    async recover(idempotencyKey: string) {
+      const persisted = await restoreReceizExactValueIntentV123(store, idempotencyKey);
+      if (!persisted) throw new TypeError("V123_VALUE_PERSISTED_INTENT_REQUIRED");
+      return bindOutcome(await session.recover(idempotencyKey), persisted.exactIntentJson);
     },
   });
 }

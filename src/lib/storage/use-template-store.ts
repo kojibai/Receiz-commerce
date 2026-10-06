@@ -17,6 +17,7 @@ import {
 } from "@/lib/hosting/domain-utils";
 import { BASE_STORAGE_KEY, currentHostContext, hostContextFromHost, type HostContext } from "@/lib/hosting/host-context";
 import { merchantProofAuthorityRequirement, type MerchantAuthorityAction } from "@/lib/hosting/merchant-proof-authority";
+import { validateHostingRenewalPeriod } from "@/lib/hosting/renewal-period";
 import { checkoutTenantHost } from "@/lib/checkout/checkout-request";
 import {
   checkoutCompletionState,
@@ -52,6 +53,7 @@ import {
   preparePublishRequestBody
 } from "@/lib/receiz/publish-payload-media";
 import { createReceizCommerceAdapter } from "@/lib/receiz/adapter";
+import { isInAppPermissionPurpose } from "@/lib/receiz/in-app-permission";
 import { canonicalReceizVerifyUrl, receizVerifyUrl } from "@/lib/receiz/verify-url";
 import {
   applyBrowserReceizIdSession,
@@ -1334,7 +1336,31 @@ type ReceizCheckoutSessionPayload = {
   checkoutSessionId?: string;
   clientSecret?: string;
   status?: string;
+  paymentOrigin?: string;
+  merchantUsername?: string;
+  continuationToken?: string;
+  recoveryToken?: string;
+  servicePeriodLabel?: string;
+  walletAppliedLabel?: string;
+  cardDeltaLabel?: string;
 };
+
+function pendingPaymentKey(purpose: EmbeddedPaymentPurpose) {
+  return `receiz:pending-payment:${currentHostContext().storageKey}:${purpose}`;
+}
+
+function pendingPayment(purpose: EmbeddedPaymentPurpose): EmbeddedPaymentSession | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const payment = JSON.parse(safeGetLocalStorage(window.localStorage, pendingPaymentKey(purpose)) ?? "null");
+    return isRecord(payment) && payment.purpose === purpose && typeof payment.continuationToken === "string"
+      ? payment as EmbeddedPaymentSession : null;
+  } catch { return null; }
+}
+
+function clearPendingPayment(purpose: EmbeddedPaymentPurpose) {
+  safeRemoveLocalStorage(window.localStorage, pendingPaymentKey(purpose));
+}
 
 class ReceizPaymentRequiredError extends Error {
   payload: Record<string, unknown>;
@@ -1362,7 +1388,12 @@ function checkoutSessionFromPayload(payload: unknown): ReceizCheckoutSessionPayl
     checkoutUrl: typeof session.checkoutUrl === "string" ? session.checkoutUrl : undefined,
     checkoutSessionId: typeof session.checkoutSessionId === "string" ? session.checkoutSessionId : undefined,
     clientSecret: typeof session.clientSecret === "string" ? session.clientSecret : undefined,
-    status: typeof session.status === "string" ? session.status : undefined
+    status: typeof session.status === "string" ? session.status : undefined,
+    paymentOrigin: typeof session.paymentOrigin === "string" ? session.paymentOrigin : undefined,
+    merchantUsername: typeof session.merchantUsername === "string" ? session.merchantUsername : undefined,
+    recoveryToken: typeof payload.recoveryToken === "string" ? payload.recoveryToken : undefined,
+    continuationToken: typeof payload.continuationToken === "string" ? payload.continuationToken
+      : isRecord(payload.platformBilling) && typeof payload.platformBilling.continuationToken === "string" ? payload.platformBilling.continuationToken : undefined
   };
 }
 
@@ -1398,7 +1429,10 @@ async function postJson<T>(
 
   if (response.status === 401 && typeof payload.connectUrl === "string") {
     if (!options.deferAuthorityRedirect && typeof window !== "undefined") {
-      window.open(payload.connectUrl, "receiz-connect", "popup=yes,width=560,height=760,resizable=yes,scrollbars=yes");
+      window.dispatchEvent(new CustomEvent("receiz:permission-required", { detail: {
+        purpose: isInAppPermissionPurpose(payload.permissionPurpose) ? payload.permissionPurpose
+          : url === "/api/hosting" ? "platform_billing" : url === "/api/checkout" ? "wallet_checkout" : "store_manage"
+      } }));
     }
     throw new ReceizAuthorityRequiredError(payload.connectUrl, String(payload.message ?? "Receiz authority required"));
   }
@@ -1801,6 +1835,8 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
   const stateRef = useRef(initialState);
   const pendingBrowserIdentityKeyFileRef = useRef<unknown | null>(null);
   const publishResumeAttemptedRef = useRef(false);
+  const checkoutSubmissionRef = useRef(false);
+  const hostingPlanSubmissionRef = useRef(false);
 
   const merchantProofKeyFile = useCallback(() => {
     if (pendingBrowserIdentityKeyFileRef.current) return pendingBrowserIdentityKeyFileRef.current;
@@ -1843,23 +1879,55 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
       | "resumeExchangeShares"
     > = {}
   ) => {
+    const pending = pendingPayment(purpose);
+    const previous = pending?.checkoutSessionId === session?.checkoutSessionId ? pending : null;
+    session = session ? { ...previous, ...session,
+      clientSecret: session.clientSecret ?? previous?.clientSecret,
+      paymentOrigin: session.paymentOrigin ?? previous?.paymentOrigin,
+      merchantUsername: session.merchantUsername ?? previous?.merchantUsername } : undefined;
     if (!session?.checkoutUrl && !session?.clientSecret) return false;
 
-    setEmbeddedPayment({
+    const payment: EmbeddedPaymentSession = {
       purpose,
       title,
       checkoutSessionId: session.checkoutSessionId,
       checkoutUrl: session.checkoutUrl,
       clientSecret: session.clientSecret,
       status: session.status,
+      paymentOrigin: session.paymentOrigin,
+      merchantUsername: session.merchantUsername,
+      continuationToken: session.continuationToken,
+      recoveryToken: session.recoveryToken,
+      servicePeriodLabel: session.servicePeriodLabel,
+      walletAppliedLabel: session.walletAppliedLabel,
+      cardDeltaLabel: session.cardDeltaLabel,
       ...resume
-    });
+    };
+    if (payment.continuationToken) safeSetLocalStorage(window.localStorage, pendingPaymentKey(purpose), JSON.stringify(payment));
+    setEmbeddedPayment(payment);
     return true;
+  }, []);
+
+  useEffect(() => {
+    const payment = window.location.pathname.startsWith("/admin")
+      ? pendingPayment("hosting_plan") ?? pendingPayment("custom_domain")
+      : pendingPayment("storefront_checkout");
+    if (payment) setEmbeddedPayment(payment);
   }, []);
 
   useEffect(() => {
     stateRef.current = state;
   }, [state]);
+
+  useEffect(() => {
+    if (!window.location.pathname.startsWith("/admin")) return;
+    let active = true;
+    void fetch("/api/hosting", { cache: "no-store" }).then(response => response.ok ? response.json() : null).then(result => {
+      if (!active || !Array.isArray(result?.billing?.plans)) return;
+      setState(current => ({ ...current, billing: { ...current.billing, plans: result.billing.plans } }));
+    }).catch(() => undefined);
+    return () => { active = false; };
+  }, []);
 
   useEffect(() => {
     const context = currentHostContext();
@@ -1913,6 +1981,20 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
       safeSetLocalStorage(window.localStorage, hostContext.storageKey, JSON.stringify(state));
     }
   }, [hostContext.storageKey, hostContext.surface, hydrated, state]);
+
+  useEffect(() => {
+    let active = true;
+    const refreshPermission = () => {
+      setReceizSessionPending(true);
+      void fetchReceizProfile().then((result) => {
+        if (active && result?.connected && result.profile) {
+          setState((current) => applyReceizProfile(current, result.profile!, result.surface ?? currentHostContext().surface));
+        }
+      }).catch(() => undefined).finally(() => { if (active) setReceizSessionPending(false); });
+    };
+    window.addEventListener("receiz:permission-ready", refreshPermission);
+    return () => { active = false; window.removeEventListener("receiz:permission-ready", refreshPermission); };
+  }, []);
 
   useEffect(() => {
     if (!hydrated || hostContext.surface !== "platform") return;
@@ -2006,7 +2088,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
     );
     const gate = merchantProofAuthorityRequirement({
       action,
-      delegatedPermission: Boolean(result?.connected),
+      delegatedPermission: Boolean(result?.connected && result.profile),
       handle: result?.profile?.handle || snapshot.auth.receizId.handle || browserIdentity?.receizId.handle,
       localReceizIdConnected: snapshot.auth.receizId.connected,
       localProofVerified: snapshot.auth.receizId.localProofVerified,
@@ -2048,6 +2130,10 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
       proofEvents: [makeEvent(gate.eventType, gate.message), ...current.proofEvents]
     }));
     setReceizSessionPending(false);
+
+    window.dispatchEvent(new CustomEvent("receiz:permission-required", { detail: {
+      purpose: action === "publish" ? "store_manage" : action === "wallet" || action === "checkout" ? "wallet_checkout" : "platform_billing"
+    } }));
 
     return false;
   }, [merchantProofKeyFile]);
@@ -2291,7 +2377,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
           }));
         }
       },
-      async connectCustomDomain(domain: string) {
+      async connectCustomDomain(domain: string, continuationToken?: string) {
         let normalizedDomain = "";
 
         try {
@@ -2304,6 +2390,9 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
           }));
           return;
         }
+
+        const pending = pendingPayment("custom_domain");
+        if (pending?.resumeDomain === normalizedDomain) continuationToken ??= pending.continuationToken;
 
         if (!(await ensureMerchantProofAuthority("custom_domain"))) {
           setActionFeedback("domains.customDomain", "error", "Create or restore a verified Receiz proof object in app");
@@ -2332,10 +2421,11 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
           const snapshot = stateRef.current;
           const result = await postJson<{ hosting: CommerceState["hosting"]; storeStateSync?: StoreStateSyncResponse }>(
             "/api/hosting",
-            await prepareHostingStoreStateRequestBody("custom_domain", snapshot, merchantProof(snapshot), { domain: normalizedDomain }),
+            await prepareHostingStoreStateRequestBody("custom_domain", snapshot, merchantProof(snapshot), { domain: normalizedDomain, continuationToken }),
             { maxBodyChars: HOSTING_PUBLISH_REQUEST_BODY_MAX_CHARS }
           );
           const syncError = storeStateSyncError(result.storeStateSync);
+          clearPendingPayment("custom_domain");
           const syncPending = storeStateSyncPending(result.storeStateSync);
           setActionFeedback(
             "domains.customDomain",
@@ -2365,6 +2455,11 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
           }));
         } catch (error) {
           if (error instanceof ReceizPaymentRequiredError) {
+            if (error.payload.error === "checkout_session_expired" || error.message === "checkout_continuation_expired") {
+              clearPendingPayment("custom_domain");
+              setActionFeedback("domains.customDomain", "error", "The payment session expired. Connect the domain again to start a new payment.");
+              return;
+            }
             const session = checkoutSessionFromPayload(error.payload);
             const opened = beginEmbeddedPayment(session, "custom_domain", `Fund ${normalizedDomain}`, {
               resumeDomain: normalizedDomain
@@ -2511,7 +2606,40 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
           }));
         }
       },
-      async selectHostingPlan(plan: CommerceState["hosting"]["plan"]) {
+      async recoverHostingBilling() {
+        if (hostingPlanSubmissionRef.current) return;
+        const hosting = stateWithCurrentMerchantReceizAccount(stateRef.current).hosting;
+        const recoveryToken = hosting.pendingBillingRenewalToken ?? hosting.billingRenewalToken;
+        if (!recoveryToken) return;
+        setActionFeedback("billing.status", "pending", "Checking your original hosting payment");
+        try {
+          const result = await postJson<{ hosting: CommerceState["hosting"]; billing: CommerceState["billing"]; paymentPending: boolean }>("/api/hosting", {
+            action: "billing_status", hosting, recoveryToken,
+          }, { deferAuthorityRedirect: true, maxBodyChars: HOSTING_PUBLISH_REQUEST_BODY_MAX_CHARS });
+          if (hostingPlanSubmissionRef.current) return;
+          if (!result.paymentPending) {
+            clearPendingPayment("hosting_plan");
+            setEmbeddedPayment(current => current?.purpose === "hosting_plan" ? null : current);
+          }
+          setState(current => ({ ...current, hosting: { ...current.hosting, ...result.hosting }, billing: result.billing }));
+          setActionFeedback("billing.status", "success", result.paymentPending ? "Renewal payment is still pending" : result.billing.status === "active" ? "Your paid month is verified" : "Renew in this app to restore paid hosting");
+        } catch (error) {
+          setActionFeedback("billing.status", "error", error instanceof Error ? error.message : "Could not check hosting payment");
+        }
+      },
+      async selectHostingPlan(plan: CommerceState["hosting"]["plan"], continuationToken?: string, renew = false) {
+        if (hostingPlanSubmissionRef.current) return;
+        hostingPlanSubmissionRef.current = true;
+        const pending = pendingPayment("hosting_plan");
+        if (pending?.resumePlan === plan) continuationToken ??= pending.continuationToken;
+        const hosting = stateWithCurrentMerchantReceizAccount(stateRef.current).hosting;
+        const recoveryToken = plan === "starter" ? undefined : pending?.resumePlan === plan ? pending.recoveryToken ?? hosting.pendingBillingRenewalToken : hosting.pendingBillingRenewalToken;
+        const referenceKey = `${currentHostContext().storageKey}:billing-reference:${plan}`;
+        let paymentReference = safeGetLocalStorage(window.localStorage, referenceKey);
+        if (!paymentReference) {
+          paymentReference = crypto.randomUUID();
+          safeSetLocalStorage(window.localStorage, referenceKey, paymentReference);
+        }
         setActionFeedback("billing.plan", "pending", `Selecting ${plan}`);
         setState((current) => ({
           ...current,
@@ -2528,26 +2656,51 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
           }>("/api/hosting", {
             action: "plan",
             plan,
-            hosting: stateWithCurrentMerchantReceizAccount(stateRef.current).hosting,
+            paymentReference,
+            continuationToken,
+            recoveryToken,
+            renew,
+            hosting,
             merchantProof: merchantProof(stateRef.current)
           }, { maxBodyChars: HOSTING_PUBLISH_REQUEST_BODY_MAX_CHARS });
           setActionFeedback("billing.plan", "success", `${plan} plan synced`);
+          clearPendingPayment("hosting_plan");
+          safeRemoveLocalStorage(window.localStorage, referenceKey);
           setState((current) => {
             const ownerState = stateWithCurrentMerchantReceizAccount(current);
 
             return {
               ...ownerState,
-              hosting: {
-                ...ownerState.hosting,
-                plan: result.hosting.plan
-              },
+              hosting: { ...ownerState.hosting, ...result.hosting },
               billing: result.billing,
               proofEvents: [makeEvent("HOSTING_PLAN_UPDATED", `${plan} plan synced with Receiz billing`), ...current.proofEvents]
             };
           });
         } catch (error) {
           if (error instanceof ReceizPaymentRequiredError) {
+            const retainedRecovery = typeof error.payload.recoveryToken === "string" ? error.payload.recoveryToken : recoveryToken;
+            let offeredPeriod: ReturnType<typeof validateHostingRenewalPeriod> | undefined;
+            try { offeredPeriod = validateHostingRenewalPeriod(error.payload.period); } catch { /* Existing attempts can recover their period from the encrypted coordinates. */ }
+            if (retainedRecovery) setState(current => ({ ...current, hosting: { ...current.hosting, pendingBillingRenewalToken: retainedRecovery,
+              pendingBillingPlan: plan === "starter" ? undefined : plan, pendingBillingPeriod: offeredPeriod ?? current.hosting.pendingBillingPeriod } }));
+            if (error.payload.error === "checkout_session_expired" || error.message === "checkout_continuation_expired") {
+              if (retainedRecovery) {
+                setActionFeedback("billing.plan", "error", "The card window expired. Check hosting payment to recover the original month before starting another payment.");
+                return;
+              }
+              clearPendingPayment("hosting_plan");
+              safeRemoveLocalStorage(window.localStorage, referenceKey);
+              setActionFeedback("billing.plan", "error", "The payment session expired. Select the plan again to start a new payment.");
+              return;
+            }
             const session = checkoutSessionFromPayload(error.payload);
+            if (session) {
+              session.recoveryToken = retainedRecovery;
+              if (offeredPeriod) {
+                const format = new Intl.DateTimeFormat(undefined, { dateStyle: "medium" });
+                session.servicePeriodLabel = `Service month: ${format.format(new Date(offeredPeriod.startsAt))} – ${format.format(new Date(offeredPeriod.paidThrough))}`;
+              }
+            }
             const opened = beginEmbeddedPayment(session, "hosting_plan", `Fund ${plan} hosting`, {
               resumePlan: plan
             });
@@ -2578,6 +2731,8 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
               ...current.proofEvents
             ]
           }));
+        } finally {
+          hostingPlanSubmissionRef.current = false;
         }
       },
       async addBillingMethod(label: string) {
@@ -2586,9 +2741,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
           ...current,
           billing: {
             ...current.billing,
-            status: "trial",
             paymentMethodLabel: `${label} connecting`,
-            trialEndsAt: "Select a paid plan to collect payment"
           },
           proofEvents: [makeEvent("BILLING_METHOD_ADDED", `${label} added for hosting`), ...current.proofEvents]
         }));
@@ -2597,6 +2750,7 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
           const result = await postJson<{ billing: CommerceState["billing"] }>("/api/hosting", {
             action: "payment",
             paymentMethodLabel: label,
+            hosting: stateWithCurrentMerchantReceizAccount(stateRef.current).hosting,
             merchantProof: merchantProof(stateRef.current)
           }, { maxBodyChars: HOSTING_PUBLISH_REQUEST_BODY_MAX_CHARS });
           setActionFeedback("billing.payment", "success", "Billing synced");
@@ -3326,236 +3480,269 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
           };
         });
       },
-      async startCheckout(productId?: string, referenceId?: string) {
-        setActionFeedback("checkout", "pending", "Starting checkout");
-        const checkoutBase = productId ? stateWithCartProduct(stateRef.current, productId) : stateRef.current;
-
-        if (productId) {
-          stateRef.current = checkoutBase;
-          setState(checkoutBase);
-        }
-
-        const identity = await receizIdentityForAutomaticCustomerSession(checkoutBase, "one-click checkout");
-        if (identity.keyFile) {
-          pendingBrowserIdentityKeyFileRef.current = identity.keyFile;
-        }
-
-        const checkoutSnapshot = identity.apply(checkoutBase);
-        const checkoutMode = process.env.NEXT_PUBLIC_CHECKOUT_MODE ?? checkoutSnapshot.checkout.mode;
-        const totalLabel = `$${cartAmountUsd(checkoutSnapshot)}`;
-        const itemCount = Math.max(1, checkoutSnapshot.cart.lines.length);
-        const checkoutProductList = checkoutProducts(checkoutSnapshot);
-        const checkoutFulfillmentKindValue = checkoutFulfillmentKind(checkoutProductList);
-
-        if (checkoutMode === "mock") {
-          const id = `${Math.floor(10000 + Math.random() * 89999)}`;
-          setState((current) => {
-            const base = identity.apply(current);
-            const customer = {
-              ...base.auth.customer,
-              receizHandle: base.auth.receizId.handle
-            };
-            const funding = {
-              ...fallbackFunding(totalLabel, "$0.00"),
-              walletAppliedLabel: totalLabel,
-              walletBalanceLabel: totalLabel,
-              cardRequired: false
-            };
-            const shipping = checkoutCustomerShipping(base, customer);
-            const completion = checkoutCompletionState({
-              funding,
-              products: checkoutProducts(base),
-              shipping
-            });
-            const order = {
-              id,
-              customerId: customer.id,
-              customerEmail: customer.email,
-              totalLabel,
-              status: completion.orderStatus === "settled" ? ("mock_paid" as const) : completion.orderStatus,
-              itemCount,
-              sealed: completion.sealed,
-              createdAt: new Date().toISOString(),
-              merchantReceizId: base.hosting.merchantReceizId,
-              tenantHost: base.hosting.customDomain.domain || base.hosting.subdomain,
-              checkoutSessionId: `mock-${id}`,
-              paymentRail: "sandbox" as const,
-              settlementStatus: "sandbox" as const,
-              funding,
-              shipping,
-              fulfillment: checkoutOrderFulfillment(completion)
-            };
-
-            return {
-              ...base,
-              cart: { lines: [] },
-              orders: [order, ...base.orders],
-              customers: upsertCheckoutCustomer(base.customers, customer, order.id),
-              proofEvents: [
-                makeEvent("RECEIZ_ID_CONNECTED", identity.detail),
-                makeEvent("ORDER_VERIFIED", completion.fulfillmentMessage),
-                ...base.proofEvents
-              ]
-            };
-          });
-          setActionFeedback("checkout", "success", "Payment recorded");
-          return;
-        }
-
+      async startCheckout(productId?: string, referenceId?: string, continuationToken?: string) {
+        if (checkoutSubmissionRef.current) return;
+        checkoutSubmissionRef.current = true;
         try {
-          const checkoutReferenceId = referenceId ?? `order-${Date.now()}`;
-          const result = await postJson<{
-            session?: {
-              checkoutUrl?: string;
-              checkoutSessionId?: string;
-              clientSecret?: string;
-              status?: string;
-            };
-            funding?: CheckoutFundingPayload;
-            paymentRails?: {
-              preferred: "receiz_wallet";
-              fallback: "credit_card";
-              settlement: "merchant_receiz_reserve";
-              merchantReceizId: string;
-            };
-            wildsOwnership?: {
-              transfers: Array<{ assetId: string; productId: string; ownerReceizId: string }>;
-            } | null;
-          }>("/api/checkout", {
-            cartLines: checkoutSnapshot.cart.lines,
-            customerId: checkoutSnapshot.auth.customer.id,
-            customerEmail: checkoutSnapshot.auth.customer.email,
-            customerName: checkoutSnapshot.auth.customer.name,
-            referenceId: checkoutReferenceId,
-            description: `${checkoutSnapshot.brand.name} proof-sealed order`,
-            shipping: checkoutCustomerShipping(checkoutSnapshot, checkoutSnapshot.auth.customer),
-            tenantSlug: checkoutSnapshot.hosting.tenantSlug,
-            tenantHost: checkoutTenantHost(checkoutSnapshot),
-            fulfillment: {
-              kind: checkoutFulfillmentKindValue,
-              status: "payment_required",
-              message: "Payment must settle before fulfillment starts.",
-              deliveryRails:
-                checkoutFulfillmentKindValue === "digital_delivery" || checkoutFulfillmentKindValue === "mixed"
-                  ? ["receiz_communications", "email"]
-                  : undefined
-            },
-            merchantProof: merchantProof(checkoutSnapshot),
-            successUrl: `${window.location.origin}/?checkout=success`,
-            cancelUrl: `${window.location.origin}/?checkout=cancel`
-          });
+          const pending = pendingPayment("storefront_checkout");
+          continuationToken ??= pending?.continuationToken;
+          referenceId ??= pending?.resumeReferenceId;
+          setActionFeedback("checkout", "pending", "Starting checkout");
+          const checkoutBase = productId && !continuationToken ? stateWithCartProduct(stateRef.current, productId) : stateRef.current;
 
-          const funding = fundingFromPayload(result.funding, totalLabel);
-          if (funding.cardRequired) {
-            const checkoutUrl = result.session?.checkoutUrl;
+          if (productId) {
+            stateRef.current = checkoutBase;
+            setState(checkoutBase);
+          }
+
+          const identity = await receizIdentityForAutomaticCustomerSession(checkoutBase, "one-click checkout");
+          if (identity.keyFile) {
+            pendingBrowserIdentityKeyFileRef.current = identity.keyFile;
+          }
+
+          const checkoutSnapshot = identity.apply(checkoutBase);
+          const checkoutMode = process.env.NEXT_PUBLIC_CHECKOUT_MODE ?? checkoutSnapshot.checkout.mode;
+          const totalLabel = `$${cartAmountUsd(checkoutSnapshot)}`;
+          const itemCount = Math.max(1, checkoutSnapshot.cart.lines.length);
+          const checkoutProductList = checkoutProducts(checkoutSnapshot);
+          const checkoutFulfillmentKindValue = checkoutFulfillmentKind(checkoutProductList);
+
+          if (checkoutMode === "mock") {
+            const id = `${Math.floor(10000 + Math.random() * 89999)}`;
             setState((current) => {
               const base = identity.apply(current);
+              const customer = {
+                ...base.auth.customer,
+                receizHandle: base.auth.receizId.handle
+              };
+              const funding = {
+                ...fallbackFunding(totalLabel, "$0.00"),
+                walletAppliedLabel: totalLabel,
+                walletBalanceLabel: totalLabel,
+                cardRequired: false
+              };
+              const shipping = checkoutCustomerShipping(base, customer);
+              const completion = checkoutCompletionState({
+                funding,
+                products: checkoutProducts(base),
+                shipping
+              });
+              const order = {
+                id,
+                customerId: customer.id,
+                customerEmail: customer.email,
+                totalLabel,
+                status: completion.orderStatus === "settled" ? ("mock_paid" as const) : completion.orderStatus,
+                itemCount,
+                sealed: completion.sealed,
+                createdAt: new Date().toISOString(),
+                merchantReceizId: base.hosting.merchantReceizId,
+                tenantHost: base.hosting.customDomain.domain || base.hosting.subdomain,
+                checkoutSessionId: `mock-${id}`,
+                paymentRail: "sandbox" as const,
+                settlementStatus: "sandbox" as const,
+                funding,
+                shipping,
+                fulfillment: checkoutOrderFulfillment(completion)
+              };
 
               return {
                 ...base,
+                cart: { lines: [] },
+                orders: [order, ...base.orders],
+                customers: upsertCheckoutCustomer(base.customers, customer, order.id),
                 proofEvents: [
                   makeEvent("RECEIZ_ID_CONNECTED", identity.detail),
-                  makeEvent("ORDER_VERIFIED", `Wallet applied ${funding.walletAppliedLabel}; card delta ${funding.cardDeltaLabel} requires payment`),
+                  makeEvent("ORDER_VERIFIED", completion.fulfillmentMessage),
                   ...base.proofEvents
                 ]
               };
             });
+            setActionFeedback("checkout", "success", "Payment recorded");
+            return;
+          }
 
-            if (checkoutUrl || result.session?.clientSecret) {
-              setActionFeedback("checkout", "pending", "Card payment ready");
-              beginEmbeddedPayment(result.session, "storefront_checkout", "Complete card funding", {
-                resumeProductId: productId,
-                resumeReferenceId: checkoutReferenceId
+          try {
+            const checkoutReferenceId = referenceId ?? `order-${Date.now()}`;
+            const result = await postJson<{
+              paid?: boolean;
+              continuationToken?: string;
+              itemCount?: number;
+              purchasedLines?: Array<{ productId: string; quantity: number }>;
+              commerceEvent?: { data: { fulfillment?: Order["fulfillment"]; shipping?: Order["shipping"] } };
+              session?: {
+                checkoutUrl?: string;
+                checkoutSessionId?: string;
+                clientSecret?: string;
+                status?: string;
+                paymentOrigin?: string;
+                merchantUsername?: string;
+              };
+              funding?: CheckoutFundingPayload;
+              paymentRails?: {
+                preferred: "receiz_wallet";
+                fallback: "credit_card";
+                settlement: "merchant_receiz_reserve";
+                merchantReceizId: string;
+              };
+              wildsOwnership?: {
+                transfers: Array<{ assetId: string; productId: string; ownerReceizId: string }>;
+              } | null;
+            }>("/api/checkout", {
+              cartLines: checkoutSnapshot.cart.lines,
+              customerId: checkoutSnapshot.auth.customer.id,
+              customerEmail: checkoutSnapshot.auth.customer.email,
+              customerName: checkoutSnapshot.auth.customer.name,
+              referenceId: checkoutReferenceId,
+              continuationToken,
+              description: `${checkoutSnapshot.brand.name} proof-sealed order`,
+              shipping: checkoutCustomerShipping(checkoutSnapshot, checkoutSnapshot.auth.customer),
+              tenantSlug: checkoutSnapshot.hosting.tenantSlug,
+              tenantHost: checkoutTenantHost(checkoutSnapshot),
+              fulfillment: {
+                kind: checkoutFulfillmentKindValue,
+                status: "payment_required",
+                message: "Payment must settle before fulfillment starts.",
+                deliveryRails:
+                  checkoutFulfillmentKindValue === "digital_delivery" || checkoutFulfillmentKindValue === "mixed"
+                    ? ["receiz_communications", "email"]
+                    : undefined
+              },
+              merchantProof: merchantProof(checkoutSnapshot),
+              successUrl: `${window.location.origin}/?checkout=success`,
+              cancelUrl: `${window.location.origin}/?checkout=cancel`
+            }, { deferAuthorityRedirect: true });
+
+            const funding = fundingFromPayload(result.funding, totalLabel);
+            if (result.session?.status === "expired") {
+              clearPendingPayment("storefront_checkout");
+              throw new Error("The payment session expired without payment. Start checkout again.");
+            }
+            if (result.paid !== true) {
+              const checkoutUrl = result.session?.checkoutUrl;
+              setState((current) => {
+                const base = identity.apply(current);
+
+                return {
+                  ...base,
+                  proofEvents: [
+                    makeEvent("RECEIZ_ID_CONNECTED", identity.detail),
+                    makeEvent("ORDER_VERIFIED", `Wallet applied ${funding.walletAppliedLabel}; card delta ${funding.cardDeltaLabel} requires payment`),
+                    ...base.proofEvents
+                  ]
+                };
               });
+
+              if (checkoutUrl || result.session?.clientSecret || pending?.clientSecret) {
+                setActionFeedback("checkout", "pending", "Card payment ready");
+                beginEmbeddedPayment({ ...result.session, continuationToken: result.continuationToken ?? continuationToken,
+                  walletAppliedLabel: funding.walletAppliedLabel, cardDeltaLabel: funding.cardDeltaLabel }, "storefront_checkout", "Complete card funding", {
+                  resumeProductId: productId,
+                  resumeReferenceId: checkoutReferenceId
+                });
+                return;
+              }
+
+              setActionFeedback(
+                "checkout",
+                result.session?.clientSecret ? "pending" : "error",
+                result.session?.clientSecret
+                  ? "Card payment session ready. Complete the card delta before the order is created."
+                  : "Card payment required, but Receiz did not return a card checkout URL."
+              );
               return;
             }
 
-            setActionFeedback(
-              "checkout",
-              result.session?.clientSecret ? "pending" : "error",
-              result.session?.clientSecret
-                ? "Card payment session ready. Complete the card delta before the order is created."
-                : "Card payment required, but Receiz did not return a card checkout URL."
-            );
-            return;
-          }
+            clearPendingPayment("storefront_checkout");
 
-          setState((current) => {
-            const base = identity.apply(current);
-            const checkoutSessionId = result.session?.checkoutSessionId ?? `receiz-${Date.now()}`;
-            const wildsTransfers = result.wildsOwnership?.transfers ?? [];
-            const soldProductIds = new Set(wildsTransfers.map((transfer) => transfer.productId));
-            const customer = {
-              ...base.auth.customer,
-              receizHandle: base.auth.receizId.handle,
-              assetIds: Array.from(new Set([...base.auth.customer.assetIds, ...wildsTransfers.map((transfer) => transfer.assetId)]))
-            };
-            const shipping = checkoutCustomerShipping(base, customer);
-            const completion = checkoutCompletionState({
-              funding,
-              products: checkoutProducts(base),
-              shipping
-            });
-            const order = {
-              id: checkoutReferenceId,
-              customerId: customer.id,
-              customerEmail: customer.email,
-              totalLabel,
-              status: completion.orderStatus,
-              itemCount,
-              sealed: completion.sealed,
-              createdAt: new Date().toISOString(),
-              merchantReceizId: result.paymentRails?.merchantReceizId ?? base.hosting.merchantReceizId,
-              tenantHost: base.hosting.customDomain.domain || base.hosting.subdomain,
-              checkoutSessionId,
-              paymentRail: railFromFunding(funding),
-              settlementStatus: completion.settlementStatus,
-              funding,
-              shipping,
-              fulfillment: checkoutOrderFulfillment(completion)
-            };
-
-            return {
-              ...base,
-              cart: { lines: [] },
-              products: base.products.map((item) => soldProductIds.has(item.id) ? { ...item, status: "draft", inventoryLabel: "Sold" } : item),
-              orders: [order, ...base.orders],
-              customers: upsertCheckoutCustomer(base.customers, customer, order.id),
-              proofEvents: [
-                makeEvent("RECEIZ_ID_CONNECTED", identity.detail),
-                ...(wildsTransfers.length ? [makeEvent("ASSET_RECEIZED", `${wildsTransfers.length} Wilds card ownership transfer${wildsTransfers.length === 1 ? "" : "s"} appended`)] : []),
-                makeEvent("ORDER_VERIFIED", completion.fulfillmentMessage),
-                ...base.proofEvents
-              ]
-            };
-          });
-          setActionFeedback("checkout", "success", "Payment recorded");
-        } catch (error) {
-          if (error instanceof ReceizAuthorityRequiredError) {
             setState((current) => {
               const base = identity.apply(current);
+              const checkoutSessionId = result.session?.checkoutSessionId ?? `receiz-${Date.now()}`;
+              const wildsTransfers = result.wildsOwnership?.transfers ?? [];
+              const soldProductIds = new Set(wildsTransfers.map((transfer) => transfer.productId));
+              const customer = {
+                ...base.auth.customer,
+                receizHandle: base.auth.receizId.handle,
+                assetIds: Array.from(new Set([...base.auth.customer.assetIds, ...wildsTransfers.map((transfer) => transfer.assetId)]))
+              };
+              const shipping = result.commerceEvent?.data.shipping ?? checkoutCustomerShipping(base, customer);
+              const completion = checkoutCompletionState({
+                funding,
+                products: result.purchasedLines
+                  ? base.products.filter((item) => result.purchasedLines!.some((line) => line.productId === item.id))
+                  : checkoutProducts(base),
+                fulfillmentKind: result.commerceEvent?.data.fulfillment?.kind,
+                shipping
+              });
+              const order = {
+                id: checkoutReferenceId,
+                customerId: customer.id,
+                customerEmail: customer.email,
+                totalLabel: funding.totalLabel,
+                status: completion.orderStatus,
+                itemCount: result.itemCount ?? itemCount,
+                sealed: completion.sealed,
+                createdAt: new Date().toISOString(),
+                merchantReceizId: result.paymentRails?.merchantReceizId ?? base.hosting.merchantReceizId,
+                tenantHost: base.hosting.customDomain.domain || base.hosting.subdomain,
+                checkoutSessionId,
+                paymentRail: railFromFunding(funding),
+                settlementStatus: completion.settlementStatus,
+                funding,
+                shipping,
+                fulfillment: result.commerceEvent?.data.fulfillment ?? checkoutOrderFulfillment(completion)
+              };
 
               return {
                 ...base,
+                cart: { lines: base.cart.lines.flatMap((line) => {
+                  const purchased = result.purchasedLines ? result.purchasedLines.find((item) => item.productId === line.productId)?.quantity ?? 0 : line.quantity;
+                  return line.quantity > purchased ? [{ ...line, quantity: line.quantity - purchased }] : [];
+                }) },
+                products: base.products.map((item) => soldProductIds.has(item.id) ? { ...item, status: "draft", inventoryLabel: "Sold" } : item),
+                orders: [order, ...base.orders.filter((existing) => existing.id !== order.id)],
+                customers: upsertCheckoutCustomer(base.customers, customer, order.id),
                 proofEvents: [
                   makeEvent("RECEIZ_ID_CONNECTED", identity.detail),
-                  makeEvent("ORDER_VERIFIED", "Receiz checkout needs a payment rail before the order can be created"),
+                  ...(wildsTransfers.length ? [makeEvent("ASSET_RECEIZED", `${wildsTransfers.length} Wilds card ownership transfer${wildsTransfers.length === 1 ? "" : "s"} appended`)] : []),
+                  makeEvent("ORDER_VERIFIED", completion.fulfillmentMessage),
                   ...base.proofEvents
                 ]
               };
             });
-            setActionFeedback("checkout", "error", "Receiz checkout needs a payment rail before the order can be created.");
-            return;
-          }
+            setActionFeedback("checkout", "success", "Payment recorded");
+          } catch (error) {
+            if (error instanceof ReceizAuthorityRequiredError) {
+              setState((current) => {
+                const base = identity.apply(current);
 
-          setActionFeedback("checkout", "error", error instanceof Error ? error.message : "Receiz checkout failed");
-          setState((latest) => ({
-            ...latest,
-            proofEvents: [
-              makeEvent("ORDER_VERIFIED", error instanceof Error ? error.message : "Receiz checkout failed"),
-              ...latest.proofEvents
-            ]
-          }));
+                return {
+                  ...base,
+                  proofEvents: [
+                    makeEvent("RECEIZ_ID_CONNECTED", identity.detail),
+                    makeEvent("ORDER_VERIFIED", "Receiz checkout needs a payment rail before the order can be created"),
+                    ...base.proofEvents
+                  ]
+                };
+              });
+              setActionFeedback("checkout", "error", "Receiz checkout needs a payment rail before the order can be created.");
+              return;
+            }
+
+            setActionFeedback("checkout", "error", error instanceof Error ? error.message : "Receiz checkout failed");
+            if (error instanceof Error && error.message === "checkout_continuation_expired") clearPendingPayment("storefront_checkout");
+            setState((latest) => ({
+              ...latest,
+              proofEvents: [
+                makeEvent("ORDER_VERIFIED", error instanceof Error ? error.message : "Receiz checkout failed"),
+                ...latest.proofEvents
+              ]
+            }));
+          }
+        } catch (error) {
+          setActionFeedback("checkout", "error", error instanceof Error ? error.message : "Checkout could not start");
+        } finally {
+          checkoutSubmissionRef.current = false;
         }
       },
       updateCheckoutShipping(orderId: string, shipping: NonNullable<Order["shipping"]>) {
@@ -3646,6 +3833,18 @@ export function useTemplateStore(initialState: CommerceState = seedCommerceState
     }),
     [beginEmbeddedPayment, ensureMerchantProofAuthority, merchantProof, publishWorkspace, setActionFeedback]
   );
+
+  useEffect(() => {
+    if (!hydrated || receizSessionPending || !window.location.pathname.startsWith("/admin")) return;
+    if (!state.hosting.billingRenewalToken && !state.hosting.pendingBillingRenewalToken) return;
+    void actions.recoverHostingBilling();
+    const refresh = () => { void actions.recoverHostingBilling(); };
+    window.addEventListener("focus", refresh);
+    const paidThrough = state.billing.paidThrough ? Date.parse(state.billing.paidThrough) : NaN;
+    const delay = paidThrough - Date.now();
+    const timer = Number.isFinite(delay) && delay > 0 && delay < 2_147_483_647 ? window.setTimeout(refresh, delay + 50) : undefined;
+    return () => { window.removeEventListener("focus", refresh); if (timer !== undefined) window.clearTimeout(timer); };
+  }, [actions, hydrated, receizSessionPending, state.auth.receizId.handle, state.hosting.billingRenewalToken, state.hosting.pendingBillingRenewalToken, state.billing.paidThrough]);
 
   useEffect(() => {
     if (

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { platform } from "@/lib/platform";
 import { PwaController } from "@/features/pwa/PwaController";
+import { ReceizProofPermission } from "@/features/account/ReceizProofPermission";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -47,6 +48,7 @@ export default function RootLayout({
       <body>
         {children}
         <PwaController />
+        <ReceizProofPermission />
       </body>
     </html>
   );

@@ -5,6 +5,7 @@ import type {
 } from "@receiz/sdk";
 import type { ReceizCommerceAdapter } from "@/lib/receiz/adapter";
 import type { Order } from "@/types/domain";
+import { reserveBalanceUsdCents } from "./payment-contract";
 
 export const RECEIZ_CHECKOUT_VALUE_AUTHORITY_NOTICE =
   "USD checkout is a commerce quote. Proof-native value movement requires an explicit Phi intent bound to its source proof and head." as const;
@@ -35,6 +36,14 @@ export type WalletFirstReceizSettlementInput = {
   amountUsd: string;
   tenantHost: string;
   recipientUserId: string;
+  merchantUsername?: string;
+  buyerAuthenticated: boolean;
+  /** Verified payer account from this request's connection, never the payee. */
+  buyerUserId?: string;
+  resume?: {
+    checkoutSessionId: string;
+    funding: Pick<WalletFirstFunding, "totalUsdCents" | "walletBalanceUsdCents" | "walletAppliedUsdCents" | "cardDeltaUsdCents">;
+  };
   idempotencyKey: string;
   note: string;
   orderId?: string;
@@ -66,8 +75,9 @@ export function centsFromUsdAmount(value: string | number | undefined | null) {
 
 export function centsFromReceizValue(value: unknown) {
   if (typeof value !== "string" && typeof value !== "number") return 0;
-  const cents = Number.parseInt(String(value), 10);
-  return Number.isFinite(cents) ? Math.max(0, cents) : 0;
+  if (typeof value === "string" && !/^\d+$/.test(value)) return 0;
+  const cents = Number(value);
+  return Number.isSafeInteger(cents) && cents >= 0 ? cents : 0;
 }
 
 export function usdLabelFromCents(cents: number) {
@@ -113,7 +123,7 @@ function proofBundleFrom(value: unknown) {
 
 function checkoutSessionIsPaid(session: CheckoutSessionResponse | null) {
   const status = session?.status?.trim().toLowerCase();
-  return status === "paid" || status === "complete" || status === "completed" || status === "succeeded" || status === "settled";
+  return session?.ok === true && (status === "paid" || status === "succeeded" || status === "settled");
 }
 
 async function refreshCheckoutSessionIfNeeded(
@@ -134,17 +144,44 @@ export async function createWalletFirstReceizSettlement(
   input: WalletFirstReceizSettlementInput
 ): Promise<WalletFirstReceizSettlement> {
   const totalUsdCents = centsFromUsdAmount(input.amountUsd);
-  const wallet = totalUsdCents > 0 ? await input.receiz.connectWallet() : null;
-  const walletBalanceUsdCents = centsFromReceizValue(wallet?.balanceUsdCents);
-  const funding = walletFirstFunding(totalUsdCents, walletBalanceUsdCents);
+  if (!/^\d+(?:\.\d{1,2})?$/.test(input.amountUsd) || !Number.isSafeInteger(totalUsdCents) || totalUsdCents <= 0) throw new Error("checkout_amount_invalid");
+  if (input.buyerAuthenticated && !input.buyerUserId?.trim()) throw new Error("checkout_buyer_identity_required");
+  if (input.resume) {
+    const original = input.resume.funding;
+    const expected = walletFirstFunding(totalUsdCents, original.walletBalanceUsdCents);
+    const cents = [original.totalUsdCents, original.walletBalanceUsdCents, original.walletAppliedUsdCents, original.cardDeltaUsdCents];
+    if (cents.some((value) => !Number.isSafeInteger(value) || value < 0) ||
+      original.totalUsdCents !== totalUsdCents || original.walletAppliedUsdCents !== expected.walletAppliedUsdCents ||
+      original.cardDeltaUsdCents !== expected.cardDeltaUsdCents) throw new Error("checkout_funding_mismatch");
+  }
+  const wallet = !input.resume && input.buyerAuthenticated ? await input.receiz.connectWallet() : null;
+  if (wallet && !wallet.ok) throw new Error("checkout_wallet_read_failed");
+  if (wallet) {
+    const source = wallet.wallet && typeof wallet.wallet === "object" ? wallet.wallet as Record<string, unknown> : {};
+    const walletUserId = wallet.userId ?? source.userId ?? source.user_id;
+    if (walletUserId !== input.buyerUserId) throw new Error("checkout_buyer_wallet_mismatch");
+  }
+  const walletBalanceUsdCents = wallet ? reserveBalanceUsdCents(wallet) : 0;
+  if (walletBalanceUsdCents === null) throw new Error("checkout_reserve_balance_unavailable: Your funded Reserve balance could not be verified. Reconnect your Identity Seal and try again. No card payment has been created.");
+  const funding = input.resume
+    ? walletFirstFunding(input.resume.funding.totalUsdCents, input.resume.funding.walletBalanceUsdCents)
+    : walletFirstFunding(totalUsdCents, walletBalanceUsdCents);
+  if (funding.walletAppliedUsdCents > 0) {
+    throw new Error("reserve_checkout_execution_required: Funded Reserve requires its admitted source proof and atomic sender/receiver edge commit. A wallet response or continuation cannot authorize a debit. No payment has been taken by this attempt.");
+  }
   const orderId = input.orderId ?? input.idempotencyKey;
-  let walletTransfer: ConnectTransferResponse | null = null;
+  const walletTransfer: ConnectTransferResponse | null = null;
   let checkoutSession: CheckoutSessionResponse | null = null;
 
-  if (funding.cardDeltaUsdCents > 0) {
+  if (input.resume) {
+    checkoutSession = input.merchantUsername
+      ? await input.receiz.merchantCheckoutSession({ checkoutSessionId: input.resume.checkoutSessionId, username: input.merchantUsername })
+      : await input.receiz.checkoutSession({ checkoutSessionId: input.resume.checkoutSessionId });
+  } else if (funding.cardDeltaUsdCents > 0) {
     const cardIdempotencyKey = `${input.idempotencyKey}:card`;
     checkoutSession = await input.receiz.checkout({
       amountUsd: usdAmountFromCents(funding.cardDeltaUsdCents),
+      username: input.merchantUsername,
       currency: "usd",
       uiMode: "embedded",
       referenceId: orderId,
@@ -161,28 +198,35 @@ export async function createWalletFirstReceizSettlement(
       idempotencyKey: cardIdempotencyKey
     });
     checkoutSession = await refreshCheckoutSessionIfNeeded(input.receiz, checkoutSession);
+    if (!checkoutSession?.ok || !checkoutSession.checkoutSessionId) throw new Error("checkout_session_creation_failed");
+  }
+
+  // An idempotent creation can return an already-paid session. Verify that
+  // result through the same merchant status route used by continuation recovery.
+  if (!input.resume && checkoutSessionIsPaid(checkoutSession) && checkoutSession?.checkoutSessionId) {
+    const originalSessionId = checkoutSession.checkoutSessionId;
+    checkoutSession = input.merchantUsername
+      ? await input.receiz.merchantCheckoutSession({ checkoutSessionId: originalSessionId, username: input.merchantUsername })
+      : await input.receiz.checkoutSession({ checkoutSessionId: originalSessionId });
+    if (checkoutSession.checkoutSessionId !== originalSessionId) throw new Error("checkout_session_mismatch");
+  }
+  if (checkoutSession) {
+    if (!checkoutSession.ok) throw new Error("checkout_session_verification_failed");
+    if (input.resume && checkoutSession.checkoutSessionId !== input.resume.checkoutSessionId) throw new Error("checkout_session_mismatch");
+    if (checkoutSession.amountUsdCents !== undefined && centsFromReceizValue(checkoutSession.amountUsdCents) !== funding.cardDeltaUsdCents) throw new Error("checkout_amount_mismatch");
+    if (checkoutSession.referenceId && checkoutSession.referenceId !== orderId) throw new Error("checkout_reference_mismatch");
+    if (input.merchantUsername && checkoutSession.merchantUsername && checkoutSession.merchantUsername !== input.merchantUsername) throw new Error("checkout_merchant_mismatch");
+    if (input.merchantUsername && checkoutSessionIsPaid(checkoutSession) && checkoutSession.amountUsdCents === undefined) throw new Error("checkout_amount_unverified");
+    if (/^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(input.recipientUserId) && checkoutSessionIsPaid(checkoutSession) &&
+      checkoutSession.recipientUserId !== input.recipientUserId) throw new Error("checkout_recipient_mismatch");
   }
 
   const cardSettled = !funding.cardRequired || checkoutSessionIsPaid(checkoutSession);
 
-  if (funding.walletAppliedUsdCents > 0 && cardSettled) {
-    const walletIdempotencyKey = `${input.idempotencyKey}:wallet`;
-    walletTransfer = await input.receiz.connectTransfer(
-      {
-        recipientUserId: input.recipientUserId,
-        unit: "usd",
-        amountUsd: usdAmountFromCents(funding.walletAppliedUsdCents),
-        note: input.note,
-        clientNonce: walletIdempotencyKey
-      },
-      walletIdempotencyKey
-    );
-  }
-
-  const walletSettled = funding.walletAppliedUsdCents === 0 || walletTransfer?.ok === true;
-  const paid = totalUsdCents > 0 && cardSettled && walletSettled;
+  const paid = totalUsdCents > 0 && cardSettled;
+  if (paid) funding.cardRequired = false;
   const paymentRail = paymentRailFromFunding(funding);
-  const proofBundle = proofBundleFrom(checkoutSession?.proofBundle) ?? proofBundleFrom(walletTransfer?.proofBundle);
+  const proofBundle = proofBundleFrom(checkoutSession?.proofBundle);
 
   return {
     ok: true,
@@ -193,7 +237,7 @@ export async function createWalletFirstReceizSettlement(
     checkoutSession,
     paymentRail,
     settlementStatus: !cardSettled ? "card_required" : paid ? "settled" : "pending",
-    receiptId: checkoutSession?.receiptId ?? walletTransfer?.ledgerEventId ?? walletTransfer?.transferId,
+    receiptId: checkoutSession?.receiptId,
     proofBundle
   };
 }

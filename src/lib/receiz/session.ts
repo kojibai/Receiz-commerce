@@ -1,4 +1,5 @@
 import type { NextRequest } from "next/server";
+import { inAppPermissionEntryPath, type InAppPermissionPurpose } from "./in-app-permission";
 
 export type ReceizRequestSession = {
   accessToken: string | undefined;
@@ -26,11 +27,13 @@ export function receizAccessTokenFromRequest(request: NextRequest) {
   return receizRequestSession(request).accessToken;
 }
 
-export function receizAuthorityRequired(returnTo = "/admin") {
+export function receizAuthorityRequired(returnTo = "/admin", purpose?: InAppPermissionPurpose) {
+  const permissionPurpose = purpose ?? (returnTo.startsWith("/admin") ? "store_manage" : "wallet_checkout");
   return {
     ok: false,
     error: "receiz_authority_required",
     message: "Create or restore a verified Receiz proof object in app, then try again.",
-    connectUrl: `/api/auth/receiz/start?returnTo=${encodeURIComponent(returnTo)}`
+    permissionPurpose,
+    connectUrl: inAppPermissionEntryPath(permissionPurpose)
   };
 }

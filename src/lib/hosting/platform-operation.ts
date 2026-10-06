@@ -1,5 +1,7 @@
 import type { CommerceState, HostingConfig } from "@/types/domain";
 import { hostingBillingFromPlatformPayment } from "./platform-billing";
+import type { PaymentContinuation } from "../checkout/payment-continuation";
+import { validateHostingRenewalPeriod, type HostingRenewalPeriod } from "./renewal-period";
 
 export const PLATFORM_OPERATION_SCHEMA = "receiz.app.platform_operation.v1" as const;
 
@@ -12,12 +14,31 @@ export type PlatformOperationIntent = {
   recipientUserId: string;
   plan?: HostingConfig["plan"];
   domain?: string;
+  period?: HostingRenewalPeriod;
 };
 
 export type SettledPlatformOperation = PlatformOperationIntent & {
   receiptId: string;
   settledAt: string;
 };
+
+/** Recover only the operation carried by the authenticated continuation. A
+ * current price or a newly submitted plan cannot replace an already-paid quote. */
+export function platformOperationFromContinuation(
+  continuation: PaymentContinuation,
+  expected: Omit<PlatformOperationIntent, "amountUsd" | "recipientUserId">
+): PlatformOperationIntent {
+  const value = continuation.context.operation;
+  if (!isRecord(value) || value.id !== continuation.referenceId || value.kind !== continuation.purpose ||
+    value.amountUsd !== continuation.amountUsd || typeof value.recipientUserId !== "string" || !value.recipientUserId.trim() ||
+    !/^\d+(?:\.\d{1,2})?$/.test(continuation.amountUsd) || Number(continuation.amountUsd) <= 0 ||
+    ["id", "kind", "merchantReceizId", "tenantHost", "plan", "domain"].some((key) =>
+      value[key] !== expected[key as keyof typeof expected])) throw new Error("platform_payment_continuation_mismatch");
+  if (value.period !== undefined) validateHostingRenewalPeriod(value.period);
+  if (expected.period && (!isRecord(value.period) || value.period.startsAt !== expected.period.startsAt ||
+    value.period.paidThrough !== expected.period.paidThrough)) throw new Error("platform_payment_continuation_mismatch");
+  return value as PlatformOperationIntent;
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
@@ -46,7 +67,8 @@ export function platformOperationMetadata(operation: PlatformOperationIntent) {
     expectedAmountUsd: Number(operation.amountUsd).toFixed(2),
     recipientUserId: operation.recipientUserId,
     ...(operation.plan ? { plan: operation.plan } : {}),
-    ...(operation.domain ? { domain: operation.domain } : {})
+    ...(operation.domain ? { domain: operation.domain } : {}),
+    ...(operation.period ? { periodStartsAt: operation.period.startsAt, paidThrough: operation.period.paidThrough } : {})
   };
 }
 
