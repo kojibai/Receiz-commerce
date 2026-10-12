@@ -1,0 +1,969 @@
+{
+  "schema": "receiz.capability.execution-coverage.v129",
+  "releaseVersion": "129.0.0",
+  "counts": {
+    "sdkClientMethods": 425,
+    "sdkPublicExports": 704,
+    "fullMcpTools": 356,
+    "aiSkills": 43,
+    "fixedGenericAdapters": 86,
+    "fixedCurrentSourceAdapters": 11,
+    "marketplaceNonfinancialTools": 195,
+    "fixedReadOnlyValuationAdapters": 3
+  },
+  "authority": {
+    "inventoryIsExecutionEvidence": false,
+    "mcpIsProofAuthority": false,
+    "strongerTruth": "sealed-receiz-proof-object",
+    "genericInvokeAvailable": false
+  },
+  "fixedCurrentSourceAdapters": [
+    {
+      "tool": "receiz_public_proof_observe",
+      "sdkMethod": "publicProof.observe",
+      "mutation": true,
+      "route": "/api/public-proof/observe",
+      "qualification": "public projection only; sourceUrl current, url SDK compatibility alias"
+    },
+    {
+      "tool": "receiz_world_profile",
+      "sdkMethod": "world.profile",
+      "mutation": false,
+      "route": "/api/world/profile/[username]",
+      "qualification": "explicit profile read; route may append guest view"
+    },
+    {
+      "tool": "receiz_world_message",
+      "sdkMethod": "world.message",
+      "mutation": true,
+      "route": "/api/world/profile/[username]",
+      "qualification": "current guest/session/usage admission; speech not canonical event"
+    },
+    {
+      "tool": "receiz_world_welcome",
+      "sdkMethod": "world.welcome",
+      "mutation": true,
+      "route": "/api/world/profile/[username]",
+      "qualification": "current guest/session/usage admission"
+    },
+    {
+      "tool": "receiz_world_book",
+      "sdkMethod": "world.book",
+      "mutation": true,
+      "route": "/api/world/profile/[username]",
+      "qualification": "current booking admission"
+    },
+    {
+      "tool": "receiz_world_stream_profile",
+      "sdkMethod": "world.streamProfile",
+      "mutation": true,
+      "route": "/api/world/profile/[username]/stream",
+      "maximumEvents": 4096,
+      "maximumProjectedBytes": 4194304,
+      "requiredTerminalEvents": [
+        "reply_done",
+        "done"
+      ],
+      "automaticRetry": false,
+      "exposedSdkCancellationParameter": false
+    },
+    {
+      "tool": "receiz_sports_conformance_history",
+      "sdkMethod": "sports.conformanceHistory",
+      "mutation": false,
+      "route": "/api/game/sports/conformance/history",
+      "qualification": "diagnostics, not artifact verification"
+    },
+    {
+      "tool": "receiz_sports_conformance_rollups",
+      "sdkMethod": "sports.conformanceRollups",
+      "mutation": false,
+      "route": "/api/game/sports/conformance/history/rollups",
+      "qualification": "diagnostics, exact days query"
+    },
+    {
+      "tool": "receiz_sports_badge",
+      "sdkMethod": "sports.badge",
+      "mutation": false,
+      "route": "/api/game/sports/conformance/badge",
+      "qualification": "diagnostic projection"
+    },
+    {
+      "tool": "receiz_verification_conformance",
+      "sdkMethod": "verification.conformance",
+      "mutation": false,
+      "route": "/api/verification/conformance",
+      "qualification": "service report, not selected-file proof verdict"
+    },
+    {
+      "tool": "receiz_connect_record",
+      "sdkMethod": "connect.record",
+      "mutation": true,
+      "route": "/api/connect/record",
+      "requiredScope": "receiz:record",
+      "qualification": "exact account save/showcase intent; complete enclosing PNG verifies before projection/private persistence; save headers descriptive only",
+      "automaticRetry": false,
+      "failedRemoteOutcome": "unknown; remote save/showcase append may precede delivery failure"
+    }
+  ],
+  "nativeCompositionInventories": [
+    {
+      "source": "packages/receiz-mcp-server/src/operations.ts",
+      "boundary": "canonical artifact verification/admission/append/stage/commit"
+    },
+    {
+      "source": "packages/receiz-mcp-server/src/globalReconciliationOperations.ts",
+      "boundary": "additive verified global reconciliation"
+    },
+    {
+      "source": "packages/receiz-mcp-server/src/livingSubjectOperations.ts",
+      "boundary": "living subject/world native adapters"
+    },
+    {
+      "source": "packages/receiz-mcp-server/src/v127SubjectOperations.ts",
+      "boundary": "owner-private runtime, enclosing sealed source custody"
+    },
+    {
+      "source": "packages/receiz-mcp-server/src/v122Operations.ts",
+      "boundary": "typed world/subject/value composition"
+    },
+    {
+      "source": "packages/receiz-mcp-server/src/v123Operations.ts",
+      "boundary": "explicit Settlement/Reserve, proof authority, authenticated scopes"
+    },
+    {
+      "source": "packages/receiz-mcp-server/src/v124Operations.ts",
+      "boundary": "qualified application/audience, held sessions, exact staged plans and SDK-issued handles"
+    },
+    {
+      "source": "packages/receiz-mcp-server/src/v125Operations.ts",
+      "boundary": "lawful action and sender/receiver edge Settlement/Reserve"
+    },
+    {
+      "source": "packages/receiz-mcp-server/src/v125TrustHost.ts",
+      "boundary": "sealed trust sources, exact accepted heads, PBI and typed providers"
+    },
+    {
+      "source": "packages/receiz-mcp-server/src/financialArtifactOperations.ts",
+      "boundary": "exact sealed note delivery and canonical ownership claim"
+    },
+    {
+      "source": "packages/receiz-sdk/src/v1241Capabilities.ts",
+      "boundary": "explicit SDK/MCP/host exposure policy"
+    },
+    {
+      "source": "packages/receiz-mcp-server/src/currentRecordOperations.ts",
+      "boundary": "current record proof creation, single-use account save/showcase consent, canonical enclosing verification and private exact-byte output"
+    }
+  ],
+  "hostComposition": [
+    {
+      "id": "portable-account-continuity",
+      "status": "sdk-private-boundary",
+      "sdk": [
+        "appendReceizIdentityPortableState",
+        "verifyReceizIdentityPortableStateProof",
+        "projectReceizIdentityAccount"
+      ],
+      "required": "complete verified Identity Seal/Record/Key remains private device truth"
+    },
+    {
+      "id": "identity-signed-public-store-publish",
+      "status": "sdk-host-only-no-dedicated-mcp-adapter",
+      "sdk": [
+        "publicStore.signPublish",
+        "publicStore.publishSigned",
+        "publicStore.publishWithIdentityProof",
+        "publicStore.assertSignedPublishContract"
+      ],
+      "required": "trusted host holds exact identity key/passphrase and merchant proof"
+    },
+    {
+      "id": "offline-note-custody",
+      "status": "sdk-device-only-no-dedicated-mcp-adapter",
+      "sdk": [
+        "createReceizOfflineNoteReceivingSeal",
+        "createReceizOfflineNoteCustodyQualification",
+        "createReceizOfflineNoteReceivingCustodyCommitment",
+        "createReceizOfflineNoteDestination",
+        "prepareReceizOfflineNoteWebAuthnActivationChallenge",
+        "finalizeReceizOfflineNoteWebAuthnActivationReceipt",
+        "verifyReceizOfflineNoteWebAuthnActivationReceipt",
+        "prepareReceizOfflineNoteWebAuthnConsumptionChallenge",
+        "finalizeReceizOfflineNoteWebAuthnConsumptionReceipt",
+        "verifyReceizOfflineNoteWebAuthnConsumptionReceipt",
+        "createReceizOfflineNoteIrreversibleConsumptionReceipt"
+      ],
+      "required": "actual receiving/device custody and WebAuthn assertions; enclosing note verification"
+    },
+    {
+      "id": "offline-reserve-consumption",
+      "status": "sdk-device-only-no-dedicated-mcp-adapter",
+      "sdk": [
+        "createReceizOfflineReserveFundingBinding",
+        "prepareReceizOfflineReserveWebAuthnConsumptionChallenge",
+        "finalizeReceizOfflineReserveWebAuthnConsumptionReceipt",
+        "verifyReceizOfflineReserveWebAuthnConsumptionReceipt",
+        "reduceReceizWholeNoteCapacity"
+      ],
+      "required": "exact Reserve funding proof and actual qualified device assertion"
+    },
+    {
+      "id": "legacy-account-twin-binary",
+      "status": "sdk-host-only-no-dedicated-mcp-adapter",
+      "sdk": [
+        "twin.exportMind",
+        "twin.importMind"
+      ],
+      "required": "exact private account-Twin source bytes; subject Twin has separate adapters"
+    },
+    {
+      "id": "receiz-id-conversation",
+      "status": "sdk-with-bounded-mcp-projection",
+      "sdk": [
+        "createReceizConversationEpochSecretV1",
+        "openReceizConversationEpochGrantV1",
+        "encryptReceizConversationMessageV1",
+        "decryptReceizConversationMessageV1"
+      ],
+      "required": "clear messages and epoch secrets remain trusted-host custody"
+    },
+    {
+      "id": "held-material-and-progressive-playback",
+      "status": "sdk-with-bounded-mcp-projection",
+      "sdk": [
+        "buildReceizMaterialCompositeTransport",
+        "publishReceizMaterialCompositeTransport",
+        "openReceizMaterialSourceRangeReader"
+      ],
+      "required": "verify enclosing artifact before native-byte reconstruction/playback"
+    },
+    {
+      "id": "identity-oauth-host-mechanics",
+      "status": "sdk-host-only-private-custody",
+      "sdk": [
+        "identity.createReceizId",
+        "identity.readArtifact",
+        "identity.signLoginProof",
+        "identity.signCapability",
+        "identity.continueReceizId",
+        "identity.token",
+        "identity.introspect",
+        "identity.revoke",
+        "identity.buildReceizIdContinueRequest",
+        "identity.verifyLoginProof",
+        "identity.bootstrap",
+        "identity.checkUsernameAvailability",
+        "identity.updateProfile",
+        "identity.userinfo",
+        "identity.jwks",
+        "identity.openIdConfiguration",
+        "identity.oauthAuthorizationServerMetadata"
+      ],
+      "required": "real identity proof, device interaction and private credential custody for private paths; public discovery/availability remains host onboarding mechanics, with frozen account entry"
+    }
+  ],
+  "intentionalExclusions": [
+    {
+      "sdk": [
+        "connect.mintNote"
+      ],
+      "status": "disabled",
+      "reason": "wallet_note_receiving_seal_required; no success-capable issue"
+    },
+    {
+      "sdk": [
+        "connect.claimNote",
+        "payments.embeddedNoteClaim"
+      ],
+      "status": "sdk-compatibility-only",
+      "reason": "raw token cannot replace enclosing sealed-note receiving-custody admission"
+    },
+    {
+      "sdk": [
+        "artifacts.admitAndRecover",
+        "artifacts.planRecovery",
+        "artifacts.commitRecovery"
+      ],
+      "status": "historical-artifact-compatibility",
+      "reason": "retained historical methods, not current canonical adapter aliases"
+    },
+    {
+      "sdk": [
+        "subjectCoordination.planMessage",
+        "subjectCoordination.applyMessage"
+      ],
+      "status": "close-effect-only",
+      "reason": "encrypted message effect unsupported in this SDK family"
+    },
+    {
+      "sdk": [
+        "historical-http"
+      ],
+      "status": "explicit-host-required",
+      "reason": "69 fixed generic adapters and other historical contracts fail before dispatch without explicit compatibility transport/host"
+    }
+  ],
+  "evidenceLimits": {
+    "enumerationProvesExecution": false,
+    "transportFixtureProvesLiveIntegration": false,
+    "signedFixtureProvesLiveDeployment": false,
+    "liveProviderOrFinancialEvidenceRequired": true
+  },
+  "currentHttpRouteAudit": {
+    "sourceOnly": true,
+    "literalAndExpandedCurrentRouteMethods": 73,
+    "routeExistenceIsLiveEvidence": false,
+    "rows": [
+      {
+        "sdkMethod": "appState.byCreator",
+        "source": "packages/receiz-sdk/src/index.ts",
+        "currentRouteFiles": [
+          "app/api/public-proof/creator/[externalCreatorId]/route.ts"
+        ],
+        "disposition": "fixed-mcp-or-native-composition"
+      },
+      {
+        "sdkMethod": "appState.byHost",
+        "source": "packages/receiz-sdk/src/index.ts",
+        "currentRouteFiles": [
+          "app/api/public-proof/by-url/route.ts"
+        ],
+        "disposition": "covered-alias",
+        "reason": "same by-url route beneath appState.resolve",
+        "mcpTool": "receiz_app_state_resolve"
+      },
+      {
+        "sdkMethod": "appState.byId",
+        "source": "packages/receiz-sdk/src/index.ts",
+        "currentRouteFiles": [
+          "app/api/public-proof/[id]/route.ts"
+        ],
+        "disposition": "fixed-mcp-or-native-composition"
+      },
+      {
+        "sdkMethod": "appState.byNamespace",
+        "source": "packages/receiz-sdk/src/index.ts",
+        "currentRouteFiles": [
+          "app/api/public-proof/namespace/[namespace]/route.ts"
+        ],
+        "disposition": "fixed-mcp-or-native-composition"
+      },
+      {
+        "sdkMethod": "appState.byUrl",
+        "source": "packages/receiz-sdk/src/index.ts",
+        "currentRouteFiles": [
+          "app/api/public-proof/by-url/route.ts"
+        ],
+        "disposition": "fixed-mcp-or-native-composition"
+      },
+      {
+        "sdkMethod": "appState.publish",
+        "source": "packages/receiz-sdk/src/index.ts",
+        "currentRouteFiles": [
+          "app/api/public-proof/registry/feed/route.ts"
+        ],
+        "disposition": "fixed-mcp-or-native-composition"
+      },
+      {
+        "sdkMethod": "appState.publishRecord",
+        "source": "packages/receiz-sdk/src/index.ts",
+        "currentRouteFiles": [
+          "app/api/public-proof/registry/feed/route.ts"
+        ],
+        "disposition": "covered-alias",
+        "reason": "same registry-feed publication beneath appState.publish",
+        "mcpTool": "receiz_app_state_publish"
+      },
+      {
+        "sdkMethod": "assets.createProofObject",
+        "source": "packages/receiz-sdk/src/index.ts",
+        "currentRouteFiles": [
+          "app/api/document-verify/route.ts"
+        ],
+        "disposition": "fixed-mcp-or-native-composition"
+      },
+      {
+        "sdkMethod": "auth.canUseRails",
+        "source": "packages/receiz-sdk/src/index.ts",
+        "currentRouteFiles": [
+          "app/api/sdk/v1/auth/granted-scopes/route.ts"
+        ],
+        "disposition": "fixed-mcp-or-native-composition"
+      },
+      {
+        "sdkMethod": "auth.grantedScopes",
+        "source": "packages/receiz-sdk/src/index.ts",
+        "currentRouteFiles": [
+          "app/api/sdk/v1/auth/granted-scopes/route.ts"
+        ],
+        "disposition": "fixed-mcp-or-native-composition"
+      },
+      {
+        "sdkMethod": "auth.missingScopesForRails",
+        "source": "packages/receiz-sdk/src/index.ts",
+        "currentRouteFiles": [
+          "app/api/sdk/v1/auth/granted-scopes/route.ts"
+        ],
+        "disposition": "fixed-mcp-or-native-composition"
+      },
+      {
+        "sdkMethod": "commerce.oneClickCheckout",
+        "source": "packages/receiz-sdk/src/index.ts",
+        "currentRouteFiles": [
+          "app/api/connect/wallet/me/route.ts",
+          "app/api/connect/payments/checkout/route.ts"
+        ],
+        "disposition": "fixed-mcp-or-native-composition"
+      },
+      {
+        "sdkMethod": "connect.checkout",
+        "source": "packages/receiz-sdk/src/index.ts",
+        "currentRouteFiles": [
+          "app/api/connect/payments/checkout/route.ts"
+        ],
+        "disposition": "fixed-mcp-or-native-composition"
+      },
+      {
+        "sdkMethod": "connect.checkoutSession",
+        "source": "packages/receiz-sdk/src/index.ts",
+        "currentRouteFiles": [
+          "app/api/connect/payments/session/route.ts"
+        ],
+        "disposition": "fixed-mcp-or-native-composition"
+      },
+      {
+        "sdkMethod": "connect.claimNote",
+        "source": "packages/receiz-sdk/src/index.ts",
+        "currentRouteFiles": [
+          "app/api/connect/payments/notes/claim/route.ts"
+        ],
+        "disposition": "sdk-compatibility-only",
+        "reason": "raw note token cannot replace stronger enclosing receiving-custody proof"
+      },
+      {
+        "sdkMethod": "connect.downloadNote",
+        "source": "packages/receiz-sdk/src/index.ts",
+        "currentRouteFiles": [
+          "app/api/connect/payments/notes/[noteId]/download/route.ts"
+        ],
+        "disposition": "fixed-mcp-or-native-composition"
+      },
+      {
+        "sdkMethod": "connect.mintNote",
+        "source": "packages/receiz-sdk/src/index.ts",
+        "currentRouteFiles": [
+          "app/api/connect/payments/notes/mint/route.ts"
+        ],
+        "disposition": "disabled",
+        "reason": "wallet_note_receiving_seal_required"
+      },
+      {
+        "sdkMethod": "connect.record",
+        "source": "packages/receiz-sdk/src/index.ts",
+        "currentRouteFiles": [
+          "app/api/connect/record/route.ts"
+        ],
+        "disposition": "fixed-mcp-or-native-composition"
+      },
+      {
+        "sdkMethod": "connect.transfer",
+        "source": "packages/receiz-sdk/src/index.ts",
+        "currentRouteFiles": [
+          "app/api/connect/transfers/route.ts"
+        ],
+        "disposition": "fixed-mcp-or-native-composition"
+      },
+      {
+        "sdkMethod": "connect.verifyArtifact",
+        "source": "packages/receiz-sdk/src/index.ts",
+        "currentRouteFiles": [
+          "app/api/connect/verify/route.ts"
+        ],
+        "disposition": "covered-canonical-composition",
+        "reason": "delegated Connect verifier uses same canonical complete-file verifier; file remains host custody",
+        "mcpTool": "receiz_verify_uploaded_artifact"
+      },
+      {
+        "sdkMethod": "connect.wallet",
+        "source": "packages/receiz-sdk/src/index.ts",
+        "currentRouteFiles": [
+          "app/api/connect/wallet/me/route.ts"
+        ],
+        "disposition": "fixed-mcp-or-native-composition"
+      },
+      {
+        "sdkMethod": "customers.bootstrap",
+        "source": "packages/receiz-sdk/src/index.ts",
+        "currentRouteFiles": [
+          "app/api/connect/wallet/me/route.ts"
+        ],
+        "disposition": "fixed-mcp-or-native-composition"
+      },
+      {
+        "sdkMethod": "customers.bootstrapSession",
+        "source": "packages/receiz-sdk/src/index.ts",
+        "currentRouteFiles": [
+          "app/api/connect/wallet/me/route.ts"
+        ],
+        "disposition": "fixed-mcp-or-native-composition"
+      },
+      {
+        "sdkMethod": "identity.bootstrap",
+        "source": "packages/receiz-sdk/src/index.ts",
+        "currentRouteFiles": [
+          "app/api/connect/login/bootstrap/[username]/route.ts"
+        ],
+        "disposition": "sdk-host-identity-onboarding",
+        "reason": "existing identity/OAuth/onboarding contract; private custody where required, frozen account-entry behavior"
+      },
+      {
+        "sdkMethod": "identity.checkUsernameAvailability",
+        "source": "packages/receiz-sdk/src/index.ts",
+        "currentRouteFiles": [
+          "app/api/profile/username/availability/route.ts"
+        ],
+        "disposition": "sdk-host-identity-onboarding",
+        "reason": "existing identity/OAuth/onboarding contract; private custody where required, frozen account-entry behavior"
+      },
+      {
+        "sdkMethod": "identity.continueReceizId",
+        "source": "packages/receiz-sdk/src/index.ts",
+        "currentRouteFiles": [
+          "app/api/auth/receiz-id/continue/route.ts"
+        ],
+        "disposition": "sdk-host-identity-onboarding",
+        "reason": "existing identity/OAuth/onboarding contract; private custody where required, frozen account-entry behavior"
+      },
+      {
+        "sdkMethod": "identity.introspect",
+        "source": "packages/receiz-sdk/src/index.ts",
+        "currentRouteFiles": [
+          "app/api/oidc/introspect/route.ts"
+        ],
+        "disposition": "sdk-host-identity-onboarding",
+        "reason": "existing identity/OAuth/onboarding contract; private custody where required, frozen account-entry behavior"
+      },
+      {
+        "sdkMethod": "identity.jwks",
+        "source": "packages/receiz-sdk/src/index.ts",
+        "currentRouteFiles": [
+          "app/api/oidc/jwks/route.ts"
+        ],
+        "disposition": "sdk-host-identity-onboarding",
+        "reason": "existing identity/OAuth/onboarding contract; private custody where required, frozen account-entry behavior"
+      },
+      {
+        "sdkMethod": "identity.revoke",
+        "source": "packages/receiz-sdk/src/index.ts",
+        "currentRouteFiles": [
+          "app/api/oidc/revoke/route.ts"
+        ],
+        "disposition": "sdk-host-identity-onboarding",
+        "reason": "existing identity/OAuth/onboarding contract; private custody where required, frozen account-entry behavior"
+      },
+      {
+        "sdkMethod": "identity.token",
+        "source": "packages/receiz-sdk/src/index.ts",
+        "currentRouteFiles": [
+          "app/api/oidc/token/route.ts"
+        ],
+        "disposition": "sdk-host-identity-onboarding",
+        "reason": "existing identity/OAuth/onboarding contract; private custody where required, frozen account-entry behavior"
+      },
+      {
+        "sdkMethod": "identity.updateProfile",
+        "source": "packages/receiz-sdk/src/index.ts",
+        "currentRouteFiles": [
+          "app/api/receiz/identity/profile/route.ts"
+        ],
+        "disposition": "sdk-host-identity-onboarding",
+        "reason": "existing identity/OAuth/onboarding contract; private custody where required, frozen account-entry behavior"
+      },
+      {
+        "sdkMethod": "identity.userinfo",
+        "source": "packages/receiz-sdk/src/index.ts",
+        "currentRouteFiles": [
+          "app/api/oidc/userinfo/route.ts"
+        ],
+        "disposition": "sdk-host-identity-onboarding",
+        "reason": "existing identity/OAuth/onboarding contract; private custody where required, frozen account-entry behavior"
+      },
+      {
+        "sdkMethod": "ownership.claimBearerAsset",
+        "source": "packages/receiz-sdk/src/index.ts",
+        "currentRouteFiles": [
+          "app/api/document-verify/route.ts"
+        ],
+        "disposition": "fixed-mcp-or-native-composition"
+      },
+      {
+        "sdkMethod": "payments.embeddedCheckout",
+        "source": "packages/receiz-sdk/src/index.ts",
+        "currentRouteFiles": [
+          "app/api/payments/embed/checkout/route.ts"
+        ],
+        "disposition": "fixed-mcp-or-native-composition"
+      },
+      {
+        "sdkMethod": "payments.embeddedNoteClaim",
+        "source": "packages/receiz-sdk/src/index.ts",
+        "currentRouteFiles": [
+          "app/api/payments/embed/note-claim/route.ts"
+        ],
+        "disposition": "sdk-compatibility-only",
+        "reason": "raw note token cannot replace stronger enclosing receiving-custody proof"
+      },
+      {
+        "sdkMethod": "profile.update",
+        "source": "packages/receiz-sdk/src/index.ts",
+        "currentRouteFiles": [
+          "app/api/receiz/identity/profile/route.ts"
+        ],
+        "disposition": "fixed-mcp-or-native-composition"
+      },
+      {
+        "sdkMethod": "publicProof.byCreator",
+        "source": "packages/receiz-sdk/src/index.ts",
+        "currentRouteFiles": [
+          "app/api/public-proof/creator/[externalCreatorId]/route.ts"
+        ],
+        "disposition": "covered-alias",
+        "reason": "same creator route",
+        "mcpTool": "receiz_app_state_by_creator"
+      },
+      {
+        "sdkMethod": "publicProof.byId",
+        "source": "packages/receiz-sdk/src/index.ts",
+        "currentRouteFiles": [
+          "app/api/public-proof/[id]/route.ts"
+        ],
+        "disposition": "fixed-mcp-or-native-composition"
+      },
+      {
+        "sdkMethod": "publicProof.byUrl",
+        "source": "packages/receiz-sdk/src/index.ts",
+        "currentRouteFiles": [
+          "app/api/public-proof/by-url/route.ts"
+        ],
+        "disposition": "fixed-mcp-or-native-composition"
+      },
+      {
+        "sdkMethod": "publicProof.observe",
+        "source": "packages/receiz-sdk/src/index.ts",
+        "currentRouteFiles": [
+          "app/api/public-proof/observe/route.ts"
+        ],
+        "disposition": "fixed-mcp-or-native-composition"
+      },
+      {
+        "sdkMethod": "publicProof.registryFeed",
+        "source": "packages/receiz-sdk/src/index.ts",
+        "currentRouteFiles": [
+          "app/api/public-proof/registry/feed/route.ts"
+        ],
+        "disposition": "covered-alias",
+        "reason": "same registry-feed route",
+        "mcpTool": "receiz_app_state_publish"
+      },
+      {
+        "sdkMethod": "publicStore.publish",
+        "source": "packages/receiz-sdk/src/index.ts",
+        "currentRouteFiles": [
+          "app/api/public-proof/registry/feed/route.ts"
+        ],
+        "disposition": "fixed-mcp-or-native-composition"
+      },
+      {
+        "sdkMethod": "publicStore.publishSigned",
+        "source": "packages/receiz-sdk/src/index.ts",
+        "currentRouteFiles": [
+          "app/api/public-proof/registry/feed/route.ts"
+        ],
+        "disposition": "sdk-host-private-identity-key",
+        "reason": "exact identity-signed publication requires host key/passphrase custody"
+      },
+      {
+        "sdkMethod": "publicStore.publishWithIdentityProof",
+        "source": "packages/receiz-sdk/src/index.ts",
+        "currentRouteFiles": [
+          "app/api/public-proof/registry/feed/route.ts"
+        ],
+        "disposition": "sdk-host-private-identity-key",
+        "reason": "exact identity-signed publication requires host key/passphrase custody"
+      },
+      {
+        "sdkMethod": "sports.badge",
+        "source": "packages/receiz-sdk/src/index.ts",
+        "currentRouteFiles": [
+          "app/api/game/sports/conformance/badge/route.ts"
+        ],
+        "disposition": "fixed-mcp-or-native-composition"
+      },
+      {
+        "sdkMethod": "sports.conformance",
+        "source": "packages/receiz-sdk/src/index.ts",
+        "currentRouteFiles": [
+          "app/api/game/sports/conformance/route.ts"
+        ],
+        "disposition": "fixed-mcp-or-native-composition"
+      },
+      {
+        "sdkMethod": "sports.conformanceHistory",
+        "source": "packages/receiz-sdk/src/index.ts",
+        "currentRouteFiles": [
+          "app/api/game/sports/conformance/history/route.ts"
+        ],
+        "disposition": "fixed-mcp-or-native-composition"
+      },
+      {
+        "sdkMethod": "sports.conformanceRollups",
+        "source": "packages/receiz-sdk/src/index.ts",
+        "currentRouteFiles": [
+          "app/api/game/sports/conformance/history/rollups/route.ts"
+        ],
+        "disposition": "fixed-mcp-or-native-composition"
+      },
+      {
+        "sdkMethod": "twin.approval",
+        "source": "packages/receiz-sdk/src/index.ts",
+        "currentRouteFiles": [
+          "app/api/connect/twin/approval/route.ts"
+        ],
+        "disposition": "fixed-mcp-or-native-composition"
+      },
+      {
+        "sdkMethod": "twin.approveMarketIntent",
+        "source": "packages/receiz-sdk/src/index.ts",
+        "currentRouteFiles": [
+          "app/api/connect/twin/market/intents/[intentId]/approve/route.ts"
+        ],
+        "disposition": "fixed-mcp-or-native-composition"
+      },
+      {
+        "sdkMethod": "twin.approvePromotion",
+        "source": "packages/receiz-sdk/src/index.ts",
+        "currentRouteFiles": [
+          "app/api/connect/twin/approval/route.ts"
+        ],
+        "disposition": "fixed-mcp-or-native-composition"
+      },
+      {
+        "sdkMethod": "twin.createMarketIntent",
+        "source": "packages/receiz-sdk/src/index.ts",
+        "currentRouteFiles": [
+          "app/api/connect/twin/market/intents/route.ts"
+        ],
+        "disposition": "fixed-mcp-or-native-composition"
+      },
+      {
+        "sdkMethod": "twin.exportMind",
+        "source": "packages/receiz-sdk/src/index.ts",
+        "currentRouteFiles": [
+          "app/api/connect/twin/mind/export/route.tsx"
+        ],
+        "disposition": "sdk-host-private-binary",
+        "reason": "legacy account-Twin bytes; distinct from subject-Twin source"
+      },
+      {
+        "sdkMethod": "twin.importMind",
+        "source": "packages/receiz-sdk/src/index.ts",
+        "currentRouteFiles": [
+          "app/api/connect/twin/mind/import/route.ts"
+        ],
+        "disposition": "sdk-host-private-binary",
+        "reason": "legacy account-Twin bytes; distinct from subject-Twin source"
+      },
+      {
+        "sdkMethod": "twin.importMindSummary",
+        "source": "packages/receiz-sdk/src/index.ts",
+        "currentRouteFiles": [
+          "app/api/connect/twin/mind/import/route.ts"
+        ],
+        "disposition": "fixed-mcp-or-native-composition"
+      },
+      {
+        "sdkMethod": "twin.marketIntents",
+        "source": "packages/receiz-sdk/src/index.ts",
+        "currentRouteFiles": [
+          "app/api/connect/twin/market/intents/route.ts"
+        ],
+        "disposition": "fixed-mcp-or-native-composition"
+      },
+      {
+        "sdkMethod": "twin.marketMandate",
+        "source": "packages/receiz-sdk/src/index.ts",
+        "currentRouteFiles": [
+          "app/api/connect/twin/market/mandate/route.ts"
+        ],
+        "disposition": "fixed-mcp-or-native-composition"
+      },
+      {
+        "sdkMethod": "twin.saveMarketMandate",
+        "source": "packages/receiz-sdk/src/index.ts",
+        "currentRouteFiles": [
+          "app/api/connect/twin/market/mandate/route.ts"
+        ],
+        "disposition": "fixed-mcp-or-native-composition"
+      },
+      {
+        "sdkMethod": "verification.conformance",
+        "source": "packages/receiz-sdk/src/index.ts",
+        "currentRouteFiles": [
+          "app/api/verification/conformance/route.ts"
+        ],
+        "disposition": "fixed-mcp-or-native-composition"
+      },
+      {
+        "sdkMethod": "wallet.actionLedger",
+        "source": "packages/receiz-sdk/src/index.ts",
+        "currentRouteFiles": [
+          "app/api/ledger/actions/public/route.ts"
+        ],
+        "disposition": "fixed-mcp-or-native-composition"
+      },
+      {
+        "sdkMethod": "wallet.publicLedger",
+        "source": "packages/receiz-sdk/src/index.ts",
+        "currentRouteFiles": [
+          "app/api/wallet/ledger/public/route.ts"
+        ],
+        "disposition": "fixed-mcp-or-native-composition"
+      },
+      {
+        "sdkMethod": "webhookEndpoints.create",
+        "source": "packages/receiz-sdk/src/index.ts",
+        "currentRouteFiles": [
+          "app/api/developers/webhooks/route.ts"
+        ],
+        "disposition": "fixed-mcp-or-native-composition"
+      },
+      {
+        "sdkMethod": "webhookEndpoints.delete",
+        "source": "packages/receiz-sdk/src/index.ts",
+        "currentRouteFiles": [
+          "app/api/developers/webhooks/[endpointId]/route.ts"
+        ],
+        "disposition": "fixed-mcp-or-native-composition"
+      },
+      {
+        "sdkMethod": "webhookEndpoints.list",
+        "source": "packages/receiz-sdk/src/index.ts",
+        "currentRouteFiles": [
+          "app/api/developers/webhooks/route.ts"
+        ],
+        "disposition": "fixed-mcp-or-native-composition"
+      },
+      {
+        "sdkMethod": "webhookEndpoints.rotateSecret",
+        "source": "packages/receiz-sdk/src/index.ts",
+        "currentRouteFiles": [
+          "app/api/developers/webhooks/[endpointId]/rotate-secret/route.ts"
+        ],
+        "disposition": "fixed-mcp-or-native-composition"
+      },
+      {
+        "sdkMethod": "webhookEndpoints.sendTest",
+        "source": "packages/receiz-sdk/src/index.ts",
+        "currentRouteFiles": [
+          "app/api/developers/webhooks/[endpointId]/test-event/route.ts"
+        ],
+        "disposition": "fixed-mcp-or-native-composition"
+      },
+      {
+        "sdkMethod": "webhookEndpoints.update",
+        "source": "packages/receiz-sdk/src/index.ts",
+        "currentRouteFiles": [
+          "app/api/developers/webhooks/[endpointId]/route.ts"
+        ],
+        "disposition": "fixed-mcp-or-native-composition"
+      },
+      {
+        "sdkMethod": "world.book",
+        "source": "packages/receiz-sdk/src/index.ts",
+        "currentRouteFiles": [
+          "app/api/world/profile/[username]/route.ts"
+        ],
+        "disposition": "fixed-mcp-or-native-composition"
+      },
+      {
+        "sdkMethod": "world.message",
+        "source": "packages/receiz-sdk/src/index.ts",
+        "currentRouteFiles": [
+          "app/api/world/profile/[username]/route.ts"
+        ],
+        "disposition": "fixed-mcp-or-native-composition"
+      },
+      {
+        "sdkMethod": "world.profile",
+        "source": "packages/receiz-sdk/src/index.ts",
+        "currentRouteFiles": [
+          "app/api/world/profile/[username]/route.ts"
+        ],
+        "disposition": "fixed-mcp-or-native-composition"
+      },
+      {
+        "sdkMethod": "world.publicSnapshot",
+        "source": "packages/receiz-sdk/src/index.ts",
+        "currentRouteFiles": [
+          "app/api/world/public/route.ts"
+        ],
+        "disposition": "fixed-mcp-or-native-composition"
+      },
+      {
+        "sdkMethod": "world.streamProfile",
+        "source": "packages/receiz-sdk/src/index.ts",
+        "currentRouteFiles": [
+          "app/api/world/profile/[username]/stream/route.ts"
+        ],
+        "disposition": "fixed-mcp-or-native-composition"
+      },
+      {
+        "sdkMethod": "world.welcome",
+        "source": "packages/receiz-sdk/src/index.ts",
+        "currentRouteFiles": [
+          "app/api/world/profile/[username]/route.ts"
+        ],
+        "disposition": "fixed-mcp-or-native-composition"
+      }
+    ],
+    "additionalHostDiscoveryMethods": [
+      "identity.openIdConfiguration",
+      "identity.oauthAuthorizationServerMetadata"
+    ],
+    "scope": "current literal HTTP methods and expanded fixed private transport helpers; dynamic/local SDK runtimes are accounted by native composition inventories"
+  },
+  "fixedReadOnlyValuationAdapters": [
+    {
+      "tool": "receiz_proof_value_inspect",
+      "sdkExports": [
+        "projectReceizProofValueV129",
+        "exportReceizProofValueReplayV129"
+      ],
+      "mutation": false,
+      "source": "canonical verified exact local artifact; portable-state admission only for the verified portable carrier",
+      "coordinates": "explicit valuationKaiUPulse",
+      "optionalReplay": "includeReplay returns the SDK public replay package without writing files"
+    },
+    {
+      "tool": "receiz_proof_value_sample",
+      "sdkExports": [
+        "sampleReceizProofValueV129",
+        "exportReceizProofValueReplayV129"
+      ],
+      "mutation": false,
+      "source": "same admitted enclosing artifact and source-carried history/policy",
+      "coordinates": "explicit bounded valuationKaiUPulses; recomputed model samples, not measured historical prices",
+      "optionalReplay": "includeReplay returns the SDK public replay package without writing files"
+    },
+    {
+      "tool": "receiz_proof_value_replay_verify",
+      "sdkExports": [
+        "verifyReceizProofValueReplayV129"
+      ],
+      "mutation": false,
+      "source": "exact digest-bound local replay package; SDK verifies every complete enclosing proof before projection",
+      "coordinates": "carried replay coordinates checked and recomputed by SDK"
+    }
+  ]
+}

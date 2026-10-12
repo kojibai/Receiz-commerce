@@ -12,9 +12,9 @@ const rootTypes = readFileSync(join(packageRoot, "dist/index.d.ts"), "utf8");
 const canonicalTypes = readFileSync(join(packageRoot, "dist/verifier/canonical.d.ts"), "utf8");
 const verificationLimits = readFileSync(join(packageRoot, "dist/verificationLimits.js"), "utf8");
 
-describe("Receiz v128.0.0 upstream streaming-verifier export gap", () => {
+describe("Receiz v129.0.0 upstream streaming-verifier export gap", () => {
   it("records the confirmed package boundary as a private next-release requirement", () => {
-    assert.equal(packageJson.version, "128.0.0");
+    assert.equal(packageJson.version, "129.0.0");
     assert.match(canonicalTypes, /verifyReceizTrailerFileStreaming/);
     assert.match(canonicalTypes, /validateReceizExactByteVerification/);
     assert.doesNotMatch(rootTypes, /verifyReceizTrailerFileStreaming/);

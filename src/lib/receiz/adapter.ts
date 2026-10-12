@@ -485,7 +485,7 @@ function defaultDoctorOptions(): ReceizCapabilitiesOptions {
 export function createReceizCommerceAdapter(
   options: ReceizClientOptions = receizClientOptionsFromEnv()
 ): ReceizCommerceAdapter {
-  const applicationId = options.applicationId ?? (process.env.RECEIZ_APPLICATION_ID?.trim() || undefined);
+  const applicationId = options.applicationId ?? (process.env.RECEIZ_CLIENT_ID || process.env.RECEIZ_APPLICATION_ID || undefined);
   const client = createReceizClient({ ...options, ...(applicationId ? { applicationId } : {}) });
   const hasAccessToken = Boolean(options.accessToken);
   const hasWebhookSecret = Boolean(process.env.RECEIZ_WEBHOOK_SECRET);

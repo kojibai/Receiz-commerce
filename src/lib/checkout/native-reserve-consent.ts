@@ -2,7 +2,7 @@ import { digestReceizCanonicalV122, receizOidcScopesForRails } from "@receiz/sdk
 import type { NativeReserveQuote } from "./native-reserve-execution";
 
 export function nativeReserveScopes() {
-  return [...new Set(receizOidcScopesForRails("reserve", "domains"))].sort();
+  return [...new Set(["receiz:subjects.write", ...receizOidcScopesForRails("reserve", "domains")])].sort();
 }
 
 export function nativeReserveConsentDigest(quote: NativeReserveQuote, exactPlanDigest: string) {

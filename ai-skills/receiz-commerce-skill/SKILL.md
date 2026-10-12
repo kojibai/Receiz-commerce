@@ -7,6 +7,12 @@ description: Use when an agent must create, explain, inspect, or verify Receiz c
 
 Receiz commerce is proof-native commerce. A product page, storefront, order view, receipt, certificate, note, or resale route must preserve product proof, ownership state, settlement state, and public proof surfaces.
 
+## Registered native application and purchase evidence
+
+For registered native APIs, configure `RECEIZ_APPLICATION_ID` with the **exact registered OIDC client ID**, separate from the subject's Receiz ID, username, and client secret. Preserve its bytes and case; never normalize, strip `rc_`, or substitute an alias. Keep client secrets server-side. Obtain the minimum proof-authority grant, publish the complete current subject source, and open the authority session through the [registered native session example](../receiz-proof-authority/examples/registered-native-session.md).
+
+Payment, wallet funding, and bearer delivery are distinct verifiable stages. A successful card checkout alone does not establish an asset purchase or ownership transfer. Verify actual Reserve credit before resuming quote review and payment approval; verify seller proceeds, actual bearer artifact delivery, buyer claim, custody, and asset use separately. Follow the [no-database store example](examples/create-no-db-store.md) for live integration evidence and retry boundaries.
+
 ## When To Use This Skill
 
 - Use for product proof pages, storefronts, marketplace listings, checkout explanations, buyer/seller copy, no-database stores, receipt proof, and ownership verification.
@@ -50,9 +56,13 @@ Receiz commerce is proof-native commerce. A product page, storefront, order view
 
 Use MCP read tools to resolve and inspect product proof first: `receiz_asset_by_url`, `receiz_asset_by_id`, `receiz_inspect_proof_object`, and `receiz_public_store_resolve`. Resolution and inspection are not verification. Use SDK `verification.verifyArtifact(file)` for the integrity-and-continuity verdict. Use `receiz_public_store_publish`, `receiz_sandbox_seed_store`, or `receiz_sandbox_checkout` only when the user explicitly asks for a write or sandbox action and confirms the exact inputs. See [resources/product-proof-flow.md](resources/product-proof-flow.md).
 
+The full MCP library supports financial workflows: `receiz_commerce_one_click_checkout` composes actual card-session creation; `receiz_v123_value_execute_settlement` and `receiz_v123_value_execute_reserve` call the distinct canonical value rails; V125 edge tools cover exact plan, verification, commit preparation, recovery, and sender/receiver Settlement/Reserve admission. Current wallet, funding, merchant, note-download, and reference-based canonical bearer-claim adapters are defined in the [full financial tool map](../receiz-mcp-agent-skill/resources/full-financial-tool-map.md). The [commerce example](examples/create-no-db-store.md) composes those actual tools. The ChatGPT Marketplace plugin's restricted nonfinancial profile does not restrict the full library. Live financial completion still requires actual funding, payment, delivery, claim, and custody evidence.
+
 ## SDK Usage Rules
 
 Use `createReceizClient` and the commerce, public store, verification, app state, payments, and connect rails. Prefer `receiz.publicStore.resolve`, `receiz.publicStore.publish`, `receiz.verification.verifyArtifact`, `receiz.connect.checkout`, `receiz.connect.checkoutSession`, `receiz.commerce`, `receiz.payments`, `assertReceizAssetManifest`, and `projectReceizAssetManifest` as documented in [resources/storefront-patterns.md](resources/storefront-patterns.md).
+
+Qualify the actual native operations and their deployed dependencies through `client.runtime.qualifyV124(...)`; historical commerce HTTP adapters require the explicitly configured compatibility host documented by the SDK. Neither a callable method, sandbox checkout, nor generated MCP configuration proves a live purchase. Report untested funding, payment, delivery, claim, and use stages explicitly.
 
 ## Output Format
 
@@ -76,7 +86,7 @@ Safe next action:
 
 ## Safety And Security Boundaries
 
-Checkout, transfer, certificate issue, note issue, receipt append, seller onboarding, payment, and refund actions are value-affecting. They require explicit confirmation, scoped delegated access, and the existing Receiz rail. Never print bearer tokens, payment credentials, private keys, private identity files, or hidden recovery material.
+Checkout, transfer, certificate issue, note issue, receipt append, seller onboarding, payment, and refund actions are value-affecting. They require explicit confirmation and the existing Receiz rail's exact admission, including scoped delegated access where required. Public embedded merchant routes retain their own existing admission. Never print bearer tokens, payment credentials, private keys, private identity files, or hidden recovery material.
 
 ## Examples
 

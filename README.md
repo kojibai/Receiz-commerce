@@ -4,7 +4,7 @@
 
 Receiz Commerce Kit is a commerce application and a forkable SDK kernel for building proof-sealed applications with `@receiz/sdk`, Receiz MCP and Receiz AI skills.
 
-Current release: `5.4.0` · SDK target: `@receiz/sdk@128.0.0` · ruleset: `127.0.0`
+Current release: `5.5.0` · SDK target: `@receiz/sdk@129.0.0` · ruleset: `127.0.0`
 
 It ships as a Next.js App Router application with a public storefront, customer account area, no-code merchant admin, Receiz ID, checkout, wallet projection, rewards, Receized assets, domain hosting, media upload, proof memory, publish recovery, webhook verification, release diagnostics, and an AI operator layer built around Receiz MCP, Twin, World, and SDK doctor workflows. You can run it as the Receiz.app Commerce Cloud product, or clone it and build your own commerce, rewards, marketplace, game, content, or agent-operated SaaS on top of the same primitives.
 
@@ -64,9 +64,9 @@ pnpm dev
 
 For an independent deployment, follow [Fork setup](docs/FORK_SETUP.md). Use your own Receiz client registration, platform receiving account, domain and Vercel project. The example environment does not select a platform fee receiver. Current payment support and the remaining automatic Reserve preparation work are documented in [Payment integration status](docs/payment-integration-status.md).
 
-The v128 Receiz toolchain is pinned exactly as `@receiz/sdk@128.0.0`, `@receiz/mcp-server@128.0.0`, and `@receiz/ai-skills@128.0.0` from the public npm registry. The lockfile pins their published integrity values with no Receiz package override. The local 43-skill `ai-skills/` tree is byte-aligned with the published doctrine, excluding only the npm package manifest, and can be checked with `pnpm validate:ai-skills`.
+The v129 Receiz toolchain is pinned exactly as `@receiz/sdk@129.0.0`, `@receiz/mcp-server@129.0.0`, and `@receiz/ai-skills@129.0.0` from the public npm registry. The lockfile pins their published integrity values with no Receiz package override. The local 43-skill `ai-skills/` tree is byte-aligned with the published doctrine, excluding only the npm package manifest, and can be checked with `pnpm validate:ai-skills`.
 
-`receiz.app.json` declares the complete 60-operation v128 authority matrix, while `receiz.constitution.json` is the app law overlay chained to the package-embedded canonical ruleset v127 registry digest. The MCP server exposes 335 tools, including all 22 v124 production-runtime outcomes plus verified material opening and sealed-pulse Kai projection; the AI package exposes 43 skills, 37 manifests, and 34 agent prompts. The package release is `128.0.0` and the constitutional ruleset remains `127.0.0`; the app verifies both independently. JSON cannot mint session, plan, handle, private-result, replay-candidate, or sealed-source custody. Run `pnpm receiz:check`, `pnpm receiz:conformance`, `pnpm receiz:authority-scan`, and `pnpm receiz:release-lock` for the complete evidence chain.
+`receiz.app.json` declares the complete 60-operation v129 authority matrix, while `receiz.constitution.json` is the app law overlay chained to the package-embedded canonical ruleset v127 registry digest. The MCP server exposes 356 tools, including all 22 v124 production-runtime outcomes plus verified material opening and sealed-pulse Kai projection; the AI package exposes 43 skills, 37 manifests, and 34 agent prompts. The package release is `129.0.0` and the constitutional ruleset remains `127.0.0`; the app verifies both independently. JSON cannot mint session, plan, handle, private-result, replay-candidate, or sealed-source custody. Run `pnpm receiz:check`, `pnpm receiz:conformance`, `pnpm receiz:authority-scan`, and `pnpm receiz:release-lock` for the complete evidence chain.
 
 Open:
 
@@ -80,7 +80,7 @@ Run the release gate:
 pnpm release:check
 ```
 
-`pnpm release:check` runs the tracked-file secret scan, tests, typecheck, the v128 app contract and 60-operation matrix check, general SDK conformance, retained living-subject conformance, v128 migration and retained runtime authority checks, the release lock, AI-skill validation, lint, a guarded production build, and Receiz doctor. Public forks can run doctor without static access tokens. Production readiness comes from `runtime.qualifyV124` dependency evidence—not method presence.
+`pnpm release:check` runs the tracked-file secret scan, tests, typecheck, the v129 app contract and 60-operation matrix check, general SDK conformance, retained living-subject conformance, v129 migration and retained runtime authority checks, the release lock, AI-skill validation, lint, a guarded production build, and Receiz doctor. Public forks can run doctor without static access tokens. Production readiness comes from `runtime.qualifyV124` dependency evidence—not method presence.
 
 ## Product Tour
 
@@ -206,7 +206,7 @@ startup_timeout_sec = 120
 RECEIZ_BASE_URL = "https://receiz.com"
 ```
 
-The local command resolves the pnpm-pinned `@receiz/mcp-server@128.0.0`. Use the matching `@receiz/ai-skills@128.0.0` doctrine from `node_modules/@receiz/ai-skills` or the aligned local `ai-skills/` directory. V124 retains every inherited surface and adds 22 production-runtime tools for Kai, proof challenges, authority-session lifecycle, atomic stage/execute/recovery/cancel, operational qualification, verified public/private replay and checkpoints, sealed replay portability, exact namespaces, privacy-safe recipients, and sealed-source publication. V124.0.3 introduced `receiz_material_url_open` and `receiz_sealed_kai_moment`; the app verifies and plays `rma2` or `rmc1` material at `/verify#material=…`, exposes the canonical proof link, and never lets transport or presentation outrank the sealed object. The retained runtime mapping is at `/developers/receiz`.
+The local command resolves the pnpm-pinned `@receiz/mcp-server@129.0.0`. Use the matching `@receiz/ai-skills@129.0.0` doctrine from `node_modules/@receiz/ai-skills` or the aligned local `ai-skills/` directory. V124 retains every inherited surface and adds 22 production-runtime tools for Kai, proof challenges, authority-session lifecycle, atomic stage/execute/recovery/cancel, operational qualification, verified public/private replay and checkpoints, sealed replay portability, exact namespaces, privacy-safe recipients, and sealed-source publication. V124.0.3 introduced `receiz_material_url_open` and `receiz_sealed_kai_moment`; the app verifies and plays `rma2` or `rmc1` material at `/verify#material=…`, exposes the canonical proof link, and never lets transport or presentation outrank the sealed object. The retained runtime mapping is at `/developers/receiz`.
 
 Brand edits preview immediately in the merchant workspace. `Publish theme` uses the same signed publication transaction as `Publish changes`: success means the authoritative public-store revision was accepted and adopted by the workspace. A pending or failed publication remains visibly unresolved and is never presented as globally saved. Other open merchant tabs adopt the updated workspace through scoped storage synchronization, while storefront subdomains and custom domains continue to resolve from the published Receiz projection.
 
@@ -390,4 +390,4 @@ Read `SECURITY.md` for vulnerability reporting, secret handling, and tenant-isol
 
 MIT. See `LICENSE`.
 
-See [v5.4.0 / v128 release notes](docs/releases/2026-10-04-v128-update.md) for the complete changes and verification. V128 retains offline sealing, Kai proving, and local subject-host entrypoints. These require explicit custody configuration; this app does not enroll devices automatically. Historical Connect calls require an explicit compatibility host and are unavailable on the default canonical host. The release preserves this fail-closed behavior and tests it.
+See [v5.5.0 / v129 release notes](docs/releases/2026-10-11-v129-commerce-upgrade.md) for the complete changes and verification. V129 retains offline sealing, Kai proving, and local subject-host entrypoints. These require explicit custody configuration; this app does not enroll devices automatically. Historical Connect calls require an explicit compatibility host and are unavailable on the default canonical host. The release preserves this fail-closed behavior and tests it.

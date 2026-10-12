@@ -12,20 +12,20 @@ import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 import { RECEIZ_V124_CONTRACT } from "../src/lib/receiz/v124/contract";
 
-describe("Receiz v128.0.0 coordinated release identity", () => {
+describe("Receiz v129.0.0 coordinated release identity", () => {
   it("keeps package, release, ruleset, registry, and matrix coordinates distinct and exact", () => {
-    assert.equal(RECEIZ_SDK_VERSION, "128.0.0");
-    assert.equal(RECEIZ_RELEASE_VERSION, "128.0.0");
+    assert.equal(RECEIZ_SDK_VERSION, "129.0.0");
+    assert.equal(RECEIZ_RELEASE_VERSION, "129.0.0");
     assert.equal(RECEIZ_RULESET_VERSION, "127.0.0");
-    assert.equal(describeReceizCapabilities().packageCompatibility.sdk, ">=128.0.0 <129.0.0");
+    assert.equal(describeReceizCapabilities().packageCompatibility.sdk, ">=129.0.0 <130.0.0");
     assert.equal(RECEIZ_CURRENT_REGISTRY_DIGEST, RECEIZ_V124_CONTRACT.registryDigest);
     assert.equal(RECEIZ_CURRENT_APPLICATION_OPERATION_MATRIX_DIGEST, RECEIZ_V124_CONTRACT.operationMatrixDigest);
     assert.equal(RECEIZ_CURRENT_APPLICATION_OPERATION_MATRIX.length, 60);
   });
 
-  it("ships the complete 335-tool server and retained v124 runtime tools", () => {
+  it("ships the complete 356-tool server and retained v124 runtime tools", () => {
     const names = new Set(RECEIZ_MCP_TOOLS.map((tool) => tool.name));
-    assert.equal(RECEIZ_MCP_TOOLS.length, 335);
+    assert.equal(RECEIZ_MCP_TOOLS.length, 356);
     assert.equal(RECEIZ_V124_MCP_TOOL_NAMES.length, 26);
     assert.ok(RECEIZ_V124_CONTRACT.mcpTools.every((name) => names.has(name)));
     assert.equal(RECEIZ_V124_MCP_TOOL_NAMES.every((name) => names.has(name)), true);
@@ -36,10 +36,10 @@ describe("Receiz v128.0.0 coordinated release identity", () => {
     assert.equal(names.has("receiz_sealed_kai_moment"), true);
   });
 
-  it("mirrors the exact v128.0.0 AI doctrine", () => {
+  it("mirrors the exact v129.0.0 AI doctrine", () => {
     const skills = JSON.parse(readFileSync("ai-skills/skills.json", "utf8"));
-    assert.equal(skills.schema, "receiz.ai-skills-index.v128");
-    assert.equal(skills.version, "128.0.0");
+    assert.equal(skills.schema, "receiz.ai-skills-index.v129");
+    assert.equal(skills.version, "129.0.0");
     assert.equal(skills.rulesetVersion, "127.0.0");
     assert.equal(skills.registryDigest, RECEIZ_V124_CONTRACT.registryDigest);
     assert.equal(skills.operationMatrixDigest, RECEIZ_V124_CONTRACT.operationMatrixDigest);

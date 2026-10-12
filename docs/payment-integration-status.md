@@ -1,6 +1,14 @@
 # Payment integration status
 
-App integration checked against the installed Receiz SDK 128.0.0 on 2026-10-06. This document does not establish completed live payments.
+The current app uses the published Receiz SDK, MCP server and AI skills at 129.0.0 as of 2026-10-11. The earlier dated sections retain v128 validation history; the following v129 correction supersedes their separate application-namespace guidance. This document does not establish completed live payments.
+
+## V129 registered native execution correction
+
+New native payment quotes use the exact registered `RECEIZ_CLIENT_ID` as application and audience. V129 accepts the registered `rc_` format without normalization. The earlier separation between that registration and a `receiz-commerce-kit` edge namespace was wrong for registered native execution. Original pending quotes and complete recoveries retain their original IDs; no historical proof is rewritten.
+
+Buyer and billing permission requests now include `receiz:subjects.write`. The source-bound flow qualifies the actual `source-publication` and `durable-execution` families, publishes the held current subject source through the existing custody wrapper with no session, then opens the session and stages the independently verified Reserve preparation. Publication failure stops before session opening or financial execution. The account proof viewer and diagnostic runtime use the same registered ID. This is application integration with the published SDK; Receiz's main repository is untouched.
+
+Automatic first-time Reserve preparation still needs the SDK's complete admitted buyer and receiving participant sources. Neither credentials, a scalar wallet balance, the new read-only valuation helpers nor the retained account export supplies those transitions. Compensation, native merchant history and live end-to-end acceptance also remain pending. See [the v129 release record](releases/2026-10-11-v129-commerce-upgrade.md) for the current package and validation boundary.
 
 ## Implemented in this patch
 

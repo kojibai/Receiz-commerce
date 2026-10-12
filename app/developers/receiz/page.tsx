@@ -2,25 +2,32 @@ import { RECEIZ_V124_CONTRACT } from "@/lib/receiz/v124/contract";
 import { RECEIZ_V124_DEVELOPER_SEQUENCE, RECEIZ_V124_DOCTRINE, RECEIZ_V124_EXAMPLES } from "@/lib/receiz/v124/doctrine";
 
 export const metadata = {
-  title: "Receiz v128 developer integration",
-  description: "Complete source-first SDK, MCP, and AI-skill doctrine for Receiz v128.0.0.",
+  title: "Receiz v129 developer integration",
+  description: "Complete source-first SDK, MCP, and AI-skill doctrine for Receiz v129.0.0.",
 };
 
 export default function ReceizDeveloperDoctrinePage() {
   return (
     <main className="legal-page">
       <header className="legal-hero">
-        <p className="eyebrow">Receiz v128 · Reality Becomes Infrastructure</p>
+        <p className="eyebrow">Receiz v129 · Reality Becomes Infrastructure</p>
         <h1>The production runtime for verified civilization.</h1>
         <p>V124 turns independently verifiable source truth into durable, atomic, privacy-preserving operations that can cross applications and institutions without making any government, company, platform, database, SDK, MCP tool, agent, receipt, or interface the source of that truth.</p>
         <p><strong>Representation must never outrank the source.</strong> This is an institution-independent technical verification boundary—not immunity from applicable law, legitimate process, or human responsibility.</p>
       </header>
 
       <section className="panel">
-        <h2>V128 integration</h2>
-        <p>Application 5.4.0 uses Receiz 128.0.0 with 335 MCP tools. Offline sealing, offline Kai proving, and a durable local subject host are available through the installed SDK entrypoints. They require explicit device or identity custody; this application does not provision them automatically.</p>
+        <h2>V129 integration</h2>
+        <p>Application 5.5.0 uses Receiz 129.0.0 with 356 MCP tools. Offline sealing, offline Kai proving, and a durable local subject host are available through the installed SDK entrypoints. They require explicit device or identity custody; this application does not provision them automatically.</p>
         <p>Historical Connect methods require an explicitly configured compatibility host. Historical subject methods require a local runtime or explicit transport. The canonical host is not a historical compatibility host, and an available method is not evidence that its service is operational.</p>
         <p>The runtime integration below retains the existing v124 interfaces and authority boundaries.</p>
+      </section>
+
+      <section className="panel">
+        <h2>V129 proof value and completed-sale evidence</h2>
+        <p>The declared <code>@receiz/sdk/valuation</code> entrypoint provides local proof valuation, completed-sale verification and portable replay. Every read begins with the complete verified source and its carried history.</p>
+        <p>A completed sale joins a Settlement payment and accepted asset delivery in the same atomic operation. A Reserve payment, card session, asking price or unsigned order record does not supply that evidence. These readers perform no payment, refund or access-grant writes.</p>
+        <p>Use <code>verifyReceizProofValueSaleRecoveryV129</code> for a complete public sale recovery, then <code>readReceizProofValueTransactionsV129</code> with the admitted delivered asset. Native Reserve checkout continues through the explicit sender/receiver edge APIs and retained original payment coordinates.</p>
       </section>
 
       <section className="panel">
@@ -32,12 +39,12 @@ export default function ReceizDeveloperDoctrinePage() {
 
       <section className="panel">
         <h2>Exact release identity</h2>
-        <p>The coordinated release contains 60 application operations, 335 MCP tools, and 43 AI skills.</p>
+        <p>The coordinated release contains 60 application operations, 356 MCP tools, and 43 AI skills.</p>
         <p><strong>Application:</strong> {RECEIZ_V124_CONTRACT.applicationVersion} · <strong>SDK/MCP/skills:</strong> {RECEIZ_V124_CONTRACT.sdkVersion} · <strong>Ruleset:</strong> {RECEIZ_V124_CONTRACT.rulesetVersion}</p>
         <p><strong>Registry:</strong> <code>{RECEIZ_V124_CONTRACT.registryDigest}</code></p>
         <p><strong>Operation matrix:</strong> <code>{RECEIZ_V124_CONTRACT.operationMatrixDigest}</code></p>
         <p><strong>Inventory:</strong> {RECEIZ_V124_CONTRACT.operationCount} app operations · {RECEIZ_V124_CONTRACT.mcpToolCount} MCP tools ({RECEIZ_V124_CONTRACT.v124McpToolCount} integrated v124 tools) · {RECEIZ_V124_CONTRACT.aiSkillCount} AI skills · {RECEIZ_V124_CONTRACT.aiManifestCount} manifests · {RECEIZ_V124_CONTRACT.openAiPromptCount} OpenAI prompts.</p>
-        <p>Package release <code>128.0.0</code> and constitutional ruleset <code>127.0.0</code> are separate coordinates. Never derive one from the other.</p>
+        <p>Package release <code>129.0.0</code> and constitutional ruleset <code>127.0.0</code> are separate coordinates. Never derive one from the other.</p>
       </section>
 
       <section className="panel">

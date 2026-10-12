@@ -27,3 +27,7 @@ Always separate:
 - What checkout attempted.
 - What settlement or receipt proof exists.
 - What remains unverified.
+
+Funding, payment, seller proceeds, bearer artifact delivery, buyer claim/custody, and asset use each need separate verifiable evidence. A successful card checkout alone does not establish an asset purchase or ownership transfer. Verify actual admitted wallet credit before resuming review/approval of a shortfall-funded purchase. Preserve idempotent recovery across return, reload, retries, lost responses, concurrent buyers, and stale custody without duplicate charges or ownership.
+
+See the [live commerce evidence sequence](../examples/create-no-db-store.md). Qualified operations and healthy dependencies are required alongside actual deployed requests; method/tool presence, generated configuration, and sandbox fixtures prove no live settlement or delivery result.

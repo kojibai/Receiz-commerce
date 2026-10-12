@@ -7,6 +7,14 @@ description: Use when building or materially changing a production Receiz applic
 
 Coordinate the complete production workflow across architecture, domains, laws, commands, history, offline behavior, MCP, verification, migration, and release. Receiz is a proof-native artifact system; this skill operates beneath sealed proof and verified local history.
 
+## Registered native application contract
+
+Set `RECEIZ_APPLICATION_ID` and SDK `applicationId` to the **exact registered OIDC client ID**, distinct from the subject's Receiz ID, username, and client secret. Keep client secrets server-side. Preserve exact bytes and case across grants, audience, sessions, source publication, plans, replay, and requests; never normalize, strip `rc_`, or replace the ID with an alias. A valid native slug is syntax compatibility, not registered-client authorization.
+
+Use the [registered native session example](../receiz-proof-authority/examples/registered-native-session.md): device-held explicit consent and the minimum grant precede subject-source publication and session opening. Replay/checkpoint sources remain enclosed sealed proof objects. Foreign coordinates, revoked client/key, insufficient scopes, nonce replay, stale custody, and applicable zero-write guarantees remain enforced.
+
+Release the compatible SDK, full MCP library, AI skills, server, and forward database migration together. Package version alone does not rename retained v124 protocol schemas or alter canonical registry/ruleset bytes. Require qualification of the actual called operations and their dependencies plus a live integration test on the deployed server/database. For commerce, separately prove seller publication to another authenticated buyer, funding credit, quote approval, payment, bearer delivery, claim, custody, seller proceeds, and asset use. Record any untested stage explicitly.
+
 ## Constitutional workflow
 
 1. Inspect the repository and installed SDK version.
@@ -104,7 +112,7 @@ Historical sealed proof objects remain exact-byte verifiable evidence. Historica
 
 ## v124 production-runtime MCP contract
 
-Production composition uses the exact 22 adapters in the [universal V124 runtime tool map](../receiz-mcp-agent-skill/resources/v124-runtime-tool-map.md). The map binds every tool to its canonical SDK method, fixed or conditional scope contract, action class, process-local handle rule, and trusted-host material/session custody. Tool presence alone is not operational evidence; `receiz_v124_runtime_qualify` must report every required dependency operational.
+Production composition uses the exact 26 retained V124/V124.1 adapters in the [universal V124 runtime tool map](../receiz-mcp-agent-skill/resources/v124-runtime-tool-map.md). The map binds every tool to its canonical SDK method, fixed or conditional scope contract, action class, process-local handle rule, and trusted-host material/session custody. Tool presence alone is not operational evidence; `receiz_v124_runtime_qualify` must report every required dependency operational. Full-library guidance does not widen restricted ChatGPT Marketplace profiles.
 
 The sealed proof object and authenticated heads remain authority. The Receiz identity artifact remains identity authority. Grants, bearers, authority sessions, handles, MCP references, responses, and database rows remain subordinate execution, synchronization, or recovery mechanics. MCP must never reconstruct SDK authority from JSON.
 

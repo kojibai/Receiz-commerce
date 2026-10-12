@@ -213,15 +213,19 @@ export function createNativeReserveExecution(receiz: ReceizCommerceAdapter, quot
           throw new Error("reserve_checkout_explicit_consent_required");
         }
         const report = await receiz.v124.runtime.qualifyV124({ applicationId: frozenQuote.applicationId,
-          operations: ["runtime.authority-session.open", "execution.stage", "execution.execute"] });
-        if (report.applicationId !== frozenQuote.applicationId || report.results.length !== 3 ||
-          new Set(report.results.map(result => result.operation)).size !== 3 ||
-          report.results.some(result => !["runtime.authority-session.open", "execution.stage", "execution.execute"].includes(result.operation)) ||
+          operations: ["source-publication", "durable-execution"] });
+        if (report.applicationId !== frozenQuote.applicationId || report.results.length !== 2 ||
+          new Set(report.results.map(result => result.operation)).size !== 2 ||
+          report.results.some(result => !["source-publication", "durable-execution"].includes(result.operation)) ||
           report.results.some(result => result.status !== "available" || result.dependencyHealth !== "healthy" || result.evidence.runtime !== "ready")) {
           throw new Error("reserve_checkout_runtime_unavailable");
         }
         // Identity and subject source are canonically reverified by the SDK.
         // Neither cookie possession nor the caller's session JSON is authority.
+        const sourceRef = runtime.sources.holdSealed(authority.subjectSourceArtifact);
+        const publication = await runtime.sources.publish(sourceRef);
+        if (!["published", "idempotent"].includes(publication.status) || publication.sourceKind !== "subject" ||
+          publication.artifactSha256 !== authority.subjectSourceArtifact.artifactSha256) throw new Error("reserve_checkout_subject_publication_mismatch");
         const opened = await runtime.sessions.open(authority);
         session = opened.sessionRef;
         if (opened.projection.identityKeyId !== bound.buyerIdentity.keyId || opened.projection.applicationId !== frozenQuote.applicationId ||
@@ -233,8 +237,8 @@ export function createNativeReserveExecution(receiz: ReceizCommerceAdapter, quot
         mustResolve = true;
         submitted = true;
         if (!planRef) throw new Error("reserve_checkout_preparation_required");
-        handle ??= (await runtime.execution.stagePrepared(planRef, preparation.transitionSet, ["execution.stage"])).handleRef;
-        return await acceptOutcome(await runtime.execution.execute(handle, session, ["execution.execute"]));
+        handle ??= (await runtime.execution.stagePrepared(planRef, preparation.transitionSet, ["durable-execution"])).handleRef;
+        return await acceptOutcome(await runtime.execution.execute(handle, session, ["durable-execution"]));
       } finally { active = false; }
     },
     async resolve() {

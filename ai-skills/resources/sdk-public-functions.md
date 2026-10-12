@@ -1,8 +1,8 @@
-# Receiz v128.0.0 public SDK functions
+# Receiz v129.0.0 public SDK functions
 
 Generated from the built public entry points. SDK client methods are separately enumerated by `describeReceizSdkClientCapabilityInventory`. Signatures preserve the canonical SDK contract; an inventory entry does not create an MCP execution adapter or serialize proof authority.
 
-680 callable exports across all public entry points. Inventory SHA-256: `687bdd064b49bf7df1c32eb4ab3c0f1389c80c8bc90d7cfbec32147db1cc73ad`.
+704 callable exports across all public entry points. Inventory SHA-256: `af61e23d857fa1fa54fd2a09d5b0f02afadd55b6a02936dcacbae300f124cb94`.
 
 | Entry point | Function |
 | --- | --- |
@@ -94,6 +94,7 @@ Generated from the built public entry points. SDK client methods are separately 
 | `@receiz/sdk` | `commitReceizArtifactRecovery` |
 | `@receiz/sdk` | `compareReceizProfileShowcaseTransitionOperationsV114` |
 | `@receiz/sdk` | `composeReceizNamespaceReductionPayload` |
+| `@receiz/sdk` | `computeIntrinsicUnsigned` |
 | `@receiz/sdk` | `confirmReceizEdgeReserveSendV125` |
 | `@receiz/sdk` | `confirmReceizEdgeSettlementSendV125` |
 | `@receiz/sdk` | `createEmptyReceizCompositeMerkleState` |
@@ -280,6 +281,7 @@ Generated from the built public entry points. SDK client methods are separately 
 | `@receiz/sdk` | `digestReceizConstitution` |
 | `@receiz/sdk` | `digestReceizExecutionTransportRequestV124` |
 | `@receiz/sdk` | `digestReceizProfileShowcaseOperationLeafV114` |
+| `@receiz/sdk` | `digestReceizRarityPolicyV129` |
 | `@receiz/sdk` | `discoverReceizRegistryLaw` |
 | `@receiz/sdk` | `discoverReceizSubjectsV125` |
 | `@receiz/sdk` | `encodeReceizAuthority` |
@@ -290,9 +292,13 @@ Generated from the built public entry points. SDK client methods are separately 
 | `@receiz/sdk` | `equalReceizExactHeadMaps` |
 | `@receiz/sdk` | `evaluateReceizHistoricalHandoffRevocation` |
 | `@receiz/sdk` | `evaluateReceizLawSet` |
+| `@receiz/sdk` | `evaluateReceizRarityPolicyV129` |
 | `@receiz/sdk` | `exactVerifiedDescendantAdditions` |
 | `@receiz/sdk` | `exportReceizCommittedExecutionRecoveryV124` |
 | `@receiz/sdk` | `exportReceizCredentialPresentationFileV125` |
+| `@receiz/sdk` | `exportReceizProofValueReplayV129` |
+| `@receiz/sdk` | `exportReceizProofValueSalePublicEvidenceV129` |
+| `@receiz/sdk` | `exportReceizProofValueSaleRecoveryV129` |
 | `@receiz/sdk` | `extractReceizAppStateData` |
 | `@receiz/sdk` | `extractReceizPortableAssetDocument` |
 | `@receiz/sdk` | `extractReceizPortableAssetPayload` |
@@ -431,6 +437,7 @@ Generated from the built public entry points. SDK client methods are separately 
 | `@receiz/sdk` | `projectReceizAttestationApplicationV125` |
 | `@receiz/sdk` | `projectReceizIdentityAccount` |
 | `@receiz/sdk` | `projectReceizKksV1SealedProofCoordinate` |
+| `@receiz/sdk` | `projectReceizProofValueV129` |
 | `@receiz/sdk` | `projectReceizSourceCarriedReplayBranchesV124` |
 | `@receiz/sdk` | `projectReceizSportsCardManifest` |
 | `@receiz/sdk` | `projectReceizSubjectNamespacesV123` |
@@ -452,6 +459,7 @@ Generated from the built public entry points. SDK client methods are separately 
 | `@receiz/sdk` | `readReceizMaterialCapsuleFromUrl` |
 | `@receiz/sdk` | `readReceizMaterialCompositePackageDigest` |
 | `@receiz/sdk` | `readReceizProfileShowcaseGenesisBody` |
+| `@receiz/sdk` | `readReceizProofValueTransactionsV129` |
 | `@receiz/sdk` | `readReceizSignedTransportEnvelopeV124` |
 | `@receiz/sdk` | `readReceizSubjectRelationshipSourceV125` |
 | `@receiz/sdk` | `readReceizSubjectSourceFamilyMemberV125` |
@@ -509,6 +517,7 @@ Generated from the built public entry points. SDK client methods are separately 
 | `@receiz/sdk` | `runReceizOfflineNoteCustodyConformance` |
 | `@receiz/sdk` | `runReceizOfflineNoteRollbackConformance` |
 | `@receiz/sdk` | `runReceizV125TemporalAuthorityConformance` |
+| `@receiz/sdk` | `sampleReceizProofValueV129` |
 | `@receiz/sdk` | `sanitizeReceizErrorMessage` |
 | `@receiz/sdk` | `sealArtifactTransitionCandidate` |
 | `@receiz/sdk` | `sealReceizEconomyShowcaseGenesis` |
@@ -527,6 +536,7 @@ Generated from the built public entry points. SDK client methods are separately 
 | `@receiz/sdk` | `snapshotReceizArtifactInput` |
 | `@receiz/sdk` | `snapshotReceizNamespaceBodies` |
 | `@receiz/sdk` | `spoolReceizArtifactInput` |
+| `@receiz/sdk` | `stableStringify` |
 | `@receiz/sdk` | `transportReceizSealedArtifactV124` |
 | `@receiz/sdk` | `unknownReceizLawfulDeliveryV125` |
 | `@receiz/sdk` | `updateReceizCompositeFibonacciState` |
@@ -614,6 +624,8 @@ Generated from the built public entry points. SDK client methods are separately 
 | `@receiz/sdk` | `verifyReceizProfileShowcaseCheckpointBundleV114` |
 | `@receiz/sdk` | `verifyReceizProfileShowcaseCheckpointSnapshotV114` |
 | `@receiz/sdk` | `verifyReceizProofHistory` |
+| `@receiz/sdk` | `verifyReceizProofValueReplayV129` |
+| `@receiz/sdk` | `verifyReceizProofValueSaleRecoveryV129` |
 | `@receiz/sdk` | `verifyReceizReconciliationCommitAuthorization` |
 | `@receiz/sdk` | `verifyReceizRegistryArtifactPayloadDigest` |
 | `@receiz/sdk` | `verifyReceizSportsVaultSuccessorV119` |
@@ -686,3 +698,15 @@ Generated from the built public entry points. SDK client methods are separately 
 | `@receiz/sdk/testing` | `runReceizConformance` |
 | `@receiz/sdk/testing` | `runReceizLivingSubjectConformanceV120` |
 | `@receiz/sdk/testing` | `sanitizeReceizErrorMessage` |
+| `@receiz/sdk/valuation` | `computeIntrinsicUnsigned` |
+| `@receiz/sdk/valuation` | `digestReceizRarityPolicyV129` |
+| `@receiz/sdk/valuation` | `evaluateReceizRarityPolicyV129` |
+| `@receiz/sdk/valuation` | `exportReceizProofValueReplayV129` |
+| `@receiz/sdk/valuation` | `exportReceizProofValueSalePublicEvidenceV129` |
+| `@receiz/sdk/valuation` | `exportReceizProofValueSaleRecoveryV129` |
+| `@receiz/sdk/valuation` | `projectReceizProofValueV129` |
+| `@receiz/sdk/valuation` | `readReceizProofValueTransactionsV129` |
+| `@receiz/sdk/valuation` | `sampleReceizProofValueV129` |
+| `@receiz/sdk/valuation` | `stableStringify` |
+| `@receiz/sdk/valuation` | `verifyReceizProofValueReplayV129` |
+| `@receiz/sdk/valuation` | `verifyReceizProofValueSaleRecoveryV129` |

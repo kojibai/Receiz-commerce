@@ -29,15 +29,15 @@ RECEIZ_OAUTH_STATE_SECRET=<your independent random secret of at least 32 bytes>
 
 A blank platform name/domain retains the template's Receiz.app branding. A blank default subdomain derives `boost.<your platform domain>`. A default subdomain on a different platform is rejected. New merchant workspaces, tenant routing and domain setup use the configured platform root.
 
-The native application namespace is separate from the OAuth client ID. Choose one namespace for your fork before creating application-bound payment sources, and keep its server, browser and audience settings consistent:
+Use the exact public registered OIDC client ID for native application and audience binding. The app derives new payment coordinates from `RECEIZ_CLIENT_ID`. Preserve its case, underscores and hyphens, and configure the same value for browser proof reads and any separately configured native host:
 
 ```dotenv
-RECEIZ_APPLICATION_ID=com.example.commerce
-NEXT_PUBLIC_RECEIZ_APPLICATION_ID=com.example.commerce
-RECEIZ_RUNTIME_AUDIENCE=com.example.commerce
+RECEIZ_APPLICATION_ID=<your issued public client ID>
+NEXT_PUBLIC_RECEIZ_APPLICATION_ID=<your issued public client ID>
+RECEIZ_RUNTIME_AUDIENCE=<your issued public client ID>
 ```
 
-These strings bind existing SDK operations. They do not create an admitted identity, source proof, capability or qualified runtime. Changing the namespace cannot migrate proof already issued for a different application.
+These strings bind existing SDK operations. They do not create an admitted identity, source proof, capability or qualified runtime. A client rotation cannot rewrite old application-bound proofs or unresolved payment attempts. Native source publication requires `receiz:subjects.write`; the source-publication qualification family also requires `receiz:domains.write`. Request only the necessary scopes through explicit in-app consent.
 
 ## Direct MCP and AI skills
 
@@ -74,7 +74,7 @@ If you register Receiz webhooks, use your own `RECEIZ_WEBHOOK_URL`, tenant host 
 
 ## Current payment boundary and validation
 
-The SDK, MCP server and AI skills are pinned together at 128.0.0. No Receiz main-repository change, SDK modification or new package version is needed to use the methods already integrated here. An MCP host's application binding, custody and actual exposed tools are configured independently of the app's Vercel environment. Installing the ChatGPT connector or configuring an OAuth client does not by itself qualify financial execution.
+The SDK, MCP server and AI skills are pinned together at 129.0.0. No Receiz main-repository change, SDK modification or new package version is needed to use the methods already integrated here. An MCP host's application binding, custody and actual exposed tools are configured independently of the app's Vercel environment. Installing the ChatGPT connector or configuring an OAuth client does not by itself qualify financial execution.
 
 Guest and unfunded-wallet card checkout, original-session recovery and in-app monthly billing use the Receiz merchant payment surface. Native Reserve orchestration verifies both participants, executes one exact admitted SDK plan, retains its complete recovery, and charges only the pinned card remainder. Ambiguous attempts resolve by original idempotency coordinates before retry; expired-card replacement happens only from an explicit checkout action after verifying the original card session.
 

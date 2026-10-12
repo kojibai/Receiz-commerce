@@ -31,9 +31,11 @@ import { ReceizSubjectContinuity } from "@/features/account/ReceizSubjectContinu
 import { ReceizValueRails } from "@/features/account/ReceizValueRails";
 
 export function AccountDashboard({
+  applicationId,
   initialHostContext,
   initialState
 }: {
+  applicationId?: string;
   initialHostContext?: HostContext;
   initialState?: CommerceState;
 }) {
@@ -377,7 +379,7 @@ export function AccountDashboard({
 
         <ReceizSubjectContinuity connected={state.auth.receizId.connected} />
 
-        <ReceizValueRails />
+        <ReceizValueRails applicationId={applicationId} />
 
         <Panel>
           <SectionHeader title="Proof trail" action={<StatusPill tone="green">Live</StatusPill>} />

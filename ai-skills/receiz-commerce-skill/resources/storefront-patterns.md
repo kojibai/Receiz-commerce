@@ -17,6 +17,12 @@ Core SDK rails:
 - `receiz.sandbox.seedStore`
 - `receiz.sandbox.checkout`
 
+Registered native clients use the exact registered OIDC client ID for `RECEIZ_APPLICATION_ID`, application, and audience. Keep client secrets server-side and compose the [existing grant/source/session sequence](../../receiz-proof-authority/examples/registered-native-session.md); subject identity and usernames are not application aliases.
+
+Current artifact delivery/claim uses `receiz.artifacts.verifyAndOpen(file)` then `receiz.ownership.claimBearerAsset({ artifact: opened.sealedArtifact })`. The current full MCP `receiz_bearer_artifact_claim` adapter composes that path through a private digest-bound source reference, same-runtime SDK custody, and single-use confirmation. It is separate from checkout and from historical V120 bearer instruments. Use the [full financial tool map](../../receiz-mcp-agent-skill/resources/full-financial-tool-map.md) for actual arguments and operation boundaries; no inventory entry supplies deployed purchase evidence. Historical commerce rails need the SDK's explicitly configured compatible HTTP host.
+
+`receiz.commerce.oneClickCheckout(...)` never treats a wallet read as settlement. It returns `wallet_settlement_execution_required` with zero applied wallet funds and no card request when wallet funding would be proposed. With `walletFirst: false` it may create a card checkout session, whose creation/success does not establish asset payment, delivery, ownership, or use.
+
 ## Storefront First Paint
 
 Paint known verified product truth immediately. Background sync may append verified additions, but must not replace the settled product shell with a loading state.

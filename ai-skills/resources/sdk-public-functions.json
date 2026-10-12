@@ -1,7 +1,7 @@
 {
   "schema": "receiz.sdk.public-functions.v1",
-  "releaseVersion": "128.0.0",
-  "digest": "687bdd064b49bf7df1c32eb4ab3c0f1389c80c8bc90d7cfbec32147db1cc73ad",
+  "releaseVersion": "129.0.0",
+  "digest": "af61e23d857fa1fa54fd2a09d5b0f02afadd55b6a02936dcacbae300f124cb94",
   "functions": [
     {
       "entryPoint": "@receiz/sdk",
@@ -617,6 +617,13 @@
       "name": "composeReceizNamespaceReductionPayload",
       "signatures": [
         "(input: Readonly<{ originalPayloadBytes: Uint8Array<ArrayBufferLike>; reduction: Readonly<{ namespace: Readonly<{ scheme: \"receiz-namespace.v1\"; value: string; }>; ... 5 more ...; preservedNamespaces: ReadonlyMap<...>; }>; }>): Uint8Array<...>"
+      ]
+    },
+    {
+      "entryPoint": "@receiz/sdk",
+      "name": "computeIntrinsicUnsigned",
+      "signatures": [
+        "(meta: SigilMetadataLite, nowPulse: number): Readonly<{ unsigned: UnsignedSeal; stampPayload: string; calculation: readonly Readonly<{ id: string; label: string; formula: string; operands: Readonly<...>; result: string; unit: string; sourceReferences: readonly string[]; }>[]; appliedDefaults: readonly Readonly<...>[]; }>"
       ]
     },
     {
@@ -1554,7 +1561,7 @@
       "entryPoint": "@receiz/sdk",
       "name": "createReceizV127SubjectRuntimeAdapter",
       "signatures": [
-        "(options: ReceizV127SubjectRuntimeAdapterOptions): Promise<Readonly<{ version: \"120.0.0\"; registryDigest: string; reducerDigest: string; exportSnapshot: () => Promise<...>; importSnapshot: (source: Readonly<...>) => Promise<...>; admitSubject: (source: Readonly<...>) => Promise<...>; subjects: Readonly<...>; world: Readonly<...>; }>>"
+        "(options: ReceizV127SubjectRuntimeAdapterOptions): Promise<Readonly<{ version: \"120.0.0\"; registryDigest: string; reducerDigest: string; exportSnapshot: () => Promise<...>; ... 4 more ...; world: Readonly<...>; }>>"
       ]
     },
     {
@@ -1848,7 +1855,7 @@
       "entryPoint": "@receiz/sdk",
       "name": "describeReceizCapabilities",
       "signatures": [
-        "(): Readonly<{ schema: \"receiz.sdk.capability_descriptor.v1\"; version: \"1.0.0\"; packageCompatibility: Readonly<{ sdk: \">=128.0.0 <129.0.0\"; mcp: \">=128.0.0 <129.0.0\"; }>; entryPoints: Readonly<...>; rails: readonly Readonly<...>[]; authorityBoundary: \"capability-description-is-not-proof-verification\"; }>"
+        "(): Readonly<{ schema: \"receiz.sdk.capability_descriptor.v1\"; version: \"1.0.0\"; packageCompatibility: Readonly<{ sdk: \">=129.0.0 <130.0.0\"; mcp: \">=129.0.0 <130.0.0\"; }>; entryPoints: Readonly<...>; rails: readonly Readonly<...>[]; authorityBoundary: \"capability-description-is-not-proof-verification\"; }>"
       ]
     },
     {
@@ -1862,7 +1869,7 @@
       "entryPoint": "@receiz/sdk",
       "name": "describeReceizSdkClientCapabilityInventory",
       "signatures": [
-        "(client?: ReceizClient): Readonly<{ schema: \"receiz.sdk.client-capability-inventory.v125\"; releaseVersion: \"128.0.0\"; operations: readonly string[]; authority: Readonly<{ inventoryIsProofAuthority: false; mcpIsProofAuthority: false; strongerTruth: \"sealed-receiz-proof-object\"; }>; }>"
+        "(client?: ReceizClient): Readonly<{ schema: \"receiz.sdk.client-capability-inventory.v125\"; releaseVersion: \"129.0.0\"; operations: readonly string[]; authority: Readonly<{ inventoryIsProofAuthority: false; mcpIsProofAuthority: false; strongerTruth: \"sealed-receiz-proof-object\"; }>; }>"
       ]
     },
     {
@@ -1919,6 +1926,13 @@
       "name": "digestReceizProfileShowcaseOperationLeafV114",
       "signatures": [
         "(operation: ReceizConstitutionJson): Promise<string>"
+      ]
+    },
+    {
+      "entryPoint": "@receiz/sdk",
+      "name": "digestReceizRarityPolicyV129",
+      "signatures": [
+        "(policy: Readonly<{ schema: \"receiz.rarity-policy.v129\"; algorithm: string; version: string; platform: string; rounding: \"half-up-phi-micro\"; expression: ReceizRarityExpressionV129; }>): Promise<...>"
       ]
     },
     {
@@ -1993,6 +2007,13 @@
     },
     {
       "entryPoint": "@receiz/sdk",
+      "name": "evaluateReceizRarityPolicyV129",
+      "signatures": [
+        "(policyInput: Readonly<{ schema: \"receiz.rarity-policy.v129\"; algorithm: string; version: string; platform: string; rounding: \"half-up-phi-micro\"; expression: ReceizRarityExpressionV129; }>, operandsInput: Readonly<...>): Readonly<...>"
+      ]
+    },
+    {
+      "entryPoint": "@receiz/sdk",
       "name": "exactVerifiedDescendantAdditions",
       "signatures": [
         "(input: Readonly<{ history: ReceizVerifiedProofHistory; expected: ReceizAcceptedHeadExpectation; verifyMergeArtifact: ReceizVerifiedMergeArtifactResolver; }>): Promise<...>"
@@ -2010,6 +2031,27 @@
       "name": "exportReceizCredentialPresentationFileV125",
       "signatures": [
         "(presentation: ReceizCredentialPresentationV125): Promise<Readonly<{ schema: \"receiz.credential.presentation-file.v125\"; filename: string; mimeType: \"application/vnd.receiz.credential-presentation+json\"; exactBytes: readonly number[]; exactBytesSha256: string; presentationDigest: string; authority: Readonly<...>; }>>"
+      ]
+    },
+    {
+      "entryPoint": "@receiz/sdk",
+      "name": "exportReceizProofValueReplayV129",
+      "signatures": [
+        "(input: Readonly<{ source: ReceizProofValueSourceV129; expectedProofDigest?: string; expectedHistoryHead?: string; policy?: Readonly<{ algorithm: \"phi/kosmos-vφ-5\"; checksum: string; }>; ... 4 more ...; askingPricePhiMicro?: string; }> & Readonly<...>): Promise<...>"
+      ]
+    },
+    {
+      "entryPoint": "@receiz/sdk",
+      "name": "exportReceizProofValueSalePublicEvidenceV129",
+      "signatures": [
+        "(evidence: Readonly<{ kind: \"committed-atomic-sale\"; sourceRecovery: Readonly<{ schema: \"receiz.proof-value-sale-recovery.v129\"; recovery: Readonly<{ schema: \"receiz.portable-execution-transition-recovery.v124\"; transitionSet: Readonly<...>; members: readonly Readonly<...>[]; authority: Readonly<...>; }>; outcomeCoordinates: Readonly<...>; }>; transitions: readonly Readonly<...>[]; publicRecovery?: Readonly<...>; }>): Promise<...>"
+      ]
+    },
+    {
+      "entryPoint": "@receiz/sdk",
+      "name": "exportReceizProofValueSaleRecoveryV129",
+      "signatures": [
+        "(evidence: ReceizProofValueSaleEvidenceV129): Promise<ReceizProofValueSaleRecoveryV129>"
       ]
     },
     {
@@ -2980,6 +3022,13 @@
     },
     {
       "entryPoint": "@receiz/sdk",
+      "name": "projectReceizProofValueV129",
+      "signatures": [
+        "(input: Readonly<{ source: ReceizProofValueSourceV129; expectedProofDigest?: string; expectedHistoryHead?: string; policy?: Readonly<{ algorithm: \"phi/kosmos-vφ-5\"; checksum: string; }>; ... 4 more ...; askingPricePhiMicro?: string; }> & Readonly<...>): Promise<...>"
+      ]
+    },
+    {
+      "entryPoint": "@receiz/sdk",
       "name": "projectReceizSourceCarriedReplayBranchesV124",
       "signatures": [
         "(value: Readonly<{ schema: \"receiz.source-carried-replay-family.v124\"; proofObjectId: string; applicationId: string; domainId: string; registryDigest: string; reducerDigest: string; familySetDigest: string; sources: readonly Readonly<...>[]; headArtifactSha256s: readonly string[]; authority: Readonly<...>; }>): readonly Readonly<...>[]"
@@ -3123,6 +3172,13 @@
       "name": "readReceizProfileShowcaseGenesisBody",
       "signatures": [
         "(plan: Readonly<{ schema: \"receiz.profile-showcase-genesis-plan.v114\"; resource: `profile-showcase:${string}`; ownerReceizIdentity: string; profileIdentity: string; actor: Readonly<{ actorId: string; evidenceDigest: Readonly<{ algorithm: \"sha-256\"; binds: \"verified-actor-evidence\"; value: string; }>; admissionProfile: \"identity\"; registryDigest: Readonly<...>; }>; ... 12 more ...; authority: Readonly<...>; }>): Readonly<...>"
+      ]
+    },
+    {
+      "entryPoint": "@receiz/sdk",
+      "name": "readReceizProofValueTransactionsV129",
+      "signatures": [
+        "(input: Readonly<{ admission?: ReceizVerifiedArtifactAdmission; sales?: readonly ReceizProofValueSaleEvidenceV129[]; }>): Promise<...>"
       ]
     },
     {
@@ -3521,7 +3577,14 @@
       "entryPoint": "@receiz/sdk",
       "name": "runReceizV125TemporalAuthorityConformance",
       "signatures": [
-        "(): Promise<Readonly<{ schema: \"receiz.temporal-authority.conformance.v125\"; releaseVersion: \"128.0.0\"; qualified: boolean; passedChecks: readonly (\"valid-kaisigil-proof-admitted\" | \"bare-upulse-rejected\" | ... 8 more ... | \"sealed-projection-preserves-exact-upulse\")[]; failedChecks: readonly (\"valid-kaisigil-proof-admitted\" | ... 9 more ... | \"sealed-projection-preserves-exact-upulse\")[]; checks: readonly Readonly<...>[]; authority: Readonly<...>; reportDigest: string; }>>"
+        "(): Promise<Readonly<{ schema: \"receiz.temporal-authority.conformance.v125\"; releaseVersion: \"129.0.0\"; qualified: boolean; passedChecks: readonly (\"valid-kaisigil-proof-admitted\" | \"bare-upulse-rejected\" | ... 8 more ... | \"sealed-projection-preserves-exact-upulse\")[]; failedChecks: readonly (\"valid-kaisigil-proof-admitted\" | ... 9 more ... | \"sealed-projection-preserves-exact-upulse\")[]; checks: readonly Readonly<...>[]; authority: Readonly<...>; reportDigest: string; }>>"
+      ]
+    },
+    {
+      "entryPoint": "@receiz/sdk",
+      "name": "sampleReceizProofValueV129",
+      "signatures": [
+        "(input: Readonly<{ source: ReceizProofValueSourceV129; expectedProofDigest?: string; expectedHistoryHead?: string; policy?: Readonly<{ algorithm: \"phi/kosmos-vφ-5\"; checksum: string; }>; ... 4 more ...; askingPricePhiMicro?: string; }> & Readonly<...>): Promise<...>"
       ]
     },
     {
@@ -3649,6 +3712,14 @@
       "name": "spoolReceizArtifactInput",
       "signatures": [
         "(input: ReceizArtifactInput, sink: Readonly<{ write(chunk: Uint8Array<ArrayBufferLike>): void | Promise<void>; close?(): void | Promise<...>; abort?(reason: unknown): void | Promise<...>; }>, options?: Readonly<...>): Promise<...>"
+      ]
+    },
+    {
+      "entryPoint": "@receiz/sdk",
+      "name": "stableStringify",
+      "signatures": [
+        "(x: JSONValue): string",
+        "(x: unknown): string"
       ]
     },
     {
@@ -4262,6 +4333,20 @@
     },
     {
       "entryPoint": "@receiz/sdk",
+      "name": "verifyReceizProofValueReplayV129",
+      "signatures": [
+        "(input: unknown): Promise<ReceizProofValueReplayVerificationV129>"
+      ]
+    },
+    {
+      "entryPoint": "@receiz/sdk",
+      "name": "verifyReceizProofValueSaleRecoveryV129",
+      "signatures": [
+        "(value: ReceizProofValueSaleRecoveryV129): Promise<Readonly<{ kind: \"verified-sale-recovery\"; recoveryDigest: string; authority: Readonly<{ projectionIsProofAuthority: false; committedCustodyIssued: false; strongerTruth: \"sealed-receiz-proof-object\"; }>; }>>"
+      ]
+    },
+    {
+      "entryPoint": "@receiz/sdk",
       "name": "verifyReceizReconciliationCommitAuthorization",
       "signatures": [
         "(input: Readonly<{ accountBound: boolean; tenantBound: boolean; tokenValid: boolean; identityKeyValid: boolean; capabilityValid: boolean; plannedAuthorizationEpoch: string; commitAuthorizationEpoch: string; }>): Readonly<...> | Readonly<...>"
@@ -4383,7 +4468,7 @@
       "entryPoint": "@receiz/sdk/compiler",
       "name": "describeReceizCapabilities",
       "signatures": [
-        "(): Readonly<{ schema: \"receiz.sdk.capability_descriptor.v1\"; version: \"1.0.0\"; packageCompatibility: Readonly<{ sdk: \">=128.0.0 <129.0.0\"; mcp: \">=128.0.0 <129.0.0\"; }>; entryPoints: Readonly<...>; rails: readonly Readonly<...>[]; authorityBoundary: \"capability-description-is-not-proof-verification\"; }>"
+        "(): Readonly<{ schema: \"receiz.sdk.capability_descriptor.v1\"; version: \"1.0.0\"; packageCompatibility: Readonly<{ sdk: \">=129.0.0 <130.0.0\"; mcp: \">=129.0.0 <130.0.0\"; }>; entryPoints: Readonly<...>; rails: readonly Readonly<...>[]; authorityBoundary: \"capability-description-is-not-proof-verification\"; }>"
       ]
     },
     {
@@ -4712,7 +4797,7 @@
       "entryPoint": "@receiz/sdk/testing",
       "name": "describeReceizCapabilities",
       "signatures": [
-        "(): Readonly<{ schema: \"receiz.sdk.capability_descriptor.v1\"; version: \"1.0.0\"; packageCompatibility: Readonly<{ sdk: \">=128.0.0 <129.0.0\"; mcp: \">=128.0.0 <129.0.0\"; }>; entryPoints: Readonly<...>; rails: readonly Readonly<...>[]; authorityBoundary: \"capability-description-is-not-proof-verification\"; }>"
+        "(): Readonly<{ schema: \"receiz.sdk.capability_descriptor.v1\"; version: \"1.0.0\"; packageCompatibility: Readonly<{ sdk: \">=129.0.0 <130.0.0\"; mcp: \">=129.0.0 <130.0.0\"; }>; entryPoints: Readonly<...>; rails: readonly Readonly<...>[]; authorityBoundary: \"capability-description-is-not-proof-verification\"; }>"
       ]
     },
     {
@@ -4762,6 +4847,91 @@
       "name": "sanitizeReceizErrorMessage",
       "signatures": [
         "(message: string): string"
+      ]
+    },
+    {
+      "entryPoint": "@receiz/sdk/valuation",
+      "name": "computeIntrinsicUnsigned",
+      "signatures": [
+        "(meta: SigilMetadataLite, nowPulse: number): Readonly<{ unsigned: UnsignedSeal; stampPayload: string; calculation: readonly Readonly<{ id: string; label: string; formula: string; operands: Readonly<...>; result: string; unit: string; sourceReferences: readonly string[]; }>[]; appliedDefaults: readonly Readonly<...>[]; }>"
+      ]
+    },
+    {
+      "entryPoint": "@receiz/sdk/valuation",
+      "name": "digestReceizRarityPolicyV129",
+      "signatures": [
+        "(policy: Readonly<{ schema: \"receiz.rarity-policy.v129\"; algorithm: string; version: string; platform: string; rounding: \"half-up-phi-micro\"; expression: ReceizRarityExpressionV129; }>): Promise<...>"
+      ]
+    },
+    {
+      "entryPoint": "@receiz/sdk/valuation",
+      "name": "evaluateReceizRarityPolicyV129",
+      "signatures": [
+        "(policyInput: Readonly<{ schema: \"receiz.rarity-policy.v129\"; algorithm: string; version: string; platform: string; rounding: \"half-up-phi-micro\"; expression: ReceizRarityExpressionV129; }>, operandsInput: Readonly<...>): Readonly<...>"
+      ]
+    },
+    {
+      "entryPoint": "@receiz/sdk/valuation",
+      "name": "exportReceizProofValueReplayV129",
+      "signatures": [
+        "(input: Readonly<{ source: ReceizProofValueSourceV129; expectedProofDigest?: string; expectedHistoryHead?: string; policy?: Readonly<{ algorithm: \"phi/kosmos-vφ-5\"; checksum: string; }>; ... 4 more ...; askingPricePhiMicro?: string; }> & Readonly<...>): Promise<...>"
+      ]
+    },
+    {
+      "entryPoint": "@receiz/sdk/valuation",
+      "name": "exportReceizProofValueSalePublicEvidenceV129",
+      "signatures": [
+        "(evidence: Readonly<{ kind: \"committed-atomic-sale\"; sourceRecovery: Readonly<{ schema: \"receiz.proof-value-sale-recovery.v129\"; recovery: Readonly<{ schema: \"receiz.portable-execution-transition-recovery.v124\"; transitionSet: Readonly<...>; members: readonly Readonly<...>[]; authority: Readonly<...>; }>; outcomeCoordinates: Readonly<...>; }>; transitions: readonly Readonly<...>[]; publicRecovery?: Readonly<...>; }>): Promise<...>"
+      ]
+    },
+    {
+      "entryPoint": "@receiz/sdk/valuation",
+      "name": "exportReceizProofValueSaleRecoveryV129",
+      "signatures": [
+        "(evidence: ReceizProofValueSaleEvidenceV129): Promise<ReceizProofValueSaleRecoveryV129>"
+      ]
+    },
+    {
+      "entryPoint": "@receiz/sdk/valuation",
+      "name": "projectReceizProofValueV129",
+      "signatures": [
+        "(input: Readonly<{ source: ReceizProofValueSourceV129; expectedProofDigest?: string; expectedHistoryHead?: string; policy?: Readonly<{ algorithm: \"phi/kosmos-vφ-5\"; checksum: string; }>; ... 4 more ...; askingPricePhiMicro?: string; }> & Readonly<...>): Promise<...>"
+      ]
+    },
+    {
+      "entryPoint": "@receiz/sdk/valuation",
+      "name": "readReceizProofValueTransactionsV129",
+      "signatures": [
+        "(input: Readonly<{ admission?: ReceizVerifiedArtifactAdmission; sales?: readonly ReceizProofValueSaleEvidenceV129[]; }>): Promise<...>"
+      ]
+    },
+    {
+      "entryPoint": "@receiz/sdk/valuation",
+      "name": "sampleReceizProofValueV129",
+      "signatures": [
+        "(input: Readonly<{ source: ReceizProofValueSourceV129; expectedProofDigest?: string; expectedHistoryHead?: string; policy?: Readonly<{ algorithm: \"phi/kosmos-vφ-5\"; checksum: string; }>; ... 4 more ...; askingPricePhiMicro?: string; }> & Readonly<...>): Promise<...>"
+      ]
+    },
+    {
+      "entryPoint": "@receiz/sdk/valuation",
+      "name": "stableStringify",
+      "signatures": [
+        "(x: JSONValue): string",
+        "(x: unknown): string"
+      ]
+    },
+    {
+      "entryPoint": "@receiz/sdk/valuation",
+      "name": "verifyReceizProofValueReplayV129",
+      "signatures": [
+        "(input: unknown): Promise<ReceizProofValueReplayVerificationV129>"
+      ]
+    },
+    {
+      "entryPoint": "@receiz/sdk/valuation",
+      "name": "verifyReceizProofValueSaleRecoveryV129",
+      "signatures": [
+        "(value: ReceizProofValueSaleRecoveryV129): Promise<Readonly<{ kind: \"verified-sale-recovery\"; recoveryDigest: string; authority: Readonly<{ projectionIsProofAuthority: false; committedCustodyIssued: false; strongerTruth: \"sealed-receiz-proof-object\"; }>; }>>"
       ]
     }
   ],

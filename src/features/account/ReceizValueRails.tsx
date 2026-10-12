@@ -5,7 +5,7 @@ import { Button, Panel, SectionHeader, StatusPill } from "@/components/ui";
 import { ProofFilePicker } from "@/components/ProofFilePicker";
 import { paymentProofUsdLabel, verifyHeldPaymentProof, type HeldPaymentProof } from "@/lib/checkout/held-payment-proof";
 
-export function ReceizValueRails() {
+export function ReceizValueRails({ applicationId }: { applicationId?: string }) {
   const fileInput = useRef<HTMLInputElement>(null);
   const verifyingRef = useRef(false);
   const [file, setFile] = useState<File | null>(null);
@@ -20,7 +20,7 @@ export function ReceizValueRails() {
     setProof(null);
     setError("");
     try {
-      setProof(await verifyHeldPaymentProof(file, process.env.NEXT_PUBLIC_RECEIZ_APPLICATION_ID || "receiz-commerce-kit"));
+      setProof(await verifyHeldPaymentProof(file, applicationId || process.env.NEXT_PUBLIC_RECEIZ_APPLICATION_ID || "receiz-commerce-kit"));
     } catch {
       setError("This file could not be verified as a complete payment proof for this app. Choose the original SDK payment recovery containing both participants and all carried sources.");
     } finally {

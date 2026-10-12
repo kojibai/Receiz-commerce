@@ -24,9 +24,9 @@ verification verdict or proof authority.
 
 Source: `packages/receiz-mcp-server/src/index.ts`.
 
-## SDK-direct Profile And Ownership Outcomes
+## Profile And Canonical Ownership Outcomes
 
-The complete SDK capability inventory exposed by `receiz_capabilities` includes these outcomes, while the MCP runtime intentionally exposes no direct profile-mutation or bearer-claim adapter that could serialize same-runtime proof custody. Use the canonical SDK operations instead:
+The complete SDK capability inventory exposed by `receiz_capabilities` includes these outcomes. Profile mutation uses the canonical SDK operation. Canonical bearer claim also has the current reference-based `receiz_bearer_artifact_claim` adapter, which retains the SDK-issued sealed object in the host runtime rather than serializing custody:
 
 | Need | Canonical SDK operation | Boundary |
 |---|---|---|
@@ -36,6 +36,8 @@ The complete SDK capability inventory exposed by `receiz_capabilities` includes 
 The profile operation accepts no caller-selected account UID, identity key, or proof head. The authenticated session/OIDC actor is the account.
 
 The bearer operation passes only the runtime-issued sealed-artifact handle into the claim. Prior ownership comes from the verified carried proof. Never accept a detached payload, caller owner, claim key, or caller head, and never invent an MCP tool name or substitute an unrelated MCP mutation.
+
+See the [full financial tool map](full-financial-tool-map.md) for exact wallet, funding, payment, note-download, and bearer-claim arguments, grants, single-use confirmation, and private artifact output. The ChatGPT Marketplace profile's nonfinancial restriction is separate from full-library support.
 
 A verified proof object is not limited to the platform that created it. Any lawful platform may append authenticated ownership and history only while preserving the same immutable object identity, payload, provenance root, prior history, and unknown namespaces, then returning a complete verified proof object. The SDK workflow preserves that continuity and creates neither an origin-platform lock nor a parallel chain.
 

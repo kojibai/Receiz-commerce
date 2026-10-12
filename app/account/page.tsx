@@ -13,5 +13,6 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
     redirect("/#account");
   }
 
-  return <AccountDashboard initialHostContext={hostContext} initialState={state} />;
+  return <AccountDashboard initialHostContext={hostContext} initialState={state}
+    applicationId={process.env.RECEIZ_CLIENT_ID || process.env.NEXT_PUBLIC_RECEIZ_APPLICATION_ID} />;
 }

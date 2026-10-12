@@ -6,15 +6,14 @@ import { createReceizV124ProductionRuntime } from "@/lib/receiz/v124/production-
 
 export const dynamic = "force-dynamic";
 
-const APPLICATION_ID = process.env.RECEIZ_APPLICATION_ID || "receiz-commerce-kit";
-const AUDIENCE = process.env.RECEIZ_RUNTIME_AUDIENCE || APPLICATION_ID;
+const APPLICATION_ID = process.env.RECEIZ_CLIENT_ID || process.env.RECEIZ_APPLICATION_ID || "receiz-commerce-kit";
+const AUDIENCE = process.env.RECEIZ_CLIENT_ID || process.env.RECEIZ_RUNTIME_AUDIENCE || APPLICATION_ID;
 const DEFAULT_OPERATIONS = Object.freeze([
-  "runtime.authority-session.open",
-  "execution.atomic.stage",
-  "execution.atomic.execute",
-  "domain.replay.verified",
-  "identity.public-recipient.resolve",
-  "source.sealed.publish",
+  "source-publication",
+  "namespace-resolution",
+  "durable-execution",
+  "verified-replay",
+  "public-recipient-resolution",
 ]);
 
 export async function GET(request: Request) {

@@ -14,7 +14,7 @@ export function inAppPermissionEntryPath(purpose: InAppPermissionPurpose): strin
 }
 export function inAppPermissionScopes(purpose: InAppPermissionPurpose): readonly string[] {
   return Object.freeze(["openid", "profile", "email", ...(purpose === "store_manage" ? ["receiz:record"]
-    : ["receiz:wallet.read", ...receizOidcScopesForRails("reserve", "domains")])].sort());
+    : ["receiz:wallet.read", "receiz:subjects.write", ...receizOidcScopesForRails("reserve", "domains")])].sort());
 }
 
 export async function readInAppPermissionIdentity(artifact: Uint8Array) {

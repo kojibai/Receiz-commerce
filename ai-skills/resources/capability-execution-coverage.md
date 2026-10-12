@@ -1,0 +1,74 @@
+# Current capability execution coverage
+
+The current release exposes 425 SDK client methods, 704 public SDK exports, 356 full MCP tools, and 43 AI skills. These are different inventories. SDK exports include factories, validators, reducers, transport builders, browser integrations, and private device operations. MCP supplies fixed adapters and bounded host compositions. AI skills teach those paths and describe the complete public SDK; inventory membership does not make an arbitrary function model-callable or prove live execution.
+
+Read [the machine execution map](capability-execution-coverage.json) with this guide. The generated public capability catalog, SDK function inventory, SDK client inventory, and full MCP inventory remain the exact symbol/name enumeration. This execution map identifies the actual boundary beneath that enumeration. It grants no new authority.
+
+## Fixed current service adapters
+
+These tools invoke the named existing SDK method. Mutation previews perform no transport; execution requires the identical arguments and that runtime's single-use confirmation. SDK and current route admission remain binding.
+
+| MCP tool | SDK method | Implemented boundary |
+| --- | --- | --- |
+| `receiz_public_proof_observe` | `publicProof.observe` | Current observer accepts `sourceUrl`/optional `sourceType`; SDK preserves legacy `url` as an alias. Current `{ok,record,created}` output is projected through the existing public-proof projector. Observation records public source data; it does not admit sealed proof or establish ownership. |
+| `receiz_world_profile` | `world.profile` | Explicit current profile read with exact visitor/thread query. The route may append a guest view. It does not replace known local proof. |
+| `receiz_world_message` | `world.message` | Exact World interaction with route-owned action, visitor/thread, operation identity and quoted usage fields. Provider speech is non-authoritative. |
+| `receiz_world_welcome` | `world.welcome` | One welcome interaction under current session/guest and usage admission. |
+| `receiz_world_book` | `world.book` | Exact recipient, appointment slot, contact and question fields under current booking admission. |
+| `receiz_world_stream_profile` | `world.streamProfile` | One finite SDK reply stream. Maximum 4096 events / 4 MiB projected JSON; both `reply_done` and `done` are required. Error, missing completion, transport failure or limit exhaustion is failed/unknown outcome, never automatic retry. Caller operation IDs remain exact. The SDK stream has no exposed cancellation/timeout parameter; a stalled transport is an unresolved transport boundary. |
+| `receiz_sports_conformance_history` | `sports.conformanceHistory` | Current sports history diagnostics. |
+| `receiz_sports_conformance_rollups` | `sports.conformanceRollups` | Current sports rollups with exact numeric `days` query. |
+| `receiz_sports_badge` | `sports.badge` | Current sports badge projection. |
+| `receiz_verification_conformance` | `verification.conformance` | Current service conformance report. It does not verify a selected file. |
+| `receiz_connect_record` | `connect.record` | Current `receiz:record` scoped record proof creation and account save/showcase intent. Save defaults true. `vis: public` selects showcase; `private` selects private; `hidden` or omission hides from showcase and does not imply private ownership. Always request the complete PNG; verify its enclosing proof before projection or exact private custody. Save/visibility/showcase headers are descriptive only. The producer reuses the existing document-seal local anchor before Signature V4; rendered pixels and explicit wallet/external anchors stay intact. Remote save may precede failed delivery: consumed consent, unknown remote outcome, no automatic retry. |
+
+The three fixed local value tools are `receiz_proof_value_inspect`, `receiz_proof_value_sample`, and `receiz_proof_value_replay_verify`. They call the same public SDK projector, sampler, replay exporter, and replay verifier. Inspection and sampling take exact digest-bound workspace proof references and explicit Kai uPulse coordinates; optional `includeReplay` returns the public SDK package without a file write. Portable sources enter the existing SDK portable-state admission before source-carried history is projected. Sale recovery references enter the existing SDK verifier before payment and accepted-delivery evidence is joined. Model metadata, serialized custody, raw sale claims, implicit current time, and listing-price multipliers cannot supply authority. Intrinsic value, declared market reference, asking price, and completed sale remain distinct. Missing original proof/history yields the SDK's precise unavailable boundary. These tools perform no network, identity/custody transition, settlement, payment, approval or file write. Referenced files are limited to 64 MiB, arguments to 256 KiB, samples and sale recoveries to 256 each, and tool output to 8 MiB; exceeded limits produce operational denial without truncating an apparently valid result.
+
+The 86-entry fixed generic SDK map remains separate: 17 current service adapters and 69 historical HTTP compatibility adapters. The two financial artifact adapters separately expose exact note download and canonical bearer artifact claim. Current wallet, transfer, checkout, session, embedded checkout, and one-click checkout adapters preserve SDK admission and exact consent. Checkout creation/status is not completed payment or Settlement. Checkout credential values remain in the private host metadata channel.
+
+## Native capabilities composed by tools
+
+Full MCP also composes implemented SDK primitives through explicit wrapper families. Their tool counts are not method counts:
+
+- Artifact verification, admission, append planning, sealed staging and commit use the existing canonical artifact/runtime custody primitives. Global reconciliation is an additive append beneath verified local truth.
+- Living-subject and world wrappers expose admitted state, proof memory, relationships, inventory, trades, mandates, Twin responses and bounded runtime operations. The owner-private V127 runtime and verified enclosing source resolvers must be configured where required; a missing host produces `unavailable`, not invented success.
+- V122/V123/V124 wrappers expose typed world planning, explicit Settlement/Reserve execution, proof-authority exchange, authenticated scope projection, authority sessions, runtime qualification, exact plan staging/execution/recovery, verified replay/checkpoints, private additions, source publication and recipient resolution. Application/audience, exact heads, scope, held session custody and SDK-issued handles remain binding.
+- V125 lawful-action and edge-value wrappers expose lawful action admission/value derivation and complete sender/receiver Settlement or Reserve planning, transition verification, commit preparation, recovery, send confirmation and receive. A known outcome is resolved before retry.
+- V125 trust wrappers compose attestation/credential lifecycle, PBI presence/selective presentation, subject relationship/presence discovery and typed external execution. The exact source, accepted heads, real PBI interaction, provider configuration and host custody govern execution. Provider availability is not established by discovery.
+- Source-carried replay, private conversation, held material and progressive media wrappers provide the bounded projections identified by the canonical V124.1 capability inventory. Enclosing sealed sources verify before any embedded projection.
+
+`appState.resolve` covers host/id/url restore helpers. `appState.byCreator` covers the public creator lookup route; `appState.publish` covers registry-feed publication. Method aliases, URL builders, pure validators and runtime factories do not each require a separate tool to make their composed capability available.
+
+## SDK and trusted-host/device composition boundaries
+
+The following implemented SDK paths are discoverable and usable in a developer's trusted host. They are not arbitrary model-callable MCP functions. A host must compose their existing primitives while retaining private objects and real device interaction; no model-supplied key, self-hash, token or serialized SDK custody may substitute.
+
+| Workflow | Existing SDK source/primitive | Current MCP boundary |
+| --- | --- | --- |
+| Complete portable account continuity | `appendReceizIdentityPortableState`, `verifyReceizIdentityPortableStateProof`, `projectReceizIdentityAccount`; canonical V124.1 `sdk-private-boundary` | Private Identity Seal/Record/Key account state stays host/device-held. MCP offers bounded identity context; it does not expose complete account state. |
+| Identity-authored public-store publication | `publicStore.signPublish`, `publishSigned`, `publishWithIdentityProof`, `assertSignedPublishContract` | Existing MCP public-store publication is delegated publication. No dedicated trusted identity-key signer/publish adapter is installed. Compose exact merchant identity proof in the SDK host; do not pass a key/passphrase to the model. |
+| Offline note Receiving Seal and irreversible custody | `createReceizOfflineNoteReceivingSeal`, custody qualification/commitment, destination, WebAuthn activation/consumption challenge/finalize/verify and irreversible consumption receipt exports | No MCP device WebAuthn note activation/irreversible consumption adapter is installed. The real receiving Custody Seal, qualified device key, actual authenticator assertion, exact enclosing note and irreversible receipt remain binding. V125 edge-value rails do not replace this different primitive. |
+| Offline Reserve consumption | `createReceizOfflineReserveFundingBinding`, Reserve WebAuthn consumption challenge/finalize/verify exports and `reduceReceizWholeNoteCapacity` | No MCP WebAuthn Reserve consumption adapter is installed. Compose the exact funding proof, receiving/device custody and real assertion through SDK host code. |
+| Legacy account Twin binary export/import | `twin.exportMind`, `twin.importMind` | The summary adapter exists; no dedicated private binary export/import adapter exists for this account-Twin format. Subject-Twin source-family export/import is a different implemented primitive. Retain exact source bytes in the trusted host. |
+| Receiz-ID private conversation encryption | Canonical V124.1 conversation epoch secret, grant, encrypt/decrypt exports | MCP opens verified source families and plans encrypted grant batches. Clear messages and epoch secrets remain trusted-host custody; the SDK supplies the remaining composition. |
+| Held material publication and progressive playback | Canonical V124.1 RMA/RMC transport builders and range-reader exports | MCP opens verified source parts/URLs and projects safe coordinates. Host/browser reconstructs exact admitted native bytes and performs playback. Transport locators do not become authority. |
+| Identity creation, restore/login signing, OAuth token lifecycle | Existing `identity` SDK primitives, `bootstrap`, `checkUsernameAvailability`, `updateProfile`, `userinfo`, `jwks`, OIDC discovery and host CLI | Real identity proof/device custody and credential exchange remain host mechanics. Public username availability and issuer discovery require no invented key boundary; they remain host onboarding/discovery without dedicated MCP invocation. No generic token, login-key, introspection or revoke invocation tool is implied by the inventory. Account-entry frozen law remains binding. |
+| Standalone construction/validation helpers | SDK manifests/projections, world access-append planning, USD-display quote/validation, webhook delivery signing/routing, queues/stores/compiler/React helpers | Use SDK host/application code and the existing typed runtime tool where it composes that helper. A pure helper listing is not a promise of a separate model invocation. |
+
+## Current remote route audit
+
+The machine map records every one of the 73 current literal HTTP methods and fixed private transport expansions found in the 425-method SDK inventory. Each current route file is named. Fixed MCP dispatch or native composition covers 52 of these methods; the other 21 are exact aliases/canonical compositions, identity host onboarding, private identity-signed publication or account-Twin binary custody, disabled mint, or raw-token compatibility. This source audit establishes implemented routes, not live availability. Dynamic native runtimes and pure helpers are accounted separately by their wrapper families. `connect.verifyArtifact` reaches the same canonical complete-file verifier as the current uploaded-artifact composition; it does not require a second proof authority.
+
+## Explicit exclusions
+
+- Disabled legacy `connect.mintNote` always returns `wallet_note_receiving_seal_required`; it cannot be described as a success-capable note issuer.
+- `connect.claimNote` and `payments.embeddedNoteClaim` remain direct SDK compatibility methods. Their raw note-token JSON input cannot replace enclosing sealed-note and receiver-custody admission; MCP omits them until an existing canonical source projector supplies that boundary.
+- Retired raw artifact/profile/claim aliases are not in the current supported MCP catalog. Current canonical bearer claim resolves and verifies the enclosing artifact before consent and passes the exact SDK-issued object to `ownership.claimBearerAsset`.
+- Historical Connect HTTP operations require an explicitly configured compatibility host and transport. Default execution fails before consent/auth/HTTP. Current route evidence and fixture forwarding do not qualify a live deployment.
+- V125 subject-thread message planning supports the implemented close effect; encrypted message effects are unsupported in that SDK family. The separate Receiz-ID conversation encryption exports remain implemented host primitives.
+
+The ChatGPT Marketplace nonfinancial profile remains the exact reviewed 195-tool allowlist. These eleven new tools do not expand it. Full MCP exposes financial capabilities; the Phi execution profile separately excludes World provider/booking side effects without a closed Phi-only effect contract. Discovery never removes current SDK proof admission, permissions, consent or custody prerequisites.
+
+## Evidence and completion
+
+Source/fixture contracts prove fixed dispatch, exact application/audience binding, genuine enclosing verification, private custody, single-use consent, zero effects for rejected input and deterministic native execution. Tests of descriptor lists prove discovery only. Tests using transport fixtures prove forwarding only. A live financial/provider claim additionally requires a real admitted identity/session, actual provider/device execution and exact successful receipt/outcome evidence. No such live claim follows from any count in this guide.

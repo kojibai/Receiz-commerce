@@ -28,8 +28,9 @@ before(async () => {
 // These test doubles exercise orchestration only. The real SDK creates and
 // inspects the canonical plan and reads cryptographic identities; the fake
 // admission/commit boundary does NOT prove a spendable source or live payment.
-async function fixture(options: { unknown?: boolean; loseExecute?: boolean; failCard?: boolean; walletOnly?: boolean; expiredCard?: boolean; destinationSubjectId?: string } = {}) {
+async function fixture(options: { unknown?: boolean; loseExecute?: boolean; failCard?: boolean; walletOnly?: boolean; expiredCard?: boolean; destinationSubjectId?: string; failPublication?: boolean } = {}) {
   const calls: string[] = [], cardBodies: Record<string, unknown>[] = [];
+  const qualifications: string[][] = [];
   const actual = createReceizCommerceAdapter({ fetchImpl: async () => { throw new Error("unexpected_network"); } });
   const planned = await actual.v125.value.edge.planReserve({ applicationId: quote.applicationId,
     amountPhiMicro: options.walletOnly ? "18000000" : "9000000", sourceProofObjectId: "fixture:reserve:source", sourceValueHead: "11".repeat(32),
@@ -51,10 +52,18 @@ async function fixture(options: { unknown?: boolean; loseExecute?: boolean; fail
       async receiveReserve() { calls.push("receive-merchant"); return { intent: planned.intent, participantId: planned.destinationParticipantId }; },
     } } },
     v124: { ...actual.v124, runtime: { ...actual.v124.runtime,
-      async qualifyV124(input: { operations: string[] }) { calls.push("qualify"); return { applicationId: quote.applicationId,
+      async qualifyV124(input: { operations: string[] }) { calls.push("qualify"); qualifications.push(input.operations); return { applicationId: quote.applicationId,
         results: input.operations.map(operation => ({ operation, status: "available", dependencyHealth: "healthy", evidence: { runtime: "ready" } })) }; },
       async openAuthoritySessionV124() { calls.push("open"); return { identityKeyId: buyerKeyId, applicationId: quote.applicationId,
         audience: quote.applicationId, grantedScopes: nativeReserveScopes() }; },
+    }, sources: { ...actual.v124.sources,
+      async publishSealedSourceV124(input: Record<string, unknown>) {
+        calls.push("publish-source");
+        assert.equal(input.applicationId, quote.applicationId);
+        assert.equal(input.authoritySessionHandle, null);
+        if (options.failPublication) throw new Error("subject_publication_unavailable");
+        return { status: "published", sourceKind: "subject", artifactSha256: "33".repeat(32) };
+      },
     }, execution: { ...actual.v124.execution,
       async stagePrepared() { calls.push("stage"); return { fixture: "process-local-handle" }; },
       async execute() { calls.push("execute"); if (options.loseExecute) throw new Error("response_lost"); return outcome(options.unknown); },
@@ -68,9 +77,9 @@ async function fixture(options: { unknown?: boolean; loseExecute?: boolean; fail
       amountUsdCents: "900", merchantUsername: quote.merchantUsername, referenceId: quote.referenceId,
       status: options.expiredCard && input.checkoutSessionId === "expired-fixture-card" ? "expired" : status }; },
   } as unknown as ReceizCommerceAdapter;
-  const authority = { actorSubjectId: quote.buyerUserId, requestedRails: ["reserve"], requiredNamespaces: [], subjectSourceArtifact: {}, proofArtifact: "fixture",
+  const authority = { actorSubjectId: quote.buyerUserId, requestedRails: ["reserve"], requiredNamespaces: [], subjectSourceArtifact: { artifactSha256: "33".repeat(32) }, proofArtifact: "fixture",
     signedChallenge: { audience: quote.applicationId, consent: { approved: true, statementDigest: await nativeReserveConsentDigest(quote, planned.plan.exactPlanDigest) } } } as unknown as NonNullable<Parameters<typeof createWalletFirstReceizSettlement>[0]["nativeReserveExecution"]>["authority"];
-  return { calls, cardBodies, adapter, preparation, recovery, authority, paid: () => { status = "paid"; } };
+  return { calls, cardBodies, qualifications, adapter, preparation, recovery, authority, paid: () => { status = "paid"; } };
 }
 function settlementInput(adapter: ReceizCommerceAdapter) {
   return { receiz: adapter, amountUsd: "18.00", tenantHost: quote.tenantHost, recipientUserId: quote.recipientUserId,
@@ -79,6 +88,27 @@ function settlementInput(adapter: ReceizCommerceAdapter) {
 }
 
 describe("Reserve checkout orchestration", () => {
+  it("publishes the held subject source before opening its session and qualifies the SDK's actual operation families", async () => {
+    const f = await fixture();
+    const execution = createNativeReserveExecution(f.adapter, quote);
+    await execution.prepare(f.preparation);
+    await execution.execute(f.authority);
+    assert.deepEqual(f.qualifications, [["source-publication", "durable-execution"], ["durable-execution"], ["durable-execution"]]);
+    assert.ok(f.calls.indexOf("publish-source") >= 0);
+    assert.ok(f.calls.indexOf("publish-source") < f.calls.indexOf("open"));
+    assert.ok(f.calls.indexOf("open") < f.calls.indexOf("stage"));
+  });
+
+  it("stops before session opening or staging when subject publication fails", async () => {
+    const f = await fixture({ failPublication: true });
+    const execution = createNativeReserveExecution(f.adapter, quote);
+    await execution.prepare(f.preparation);
+    await assert.rejects(execution.execute(f.authority), /subject_publication_unavailable/);
+    assert.equal(f.calls.includes("open"), false);
+    assert.equal(f.calls.includes("stage"), false);
+    assert.equal(f.calls.includes("execute"), false);
+  });
+
   it("binds the verified receiving account without substituting its UID for the SDK destination subject", async () => {
     const f = await fixture({ destinationSubjectId: "receiz:subject:merchant-value" });
     const execution = createNativeReserveExecution(f.adapter, quote);
@@ -252,6 +282,26 @@ describe("Reserve checkout orchestration", () => {
     await assert.rejects(createWalletFirstReceizSettlement(settlementInput(f.adapter)), error => error instanceof NativeReserveRequiredError &&
       error.quote.merchantUsername === "seller" && error.quote.buyerUserId === quote.buyerUserId && error.quote.funding.cardDeltaUsdCents === 900);
     assert.deepEqual(f.calls, []);
+  });
+
+  it("uses the exact registered client ID for a new Reserve quote while retaining earlier quoted IDs", async () => {
+    const previousClient = process.env.RECEIZ_CLIENT_ID;
+    const previousApp = process.env.RECEIZ_APPLICATION_ID;
+    const registeredId = "rc_AbCdEfGhIjKlMnOpQrStUvWx";
+    process.env.RECEIZ_CLIENT_ID = registeredId;
+    process.env.RECEIZ_APPLICATION_ID = "receiz-commerce-kit";
+    try {
+      const f = await fixture();
+      await assert.rejects(createWalletFirstReceizSettlement({ ...settlementInput(f.adapter), originalReserveQuote: undefined }),
+        error => error instanceof NativeReserveRequiredError && error.quote.applicationId === registeredId);
+      f.calls.length = 0;
+      await assert.rejects(createWalletFirstReceizSettlement(settlementInput(f.adapter)),
+        error => error instanceof NativeReserveRequiredError && error.quote.applicationId === quote.applicationId);
+      assert.deepEqual(f.calls, []);
+    } finally {
+      if (previousClient === undefined) delete process.env.RECEIZ_CLIENT_ID; else process.env.RECEIZ_CLIENT_ID = previousClient;
+      if (previousApp === undefined) delete process.env.RECEIZ_APPLICATION_ID; else process.env.RECEIZ_APPLICATION_ID = previousApp;
+    }
   });
 
   it("the unchanged SDK rejects caller-created proof/paid flags without creating any financial request", async () => {

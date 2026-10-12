@@ -7,6 +7,14 @@ description: Use when an agent has or needs Receiz MCP tool access for verificat
 
 Receiz MCP is an agent-callable tool layer beneath Receiz proof truth. It can call SDK/API rails, but it is not a proof authority.
 
+## Registered native runtime configuration
+
+This guidance covers the full `@receiz/mcp-server` pnpm library. Set `RECEIZ_APPLICATION_ID` to the **exact registered OIDC client ID** used to issue its application-bound bearer. `receiz_mcp_login` generates that coordinate from `clientId`; preserve it exactly. It is separate from the subject's Receiz ID, username, and client secret. Never normalize, lowercase, strip `rc_`, or substitute an alias. Keep client secrets server-side and bearer/private proof material outside model output.
+
+Use the [registered native session example](../receiz-proof-authority/examples/registered-native-session.md) and [agent build example](examples/agent-build-app.md) for actual supported tools, scopes, device-held consent, subject-source publication, and authority-session opening. V124 tools pin `applicationId` and `audience` in the host runtime; foreign coordinates must fail. The retained V123 exchange adapter accepts exact exchange input, so the trusted host must bind that input to the same registered application.
+
+The full MCP library supports financial workflows through the canonical Settlement/Reserve, lawful-action, execution, commerce, wallet, funding, merchant, and reference-based bearer-claim adapters. Its current tools include `receiz_commerce_one_click_checkout`, `receiz_v123_value_execute_settlement`, `receiz_v123_value_execute_reserve`, and the V125 edge sender/receiver lifecycle. Follow the [full financial tool map](resources/full-financial-tool-map.md) for exact arguments, scopes, single-use consent, and private complete artifact output. The restricted ChatGPT Marketplace plugin remains nonfinancial under its reviewed profile; that restriction does not apply globally to the full library. Follow exact SDK admission and supported tool schemas through every financial stage, preserving confirmation and source custody.
+
 ## KKSv1.0 temporal authority
 
 Read [the shared KKSv1.0 temporal-authority contract](../resources/kks-v1-temporal-authority.md). Use `receiz_v124_kai_now` for a new locally computed KKSv1.0 coordinate and `receiz_sealed_kai_moment` only for a pulse carried by a verified sealed proof object. Never send or infer `createdAt` as Kai authority; MCP is a projection rail beneath the proof object.
@@ -110,11 +118,13 @@ Concrete v120 evidence must include: a creature speaking from exact long-form pr
 
 Use only the 26 exact retained adapters in the [V124 runtime tool map](resources/v124-runtime-tool-map.md). `handleRef` is a non-authoritative process-local reference. `sessionRef` may resolve a local session or a trusted-host `persistedSessionRef`, but the canonical SDK/server path must re-verify it before use. Execute and cancel require the process-local handle plus the re-verified session. Refresh rotates session custody; close consumes it. Replay export returns an unsealed non-authoritative candidate with `exactBytesB64u`; canonically Record -> Seal those exact bytes before admitting `sealedReplayProofObjectRef` for restore. Exact private additions remain in trusted-host custody under `privateAdditionsRef` and never enter model output. `applicationId` and `audience` are runtime-pinned and never tool inputs. Never reconstruct authority from MCP JSON.
 
+Use `receiz_v124_runtime_qualify` for every operation actually called and inspect its dependency health, granted scopes, publication heads, registry/reducer compatibility, and authenticated runtime evidence. Follow with a live integration test against the deployed server/database. Tool inventory, generated setup configuration, and fixture passes do not establish end-to-end payment, wallet funding, bearer delivery, claim, or use.
+
 ## v125 economy contract
 
 The [V125 economy and trust tool map](resources/v125-economy-tool-map.md) contains the thirteen retained economy tools and 39 canonical trust tools. Use the thirteen economy tools for lawful action and Settlement/Reserve; use the named trust operations for their source-bound families. Lawful-action proof bytes resolve only through the proof host after confirmation. Edge plans and portable transition/recovery materials resolve through the existing material host. Verified transition sets, prepared commit sets, and SDK-issued committed transitions remain same-runtime-custodied. Settlement and Reserve send/receive independently reverify the exact recovery at the respective user edge; server and database state only synchronize the resulting proof globally.
 
-## v128 complete SDK reference
+## Current complete SDK reference
 
 Read [all public SDK function signatures](../resources/sdk-public-functions.json) and [the entry-point index](../resources/sdk-public-functions.md), including compiler, testing, and React exports. Client capabilities and executable MCP adapters remain separately identified; inventory membership never substitutes for an implemented adapter or SDK proof admission.
 

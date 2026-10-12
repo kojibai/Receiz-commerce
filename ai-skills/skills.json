@@ -1,8 +1,8 @@
 {
-  "schema": "receiz.ai-skills-index.v128",
-  "version": "128.0.0",
+  "schema": "receiz.ai-skills-index.v129",
+  "version": "129.0.0",
   "registryDigest": "8d0b5b839d02d9efbd4306cc99410595a183705c2670b76d2567eaaaade99065",
-  "operationMatrixDigest": "940c316b5b7d6212240e699d03b3c1fd419cbbecc6ee51ddd7aa7783d9e523b0",
+  "operationMatrixDigest": "c4e0cff348b62f31db2bb2ffdeec533a92ca3a6d476757bb9b559ac58a7875e1",
   "currentMcpArtifactTools": [
     "receiz_artifact_verify",
     "receiz_artifact_admit",
@@ -298,7 +298,7 @@
       "outputAuthority": "verified-artifact-runtime",
       "processBoundary": "reverify-exact-bytes",
       "namespacePolicy": "not-applicable",
-      "compatibleSdkRange": ">=128.0.0 <129.0.0"
+      "compatibleSdkRange": ">=129.0.0 <130.0.0"
     },
     {
       "operation": "artifact.admit",
@@ -312,7 +312,7 @@
       "outputAuthority": "verified-admission-runtime",
       "processBoundary": "same-runtime-custody",
       "namespacePolicy": "not-applicable",
-      "compatibleSdkRange": ">=128.0.0 <129.0.0"
+      "compatibleSdkRange": ">=129.0.0 <130.0.0"
     },
     {
       "operation": "artifact.append.plan",
@@ -334,7 +334,7 @@
       "outputAuthority": "sdk-plan-runtime",
       "processBoundary": "same-runtime-custody",
       "namespacePolicy": "preserve-all-non-target",
-      "compatibleSdkRange": ">=128.0.0 <129.0.0"
+      "compatibleSdkRange": ">=129.0.0 <130.0.0"
     },
     {
       "operation": "identity.capability.sign",
@@ -347,7 +347,7 @@
       "outputAuthority": "signed-capability-claim-not-yet-verified",
       "processBoundary": "local-identity-key-custody",
       "namespacePolicy": "not-applicable",
-      "compatibleSdkRange": ">=128.0.0 <129.0.0"
+      "compatibleSdkRange": ">=129.0.0 <130.0.0"
     },
     {
       "operation": "artifact.transition.seal",
@@ -364,7 +364,7 @@
       "outputAuthority": "sealed-candidate-proof-object-not-accepted-head",
       "processBoundary": "same-runtime-custody",
       "namespacePolicy": "preserve-all-non-target",
-      "compatibleSdkRange": ">=128.0.0 <129.0.0"
+      "compatibleSdkRange": ">=129.0.0 <130.0.0"
     },
     {
       "operation": "artifact.transition.stage",
@@ -381,7 +381,7 @@
       "outputAuthority": "staged-candidate-locator-non-authoritative",
       "processBoundary": "same-runtime-custody",
       "namespacePolicy": "preserve-all-non-target",
-      "compatibleSdkRange": ">=128.0.0 <129.0.0"
+      "compatibleSdkRange": ">=129.0.0 <130.0.0"
     },
     {
       "operation": "artifact.transition.commit",
@@ -400,7 +400,7 @@
       "outputAuthority": "accepted-artifact-history-with-report-only-receipt",
       "processBoundary": "same-runtime-custody",
       "namespacePolicy": "preserve-all-non-target",
-      "compatibleSdkRange": ">=128.0.0 <129.0.0"
+      "compatibleSdkRange": ">=129.0.0 <130.0.0"
     },
     {
       "operation": "admission.command.execute",
@@ -421,7 +421,7 @@
       "outputAuthority": "admission-receipt-non-authoritative",
       "processBoundary": "same-runtime-custody",
       "namespacePolicy": "not-applicable",
-      "compatibleSdkRange": ">=128.0.0 <129.0.0"
+      "compatibleSdkRange": ">=129.0.0 <130.0.0"
     },
     {
       "operation": "public-proof.projection.locate",
@@ -435,7 +435,7 @@
       "outputAuthority": "exact-artifact-bytes-not-yet-verified",
       "processBoundary": "projection-only",
       "namespacePolicy": "not-applicable",
-      "compatibleSdkRange": ">=128.0.0 <129.0.0"
+      "compatibleSdkRange": ">=129.0.0 <130.0.0"
     },
     {
       "operation": "artifact.global.resolve",
@@ -451,7 +451,7 @@
       "outputAuthority": "exact-artifact-bytes-not-yet-verified",
       "processBoundary": "reverify-exact-bytes",
       "namespacePolicy": "not-applicable",
-      "compatibleSdkRange": ">=128.0.0 <129.0.0"
+      "compatibleSdkRange": ">=129.0.0 <130.0.0"
     },
     {
       "operation": "artifact.offline.reconcile",
@@ -474,7 +474,7 @@
       "outputAuthority": "accepted-artifact-history-with-report-only-receipt",
       "processBoundary": "reverify-exact-bytes",
       "namespacePolicy": "preserve-all-non-target",
-      "compatibleSdkRange": ">=128.0.0 <129.0.0"
+      "compatibleSdkRange": ">=129.0.0 <130.0.0"
     },
     {
       "operation": "profile-showcase.genesis.plan",
@@ -498,7 +498,7 @@
       "outputAuthority": "sdk-plan-runtime",
       "processBoundary": "same-runtime-custody",
       "namespacePolicy": "preserve-all-non-target",
-      "compatibleSdkRange": ">=128.0.0 <129.0.0"
+      "compatibleSdkRange": ">=129.0.0 <130.0.0"
     },
     {
       "operation": "profile-showcase.append.plan",
@@ -524,7 +524,7 @@
       "outputAuthority": "sdk-plan-runtime",
       "processBoundary": "same-runtime-custody",
       "namespacePolicy": "preserve-all-non-target",
-      "compatibleSdkRange": ">=128.0.0 <129.0.0"
+      "compatibleSdkRange": ">=129.0.0 <130.0.0"
     },
     {
       "operation": "economy-showcase.genesis.plan",
@@ -548,7 +548,7 @@
       "outputAuthority": "sdk-plan-runtime",
       "processBoundary": "same-runtime-custody",
       "namespacePolicy": "preserve-all-non-target",
-      "compatibleSdkRange": ">=128.0.0 <129.0.0"
+      "compatibleSdkRange": ">=129.0.0 <130.0.0"
     },
     {
       "operation": "economy-showcase.append.plan",
@@ -575,7 +575,7 @@
       "outputAuthority": "sdk-plan-runtime",
       "processBoundary": "same-runtime-custody",
       "namespacePolicy": "preserve-all-non-target",
-      "compatibleSdkRange": ">=128.0.0 <129.0.0"
+      "compatibleSdkRange": ">=129.0.0 <130.0.0"
     },
     {
       "operation": "economy-showcase.merge.plan",
@@ -603,7 +603,7 @@
       "outputAuthority": "sdk-plan-runtime",
       "processBoundary": "same-runtime-custody",
       "namespacePolicy": "preserve-all-non-target",
-      "compatibleSdkRange": ">=128.0.0 <129.0.0"
+      "compatibleSdkRange": ">=129.0.0 <130.0.0"
     },
     {
       "operation": "subject.resolve",
@@ -623,7 +623,7 @@
       "outputAuthority": "verified-subject-runtime",
       "processBoundary": "reverify-exact-bytes",
       "namespacePolicy": "preserve-all-non-target",
-      "compatibleSdkRange": ">=128.0.0 <129.0.0"
+      "compatibleSdkRange": ">=129.0.0 <130.0.0"
     },
     {
       "operation": "subject.brain.retrieve",
@@ -643,7 +643,7 @@
       "outputAuthority": "proof-context-non-authoritative",
       "processBoundary": "reverify-exact-bytes",
       "namespacePolicy": "preserve-all-non-target",
-      "compatibleSdkRange": ">=128.0.0 <129.0.0"
+      "compatibleSdkRange": ">=129.0.0 <130.0.0"
     },
     {
       "operation": "subject.twin.message",
@@ -661,7 +661,7 @@
       "outputAuthority": "model-intent-non-authoritative",
       "processBoundary": "same-runtime-custody",
       "namespacePolicy": "preserve-all-non-target",
-      "compatibleSdkRange": ">=128.0.0 <129.0.0"
+      "compatibleSdkRange": ">=129.0.0 <130.0.0"
     },
     {
       "operation": "subject.mandate.activate",
@@ -680,7 +680,7 @@
       "outputAuthority": "active-mandate-runtime",
       "processBoundary": "same-runtime-custody",
       "namespacePolicy": "preserve-all-non-target",
-      "compatibleSdkRange": ">=128.0.0 <129.0.0"
+      "compatibleSdkRange": ">=129.0.0 <130.0.0"
     },
     {
       "operation": "world.command.plan",
@@ -700,7 +700,7 @@
       "outputAuthority": "world-command-plan-runtime",
       "processBoundary": "same-runtime-custody",
       "namespacePolicy": "not-applicable",
-      "compatibleSdkRange": ">=128.0.0 <129.0.0"
+      "compatibleSdkRange": ">=129.0.0 <130.0.0"
     },
     {
       "operation": "world.command.execute",
@@ -721,7 +721,7 @@
       "outputAuthority": "accepted-world-event-with-report-only-receipt",
       "processBoundary": "same-runtime-custody",
       "namespacePolicy": "preserve-all-non-target",
-      "compatibleSdkRange": ">=128.0.0 <129.0.0"
+      "compatibleSdkRange": ">=129.0.0 <130.0.0"
     },
     {
       "operation": "world.transaction.plan",
@@ -740,7 +740,7 @@
       "outputAuthority": "world-transaction-plan-runtime",
       "processBoundary": "same-runtime-custody",
       "namespacePolicy": "not-applicable",
-      "compatibleSdkRange": ">=128.0.0 <129.0.0"
+      "compatibleSdkRange": ">=129.0.0 <130.0.0"
     },
     {
       "operation": "world.transaction.execute",
@@ -761,7 +761,7 @@
       "outputAuthority": "accepted-world-event-with-report-only-receipt",
       "processBoundary": "same-runtime-custody",
       "namespacePolicy": "preserve-all-non-target",
-      "compatibleSdkRange": ">=128.0.0 <129.0.0"
+      "compatibleSdkRange": ">=129.0.0 <130.0.0"
     },
     {
       "operation": "subject.runtime.enqueue",
@@ -780,7 +780,7 @@
       "outputAuthority": "runtime-job-non-authoritative",
       "processBoundary": "same-runtime-custody",
       "namespacePolicy": "not-applicable",
-      "compatibleSdkRange": ">=128.0.0 <129.0.0"
+      "compatibleSdkRange": ">=129.0.0 <130.0.0"
     },
     {
       "operation": "subject.memory.project",
@@ -798,7 +798,7 @@
       "outputAuthority": "event-memory-projection-non-authoritative",
       "processBoundary": "same-runtime-custody",
       "namespacePolicy": "preserve-all-non-target",
-      "compatibleSdkRange": ">=128.0.0 <129.0.0"
+      "compatibleSdkRange": ">=129.0.0 <130.0.0"
     },
     {
       "operation": "bearer.transfer.plan",
@@ -817,7 +817,7 @@
       "outputAuthority": "bearer-transfer-plan-runtime",
       "processBoundary": "same-runtime-custody",
       "namespacePolicy": "preserve-all-non-target",
-      "compatibleSdkRange": ">=128.0.0 <129.0.0"
+      "compatibleSdkRange": ">=129.0.0 <130.0.0"
     },
     {
       "operation": "bearer.instrument.issue",
@@ -836,7 +836,7 @@
       "outputAuthority": "bearer-instrument-not-ownership",
       "processBoundary": "same-runtime-custody",
       "namespacePolicy": "preserve-all-non-target",
-      "compatibleSdkRange": ">=128.0.0 <129.0.0"
+      "compatibleSdkRange": ">=129.0.0 <130.0.0"
     },
     {
       "operation": "bearer.instrument.claim",
@@ -856,7 +856,7 @@
       "outputAuthority": "ownership-transition-with-sealed-artifact",
       "processBoundary": "reverify-exact-bytes",
       "namespacePolicy": "preserve-all-non-target",
-      "compatibleSdkRange": ">=128.0.0 <129.0.0"
+      "compatibleSdkRange": ">=129.0.0 <130.0.0"
     },
     {
       "operation": "bearer.transfer.cancel",
@@ -874,7 +874,7 @@
       "outputAuthority": "ownership-transition-with-sealed-artifact",
       "processBoundary": "same-runtime-custody",
       "namespacePolicy": "preserve-all-non-target",
-      "compatibleSdkRange": ">=128.0.0 <129.0.0"
+      "compatibleSdkRange": ">=129.0.0 <130.0.0"
     },
     {
       "operation": "identity.proof-authority.exchange",
@@ -893,7 +893,7 @@
       "outputAuthority": "scoped-proof-capability-not-proof-authority",
       "processBoundary": "reverify-exact-bytes",
       "namespacePolicy": "not-applicable",
-      "compatibleSdkRange": ">=128.0.0 <129.0.0"
+      "compatibleSdkRange": ">=129.0.0 <130.0.0"
     },
     {
       "operation": "authorization.scopes.introspect",
@@ -907,7 +907,7 @@
       "outputAuthority": "granted-scope-projection-non-authoritative",
       "processBoundary": "projection-only",
       "namespacePolicy": "not-applicable",
-      "compatibleSdkRange": ">=128.0.0 <129.0.0"
+      "compatibleSdkRange": ">=129.0.0 <130.0.0"
     },
     {
       "operation": "subject.namespaces.resolve",
@@ -927,7 +927,7 @@
       "outputAuthority": "exact-head-namespace-projection-non-authoritative",
       "processBoundary": "reverify-exact-bytes",
       "namespacePolicy": "preserve-all-non-target",
-      "compatibleSdkRange": ">=128.0.0 <129.0.0"
+      "compatibleSdkRange": ">=129.0.0 <130.0.0"
     },
     {
       "operation": "value.settlement.execute",
@@ -947,7 +947,7 @@
       "outputAuthority": "accepted-phi-movement-with-report-only-receipt",
       "processBoundary": "same-runtime-custody",
       "namespacePolicy": "preserve-all-non-target",
-      "compatibleSdkRange": ">=128.0.0 <129.0.0"
+      "compatibleSdkRange": ">=129.0.0 <130.0.0"
     },
     {
       "operation": "value.reserve.execute",
@@ -967,7 +967,7 @@
       "outputAuthority": "accepted-phi-movement-with-report-only-receipt",
       "processBoundary": "same-runtime-custody",
       "namespacePolicy": "preserve-all-non-target",
-      "compatibleSdkRange": ">=128.0.0 <129.0.0"
+      "compatibleSdkRange": ">=129.0.0 <130.0.0"
     },
     {
       "operation": "value.execution.resolve",
@@ -984,7 +984,7 @@
       "outputAuthority": "execution-outcome-projection-non-authoritative",
       "processBoundary": "projection-only",
       "namespacePolicy": "not-applicable",
-      "compatibleSdkRange": ">=128.0.0 <129.0.0"
+      "compatibleSdkRange": ">=129.0.0 <130.0.0"
     },
     {
       "operation": "time.kai.now",
@@ -1000,7 +1000,7 @@
       "outputAuthority": "kai-coordinate-projection-non-authoritative",
       "processBoundary": "projection-only",
       "namespacePolicy": "not-applicable",
-      "compatibleSdkRange": ">=128.0.0 <129.0.0"
+      "compatibleSdkRange": ">=129.0.0 <130.0.0"
     },
     {
       "operation": "identity.proof-authority.challenge.create",
@@ -1017,7 +1017,7 @@
       "outputAuthority": "proof-authority-challenge-not-proof-authority",
       "processBoundary": "projection-only",
       "namespacePolicy": "not-applicable",
-      "compatibleSdkRange": ">=128.0.0 <129.0.0"
+      "compatibleSdkRange": ">=129.0.0 <130.0.0"
     },
     {
       "operation": "runtime.authority-session.open",
@@ -1038,7 +1038,7 @@
       "outputAuthority": "server-custodied-authority-session-not-proof-authority",
       "processBoundary": "reverify-exact-bytes",
       "namespacePolicy": "preserve-all-non-target",
-      "compatibleSdkRange": ">=128.0.0 <129.0.0"
+      "compatibleSdkRange": ">=129.0.0 <130.0.0"
     },
     {
       "operation": "runtime.authority-session.refresh",
@@ -1057,7 +1057,7 @@
       "outputAuthority": "server-custodied-authority-session-not-proof-authority",
       "processBoundary": "same-runtime-custody",
       "namespacePolicy": "preserve-all-non-target",
-      "compatibleSdkRange": ">=128.0.0 <129.0.0"
+      "compatibleSdkRange": ">=129.0.0 <130.0.0"
     },
     {
       "operation": "runtime.authority-session.close",
@@ -1073,7 +1073,7 @@
       "outputAuthority": "execution-outcome-projection-non-authoritative",
       "processBoundary": "same-runtime-custody",
       "namespacePolicy": "not-applicable",
-      "compatibleSdkRange": ">=128.0.0 <129.0.0"
+      "compatibleSdkRange": ">=129.0.0 <130.0.0"
     },
     {
       "operation": "runtime.capabilities.qualify",
@@ -1092,7 +1092,7 @@
       "outputAuthority": "operational-capability-report-non-authoritative",
       "processBoundary": "projection-only",
       "namespacePolicy": "not-applicable",
-      "compatibleSdkRange": ">=128.0.0 <129.0.0"
+      "compatibleSdkRange": ">=129.0.0 <130.0.0"
     },
     {
       "operation": "domain.verified-additions.resolve",
@@ -1112,7 +1112,7 @@
       "outputAuthority": "authenticated-verified-additions-projection-non-authoritative",
       "processBoundary": "reverify-exact-bytes",
       "namespacePolicy": "preserve-all-non-target",
-      "compatibleSdkRange": ">=128.0.0 <129.0.0"
+      "compatibleSdkRange": ">=129.0.0 <130.0.0"
     },
     {
       "operation": "domain.replay.verify",
@@ -1132,7 +1132,7 @@
       "outputAuthority": "authenticated-verified-additions-projection-non-authoritative",
       "processBoundary": "reverify-exact-bytes",
       "namespacePolicy": "preserve-all-non-target",
-      "compatibleSdkRange": ">=128.0.0 <129.0.0"
+      "compatibleSdkRange": ">=129.0.0 <130.0.0"
     },
     {
       "operation": "domain.checkpoint.verify",
@@ -1152,7 +1152,7 @@
       "outputAuthority": "authenticated-checkpoint-projection-non-authoritative",
       "processBoundary": "reverify-exact-bytes",
       "namespacePolicy": "preserve-all-non-target",
-      "compatibleSdkRange": ">=128.0.0 <129.0.0"
+      "compatibleSdkRange": ">=129.0.0 <130.0.0"
     },
     {
       "operation": "domain.private-additions.resolve",
@@ -1171,7 +1171,7 @@
       "outputAuthority": "access-filtered-private-additions-projection-non-authoritative",
       "processBoundary": "reverify-exact-bytes",
       "namespacePolicy": "preserve-all-non-target",
-      "compatibleSdkRange": ">=128.0.0 <129.0.0"
+      "compatibleSdkRange": ">=129.0.0 <130.0.0"
     },
     {
       "operation": "execution.stage",
@@ -1190,7 +1190,7 @@
       "outputAuthority": "persisted-plan-handle-non-authoritative",
       "processBoundary": "same-runtime-custody",
       "namespacePolicy": "preserve-all-non-target",
-      "compatibleSdkRange": ">=128.0.0 <129.0.0"
+      "compatibleSdkRange": ">=129.0.0 <130.0.0"
     },
     {
       "operation": "execution.execute",
@@ -1209,7 +1209,7 @@
       "outputAuthority": "accepted-world-event-with-report-only-receipt",
       "processBoundary": "same-runtime-custody",
       "namespacePolicy": "preserve-all-non-target",
-      "compatibleSdkRange": ">=128.0.0 <129.0.0"
+      "compatibleSdkRange": ">=129.0.0 <130.0.0"
     },
     {
       "operation": "execution.resolve",
@@ -1227,7 +1227,7 @@
       "outputAuthority": "execution-outcome-projection-non-authoritative",
       "processBoundary": "projection-only",
       "namespacePolicy": "not-applicable",
-      "compatibleSdkRange": ">=128.0.0 <129.0.0"
+      "compatibleSdkRange": ">=129.0.0 <130.0.0"
     },
     {
       "operation": "execution.resolve-by-idempotency-key",
@@ -1245,7 +1245,7 @@
       "outputAuthority": "execution-outcome-projection-non-authoritative",
       "processBoundary": "projection-only",
       "namespacePolicy": "not-applicable",
-      "compatibleSdkRange": ">=128.0.0 <129.0.0"
+      "compatibleSdkRange": ">=129.0.0 <130.0.0"
     },
     {
       "operation": "execution.cancel",
@@ -1263,7 +1263,7 @@
       "outputAuthority": "execution-outcome-projection-non-authoritative",
       "processBoundary": "same-runtime-custody",
       "namespacePolicy": "not-applicable",
-      "compatibleSdkRange": ">=128.0.0 <129.0.0"
+      "compatibleSdkRange": ">=129.0.0 <130.0.0"
     },
     {
       "operation": "execution.atomic-mutation.plan",
@@ -1283,7 +1283,7 @@
       "outputAuthority": "world-transaction-plan-runtime",
       "processBoundary": "same-runtime-custody",
       "namespacePolicy": "preserve-all-non-target",
-      "compatibleSdkRange": ">=128.0.0 <129.0.0"
+      "compatibleSdkRange": ">=129.0.0 <130.0.0"
     },
     {
       "operation": "identity.public-recipient.resolve",
@@ -1302,7 +1302,7 @@
       "outputAuthority": "privacy-safe-one-use-recipient-locator-non-authoritative",
       "processBoundary": "projection-only",
       "namespacePolicy": "not-applicable",
-      "compatibleSdkRange": ">=128.0.0 <129.0.0"
+      "compatibleSdkRange": ">=129.0.0 <130.0.0"
     },
     {
       "operation": "action.law.resolve",
@@ -1319,7 +1319,7 @@
       "outputAuthority": "action-law-projection-non-authoritative",
       "processBoundary": "projection-only",
       "namespacePolicy": "not-applicable",
-      "compatibleSdkRange": ">=128.0.0 <129.0.0"
+      "compatibleSdkRange": ">=129.0.0 <130.0.0"
     },
     {
       "operation": "action.plan",
@@ -1342,7 +1342,7 @@
       "outputAuthority": "lawful-action-plan-runtime",
       "processBoundary": "same-runtime-custody",
       "namespacePolicy": "preserve-all-non-target",
-      "compatibleSdkRange": ">=128.0.0 <129.0.0"
+      "compatibleSdkRange": ">=129.0.0 <130.0.0"
     },
     {
       "operation": "action.proof.verify",
@@ -1367,7 +1367,7 @@
       "outputAuthority": "verified-lawful-action-runtime",
       "processBoundary": "reverify-exact-bytes",
       "namespacePolicy": "preserve-all-non-target",
-      "compatibleSdkRange": ">=128.0.0 <129.0.0"
+      "compatibleSdkRange": ">=129.0.0 <130.0.0"
     },
     {
       "operation": "action.admit",
@@ -1388,7 +1388,7 @@
       "outputAuthority": "admitted-lawful-action-with-report-only-receipt",
       "processBoundary": "same-runtime-custody",
       "namespacePolicy": "preserve-all-non-target",
-      "compatibleSdkRange": ">=128.0.0 <129.0.0"
+      "compatibleSdkRange": ">=129.0.0 <130.0.0"
     },
     {
       "operation": "action.value-head.derive",
@@ -1409,7 +1409,7 @@
       "outputAuthority": "deterministic-value-head-projection-non-authoritative",
       "processBoundary": "same-runtime-custody",
       "namespacePolicy": "preserve-all-non-target",
-      "compatibleSdkRange": ">=128.0.0 <129.0.0"
+      "compatibleSdkRange": ">=129.0.0 <130.0.0"
     },
     {
       "operation": "action.settlement.execute",
@@ -1428,7 +1428,7 @@
       "outputAuthority": "accepted-phi-movement-with-report-only-receipt",
       "processBoundary": "same-runtime-custody",
       "namespacePolicy": "preserve-all-non-target",
-      "compatibleSdkRange": ">=128.0.0 <129.0.0"
+      "compatibleSdkRange": ">=129.0.0 <130.0.0"
     },
     {
       "operation": "action.outcome.resolve",
@@ -1446,7 +1446,7 @@
       "outputAuthority": "execution-outcome-projection-non-authoritative",
       "processBoundary": "projection-only",
       "namespacePolicy": "not-applicable",
-      "compatibleSdkRange": ">=128.0.0 <129.0.0"
+      "compatibleSdkRange": ">=129.0.0 <130.0.0"
     }
   ],
   "currentMcpLivingSubjectTools": [
@@ -1539,6 +1539,11 @@
     "receiz_offline_crystal_append",
     "receiz_offline_crystal_open",
     "receiz_verify_uploaded_artifact",
+    "receiz_connect_wallet",
+    "receiz_connect_transfer",
+    "receiz_connect_checkout",
+    "receiz_connect_checkout_session",
+    "receiz_payments_embedded_checkout",
     "receiz_twin_market_mandate",
     "receiz_twin_market_intents",
     "receiz_twin_import_mind_summary",
@@ -1620,6 +1625,22 @@
     "receiz_webhook_endpoints_list",
     "receiz_webhook_endpoints_update",
     "receiz_webhook_endpoints_delete",
+    "receiz_connect_note_download",
+    "receiz_bearer_artifact_claim",
+    "receiz_public_proof_observe",
+    "receiz_world_profile",
+    "receiz_world_message",
+    "receiz_world_welcome",
+    "receiz_world_book",
+    "receiz_world_stream_profile",
+    "receiz_sports_conformance_history",
+    "receiz_sports_conformance_rollups",
+    "receiz_sports_badge",
+    "receiz_verification_conformance",
+    "receiz_connect_record",
+    "receiz_proof_value_inspect",
+    "receiz_proof_value_sample",
+    "receiz_proof_value_replay_verify",
     "receiz_subject_local_runtime_status",
     "receiz_subject_local_admit",
     "receiz_subject_local_snapshot_import",
@@ -2923,8 +2944,8 @@
   },
   "sdkPublicFunctionInventory": {
     "schema": "receiz.sdk.public-functions.v1",
-    "releaseVersion": "128.0.0",
-    "digest": "687bdd064b49bf7df1c32eb4ab3c0f1389c80c8bc90d7cfbec32147db1cc73ad",
+    "releaseVersion": "129.0.0",
+    "digest": "af61e23d857fa1fa54fd2a09d5b0f02afadd55b6a02936dcacbae300f124cb94",
     "functions": [
       {
         "entryPoint": "@receiz/sdk",
@@ -3540,6 +3561,13 @@
         "name": "composeReceizNamespaceReductionPayload",
         "signatures": [
           "(input: Readonly<{ originalPayloadBytes: Uint8Array<ArrayBufferLike>; reduction: Readonly<{ namespace: Readonly<{ scheme: \"receiz-namespace.v1\"; value: string; }>; ... 5 more ...; preservedNamespaces: ReadonlyMap<...>; }>; }>): Uint8Array<...>"
+        ]
+      },
+      {
+        "entryPoint": "@receiz/sdk",
+        "name": "computeIntrinsicUnsigned",
+        "signatures": [
+          "(meta: SigilMetadataLite, nowPulse: number): Readonly<{ unsigned: UnsignedSeal; stampPayload: string; calculation: readonly Readonly<{ id: string; label: string; formula: string; operands: Readonly<...>; result: string; unit: string; sourceReferences: readonly string[]; }>[]; appliedDefaults: readonly Readonly<...>[]; }>"
         ]
       },
       {
@@ -4477,7 +4505,7 @@
         "entryPoint": "@receiz/sdk",
         "name": "createReceizV127SubjectRuntimeAdapter",
         "signatures": [
-          "(options: ReceizV127SubjectRuntimeAdapterOptions): Promise<Readonly<{ version: \"120.0.0\"; registryDigest: string; reducerDigest: string; exportSnapshot: () => Promise<...>; importSnapshot: (source: Readonly<...>) => Promise<...>; admitSubject: (source: Readonly<...>) => Promise<...>; subjects: Readonly<...>; world: Readonly<...>; }>>"
+          "(options: ReceizV127SubjectRuntimeAdapterOptions): Promise<Readonly<{ version: \"120.0.0\"; registryDigest: string; reducerDigest: string; exportSnapshot: () => Promise<...>; ... 4 more ...; world: Readonly<...>; }>>"
         ]
       },
       {
@@ -4771,7 +4799,7 @@
         "entryPoint": "@receiz/sdk",
         "name": "describeReceizCapabilities",
         "signatures": [
-          "(): Readonly<{ schema: \"receiz.sdk.capability_descriptor.v1\"; version: \"1.0.0\"; packageCompatibility: Readonly<{ sdk: \">=128.0.0 <129.0.0\"; mcp: \">=128.0.0 <129.0.0\"; }>; entryPoints: Readonly<...>; rails: readonly Readonly<...>[]; authorityBoundary: \"capability-description-is-not-proof-verification\"; }>"
+          "(): Readonly<{ schema: \"receiz.sdk.capability_descriptor.v1\"; version: \"1.0.0\"; packageCompatibility: Readonly<{ sdk: \">=129.0.0 <130.0.0\"; mcp: \">=129.0.0 <130.0.0\"; }>; entryPoints: Readonly<...>; rails: readonly Readonly<...>[]; authorityBoundary: \"capability-description-is-not-proof-verification\"; }>"
         ]
       },
       {
@@ -4785,7 +4813,7 @@
         "entryPoint": "@receiz/sdk",
         "name": "describeReceizSdkClientCapabilityInventory",
         "signatures": [
-          "(client?: ReceizClient): Readonly<{ schema: \"receiz.sdk.client-capability-inventory.v125\"; releaseVersion: \"128.0.0\"; operations: readonly string[]; authority: Readonly<{ inventoryIsProofAuthority: false; mcpIsProofAuthority: false; strongerTruth: \"sealed-receiz-proof-object\"; }>; }>"
+          "(client?: ReceizClient): Readonly<{ schema: \"receiz.sdk.client-capability-inventory.v125\"; releaseVersion: \"129.0.0\"; operations: readonly string[]; authority: Readonly<{ inventoryIsProofAuthority: false; mcpIsProofAuthority: false; strongerTruth: \"sealed-receiz-proof-object\"; }>; }>"
         ]
       },
       {
@@ -4842,6 +4870,13 @@
         "name": "digestReceizProfileShowcaseOperationLeafV114",
         "signatures": [
           "(operation: ReceizConstitutionJson): Promise<string>"
+        ]
+      },
+      {
+        "entryPoint": "@receiz/sdk",
+        "name": "digestReceizRarityPolicyV129",
+        "signatures": [
+          "(policy: Readonly<{ schema: \"receiz.rarity-policy.v129\"; algorithm: string; version: string; platform: string; rounding: \"half-up-phi-micro\"; expression: ReceizRarityExpressionV129; }>): Promise<...>"
         ]
       },
       {
@@ -4916,6 +4951,13 @@
       },
       {
         "entryPoint": "@receiz/sdk",
+        "name": "evaluateReceizRarityPolicyV129",
+        "signatures": [
+          "(policyInput: Readonly<{ schema: \"receiz.rarity-policy.v129\"; algorithm: string; version: string; platform: string; rounding: \"half-up-phi-micro\"; expression: ReceizRarityExpressionV129; }>, operandsInput: Readonly<...>): Readonly<...>"
+        ]
+      },
+      {
+        "entryPoint": "@receiz/sdk",
         "name": "exactVerifiedDescendantAdditions",
         "signatures": [
           "(input: Readonly<{ history: ReceizVerifiedProofHistory; expected: ReceizAcceptedHeadExpectation; verifyMergeArtifact: ReceizVerifiedMergeArtifactResolver; }>): Promise<...>"
@@ -4933,6 +4975,27 @@
         "name": "exportReceizCredentialPresentationFileV125",
         "signatures": [
           "(presentation: ReceizCredentialPresentationV125): Promise<Readonly<{ schema: \"receiz.credential.presentation-file.v125\"; filename: string; mimeType: \"application/vnd.receiz.credential-presentation+json\"; exactBytes: readonly number[]; exactBytesSha256: string; presentationDigest: string; authority: Readonly<...>; }>>"
+        ]
+      },
+      {
+        "entryPoint": "@receiz/sdk",
+        "name": "exportReceizProofValueReplayV129",
+        "signatures": [
+          "(input: Readonly<{ source: ReceizProofValueSourceV129; expectedProofDigest?: string; expectedHistoryHead?: string; policy?: Readonly<{ algorithm: \"phi/kosmos-vφ-5\"; checksum: string; }>; ... 4 more ...; askingPricePhiMicro?: string; }> & Readonly<...>): Promise<...>"
+        ]
+      },
+      {
+        "entryPoint": "@receiz/sdk",
+        "name": "exportReceizProofValueSalePublicEvidenceV129",
+        "signatures": [
+          "(evidence: Readonly<{ kind: \"committed-atomic-sale\"; sourceRecovery: Readonly<{ schema: \"receiz.proof-value-sale-recovery.v129\"; recovery: Readonly<{ schema: \"receiz.portable-execution-transition-recovery.v124\"; transitionSet: Readonly<...>; members: readonly Readonly<...>[]; authority: Readonly<...>; }>; outcomeCoordinates: Readonly<...>; }>; transitions: readonly Readonly<...>[]; publicRecovery?: Readonly<...>; }>): Promise<...>"
+        ]
+      },
+      {
+        "entryPoint": "@receiz/sdk",
+        "name": "exportReceizProofValueSaleRecoveryV129",
+        "signatures": [
+          "(evidence: ReceizProofValueSaleEvidenceV129): Promise<ReceizProofValueSaleRecoveryV129>"
         ]
       },
       {
@@ -5903,6 +5966,13 @@
       },
       {
         "entryPoint": "@receiz/sdk",
+        "name": "projectReceizProofValueV129",
+        "signatures": [
+          "(input: Readonly<{ source: ReceizProofValueSourceV129; expectedProofDigest?: string; expectedHistoryHead?: string; policy?: Readonly<{ algorithm: \"phi/kosmos-vφ-5\"; checksum: string; }>; ... 4 more ...; askingPricePhiMicro?: string; }> & Readonly<...>): Promise<...>"
+        ]
+      },
+      {
+        "entryPoint": "@receiz/sdk",
         "name": "projectReceizSourceCarriedReplayBranchesV124",
         "signatures": [
           "(value: Readonly<{ schema: \"receiz.source-carried-replay-family.v124\"; proofObjectId: string; applicationId: string; domainId: string; registryDigest: string; reducerDigest: string; familySetDigest: string; sources: readonly Readonly<...>[]; headArtifactSha256s: readonly string[]; authority: Readonly<...>; }>): readonly Readonly<...>[]"
@@ -6046,6 +6116,13 @@
         "name": "readReceizProfileShowcaseGenesisBody",
         "signatures": [
           "(plan: Readonly<{ schema: \"receiz.profile-showcase-genesis-plan.v114\"; resource: `profile-showcase:${string}`; ownerReceizIdentity: string; profileIdentity: string; actor: Readonly<{ actorId: string; evidenceDigest: Readonly<{ algorithm: \"sha-256\"; binds: \"verified-actor-evidence\"; value: string; }>; admissionProfile: \"identity\"; registryDigest: Readonly<...>; }>; ... 12 more ...; authority: Readonly<...>; }>): Readonly<...>"
+        ]
+      },
+      {
+        "entryPoint": "@receiz/sdk",
+        "name": "readReceizProofValueTransactionsV129",
+        "signatures": [
+          "(input: Readonly<{ admission?: ReceizVerifiedArtifactAdmission; sales?: readonly ReceizProofValueSaleEvidenceV129[]; }>): Promise<...>"
         ]
       },
       {
@@ -6444,7 +6521,14 @@
         "entryPoint": "@receiz/sdk",
         "name": "runReceizV125TemporalAuthorityConformance",
         "signatures": [
-          "(): Promise<Readonly<{ schema: \"receiz.temporal-authority.conformance.v125\"; releaseVersion: \"128.0.0\"; qualified: boolean; passedChecks: readonly (\"valid-kaisigil-proof-admitted\" | \"bare-upulse-rejected\" | ... 8 more ... | \"sealed-projection-preserves-exact-upulse\")[]; failedChecks: readonly (\"valid-kaisigil-proof-admitted\" | ... 9 more ... | \"sealed-projection-preserves-exact-upulse\")[]; checks: readonly Readonly<...>[]; authority: Readonly<...>; reportDigest: string; }>>"
+          "(): Promise<Readonly<{ schema: \"receiz.temporal-authority.conformance.v125\"; releaseVersion: \"129.0.0\"; qualified: boolean; passedChecks: readonly (\"valid-kaisigil-proof-admitted\" | \"bare-upulse-rejected\" | ... 8 more ... | \"sealed-projection-preserves-exact-upulse\")[]; failedChecks: readonly (\"valid-kaisigil-proof-admitted\" | ... 9 more ... | \"sealed-projection-preserves-exact-upulse\")[]; checks: readonly Readonly<...>[]; authority: Readonly<...>; reportDigest: string; }>>"
+        ]
+      },
+      {
+        "entryPoint": "@receiz/sdk",
+        "name": "sampleReceizProofValueV129",
+        "signatures": [
+          "(input: Readonly<{ source: ReceizProofValueSourceV129; expectedProofDigest?: string; expectedHistoryHead?: string; policy?: Readonly<{ algorithm: \"phi/kosmos-vφ-5\"; checksum: string; }>; ... 4 more ...; askingPricePhiMicro?: string; }> & Readonly<...>): Promise<...>"
         ]
       },
       {
@@ -6572,6 +6656,14 @@
         "name": "spoolReceizArtifactInput",
         "signatures": [
           "(input: ReceizArtifactInput, sink: Readonly<{ write(chunk: Uint8Array<ArrayBufferLike>): void | Promise<void>; close?(): void | Promise<...>; abort?(reason: unknown): void | Promise<...>; }>, options?: Readonly<...>): Promise<...>"
+        ]
+      },
+      {
+        "entryPoint": "@receiz/sdk",
+        "name": "stableStringify",
+        "signatures": [
+          "(x: JSONValue): string",
+          "(x: unknown): string"
         ]
       },
       {
@@ -7185,6 +7277,20 @@
       },
       {
         "entryPoint": "@receiz/sdk",
+        "name": "verifyReceizProofValueReplayV129",
+        "signatures": [
+          "(input: unknown): Promise<ReceizProofValueReplayVerificationV129>"
+        ]
+      },
+      {
+        "entryPoint": "@receiz/sdk",
+        "name": "verifyReceizProofValueSaleRecoveryV129",
+        "signatures": [
+          "(value: ReceizProofValueSaleRecoveryV129): Promise<Readonly<{ kind: \"verified-sale-recovery\"; recoveryDigest: string; authority: Readonly<{ projectionIsProofAuthority: false; committedCustodyIssued: false; strongerTruth: \"sealed-receiz-proof-object\"; }>; }>>"
+        ]
+      },
+      {
+        "entryPoint": "@receiz/sdk",
         "name": "verifyReceizReconciliationCommitAuthorization",
         "signatures": [
           "(input: Readonly<{ accountBound: boolean; tenantBound: boolean; tokenValid: boolean; identityKeyValid: boolean; capabilityValid: boolean; plannedAuthorizationEpoch: string; commitAuthorizationEpoch: string; }>): Readonly<...> | Readonly<...>"
@@ -7306,7 +7412,7 @@
         "entryPoint": "@receiz/sdk/compiler",
         "name": "describeReceizCapabilities",
         "signatures": [
-          "(): Readonly<{ schema: \"receiz.sdk.capability_descriptor.v1\"; version: \"1.0.0\"; packageCompatibility: Readonly<{ sdk: \">=128.0.0 <129.0.0\"; mcp: \">=128.0.0 <129.0.0\"; }>; entryPoints: Readonly<...>; rails: readonly Readonly<...>[]; authorityBoundary: \"capability-description-is-not-proof-verification\"; }>"
+          "(): Readonly<{ schema: \"receiz.sdk.capability_descriptor.v1\"; version: \"1.0.0\"; packageCompatibility: Readonly<{ sdk: \">=129.0.0 <130.0.0\"; mcp: \">=129.0.0 <130.0.0\"; }>; entryPoints: Readonly<...>; rails: readonly Readonly<...>[]; authorityBoundary: \"capability-description-is-not-proof-verification\"; }>"
         ]
       },
       {
@@ -7635,7 +7741,7 @@
         "entryPoint": "@receiz/sdk/testing",
         "name": "describeReceizCapabilities",
         "signatures": [
-          "(): Readonly<{ schema: \"receiz.sdk.capability_descriptor.v1\"; version: \"1.0.0\"; packageCompatibility: Readonly<{ sdk: \">=128.0.0 <129.0.0\"; mcp: \">=128.0.0 <129.0.0\"; }>; entryPoints: Readonly<...>; rails: readonly Readonly<...>[]; authorityBoundary: \"capability-description-is-not-proof-verification\"; }>"
+          "(): Readonly<{ schema: \"receiz.sdk.capability_descriptor.v1\"; version: \"1.0.0\"; packageCompatibility: Readonly<{ sdk: \">=129.0.0 <130.0.0\"; mcp: \">=129.0.0 <130.0.0\"; }>; entryPoints: Readonly<...>; rails: readonly Readonly<...>[]; authorityBoundary: \"capability-description-is-not-proof-verification\"; }>"
         ]
       },
       {
@@ -7685,6 +7791,91 @@
         "name": "sanitizeReceizErrorMessage",
         "signatures": [
           "(message: string): string"
+        ]
+      },
+      {
+        "entryPoint": "@receiz/sdk/valuation",
+        "name": "computeIntrinsicUnsigned",
+        "signatures": [
+          "(meta: SigilMetadataLite, nowPulse: number): Readonly<{ unsigned: UnsignedSeal; stampPayload: string; calculation: readonly Readonly<{ id: string; label: string; formula: string; operands: Readonly<...>; result: string; unit: string; sourceReferences: readonly string[]; }>[]; appliedDefaults: readonly Readonly<...>[]; }>"
+        ]
+      },
+      {
+        "entryPoint": "@receiz/sdk/valuation",
+        "name": "digestReceizRarityPolicyV129",
+        "signatures": [
+          "(policy: Readonly<{ schema: \"receiz.rarity-policy.v129\"; algorithm: string; version: string; platform: string; rounding: \"half-up-phi-micro\"; expression: ReceizRarityExpressionV129; }>): Promise<...>"
+        ]
+      },
+      {
+        "entryPoint": "@receiz/sdk/valuation",
+        "name": "evaluateReceizRarityPolicyV129",
+        "signatures": [
+          "(policyInput: Readonly<{ schema: \"receiz.rarity-policy.v129\"; algorithm: string; version: string; platform: string; rounding: \"half-up-phi-micro\"; expression: ReceizRarityExpressionV129; }>, operandsInput: Readonly<...>): Readonly<...>"
+        ]
+      },
+      {
+        "entryPoint": "@receiz/sdk/valuation",
+        "name": "exportReceizProofValueReplayV129",
+        "signatures": [
+          "(input: Readonly<{ source: ReceizProofValueSourceV129; expectedProofDigest?: string; expectedHistoryHead?: string; policy?: Readonly<{ algorithm: \"phi/kosmos-vφ-5\"; checksum: string; }>; ... 4 more ...; askingPricePhiMicro?: string; }> & Readonly<...>): Promise<...>"
+        ]
+      },
+      {
+        "entryPoint": "@receiz/sdk/valuation",
+        "name": "exportReceizProofValueSalePublicEvidenceV129",
+        "signatures": [
+          "(evidence: Readonly<{ kind: \"committed-atomic-sale\"; sourceRecovery: Readonly<{ schema: \"receiz.proof-value-sale-recovery.v129\"; recovery: Readonly<{ schema: \"receiz.portable-execution-transition-recovery.v124\"; transitionSet: Readonly<...>; members: readonly Readonly<...>[]; authority: Readonly<...>; }>; outcomeCoordinates: Readonly<...>; }>; transitions: readonly Readonly<...>[]; publicRecovery?: Readonly<...>; }>): Promise<...>"
+        ]
+      },
+      {
+        "entryPoint": "@receiz/sdk/valuation",
+        "name": "exportReceizProofValueSaleRecoveryV129",
+        "signatures": [
+          "(evidence: ReceizProofValueSaleEvidenceV129): Promise<ReceizProofValueSaleRecoveryV129>"
+        ]
+      },
+      {
+        "entryPoint": "@receiz/sdk/valuation",
+        "name": "projectReceizProofValueV129",
+        "signatures": [
+          "(input: Readonly<{ source: ReceizProofValueSourceV129; expectedProofDigest?: string; expectedHistoryHead?: string; policy?: Readonly<{ algorithm: \"phi/kosmos-vφ-5\"; checksum: string; }>; ... 4 more ...; askingPricePhiMicro?: string; }> & Readonly<...>): Promise<...>"
+        ]
+      },
+      {
+        "entryPoint": "@receiz/sdk/valuation",
+        "name": "readReceizProofValueTransactionsV129",
+        "signatures": [
+          "(input: Readonly<{ admission?: ReceizVerifiedArtifactAdmission; sales?: readonly ReceizProofValueSaleEvidenceV129[]; }>): Promise<...>"
+        ]
+      },
+      {
+        "entryPoint": "@receiz/sdk/valuation",
+        "name": "sampleReceizProofValueV129",
+        "signatures": [
+          "(input: Readonly<{ source: ReceizProofValueSourceV129; expectedProofDigest?: string; expectedHistoryHead?: string; policy?: Readonly<{ algorithm: \"phi/kosmos-vφ-5\"; checksum: string; }>; ... 4 more ...; askingPricePhiMicro?: string; }> & Readonly<...>): Promise<...>"
+        ]
+      },
+      {
+        "entryPoint": "@receiz/sdk/valuation",
+        "name": "stableStringify",
+        "signatures": [
+          "(x: JSONValue): string",
+          "(x: unknown): string"
+        ]
+      },
+      {
+        "entryPoint": "@receiz/sdk/valuation",
+        "name": "verifyReceizProofValueReplayV129",
+        "signatures": [
+          "(input: unknown): Promise<ReceizProofValueReplayVerificationV129>"
+        ]
+      },
+      {
+        "entryPoint": "@receiz/sdk/valuation",
+        "name": "verifyReceizProofValueSaleRecoveryV129",
+        "signatures": [
+          "(value: ReceizProofValueSaleRecoveryV129): Promise<Readonly<{ kind: \"verified-sale-recovery\"; recoveryDigest: string; authority: Readonly<{ projectionIsProofAuthority: false; committedCustodyIssued: false; strongerTruth: \"sealed-receiz-proof-object\"; }>; }>>"
         ]
       }
     ],

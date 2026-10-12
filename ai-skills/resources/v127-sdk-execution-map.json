@@ -1,7 +1,127 @@
 {
-  "version": "128.0.0",
+  "version": "129.0.0",
   "boundary": "Fixed SDK adapters; existing proof admission and delegated permissions remain authoritative",
   "operations": [
+    {
+      "name": "receiz_connect_wallet",
+      "sdkMethod": "connect.wallet",
+      "arguments": [],
+      "mutation": false,
+      "requiresDelegated": true,
+      "requiredPayload": [],
+      "executionMode": "current-http",
+      "currentRouteImplemented": true,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/wallet/me",
+          "routeFile": "app/api/connect/wallet/me/route.ts"
+        }
+      ],
+      "evidence": [
+        "packages/receiz-sdk/src/index.ts",
+        "app/api/connect/wallet/me/route.ts"
+      ]
+    },
+    {
+      "name": "receiz_connect_transfer",
+      "sdkMethod": "connect.transfer",
+      "arguments": [
+        "body",
+        "options?"
+      ],
+      "mutation": true,
+      "requiresDelegated": true,
+      "requiredPayload": [
+        "recipientUserId",
+        "unit"
+      ],
+      "executionMode": "current-http",
+      "currentRouteImplemented": true,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/transfers",
+          "routeFile": "app/api/connect/transfers/route.ts"
+        }
+      ],
+      "evidence": [
+        "packages/receiz-sdk/src/index.ts",
+        "app/api/connect/transfers/route.ts"
+      ]
+    },
+    {
+      "name": "receiz_connect_checkout",
+      "sdkMethod": "connect.checkout",
+      "arguments": [
+        "body"
+      ],
+      "mutation": true,
+      "requiresDelegated": true,
+      "requiredPayload": [
+        "amountUsd"
+      ],
+      "executionMode": "current-http",
+      "currentRouteImplemented": true,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/payments/checkout",
+          "routeFile": "app/api/connect/payments/checkout/route.ts"
+        }
+      ],
+      "evidence": [
+        "packages/receiz-sdk/src/index.ts",
+        "app/api/connect/payments/checkout/route.ts"
+      ],
+      "semanticLimit": "Creates a card checkout session; session creation is not completed payment or Settlement."
+    },
+    {
+      "name": "receiz_connect_checkout_session",
+      "sdkMethod": "connect.checkoutSession",
+      "arguments": [
+        "query"
+      ],
+      "mutation": false,
+      "requiresDelegated": true,
+      "requiredPayload": [],
+      "executionMode": "current-http",
+      "currentRouteImplemented": true,
+      "routes": [
+        {
+          "pathPattern": "/api/connect/payments/session",
+          "routeFile": "app/api/connect/payments/session/route.ts"
+        }
+      ],
+      "evidence": [
+        "packages/receiz-sdk/src/index.ts",
+        "app/api/connect/payments/session/route.ts"
+      ],
+      "semanticLimit": "Projects provider session status and receipt identity; an open session is not completed payment or Settlement."
+    },
+    {
+      "name": "receiz_payments_embedded_checkout",
+      "sdkMethod": "payments.embeddedCheckout",
+      "arguments": [
+        "body"
+      ],
+      "mutation": true,
+      "requiresDelegated": false,
+      "requiredPayload": [
+        "amountUsd",
+        "username"
+      ],
+      "executionMode": "current-http",
+      "currentRouteImplemented": true,
+      "routes": [
+        {
+          "pathPattern": "/api/payments/embed/checkout",
+          "routeFile": "app/api/payments/embed/checkout/route.ts"
+        }
+      ],
+      "evidence": [
+        "packages/receiz-sdk/src/index.ts",
+        "app/api/payments/embed/checkout/route.ts"
+      ],
+      "semanticLimit": "Creates a merchant card checkout session; session creation is not completed payment or Settlement."
+    },
     {
       "name": "receiz_twin_market_mandate",
       "sdkMethod": "twin.marketMandate",

@@ -9,6 +9,7 @@ import type { Order } from "@/types/domain";
 import { reserveBalanceUsdCents } from "./payment-contract";
 import { createNativeReserveExecution, recoverNativeReservePayment, type NativeReservePreparation, type NativeReserveQuote } from "./native-reserve-execution";
 import { encodeNativeReserveCoordinates, readNativeReserveCoordinates } from "./native-reserve-coordinates";
+import { nativePaymentApplicationId } from "../receiz/native-application";
 
 export const RECEIZ_CHECKOUT_VALUE_AUTHORITY_NOTICE =
   "USD checkout is a commerce quote. Proof-native value movement requires an explicit Phi intent bound to its source proof and head." as const;
@@ -214,7 +215,7 @@ export async function createWalletFirstReceizSettlement(
     if (!input.buyerAuthenticated || !input.buyerReceizId || !input.buyerUserId || !input.merchantUsername) {
       throw new Error("reserve_checkout_buyer_identity_required");
     }
-    const quote: NativeReserveQuote = originalReserveQuote ?? { applicationId: process.env.RECEIZ_APPLICATION_ID?.trim() || "receiz-commerce-kit",
+    const quote: NativeReserveQuote = originalReserveQuote ?? { applicationId: nativePaymentApplicationId(),
       tenantHost: input.tenantHost, buyerUserId: input.buyerUserId, buyerReceizId: input.buyerReceizId,
       merchantUsername: input.merchantUsername, recipientUserId: input.recipientUserId,
       referenceId: input.orderId ?? input.idempotencyKey, idempotencyKey: input.idempotencyKey,
@@ -230,7 +231,7 @@ export async function createWalletFirstReceizSettlement(
     reservePaymentToken = encodeNativeReserveCoordinates({ schema: "receiz.app.native_reserve_coordinates.v1", quote, recovery: result.payment.recovery });
   } else if (funding.walletAppliedUsdCents > 0) {
     if (input.buyerReceizId && input.buyerUserId && input.merchantUsername) {
-      throw new NativeReserveRequiredError({ applicationId: process.env.RECEIZ_APPLICATION_ID?.trim() || "receiz-commerce-kit",
+      throw new NativeReserveRequiredError({ applicationId: originalReserveQuote?.applicationId ?? nativePaymentApplicationId(),
         tenantHost: input.tenantHost, buyerUserId: input.buyerUserId, buyerReceizId: input.buyerReceizId,
         merchantUsername: input.merchantUsername, recipientUserId: input.recipientUserId,
         referenceId: input.orderId ?? input.idempotencyKey, idempotencyKey: input.idempotencyKey,

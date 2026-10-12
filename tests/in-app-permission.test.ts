@@ -73,6 +73,9 @@ describe("in-app Receiz proof permission", () => {
     assert.equal(inAppPermissionScopes("platform_billing").includes("receiz:reserve.write"), true);
     assert.equal(inAppPermissionScopes("platform_billing").includes("receiz:domains.read"), true);
     assert.equal(inAppPermissionScopes("platform_billing").includes("receiz:domains.write"), true);
+    assert.equal(inAppPermissionScopes("platform_billing").includes("receiz:subjects.write"), true);
+    assert.equal(inAppPermissionScopes("wallet_checkout").includes("receiz:subjects.write"), true);
+    assert.equal(inAppPermissionScopes("store_manage").includes("receiz:subjects.write"), false);
     assert.equal(inAppPermissionScopes("platform_billing").includes("receiz:wallet.transfer"), false);
     assert.equal(inAppPermissionScopes("store_manage").includes("receiz:reserve.write"), false);
   });
